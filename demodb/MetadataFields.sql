@@ -1,4 +1,6 @@
-WITH XMLNAMESPACES ('uri' as data)
+--this script helps to create metadata definition of DbSets
+WITH XMLNAMESPACES ('uri' as 
+data)
 select[name] as [@fieldName],
 CASE 
 WHEN system_type_id=127 THEN 'Integer'
