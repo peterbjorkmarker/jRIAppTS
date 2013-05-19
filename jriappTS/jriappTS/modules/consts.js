@@ -1,0 +1,72 @@
+/// <reference path="..\jriapp.ts"/>
+var RIAPP;
+(function (RIAPP) {
+    (function (MOD) {
+        (function (consts) {
+            consts.CHUNK_SEP = '$&@';
+            consts.DATA_ATTR = {
+                EL_VIEW_KEY: 'data-elvwkey',
+                DATA_BIND: 'data-bind',
+                DATA_VIEW: 'data-view',
+                DATA_APP: 'data-app',
+                DATA_EVENT_SCOPE: 'data-scope',
+                DATA_ITEM_KEY: 'data-key',
+                DATA_CONTENT: 'data-content',
+                DATA_COLUMN: 'data-column',
+                DATA_NAME: 'data-name'
+            };
+            consts.DATA_TYPE = {
+                None: 0,
+                String: 1,
+                Bool: 2,
+                Integer: 3,
+                Decimal: 4,
+                Float: 5,
+                DateTime: 6,
+                Date: 7,
+                Time: 8,
+                Guid: 9,
+                Binary: 10
+            };
+            consts.DATE_CONVERSION = {
+                None: 0,
+                ServerLocalToClientLocal: 1,
+                UtcToClientLocal: 2
+            };
+            consts.CHANGE_TYPE = {
+                NONE: 0,
+                ADDED: 1,
+                UPDATED: 2,
+                DELETED: 3
+            };
+            consts.KEYS = {
+                backspace: 8,
+                tab: 9,
+                enter: 13,
+                esc: 27,
+                space: 32,
+                pageUp: 33,
+                pageDown: 34,
+                end: 35,
+                home: 36,
+                left: 37,
+                up: 38,
+                right: 39,
+                down: 40,
+                del: 127
+            };
+            consts.ELVIEW_NM = {
+                DATAFORM: 'dataform',
+                DYNACONT: 'dynacontent'
+            };
+            consts.LOADER_GIF = {
+                SMALL: 'loader2.gif',
+                NORMAL: 'loader.gif'
+            };
+            RIAPP.global.onModuleLoaded('consts', consts);
+        })(MOD.consts || (MOD.consts = {}));
+        var consts = MOD.consts;
+    })(RIAPP.MOD || (RIAPP.MOD = {}));
+    var MOD = RIAPP.MOD;
+})(RIAPP || (RIAPP = {}));
+//@ sourceMappingURL=consts.js.map

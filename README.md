@@ -1,0 +1,69 @@
+jRIAppTS
+======
+
+<b>RIA application framework for building LOB applications</b>
+<br/>
+This is typescript version ov the previous <a href="https://github.com/BBGONE/jRIApp" target="_blank">jRIApp framework</a>
+You can watch video of the demo on <a href="http://youtu.be/m2lxFWhJghA" target="_blank">YouTube SPA</a>
+<br/>
+
+<b>Future enhancements:</b>
+<br/>
+When typescript's version 0.9 will be available then it will be possible to make all event handlers in descendants to have arguments really typed.
+Now typed DbSets's descendant use base types in event handlers arguments, such as Entity or CollectionItem.
+With generics instead of base Entity type there will be concrete type of the entity such as Customer, Product, ... etc.
+Also, it will be possible to have real entity type in DataView and ChildView classes.
+
+When the typescript will allow to define get and set properties in interfaces, there will be possible to see errors at design time when
+one is trying to assign value to a read only property. Now it is only runtime errors those will notify about this.
+
+<b>Differences from previous javascript version:</b>
+<br/>
+Now, strongly typed entities, DbSets, DbContext are pregenerated and we have typed classes at design time.
+To achieve this, the data service exposes GetTypeScript method.
+You can enter in a browser an address to GetTypeScript method on the ASP.NET MVC data controller, such as, for example
+http://YOURSERVER/RIAppDemoService/GetTypeScript and you will get a strongly typed definition of the classes.
+Then paste this text into some module (in demo application it is in demoDB.ts file).
+
+Now, the Application class is not dependent on the db module and the DbContext's instance is created when you need it in your code.
+You can remove db module's reference (db.ts) from the jriapp.ts and the compiled jriapp.js will not be dependent on the data service.
+You can also remove references for listbox.ts, datadialog.ts, datagrid.ts, pager.ts, stackpanel.ts if you don't need their functionality in your
+applications. But don't remove reference for dataform.ts, because the Application class knows about it.
+
+Previously, we used Metadata to initialze DbContex's instance, now, the typed DbContext needs only part of that data,
+so i added one more method on the data service which return only this information- it is named PermissionsInfo. This info
+includes server's time zone and permissions for CRUD methods on the DbSets. They allow to enable - disable some controls on the client
+depending on these permissions. But the permissions are always checked at the server too. So these permissions are only convenient way
+to make UI more users friendly.
+
+Because the core application class does not expose dbContext property, i added a way to register class instances in the application with
+application's <i>registerObject</i> method. You can register DbContext's instance at application's startup, and later get this instance
+with application's <i>getObject</i> method. I used this method to provide DbContext's instance to my custom autocomplete element view.
+It gets DbContext's registered name in the options and obtains the DbContext's instance using getObject method.
+
+Also changed the way to define calculated fields implementation. Previously Application and DbContext had 'define_calc' event to get them.
+Now it is done in strongly typed way. We can use generatated on the DbSets methods to define each calculated field individually, in the
+form <i>defineFIELDNameField</i>. You can see the demo for example.
+
+The Data bindings had been enhanced. Now if you specify only the data-view attribute on the html element (without the data-bind attribute),
+the element view on that DOM HTML element will still be created. It can be used in rare cases when you want to attach some custom code
+to the DOM element, and you dont need to data bound to the element view's properties.
+ 
+One more change had been made to make data content attributes more typescript friendly.
+Previously to define lookup content you did something like this: 
+data-content="fieldName=ProductCategoryID,lookup:{dataSource=dbContext.dbSets.ProductCategory,valuePath=ProductCategoryID,textPath=Name}" 
+now it is changed to:
+data-content="fieldName=ProductCategoryID,name:lookup,options:{dataSource=dbContext.dbSets.ProductCategory,valuePath=ProductCategoryID,textPath=Name}"
+
+the same applies for the multyline data content. Now the name and the options for specialized data contents are specified separately.
+
+The rest of the framework's behavior and implementation is still the same as in previous javascript version.
+You can use the docs from there to understand how the framework works and how to use it.
+
+
+You are welcome to use it in your applications.
+
+--
+Maxim V. Tsapov<br/>
+Moscow, Russian Federation<br/> 
+<a href="https://plus.google.com/u/0/102838307743207067758/about?tab=wX" target="_blank">I'm on Google+</a>

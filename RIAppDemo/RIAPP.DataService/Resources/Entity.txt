@@ -1,0 +1,22 @@
+﻿export interface I{{ENTITY_TYPE}} extends MOD.utils.IEditable, MOD.utils.ISubmittable
+{
+{{INTERFACE_FIELDS}}
+	getDbContext():DbContext;
+	getDbSet():{{DBSET_TYPE}};
+	_dbSet:{{DBSET_TYPE}};
+}
+
+export class {{ENTITY_TYPE}} extends MOD.db.Entity implements I{{ENTITY_TYPE}}
+{
+{{ENTITY_FIELDS}}
+	getDbContext() {
+		return <DbContext>super.getDbContext();
+	}
+	getDbSet() {
+		return <{{DBSET_TYPE}}>super.getDbSet();
+	}
+	get _dbSet() { return <{{DBSET_TYPE}}>this.getDbSet(); }
+	toString() {
+		return '{{ENTITY_NAME}}';
+	}
+}
