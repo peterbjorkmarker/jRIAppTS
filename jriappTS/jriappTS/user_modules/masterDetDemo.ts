@@ -689,17 +689,23 @@ module RIAPP
                 this._errorVM = new COMMON.ErrorViewModel(this);
                 this._customerVM = new CustomerVM(this);
 
+                function handleError(sender, data) {
+                    self._handleError(sender, data);
+                };
                 //here we could process application's errors
-                this.addOnError(function (sender, data) {
-                    debugger;
-                    data.isHandled = true;
-                    self.errorVM.error = data.error;
-                    self.errorVM.showDialog();
-                });
+                this.addOnError(handleError);
+                this._dbContext.addOnError(handleError);
+
                 super.onStartUp();
                 this._customerVM.load();
             }
-            //really, the destroy method is redundant here because application lives till the page lives
+            private _handleError(sender, data) {
+                debugger;
+                data.isHandled = true;
+                this.errorVM.error = data.error;
+                this.errorVM.showDialog();
+            }
+            //really, the destroy method is redundant here because the application lives while the page lives
             destroy() {
                 if (this._isDestroyed)
                     return;

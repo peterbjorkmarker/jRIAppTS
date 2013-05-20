@@ -967,14 +967,13 @@ var RIAPP;
                 this._headerVM = new RIAPP.HEADER.HeaderVM(this);
                 this._productVM = new ProductViewModel(this);
                 this._uploadVM = new UploadThumbnailVM(this, options.upload_thumb_url);
+                function handleError(sender, data) {
+                    self._handleError(sender, data);
+                }
+                ;
                 //here we could process application's errors
-                this.addOnError(function (sender, data) {
-                    debugger;
-
-                    data.isHandled = true;
-                    self.errorVM.error = data.error;
-                    self.errorVM.showDialog();
-                });
+                this.addOnError(handleError);
+                this._dbContext.addOnError(handleError);
                 //adding event handler for our custom event
                 this._uploadVM.addOnFilesUploaded(function (s, a) {
                     //need to update ThumbnailPhotoFileName
@@ -987,7 +986,14 @@ var RIAPP;
                 });
                 _super.prototype.onStartUp.call(this);
             };
-            DemoApplication.prototype.destroy = //really, the destroy method is redundant here because application lives till the page lives
+            DemoApplication.prototype._handleError = function (sender, data) {
+                debugger;
+
+                data.isHandled = true;
+                this.errorVM.error = data.error;
+                this.errorVM.showDialog();
+            };
+            DemoApplication.prototype.destroy = //really, the destroy method is redundant here because the application lives while the page lives
             function () {
                 if(this._isDestroyed) {
                     return;

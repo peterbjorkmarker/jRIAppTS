@@ -253,7 +253,6 @@ var RIAPP;
             function ErrorViewModel(app) {
                         _super.call(this, app);
                 var self = this;
-                this._app = app;
                 this._error = null;
                 this._message = null;
                 this._title = '';

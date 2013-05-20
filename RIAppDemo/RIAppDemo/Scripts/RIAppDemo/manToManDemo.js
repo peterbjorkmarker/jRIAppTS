@@ -903,18 +903,24 @@ var RIAPP;
                 this.registerObject("dbContext", this._dbContext);
                 this._errorVM = new RIAPP.COMMON.ErrorViewModel(this);
                 this._customerVM = new CustomerVM(this);
+                function handleError(sender, data) {
+                    self._handleError(sender, data);
+                }
+                ;
                 //here we could process application's errors
-                this.addOnError(function (sender, data) {
-                    debugger;
-
-                    data.isHandled = true;
-                    self.errorVM.error = data.error;
-                    self.errorVM.showDialog();
-                });
+                this.addOnError(handleError);
+                this._dbContext.addOnError(handleError);
                 _super.prototype.onStartUp.call(this);
                 this._customerVM.load();
             };
-            DemoApplication.prototype.destroy = //really, the destroy method is redundant here because application lives till the page lives
+            DemoApplication.prototype._handleError = function (sender, data) {
+                debugger;
+
+                data.isHandled = true;
+                this.errorVM.error = data.error;
+                this.errorVM.showDialog();
+            };
+            DemoApplication.prototype.destroy = //really, the destroy method is redundant here because the application lives while the page lives
             function () {
                 if(this._isDestroyed) {
                     return;
