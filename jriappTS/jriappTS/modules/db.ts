@@ -931,7 +931,7 @@ module RIAPP {
                     this._changeType = CHANGE_TYPE.DELETED;
                     return true;
                 }
-                acceptChanges(rowInfo:IRowInfo) {
+                acceptChanges(rowInfo?:IRowInfo) {
                     var oldCT = this._changeType, eset:DbSet = this._dbSet;
                     if (this._key === null)
                         return;
