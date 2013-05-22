@@ -550,7 +550,7 @@ module RIAPP
                 }
                 adrID = adrInfo.AddressID;
                 var existedAddr:bool = adrView.items.some(function (item) {
-                    return item.AddressID === adrID;
+                    return (<any>item).AddressID === adrID;
                 });
 
                 if (existedAddr) {
@@ -574,7 +574,7 @@ module RIAPP
                 if (!item) {
                     return;
                 }
-                var id = item.AddressID;
+                var id = (<any>item).AddressID;
                 //delete it from the left panel
                 if (item.deleteItem())
                     //and then add the address to the right panel (really adds an addressInfo, not the address entity)

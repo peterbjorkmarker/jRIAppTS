@@ -1181,7 +1181,7 @@ module RIAPP
                 }
                 adrID = adrInfo.AddressID;
                 var existedAddr: bool = adrView.items.some(function (item) {
-                    return item.AddressID === adrID;
+                    return (<any>item).AddressID === adrID;
                 });
 
                 if (existedAddr) {
@@ -1205,7 +1205,7 @@ module RIAPP
                 if (!item) {
                     return;
                 }
-                var id = item.AddressID;
+                var id = (<any>item).AddressID;
                 //delete it from the left panel
                 if (item.deleteItem())
                     //and then add the address to the right panel (really adds an addressInfo, not the address entity)
@@ -1250,7 +1250,7 @@ module RIAPP
                     this._addressInfosView.removeItem(item);
                 }
             }
-            submitChanges() { return this.dbContext.submitChanges(); }
+            submitChanges():JQueryPromise { return this.dbContext.submitChanges(); }
             destroy() {
                 if (this._isDestroyed)
                     return;
@@ -1274,7 +1274,7 @@ module RIAPP
             get app() { return <DemoApplication>this._app; }
             get dbContext() { return this.app.dbContext; }
             get dbSets() { return this.dbContext.dbSets; }
-            get _isCanSubmit() { return true; }
+            get _isCanSubmit():bool { return true; }
             get addressInfosDb() { return this._addressInfosDb; }
             get addressInfosView() { return this._addressInfosView; }
             get addressesView() { return this._customerAddressVM._addressesView; }

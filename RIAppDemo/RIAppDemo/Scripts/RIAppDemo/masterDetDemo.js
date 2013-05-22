@@ -16,22 +16,20 @@ var RIAPP;
         var CustomerVM = (function (_super) {
             __extends(CustomerVM, _super);
             function CustomerVM(app) {
-                        _super.call(this, app);
+                _super.call(this, app);
                 var self = this;
                 this._dataGrid = null;
                 this._dbSet = this.dbSets.Customer;
                 this._dbSet.isSubmitOnDelete = true;
                 this._propWatcher = new RIAPP.MOD.utils.PropWatcher();
                 this._dbSet.addOnItemDeleting(function (sender, args) {
-                    if(!confirm('Are you sure that you want to delete customer ?')) {
+                    if (!confirm('Are you sure that you want to delete customer ?')) {
                         args.isCancel = true;
                     }
                 }, self.uniqueID);
                 this._dbSet.addOnFill(function (sender, args) {
-                    //when fill is ended
-                    if(args.isBegin && args.isPageChanged) {
-                        self.raiseEvent('page_changed', {
-                        });
+                    if (args.isBegin && args.isPageChanged) {
+                        self.raiseEvent('page_changed', {});
                     }
                 }, self.uniqueID);
                 //adds new customer - uses dialog to enter the data
@@ -39,20 +37,17 @@ var RIAPP;
                     //showing of the dialog is handled by the datagrid
                     self._dbSet.addNew();
                 }, self, function (sender, param) {
-                    //the command is always enabled
                     return true;
                 });
                 //saves changes (submitts them to the service)
                 this._saveCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     self.dbContext.submitChanges();
                 }, self, function (s, p) {
-                    //the command is enabled when there are pending changes
                     return self.dbContext.hasChanges;
                 });
                 this._undoCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     self.dbContext.rejectChanges();
                 }, self, function (s, p) {
-                    //the command is enabled when there are pending changes
                     return self.dbContext.hasChanges;
                 });
                 //load data from the server
@@ -61,11 +56,10 @@ var RIAPP;
                 }, self, null);
                 //example of getting instance of bounded dataGrid by using elView's propChangedCommand
                 this._propChangeCommand = new RIAPP.MOD.mvvm.Command(function (sender, args) {
-                    if(args.property == '*' || args.property == 'grid') {
+                    if (args.property == '*' || args.property == 'grid') {
                         self._dataGrid = sender.grid;
                     }
-                    //example of binding to dataGrid events
-                    if(!!self._dataGrid) {
+                    if (!!self._dataGrid) {
                         self._dataGrid.addHandler('page_changed', function (s, a) {
                             self._onGridPageChanged();
                         }, self.uniqueID);
@@ -79,8 +73,7 @@ var RIAPP;
                 }, self, null);
                 //it is not needed here, but can be used when we want to respond to the tabs events
                 this._tabsEventCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
-                    //alert(param.eventName);
-                                    }, self, null);
+                }, self, null);
                 //the property watcher helps us handling properties changes
                 //more convenient than using addOnPropertyChange
                 this._propWatcher.addPropWatch(self.dbContext, 'hasChanges', function (prop) {
@@ -117,7 +110,7 @@ var RIAPP;
             };
             CustomerVM.prototype._onGridRowExpanded = function (oldRow, row, isExpanded) {
                 var r = row;
-                if(!isExpanded) {
+                if (!isExpanded) {
                     r = oldRow;
                 }
                 this.raiseEvent('row_expanded', {
@@ -142,16 +135,16 @@ var RIAPP;
                 return this.dbContext.load(query);
             };
             CustomerVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
                 this._propWatcher.destroy();
                 this._propWatcher = null;
-                if(!!this._dbSet) {
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
-                if(!!this._dataGrid) {
+                if (!!this._dataGrid) {
                     this._dataGrid.removeNSHandlers(this.uniqueID);
                 }
                 this._ordersVM.destroy();
@@ -255,7 +248,7 @@ var RIAPP;
         var OrderVM = (function (_super) {
             __extends(OrderVM, _super);
             function OrderVM(customerVM) {
-                        _super.call(this, customerVM.app);
+                _super.call(this, customerVM.app);
                 var self = this;
                 this._customerVM = customerVM;
                 this._dbSet = this.dbSets.SalesOrderHeader;
@@ -294,7 +287,7 @@ var RIAPP;
                 ], true);
                 //loads the data only when customer's row is expanded
                 this._customerVM.addHandler('row_expanded', function (sender, args) {
-                    if(args.isExpanded) {
+                    if (args.isExpanded) {
                         self.currentCustomer = args.customer;
                     } else {
                         self.currentCustomer = null;
@@ -304,7 +297,7 @@ var RIAPP;
                     self._onCurrentChanged();
                 }, self.uniqueID);
                 this._dbSet.addOnItemDeleting(function (sender, args) {
-                    if(!confirm('Are you sure that you want to delete order ?')) {
+                    if (!confirm('Are you sure that you want to delete order ?')) {
                         args.isCancel = true;
                     }
                 }, self.uniqueID);
@@ -326,11 +319,10 @@ var RIAPP;
                 });
                 //example of getting instance of bounded dataGrid by using elView's propChangedCommand
                 this._propChangeCommand = new RIAPP.MOD.mvvm.Command(function (sender, args) {
-                    if(args.property == '*' || args.property == 'grid') {
+                    if (args.property == '*' || args.property == 'grid') {
                         self._dataGrid = sender.grid;
                     }
-                    //example of binding to dataGrid events
-                    if(!!self._dataGrid) {
+                    if (!!self._dataGrid) {
                         self._dataGrid.addHandler('page_changed', function (s, a) {
                             self._onGridPageChanged();
                         }, self.uniqueID);
@@ -343,7 +335,6 @@ var RIAPP;
                     }
                 }, self, null);
                 this._tabsEventCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
-                    //here we can handle tabs events
                     switch(param.eventName) {
                         case "select":
                             this._onTabSelected(param.args.index);
@@ -364,7 +355,7 @@ var RIAPP;
             OrderVM.prototype._onTabSelected = function (index) {
                 this._selectedTabIndex = index;
                 this.raisePropertyChanged('selectedTabIndex');
-                if(index === 2) {
+                if (index === 2) {
                     //load details only when tab which contain details grid is selected
                     this._orderDetailVM.currentOrder = this.dbSet.currentItem;
                 }
@@ -375,14 +366,14 @@ var RIAPP;
             };
             OrderVM.prototype._onGridRowExpanded = function (oldRow, row, isExpanded) {
                 var r = row;
-                if(!isExpanded) {
+                if (!isExpanded) {
                     r = oldRow;
                 }
                 this.raiseEvent('row_expanded', {
                     order: r.item,
                     isExpanded: isExpanded
                 });
-                if(isExpanded) {
+                if (isExpanded) {
                     this._onTabSelected(this.selectedTabIndex);
                 }
             };
@@ -396,7 +387,7 @@ var RIAPP;
             function () {
                 //explicitly clear before every load
                 this.clear();
-                if(!this.currentCustomer || this.currentCustomer.getIsNew()) {
+                if (!this.currentCustomer || this.currentCustomer.getIsNew()) {
                     var deferred = utils.createDeferred();
                     deferred.reject();
                     return deferred.promise();
@@ -409,14 +400,14 @@ var RIAPP;
                 return this.dbContext.load(query);
             };
             OrderVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
-                if(!!this._dbSet) {
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
-                if(!!this._dataGrid) {
+                if (!!this._dataGrid) {
                     this._dataGrid.removeNSHandlers(this.uniqueID);
                 }
                 this.currentCustomer = null;
@@ -495,7 +486,7 @@ var RIAPP;
                     return this._currentCustomer;
                 },
                 set: function (v) {
-                    if(v !== this._currentCustomer) {
+                    if (v !== this._currentCustomer) {
                         this._currentCustomer = v;
                         this.raisePropertyChanged('currentCustomer');
                         this.load();
@@ -531,7 +522,7 @@ var RIAPP;
         var OrderDetailVM = (function (_super) {
             __extends(OrderDetailVM, _super);
             function OrderDetailVM(orderVM) {
-                        _super.call(this, orderVM.app);
+                _super.call(this, orderVM.app);
                 var self = this;
                 this._dbSet = this.dbSets.SalesOrderDetail;
                 this._orderVM = orderVM;
@@ -550,7 +541,7 @@ var RIAPP;
             OrderDetailVM.prototype.load = //returns promise
             function () {
                 this.clear();
-                if(!this.currentOrder || this.currentOrder.getIsNew()) {
+                if (!this.currentOrder || this.currentOrder.getIsNew()) {
                     var deferred = new global.$.Deferred();
                     deferred.reject();
                     return deferred.promise();
@@ -566,11 +557,11 @@ var RIAPP;
                 this.dbSet.clear();
             };
             OrderDetailVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
-                if(!!this._dbSet) {
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
                 this.currentOrder = null;
@@ -620,7 +611,7 @@ var RIAPP;
                     return this._currentOrder;
                 },
                 set: function (v) {
-                    if(v !== this._currentOrder) {
+                    if (v !== this._currentOrder) {
                         this._currentOrder = v;
                         this.raisePropertyChanged('currentOrder');
                         this.load();
@@ -642,12 +633,12 @@ var RIAPP;
         var AddressVM = (function (_super) {
             __extends(AddressVM, _super);
             function AddressVM(orderVM) {
-                        _super.call(this, orderVM.app);
+                _super.call(this, orderVM.app);
                 var self = this;
                 this._orderVM = orderVM;
                 this._dbSet = this.dbSets.Address;
                 this._orderVM.dbSet.addOnFill(function (sender, args) {
-                    if(!args.isBegin) {
+                    if (!args.isBegin) {
                         self.loadAddressesForOrders(args.fetchedItems);
                     }
                 }, self.uniqueID);
@@ -684,11 +675,11 @@ var RIAPP;
                 this.dbSet.clear();
             };
             AddressVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
-                if(!!this._dbSet) {
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
                 this._customerDbSet.removeNSHandlers(this.uniqueID);
@@ -766,7 +757,7 @@ var RIAPP;
             };
             ProductAutoComplete.prototype._updateSelection = //overriden base method
             function () {
-                if(!!this.dataContext) {
+                if (!!this.dataContext) {
                     var id = this.currentSelection;
                     this.dataContext.ProductID = id;
                 }
@@ -777,18 +768,18 @@ var RIAPP;
             };
             ProductAutoComplete.prototype._updateValue = //new method
             function () {
-                if(!this.dataContext) {
+                if (!this.dataContext) {
                     this.value = '';
                     return;
                 }
                 var productID = this.dataContext.ProductID;
                 //casting will be solved with generics soon
                 var product = this._lookupSource.findByPK(productID);
-                if(!!product) {
+                if (!!product) {
                     this.value = product.Name;
                 } else {
                     this.value = '';
-                    if(this._lastLoadedID !== productID) {
+                    if (this._lastLoadedID !== productID) {
                         //this prevents the cicles of loading of the same item
                         this._lastLoadedID = productID;
                         var query = this._lookupSource.createReadProductByIdsQuery({
@@ -808,12 +799,12 @@ var RIAPP;
                 },
                 set: function (v) {
                     var self = this;
-                    if(this._dataContext !== v) {
-                        if(!!this._dataContext) {
+                    if (this._dataContext !== v) {
+                        if (!!this._dataContext) {
                             this._dataContext.removeNSHandlers(this.uniqueID);
                         }
                         this._dataContext = v;
-                        if(!!this._dataContext) {
+                        if (!!this._dataContext) {
                             this._dataContext.addOnPropertyChange('ProductID', function (sender, a) {
                                 self._updateValue();
                             }, this.uniqueID);
@@ -828,7 +819,7 @@ var RIAPP;
             Object.defineProperty(ProductAutoComplete.prototype, "currentSelection", {
                 get: //overriden base property
                 function () {
-                    if(!!this._dbSet.currentItem) {
+                    if (!!this._dbSet.currentItem) {
                         return this._dbSet.currentItem['ProductID'];
                     } else {
                         return null;
@@ -850,7 +841,7 @@ var RIAPP;
         var ProductVM = (function (_super) {
             __extends(ProductVM, _super);
             function ProductVM(orderDetailVM) {
-                        _super.call(this, orderDetailVM.app);
+                _super.call(this, orderDetailVM.app);
                 var self = this;
                 this._orderDetailVM = orderDetailVM;
                 this._dbSet = this.dbSets.Product;
@@ -859,7 +850,7 @@ var RIAPP;
                 }, self.uniqueID);
                 //here we load products which are referenced in order details
                 this._orderDetailVM.dbSet.addOnFill(function (sender, args) {
-                    if(!args.isBegin) {
+                    if (!args.isBegin) {
                         self.loadProductsForOrderDetails(args.fetchedItems);
                     }
                 }, self.uniqueID);
@@ -891,11 +882,11 @@ var RIAPP;
                 return this.dbContext.load(query);
             };
             ProductVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
-                if(!!this._dbSet) {
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
                 this._customerDbSet.removeNSHandlers(this.uniqueID);
@@ -952,7 +943,7 @@ var RIAPP;
         var DemoApplication = (function (_super) {
             __extends(DemoApplication, _super);
             function DemoApplication(options) {
-                        _super.call(this, options);
+                _super.call(this, options);
                 var self = this;
                 this._dbContext = null;
                 this._errorVM = null;
@@ -966,7 +957,7 @@ var RIAPP;
                     permissions: options.permissionInfo
                 });
                 function toText(str) {
-                    if(str === null) {
+                    if (str === null) {
                         return '';
                     } else {
                         return str;
@@ -998,7 +989,7 @@ var RIAPP;
             };
             DemoApplication.prototype.destroy = //really, the destroy method is redundant here because the application lives while the page lives
             function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
@@ -1007,7 +998,7 @@ var RIAPP;
                     self._errorVM.destroy();
                     self._customerVM.destroy();
                     self._dbContext.destroy();
-                }finally {
+                } finally {
                     _super.prototype.destroy.call(this);
                 }
             };

@@ -9,7 +9,7 @@ module RIAPP {
             var ERRTEXT = RIAPP.localizable.VALIDATE;
 
             export class DataForm extends RIAPP.BaseObject {
-                private get _DATA_CONTENT_SELECTOR() { return '*[' + consts.DATA_ATTR.DATA_CONTENT + ']:not([' + consts.DATA_ATTR.DATA_COLUMN + '])'; };
+                private get _DATA_CONTENT_SELECTOR() { return '*[' + consts.DATA_ATTR.DATA_CONTENT + ']:not([' + consts.DATA_ATTR.DATA_COLUMN + '])'; }
                 _el: HTMLElement;
                 _$el: JQuery;
                 _objId: string;
@@ -231,7 +231,7 @@ module RIAPP {
                 get app() { return this._app; }
                 get el() { return this._el; }
                 get dataContext() { return this._dataContext; }
-                set dataContext(v) {
+                set dataContext(v: BaseObject) {
                     var dataContext:any;
                     try {
                         if (v === this._dataContext)

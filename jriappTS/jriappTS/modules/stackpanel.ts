@@ -318,7 +318,7 @@ module RIAPP {
                 get containerEl() { return this._el; }
                 get uniqueID() { return this._objId; }
                 get dataSource() { return this._dataSource; }
-                set dataSource(v) {
+                set dataSource(v: collection.Collection) {
                     if (v === this._dataSource)
                         return;
                     if (this._dataSource !== null) {

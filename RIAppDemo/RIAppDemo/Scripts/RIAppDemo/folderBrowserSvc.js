@@ -318,16 +318,16 @@ var RIAPP;
                         }
                     ]
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = FileSystemObject;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -377,7 +377,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof FileSystemObject)) {
+                    if (!!v && !(v instanceof FileSystemObject)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'FileSystemObject'));
                     }
                     this._setCurrentItem(v);
@@ -391,7 +391,7 @@ var RIAPP;
         var DbContext = (function (_super) {
             __extends(DbContext, _super);
             function DbContext() {
-                        _super.call(this);
+                _super.call(this);
                 this._dbSetNames = [
                     "FileSystemObject"
                 ];

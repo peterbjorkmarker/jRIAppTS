@@ -1863,7 +1863,7 @@ module RIAPP {
                 get uniqueID() { return this._objId; }
                 get name() { return this._name; }
                 get dataSource() { return this._dataSource; }
-                set dataSource(v) {
+                set dataSource(v: collection.Collection) {
                     if (v === this._dataSource)
                         return;
                     if (this._dataSource !== null) {

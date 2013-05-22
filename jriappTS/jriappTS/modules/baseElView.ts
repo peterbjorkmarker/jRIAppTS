@@ -124,7 +124,7 @@ module RIAPP {
                         this._setFieldError(false);
                     }
                 }
-                _onError(error, source) {
+                _onError(error, source):bool {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
                         return global._onError(error, source);
@@ -593,7 +593,7 @@ module RIAPP {
                     });
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
-                        var args = { keyCode: e.which, value: e.target.value, isCancel: false };
+                        var args = { keyCode: e.which, value: (<any>e.target).value, isCancel: false };
                         self.raiseEvent('keypress', args);
                         if (args.isCancel)
                             e.preventDefault();
@@ -667,7 +667,7 @@ module RIAPP {
                     });
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
-                        var args = { keyCode: e.which, value: e.target.value, isCancel: false };
+                        var args = { keyCode: e.which, value: (<any>e.target).value, isCancel: false };
                         self.raiseEvent('keypress', args);
                         if (args.isCancel)
                             e.preventDefault();

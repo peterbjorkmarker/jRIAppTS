@@ -363,7 +363,7 @@ module RIAPP {
                     return 'ListBox';
                 }
                 get dataSource() { return this._dataSource; }
-                set dataSource(v) {
+                set dataSource(v: collection.Collection) {
                     if (this._dataSource !== v) {
                         if (!!this._dataSource)
                             this._unbindDS();
@@ -387,7 +387,7 @@ module RIAPP {
                     }
                 }
                 get selectedItem() { return this._selectedItem; }
-                set selectedItem(v) {
+                set selectedItem(v: collection.CollectionItem) {
                     if (this._selectedItem !== v) {
                         if (!!this._selectedItem)
                             this._saveSelected = this._selectedItem;
@@ -495,7 +495,7 @@ module RIAPP {
                         return null;
                     return this._listBox.selectedItem;
                 }
-                set selectedItem(v) {
+                set selectedItem(v: collection.CollectionItem) {
                     if (!this._listBox)
                         return;
                     this._listBox.selectedItem = v;

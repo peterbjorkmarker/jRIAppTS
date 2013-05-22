@@ -475,7 +475,7 @@ module RIAPP {
                 get filterInfo() { return this._filterInfo; }
                 get sortInfo() { return this._sortInfo; }
                 get isIncludeTotalCount() { return this._isIncludeTotalCount; }
-                set isIncludeTotalCount(v: bool) { this._isIncludeTotalCount = v };
+                set isIncludeTotalCount(v: bool) { this._isIncludeTotalCount = v; }
                 get isClearPrevData() { return this._isClearPrevData; }
                 set isClearPrevData(v:bool) { this._isClearPrevData = v; }
                 get pageSize() { return this._pageSize; }
@@ -979,7 +979,7 @@ module RIAPP {
                         eset._onCommitChanges(this, false, true, oldCT);
                     }
                 }
-                submitChanges() {
+                submitChanges(): JQueryPromise {
                     var dbContext = this.getDbContext(), uniqueID = utils.uuid();
                     dbContext.addOnSubmitError(function (sender, args) {
                         if (args.error instanceof db.SubmitError) {
@@ -1078,20 +1078,19 @@ module RIAPP {
             export class DbSet extends collection.Collection {
                 private _dbContext: DbContext;
                 private _isSubmitOnDelete: bool;
-                private _options: IDbSetOptions;
                 private _trackAssoc: { [name: string]: IAssociationInfo; };
                 private _trackAssocMap: { [childFieldName: string]: string[]; };
                 private _childAssocMap: { [fieldName: string]: IAssociationInfo; };
                 private _parentAssocMap: { [fieldName: string]: IAssociationInfo; };
                 private _changeCount: number;
                 private _changeCache: { [key: string]: Entity; };
+                _options: IDbSetOptions;
                 _navfldMap: { [fieldName: string]: { getFunc: () => any; setFunc: (v: any) => void; }; };
                 _calcfldMap: { [fieldName: string]: { getFunc: () => any; }; };
-
+                _itemsByKey: { [key: string]: Entity; };
                 _entityType: IEntityConstructor;
                 _ignorePageChanged: bool;
                 _query: DataQuery;
-                _itemsByKey: { [key: string]: Entity; };
 
                 constructor(opts: IDbSetConstuctorOptions) {
                     super();

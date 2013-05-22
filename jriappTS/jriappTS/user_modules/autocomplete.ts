@@ -86,13 +86,14 @@ module RIAPP
                 this._$dlg = null;
                 var $el = this.$el;
 
+
                 $el.on('change.' + this._objId, function (e) {
                     e.stopPropagation();
                     self.raisePropertyChanged('value');
                 });
                 $el.on('keyup.' + this._objId, function (e) {
                     e.stopPropagation();
-                    self._onTextChange(e.target.value);
+                    self._onTextChange((<any>e.target).value);
                 });
                 $el.on('keypress.' + this._objId, function (e) {
                     e.stopPropagation();

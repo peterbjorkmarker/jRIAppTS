@@ -174,7 +174,7 @@ module RIAPP {
                         (<baseElView.BaseElView>tgt).validationErrors = errors;
                     }
                 }
-                _onError(error: any, source: any) {
+                _onError(error: any, source: any):bool {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
                         return global._onError(error, source);
@@ -478,7 +478,7 @@ module RIAPP {
                 }
                 get mode() { return this._mode; }
                 get converter() { return this._converter; }
-                set converter(v) { this._converter = v; }
+                set converter(v: MOD.converter.IConverter) { this._converter = v; }
                 get converterParam() { return this._converterParam; }
                 set converterParam(v) { this._converterParam = v; }
                 get isSourceFixed() { return this._isSourceFixed; }

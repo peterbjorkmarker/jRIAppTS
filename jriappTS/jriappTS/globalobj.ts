@@ -18,7 +18,6 @@ module RIAPP {
         private _currentSelectable: ISelectable;
         private _defaults: MOD.defaults.Defaults;
         private _userCode: any;
-        private _exports: { [name: string]: any; };
         private _utils: MOD.utils.Utils;
         private _templateLoaders: any;
         private _templateGroups: any;
@@ -28,6 +27,7 @@ module RIAPP {
         private _parser: MOD.parser.Parser;
         //all loaded modules
         private _moduleNames: string[];
+        _exports: { [name: string]: any; };
 
         constructor(window: Window, jQuery: JQueryStatic) {
             super();
@@ -40,7 +40,8 @@ module RIAPP {
             this._$ = jQuery;
             this._currentSelectable = null;
             this._userCode = {};
-            this._exports = {}; //exported types
+            //exported types
+            this._exports = {}; 
             this._templateLoaders = {};
             this._templateGroups = {};
             this._promises = [];
@@ -201,13 +202,13 @@ module RIAPP {
         _checkIsDummy(error) {
             return !!error.isDummy;
         }
-        _registerObject(root: { _exports: any; }, name: string, obj: any) {
+        _registerObject(root: { _exports: { [name: string]: any; } }, name: string, obj: any) {
             return this._registerObjectCore(root._exports, name, obj, true);
         }
-        _getObject(root: { _exports: any; }, name: string) {
+        _getObject(root: { _exports: { [name: string]: any; } }, name: string) {
             return this._getObjectCore(root['_exports'], name);
         }
-        _removeObject(root: { _exports: any; }, name: string) {
+        _removeObject(root: { _exports: { [name: string]: any; } }, name: string) {
             return this._removeObjectCore(root['_exports'], name);
         }
         _processTemplateSections(root: { querySelectorAll: (selectors: string) => NodeList; }) {

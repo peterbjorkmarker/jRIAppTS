@@ -73,51 +73,51 @@ module RIAPP {
                 }
                 static isFunction = base_utils.isFunc;
                 static isString(a) {
-                    if (isNt(a)) return false;
+                    if (Checks.isNt(a)) return false;
                     var rx = /string/i;
                     return (typeof (a) === 'string') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
                 }
                 static isArray = base_utils.isArray;
                 static isBoolean(a) {
-                    if (isNt(a)) return false;
+                    if (Checks.isNt(a)) return false;
                     var rx = /boolean/i;
                     return (typeof (a) === 'boolean') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
                 }
                 static isDate(a) {
-                    if (isNt(a)) return false;
+                    if (Checks.isNt(a)) return false;
                     var rx = /date/i;
                     return (typeof (a) === 'date') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
                 }
                 static isHTML(a) {
-                    if (isNt(a)) return false;
+                    if (Checks.isNt(a)) return false;
                     var rx = /html/i;
                     return (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
                 }
                 static isNumber(a) {
-                    if (isNt(a)) return false;
+                    if (Checks.isNt(a)) return false;
                     var rx = /Number/;
                     return (typeof (a) === 'number') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
                 }
                 static isObject(a) {
-                    if (isNt(a)) return false;
+                    if (Checks.isNt(a)) return false;
                     var rx = /object/i;
                     return (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
                 }
                 static isSimpleObject(a) {
-                    if (isNt(a)) return false;
-                    var res = isObject(a);
+                    if (Checks.isNt(a)) return false;
+                    var res = Checks.isObject(a);
                     return res && (Object.prototype === Object.getPrototypeOf(a));
                 }
                 static isRegExp(a) {
-                    if (isNt(a)) return false;
+                    if (Checks.isNt(a)) return false;
                     var rx = /regexp/i;
                     return (typeof (a) === 'function') ? rx.test(a.constructor.toString()) : false;
                 }
                 static isNumeric(obj) {
-                    return isNumber(obj) || (isString(obj) && !isNaN(Number(obj)));
+                    return Checks.isNumber(obj) || (Checks.isString(obj) && !isNaN(Number(obj)));
                 }
                 static isBoolString(a) {
-                    if (isNt(a)) return false;
+                    if (Checks.isNt(a)) return false;
                     return (a == 'true' || a == 'false');
                 }
                 static isProtoOf(objConstructor, obj) {
@@ -245,12 +245,12 @@ module RIAPP {
                 static checkDateRange(dt:Date, range: string) {
                     var rangeParts = range.split(',');
                     if (!!rangeParts[0]) {
-                        if (dt < _dtRangeToDate(rangeParts[0])) {
+                        if (dt < Validations._dtRangeToDate(rangeParts[0])) {
                             throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_RANGE, dt, range));
                         }
                     }
                     if (!!rangeParts[1]) {
-                        if (dt > _dtRangeToDate(rangeParts[1])) {
+                        if (dt > Validations._dtRangeToDate(rangeParts[1])) {
                             throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_RANGE, dt, range));
                         }
                     }

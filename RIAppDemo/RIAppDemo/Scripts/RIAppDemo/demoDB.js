@@ -552,16 +552,16 @@ var RIAPP;
                         }
                     ]
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = Customer;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -606,7 +606,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof Customer)) {
+                    if (!!v && !(v instanceof Customer)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Customer'));
                     }
                     this._setCurrentItem(v);
@@ -926,16 +926,16 @@ var RIAPP;
                     ],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = CustomerAddress;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -980,7 +980,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof CustomerAddress)) {
+                    if (!!v && !(v instanceof CustomerAddress)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'CustomerAddress'));
                     }
                     this._setCurrentItem(v);
@@ -1352,16 +1352,16 @@ var RIAPP;
                         }
                     ]
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = Address;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -1406,7 +1406,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof Address)) {
+                    if (!!v && !(v instanceof Address)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Address'));
                     }
                     this._setCurrentItem(v);
@@ -1979,16 +1979,16 @@ var RIAPP;
                         }
                     ]
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = Product;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -2038,7 +2038,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof Product)) {
+                    if (!!v && !(v instanceof Product)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Product'));
                     }
                     this._setCurrentItem(v);
@@ -2144,16 +2144,16 @@ var RIAPP;
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = ProductModel;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -2193,7 +2193,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof ProductModel)) {
+                    if (!!v && !(v instanceof ProductModel)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'ProductModel'));
                     }
                     this._setCurrentItem(v);
@@ -3020,16 +3020,16 @@ var RIAPP;
                         }
                     ]
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = SalesOrderHeader;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -3069,7 +3069,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof SalesOrderHeader)) {
+                    if (!!v && !(v instanceof SalesOrderHeader)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesOrderHeader'));
                     }
                     this._setCurrentItem(v);
@@ -3450,16 +3450,16 @@ var RIAPP;
                     ],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = SalesOrderDetail;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -3499,7 +3499,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof SalesOrderDetail)) {
+                    if (!!v && !(v instanceof SalesOrderDetail)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesOrderDetail'));
                     }
                     this._setCurrentItem(v);
@@ -3692,16 +3692,16 @@ var RIAPP;
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = ProductCategory;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -3741,7 +3741,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof ProductCategory)) {
+                    if (!!v && !(v instanceof ProductCategory)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'ProductCategory'));
                     }
                     this._setCurrentItem(v);
@@ -3821,16 +3821,16 @@ var RIAPP;
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = SalesInfo;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -3870,7 +3870,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof SalesInfo)) {
+                    if (!!v && !(v instanceof SalesInfo)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesInfo'));
                     }
                     this._setCurrentItem(v);
@@ -3979,16 +3979,16 @@ var RIAPP;
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = LookUpProduct;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -4028,7 +4028,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof LookUpProduct)) {
+                    if (!!v && !(v instanceof LookUpProduct)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'LookUpProduct'));
                     }
                     this._setCurrentItem(v);
@@ -4250,16 +4250,16 @@ var RIAPP;
                         }
                     ]
                 }, utils = RIAPP.global.utils;
-                        _super.call(this, opts);
+                _super.call(this, opts);
                 self._entityType = AddressInfo;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if(!!f.isNavigation) {
+                    if (!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if(!!f.isCalculated) {
+                    } else if (!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
@@ -4299,7 +4299,7 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if(!!v && !(v instanceof AddressInfo)) {
+                    if (!!v && !(v instanceof AddressInfo)) {
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'AddressInfo'));
                     }
                     this._setCurrentItem(v);
@@ -4313,7 +4313,7 @@ var RIAPP;
         var DbContext = (function (_super) {
             __extends(DbContext, _super);
             function DbContext() {
-                        _super.call(this);
+                _super.call(this);
                 this._dbSetNames = [
                     "Customer", 
                     "CustomerAddress", 

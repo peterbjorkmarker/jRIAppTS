@@ -68,7 +68,7 @@ module RIAPP {
                     this._app = app;
                     this._objId = 'vm' + utils.getNewID();
                 }
-                _onError(error, source) {
+                _onError(error, source):bool {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
                         return this._app._onError(error, source);

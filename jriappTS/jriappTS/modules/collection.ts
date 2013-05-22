@@ -2,7 +2,7 @@ module RIAPP {
     export module MOD {
         export module collection {
             //local variables for optimization
-            var utils = global.utils, consts = global.consts, ValidationError = binding.ValidationError;
+            var utils = global.utils, ValidationError = binding.ValidationError;
 
             export var consts = {
                 DATA_TYPE: MOD.consts.DATA_TYPE,
@@ -268,7 +268,7 @@ module RIAPP {
                     });
                     return res.join('|');
                 }
-                submitChanges() {
+                submitChanges(): JQueryPromise {
                     var deffered = utils.createDeferred();
                     deffered.reject();
                     return deffered.promise();
@@ -1081,7 +1081,7 @@ module RIAPP {
                 }
                 get options() { return this._options; }
                 get currentItem() { return this.getItemByPos(this._currentPos); }
-                set currentItem(v) { this._setCurrentItem(v); }
+                set currentItem(v: CollectionItem) { this._setCurrentItem(v); }
                 get count() { return this._items.length; }
                 get totalCount() { return this._totalCount; }
                 set totalCount(v) {
@@ -1233,7 +1233,6 @@ module RIAPP {
                     this._itemType = null;
                     this._createItemType();
                 }
-                static create(type_name: string, properties) { return new List(type_name,properties); }
                 _initFieldMap(isCollectionItem:bool, obj) {
                     var self = this;
                     if (!isCollectionItem) {
@@ -1348,7 +1347,6 @@ module RIAPP {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_NOTFOUND, keyName));
                     keyFld.isPrimaryKey = 1;
                 }
-                static create(type_name: string, properties, keyName: string) { return new Dictionary(type_name, properties,keyName); }
                 _getNewKey(item:ListItem) {
                     if (!item) {
                         return super._getNewKey(null);

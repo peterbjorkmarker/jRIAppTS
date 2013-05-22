@@ -27,6 +27,7 @@ module RIAPP {
             return r;
         }
     }
+ 
     //essential basic utils
     export class baseUtils {
         static isFunc(a): bool {
@@ -111,7 +112,7 @@ module RIAPP {
             }
             return result;
         }
-    };
+    }
 
     export class BaseObject {
         _isDestroyed: bool;
@@ -309,5 +310,5 @@ module RIAPP {
                 this.__events = null;
             }
         }
-    };
+    }
 }

@@ -15,18 +15,18 @@ var RIAPP;
         var global = RIAPP.global, utils = global.utils;
         function addTextQuery(query, fldName, val) {
             var tmp;
-            if(!!val) {
-                if(utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
+            if (!!val) {
+                if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 'contains', [
                         tmp
                     ]);
-                } else if(utils.str.startsWith(val, '%')) {
+                } else if (utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 'endswith', [
                         tmp
                     ]);
-                } else if(utils.str.endsWith(val, '%')) {
+                } else if (utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 'startswith', [
                         tmp
@@ -45,7 +45,7 @@ var RIAPP;
         var ProductsFilter = (function (_super) {
             __extends(ProductsFilter, _super);
             function ProductsFilter(app) {
-                        _super.call(this);
+                _super.call(this);
                 var self = this;
                 this._app = app;
                 this._prodNumber = null;
@@ -82,20 +82,18 @@ var RIAPP;
             ProductsFilter.prototype._loadCategories = function () {
                 var query = this.ProductCategories.createReadProductCategoryQuery();
                 query.orderBy('Name', 'ASC');
-                //returns promise
                 return this.dbContext.load(query);
             };
             ProductsFilter.prototype._loadProductModels = //returns promise
             function () {
                 var query = this.ProductModels.createReadProductModelQuery();
                 query.orderBy('Name', 'ASC');
-                //returns promise
                 return this.dbContext.load(query);
             };
             ProductsFilter.prototype.load = //returns promise
             function () {
                 //load two dbsets simultanously
-                                var promise1 = this._loadCategories(), promise2 = this._loadProductModels();
+                var promise1 = this._loadCategories(), promise2 = this._loadProductModels();
                 return global.$.when(promise1, promise2);
             };
             ProductsFilter.prototype.reset = function () {
@@ -112,7 +110,7 @@ var RIAPP;
                     return this._prodNumber;
                 },
                 set: function (v) {
-                    if(this._prodNumber != v) {
+                    if (this._prodNumber != v) {
                         this._prodNumber = v;
                         this.raisePropertyChanged('prodNumber');
                     }
@@ -125,7 +123,7 @@ var RIAPP;
                     return this._name;
                 },
                 set: function (v) {
-                    if(this._name != v) {
+                    if (this._name != v) {
                         this._name = v;
                         this.raisePropertyChanged('name');
                     }
@@ -138,7 +136,7 @@ var RIAPP;
                     return this._parentCategoryID;
                 },
                 set: function (v) {
-                    if(this._parentCategoryID != v) {
+                    if (this._parentCategoryID != v) {
                         this._parentCategoryID = v;
                         this.raisePropertyChanged('parentCategoryID');
                         this._childCategories.refresh();
@@ -152,7 +150,7 @@ var RIAPP;
                     return this._childCategoryID;
                 },
                 set: function (v) {
-                    if(this._childCategoryID != v) {
+                    if (this._childCategoryID != v) {
                         this._childCategoryID = v;
                         this.raisePropertyChanged('childCategoryID');
                     }
@@ -165,7 +163,7 @@ var RIAPP;
                     return this._modelID;
                 },
                 set: function (v) {
-                    if(this._modelID != v) {
+                    if (this._modelID != v) {
                         this._modelID = v;
                         this.raisePropertyChanged('modelID');
                     }
@@ -227,7 +225,7 @@ var RIAPP;
                     return this._selectedCategory;
                 },
                 set: function (v) {
-                    if(this._selectedCategory != v) {
+                    if (this._selectedCategory != v) {
                         this._selectedCategory = v;
                         this.raisePropertyChanged('selectedCategory');
                     }
@@ -240,7 +238,7 @@ var RIAPP;
                     return this._selectedModel;
                 },
                 set: function (v) {
-                    if(this._selectedModel != v) {
+                    if (this._selectedModel != v) {
                         this._selectedModel = v;
                         this.raisePropertyChanged('selectedModel');
                     }
@@ -275,14 +273,13 @@ var RIAPP;
         var ProductViewModel = (function (_super) {
             __extends(ProductViewModel, _super);
             function ProductViewModel(app) {
-                        _super.call(this, app);
+                _super.call(this, app);
                 var self = this;
                 this._filter = new ProductsFilter(app);
                 this._dbSet = this.dbSets.Product;
                 this._dataGrid = null;
                 this._propWatcher = new RIAPP.MOD.utils.PropWatcher();
-                this._selected = {
-                };
+                this._selected = {};
                 this._selectedCount = 0;
                 this._invokeResult = null;
                 //this._templateID = 'productEditTemplate';
@@ -292,14 +289,14 @@ var RIAPP;
                 }, self.uniqueID);
                 //if we need to confirm the deletion, this is how it is done
                 this._dbSet.addOnItemDeleting(function (sender, args) {
-                    if(!confirm('Are you sure that you want to delete ' + (args.item).Name + ' ?')) {
+                    if (!confirm('Are you sure that you want to delete ' + (args.item).Name + ' ?')) {
                         args.isCancel = true;
                     }
                 }, self.uniqueID);
                 //the end edit event- the entity potentially changed its data. we can recheck conditions based on
                 //entities data here
                 this._dbSet.addOnEndEdit(function (sender, args) {
-                    if(!args.isCanceled) {
+                    if (!args.isCanceled) {
                         //at the end of the editing, let the command will check: can it be executed?
                         self._testInvokeCommand.raiseCanExecuteChanged();
                     }
@@ -307,10 +304,8 @@ var RIAPP;
                 //auto submit changes when an entity is deleted
                 this._dbSet.isSubmitOnDelete = true;
                 this._dbSet.addOnFill(function (s, a) {
-                    //when fill is ended
-                    if(!a.isBegin) {
-                        if(!a.isPageChanged) {
-                            //clear products selection when the dbSet is refilled (but not when page is changed)
+                    if (!a.isBegin) {
+                        if (!a.isPageChanged) {
                             self._clearSelection();
                         }
                     }
@@ -318,18 +313,15 @@ var RIAPP;
                 //example of using custom validation on client (in addition to builtin validation)
                 this._dbSet.addOnValidate(function (sender, args) {
                     var item = args.item;
-                    if(!args.fieldName) {
-                        //full item validation
-                        if(!!item.SellEndDate) {
-                            //check it must be after Start Date
-                            if(item.SellEndDate < item.SellStartDate) {
+                    if (!args.fieldName) {
+                        if (!!item.SellEndDate) {
+                            if (item.SellEndDate < item.SellStartDate) {
                                 args.errors.push('End Date must be after Start Date');
                             }
                         }
-                    } else//validation of field value
-                     {
-                        if(args.fieldName == "Weight") {
-                            if(args.item[args.fieldName] > 20000) {
+                    } else {
+                        if (args.fieldName == "Weight") {
+                            if (args.item[args.fieldName] > 20000) {
                                 args.errors.push('Weight must be less than 20000');
                             }
                         }
@@ -338,16 +330,13 @@ var RIAPP;
                 //an example of getting notifications in viewmodel on the tabs events
                 this._tabsEventCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     var index = param.args.index, tab = param.args.tab, panel = param.args.panel;
-
                 }, self, null);
                 //adds new product - uses dialog to enter the data
                 this._addNewCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     //grid will show the edit dialog, because we set grid options isHandleAddNew:true
                     //see the options for the grid on the HTML demo page
                     var item = self._dbSet.addNew();
-                    //P.S. - grids editor options also has submitOnOK:true, which means
-                    //on clicking OK button all changes are submitted to the service
-                                    }, self, function (sender, param) {
+                }, self, function (sender, param) {
                     return true;
                 });
                 //loads data from the server for the products
@@ -358,14 +347,13 @@ var RIAPP;
                 //we can name this command just how we like it (here i named it propChangeCommand)
                 //look at the datagrid's databinding on the demo page
                 this._propChangeCommand = new RIAPP.MOD.baseElView.PropChangedCommand(function (sender, data) {
-                    if(data.property == '*' || data.property == 'grid') {
-                        if(self._dataGrid === sender.grid) {
+                    if (data.property == '*' || data.property == 'grid') {
+                        if (self._dataGrid === sender.grid) {
                             return;
                         }
                         self._dataGrid = sender.grid;
                     }
-                    //example of binding to dataGrid events
-                    if(!!self._dataGrid) {
+                    if (!!self._dataGrid) {
                         self._dataGrid.addOnPageChanged(function (s, a) {
                             self._onGridPageChanged();
                         }, self.uniqueID);
@@ -376,7 +364,7 @@ var RIAPP;
                             self._onGridRowExpanded(a.old_expandedRow, a.expandedRow, a.isExpanded);
                         }, self.uniqueID);
                         self._dataGrid.addOnRowStateChanged(function (s, a) {
-                            if(!a.val) {
+                            if (!a.val) {
                                 a.css = 'rowInactive';
                             }
                         }, self.uniqueID);
@@ -401,11 +389,8 @@ var RIAPP;
                         self._dialogVM.showDialog('testDialog', self);
                     });
                     promise.fail(function () {
-                        //do something on fail if you need
-                        //but the error message display is automatically shown
-                                            });
+                    });
                 }, self, function (sender, param) {
-                    //just for the test: this command can be executed only when this condition is true!
                     return self.currentItem !== null;
                 });
                 //the property watcher helps us handling properties changes
@@ -421,8 +406,7 @@ var RIAPP;
                     width: 600,
                     height: 250,
                     canCancel: false,
-                    title: //no cancel button
-                    'Result of a service method invocation',
+                    title: 'Result of a service method invocation',
                     fn_OnClose: function (dialog) {
                         self.invokeResult = null;
                     }
@@ -431,12 +415,12 @@ var RIAPP;
             }
             ProductViewModel.prototype._onGridPageChanged = function () {
                 //when moving to any page, select rows which was previously selected on that page (restore selection)
-                                var self = this, keys = self.selectedIDs, grid = self._dataGrid;
+                var self = this, keys = self.selectedIDs, grid = self._dataGrid;
                 keys.forEach(function (key) {
                     var item = self.dbSet.getItemByKey(key), row;
-                    if(!!item) {
+                    if (!!item) {
                         row = grid.findRowByItem(item);
-                        if(!!row) {
+                        if (!!row) {
                             row.isSelected = true;
                         }
                     }
@@ -446,31 +430,28 @@ var RIAPP;
                 this._productSelected(row.item, row.isSelected);
             };
             ProductViewModel.prototype._onGridRowExpanded = function (oldRow, row, isExpanded) {
-                //just for example
-                //we could retrieve additional data from the server when grid's row is expanded
-                            };
+            };
             ProductViewModel.prototype._onCurrentChanged = function () {
                 this.raisePropertyChanged('currentItem');
             };
             ProductViewModel.prototype._clearSelection = function () {
                 //clear all selection
-                this._selected = {
-                };
+                this._selected = {};
                 this.selectedCount = 0;
             };
             ProductViewModel.prototype._productSelected = //when product is selected (unselected) by user in the grid (clicking checkboxes)
             //we store the entities keys in the map (it survives going to another page and return back)
             function (item, isSelected) {
-                if(!item) {
+                if (!item) {
                     return;
                 }
-                if(isSelected) {
-                    if(!this._selected[item._key]) {
+                if (isSelected) {
+                    if (!this._selected[item._key]) {
                         this._selected[item._key] = item;
                         this.selectedCount += 1;
                     }
                 } else {
-                    if(!!this._selected[item._key]) {
+                    if (!!this._selected[item._key]) {
                         delete this._selected[item._key];
                         this.selectedCount -= 1;
                     }
@@ -491,18 +472,16 @@ var RIAPP;
                     param2: 'Test'
                 });
                 query.pageSize = 50;
-                query.loadPageCount = 20//load 20 pages at once (only one will be visible, others will be in local cache)
-                ;
-                query.isClearCacheOnEveryLoad = true//clear local cache when a new batch of data is loaded from the server
-                ;
+                query.loadPageCount = 20;
+                query.isClearCacheOnEveryLoad = true;
                 addTextQuery(query, 'ProductNumber', this._filter.prodNumber);
                 addTextQuery(query, 'Name', this._filter.name);
-                if(!utils.check.isNt(this._filter.childCategoryID)) {
+                if (!utils.check.isNt(this._filter.childCategoryID)) {
                     query.where('ProductCategoryID', '=', [
                         this._filter.childCategoryID
                     ]);
                 }
-                if(!utils.check.isNt(this._filter.modelID)) {
+                if (!utils.check.isNt(this._filter.modelID)) {
                     query.where('ProductModelID', '=', [
                         this._filter.modelID
                     ]);
@@ -511,16 +490,16 @@ var RIAPP;
                 return this.dbContext.load(query);
             };
             ProductViewModel.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
                 this._propWatcher.destroy();
                 this._propWatcher = null;
-                if(!!this._dbSet) {
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
-                if(!!this._dataGrid) {
+                if (!!this._dataGrid) {
                     this._dataGrid.removeNSHandlers(this.uniqueID);
                 }
                 _super.prototype.destroy.call(this);
@@ -609,7 +588,7 @@ var RIAPP;
                 },
                 set: function (v) {
                     var old = this._selectedCount;
-                    if(old !== v) {
+                    if (old !== v) {
                         this._selectedCount = v;
                         this.raisePropertyChanged('selectedCount');
                     }
@@ -630,7 +609,7 @@ var RIAPP;
                 },
                 set: function (v) {
                     var old = this._invokeResult;
-                    if(old !== v) {
+                    if (old !== v) {
                         this._invokeResult = v;
                         this.raisePropertyChanged('invokeResult');
                     }
@@ -644,7 +623,7 @@ var RIAPP;
         var BaseUploadVM = (function (_super) {
             __extends(BaseUploadVM, _super);
             function BaseUploadVM(url) {
-                        _super.call(this);
+                _super.call(this);
                 var self = this;
                 this._uploadUrl = url;
                 this._formEl = null;
@@ -668,7 +647,7 @@ var RIAPP;
             }
             BaseUploadVM.prototype._initXhr = function () {
                 this.xhr = new XMLHttpRequest();
-                if(!this.xhr.upload) {
+                if (!this.xhr.upload) {
                     this.xhr = null;
                     this._onError('Browser dose not support HTML5 files upload interface', this);
                     return false;
@@ -683,7 +662,7 @@ var RIAPP;
                 upload.onprogress = function (e) {
                     var progressBar = $("#progressBar");
                     var percentageDiv = $("#percentageCalc");
-                    if(!!e.lengthComputable) {
+                    if (!!e.lengthComputable) {
                         self._progressBar.prop("max", e.total);
                         self._progressBar.prop("value", e.loaded);
                         self._percentageCalc.html(Math.round(e.loaded / e.total * 100) + "%");
@@ -700,8 +679,8 @@ var RIAPP;
                     self._onError(new Error('File upload error'), self);
                 };
                 xhr.onreadystatechange = function (e) {
-                    if(xhr.readyState === 4) {
-                        if(xhr.status >= 400) {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status >= 400) {
                             self._onError(new Error(utils.format("File upload error: {0}", xhr.statusText)), self);
                         }
                     }
@@ -712,14 +691,14 @@ var RIAPP;
                 this._fileUploaded = true;
             };
             BaseUploadVM.prototype.uploadFiles = function (fileList) {
-                if(!!fileList) {
+                if (!!fileList) {
                     for(var i = 0, l = fileList.length; i < l; i++) {
                         this.uploadFile(fileList[i]);
                     }
                 }
             };
             BaseUploadVM.prototype.uploadFile = function (file) {
-                if(!this._initOk) {
+                if (!this._initOk) {
                     return;
                 }
                 var xhr = this.xhr;
@@ -749,7 +728,7 @@ var RIAPP;
                     return this._fileInfo;
                 },
                 set: function (v) {
-                    if(this._fileInfo !== v) {
+                    if (this._fileInfo !== v) {
                         this._fileInfo = v;
                         this.raisePropertyChanged('fileInfo');
                         this._uploadCommand.raiseCanExecuteChanged();
@@ -771,7 +750,7 @@ var RIAPP;
                 },
                 set: function (v) {
                     var old = this._id;
-                    if(old !== v) {
+                    if (old !== v) {
                         this._id = v;
                         this.raisePropertyChanged('id');
                         this._onIDChanged();
@@ -788,7 +767,7 @@ var RIAPP;
         var fn_getTemplateElement = function (template, name) {
             var t = template;
             var els = t.findElByDataName(name);
-            if(els.length < 1) {
+            if (els.length < 1) {
                 return null;
             }
             return els[0];
@@ -796,7 +775,7 @@ var RIAPP;
         var UploadThumbnailVM = (function (_super) {
             __extends(UploadThumbnailVM, _super);
             function UploadThumbnailVM(app, url) {
-                        _super.call(this, url);
+                _super.call(this, url);
                 var self = this;
                 this._product = null;
                 //we defined this custom type in common.js
@@ -841,7 +820,7 @@ var RIAPP;
                         self._fileUploaded = false;
                     },
                     fn_OnClose: function (dialog) {
-                        if(dialog.result == 'ok' && self._onDialogClose()) {
+                        if (dialog.result == 'ok' && self._onDialogClose()) {
                             //raise our custom event
                             self.raiseEvent('files_uploaded', {
                                 id: self.id,
@@ -869,10 +848,10 @@ var RIAPP;
                 this._templateCommand = new RIAPP.MOD.baseElView.TemplateCommand(function (sender, param) {
                     try  {
                         var template = param.template, $ = global.$, fileEl = $('input[data-name="files-to-upload"]', template.el);
-                        if(fileEl.length == 0) {
+                        if (fileEl.length == 0) {
                             return;
                         }
-                        if(param.isLoaded) {
+                        if (param.isLoaded) {
                             fileEl.change(function (e) {
                                 $('input[data-name="files-input"]', template.el).val($(this).val());
                             });
@@ -922,7 +901,7 @@ var RIAPP;
                 configurable: true
             });
             UploadThumbnailVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
@@ -937,7 +916,7 @@ var RIAPP;
         var DemoApplication = (function (_super) {
             __extends(DemoApplication, _super);
             function DemoApplication(options) {
-                        _super.call(this, options);
+                _super.call(this, options);
                 var self = this;
                 this._dbContext = null;
                 this._errorVM = null;
@@ -953,7 +932,7 @@ var RIAPP;
                     permissions: options.permissionInfo
                 });
                 function toText(str) {
-                    if(str === null) {
+                    if (str === null) {
                         return '';
                     } else {
                         return str;
@@ -982,7 +961,7 @@ var RIAPP;
                 this.productVM.filter.modelData = options.modelData;
                 this.productVM.filter.categoryData = options.categoryData;
                 this.productVM.load().done(function (loadRes) {
-                    /*alert(loadRes.outOfBandData.test);*/ return;
+                    return;
                 });
                 _super.prototype.onStartUp.call(this);
             };
@@ -995,7 +974,7 @@ var RIAPP;
             };
             DemoApplication.prototype.destroy = //really, the destroy method is redundant here because the application lives while the page lives
             function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
@@ -1006,7 +985,7 @@ var RIAPP;
                     self._productVM.destroy();
                     self._uploadVM.destroy();
                     self._dbContext.destroy();
-                }finally {
+                } finally {
                     _super.prototype.destroy.call(this);
                 }
             };
@@ -1081,7 +1060,7 @@ var RIAPP;
             thisApp.registerTemplateLoader('sizeDisplayTemplate', ((function () {
                 var savePromise;
                 return function () {
-                    if(!!savePromise) {
+                    if (!!savePromise) {
                         return savePromise;
                     }
                     savePromise = thisApp.global.$.get(GRIDDEMO.mainOptions.sizeDisplayTemplate_url);
@@ -1089,16 +1068,7 @@ var RIAPP;
                 };
             })()));
             thisApp.startUp(function (app) {
-                /*
-                //example of how to do ajax calls to load lookups - first load lookups, then load products
-                //at the end it displays in an alert out of band data returned from the server (see ReadProduct data service method)
-                
-                thisApp.productVM.filter.load().pipe(function()
-                {
-                return thisApp.productVM.load();}
-                ).pipe(function(data: MOD.db.ILoadResult){alert( data.outOfBandData.test);},function(){alert('load failed');});
-                */
-                            });
+            });
         });
         //this function is executed when the application is created
         //it can be used to initialize application's specific resources in the module

@@ -28,7 +28,7 @@ var RIAPP;
         var RadioDemoVM = (function (_super) {
             __extends(RadioDemoVM, _super);
             function RadioDemoVM(app) {
-                        _super.call(this, app);
+                _super.call(this, app);
                 var self = this;
                 this._radioValue = 'radioValue1';
                 //one property in dictionary  must be unique and used as key (its name does not matter )
@@ -77,7 +77,7 @@ var RIAPP;
                     return this._radioValue;
                 },
                 set: function (v) {
-                    if(this._radioValue !== v) {
+                    if (this._radioValue !== v) {
                         this._radioValue = v;
                         this.raisePropertyChanged('radioValue');
                         this._onRadioValueChanged();
@@ -100,9 +100,9 @@ var RIAPP;
         var RadioDemo2VM = (function (_super) {
             __extends(RadioDemo2VM, _super);
             function RadioDemo2VM(app, currentValue) {
-                        _super.call(this, app);
+                _super.call(this, app);
                 var self = this;
-                if(!!currentValue) {
+                if (!!currentValue) {
                     this.radioValue = currentValue;
                 }
                 this._historyList = new RIAPP.MOD.collection.List('HistoryItem', [
@@ -150,7 +150,7 @@ var RIAPP;
         var DemoApplication = (function (_super) {
             __extends(DemoApplication, _super);
             function DemoApplication(options) {
-                        _super.call(this, options);
+                _super.call(this, options);
                 var self = this;
                 this._errorVM = null;
                 this._demoVM = null;
@@ -170,7 +170,7 @@ var RIAPP;
                 _super.prototype.onStartUp.call(this);
             };
             DemoApplication.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
@@ -178,7 +178,7 @@ var RIAPP;
                 try  {
                     self._errorVM.destroy();
                     self._demoVM.destroy();
-                }finally {
+                } finally {
                     _super.prototype.destroy.call(this);
                 }
             };

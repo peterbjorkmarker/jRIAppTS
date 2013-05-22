@@ -22,10 +22,6 @@ module RIAPP {
                 fn_OnTemplateCreated?: (template: template.Template) => void;
             }
 
-            export interface JQueryDialog extends JQuery {
-                dialog?: any;
-            }
-
             export class DataEditDialog extends BaseObject {
                 _objId: string;
                 _dataContext: any;
@@ -40,7 +36,7 @@ module RIAPP {
                 _fn_OnTemplateCreated: (template: template.Template) => void;
                 _isEditable: bool;
                 _template: template.Template;
-                _$template: JQueryDialog;
+                _$template: JQuery;
                 _result: string;
                 private _options: any;
                 private _dialogCreated: bool;
@@ -130,7 +126,7 @@ module RIAPP {
                     this._template = this._createTemplate(dctx);
                     this._$template = global.$(this._template.el);
                     global.document.body.appendChild(this._template.el);
-                    this._$template.dialog(this._options);
+                    (<any>this._$template).dialog(this._options);
                     this._dialogCreated = true;
                     if (!!this._fn_OnTemplateCreated) {
                         this._fn_OnTemplateCreated(this._template);
@@ -292,19 +288,19 @@ module RIAPP {
                 }
                 show() {
                     this._result = null;
-                    this._$template.dialog("option", "buttons", this._getButtons());
+                    (<any>this._$template).dialog("option", "buttons", this._getButtons());
                     this._template.isDisabled = false;
                     this._onShow();
-                    this._$template.dialog("open");
+                    (<any>this._$template).dialog("open");
                 }
                 hide() {
-                    this._$template.dialog("close");
+                    (<any>this._$template).dialog("close");
                 }
                 getOption(name:string) {
-                    return this._$template.dialog('option', name);
+                    return (<any>this._$template).dialog('option', name);
                 }
                 setOption(name:string, value) {
-                    this._$template.dialog('option', name, value);
+                    (<any>this._$template).dialog('option', name, value);
                 }
                 destroy() {
                     if (this._isDestroyed)

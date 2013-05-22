@@ -30,8 +30,8 @@ module RIAPP {
 
     export class Application extends RIAPP.BaseObject {
         private static _newInstanceNum = 1;
-        private get _DATA_BIND_SELECTOR() { return ['*[', global.consts.DATA_ATTR.DATA_BIND, ']'].join(''); };
-        private get _DATA_VIEW_SELECTOR() { return ['*[', global.consts.DATA_ATTR.DATA_VIEW, ']'].join(''); };
+        private get _DATA_BIND_SELECTOR() { return ['*[', global.consts.DATA_ATTR.DATA_BIND, ']'].join(''); }
+        private get _DATA_VIEW_SELECTOR() { return ['*[', global.consts.DATA_ATTR.DATA_VIEW, ']'].join(''); }
         private _contentFactories: { (nextFactory?: MOD.baseContent.IContentFactory): MOD.baseContent.IContentFactory; }[];
         private _objLifeTime: MOD.utils.LifeTimeScope;
         private _ELV_STORE_KEY: string;
@@ -41,12 +41,12 @@ module RIAPP {
         private _userCode: any;
         private _viewModels: any;
         private _app_name: string;
-        private _exports: { [name: string]: any; };
         private _modules: { [name: string]: any; };
         private _objId: string;
         private _objMaps: any[];
-       _options: IAppOptions;
-
+        _exports: { [name: string]: any; };
+        _options: IAppOptions;
+       
         constructor(options?: IAppOptions) {
             super();
             var self = this, app_name = 'default', user_modules = [];
@@ -117,7 +117,7 @@ module RIAPP {
                 self._modules[mod.name] = mod.initFn(self);
             });
         }
-        _onError(error, source) {
+        _onError(error, source):bool {
             if (global._checkIsDummy(error)) {
                 return true;
             }
