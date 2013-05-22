@@ -33,16 +33,18 @@ module RIAPP
                 return this._dialogs[name];
             }
             showDialog(name:string, dataContext) {
-                var factory = this.getDialog(name);
-                if (!factory)
+                var dlg = this.getDialog(name);
+                if (!dlg)
                     throw new Error(utils.format('Invalid dialog name:  {0}', name));
-                var dlg = factory();
                 dlg.dataContext = dataContext;
                 dlg.show();
                 return dlg;
             }
             getDialog(name:string) {
-                return this._dialogs[name];
+                var factory = this._dialogs[name];
+                if (!factory)
+                    return null;
+                return factory();
             }
             destroy() {
                 if (this._isDestroyed)

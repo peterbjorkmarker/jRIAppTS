@@ -43,17 +43,20 @@ var RIAPP;
                 return this._dialogs[name];
             };
             DialogVM.prototype.showDialog = function (name, dataContext) {
-                var factory = this.getDialog(name);
-                if(!factory) {
+                var dlg = this.getDialog(name);
+                if(!dlg) {
                     throw new Error(utils.format('Invalid dialog name:  {0}', name));
                 }
-                var dlg = factory();
                 dlg.dataContext = dataContext;
                 dlg.show();
                 return dlg;
             };
             DialogVM.prototype.getDialog = function (name) {
-                return this._dialogs[name];
+                var factory = this._dialogs[name];
+                if(!factory) {
+                    return null;
+                }
+                return factory();
             };
             DialogVM.prototype.destroy = function () {
                 if(this._isDestroyed) {
