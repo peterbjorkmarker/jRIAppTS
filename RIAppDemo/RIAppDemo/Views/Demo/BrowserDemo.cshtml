@@ -54,9 +54,11 @@
 
 
 <script type="text/javascript">
-    RIAPP.FILESDEMO.mainOptions.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
-    RIAPP.FILESDEMO.mainOptions.service_url = '@Url.RouteUrl("Default",new {controller="FolderBrowserService", action=""})';
-    RIAPP.FILESDEMO.mainOptions.permissionInfo =  @Html.Action("PermissionsInfo", "FolderBrowserService");
+    (function(ops){
+        ops.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
+        ops.service_url = '@Url.RouteUrl("Default",new {controller="FolderBrowserService", action=""})';
+        ops.permissionInfo =  @Html.Action("PermissionsInfo", "FolderBrowserService");
+    })(RIAPP.FILESDEMO.mainOptions);
 </script>
 
 <h2 style="display:inline-block;">@ViewBag.Title</h2>

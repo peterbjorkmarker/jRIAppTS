@@ -120,13 +120,14 @@
 </style>
 
 <script type="text/javascript">
-    RIAPP.SPADEMO.mainOptions.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
-    RIAPP.SPADEMO.mainOptions.service_url = '@Url.RouteUrl("Default",new {controller="RIAppDemoService", action=""})';
-    RIAPP.SPADEMO.mainOptions.permissionInfo =  @Html.Action("PermissionsInfo", "RIAppDemoService"); 
-    RIAPP.SPADEMO.mainOptions.spa_template1_url = '@Url.Action("SPADemoTemplate1", "Templates")';
-    RIAPP.SPADEMO.mainOptions.spa_template2_url = '@Url.Action("SPADemoTemplate2", "Templates")';
-    RIAPP.SPADEMO.mainOptions.spa_template3_url = '@Url.Action("SPADemoTemplate3", "Templates")';
-
+    (function(ops){
+        ops.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
+        ops.service_url = '@Url.RouteUrl("Default",new {controller="RIAppDemoService", action=""})';
+        ops.permissionInfo =  @Html.Action("PermissionsInfo", "RIAppDemoService"); 
+        ops.spa_template1_url = '@Url.Action("SPADemoTemplate1", "Templates")';
+        ops.spa_template2_url = '@Url.Action("SPADemoTemplate2", "Templates")';
+        ops.spa_template3_url = '@Url.Action("SPADemoTemplate3", "Templates")';
+    })(RIAPP.SPADEMO.mainOptions);
 </script>
 
 <h2  style="display:inline-block;">@ViewBag.Title</h2><span class="space"></span><span>is based on new element view - <span style="color:blue;">dynacontent</span></span>

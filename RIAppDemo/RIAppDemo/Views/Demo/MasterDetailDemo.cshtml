@@ -110,9 +110,11 @@
 
         //The Application is also declared and started in there 
     */
-    RIAPP.MDETDEMO.mainOptions.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
-    RIAPP.MDETDEMO.mainOptions.service_url = '@Url.RouteUrl("Default",new {controller="RIAppDemoService", action=""})';
-    RIAPP.MDETDEMO.mainOptions.permissionInfo =  @Html.Action("PermissionsInfo", "RIAppDemoService");
+    (function(ops){
+        ops.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
+        ops.service_url = '@Url.RouteUrl("Default",new {controller="RIAppDemoService", action=""})';
+        ops.permissionInfo =  @Html.Action("PermissionsInfo", "RIAppDemoService");
+    })(RIAPP.MDETDEMO.mainOptions);
 </script>
 
 <h2  style="display:inline-block;">@ViewBag.Title</h2>

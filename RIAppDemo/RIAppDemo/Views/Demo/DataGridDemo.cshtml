@@ -104,14 +104,16 @@
 
         //The Application is also declared and started in there 
     */
-    RIAPP.GRIDDEMO.mainOptions.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
-    RIAPP.GRIDDEMO.mainOptions.service_url = '@Url.RouteUrl("Default",new {controller="RIAppDemoService", action=""})';
-    RIAPP.GRIDDEMO.mainOptions.permissionInfo =  @Html.Action("PermissionsInfo", "RIAppDemoService");
-    RIAPP.GRIDDEMO.mainOptions.templates_url= '@Url.Action("Download", "Templates", new {name="DataGridDemo"})';
-    RIAPP.GRIDDEMO.mainOptions.productEditTemplate_url = '@Url.Action("DownloadTemplate", "Download", new {name="productEditTemplate"})';
-    RIAPP.GRIDDEMO.mainOptions.sizeDisplayTemplate_url = '@Url.Action("DownloadTemplate", "Download", new { name = "sizeDisplayTemplate" })';
-    RIAPP.GRIDDEMO.mainOptions.modelData = @Html.Action("ProductModelData", "RIAppDemoService");
-    RIAPP.GRIDDEMO.mainOptions.categoryData = @Html.Action("ProductCategoryData", "RIAppDemoService");
+    (function(ops){
+        ops.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
+        ops.service_url = '@Url.RouteUrl("Default",new {controller="RIAppDemoService", action=""})';
+        ops.permissionInfo =  @Html.Action("PermissionsInfo", "RIAppDemoService");
+        ops.templates_url= '@Url.Action("Download", "Templates", new {name="DataGridDemo"})';
+        ops.productEditTemplate_url = '@Url.Action("DownloadTemplate", "Download", new {name="productEditTemplate"})';
+        ops.sizeDisplayTemplate_url = '@Url.Action("DownloadTemplate", "Download", new { name = "sizeDisplayTemplate" })';
+        ops.modelData = @Html.Action("ProductModelData", "RIAppDemoService");
+        ops.categoryData = @Html.Action("ProductCategoryData", "RIAppDemoService");
+    })(RIAPP.GRIDDEMO.mainOptions);
 </script>
 
 
