@@ -14,7 +14,7 @@ module RIAPP
         }
 
         export class DialogVM extends MOD.mvvm.BaseViewModel {
-            _dialogs: { [name: string]: MOD.datadialog.DataEditDialog; };
+            _dialogs: { [name: string]: () => MOD.datadialog.DataEditDialog; };
 
             constructor(app: Application) {
                 super(app);
@@ -22,18 +22,24 @@ module RIAPP
             }
             createDialog(name: string, options: MOD.datadialog.IDialogConstructorOptions) {
                 var self = this;
-
-                var dialog = new MOD.datadialog.DataEditDialog(this._app, options);
-                this._dialogs[name] = dialog;
-                return dialog;
+                this._dialogs[name] = function () {
+                    var dialog = new MOD.datadialog.DataEditDialog(self.app, options);
+                    var f = function () {
+                        return dialog;
+                    };
+                    self._dialogs[name] = f;
+                    return f();
+                };
+                return this._dialogs[name];
             }
             showDialog(name:string, dataContext) {
-                var dialog = this.getDialog(name);
-                if (!dialog)
-                    return null;
-                dialog.dataContext = dataContext;
-                dialog.show();
-                return dialog;
+                var factory = this.getDialog(name);
+                if (!factory)
+                    throw new Error(utils.format('Invalid dialog name:  {0}', name));
+                var dlg = factory();
+                dlg.dataContext = dataContext;
+                dlg.show();
+                return dlg;
             }
             getDialog(name:string) {
                 return this._dialogs[name];

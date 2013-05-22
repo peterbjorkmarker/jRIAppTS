@@ -32,18 +32,25 @@ var RIAPP;
             }
             DialogVM.prototype.createDialog = function (name, options) {
                 var self = this;
-                var dialog = new RIAPP.MOD.datadialog.DataEditDialog(this._app, options);
-                this._dialogs[name] = dialog;
-                return dialog;
+                this._dialogs[name] = function () {
+                    var dialog = new RIAPP.MOD.datadialog.DataEditDialog(self.app, options);
+                    var f = function () {
+                        return dialog;
+                    };
+                    self._dialogs[name] = f;
+                    return f();
+                };
+                return this._dialogs[name];
             };
             DialogVM.prototype.showDialog = function (name, dataContext) {
-                var dialog = this.getDialog(name);
-                if(!dialog) {
-                    return null;
+                var factory = this.getDialog(name);
+                if(!factory) {
+                    throw new Error(utils.format('Invalid dialog name:  {0}', name));
                 }
-                dialog.dataContext = dataContext;
-                dialog.show();
-                return dialog;
+                var dlg = factory();
+                dlg.dataContext = dataContext;
+                dlg.show();
+                return dlg;
             };
             DialogVM.prototype.getDialog = function (name) {
                 return this._dialogs[name];

@@ -8,13 +8,17 @@ var RIAPP;
 (function (RIAPP) {
     (function (HEADER) {
         var global = RIAPP.global, utils = global.utils;
+        HEADER.topPanel;
+        HEADER.contentPanel;
+        HEADER.topPanel = "#demoHeader";
+        HEADER.contentPanel = "#demoContent";
         var HeaderVM = (function (_super) {
             __extends(HeaderVM, _super);
             function HeaderVM(app) {
                         _super.call(this, app);
                 var self = this;
-                this._$topPanel = global.$('#demoHeader');
-                this._$contentPanel = global.$('#demoContent');
+                this._$topPanel = global.$(HEADER.topPanel);
+                this._$contentPanel = global.$(HEADER.contentPanel);
                 this._contentPanelHeight = 0;
                 if(!!this._$contentPanel) {
                     this._contentPanelHeight = this._$contentPanel.height();

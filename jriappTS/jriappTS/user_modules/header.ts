@@ -3,6 +3,10 @@ module RIAPP
 {
     export module HEADER {
         var global = RIAPP.global, utils = global.utils;
+        export var topPanel: string;
+        export var contentPanel: string;
+        topPanel = "#demoHeader";
+        contentPanel = "#demoContent";
 
         export class HeaderVM extends MOD.mvvm.BaseViewModel {
             _$topPanel: JQuery;
@@ -13,8 +17,8 @@ module RIAPP
             constructor(app: Application) {
                 super(app);
                 var self = this;
-                this._$topPanel = global.$('#demoHeader');
-                this._$contentPanel = global.$('#demoContent');
+                this._$topPanel = global.$(topPanel);
+                this._$contentPanel = global.$(contentPanel);
                 this._contentPanelHeight = 0;
                 if (!!this._$contentPanel)
                     this._contentPanelHeight = this._$contentPanel.height();
