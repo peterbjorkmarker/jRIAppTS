@@ -9,6 +9,11 @@ module RIAPP {
                 textPath: string;
             }
 
+            export interface IMappedItem {
+                item: collection.CollectionItem;
+                op: { text: string; value: any; index: number; }; 
+            }
+
             export class ListBox extends RIAPP.BaseObject {
                 _el: HTMLSelectElement;
                 _$el: JQuery;
@@ -20,8 +25,8 @@ module RIAPP {
                 _textPath: string;
                 _selectedItem: collection.CollectionItem;
                 _saveSelected: collection.CollectionItem;
-                _keyMap: { [key: string]: { item: collection.CollectionItem; op: { text: string; value: any; index: number; }; }; };
-                _valMap: { [val: string]: { item: collection.CollectionItem; op: { text: string; value: any; index: number; }; }; };
+                _keyMap: { [key: string]: IMappedItem; };
+                _valMap: { [val: string]: IMappedItem; };
                 _saveVal: any;
 
                 constructor(el: HTMLSelectElement, dataSource: collection.Collection, options: IListBoxOptions) {
@@ -335,19 +340,19 @@ module RIAPP {
                 _findItemIndex(item: collection.CollectionItem) {
                     if (!item)
                         return 0;
-                    var data = this._keyMap[item._key];
+                    var data:IMappedItem = this._keyMap[item._key];
                     if (!data)
                         return 0;
                     return data.op.index;
                 }
                 findItemByValue(val) {
-                    var data = this._valMap[val];
+                    var data: IMappedItem = this._valMap[val];
                     if (!data)
                         return null;
                     return data.item;
                 }
                 getTextByValue(val) {
-                    var data = this._valMap[val];
+                    var data: IMappedItem = this._valMap[val];
                     if (!data)
                         return '';
                     else
