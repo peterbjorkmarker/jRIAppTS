@@ -132,7 +132,7 @@ module RIAPP
             }
             get items() { return <Customer[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: Customer) {
                 if (!!v && !(v instanceof Customer)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Customer'));
                 }
@@ -239,7 +239,7 @@ module RIAPP
             }
             get items() { return <CustomerAddress[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: CustomerAddress) {
                 if (!!v && !(v instanceof CustomerAddress)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'CustomerAddress'));
                 }
@@ -350,7 +350,7 @@ module RIAPP
             }
             get items() { return <Address[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: Address) {
                 if (!!v && !(v instanceof Address)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Address'));
                 }
@@ -490,7 +490,7 @@ module RIAPP
             }
             get items() { return <Product[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: Product) {
                 if (!!v && !(v instanceof Product)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Product'));
                 }
@@ -573,7 +573,7 @@ module RIAPP
             }
             get items() { return <ProductModel[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: ProductModel) {
                 if (!!v && !(v instanceof ProductModel)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'ProductModel'));
                 }
@@ -717,7 +717,7 @@ module RIAPP
             }
             get items() { return <SalesOrderHeader[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: SalesOrderHeader) {
                 if (!!v && !(v instanceof SalesOrderHeader)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesOrderHeader'));
                 }
@@ -822,7 +822,7 @@ module RIAPP
             }
             get items() { return <SalesOrderDetail[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: SalesOrderDetail) {
                 if (!!v && !(v instanceof SalesOrderDetail)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesOrderDetail'));
                 }
@@ -914,7 +914,7 @@ module RIAPP
             }
             get items() { return <ProductCategory[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: ProductCategory) {
                 if (!!v && !(v instanceof ProductCategory)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'ProductCategory'));
                 }
@@ -995,7 +995,7 @@ module RIAPP
             }
             get items() { return <SalesInfo[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: SalesInfo) {
                 if (!!v && !(v instanceof SalesInfo)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesInfo'));
                 }
@@ -1079,7 +1079,7 @@ module RIAPP
             }
             get items() { return <LookUpProduct[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: LookUpProduct) {
                 if (!!v && !(v instanceof LookUpProduct)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'LookUpProduct'));
                 }
@@ -1169,7 +1169,7 @@ module RIAPP
             }
             get items() { return <AddressInfo[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: AddressInfo) {
                 if (!!v && !(v instanceof AddressInfo)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'AddressInfo'));
                 }

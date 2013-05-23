@@ -7,6 +7,9 @@ module RIAPP {
         _onKeyDown(key: number, event: Event);
         _onKeyUp(key: number, event: Event);
     }
+    export interface IExports {
+        _exports: { [name: string]: any; };
+    }
 
     export class Global extends BaseObject {
         public static vesion = '2.0.0.1';
@@ -202,13 +205,13 @@ module RIAPP {
         _checkIsDummy(error) {
             return !!error.isDummy;
         }
-        _registerObject(root: { _exports: { [name: string]: any; } }, name: string, obj: any) {
+        _registerObject(root: IExports, name: string, obj: any) {
             return this._registerObjectCore(root._exports, name, obj, true);
         }
-        _getObject(root: { _exports: { [name: string]: any; } }, name: string) {
+        _getObject(root: IExports, name: string) {
             return this._getObjectCore(root['_exports'], name);
         }
-        _removeObject(root: { _exports: { [name: string]: any; } }, name: string) {
+        _removeObject(root: IExports, name: string) {
             return this._removeObjectCore(root['_exports'], name);
         }
         _processTemplateSections(root: { querySelectorAll: (selectors: string) => NodeList; }) {
@@ -484,7 +487,7 @@ module RIAPP {
             var name2 = 'types.' + name;
             return this._getObject(this, name2);
         }
-        registerConverter(name, obj: MOD.converter.IConverter) {
+        registerConverter(name:string, obj: MOD.converter.IConverter) {
             var name2 = 'converters.' + name;
             if (!this._getObject(this, name2)) {
                 this._registerObject(this, name2, obj);
@@ -507,11 +510,11 @@ module RIAPP {
             else
                 throw new Error(global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         }
-        getImagePath(imageName) {
+        getImagePath(imageName:string) {
             var images = this.defaults.imagesPath;
             return images + imageName;
         }
-        loadTemplates(url) {
+        loadTemplates(url:string) {
             var self = this;
             this._loadTemplatesAsync(function () {
                 return self.utils.performAjaxGet(url);

@@ -113,7 +113,7 @@ module RIAPP
             }
             get items() { return <FileSystemObject[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
-            set currentItem(v) {
+            set currentItem(v: FileSystemObject) {
                 if (!!v && !(v instanceof FileSystemObject)) {
                     throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'FileSystemObject'));
                 }
