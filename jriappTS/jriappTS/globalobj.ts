@@ -11,7 +11,7 @@ module RIAPP {
         _exports: { [name: string]: any; };
     }
 
-    export class Global extends BaseObject {
+    export class Global extends BaseObject implements IExports {
         public static vesion = '2.0.0.1';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';

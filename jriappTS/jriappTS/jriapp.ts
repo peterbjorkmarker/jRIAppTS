@@ -28,7 +28,7 @@ module RIAPP {
         user_modules?: { name: string; initFn: (app: Application) => any; }[];
     }
 
-    export class Application extends RIAPP.BaseObject {
+    export class Application extends RIAPP.BaseObject implements IExports {
         private static _newInstanceNum = 1;
         private get _DATA_BIND_SELECTOR() { return ['*[', global.consts.DATA_ATTR.DATA_BIND, ']'].join(''); }
         private get _DATA_VIEW_SELECTOR() { return ['*[', global.consts.DATA_ATTR.DATA_VIEW, ']'].join(''); }
@@ -44,9 +44,9 @@ module RIAPP {
         private _modules: { [name: string]: any; };
         private _objId: string;
         private _objMaps: any[];
-        _exports: { [name: string]: any; };
+        _exports: { [name: string]: any; }; 
         _options: IAppOptions;
-       
+        
         constructor(options?: IAppOptions) {
             super();
             var self = this, app_name = 'default', user_modules = [];

@@ -14892,7 +14892,7 @@ var RIAPP;
                     this._bindDS();
                     this._refreshGrid();
                     this._updateColsDim();
-                    this._onDSCurrentChanged;
+                    this._onDSCurrentChanged();
                     RIAPP.global._trackSelectable(this);
                 }
                 DataGrid.prototype._getEventNames = function () {

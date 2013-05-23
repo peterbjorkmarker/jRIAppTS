@@ -1115,7 +1115,7 @@ module RIAPP {
                     //fills all rows
                     this._refreshGrid();
                     this._updateColsDim();
-                    this._onDSCurrentChanged
+                    this._onDSCurrentChanged();
                     global._trackSelectable(this);
                 }
                 _getEventNames() {
