@@ -13214,7 +13214,8 @@ var RIAPP;
                         fn_OnOK: null,
                         fn_OnShow: null,
                         fn_OnCancel: null,
-                        fn_OnTemplateCreated: null
+                        fn_OnTemplateCreated: null,
+                        fn_OnTemplateDestroy: null
                     }, options);
                     this._dataContext = opts.dataContext;
                     this._templateID = opts.templateID;
@@ -13226,6 +13227,7 @@ var RIAPP;
                     this._fn_OnShow = opts.fn_OnShow;
                     this._fn_OnCancel = opts.fn_OnCancel;
                     this._fn_OnTemplateCreated = opts.fn_OnTemplateCreated;
+                    this._fn_OnTemplateDestroy = opts.fn_OnTemplateDestroy;
                     this._isEditable = false;
                     this._template = null;
                     this._$template = null;
@@ -13294,6 +13296,15 @@ var RIAPP;
                     t.isDisabled = true;
                     t.dataContext = dcxt;
                     return t;
+                };
+                DataEditDialog.prototype._destroyTemplate = function () {
+                    if(!!this._fn_OnTemplateDestroy) {
+                        this._fn_OnTemplateDestroy(this._template);
+                    }
+                    this._$template.remove();
+                    this._template.destroy();
+                    this._$template = null;
+                    this._template = null;
                 };
                 DataEditDialog.prototype._getButtons = function () {
                     var self = this, buttons = [
@@ -13471,10 +13482,7 @@ var RIAPP;
                     this._isDestroyCalled = true;
                     if(this._dialogCreated) {
                         this.hide();
-                        this._$template.remove();
-                        this._template.destroy();
-                        this._$template = null;
-                        this._template = null;
+                        this._destroyTemplate();
                         this._dialogCreated = false;
                     }
                     this._dataContext = null;
