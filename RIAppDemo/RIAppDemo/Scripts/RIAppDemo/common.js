@@ -26,8 +26,9 @@ var RIAPP;
         var DialogVM = (function (_super) {
             __extends(DialogVM, _super);
             function DialogVM(app) {
-                _super.call(this, app);
-                this._dialogs = {};
+                        _super.call(this, app);
+                this._dialogs = {
+                };
             }
             DialogVM.prototype.createDialog = function (name, options) {
                 var self = this;
@@ -43,7 +44,7 @@ var RIAPP;
             };
             DialogVM.prototype.showDialog = function (name, dataContext) {
                 var dlg = this.getDialog(name);
-                if (!dlg) {
+                if(!dlg) {
                     throw new Error(utils.format('Invalid dialog name:  {0}', name));
                 }
                 dlg.dataContext = dataContext;
@@ -52,13 +53,13 @@ var RIAPP;
             };
             DialogVM.prototype.getDialog = function (name) {
                 var factory = this._dialogs[name];
-                if (!factory) {
+                if(!factory) {
                     return null;
                 }
                 return factory();
             };
             DialogVM.prototype.destroy = function () {
-                if (this._isDestroyed) {
+                if(this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
@@ -66,7 +67,8 @@ var RIAPP;
                 keys.forEach(function (key) {
                     this._dialogs[key].destroy();
                 }, this);
-                this._dialogs = {};
+                this._dialogs = {
+                };
                 _super.prototype.destroy.call(this);
             };
             return DialogVM;
@@ -81,30 +83,30 @@ var RIAPP;
             DownloadLinkElView.prototype._init = function (options) {
                 _super.prototype._init.call(this, options);
                 this._baseUri = '';
-                if (!!options.baseUri) {
+                if(!!options.baseUri) {
                     this._baseUri = options.baseUri;
                 }
                 this._id = '';
             };
             Object.defineProperty(DownloadLinkElView.prototype, "text", {
                 get: function () {
-                    if (!this._el) {
+                    if(!this._el) {
                         return;
                     }
                     return this.$el.text();
                 },
                 set: function (v) {
-                    if (!this._el) {
+                    if(!this._el) {
                         return;
                     }
                     var $el = this.$el;
                     var x = $el.text();
-                    if (v === null) {
+                    if(v === null) {
                         v = '';
                     } else {
                         v = '' + v;
                     }
-                    if (x !== v) {
+                    if(x !== v) {
                         $el.text(v);
                         this.raisePropertyChanged('text');
                     }
@@ -114,22 +116,22 @@ var RIAPP;
             });
             Object.defineProperty(DownloadLinkElView.prototype, "href", {
                 get: function () {
-                    if (!this._el) {
+                    if(!this._el) {
                         return;
                     }
                     return this.$el.prop('href');
                 },
                 set: function (v) {
-                    if (!this._el) {
+                    if(!this._el) {
                         return;
                     }
                     var x = this.$el.prop('href');
-                    if (v === null) {
+                    if(v === null) {
                         v = '';
                     } else {
                         v = '' + v;
                     }
-                    if (x !== v) {
+                    if(x !== v) {
                         this.$el.prop('href', v);
                         this.raisePropertyChanged('href');
                     }
@@ -143,12 +145,12 @@ var RIAPP;
                 },
                 set: function (v) {
                     var x = this._id;
-                    if (v === null) {
+                    if(v === null) {
                         v = '';
                     } else {
                         v = '' + v;
                     }
-                    if (x !== v) {
+                    if(x !== v) {
                         this._id = v;
                         this.href = this._baseUri + '/' + this._id;
                         this.raisePropertyChanged('id');
@@ -169,19 +171,19 @@ var RIAPP;
             FileImgElView.prototype._init = function (options) {
                 _super.prototype._init.call(this, options);
                 this._baseUri = '';
-                if (!!options.baseUri) {
+                if(!!options.baseUri) {
                     this._baseUri = options.baseUri;
                 }
                 this._id = '';
                 this._fileName = null;
             };
             FileImgElView.prototype.reloadImg = function () {
-                if (!this._el) {
+                if(!this._el) {
                     return;
                 }
                 var src = this.src;
                 var pos = src.indexOf('?');
-                if (pos >= 0) {
+                if(pos >= 0) {
                     src = src.substr(0, pos);
                 }
                 var date = new Date();
@@ -194,7 +196,7 @@ var RIAPP;
                 },
                 set: function (v) {
                     var x = this._fileName;
-                    if (x !== v) {
+                    if(x !== v) {
                         this._fileName = v;
                         this.raisePropertyChanged('fileName');
                         this.reloadImg();
@@ -205,23 +207,23 @@ var RIAPP;
             });
             Object.defineProperty(FileImgElView.prototype, "src", {
                 get: function () {
-                    if (!this._el) {
+                    if(!this._el) {
                         return;
                     }
                     return this.$el.prop('src');
                 },
                 set: function (v) {
-                    if (!this._el) {
+                    if(!this._el) {
                         return;
                     }
                     var el = this.$el;
                     var x = el.prop('src');
-                    if (v === null) {
+                    if(v === null) {
                         v = '';
                     } else {
                         v = '' + v;
                     }
-                    if (x !== v) {
+                    if(x !== v) {
                         el.prop('src', v);
                         this.raisePropertyChanged('src');
                     }
@@ -235,14 +237,14 @@ var RIAPP;
                 },
                 set: function (v) {
                     var x = this._id;
-                    if (v === null) {
+                    if(v === null) {
                         v = '';
                     } else {
                         v = '' + v;
                     }
-                    if (x !== v) {
+                    if(x !== v) {
                         this._id = v;
-                        if (!this._id) {
+                        if(!this._id) {
                             this.src = null;
                         } else {
                             this.src = this._baseUri + '/' + this._id;
@@ -259,7 +261,7 @@ var RIAPP;
         var ErrorViewModel = (function (_super) {
             __extends(ErrorViewModel, _super);
             function ErrorViewModel(app) {
-                _super.call(this, app);
+                        _super.call(this, app);
                 var self = this;
                 this._error = null;
                 this._message = null;
@@ -277,15 +279,15 @@ var RIAPP;
                             self._error = self.error.origError;
                             self.raisePropertyChanged('error');
                         }
-                        if (self.error instanceof RIAPP.MOD.db.AccessDeniedError) {
+                        if(self.error instanceof RIAPP.MOD.db.AccessDeniedError) {
                             self.title = "ACCESS DENIED";
-                        } else if (self.error instanceof RIAPP.MOD.db.ConcurrencyError) {
+                        } else if(self.error instanceof RIAPP.MOD.db.ConcurrencyError) {
                             self.title = "CONCURRENCY ERROR";
-                        } else if (self.error instanceof RIAPP.MOD.binding.ValidationError) {
+                        } else if(self.error instanceof RIAPP.MOD.binding.ValidationError) {
                             self.title = "VALIDATION ERROR";
-                        } else if (self.error instanceof RIAPP.MOD.db.SvcValidationError) {
+                        } else if(self.error instanceof RIAPP.MOD.db.SvcValidationError) {
                             self.title = "VALIDATION ERROR";
-                        } else if (self.error instanceof RIAPP.MOD.db.DataOperationError) {
+                        } else if(self.error instanceof RIAPP.MOD.db.DataOperationError) {
                             self.title = "DATA OPERATION ERROR";
                         } else {
                             self.title = "UNEXPECTED ERROR";
@@ -305,7 +307,7 @@ var RIAPP;
                 this._dialogVM.showDialog('errorDialog', this);
             };
             ErrorViewModel.prototype.destroy = function () {
-                if (this._isDestroyed) {
+                if(this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
@@ -320,7 +322,7 @@ var RIAPP;
                 },
                 set: function (v) {
                     var old = this._error;
-                    if (!!old) {
+                    if(!!old) {
                         global._onError(v, null);
                         global._throwDummy(v);
                     }
@@ -336,7 +338,7 @@ var RIAPP;
                 },
                 set: function (v) {
                     var old = this._title;
-                    if (old !== v) {
+                    if(old !== v) {
                         this._title = v;
                         this.raisePropertyChanged('title');
                     }
@@ -350,7 +352,7 @@ var RIAPP;
                 },
                 set: function (v) {
                     var old = this._message;
-                    if (old !== v) {
+                    if(old !== v) {
                         this._message = v;
                         this.raisePropertyChanged('message');
                     }

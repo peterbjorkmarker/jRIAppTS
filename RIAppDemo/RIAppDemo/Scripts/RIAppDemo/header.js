@@ -15,16 +15,16 @@ var RIAPP;
         var HeaderVM = (function (_super) {
             __extends(HeaderVM, _super);
             function HeaderVM(app) {
-                _super.call(this, app);
+                        _super.call(this, app);
                 var self = this;
                 this._$topPanel = global.$(HEADER.topPanel);
                 this._$contentPanel = global.$(HEADER.contentPanel);
                 this._contentPanelHeight = 0;
-                if (!!this._$contentPanel) {
+                if(!!this._$contentPanel) {
                     this._contentPanelHeight = this._$contentPanel.height();
                 }
                 this._expanderCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
-                    if (sender.isExpanded) {
+                    if(sender.isExpanded) {
                         self.expand();
                     } else {
                         self.collapse();
@@ -44,8 +44,8 @@ var RIAPP;
                 });
             };
             HeaderVM.prototype.updateUI = function (isUp) {
-                if (!!this._$contentPanel) {
-                    if (isUp) {
+                if(!!this._$contentPanel) {
+                    if(isUp) {
                         this._$contentPanel.height(this._contentPanelHeight);
                     } else {
                         this._$contentPanel.height(this._contentPanelHeight - this._$topPanel.height());

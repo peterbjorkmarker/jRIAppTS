@@ -17,14 +17,14 @@ var RIAPP;
 
             }
             UppercaseConverter.prototype.convertToSource = function (val, param, dataContext) {
-                if (utils.check.isString(val)) {
+                if(utils.check.isString(val)) {
                     return val.toLowerCase();
                 } else {
                     return val;
                 }
             };
             UppercaseConverter.prototype.convertToTarget = function (val, param, dataContext) {
-                if (utils.check.isString(val)) {
+                if(utils.check.isString(val)) {
                     return val.toUpperCase();
                 } else {
                     return val;
@@ -36,13 +36,14 @@ var RIAPP;
         var TestObject = (function (_super) {
             __extends(TestObject, _super);
             function TestObject(initPropValue) {
-                _super.call(this);
+                        _super.call(this);
                 var self = this;
                 this._testProperty1 = initPropValue;
                 this._testProperty2 = null;
                 this._testCommand = new RIAPP.MOD.mvvm.Command(function (sender, args) {
                     self._onTestCommandExecuted();
                 }, self, function (sender, args) {
+                    //if this function return false, then the command is disabled
                     return utils.check.isString(self.testProperty1) && self.testProperty1.length > 3;
                 });
                 this._month = new Date().getMonth() + 1;
@@ -128,7 +129,7 @@ var RIAPP;
                     return this._testProperty1;
                 },
                 set: function (v) {
-                    if (this._testProperty1 != v) {
+                    if(this._testProperty1 != v) {
                         this._testProperty1 = v;
                         this.raisePropertyChanged('testProperty1');
                         //let the command to evaluate its availability
@@ -143,7 +144,7 @@ var RIAPP;
                     return this._testProperty2;
                 },
                 set: function (v) {
-                    if (this._testProperty2 != v) {
+                    if(this._testProperty2 != v) {
                         this._testProperty2 = v;
                         this.raisePropertyChanged('testProperty2');
                     }
@@ -170,7 +171,7 @@ var RIAPP;
                     return this._format;
                 },
                 set: function (v) {
-                    if (this._format !== v) {
+                    if(this._format !== v) {
                         this._format = v;
                         this.raisePropertyChanged('format');
                     }
@@ -190,7 +191,7 @@ var RIAPP;
                     return this._month;
                 },
                 set: function (v) {
-                    if (v !== this._month) {
+                    if(v !== this._month) {
                         this._month = v;
                         this.raisePropertyChanged('month');
                     }
@@ -211,7 +212,7 @@ var RIAPP;
         var DemoApplication = (function (_super) {
             __extends(DemoApplication, _super);
             function DemoApplication(options) {
-                _super.call(this, options);
+                        _super.call(this, options);
                 var self = this;
                 this._errorVM = null;
                 this._testObject = null;
@@ -231,7 +232,7 @@ var RIAPP;
                 _super.prototype.onStartUp.call(this);
             };
             DemoApplication.prototype.destroy = function () {
-                if (this._isDestroyed) {
+                if(this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
@@ -239,10 +240,10 @@ var RIAPP;
                 try  {
                     self._errorVM.destroy();
                     self._testObject.destroy();
-                    if (!!self.UC.createdBinding) {
+                    if(!!self.UC.createdBinding) {
                         self.UC.createdBinding.destroy();
                     }
-                } finally {
+                }finally {
                     _super.prototype.destroy.call(this);
                 }
             };

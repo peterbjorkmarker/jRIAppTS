@@ -1439,6 +1439,12 @@ module RIAPP {
                     this._addErrors(item, res);
                     return item;
                 }
+                _setCurrentItem(v: Entity) {
+                    if (!!v && !(v instanceof this._entityType)) {
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', this._options.dbSetName));
+                    }
+                    super._setCurrentItem(v);
+                }
                 _getChanges() {
                     var changes:IRowInfo[] = [];
                     var csh = this._changeCache;

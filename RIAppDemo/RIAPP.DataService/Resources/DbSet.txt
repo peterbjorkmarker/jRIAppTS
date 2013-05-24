@@ -26,9 +26,6 @@
 
 		self._mapAssocFields();
 	}
-	toString() {
-		return '{{DBSET_NAME}}';
-	}
 {{QUERIES}}
 {{CALC_FIELDS}}
 	addNew(){
@@ -46,9 +43,6 @@
 	get items() { return <{{ENTITY_TYPE}}[]>this._items; }
 	get currentItem() { return this.getItemByPos(this._currentPos); }
 	set currentItem(v:{{ENTITY_TYPE}}) { 
-		if (!!v && !(v instanceof {{ENTITY_TYPE}})){
-			throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', '{{ENTITY_TYPE}}'));
-		}
 		this._setCurrentItem(v);
 	}
 }

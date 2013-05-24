@@ -105,9 +105,6 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            toString() {
-                return 'Customer';
-            }
             createReadCustomerQuery(args?: {
                 includeNav?: bool;
             }) {
@@ -133,9 +130,6 @@ module RIAPP
             get items() { return <Customer[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
             set currentItem(v: Customer) {
-                if (!!v && !(v instanceof Customer)) {
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Customer'));
-                }
                 this._setCurrentItem(v);
             }
         }
@@ -210,9 +204,6 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            toString() {
-                return 'CustomerAddress';
-            }
             createReadCustomerAddressQuery() {
                 return this.createQuery('ReadCustomerAddress');
             }
@@ -240,9 +231,6 @@ module RIAPP
             get items() { return <CustomerAddress[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
             set currentItem(v: CustomerAddress) {
-                if (!!v && !(v instanceof CustomerAddress)) {
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'CustomerAddress'));
-                }
                 this._setCurrentItem(v);
             }
         }
@@ -321,9 +309,6 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            toString() {
-                return 'Address';
-            }
             createReadAddressQuery() {
                 return this.createQuery('ReadAddress');
             }
@@ -351,9 +336,6 @@ module RIAPP
             get items() { return <Address[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
             set currentItem(v: Address) {
-                if (!!v && !(v instanceof Address)) {
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Address'));
-                }
                 this._setCurrentItem(v);
             }
         }
@@ -455,9 +437,6 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            toString() {
-                return 'Product';
-            }
             createReadProductQuery(args?: {
                 param1: number[];
                 param2: string;
@@ -491,9 +470,6 @@ module RIAPP
             get items() { return <Product[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
             set currentItem(v: Product) {
-                if (!!v && !(v instanceof Product)) {
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Product'));
-                }
                 this._setCurrentItem(v);
             }
         }
@@ -551,9 +527,6 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            toString() {
-                return 'ProductModel';
-            }
             createReadProductModelQuery() {
                 return this.createQuery('ReadProductModel');
             }
@@ -574,9 +547,6 @@ module RIAPP
             get items() { return <ProductModel[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
             set currentItem(v: ProductModel) {
-                if (!!v && !(v instanceof ProductModel)) {
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'ProductModel'));
-                }
                 this._setCurrentItem(v);
             }
         }
@@ -695,9 +665,6 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            toString() {
-                return 'SalesOrderHeader';
-            }
             createReadSalesOrderHeaderQuery() {
                 return this.createQuery('ReadSalesOrderHeader');
             }
@@ -718,9 +685,6 @@ module RIAPP
             get items() { return <SalesOrderHeader[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
             set currentItem(v: SalesOrderHeader) {
-                if (!!v && !(v instanceof SalesOrderHeader)) {
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesOrderHeader'));
-                }
                 this._setCurrentItem(v);
             }
         }
@@ -800,9 +764,6 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            toString() {
-                return 'SalesOrderDetail';
-            }
             createReadSalesOrderDetailQuery() {
                 return this.createQuery('ReadSalesOrderDetail');
             }
@@ -823,9 +784,6 @@ module RIAPP
             get items() { return <SalesOrderDetail[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
             set currentItem(v: SalesOrderDetail) {
-                if (!!v && !(v instanceof SalesOrderDetail)) {
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesOrderDetail'));
-                }
                 this._setCurrentItem(v);
             }
         }
@@ -892,9 +850,6 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            toString() {
-                return 'ProductCategory';
-            }
             createReadProductCategoryQuery() {
                 return this.createQuery('ReadProductCategory');
             }
@@ -915,9 +870,6 @@ module RIAPP
             get items() { return <ProductCategory[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
             set currentItem(v: ProductCategory) {
-                if (!!v && !(v instanceof ProductCategory)) {
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'ProductCategory'));
-                }
                 this._setCurrentItem(v);
             }
         }
@@ -973,9 +925,6 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            toString() {
-                return 'SalesInfo';
-            }
             createReadSalesInfoQuery() {
                 return this.createQuery('ReadSalesInfo');
             }
@@ -996,9 +945,6 @@ module RIAPP
             get items() { return <SalesInfo[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
             set currentItem(v: SalesInfo) {
-                if (!!v && !(v instanceof SalesInfo)) {
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesInfo'));
-                }
                 this._setCurrentItem(v);
             }
         }
@@ -1057,9 +1003,6 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            toString() {
-                return 'LookUpProduct';
-            }
             createReadProductLookUpQuery() {
                 return this.createQuery('ReadProductLookUp');
             }
@@ -1080,9 +1023,6 @@ module RIAPP
             get items() { return <LookUpProduct[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
             set currentItem(v: LookUpProduct) {
-                if (!!v && !(v instanceof LookUpProduct)) {
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'LookUpProduct'));
-                }
                 this._setCurrentItem(v);
             }
         }
@@ -1147,9 +1087,6 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            toString() {
-                return 'AddressInfo';
-            }
             createReadAddressInfoQuery() {
                 return this.createQuery('ReadAddressInfo');
             }
@@ -1170,9 +1107,6 @@ module RIAPP
             get items() { return <AddressInfo[]>this._items; }
             get currentItem() { return this.getItemByPos(this._currentPos); }
             set currentItem(v: AddressInfo) {
-                if (!!v && !(v instanceof AddressInfo)) {
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'AddressInfo'));
-                }
                 this._setCurrentItem(v);
             }
         }

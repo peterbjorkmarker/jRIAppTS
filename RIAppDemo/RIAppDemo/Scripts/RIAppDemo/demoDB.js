@@ -552,24 +552,21 @@ var RIAPP;
                         }
                     ]
                 }, utils = RIAPP.global.utils;
-                _super.call(this, opts);
+                        _super.call(this, opts);
                 self._entityType = Customer;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
+                    if(!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if (!!f.isCalculated) {
+                    } else if(!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
                 self._mapAssocFields();
             }
-            CustomerDb.prototype.toString = function () {
-                return 'Customer';
-            };
             CustomerDb.prototype.createReadCustomerQuery = function (args) {
                 var query = this.createQuery('ReadCustomer');
                 query.params = args;
@@ -606,9 +603,6 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if (!!v && !(v instanceof Customer)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Customer'));
-                    }
                     this._setCurrentItem(v);
                 },
                 enumerable: true,
@@ -926,24 +920,21 @@ var RIAPP;
                     ],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                _super.call(this, opts);
+                        _super.call(this, opts);
                 self._entityType = CustomerAddress;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
+                    if(!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if (!!f.isCalculated) {
+                    } else if(!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
                 self._mapAssocFields();
             }
-            CustomerAddressDb.prototype.toString = function () {
-                return 'CustomerAddress';
-            };
             CustomerAddressDb.prototype.createReadCustomerAddressQuery = function () {
                 return this.createQuery('ReadCustomerAddress');
             };
@@ -980,9 +971,6 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if (!!v && !(v instanceof CustomerAddress)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'CustomerAddress'));
-                    }
                     this._setCurrentItem(v);
                 },
                 enumerable: true,
@@ -1352,24 +1340,21 @@ var RIAPP;
                         }
                     ]
                 }, utils = RIAPP.global.utils;
-                _super.call(this, opts);
+                        _super.call(this, opts);
                 self._entityType = Address;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
+                    if(!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if (!!f.isCalculated) {
+                    } else if(!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
                 self._mapAssocFields();
             }
-            AddressDb.prototype.toString = function () {
-                return 'Address';
-            };
             AddressDb.prototype.createReadAddressQuery = function () {
                 return this.createQuery('ReadAddress');
             };
@@ -1406,9 +1391,6 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if (!!v && !(v instanceof Address)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Address'));
-                    }
                     this._setCurrentItem(v);
                 },
                 enumerable: true,
@@ -1979,24 +1961,21 @@ var RIAPP;
                         }
                     ]
                 }, utils = RIAPP.global.utils;
-                _super.call(this, opts);
+                        _super.call(this, opts);
                 self._entityType = Product;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
+                    if(!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if (!!f.isCalculated) {
+                    } else if(!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
                 self._mapAssocFields();
             }
-            ProductDb.prototype.toString = function () {
-                return 'Product';
-            };
             ProductDb.prototype.createReadProductQuery = function (args) {
                 var query = this.createQuery('ReadProduct');
                 query.params = args;
@@ -2038,9 +2017,6 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if (!!v && !(v instanceof Product)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'Product'));
-                    }
                     this._setCurrentItem(v);
                 },
                 enumerable: true,
@@ -2144,24 +2120,21 @@ var RIAPP;
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                _super.call(this, opts);
+                        _super.call(this, opts);
                 self._entityType = ProductModel;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
+                    if(!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if (!!f.isCalculated) {
+                    } else if(!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
                 self._mapAssocFields();
             }
-            ProductModelDb.prototype.toString = function () {
-                return 'ProductModel';
-            };
             ProductModelDb.prototype.createReadProductModelQuery = function () {
                 return this.createQuery('ReadProductModel');
             };
@@ -2193,9 +2166,6 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if (!!v && !(v instanceof ProductModel)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'ProductModel'));
-                    }
                     this._setCurrentItem(v);
                 },
                 enumerable: true,
@@ -3020,24 +2990,21 @@ var RIAPP;
                         }
                     ]
                 }, utils = RIAPP.global.utils;
-                _super.call(this, opts);
+                        _super.call(this, opts);
                 self._entityType = SalesOrderHeader;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
+                    if(!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if (!!f.isCalculated) {
+                    } else if(!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
                 self._mapAssocFields();
             }
-            SalesOrderHeaderDb.prototype.toString = function () {
-                return 'SalesOrderHeader';
-            };
             SalesOrderHeaderDb.prototype.createReadSalesOrderHeaderQuery = function () {
                 return this.createQuery('ReadSalesOrderHeader');
             };
@@ -3069,9 +3036,6 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if (!!v && !(v instanceof SalesOrderHeader)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesOrderHeader'));
-                    }
                     this._setCurrentItem(v);
                 },
                 enumerable: true,
@@ -3450,24 +3414,21 @@ var RIAPP;
                     ],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                _super.call(this, opts);
+                        _super.call(this, opts);
                 self._entityType = SalesOrderDetail;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
+                    if(!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if (!!f.isCalculated) {
+                    } else if(!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
                 self._mapAssocFields();
             }
-            SalesOrderDetailDb.prototype.toString = function () {
-                return 'SalesOrderDetail';
-            };
             SalesOrderDetailDb.prototype.createReadSalesOrderDetailQuery = function () {
                 return this.createQuery('ReadSalesOrderDetail');
             };
@@ -3499,9 +3460,6 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if (!!v && !(v instanceof SalesOrderDetail)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesOrderDetail'));
-                    }
                     this._setCurrentItem(v);
                 },
                 enumerable: true,
@@ -3692,24 +3650,21 @@ var RIAPP;
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                _super.call(this, opts);
+                        _super.call(this, opts);
                 self._entityType = ProductCategory;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
+                    if(!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if (!!f.isCalculated) {
+                    } else if(!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
                 self._mapAssocFields();
             }
-            ProductCategoryDb.prototype.toString = function () {
-                return 'ProductCategory';
-            };
             ProductCategoryDb.prototype.createReadProductCategoryQuery = function () {
                 return this.createQuery('ReadProductCategory');
             };
@@ -3741,9 +3696,6 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if (!!v && !(v instanceof ProductCategory)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'ProductCategory'));
-                    }
                     this._setCurrentItem(v);
                 },
                 enumerable: true,
@@ -3821,24 +3773,21 @@ var RIAPP;
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                _super.call(this, opts);
+                        _super.call(this, opts);
                 self._entityType = SalesInfo;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
+                    if(!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if (!!f.isCalculated) {
+                    } else if(!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
                 self._mapAssocFields();
             }
-            SalesInfoDb.prototype.toString = function () {
-                return 'SalesInfo';
-            };
             SalesInfoDb.prototype.createReadSalesInfoQuery = function () {
                 return this.createQuery('ReadSalesInfo');
             };
@@ -3870,9 +3819,6 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if (!!v && !(v instanceof SalesInfo)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'SalesInfo'));
-                    }
                     this._setCurrentItem(v);
                 },
                 enumerable: true,
@@ -3979,24 +3925,21 @@ var RIAPP;
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                _super.call(this, opts);
+                        _super.call(this, opts);
                 self._entityType = LookUpProduct;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
+                    if(!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if (!!f.isCalculated) {
+                    } else if(!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
                 self._mapAssocFields();
             }
-            LookUpProductDb.prototype.toString = function () {
-                return 'LookUpProduct';
-            };
             LookUpProductDb.prototype.createReadProductLookUpQuery = function () {
                 return this.createQuery('ReadProductLookUp');
             };
@@ -4028,9 +3971,6 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if (!!v && !(v instanceof LookUpProduct)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'LookUpProduct'));
-                    }
                     this._setCurrentItem(v);
                 },
                 enumerable: true,
@@ -4250,24 +4190,21 @@ var RIAPP;
                         }
                     ]
                 }, utils = RIAPP.global.utils;
-                _super.call(this, opts);
+                        _super.call(this, opts);
                 self._entityType = AddressInfo;
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
                     f.dependents = [];
                     self._fieldMap[f.fieldName] = f;
                 });
                 opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
+                    if(!!f.isNavigation) {
                         self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    } else if (!!f.isCalculated) {
+                    } else if(!!f.isCalculated) {
                         self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
                     }
                 });
                 self._mapAssocFields();
             }
-            AddressInfoDb.prototype.toString = function () {
-                return 'AddressInfo';
-            };
             AddressInfoDb.prototype.createReadAddressInfoQuery = function () {
                 return this.createQuery('ReadAddressInfo');
             };
@@ -4299,9 +4236,6 @@ var RIAPP;
                     return this.getItemByPos(this._currentPos);
                 },
                 set: function (v) {
-                    if (!!v && !(v instanceof AddressInfo)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', 'AddressInfo'));
-                    }
                     this._setCurrentItem(v);
                 },
                 enumerable: true,
@@ -4313,7 +4247,7 @@ var RIAPP;
         var DbContext = (function (_super) {
             __extends(DbContext, _super);
             function DbContext() {
-                _super.call(this);
+                        _super.call(this);
                 this._dbSetNames = [
                     "Customer", 
                     "CustomerAddress", 

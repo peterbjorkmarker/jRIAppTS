@@ -13,18 +13,18 @@ var RIAPP;
         var global = RIAPP.global, utils = global.utils;
         function addTextQuery(query, fldName, val) {
             var tmp;
-            if (!!val) {
-                if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
+            if(!!val) {
+                if(utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 'contains', [
                         tmp
                     ]);
-                } else if (utils.str.startsWith(val, '%')) {
+                } else if(utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 'endswith', [
                         tmp
                     ]);
-                } else if (utils.str.endsWith(val, '%')) {
+                } else if(utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 'startswith', [
                         tmp
@@ -97,7 +97,7 @@ var RIAPP;
                 this._template.el.style.width = '100%';
                 this._lookupGrid = null;
                 var gridElView = this._findElemViewInTemplate('lookupGrid');
-                if (!!gridElView) {
+                if(!!gridElView) {
                     this._lookupGrid = gridElView.grid;
                 }
                 this._btnOk = this._findElemInTemplate('btnOk');
@@ -114,7 +114,7 @@ var RIAPP;
             AutoCompleteElView.prototype._findElemViewInTemplate = function (name) {
                 //look by data-name attribute value
                 var arr = this._template.findElViewsByDataName(name);
-                if (!!arr && arr.length > 0) {
+                if(!!arr && arr.length > 0) {
                     return arr[0];
                 } else {
                     return null;
@@ -122,7 +122,7 @@ var RIAPP;
             };
             AutoCompleteElView.prototype._findElemInTemplate = function (name) {
                 var arr = this._template.findElByDataName(name);
-                if (!!arr && arr.length > 0) {
+                if(!!arr && arr.length > 0) {
                     return arr[0];
                 } else {
                     return null;
@@ -130,7 +130,7 @@ var RIAPP;
             };
             AutoCompleteElView.prototype._createDbSet = function () {
                 this._dbSet = this.dbContext.dbSets[this._dbSetName];
-                if (!this._dbSet) {
+                if(!this._dbSet) {
                     throw new Error(utils.format('dbContext does not contain dbSet with the name: {0}', this._dbSetName));
                 }
             };
@@ -149,14 +149,14 @@ var RIAPP;
             AutoCompleteElView.prototype._onTextChange = function (text) {
                 var self = this;
                 clearTimeout(this._loadTimeout);
-                if (!!text && text.length > 1) {
+                if(!!text && text.length > 1) {
                     this._loadTimeout = setTimeout(function () {
-                        if (self._isDestroyCalled) {
+                        if(self._isDestroyCalled) {
                             return;
                         }
-                        if (self._prevText != text) {
+                        if(self._prevText != text) {
                             self._prevText = text;
-                            if (!self._isOpen) {
+                            if(!self._isOpen) {
                                 self._open();
                             }
                             self.load(text);
@@ -165,11 +165,11 @@ var RIAPP;
                 }
             };
             AutoCompleteElView.prototype._onKeyPress = function (keyCode) {
-                if (keyCode === global.consts.KEYS.esc) {
+                if(keyCode === global.consts.KEYS.esc) {
                     this._hide();
                     return;
                 }
-                if (keyCode === global.consts.KEYS.enter) {
+                if(keyCode === global.consts.KEYS.enter) {
                     this._updateSelection();
                     this._hide();
                     return;
@@ -187,19 +187,21 @@ var RIAPP;
                 });
             };
             AutoCompleteElView.prototype._onShow = function () {
-                this.raiseEvent('show', {});
+                this.raiseEvent('show', {
+                });
             };
             AutoCompleteElView.prototype._onHide = function () {
-                this.raiseEvent('hide', {});
+                this.raiseEvent('hide', {
+                });
             };
             AutoCompleteElView.prototype._open = function () {
-                if (this._isOpen) {
+                if(this._isOpen) {
                     return;
                 }
                 var self = this;
                 this._$dlg = this.$el.closest(".ui-dialog");
                 this._$dlg.on("dialogdrag." + this._objId, function (event, ui) {
-                    if (!self._isOpen) {
+                    if(!self._isOpen) {
                         return;
                     }
                     self._updatePosition();
@@ -210,14 +212,14 @@ var RIAPP;
                     display: "none"
                 });
                 this._$dropDown.slideDown('medium');
-                if (!!this._lookupGrid) {
+                if(!!this._lookupGrid) {
                     this._lookupGrid.addHandler('cell_dblclicked', function (s, a) {
                         self._updateSelection();
                         self._hide();
                     }, this._objId);
                     global.$(global.document).on('keyup.' + this._objId, function (e) {
                         e.stopPropagation();
-                        if (global.currentSelectable === self._lookupGrid) {
+                        if(global.currentSelectable === self._lookupGrid) {
                             self._onKeyPress(e.which);
                         }
                     });
@@ -227,16 +229,16 @@ var RIAPP;
             };
             AutoCompleteElView.prototype._hide = function () {
                 var self = this;
-                if (!this._isOpen) {
+                if(!this._isOpen) {
                     return;
                 }
                 global.$(global.document).off('.' + this._objId);
                 this._$dlg.off('.' + this._objId);
-                if (!!this._lookupGrid) {
+                if(!!this._lookupGrid) {
                     this._lookupGrid.removeNSHandlers(this._objId);
                 }
                 this._$dropDown.slideUp('medium', function () {
-                    if (self._isDestroyCalled) {
+                    if(self._isDestroyCalled) {
                         return;
                     }
                     self._$dropDown.css({
@@ -261,16 +263,16 @@ var RIAPP;
                 });
             };
             AutoCompleteElView.prototype.destroy = function () {
-                if (this._isDestroyed) {
+                if(this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
                 this._hide();
                 this.$el.off('.' + this._objId);
-                if (!!this._lookupGrid) {
+                if(!!this._lookupGrid) {
                     this._lookupGrid = null;
                 }
-                if (!!this._template) {
+                if(!!this._template) {
                     this._template.destroy();
                     this._template = null;
                     this._$dropDown = null;
@@ -303,7 +305,7 @@ var RIAPP;
             });
             Object.defineProperty(AutoCompleteElView.prototype, "currentSelection", {
                 get: function () {
-                    if (this._dbSet.currentItem) {
+                    if(this._dbSet.currentItem) {
                         return this._dbSet.currentItem[this._fieldName];
                     } else {
                         return null;
@@ -326,7 +328,7 @@ var RIAPP;
                     return this._dataContext;
                 },
                 set: function (v) {
-                    if (this._dataContext !== v) {
+                    if(this._dataContext !== v) {
                         this._dataContext = v;
                         this.raisePropertyChanged('dataContext');
                     }
@@ -345,20 +347,20 @@ var RIAPP;
             Object.defineProperty(AutoCompleteElView.prototype, "value", {
                 get: function () {
                     var el = this.el;
-                    if (!el) {
+                    if(!el) {
                         return '';
                     }
                     return el.value;
                 },
                 set: function (v) {
-                    if (!this._el) {
+                    if(!this._el) {
                         return;
                     }
                     var el = this.el;
                     var x = el.value;
                     var str = '' + v;
                     v = (v === null) ? '' : str;
-                    if (x !== v) {
+                    if(x !== v) {
                         el.value = v;
                         this._prevText = v;
                         this.raisePropertyChanged('value');

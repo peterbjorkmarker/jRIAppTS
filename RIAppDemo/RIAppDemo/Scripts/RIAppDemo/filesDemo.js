@@ -11,11 +11,10 @@ var RIAPP;
     (function (FILESDEMO) {
         'use strict';
         var global = RIAPP.global, utils = global.utils;
-
         var FolderBrowser = (function (_super) {
             __extends(FolderBrowser, _super);
             function FolderBrowser(options) {
-                _super.call(this);
+                        _super.call(this);
                 var self = this;
                 self._includeFiles = options.includeFiles;
                 self._$tree = options.$tree;
@@ -58,10 +57,10 @@ var RIAPP;
                     onDblClick: function (node, event) {
                     },
                     onExpand: function (flag, node) {
-                        if (!flag) {
+                        if(!flag) {
                             node.visit(function (child) {
                                 var item = child.data.item;
-                                if (!item) {
+                                if(!item) {
                                     return;
                                 }
                                 item.deleteItem();
@@ -111,7 +110,7 @@ var RIAPP;
                     var topLevel = fetchedItems.filter(function (item) {
                         return item.Level == 0;
                     });
-                    if (topLevel.length > 0) {
+                    if(topLevel.length > 0) {
                         self._addItemsToTree(topLevel);
                     }
                 } catch (ex) {
@@ -136,16 +135,16 @@ var RIAPP;
             };
             FolderBrowser.prototype._getFullPath = function (item, path) {
                 var self = this, part;
-                if (utils.check.isNt(path)) {
+                if(utils.check.isNt(path)) {
                     path = '';
                 }
-                if (!path) {
+                if(!path) {
                     part = '';
                 } else {
                     part = '\\' + path;
                 }
                 var parent = this._assoc.getParentItem(item);
-                if (!parent) {
+                if(!parent) {
                     return item.Name + part;
                 } else {
                     return self._getFullPath(parent, item.Name + part);
@@ -155,15 +154,15 @@ var RIAPP;
                 return this._getFullPath(item, null);
             };
             FolderBrowser.prototype.destroy = function () {
-                if (this._isDestroyed) {
+                if(this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
                 var self = this;
-                if (!!this._dbContext) {
+                if(!!this._dbContext) {
                     this._dbContext.destroy();
                 }
-                if (!!this._$treeRoot) {
+                if(!!this._$treeRoot) {
                     this._$treeRoot.removeChildren();
                 }
                 _super.prototype.destroy.call(this);
@@ -188,7 +187,7 @@ var RIAPP;
         function fn_getTemplateElement(template, name) {
             var t = template;
             var els = t.findElByDataName(name);
-            if (els.length < 1) {
+            if(els.length < 1) {
                 return null;
             }
             return els[0];
@@ -197,7 +196,7 @@ var RIAPP;
         var FolderBrowserVM = (function (_super) {
             __extends(FolderBrowserVM, _super);
             function FolderBrowserVM(app, includeFiles) {
-                _super.call(this, app);
+                        _super.call(this, app);
                 var self = this;
                 this._selectedItem = null;
                 //we defined this custom type in common.js
@@ -211,7 +210,8 @@ var RIAPP;
                     title: self._includeFiles ? 'File Browser' : 'Folder Browser',
                     fn_OnTemplateCreated: function (template) {
                         var dialog = this, $ = global.$;
-                        var $tree = global.$(fn_getTemplateElement(template, 'tree'));
+                        //executed in the context of the dialog
+                                                var $tree = global.$(fn_getTemplateElement(template, 'tree'));
                         var options = utils.mergeObj(app.options, {
                             $tree: $tree,
                             includeFiles: self._includeFiles
@@ -226,7 +226,7 @@ var RIAPP;
                         self._folderBrowser.loadRootFolder();
                     },
                     fn_OnClose: function (dialog) {
-                        if (dialog.result == 'ok' && !!self._selectedItem) {
+                        if(dialog.result == 'ok' && !!self._selectedItem) {
                             self._onSelected(self._selectedItem, self._selectedItem.fullPath);
                         }
                     }
@@ -246,16 +246,16 @@ var RIAPP;
                 alert("selected: " + fullPath);
             };
             FolderBrowserVM.prototype.destroy = function () {
-                if (this._isDestroyed) {
+                if(this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
                 var self = this;
-                if (!!self._folderBrowser) {
+                if(!!self._folderBrowser) {
                     self._folderBrowser.destroy();
                     self._folderBrowser = null;
                 }
-                if (!!self._dialogVM) {
+                if(!!self._dialogVM) {
                     self._dialogVM.destroy();
                     self._dialogVM = null;
                 }
@@ -273,7 +273,7 @@ var RIAPP;
                     return this._selectedItem;
                 },
                 set: function (v) {
-                    if (v !== this._selectedItem) {
+                    if(v !== this._selectedItem) {
                         this._selectedItem = v;
                         this.raisePropertyChanged('selectedItem');
                     }
@@ -301,7 +301,7 @@ var RIAPP;
         var DemoApplication = (function (_super) {
             __extends(DemoApplication, _super);
             function DemoApplication(options) {
-                _super.call(this, options);
+                        _super.call(this, options);
                 var self = this;
                 this._errorVM = null;
                 this._fbrowserVM1 = null;
@@ -324,7 +324,7 @@ var RIAPP;
             };
             DemoApplication.prototype.destroy = //really, the destroy method is redundant here because application lives till the page lives
             function () {
-                if (this._isDestroyed) {
+                if(this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
@@ -333,7 +333,7 @@ var RIAPP;
                     self._errorVM.destroy();
                     self._fbrowserVM1.destroy();
                     self._fbrowserVM2.destroy();
-                } finally {
+                }finally {
                     _super.prototype.destroy.call(this);
                 }
             };

@@ -14,18 +14,18 @@ var RIAPP;
         //private helper function (used inside this module only)
         function addTextQuery(query, fldName, val) {
             var tmp;
-            if (!!val) {
-                if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
+            if(!!val) {
+                if(utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 'contains', [
                         tmp
                     ]);
-                } else if (utils.str.startsWith(val, '%')) {
+                } else if(utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 'endswith', [
                         tmp
                     ]);
-                } else if (utils.str.endsWith(val, '%')) {
+                } else if(utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 'startswith', [
                         tmp
@@ -43,7 +43,7 @@ var RIAPP;
         var CustomerVM = (function (_super) {
             __extends(CustomerVM, _super);
             function CustomerVM(app) {
-                _super.call(this, app);
+                        _super.call(this, app);
                 var self = this;
                 this._includeDetailsOnLoad = false;
                 this._dbSet = this.dbSets.Customer;
@@ -52,17 +52,18 @@ var RIAPP;
                     self._onCurrentChanged();
                 }, self.uniqueID);
                 this._dbSet.addOnItemDeleting(function (s, a) {
-                    if (!confirm('Are you sure that you want to delete customer ?')) {
+                    if(!confirm('Are you sure that you want to delete customer ?')) {
                         a.isCancel = true;
                     }
                 }, self.uniqueID);
                 this._dbSet.addOnEndEdit(function (sender, args) {
-                    if (!args.isCanceled) {
+                    if(!args.isCanceled) {
                         self.dbContext.submitChanges();
                     }
                 }, self.uniqueID);
                 this._dbSet.addOnFill(function (sender, args) {
-                    if (!args.isBegin) {
+                    //when filled, then raise our custom event
+                    if(!args.isBegin) {
                         self.raiseEvent('data_filled', args);
                     }
                 }, self.uniqueID);
@@ -76,17 +77,20 @@ var RIAPP;
                     //showing of the dialog is handled by the datagrid
                     self._dbSet.addNew();
                 }, self, function (sender, param) {
+                    //the command is always enabled
                     return true;
                 });
                 //saves changes (submitts them to the service)
                 this._saveCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     self.dbContext.submitChanges();
                 }, self, function (s, p) {
+                    //the command is enabled when there are pending changes
                     return self.dbContext.hasChanges;
                 });
                 this._undoCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     self.dbContext.rejectChanges();
                 }, self, function (s, p) {
+                    //the command is enabled when there are pending changes
                     return self.dbContext.hasChanges;
                 });
                 //load data from the server
@@ -125,15 +129,15 @@ var RIAPP;
                 return this.dbContext.load(query);
             };
             CustomerVM.prototype.destroy = function () {
-                if (this._isDestroyed) {
+                if(this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
-                if (!!this._customerAddressVM) {
+                if(!!this._customerAddressVM) {
                     this._customerAddressVM.destroy();
                     this._customerAddressVM = null;
                 }
-                if (!!this._dbSet) {
+                if(!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
                 _super.prototype.destroy.call(this);
@@ -210,7 +214,7 @@ var RIAPP;
             });
             Object.defineProperty(CustomerVM.prototype, "customerAddressVM", {
                 get: function () {
-                    if (!this._customerAddressVM) {
+                    if(!this._customerAddressVM) {
                         this._customerAddressVM = new CustomerAddressVM(this);
                     }
                     return this._customerAddressVM;
@@ -225,7 +229,7 @@ var RIAPP;
                     return this._includeDetailsOnLoad;
                 },
                 set: function (v) {
-                    if (v !== this._includeDetailsOnLoad) {
+                    if(v !== this._includeDetailsOnLoad) {
                         this._includeDetailsOnLoad = v;
                         this.raisePropertyChanged('includeDetailsOnLoad');
                     }
@@ -239,7 +243,7 @@ var RIAPP;
         var CustomerAddressVM = (function (_super) {
             __extends(CustomerAddressVM, _super);
             function CustomerAddressVM(customerVM) {
-                _super.call(this, customerVM.app);
+                        _super.call(this, customerVM.app);
                 var self = this;
                 this._customerVM = customerVM;
                 this._addAddressVM = null;
@@ -247,7 +251,7 @@ var RIAPP;
                 this._addressesDb = this.dbSets.Address;
                 this._custAdressDb = this.dbSets.CustomerAddress;
                 this._custAdressDb.addOnItemDeleting(function (sender, args) {
-                    if (!confirm('Are you sure that you want to unlink Address from this customer?')) {
+                    if(!confirm('Are you sure that you want to unlink Address from this customer?')) {
                         args.isCancel = true;
                     }
                 }, self.uniqueID);
@@ -256,33 +260,35 @@ var RIAPP;
                     //start editing Address entity, when CustomerAddress begins editing
                     //p.s.- Address is navigation property
                     var address = item.Address;
-                    if (!!address) {
+                    if(!!address) {
                         address.beginEdit();
                     }
                 }, self.uniqueID);
                 this._custAdressDb.addOnEndEdit(function (sender, args) {
                     var item = args.item;
                     var address = item.Address;
-                    if (!args.isCanceled) {
-                        if (!!address) {
+                    if(!args.isCanceled) {
+                        if(!!address) {
                             address.endEdit();
                         }
                     } else {
-                        if (address) {
+                        if(address) {
                             address.cancelEdit();
                         }
                     }
                 }, self.uniqueID);
                 this._addressesDb.addOnItemDeleting(function (sender, args) {
-                    if (!confirm('Are you sure that you want to delete Customer\'s Address ?')) {
+                    if(!confirm('Are you sure that you want to delete Customer\'s Address ?')) {
                         args.isCancel = true;
                     }
                 }, self.uniqueID);
                 this._customerVM.dbSet.addOnFill(function (sender, args) {
-                    if (args.isBegin) {
+                    if(args.isBegin) {
                         return;
                     }
-                    if (!self._customerVM.includeDetailsOnLoad) {
+                    //if details are not included with customers entities when they are loaded
+                    //then load addresses related to the customers separately
+                    if(!self._customerVM.includeDetailsOnLoad) {
                         self.load(args.fetchedItems);
                     }
                 }, self.uniqueID);
@@ -301,7 +307,7 @@ var RIAPP;
                         return a.AddressID - b.AddressID;
                     },
                     fn_filter: function (item) {
-                        if (!self._currentCustomer) {
+                        if(!self._currentCustomer) {
                             return false;
                         }
                         return item.CustomerAddresses.some(function (ca) {
@@ -309,7 +315,7 @@ var RIAPP;
                         });
                     },
                     fn_itemsProvider: function (ds) {
-                        if (!self._currentCustomer) {
+                        if(!self._currentCustomer) {
                             return [];
                         }
                         var custAdrs = self._currentCustomer.CustomerAddresses;
@@ -336,6 +342,7 @@ var RIAPP;
                 });
                 //if true, we clear all previous data in the DbSet
                 query.isClearPrevData = isClearTable;
+                //returns promise
                 return this.dbContext.load(query);
             };
             CustomerAddressVM.prototype._addNewAddress = function () {
@@ -366,7 +373,9 @@ var RIAPP;
                     custIDs: custIDs
                 });
                 var promise = this.dbContext.load(query);
-                if (!this._customerVM.includeDetailsOnLoad) {
+                //if we did not included details when we had loaded customers
+                //then load them now
+                if(!this._customerVM.includeDetailsOnLoad) {
                     //load related addresses based on what customerAddress items just loaded
                     promise.done(function (res) {
                         var addressIDs = res.fetchedItems.map(function (item) {
@@ -378,20 +387,20 @@ var RIAPP;
                 }
             };
             CustomerAddressVM.prototype.destroy = function () {
-                if (this._isDestroyed) {
+                if(this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
-                if (!!this._addressesDb) {
+                if(!!this._addressesDb) {
                     this._addressesDb.removeNSHandlers(this.uniqueID);
                 }
-                if (!!this._custAdressDb) {
+                if(!!this._custAdressDb) {
                     this._custAdressDb.removeNSHandlers(this.uniqueID);
                 }
-                if (!!this._customerVM) {
+                if(!!this._customerVM) {
                     this._customerVM.removeNSHandlers(this.uniqueID);
                 }
-                if (this._addAddressVM) {
+                if(this._addAddressVM) {
                     this._addAddressVM.destroy();
                     this._addAddressVM = null;
                 }
@@ -448,7 +457,7 @@ var RIAPP;
             });
             Object.defineProperty(CustomerAddressVM.prototype, "addAddressVM", {
                 get: function () {
-                    if (this._addAddressVM === null) {
+                    if(this._addAddressVM === null) {
                         this._addAddressVM = new AddAddressVM(this);
                     }
                     return this._addAddressVM;
@@ -469,7 +478,7 @@ var RIAPP;
         var AddAddressVM = (function (_super) {
             __extends(AddAddressVM, _super);
             function AddAddressVM(customerAddressVM) {
-                _super.call(this, customerAddressVM.app);
+                        _super.call(this, customerAddressVM.app);
                 var self = this;
                 this._customerAddressVM = customerAddressVM;
                 this._addressInfosDb = this.dbContext.dbSets.AddressInfo;
@@ -487,8 +496,9 @@ var RIAPP;
                     title: 'add new customer address',
                     submitOnOK: true,
                     fn_OnClose: function (dialog) {
-                        if (dialog.result != 'ok') {
-                            if (!!self._newAddress) {
+                        if(dialog.result != 'ok') {
+                            //if new address is not explicitly accepted then reject added address
+                            if(!!self._newAddress) {
                                 self._cancelAddNewAddress();
                             }
                             self.dbContext.rejectChanges();
@@ -498,10 +508,11 @@ var RIAPP;
                     },
                     fn_OnOK: function (dialog) {
                         var DIALOG_ACTION = RIAPP.MOD.datadialog.DIALOG_ACTION;
-                        if (!self._isAddingNew) {
+                        if(!self._isAddingNew) {
+                            //allow to close the dialog
                             return DIALOG_ACTION.Default;
                         }
-                        if (!self._newAddress.endEdit()) {
+                        if(!self._newAddress.endEdit()) {
                             return DIALOG_ACTION.StayOpen;
                         }
                         var custAdress = self._customerAddressVM._addNewCustAddress(self._newAddress);
@@ -514,10 +525,10 @@ var RIAPP;
                     },
                     fn_OnCancel: function (dialog) {
                         var DIALOG_ACTION = RIAPP.MOD.datadialog.DIALOG_ACTION;
-                        if (!self._isAddingNew) {
+                        if(!self._isAddingNew) {
                             return DIALOG_ACTION.Default;
                         }
-                        if (!!self._newAddress) {
+                        if(!!self._newAddress) {
                             self._cancelAddNewAddress();
                         }
                         return DIALOG_ACTION.StayOpen;
@@ -560,6 +571,7 @@ var RIAPP;
                         self._onError(ex, this);
                     }
                 }, self, function (sender, param) {
+                    //enable this command when customer is not null
                     return !!self.customer;
                 });
                 //load searched address data from the server
@@ -586,7 +598,7 @@ var RIAPP;
                 //this command executed when element view property changes
                 //we grab grid property from the sender (which is element view, and has property - grid)
                 this._propChangeCommand = new RIAPP.MOD.baseElView.PropChangedCommand(function (sender, args) {
-                    if (args.property == '*' || args.property == 'grid') {
+                    if(args.property == '*' || args.property == 'grid') {
                         self._adressInfosGrid = sender.grid;
                     }
                 }, self, null);
@@ -616,7 +628,7 @@ var RIAPP;
             };
             AddAddressVM.prototype._linkAddress = function () {
                 var self = this, adrInfo = this.currentAddressInfo, adrView = self.custAdressView, adrID;
-                if (!adrInfo) {
+                if(!adrInfo) {
                     alert('_linkAddress error: adrInfoEntity is null');
                     return;
                 }
@@ -624,7 +636,7 @@ var RIAPP;
                 var existedAddr = adrView.items.some(function (item) {
                     return (item).AddressID === adrID;
                 });
-                if (existedAddr) {
+                if(existedAddr) {
                     alert('Customer already has this address!');
                     return;
                 }
@@ -634,7 +646,7 @@ var RIAPP;
                 ], false);
                 promise.done(function (res) {
                     var address = self._customerAddressVM.addressesDb.findByPK(adrID);
-                    if (!!address) {
+                    if(!!address) {
                         self._customerAddressVM._addNewCustAddress(address);
                         //remove address from right panel
                         self._removeAddressRP(adrID);
@@ -643,24 +655,26 @@ var RIAPP;
             };
             AddAddressVM.prototype._unLinkAddress = function () {
                 var item = this.custAdressView.currentItem;
-                if (!item) {
+                if(!item) {
                     return;
                 }
                 var id = (item).AddressID;
-                if (item.deleteItem()) {
+                //delete it from the left panel
+                if(item.deleteItem()) {
                     //and then add the address to the right panel (really adds an addressInfo, not the address entity)
                     this._addAddressRP(id);
                 }
             };
             AddAddressVM.prototype._addAddressRP = //adds an addressInfo to the right panel
             function (addressID) {
-                if (this._checkAddressInRP(addressID)) {
+                //if address already on client, just make it be displayed in the view
+                if(this._checkAddressInRP(addressID)) {
                     var deferred = new global.$.Deferred();
                     deferred.reject();
                     return deferred.promise();
                 }
                 //if we are here, we need to load the address from the server
-                var self = this, query = this._addressInfosDb.createReadAddressInfoQuery();
+                                var self = this, query = this._addressInfosDb.createReadAddressInfoQuery();
                 //dont clear, append to the existing
                 query.isClearPrevData = false;
                 query.where('AddressID', '=', [
@@ -676,13 +690,13 @@ var RIAPP;
             function (addressID) {
                 //try to find it in the DbSet
                 var item = this._addressInfosDb.findByPK(addressID);
-                if (!!item) {
+                if(!!item) {
                     //if found, try append to the view
                     var appended = this._addressInfosView.appendItems([
                         item
                     ]);
                     this._addressInfosView.currentItem = item;
-                    if (!!this._adressInfosGrid) {
+                    if(!!this._adressInfosGrid) {
                         this._adressInfosGrid.scrollToCurrent(true);
                     }
                 }
@@ -691,26 +705,26 @@ var RIAPP;
             AddAddressVM.prototype._removeAddressRP = //remove the address from the right panel (it is done by removing the item from the view)
             function (addressID) {
                 var item = this._addressInfosView.findByPK(addressID);
-                if (!!item) {
+                if(!!item) {
                     this._addressInfosView.removeItem(item);
                 }
             };
             AddAddressVM.prototype.destroy = function () {
-                if (this._isDestroyed) {
+                if(this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
-                if (!!this._addressInfosDb) {
+                if(!!this._addressInfosDb) {
                     this._addressInfosDb.removeNSHandlers(this.uniqueID);
                     this._addressInfosDb.clear();
                     this._addressInfosDb = null;
                 }
-                if (!!this._addressInfosView) {
+                if(!!this._addressInfosView) {
                     this._addressInfosView.destroy();
                     this._addressInfosView = null;
                 }
                 this.custAdressView.removeNSHandlers(this.uniqueID);
-                if (!!this._customerAddressVM) {
+                if(!!this._customerAddressVM) {
                     this._customerAddressVM.removeNSHandlers(this.uniqueID);
                     this._customerAddressVM = null;
                 }
@@ -777,7 +791,7 @@ var RIAPP;
                     return this._searchString;
                 },
                 set: function (v) {
-                    if (this._searchString !== v) {
+                    if(this._searchString !== v) {
                         this._searchString = v;
                         this.raisePropertyChanged('searchString');
                     }
@@ -862,7 +876,7 @@ var RIAPP;
         var DemoApplication = (function (_super) {
             __extends(DemoApplication, _super);
             function DemoApplication(options) {
-                _super.call(this, options);
+                        _super.call(this, options);
                 var self = this;
                 this._dbContext = null;
                 this._errorVM = null;
@@ -876,7 +890,7 @@ var RIAPP;
                     permissions: options.permissionInfo
                 });
                 function toText(str) {
-                    if (str === null) {
+                    if(str === null) {
                         return '';
                     } else {
                         return str;
@@ -908,7 +922,7 @@ var RIAPP;
             };
             DemoApplication.prototype.destroy = //really, the destroy method is redundant here because the application lives while the page lives
             function () {
-                if (this._isDestroyed) {
+                if(this._isDestroyed) {
                     return;
                 }
                 this._isDestroyCalled = true;
@@ -917,7 +931,7 @@ var RIAPP;
                     self._errorVM.destroy();
                     self._customerVM.destroy();
                     self._dbContext.destroy();
-                } finally {
+                }finally {
                     _super.prototype.destroy.call(this);
                 }
             };
