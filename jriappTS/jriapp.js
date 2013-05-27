@@ -191,42 +191,42 @@ var RIAPP;
             }
             return Array.isArray(o);
         };
-        baseUtils.format = function format(format) {
+        baseUtils.format = function format(format_str) {
             var args = [];
             for (var _i = 0; _i < (arguments.length - 1); _i++) {
                 args[_i] = arguments[_i + 1];
             }
             var result = '';
             for(var i = 0; ; ) {
-                var open = format.indexOf('{', i);
-                var close = format.indexOf('}', i);
+                var open = format_str.indexOf('{', i);
+                var close = format_str.indexOf('}', i);
                 if((open < 0) && (close < 0)) {
-                    result += format.slice(i);
+                    result += format_str.slice(i);
                     break;
                 }
                 if((close > 0) && ((close < open) || (open < 0))) {
-                    if(format.charAt(close + 1) !== '}') {
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_STRING_FORMAT_INVALID, format));
+                    if(format_str.charAt(close + 1) !== '}') {
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_STRING_FORMAT_INVALID, format_str));
                     }
-                    result += format.slice(i, close + 1);
+                    result += format_str.slice(i, close + 1);
                     i = close + 2;
                     continue;
                 }
-                result += format.slice(i, open);
+                result += format_str.slice(i, open);
                 i = open + 1;
-                if(format.charAt(i) === '{') {
+                if(format_str.charAt(i) === '{') {
                     result += '{';
                     i++;
                     continue;
                 }
                 if(close < 0) {
-                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_STRING_FORMAT_INVALID, format));
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_STRING_FORMAT_INVALID, format_str));
                 }
-                var brace = format.substring(i, close);
+                var brace = format_str.substring(i, close);
                 var colonIndex = brace.indexOf(':');
                 var argNumber = parseInt((colonIndex < 0) ? brace : brace.substring(0, colonIndex), 10);
                 if(isNaN(argNumber)) {
-                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_STRING_FORMAT_INVALID, format));
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_STRING_FORMAT_INVALID, format_str));
                 }
                 var argFormat = (colonIndex < 0) ? '' : brace.substring(colonIndex + 1);
                 var arg = args[argNumber];
