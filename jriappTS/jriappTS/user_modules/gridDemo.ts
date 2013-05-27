@@ -522,7 +522,8 @@ module RIAPP
 
                 upload.onerror = function (e) {
                     self.fileInfo = null;
-                    self._onError(new Error('File upload error'), self);
+                    self._progressDiv.hide();
+                    self._onError(new Error('File uploading error'), self);
                 };
 
                 xhr.onreadystatechange = function (e) {
