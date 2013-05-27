@@ -61,6 +61,8 @@ the same applies for the multyline data content. Now the name and the options fo
 The rest of the framework's behavior and implementation is still the same as in previous javascript version.
 You can use the docs from there to understand how the framework works and how to use it.
 
+After minification jriapp.js has size about 290 KB. But it can be further gzipped, for it to reach the size of about 65 KB.
+In my real world applications i use ASP.NET MVC 4 bundling feature. For desktop applications it will suffice.
 
 You are welcome to use it in your applications.
 
