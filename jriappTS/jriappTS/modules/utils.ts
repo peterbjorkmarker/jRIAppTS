@@ -340,6 +340,8 @@ module RIAPP {
                         return valueUtils.dateToValue(v, dcnv, stz);
                     else if (Checks.isArray(v))
                         return JSON.stringify(v);
+                    else if (Checks.isString(v))
+                        return v;
                     else
                         return JSON.stringify(v);
                 },
