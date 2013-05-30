@@ -20,7 +20,7 @@ namespace RIAPP.DataService
         #region private members
         private static StaSynchronizationContext _synchronizer = new StaSynchronizationContext();
         private static MetadataCache _metadataCache = new MetadataCache();
-        private static ConcurrentDictionary<Type, List<MethodDescription>> _tInvokesInfo = new ConcurrentDictionary<Type, List<MethodDescription>>();
+        private static ConcurrentDictionary<Type, MethodsList> _tInvokesInfo = new ConcurrentDictionary<Type, MethodsList>();
         
         private ServiceMetadata _serviceMetadata;
         private ChangeSet _currentChangeSet;
@@ -94,9 +94,9 @@ namespace RIAPP.DataService
 
         protected IEnumerable<Row> CreateRows(DbSetInfo dbSetInfo, IEnumerable<object> dataSource, int rowCount)
         {
-            var fields = dbSetInfo.fieldInfos.Where(f => f._isIncludeInResult).OrderBy(f => f._ordinal).ToArray();
+            var fields = dbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).ToArray();
             int fieldsCnt = fields.Length;
-            FieldInfo[] pkInfos = DataHelper.GetPKFieldInfos(dbSetInfo);
+            FieldInfo[] pkInfos = dbSetInfo.GetPKFieldInfos();
             Row[] rows = new Row[rowCount];
 
             int counter = 0;
@@ -189,7 +189,7 @@ namespace RIAPP.DataService
 
             //create temporary result without rows
             //fills rows at the end of the method
-            IncludedResult current = new IncludedResult { dbSetName = nextDbSetInfo.dbSetName, rows = new Row[0], names = nextDbSetInfo.fieldInfos.Where(f => f._isIncludeInResult).OrderBy(f => f._ordinal).Select(fi => fi.fieldName) };
+            IncludedResult current = new IncludedResult { dbSetName = nextDbSetInfo.dbSetName, rows = new Row[0], names = nextDbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).Select(fi => fi.fieldName) };
             visited.Add(nextDbSetInfo.dbSetName + "." + propertyName, current);
 
             if (nextParts.Length>0)
@@ -197,9 +197,9 @@ namespace RIAPP.DataService
 
             //map rows by PK
             Dictionary<string, Row> rows = new Dictionary<string, Row>(rowCount);
-            var fields = nextDbSetInfo.fieldInfos.Where(f => f._isIncludeInResult).OrderBy(f => f._ordinal).ToArray();
+            var fields = nextDbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).ToArray();
             int fieldCnt = fields.Length;
-            FieldInfo[] pkInfos = DataHelper.GetPKFieldInfos(nextDbSetInfo);
+            FieldInfo[] pkInfos = nextDbSetInfo.GetPKFieldInfos();
             int counter = 0;
             foreach (object entity in resultEntities)
             {
@@ -354,12 +354,12 @@ namespace RIAPP.DataService
         /// and generates from this methods their invocation method descriptions 
         /// </summary>
         /// <returns></returns>
-        private static List<MethodDescription> GetMethodDescriptions(Type thisType)
+        private static MethodsList GetMethodDescriptions(Type thisType)
         {
-             List<MethodDescription> res;
+             MethodsList res = null;
              if (BaseDomainService._tInvokesInfo.TryGetValue(thisType, out res))
                 return res;
-             res = new List<MethodDescription>();
+             res = new MethodsList();
              var methList = thisType.GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public).Select(m => new { method = m, isQuery = m.IsDefined(typeof(QueryAttribute), false), isInvoke = m.IsDefined(typeof(InvokeAttribute), false) }).Where(m=>(m.isInvoke || m.isQuery)).ToArray();
              Array.ForEach(methList,(info) => {
                  res.Add(MethodDescription.FromMethodInfo(info.method, info.isQuery));
@@ -378,7 +378,7 @@ namespace RIAPP.DataService
             {
                 FieldInfo finfo = flds[fv.fieldName];
            
-                if (!finfo._isIncludeInResult)
+                if (!finfo.isIncludeInResult())
                     continue;
                 if (isOriginal){
                     if ((fv.flags & ValueFlags.Setted) == ValueFlags.Setted)
@@ -460,7 +460,7 @@ namespace RIAPP.DataService
             values.ForEach((fv) =>
             {
                 FieldInfo finfo = fields[fv.fieldName];
-                if (!finfo._isIncludeInResult)
+                if (!finfo.isIncludeInResult())
                     return;
                 fv.val = DataHelper.GetFieldValueAsString(entity, finfo.fieldName);
                 fv.flags = fv.flags | ValueFlags.Refreshed;
@@ -491,7 +491,7 @@ namespace RIAPP.DataService
             rowInfo.values.ForEach((fv) =>
             {
                 FieldInfo finfo = fields[fv.fieldName];
-                if (!finfo._isIncludeInResult)
+                if (!finfo.isIncludeInResult())
                     return;
                 string newVal;
                 if (isEntityValueChanged(rowInfo, finfo.fieldName, out newVal))
@@ -606,7 +606,7 @@ namespace RIAPP.DataService
 
             foreach (var fieldInfo in dbSetInfo.fieldInfos)
             {
-                if (!fieldInfo._isIncludeInResult)
+                if (!fieldInfo.isIncludeInResult())
                     continue;
                 string value = DataHelper.GetFieldValueAsString(rowInfo.changeState.Entity, fieldInfo.fieldName);
                 if (rowInfo.changeType == ChangeType.Added)
@@ -760,7 +760,7 @@ namespace RIAPP.DataService
                 pageIndex = getInfo.pageIndex,
                 pageCount = getInfo.pageCount,
                 dbSetName = getInfo.dbSetName,
-                names = getInfo.dbSetInfo.fieldInfos.Where(f => f._isIncludeInResult).OrderBy(f => f._ordinal).Select(fi => fi.fieldName),
+                names = getInfo.dbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).Select(fi => fi.fieldName),
                 totalCount = totalCount,
                 extraInfo = queryResult.extraInfo,
                 rows = rows,

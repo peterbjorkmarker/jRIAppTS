@@ -8,7 +8,7 @@ namespace RIAPP.DataService
     {
         public DbSet()
         {
-            this.rows = new List<RowInfo>();
+            this.rows = new RowsList();
         }
 
         [DataMember]
@@ -19,7 +19,7 @@ namespace RIAPP.DataService
         }
 
         [DataMember]
-        public List<RowInfo> rows
+        public RowsList rows
         {
             get;
             set;
@@ -32,12 +32,12 @@ namespace RIAPP.DataService
     {
         public ChangeSet()
         {
-            this.dbSets = new List<DbSet>();
-            this.trackAssocs = new List<TrackAssoc>();
+            this.dbSets = new DbSetList();
+            this.trackAssocs = new TrackAssocList();
         }
 
         [DataMember]
-        public List<DbSet> dbSets
+        public DbSetList dbSets
         {
             get;
             set;
@@ -51,7 +51,7 @@ namespace RIAPP.DataService
         }
 
         [DataMember]
-        public List<TrackAssoc> trackAssocs
+        public TrackAssocList trackAssocs
         {
             get;
             set;

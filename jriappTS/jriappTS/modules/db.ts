@@ -78,11 +78,19 @@ module RIAPP {
             };
 
             export interface ICachedPage { items: Entity[]; pageIndex: number; }
+            export interface IQueryParamInfo {
+                dataType: number;
+                dateConversion: number;
+                isArray: bool;
+                isNullable: bool;
+                name: string;
+                ordinal: number;
+            }
             export interface IQueryInfo {
                 isQuery: bool;
                 methodName: string;
                 methodResult: bool;
-                parameters: { dataType: number; dateConversion: number; isArray: bool; isNullable: bool; name: string; ordinal: number; }[];
+                parameters: IQueryParamInfo[];
             }
             export interface IFilterInfo{ filterItems: { fieldName: string; kind: number; values: any[]; }[]; };
             export interface ISortInfo { sortItems: { fieldName: string; sortOrder: number; }[]; };
@@ -1856,13 +1864,13 @@ module RIAPP {
                 _getMethodParams(methodInfo: IQueryInfo, args: { [paramName: string]: any; }):IMethodInvokeInfo {
                     var self = this, methodName: string = methodInfo.methodName,
                         data: IMethodInvokeInfo = { methodName: methodName, paramInfo: { parameters: [] } };
-                    var i, pinfos = methodInfo.parameters, len = pinfos.length, pinfo, val, value;
+                    var i, parameterInfos = methodInfo.parameters, len = parameterInfos.length, pinfo: IQueryParamInfo, val, value;
                     if (!args)
                         args = {};
                     for (i = 0; i < len; i += 1) {
-                        pinfo = pinfos[i];
+                        pinfo = parameterInfos[i];
                         val = args[pinfo.name];
-                        if (!pinfo.isNullable && !pinfo.isArray && pinfo.dataType !== consts.DATA_TYPE.String && utils.check.isNt(val)) {
+                        if (!pinfo.isNullable && !pinfo.isArray && !(pinfo.dataType == consts.DATA_TYPE.String || pinfo.dataType == consts.DATA_TYPE.Binary) && utils.check.isNt(val)) {
                             throw new Error(utils.format(RIAPP.ERRS.ERR_SVC_METH_PARAM_INVALID, pinfo.name, val, methodInfo.methodName));
                         }
                         if (utils.check.isFunction(val)) {
@@ -1872,12 +1880,17 @@ module RIAPP {
                             val = [val];
                         }
                         value = null;
-                        if (utils.check.isArray(val)) {
-                            value = [];
-                            val.forEach(function (v) {
-                                value.push(valueUtils.stringifyValue(v, pinfo.dateConversion, self._serverTimezone));
-                            });
-                            value = JSON.stringify(value);
+                        //byte arrays are optimized for serialization
+                        if (pinfo.dataType == consts.DATA_TYPE.Binary && utils.check.isArray(val)) {
+                            value = JSON.stringify(val);
+                        }
+                        else if (utils.check.isArray(val)) {
+                            var arr = new Array(val.length);
+                            for (var k = 0; k < val.length; k += 1) {
+                                //first convert all values to string
+                                arr[k] = valueUtils.stringifyValue(val[k], pinfo.dateConversion, self._serverTimezone);
+                            }
+                            value = JSON.stringify(arr);
                         }
                         else
                             value = valueUtils.stringifyValue(val, pinfo.dateConversion, self._serverTimezone);

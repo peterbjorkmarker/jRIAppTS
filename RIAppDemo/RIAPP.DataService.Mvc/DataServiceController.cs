@@ -47,11 +47,10 @@ namespace RIAPP.DataService.Mvc
             return Json(info);
         }
 
-        [HttpPost]
         public ActionResult GetMetadata()
         {
             var info = this.DomainService.ServiceGetMetadata();
-            return Json(info);
+            return Json(info, JsonRequestBehavior.AllowGet);
         }
 
         [HttpPost]

@@ -15,9 +15,9 @@ namespace RIAPP.DataService
     [DataContract]
     public partial class MetadataInfo
     {
-        private List<DbSetInfo> _dbSets = new List<DbSetInfo>();
-        private List<Association> _associations = new List<Association>();
-        private List<MethodDescription> _svcMethods = new List<MethodDescription>();
+        private DBSetList _dbSets = new DBSetList();
+        private AssocList _associations = new AssocList();
+        private MethodsList _svcMethods = new MethodsList();
        
         public MetadataInfo()
         {
@@ -25,7 +25,7 @@ namespace RIAPP.DataService
         }
 
         [DataMember]
-        public List<DbSetInfo> dbSets
+        public DBSetList dbSets
         {
             get
             {
@@ -38,7 +38,7 @@ namespace RIAPP.DataService
         }
 
         [DataMember]
-        public List<Association> associations
+        public AssocList associations
         {
             get
             {
@@ -51,7 +51,7 @@ namespace RIAPP.DataService
         }
 
         [DataMember]
-        public List<MethodDescription> methods
+        public MethodsList methods
         {
             get
             {

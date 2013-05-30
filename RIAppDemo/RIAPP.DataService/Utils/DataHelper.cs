@@ -85,8 +85,13 @@ namespace RIAPP.DataService.Utils
 
         public static string DateToValue(DateTime dt)
         {
-            int fff = dt.Millisecond;
-            string v = string.Format("{0}&{1}", dt.ToString("yyyy&M&d&H&m&s"), fff);
+            string v = dt.ToString("yyyy&M&d&H&m&s&FFF");
+            return v;
+        }
+
+        public static string DateOffsetToValue(DateTimeOffset dtoff)
+        {
+            string v = dtoff.DateTime.ToString("yyyy&M&d&H&m&s&FFF");
             return v;
         }
 
@@ -207,18 +212,8 @@ namespace RIAPP.DataService.Utils
                     .MakeGenericMethod(paramType.GetElementType())
                     .Invoke(null, new object[] { list });
             }
-            return DataHelper.ConvertToTyped(paramType, dataType, pinfo.dateConversion, val);
-        }
-
-   
-        public static FieldInfo[] GetPKFieldInfos(DbSetInfo dbSetInfo)
-        {
-            return dbSetInfo.fieldInfos.Where(fi => fi.isPrimaryKey > 0).OrderBy(fi => fi.isPrimaryKey).ToArray();
-        }
-
-        public static FieldInfo GetRowTimeStampFieldInfo(DbSetInfo dbSetInfo)
-        {
-            return dbSetInfo.fieldInfos.Where(fi => fi.isRowTimeStamp == true).FirstOrDefault();
+            else
+                return DataHelper.ConvertToTyped(paramType, dataType, pinfo.dateConversion, val);
         }
 
     }

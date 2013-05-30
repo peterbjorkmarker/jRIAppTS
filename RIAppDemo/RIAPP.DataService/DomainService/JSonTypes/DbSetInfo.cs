@@ -6,16 +6,13 @@ using System.Security.Principal;
 using System.Web.Script.Serialization;
 using System.Reflection;
 using RIAPP.DataService.Utils;
-using RIAPP.DataService.Security;
+using System.ComponentModel;
+
 
 namespace RIAPP.DataService
 {
-    public class FieldInfoList : List<FieldInfo>
-    {
-    }
-
     [DataContract]
-    public partial class DbSetInfo
+    public class DbSetInfo
     {
        
         #region EqualityComparers
@@ -55,13 +52,13 @@ namespace RIAPP.DataService
         #endregion
 
         private FieldInfoList _fieldInfos = new FieldInfoList();
-        private Dictionary<string, FieldInfo> _fieldsByNames;
-        private Dictionary<int, FieldInfo> _fieldsByOrdinal;
-        private MethodInfo _validateDataMethod;
-        private MethodInfo _deleteDataMethod;
-        private MethodInfo _insertDataMethod;
-        private MethodInfo _updateDataMethod;
-        private MethodInfo _refreshDataMethod;
+        internal Dictionary<string, FieldInfo> _fieldsByNames;
+        internal Dictionary<int, FieldInfo> _fieldsByOrdinal;
+        internal MethodInfo _validateDataMethod;
+        internal MethodInfo _deleteDataMethod;
+        internal MethodInfo _insertDataMethod;
+        internal MethodInfo _updateDataMethod;
+        internal MethodInfo _refreshDataMethod;
 
         public DbSetInfo()
         {
@@ -70,17 +67,14 @@ namespace RIAPP.DataService
             this.isTrackChanges = false;
             this.FetchSize = 0;
         }
-
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         [DataMember]
         public FieldInfoList fieldInfos
         {
             get
             {
                 return _fieldInfos;
-            }
-            set
-            {
-                this._fieldInfos = value;
             }
         }
 
@@ -110,6 +104,7 @@ namespace RIAPP.DataService
 
      
         #region NonSerializable properties
+        [DefaultValue(0)]
         [ScriptIgnore]
         [IgnoreDataMember]
         public int FetchSize
@@ -167,6 +162,7 @@ namespace RIAPP.DataService
             set;
         }
 
+        [DefaultValue(false)]
         [ScriptIgnore]
         [IgnoreDataMember]
         public bool isTrackChanges
@@ -176,144 +172,5 @@ namespace RIAPP.DataService
         }
         #endregion
 
-        #region Utility Methods
-        internal DbSetPermit CalculatePermissions(IAuthorizer authorizer)
-        {
-            return SecurityHelper.GetDbSetPermissions(this,authorizer);
-        }
-
-        internal MethodInfo getOperationMethodInfo(string oper)
-        {
-            switch (oper.ToLowerInvariant())
-            {
-                case OperationNames.REFRESH:
-                    return this._refreshDataMethod;
-                case OperationNames.CREATE:
-                    return this._insertDataMethod;
-                case OperationNames.UPDATE:
-                    return this._updateDataMethod;
-                case OperationNames.DELETE:
-                    return this._deleteDataMethod;
-                case OperationNames.VALIDATE:
-                    return this._validateDataMethod;
-                default:
-                    throw new DomainServiceException(string.Format("Invalid Operation name {0}", oper));
-            }
-        }
-
-        /// <summary>
-        /// typically methods names use templated scheme like: insert{0} or delete{0}
-        /// where {0} later is replaced by dbSet's name, that will turn into something like: insertCustomer or deleteCustomer 
-        /// </summary>
-        /// <param name="methodNameTemplate"></param>
-        /// <param name="dbSetName"></param>
-        /// <returns></returns>
-        private static string GenerateMethodName(string methodNameTemplate, string dbSetName)
-        {
-            try
-            {
-                return string.Format(methodNameTemplate, dbSetName);
-            }
-            catch
-            {
-                //return as is
-                return methodNameTemplate;
-            }
-        }
-
-        private string getOperationMethodName(string oper)
-        {
-            switch (oper.ToLowerInvariant())
-            {
-                case OperationNames.REFRESH:
-                    if (string.IsNullOrWhiteSpace(this.refreshDataMethod))
-                        return null;
-                    return GenerateMethodName(this.refreshDataMethod, this.dbSetName);
-                case OperationNames.CREATE:
-                    if (string.IsNullOrWhiteSpace(this.insertDataMethod))
-                        return null;
-                    return GenerateMethodName(this.insertDataMethod, this.dbSetName);
-                case OperationNames.UPDATE:
-                    if (string.IsNullOrWhiteSpace(this.updateDataMethod))
-                        return null;
-                    return GenerateMethodName(this.updateDataMethod, this.dbSetName);
-                case OperationNames.DELETE:
-                    if (string.IsNullOrWhiteSpace(this.deleteDataMethod))
-                        return null;
-                    return GenerateMethodName(this.deleteDataMethod, this.dbSetName);
-                case OperationNames.VALIDATE:
-                    if (string.IsNullOrWhiteSpace(this.validateDataMethod))
-                        return null;
-                    return GenerateMethodName(this.validateDataMethod, this.dbSetName);
-                default:
-                    throw new DomainServiceException(string.Format("Invalid Operation name {0}", oper));
-            }
-        }
-
-        public DbSetInfo ShallowCopy()
-        {
-            return (DbSetInfo)this.MemberwiseClone();
-        }
-
-        public Dictionary<string, FieldInfo> GetFieldByNames()
-        {
-            System.Threading.LazyInitializer.EnsureInitialized<Dictionary<string, FieldInfo>>(ref this._fieldsByNames, () => this.fieldInfos.ToDictionary(f => f.fieldName));
-            return _fieldsByNames;
-        }
-
-        public Dictionary<int, FieldInfo> GetFieldByOrdinal()
-        {
-            System.Threading.LazyInitializer.EnsureInitialized<Dictionary<int, FieldInfo>>(ref this._fieldsByOrdinal, () => {
-                int i = 0;
-                for (i = 0; i < this.fieldInfos.Count(); ++i)
-                {
-                    this.fieldInfos[i]._ordinal = i;
-                }
-                return this.fieldInfos.ToDictionary(f => f._ordinal);
-            });
-            return _fieldsByOrdinal;
-        }
-
-        private void InitMethods(Type serviceType) {
-            System.Reflection.FieldInfo[] fields = typeof(OperationNames).GetFields(BindingFlags.Public | BindingFlags.Static);
-            Array.ForEach(fields, (fl) => {
-                if (!fl.IsSpecialName && fl.IsLiteral && !fl.IsInitOnly) 
-                {
-                    string  operName = fl.GetValue(null).ToString();
-                    string methodName = this.getOperationMethodName(operName);
-                    MethodInfo minfo = DataHelper.GetMethodInfo(serviceType, methodName);
-                    if (minfo != null) {
-                        switch (operName)
-                        {
-                            case OperationNames.REFRESH:
-                                this._refreshDataMethod = minfo;
-                                break;
-                            case OperationNames.CREATE:
-                                this._insertDataMethod = minfo;
-                                break;
-                            case OperationNames.UPDATE:
-                                this._updateDataMethod = minfo;
-                                break;
-                            case OperationNames.DELETE:
-                                this._deleteDataMethod = minfo;
-                                break;
-                            case OperationNames.VALIDATE:
-                                this._validateDataMethod = minfo;
-                                break;
-                            default:
-                                throw new DomainServiceException(string.Format("Invalid Operation name {0}", operName));
-                        }
-                    }
-                }
-            });
-        }
-
-        public void Initialize(Type serviceType)
-        {
-            var fbo = this.GetFieldByOrdinal();
-            var fbn = this.GetFieldByNames();
-            this.InitMethods(serviceType);
-        }
-        #endregion
     }
 }

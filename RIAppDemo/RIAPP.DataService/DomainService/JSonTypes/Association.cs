@@ -25,10 +25,7 @@ namespace RIAPP.DataService
         public string childField { get; set; }
     }
 
-    public class FieldRelList : List<FieldRel>
-    {
-    }
-
+  
     [DataContract]
     public class Association
     {
@@ -64,16 +61,13 @@ namespace RIAPP.DataService
         [DataMember]
         public DeleteAction onDeleteAction { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         [DataMember]
         public FieldRelList fieldRels
         {
             get
             {
                 return _fieldRelations;
-            }
-            set
-            {
-                this._fieldRelations = value;
             }
         }
     }

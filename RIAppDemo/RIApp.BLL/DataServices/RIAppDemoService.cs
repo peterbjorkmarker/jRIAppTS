@@ -357,7 +357,7 @@ namespace RIAppDemo.BLL.DataServices
         }
         
         [Invoke()]
-        public string TestInvoke(int[] param1, string param2)
+        public string TestInvoke(byte[] param1, string param2)
         {
             StringBuilder sb = new StringBuilder();
          

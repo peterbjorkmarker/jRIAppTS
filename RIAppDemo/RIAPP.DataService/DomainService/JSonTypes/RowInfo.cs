@@ -13,12 +13,12 @@ namespace RIAPP.DataService
         public RowInfo()
         {
             this.changeType = ChangeType.None;
-            this.values = new List<ValueChange>();
+            this.values = new ValuesList();
             serverKey = string.Empty;
         }
 
         [DataMember]
-        public List<ValueChange> values
+        public ValuesList values
         {
             get;
             set;
@@ -99,7 +99,7 @@ namespace RIAPP.DataService
         public object[] GetPKValues()
         {
             Type entityType = this.dbSetInfo.EntityType;
-            FieldInfo[] finfos = DataHelper.GetPKFieldInfos(this.dbSetInfo);
+            FieldInfo[] finfos = this.dbSetInfo.GetPKFieldInfos();
             object[] result = new object[finfos.Length];
             for (int i = 0; i < finfos.Length; ++i)
             {
@@ -111,7 +111,7 @@ namespace RIAPP.DataService
 
         public string GetRowKeyAsString(DbSetInfo dbSetInfo)
         {
-            FieldInfo[] finfos =  DataHelper.GetPKFieldInfos(dbSetInfo);
+            FieldInfo[] finfos = dbSetInfo.GetPKFieldInfos();
             string[] vals = new string[finfos.Length];
             for (int i = 0; i < finfos.Length; ++i)
             {

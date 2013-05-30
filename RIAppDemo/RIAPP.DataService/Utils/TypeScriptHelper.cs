@@ -415,6 +415,9 @@ namespace RIAPP.DataService.Utils
             string fieldType = "any";
             switch (dataType)
             {
+                case DataType.Binary:
+                    fieldType = "number[]";
+                    break;
                 case DataType.Bool:
                     fieldType = "bool";
                     break;
@@ -429,7 +432,6 @@ namespace RIAPP.DataService.Utils
                     fieldType = "number";
                     break;
                 case DataType.Guid:
-                case DataType.Binary:
                 case DataType.String:
                     fieldType = "string";
                     break;

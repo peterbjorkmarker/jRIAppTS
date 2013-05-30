@@ -184,7 +184,7 @@ namespace RIAPP.DataService.Utils
         public static string GetWherePKPredicate(RowInfo rowInfo)
         {
             DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
-            FieldInfo[] pkFieldsInfo = DataHelper.GetPKFieldInfos(dbSetInfo);
+            FieldInfo[] pkFieldsInfo = dbSetInfo.GetPKFieldInfos();
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < pkFieldsInfo.Length; ++i)
             {

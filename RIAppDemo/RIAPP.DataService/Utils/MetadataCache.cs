@@ -32,7 +32,7 @@ namespace RIAPP.DataService.Utils
 
         public DbSetsDictionary dbSets { get { return _dbSets; } }
         public AssociationsDictionary associations { get { return _associations; } }
-        public List<MethodDescription> methodDescriptions { get; set; }
+        public MethodsList methodDescriptions { get; set; }
       }
 
 

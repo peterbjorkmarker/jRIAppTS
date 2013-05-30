@@ -15,7 +15,7 @@ namespace RIAPP.DataService
     [DataContract]
     public partial class PermissionsInfo
     {
-        private List<DbSetPermit> _permissions = new List<DbSetPermit>();
+        private PermissionList _permissions = new PermissionList();
        
         public PermissionsInfo()
         {
@@ -23,7 +23,7 @@ namespace RIAPP.DataService
         }
 
         [DataMember]
-        public List<DbSetPermit> permissions
+        public PermissionList permissions
         {
             get
             {

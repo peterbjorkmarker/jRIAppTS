@@ -171,7 +171,6 @@ module RIAPP {
                         case DATA_TYPE.None:
                             break;
                         case DATA_TYPE.Guid:
-                        case DATA_TYPE.Binary:
                         case DATA_TYPE.String:
                             if (!utils.check.isString(val)) {
                                 throw new Error(utils.format(ERRS.ERR_FIELD_WRONG_TYPE, val, 'String'));
@@ -186,6 +185,13 @@ module RIAPP {
                                     throw new Error(utils.format(ERRS.ERR_FIELD_REGEX, val));
                                 }
                             }
+                            break;
+                        case DATA_TYPE.Binary:
+                            if (!utils.check.isArray(val)) {
+                                throw new Error(utils.format(ERRS.ERR_FIELD_WRONG_TYPE, val, 'Array'));
+                            }
+                            if (fieldInfo.maxLength > 0 && val.length > fieldInfo.maxLength)
+                                throw new Error(utils.format(ERRS.ERR_FIELD_MAXLEN, fieldInfo.maxLength));
                             break;
                         case DATA_TYPE.Bool:
                             if (!utils.check.isBoolean(val))
@@ -414,7 +420,8 @@ module RIAPP {
                     this._isLoading = false;
                     this._EditingItem = null;
                     this._perms = { canAddRow: true, canEditRow: true, canDeleteRow: true, canRefreshRow: false };
-                    this._totalCount = 0; //includes stored on server
+                    //includes stored on server
+                    this._totalCount = 0; 
                     this._pageIndex = 0;
                     this._items = [];
                     this._itemsByKey = {};

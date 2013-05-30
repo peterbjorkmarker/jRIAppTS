@@ -56,16 +56,60 @@ namespace RIAPP.DataService.Utils
                 return typedVal;
         }
 
-        protected virtual object ConvertToBinary(string value,Type propType)
+        protected virtual object ConvertToBinary(string value, Type propType)
         {
             if (value == null)
                 return null;
-            byte[] bytes = Convert.FromBase64String(value);
+            StringBuilder sb = new StringBuilder(value);
+            sb.Remove(sb.Length - 1, 1); //remove ]
+            sb.Remove(0, 1); //remove [
+            int cnt = sb.Length, bytesCnt = cnt>0?1:0;
+
+            for (int i = 0; i < cnt; ++i)
+            {
+                if (sb[i] == ',')
+                {
+                    bytesCnt += 1;
+                }
+            }
+
+            byte[] bytes = new byte[bytesCnt];
+            bytesCnt = 0; //calculate again
+            string val ="";
+            for(int i=0;i<cnt; ++i){
+                if (sb[i] == ','){
+                    bytes[bytesCnt] = Byte.Parse(val);
+                    bytesCnt += 1;
+                    val="";
+                }
+                else{
+                    if (sb[i] != '"' && sb[i] != ' ')
+                        val+=sb[i];
+                }
+            }
+            if (val != "")
+            {
+                bytes[bytesCnt] = Byte.Parse(val);
+                bytesCnt += 1;
+                val = "";
+            }
+
+            byte[] bytes2;
+            if (bytesCnt < bytes.Length)
+            {
+                bytes2 = new byte[bytesCnt];
+                Buffer.BlockCopy(bytes, 0, bytes2, 0, bytesCnt);
+            }
+            else
+                bytes2 = bytes;
 
             if (propType == typeof(byte[]))
-                return bytes;
+                return bytes2;
             else
-                return Activator.CreateInstance(propType, bytes);
+            {
+                //new System.Data.Linq.Binary(bytes2);
+                return Activator.CreateInstance(propType, bytes2);
+            }
         }
 
         protected virtual object ConvertTo(string value, bool IsNullableType, Type propType, Type propMainType)
@@ -82,12 +126,20 @@ namespace RIAPP.DataService.Utils
                 return typedVal;
         }
 
-        protected virtual string ConvertFromGuid(object value)
+        protected virtual string GuidToString(object value)
         {
             return value.ToString();
         }
 
-        protected virtual string ConvertFromDate(object value, bool IsNullable)
+        protected virtual string DateOffsetToString(object value, bool IsNullable)
+        {
+            if (IsNullable)
+                return DataHelper.DateOffsetToValue(((Nullable<DateTimeOffset>)value).Value);
+            else
+                return DataHelper.DateOffsetToValue((DateTimeOffset)value);
+        }
+
+        protected virtual string DateToString(object value, bool IsNullable)
         {
             if (IsNullable)
                 return DataHelper.DateToValue(((Nullable<DateTime>)value).Value);
@@ -95,14 +147,32 @@ namespace RIAPP.DataService.Utils
                 return DataHelper.DateToValue((DateTime)value);
         }
 
-        protected virtual string ConvertFromBool(object value)
+        protected virtual string BoolToString(object value)
         {
             return value.ToString().ToLowerInvariant();
         }
 
-        protected virtual string ConvertFromBytes(object value)
+        protected virtual string BytesToString(object value)
         {
-            return Convert.ToBase64String((byte[])value);
+            byte[] bytes = (byte[])value;
+            StringBuilder sb = new StringBuilder(bytes.Length * 4);
+            sb.Append("[");
+            for (int i = 0; i < bytes.Length; ++i)
+            {
+                if (i > 0)
+                    sb.Append(",");
+                sb.Append(bytes[i]);
+            }
+            sb.Append("]");
+            return sb.ToString();
+        }
+
+        protected virtual string LinqBinaryToString(object value)
+        {
+            Object res = value.GetType().GetMethod("ToArray").Invoke(value, null);
+            if (res == null)
+                return null;
+            return BytesToString(res);
         }
 
         public virtual object ConvertToTyped(Type propType, DataType dataType, DateConversion dateConversion, string value)
@@ -124,6 +194,10 @@ namespace RIAPP.DataService.Utils
                 case DataType.Date:
                 case DataType.Time:
                     result = this.ConvertToDate(value, IsNullableType, dateConversion);
+                    if (result != null && propMainType == typeof(DateTimeOffset))
+                    {
+                        result = new DateTimeOffset((DateTime)result);
+                    }
                     break;
                 case DataType.Guid:
                     result = this.ConvertToGuid(value, IsNullableType);
@@ -167,19 +241,23 @@ namespace RIAPP.DataService.Utils
 
             if (realType == typeof(Guid))
             {
-                return this.ConvertFromGuid(value);
+                return this.GuidToString(value);
             }
             else if (realType == typeof(DateTime))
             {
-                return this.ConvertFromDate(value, isNullable);
+                return this.DateToString(value, isNullable);
+            }
+            else if (realType == typeof(DateTimeOffset))
+            {
+                return this.DateOffsetToString(value, isNullable);
             }
             else if (realType == typeof(Boolean))
             {
-                return this.ConvertFromBool(value);
+                return this.BoolToString(value);
             }
             else if (value is byte[])
             {
-                return this.ConvertFromBytes(value);
+                return this.BytesToString(value);
             }
             else
             {
@@ -189,7 +267,7 @@ namespace RIAPP.DataService.Utils
                 }
                 else if (realType.FullName == "System.Data.Linq.Binary")
                 {
-                    return value.ToString().Trim('"');
+                    return LinqBinaryToString(value);
                 }
                 else
                 {
@@ -216,6 +294,16 @@ namespace RIAPP.DataService.Utils
 
             switch (name)
             {
+                case "System.Byte":
+                    if (isArray)
+                    {
+                        isArray = false; //Binary is data type separate from array (although it is array by its nature)
+                        return DataType.Binary;
+                    }
+                    else
+                        return DataType.Integer;
+                case "System.Data.Linq.Binary":
+                    return DataType.Binary;
                 case "System.String":
                     return DataType.String;
                 case "System.Int16":
@@ -224,7 +312,6 @@ namespace RIAPP.DataService.Utils
                 case "System.UInt16":
                 case "System.UInt32":
                 case "System.UInt64":
-                case "System.Byte":
                     return DataType.Integer;
                 case "System.Decimal":
                     return DataType.Decimal;
@@ -232,6 +319,7 @@ namespace RIAPP.DataService.Utils
                 case "System.Single":
                     return DataType.Float;
                 case "System.DateTime":
+                case "System.DateTimeOffset":
                     return DataType.DateTime;
                 case "System.Boolean":
                     return DataType.Bool;

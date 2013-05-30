@@ -265,7 +265,7 @@ module RIAPP {
                 parseValue(v: string, dataType, dcnv, stz): any;
 
             }
-
+            
             export var valueUtils: IValueUtils = {
                 valueToDate: function (val: string, dtcnv: number, stz: number): Date {
                     if (!val)
@@ -276,7 +276,7 @@ module RIAPP {
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'val', val));
                     }
                     var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), parseInt(parts[3], 10),
-                        parseInt(parts[4], 10), parseInt(parts[5], 10), parseInt(parts[6], 10));
+                        parseInt(parts[4], 10), parseInt(parts[5], 10), (!!parts[6]) ? parseInt(parts[6],10):0);
                     var DATE_CONVERSION = consts.DATE_CONVERSION;
                     var ctz = global.utils.get_timeZoneOffset();
 
@@ -295,7 +295,7 @@ module RIAPP {
                     }
                     return dt;
                 },
-                dateToValue: function (dt: Date, dtcnv: number, stz: number): string {
+                dateToValue: function (dt: Date, dtcnv: number, serverTZ: number): string {
                     if (dt === null)
                         return null;
                     if (!Checks.isDate(dt))
@@ -307,7 +307,7 @@ module RIAPP {
                             break;
                         case DATE_CONVERSION.ServerLocalToClientLocal:
                             dt.setMinutes(dt.getMinutes() + ctz); //LocalToUTC
-                            dt.setMinutes(dt.getMinutes() - stz); //UtcToServer
+                            dt.setMinutes(dt.getMinutes() - serverTZ); //UtcToServer
                             break;
                         case DATE_CONVERSION.UtcToClientLocal:
                             dt.setMinutes(dt.getMinutes() + ctz); //LocalToUTC
@@ -338,8 +338,10 @@ module RIAPP {
                         return null;
                     if (Checks.isDate(v))
                         return valueUtils.dateToValue(v, dcnv, stz);
+                    else if (Checks.isArray(v))
+                        return JSON.stringify(v);
                     else
-                        return '' + v;
+                        return JSON.stringify(v);
                 },
                 parseValue: function (v, dataType, dcnv, stz) {
                     var res = null;
@@ -352,6 +354,7 @@ module RIAPP {
                             res = v;
                             break;
                         case DATA_TYPE.String:
+                        case DATA_TYPE.Guid:
                             res = v;
                             break;
                         case DATA_TYPE.Bool:
@@ -369,9 +372,8 @@ module RIAPP {
                         case DATA_TYPE.Time:
                             res = valueUtils.valueToDate(v, dcnv, stz);
                             break;
-                        case DATA_TYPE.Guid:
                         case DATA_TYPE.Binary:
-                            res = v;
+                            res = JSON.parse(v);
                             break;
                         default:
                             throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dataType', dataType));

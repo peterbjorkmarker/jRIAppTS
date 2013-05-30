@@ -55,6 +55,9 @@
     <Compile Include="DomainService\Security\IAuthorizer.cs" />
     <Compile Include="DomainService\JSonTypes\TrackAssoc.cs" />
     <Compile Include="DomainService\Security\SecurityHelper.cs" />
+    <Compile Include="DomainService\TypedLists.cs" />
+    <Compile Include="Utils\DbSetInfoEx.cs" />
+    <Compile Include="Utils\FieldInfoEx.cs" />
     <Compile Include="Utils\ResourceHelper.cs" />
     <Compile Include="Utils\MetadataCache.cs" />
     <Compile Include="DomainService\Exceptions\ValidationException.cs" />
