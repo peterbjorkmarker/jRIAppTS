@@ -820,7 +820,7 @@ namespace RIAPP.DataService
             ServiceMetadata metadata = this.EnsureMetadataInitialized();
             ChangeSetGraph graph = new ChangeSetGraph(changeSet, metadata);
             graph.Prepare();
-
+           
             foreach (var rowInfo in graph.insertList)
             {
                 this._currentDbSet = changeSet.dbSets.Where(d => d.dbSetName == rowInfo.dbSetInfo.dbSetName).Single();
@@ -923,7 +923,8 @@ namespace RIAPP.DataService
                 else
                     rowInfo.values = null;
             }
-            
+
+     
             //Track changes step
             foreach (var rowInfo in graph.allList)
             {

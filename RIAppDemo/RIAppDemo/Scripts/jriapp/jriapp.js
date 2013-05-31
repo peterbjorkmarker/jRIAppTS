@@ -7469,7 +7469,7 @@ var RIAPP;
                         this._lfScope = null;
                     }
                     if(!!this._el) {
-                        RIAPP.global.$(this._el).remove();
+                        utils.removeNode(this._el);
                         this._el = null;
                     }
                     this._tgt = null;
@@ -8092,7 +8092,7 @@ var RIAPP;
                     return new contentType(this._app, parentEl, options, dctx, isEditing);
                 };
                 ContentFactory.prototype.isExternallyCachable = function (contentType) {
-                    return !!contentType && !!contentType.addOnObjectCreated && !!contentType.addOnObjectNeeded;
+                    return false;
                 };
                 Object.defineProperty(ContentFactory.prototype, "app", {
                     get: function () {
@@ -9580,7 +9580,7 @@ var RIAPP;
                                 }
                             }
                         }
-                        var created_items = rows.map(function (row) {
+                        created_items = rows.map(function (row) {
                             var key = row.key;
                             if(!key) {
                                 throw new Error(RIAPP.ERRS.ERR_KEY_IS_EMPTY);
@@ -12986,7 +12986,10 @@ var RIAPP;
                     this.raiseEvent('object_needed', args1);
                     if(!!args1.object) {
                         this._isListBoxCachedExternally = true;
-                        return args1.object;
+                        this._selectView = args1.object;
+                    }
+                    if(!!this._selectView) {
+                        return this._selectView;
                     }
                     var dataSource = RIAPP.global.parser.resolvePath(this.app, lookUpOptions.dataSource), options = {
                         valuePath: lookUpOptions.valuePath,
@@ -12994,7 +12997,7 @@ var RIAPP;
                     };
                     var el = RIAPP.global.document.createElement('select');
                     el.setAttribute('size', '1');
-                    var selectElView = this._getSelectElView(el, options);
+                    var selectElView = this._createSelectElView(el, options);
                     selectElView.dataSource = dataSource;
                     var args2 = {
                         objectKey: 'selectElView',
@@ -13003,9 +13006,10 @@ var RIAPP;
                     };
                     this.raiseEvent('object_created', args2);
                     this._isListBoxCachedExternally = args2.isCachedExternally;
-                    return selectElView;
+                    this._selectView = selectElView;
+                    return this._selectView;
                 };
-                LookupContent.prototype._getSelectElView = function (el, options) {
+                LookupContent.prototype._createSelectElView = function (el, options) {
                     var elView;
                     elView = this.app._getElView(el);
                     if(!!elView) {
@@ -13015,16 +13019,17 @@ var RIAPP;
                     return elView;
                 };
                 LookupContent.prototype._updateTextValue = function () {
-                    var self = this;
-                    if(!!self._spanView) {
-                        self._spanView.value = self._getLookupText();
-                    }
+                    var spanView = this._getSpanView();
+                    spanView.value = this._getLookupText();
                 };
                 LookupContent.prototype._getLookupText = function () {
                     var listBoxView = this._getSelectView();
                     return listBoxView.listBox.getTextByValue(this.value);
                 };
-                LookupContent.prototype._createSpanView = function () {
+                LookupContent.prototype._getSpanView = function () {
+                    if(!!this._spanView) {
+                        return this._spanView;
+                    }
                     var el = RIAPP.global.document.createElement('span'), displayInfo = this._getDisplayInfo();
                     var spanView = new MOD.baseElView.SpanElView(this.app, el, {
                     });
@@ -13033,7 +13038,8 @@ var RIAPP;
                             spanView.$el.addClass(displayInfo.displayCss);
                         }
                     }
-                    return spanView;
+                    this._spanView = spanView;
+                    return this._spanView;
                 };
                 LookupContent.prototype.update = function () {
                     this._cleanUp();
@@ -13041,26 +13047,22 @@ var RIAPP;
                     this._parentEl.appendChild(this._el);
                 };
                 LookupContent.prototype._createTargetElement = function () {
-                    var el;
+                    var el, selectView, spanView;
                     if(this._isEditing && this._canBeEdited()) {
-                        if(!this._selectView) {
-                            this._selectView = this._getSelectView();
-                        }
-                        this._listBinding = this._bindToList();
-                        el = this._selectView.el;
+                        selectView = this._getSelectView();
+                        this._listBinding = this._bindToList(selectView);
+                        el = selectView.el;
                     } else {
-                        if(!this._spanView) {
-                            this._spanView = this._createSpanView();
-                        }
+                        spanView = this._getSpanView();
                         this._valBinding = this._bindToValue();
-                        el = this._spanView.el;
+                        el = spanView.el;
                     }
                     this._updateCss();
                     return el;
                 };
                 LookupContent.prototype._cleanUp = function () {
                     if(!!this._el) {
-                        RIAPP.global.$(this._el).remove();
+                        utils.removeNode(this._el);
                         this._el = null;
                     }
                     if(!!this._listBinding) {
@@ -13099,12 +13101,12 @@ var RIAPP;
                     };
                     return new MOD.binding.Binding(options);
                 };
-                LookupContent.prototype._bindToList = function () {
+                LookupContent.prototype._bindToList = function (selectView) {
                     if(!this._options.fieldName) {
                         return null;
                     }
                     var options = {
-                        target: this._getSelectView(),
+                        target: selectView,
                         source: this._dctx,
                         targetPath: 'selectedValue',
                         sourcePath: this._options.fieldName,
@@ -13171,6 +13173,9 @@ var RIAPP;
                     return new contentType(this._app, parentEl, options, dctx, isEditing);
                 };
                 ContentFactory.prototype.isExternallyCachable = function (contentType) {
+                    if(LookupContent === contentType) {
+                        return true;
+                    }
                     return this._nextFactory.isExternallyCachable(contentType);
                 };
                 Object.defineProperty(ContentFactory.prototype, "app", {

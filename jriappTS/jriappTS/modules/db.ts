@@ -1273,7 +1273,7 @@ module RIAPP {
                     }, data);
 
                     var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length,
-                        entityType = this._entityType, newItems = [], positions = [], created_items = [], fetchedItems = [],
+                        entityType = this._entityType, newItems = [], positions = [], created_items:Entity[] = [], fetchedItems = [],
                         isPagingEnabled = this.isPagingEnabled, RM = REFRESH_MODE.RefreshCurrent, query = this.query, clearAll = true, dataCache;
 
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
@@ -1290,7 +1290,7 @@ module RIAPP {
                                     dataCache.totalCount = res.totalCount;
                             }
                         }
-                        var created_items = rows.map(function (row) {
+                       created_items = rows.map(function (row) {
                             //row.key already string value generated on server (no need to convert to string)
                             var key = row.key;
                             if (!key)

@@ -74,7 +74,7 @@ namespace RIAPP.DataService.Utils
             {
                 throw new ArgumentException(string.Format(ErrorStrings.ERR_VAL_DATEFORMAT_INVALID,val));
             }
-            DateTime dt = new DateTime(int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]), int.Parse(parts[3]), int.Parse(parts[4]), int.Parse(parts[5]), int.Parse(parts[6]), DateTimeKind.Unspecified);
+            DateTime dt = new DateTime(int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]), int.Parse(parts[3]), int.Parse(parts[4]), int.Parse(parts[5]), String.IsNullOrEmpty(parts[6])?0:int.Parse(parts[6]), DateTimeKind.Unspecified);
             return dt;
         }
 
@@ -85,14 +85,13 @@ namespace RIAPP.DataService.Utils
 
         public static string DateToValue(DateTime dt)
         {
-            string v = dt.ToString("yyyy&M&d&H&m&s&FFF");
+            string v = string.Format("{0}&{1}&{2}&{3}&{4}&{5}&{6}", dt.Year,dt.Month, dt.Day,dt.Hour,dt.Minute,dt.Second,dt.Millisecond);
             return v;
         }
 
         public static string DateOffsetToValue(DateTimeOffset dtoff)
         {
-            string v = dtoff.DateTime.ToString("yyyy&M&d&H&m&s&FFF");
-            return v;
+            return DateToValue(dtoff.DateTime);
         }
 
         public static int GetLocalDateTimezoneOffset(DateTime dt)

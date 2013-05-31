@@ -132,16 +132,16 @@ module RIAPP {
                     }
                     var app = this.grid.app;
                     options.initContentFn = null;
-                    try {
-                        var contentType = app._getContentType(options);
-                        if (app.contentFactory.isExternallyCachable(contentType)) {
-                            options.initContentFn = this._getInitContentFn();
+                        try {
+                            var contentType = app._getContentType(options);
+                            if (app.contentFactory.isExternallyCachable(contentType)) {
+                                options.initContentFn = this._getInitContentFn();
+                            }
+                            this._content = app._getContent(contentType, options, this._div, this.item, this.item.isEditing);
                         }
-                        this._content = app._getContent(contentType, options, this._div, this.item, this.item.isEditing);
-                    }
-                    finally {
-                        delete options.initContentFn;
-                    }
+                        finally {
+                            delete options.initContentFn;
+                        }
                 }
                 _getInitContentFn() {
                     var self = this;

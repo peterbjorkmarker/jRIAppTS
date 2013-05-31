@@ -292,7 +292,7 @@ module RIAPP {
                         this._lfScope = null;
                     }
                     if (!!this._el) {
-                        global.$(this._el).remove();
+                        utils.removeNode(this._el);
                         this._el = null;
                     }
                     this._tgt = null;
@@ -784,7 +784,7 @@ module RIAPP {
                     return new contentType(this._app, parentEl, options, dctx, isEditing);
                 }
                 isExternallyCachable(contentType): bool {
-                    return !!contentType && !!contentType.addOnObjectCreated && !!contentType.addOnObjectNeeded;
+                    return false;
                 }
                 get app() { return this._app; }
             }

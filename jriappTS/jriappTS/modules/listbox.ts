@@ -73,7 +73,7 @@ module RIAPP {
                         key = op.value;
                         data = this._keyMap[key];
                     }
-
+                   
                     if (!data && !!this._selectedItem) {
                         this.selectedItem = null;
                     }
@@ -563,39 +563,44 @@ module RIAPP {
                     this.raiseEvent('object_needed', args1);
                     if (!!args1.object) {
                         this._isListBoxCachedExternally = true;
-                        return args1.object;
+                        this._selectView = args1.object;
                     }
-                    //else proceed creating new selectElView
+                    if (!!this._selectView)
+                        return this._selectView;
+                    //proceed creating new selectElView
                     var dataSource = global.parser.resolvePath(this.app, lookUpOptions.dataSource),
                         options = { valuePath: lookUpOptions.valuePath, textPath: lookUpOptions.textPath };
                     var el = <HTMLSelectElement>global.document.createElement('select');
                     el.setAttribute('size', '1');
-                    var selectElView = this._getSelectElView(el, options);
+                    var selectElView = this._createSelectElView(el, options);
                     selectElView.dataSource = dataSource;
                     var args2 = { objectKey: 'selectElView', object: selectElView, isCachedExternally: false };
                     //this allows to cache listBox externally
                     this.raiseEvent('object_created', args2);
                     this._isListBoxCachedExternally = args2.isCachedExternally;
-                    return selectElView;
+                    this._selectView = selectElView;
+                    return this._selectView;
                 }
-                _getSelectElView(el: HTMLSelectElement, options: ISelectViewOptions): SelectElView {
+                _createSelectElView(el: HTMLSelectElement, options: ISelectViewOptions): SelectElView {
                     var elView;
                     elView = this.app._getElView(el);
-                    if (!!elView) //view already created for this element
+                    if (!!elView)
                         return elView;
                     elView =  new SelectElView(this.app, el, options);
                     return elView;
                 }
                 _updateTextValue() {
-                    var self = this;
-                    if (!!self._spanView)
-                        self._spanView.value = self._getLookupText();
+                    var spanView = this._getSpanView();
+                    spanView.value = this._getLookupText();
                 }
                 _getLookupText() {
                     var listBoxView = this._getSelectView();
                     return listBoxView.listBox.getTextByValue(this.value);
                 }
-                _createSpanView() {
+                _getSpanView() {
+                    if (!!this._spanView) {
+                        return this._spanView;
+                    }
                     var el = global.document.createElement('span'), displayInfo = this._getDisplayInfo();
                     var spanView = new baseElView.SpanElView(this.app, el, {});
                     if (!!displayInfo) {
@@ -603,7 +608,8 @@ module RIAPP {
                             spanView.$el.addClass(displayInfo.displayCss);
                         }
                     }
-                    return spanView;
+                    this._spanView = spanView;
+                    return this._spanView;
                 }
                 update() {
                     this._cleanUp();
@@ -611,27 +617,23 @@ module RIAPP {
                     this._parentEl.appendChild(this._el);
                 }
                 _createTargetElement() {
-                    var el: HTMLElement;
+                    var el: HTMLElement, selectView: SelectElView, spanView: baseElView.SpanElView;
                     if (this._isEditing && this._canBeEdited()) {
-                        if (!this._selectView) {
-                            this._selectView = this._getSelectView();
-                        }
-                        this._listBinding = this._bindToList();
-                        el = this._selectView.el;
+                        selectView = this._getSelectView();
+                        this._listBinding = this._bindToList(selectView);
+                        el = selectView.el;
                     }
                     else {
-                        if (!this._spanView) {
-                            this._spanView = this._createSpanView();
-                        }
+                        spanView = this._getSpanView();
                         this._valBinding = this._bindToValue();
-                        el = this._spanView.el;
+                        el = spanView.el;
                     }
                     this._updateCss();
                     return el;
                 }
                 _cleanUp() {
                     if (!!this._el) {
-                        global.$(this._el).remove();
+                        utils.removeNode(this._el);
                         this._el = null;
                     }
                     if (!!this._listBinding) {
@@ -666,12 +668,12 @@ module RIAPP {
                     };
                     return new binding.Binding(options);
                 }
-                _bindToList() {
+                _bindToList(selectView: SelectElView) {
                     if (!this._options.fieldName)
                         return null;
 
                     var options = {
-                        target: this._getSelectView(), source: this._dctx,
+                        target: selectView, source: this._dctx,
                         targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: "TwoWay",
                         converter: null, converterParam: null, isSourceFixed: false
                     };
@@ -730,6 +732,8 @@ module RIAPP {
                 }
 
                 isExternallyCachable(contentType): bool {
+                    if (LookupContent === contentType)
+                        return true;
                     return this._nextFactory.isExternallyCachable(contentType);
                 }
                 get app() { return this._app; }
