@@ -475,6 +475,7 @@ var RIAPP;
             return CustomerAddressVM;
         })(RIAPP.MOD.mvvm.BaseViewModel);
         MTMDEMO.CustomerAddressVM = CustomerAddressVM;        
+        //MOD.utils.ISubmittable allows for the edit dialog to submit changes automatically
         var AddAddressVM = (function (_super) {
             __extends(AddAddressVM, _super);
             function AddAddressVM(customerAddressVM) {
@@ -603,6 +604,16 @@ var RIAPP;
                     }
                 }, self, null);
             }
+            Object.defineProperty(AddAddressVM.prototype, "_isCanSubmit", {
+                get: function () {
+                    return true;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            AddAddressVM.prototype.submitChanges = function () {
+                return this.dbContext.submitChanges();
+            };
             AddAddressVM.prototype._cancelAddNewAddress = function () {
                 var self = this;
                 self._newAddress.cancelEdit();

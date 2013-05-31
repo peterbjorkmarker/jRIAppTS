@@ -365,7 +365,8 @@ module RIAPP
             get currentCustomer() { return this._currentCustomer; }
         }
 
-        export class AddAddressVM extends MOD.mvvm.BaseViewModel {
+        //MOD.utils.ISubmittable allows for the edit dialog to submit changes automatically
+        export class AddAddressVM extends MOD.mvvm.BaseViewModel implements MOD.utils.ISubmittable  {
             _customerAddressVM: CustomerAddressVM;
             _addressInfosDb: DEMODB.AddressInfoDb;
             _currentCustomer: DEMODB.Customer;
@@ -519,6 +520,8 @@ module RIAPP
                     }
                 }, self, null);
             }
+            get _isCanSubmit(): bool { return true; }
+            submitChanges(): JQueryPromise { return this.dbContext.submitChanges(); }
             _cancelAddNewAddress() {
                 var self = this;
                 self._newAddress.cancelEdit();
