@@ -114,8 +114,14 @@ namespace RIAPP.DataService.Utils
 
         protected virtual object ConvertTo(string value, bool IsNullableType, Type propType, Type propMainType)
         {
+            if (!propMainType.IsValueType)
+            {
+                throw new Exception(string.Format(ErrorStrings.ERR_VAL_DATATYPE_INVALID, propMainType.FullName));
+            }
+
             if (value == null)
                 return null;
+          
             object typedVal = Convert.ChangeType(value, propMainType, System.Globalization.CultureInfo.InvariantCulture);
 
             if (IsNullableType)
@@ -212,7 +218,14 @@ namespace RIAPP.DataService.Utils
                     break;
                 case DataType.String:
                 case DataType.None:
-                    result = this.ConvertTo(value, IsNullableType, propType, propMainType);
+                    if (propType == typeof(string))
+                        result = value;
+                    else if (propType == typeof(System.Xml.Linq.XElement))
+                    {
+                        result = System.Xml.Linq.XElement.Parse(value);
+                    }
+                    else
+                        result = this.ConvertTo(value, IsNullableType, propType, propMainType);
                     break;
                 default:
                     throw new Exception(string.Format(ErrorStrings.ERR_VAL_DATATYPE_INVALID, dataType));
@@ -304,6 +317,7 @@ namespace RIAPP.DataService.Utils
                         return DataType.Integer;
                 case "System.Data.Linq.Binary":
                     return DataType.Binary;
+                case "System.Xml.Linq.XElement":
                 case "System.String":
                     return DataType.String;
                 case "System.Int16":
@@ -323,6 +337,8 @@ namespace RIAPP.DataService.Utils
                     return DataType.DateTime;
                 case "System.Boolean":
                     return DataType.Bool;
+                case "System.Guid":
+                    return DataType.Guid;
                 default:
                     throw new Exception(string.Format("Unsupported method type {0}", realType.FullName));
             }
