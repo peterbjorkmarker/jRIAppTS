@@ -14,6 +14,7 @@ using System.Collections;
 using System.Data.Common;
 using RIAppDemo.BLL.Utils;
 using RIAppDemo.BLL.Models;
+using System.Xml.Linq;
 
 
 namespace RIAppDemo.BLL.DataServices
@@ -38,8 +39,45 @@ namespace RIAppDemo.BLL.DataServices
             return db;
         }
 
+        /// <summary>
+        /// this is a helper method which can be used to create metadata xaml from data.linq entities
+        /// this xaml can be later pasted as metadata in the user control
+        /// and of course it needs to be corrected, but it is faster than type all this from the start
+        /// </summary>
+        /// <returns></returns>
+        public string GetMetadataDraft()
+        {
+            var metadata = base.GetMetadata();
+            var xaml = System.Windows.Markup.XamlWriter.Save(metadata);
+            XNamespace data = "clr-namespace:RIAPP.DataService;assembly=RIAPP.DataService";
+            XNamespace dal = "clr-namespace:RIAppDemo.DAL;assembly=RIAppDemo.DAL";
+
+            XElement xtree = XElement.Parse(xaml);
+            foreach (XElement el in xtree.DescendantsAndSelf())
+            {
+                el.Name = data.GetName(el.Name.LocalName);
+                if (el.Name.LocalName == "Metadata")
+                {
+                    List<XAttribute> atList = el.Attributes().ToList();
+                    el.Attributes().Remove();
+                }
+                else if (el.Name.LocalName == "DbSetInfo")
+                {
+                    XAttribute entityTypeAttr = el.Attributes().Where(a => a.Name.LocalName == "EntityType").First();
+                    entityTypeAttr.Value = string.Format("{{x:Type {0}}}", entityTypeAttr.Value);
+                }
+                
+            }
+            xtree.Add(new XAttribute(XNamespace.Xmlns + "data", "clr-namespace:RIAPP.DataService;assembly=RIAPP.DataService"));
+            return xtree.ToString();
+        }
+
         protected override Metadata GetMetadata()
         {
+          //uncomment and place breakpoint to get raw (draft version) of metadata XAML
+          /*
+           string xml = this.GetMetadataDraft();
+          */
            var res = (Metadata)(new RIAppDemoMetadata().Resources["MainDemo"]);
            return res;
         }
