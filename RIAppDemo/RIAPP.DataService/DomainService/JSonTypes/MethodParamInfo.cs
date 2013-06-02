@@ -53,7 +53,7 @@ namespace RIAPP.DataService
             set;
         }
 
-        public object GetValue(string name, MethodDescription methodDescription)
+        public object GetValue(string name, MethodDescription methodDescription, DataHelper dataHelper)
         {
             var par = this.parameters.Where(p => p.name == name).FirstOrDefault();
             if (par == null)
@@ -63,7 +63,7 @@ namespace RIAPP.DataService
             {
                 throw new DomainServiceException(string.Format("Method: {0} has no parameter with the name: {1}",methodDescription.methodName, name));
             }
-            return DataHelper.ParseParameter(paraminfo.ParameterType, paraminfo, paraminfo.isArray, par.value);
+            return dataHelper.ParseParameter(paraminfo.ParameterType, paraminfo, paraminfo.isArray, par.value);
         }
     }
 

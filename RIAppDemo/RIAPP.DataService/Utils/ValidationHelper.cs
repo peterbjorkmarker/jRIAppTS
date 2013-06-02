@@ -7,10 +7,15 @@ using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService.Utils
 {
-    public static class ValidationHelper
+    public class ValidationHelper
     {
+        private DataHelper _dataHelper;
+        public ValidationHelper(DataHelper dataHelper)
+        {
+            this._dataHelper = dataHelper;
+        }
      
-        public static void CheckString(FieldInfo fieldInfo, string val)
+        public void CheckString(FieldInfo fieldInfo, string val)
         {
             if (val == null)
                 return;
@@ -36,7 +41,7 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        public static void CheckRange(FieldInfo fieldInfo, string val)
+        public void CheckRange(FieldInfo fieldInfo, string val)
         {
             if (val == null)
                 return;
@@ -66,7 +71,7 @@ namespace RIAPP.DataService.Utils
                     case DataType.Date:
                     case DataType.DateTime:
                         {
-                            DateTime dtval = (DateTime)DataHelper.ConvertToTyped(typeof(DateTime), DataType.DateTime, fieldInfo.dateConversion, val);
+                            DateTime dtval = (DateTime)this._dataHelper.ConvertToTyped(typeof(DateTime), DataType.DateTime, fieldInfo.dateConversion, val);
                             if (!string.IsNullOrEmpty(rangeParts[0]))
                             {
                                 DateTime minDt = DateTime.ParseExact(rangeParts[0], "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
@@ -88,7 +93,7 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        public static void CheckValue(FieldInfo fieldInfo, string val)
+        public void CheckValue(FieldInfo fieldInfo, string val)
         {
             if (val == null && !fieldInfo.isNullable)
             {
@@ -96,9 +101,9 @@ namespace RIAPP.DataService.Utils
             }
             if (fieldInfo.dataType == DataType.String)
             {
-                CheckString(fieldInfo, val);
+                this.CheckString(fieldInfo, val);
             }
-            CheckRange(fieldInfo, val);
+            this.CheckRange(fieldInfo, val);
         }
 
     }

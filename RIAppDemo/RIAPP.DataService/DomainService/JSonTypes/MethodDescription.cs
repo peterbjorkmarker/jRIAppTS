@@ -89,7 +89,7 @@ namespace RIAPP.DataService
         /// </summary>
         /// <param name="pinfo"></param>
         /// <returns></returns>
-        public static ParamMetadataInfo FromParamInfo(ParameterInfo pinfo) {
+        public static ParamMetadataInfo FromParamInfo(ParameterInfo pinfo, DataHelper dataHelper) {
             Type ptype = pinfo.ParameterType;
             if (pinfo.IsOut)
                 throw new DomainServiceException("Out parameters are not supported in service methods");
@@ -107,7 +107,7 @@ namespace RIAPP.DataService
                res.dateConversion = (dtops[0] as DateOptionAttribute).dateConversion;
             }
             bool isArray = false;
-            res.dataType = DataHelper.DataTypeFromType(realType, out isArray);
+            res.dataType = dataHelper.DataTypeFromType(realType, out isArray);
             res.isArray = isArray;
             return res;
         }
@@ -161,7 +161,8 @@ namespace RIAPP.DataService
             set;
         }
 
-        public static MethodDescription FromMethodInfo(MethodInfo methodInfo, bool isQuery) {
+        public static MethodDescription FromMethodInfo(MethodInfo methodInfo, bool isQuery, DataHelper dataHelper)
+        {
             Type returnType = methodInfo.ReturnType;
             bool isVoid = returnType == typeof(void);
             MethodDescription invInfo = new MethodDescription();
@@ -176,7 +177,7 @@ namespace RIAPP.DataService
             for (var i = 0; i < paramsInfo.Length; ++i) {
                 if (isQuery && paramsInfo[i].ParameterType == typeof(GetDataInfo))
                     continue;
-                ParamMetadataInfo param = ParamMetadataInfo.FromParamInfo(paramsInfo[i]);
+                ParamMetadataInfo param = ParamMetadataInfo.FromParamInfo(paramsInfo[i], dataHelper);
                 param.ordinal = i;
                 invInfo.parameters.Add(param);
             }

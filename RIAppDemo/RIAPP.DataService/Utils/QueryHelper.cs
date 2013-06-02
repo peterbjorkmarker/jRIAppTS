@@ -9,12 +9,18 @@ using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService.Utils
 {
-    public static class QueryHelper
+    public class QueryHelper
     {
-        public static object FindEntity(IQueryable entities, RowInfo rowInfo, out object[] keyValue)
+        private DataHelper _dataHelper;
+
+        public QueryHelper(DataHelper dataHelper)
+        {
+            this._dataHelper = dataHelper;
+        }
+
+        public static object FindEntity(IQueryable entities, RowInfo rowInfo, object[] keyValue)
         {
             string predicate =  QueryHelper.GetWherePKPredicate(rowInfo);
-            keyValue = rowInfo.GetPKValues();
 
             if (keyValue == null || keyValue.Length < 1 || keyValue.Any((kv) => kv == null))
             {
@@ -35,7 +41,7 @@ namespace RIAPP.DataService.Utils
             return dbEntity;
         }
 
-        public static IQueryable<T> PerformSort<T>(IQueryable<T> entities, SortInfo sort)
+        public IQueryable<T> PerformSort<T>(IQueryable<T> entities, SortInfo sort)
             where T : class
         {
             IQueryable<T> result = entities;
@@ -63,7 +69,7 @@ namespace RIAPP.DataService.Utils
             return result;
         }
 
-        public static IQueryable<T> PerformFilter<T>(IQueryable<T> entities, FilterInfo filter, DbSetInfo dbInfo)
+        public IQueryable<T> PerformFilter<T>(IQueryable<T> entities, FilterInfo filter, DbSetInfo dbInfo)
             where T : class
         {
             IQueryable<T> result = entities;
@@ -85,13 +91,13 @@ namespace RIAPP.DataService.Utils
                         if (filterItem.values.Count == 1)
                         {
                             sb.AppendFormat("{0}==@{1}", filterItem.fieldName, cnt);
-                            filterParams.AddLast(DataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                            filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         }
                         else
                         {
                             List<object> vals = new List<object>();
                             foreach (string v in filterItem.values)
-                                vals.Add(DataHelper.ConvertToTyped(typeof(T), finfo, v));
+                                vals.Add(this._dataHelper.ConvertToTyped(typeof(T), finfo, v));
 
                             sb.AppendFormat("@{0}.Contains(outerIt.{1})", cnt, filterItem.fieldName);
                             filterParams.AddLast(vals);
@@ -99,40 +105,40 @@ namespace RIAPP.DataService.Utils
                         break;
                     case FilterType.StartsWith:
                         sb.AppendFormat("{0}.StartsWith(@{1})", filterItem.fieldName, cnt);
-                        filterParams.AddLast(DataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.EndsWith:
                         sb.AppendFormat("{0}.EndsWith(@{1})", filterItem.fieldName, cnt);
-                        filterParams.AddLast(DataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Contains:
                         sb.AppendFormat("{0}.Contains(@{1})", filterItem.fieldName, cnt);
-                        filterParams.AddLast(DataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Gt:
                         sb.AppendFormat("{0}>@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(DataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Lt:
                         sb.AppendFormat("{0}<@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(DataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.GtEq:
                         sb.AppendFormat("{0}>=@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(DataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.LtEq:
                         sb.AppendFormat("{0}<=@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(DataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.NotEq:
                         sb.AppendFormat("{0}!=@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(DataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Between:
                         sb.AppendFormat("{0}>=@{1} and {0}<=@{2}", filterItem.fieldName, cnt, ++cnt);
-                        filterParams.AddLast(DataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
-                        filterParams.AddLast(DataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.LastOrDefault()));
+                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.LastOrDefault()));
                         break;
                 }
 
@@ -142,7 +148,7 @@ namespace RIAPP.DataService.Utils
             return result;
         }
 
-        public static IQueryable<T> GetPage<T>(IQueryable<T> entities, int pageIndex, int pageSize, int pageCount, DbSetInfo dbInfo)
+        public IQueryable<T> GetPage<T>(IQueryable<T> entities, int pageIndex, int pageSize, int pageCount, DbSetInfo dbInfo)
             where T : class
         {
             IQueryable<T> result = entities;
@@ -153,31 +159,31 @@ namespace RIAPP.DataService.Utils
             return result;
         }
 
-        public static IQueryable<T> PerformQuery<T>(IQueryable<T> entities, GetDataInfo getInfo, ref int? totalCount)
+        public IQueryable<T> PerformQuery<T>(IQueryable<T> entities, GetDataInfo getInfo, ref int? totalCount)
           where T : class
         {
             if (getInfo.isIncludeTotalCount && !totalCount.HasValue)
             {
-                totalCount = QueryHelper.GetTotalCount(entities, getInfo.filterInfo, getInfo.dbSetInfo);
+                totalCount = this.GetTotalCount(entities, getInfo.filterInfo, getInfo.dbSetInfo);
             }
-            entities = QueryHelper.PerformFilter(entities, getInfo.filterInfo, getInfo.dbSetInfo);
-            entities = QueryHelper.PerformSort(entities, getInfo.sortInfo);
-            entities = QueryHelper.GetPage(entities, getInfo.pageIndex, getInfo.pageSize, getInfo.pageCount, getInfo.dbSetInfo);
+            entities = this.PerformFilter(entities, getInfo.filterInfo, getInfo.dbSetInfo);
+            entities = this.PerformSort(entities, getInfo.sortInfo);
+            entities = this.GetPage(entities, getInfo.pageIndex, getInfo.pageSize, getInfo.pageCount, getInfo.dbSetInfo);
             return entities;
         }
 
-        public static T GetRefreshedEntityDataHelper<T>(IQueryable<T> entities, RefreshRowInfo info)
+        public T GetRefreshedEntity<T>(IQueryable<T> entities, RefreshRowInfo info)
              where T : class
         {
-            object[] keyValue;
-            object dbEntity = QueryHelper.FindEntity(entities, info.rowInfo, out keyValue);
+            object[] keyValue = info.rowInfo.GetPKValues(this._dataHelper);
+            object dbEntity = QueryHelper.FindEntity(entities, info.rowInfo, keyValue);
             return (T)dbEntity;
         }
 
-        public static int? GetTotalCount<T>(IQueryable<T> entities, FilterInfo filter, DbSetInfo dbSetInfo)
+        public int? GetTotalCount<T>(IQueryable<T> entities, FilterInfo filter, DbSetInfo dbSetInfo)
             where T : class
         {
-            IQueryable filtered_entities = QueryHelper.PerformFilter<T>(entities, filter, dbSetInfo);
+            IQueryable filtered_entities = this.PerformFilter<T>(entities, filter, dbSetInfo);
             return filtered_entities.Count();
         }
 

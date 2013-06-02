@@ -72,7 +72,7 @@ namespace RIAPP.DataService.EF
                         fieldInfo.isReadOnly = true;
                     }
                     bool isArray =  false;
-                    fieldInfo.dataType = DataHelper.DataTypeFromType(propInfo2.PropertyType, out isArray);
+                    fieldInfo.dataType = this.dataHelper.DataTypeFromType(propInfo2.PropertyType, out isArray);
                     dbSetInfo.fieldInfos.Add(fieldInfo);
                 });
                

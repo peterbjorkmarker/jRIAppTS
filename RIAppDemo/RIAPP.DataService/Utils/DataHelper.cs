@@ -7,9 +7,14 @@ using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService.Utils
 {
-    public static class DataHelper
+    public class DataHelper
     {
-        private static ValueConverter _converter = new ValueConverter();
+        public DataHelper(ValueConverter converter)
+        {
+            this._converter = converter;
+        }
+
+        public readonly ValueConverter _converter;
 
         private static IList CreateList<T>()
         {
@@ -78,9 +83,9 @@ namespace RIAPP.DataService.Utils
             return dt;
         }
 
-        public static DataType DataTypeFromType(Type type, out bool isArray)
+        public DataType DataTypeFromType(Type type, out bool isArray)
         {
-            return _converter.DataTypeFromType(type, out isArray);
+            return this._converter.DataTypeFromType(type, out isArray);
         }
 
         public static string DateToValue(DateTime dt)
@@ -101,7 +106,7 @@ namespace RIAPP.DataService.Utils
             return (int)tspn.TotalMinutes;
         }
 
-        public static object SetValue(object entity, FieldInfo finfo, string value)
+        public object SetValue(object entity, FieldInfo finfo, string value)
         {
             Type enityType = entity.GetType();
             PropertyInfo pinfo = enityType.GetProperty(finfo.fieldName);
@@ -113,7 +118,7 @@ namespace RIAPP.DataService.Utils
 
             Type propType = pinfo.PropertyType;
             bool IsNullableType = DataHelper.IsNullableType(propType);
-            object val = _converter.ConvertToTyped(propType, finfo.dataType, finfo.dateConversion, value);
+            object val = this._converter.ConvertToTyped(propType, finfo.dataType, finfo.dateConversion, value);
 
             if (val != null)
                 pinfo.SetValue(entity, val, null);
@@ -127,17 +132,17 @@ namespace RIAPP.DataService.Utils
         }
 
        
-        public static string GetFieldValueAsString(object entity, string fieldName)
+        public string GetFieldValueAsString(object entity, string fieldName)
         {
             string val;
-            bool isOK = GetFieldValueAsString(entity, fieldName, false, out val);
+            bool isOK = this.GetFieldValueAsString(entity, fieldName, false, out val);
             return val;
         }
 
         /// <summary>
         /// extracts field value from entity, and converts value to string form
         /// </summary>
-        public static bool GetFieldValueAsString(object entity, string fieldName, bool optional, out string val)
+        public bool GetFieldValueAsString(object entity, string fieldName, bool optional, out string val)
         {
             val = null;
             Type enityType = entity.GetType();
@@ -151,7 +156,7 @@ namespace RIAPP.DataService.Utils
             }
             Type propType = pinfo.PropertyType;
             object fieldValue = pinfo.GetValue(entity, null);
-            val = _converter.ConvertToString(fieldValue, propType);
+            val = this._converter.ConvertToWireFormat(fieldValue, propType);
             return true;
         }
 
@@ -167,12 +172,12 @@ namespace RIAPP.DataService.Utils
             return fieldValue;
         }
 
-        public static object ConvertToTyped(Type propType, DataType dataType, DateConversion dateConversion, string value) 
+        public object ConvertToTyped(Type propType, DataType dataType, DateConversion dateConversion, string value) 
         {
-            return _converter.ConvertToTyped(propType, dataType, dateConversion, value);
+            return this._converter.ConvertToTyped(propType, dataType, dateConversion, value);
         }
 
-        public static object ConvertToTyped(Type entityType, FieldInfo finfo, string value)
+        public object ConvertToTyped(Type entityType, FieldInfo finfo, string value)
         {
             PropertyInfo propInfo = entityType.GetProperty(finfo.fieldName);
 
@@ -181,16 +186,16 @@ namespace RIAPP.DataService.Utils
 
             Type propType = propInfo.PropertyType;
 
-            return _converter.ConvertToTyped(propType, finfo.dataType, finfo.dateConversion, value);
+            return this._converter.ConvertToTyped(propType, finfo.dataType, finfo.dateConversion, value);
         }
 
-        public static string ConvertToString(object value, Type propType) 
+        public string ConvertToString(object value, Type propType) 
         {
-            return _converter.ConvertToString(value, propType);
+            return this._converter.ConvertToWireFormat(value, propType);
         }
 
 
-        public static object ParseParameter(Type paramType, ParamMetadataInfo pinfo, bool isArray, string val)
+        public object ParseParameter(Type paramType, ParamMetadataInfo pinfo, bool isArray, string val)
         {
             DataType dataType = pinfo.dataType;
 
@@ -212,7 +217,7 @@ namespace RIAPP.DataService.Utils
                     .Invoke(null, new object[] { list });
             }
             else
-                return DataHelper.ConvertToTyped(paramType, dataType, pinfo.dateConversion, val);
+                return this.ConvertToTyped(paramType, dataType, pinfo.dateConversion, val);
         }
 
     }

@@ -60,6 +60,8 @@ namespace RIAPP.DataService.Utils
         {
             if (value == null)
                 return null;
+            if (propType != typeof(byte[]))
+                throw new Exception(string.Format(ErrorStrings.ERR_VAL_DATATYPE_INVALID, propType.FullName));
             StringBuilder sb = new StringBuilder(value);
             sb.Remove(sb.Length - 1, 1); //remove ]
             sb.Remove(0, 1); //remove [
@@ -103,24 +105,27 @@ namespace RIAPP.DataService.Utils
             else
                 bytes2 = bytes;
 
-            if (propType == typeof(byte[]))
-                return bytes2;
-            else
-            {
-                //new System.Data.Linq.Binary(bytes2);
-                return Activator.CreateInstance(propType, bytes2);
-            }
+            return bytes2;
+        }
+
+        protected virtual object ConvertToString(string value, Type propType)
+        {
+            if (value == null)
+                return null;
+            if (propType != typeof(string))
+                throw new Exception(string.Format(ErrorStrings.ERR_VAL_DATATYPE_INVALID, propType.FullName));
+            return value;
         }
 
         protected virtual object ConvertTo(string value, bool IsNullableType, Type propType, Type propMainType)
         {
+            if (value == null)
+                return null;
+
             if (!propMainType.IsValueType)
             {
                 throw new Exception(string.Format(ErrorStrings.ERR_VAL_DATATYPE_INVALID, propMainType.FullName));
             }
-
-            if (value == null)
-                return null;
           
             object typedVal = Convert.ChangeType(value, propMainType, System.Globalization.CultureInfo.InvariantCulture);
 
@@ -172,15 +177,7 @@ namespace RIAPP.DataService.Utils
             sb.Append("]");
             return sb.ToString();
         }
-
-        protected virtual string LinqBinaryToString(object value)
-        {
-            Object res = value.GetType().GetMethod("ToArray").Invoke(value, null);
-            if (res == null)
-                return null;
-            return BytesToString(res);
-        }
-
+  
         public virtual object ConvertToTyped(Type propType, DataType dataType, DateConversion dateConversion, string value)
         {
             object result = null;
@@ -217,13 +214,11 @@ namespace RIAPP.DataService.Utils
                     result = this.ConvertToBinary(value, propType);
                     break;
                 case DataType.String:
+                    result = this.ConvertToString(value, propType);
+                    break;
                 case DataType.None:
                     if (propType == typeof(string))
                         result = value;
-                    else if (propType == typeof(System.Xml.Linq.XElement))
-                    {
-                        result = System.Xml.Linq.XElement.Parse(value);
-                    }
                     else
                         result = this.ConvertTo(value, IsNullableType, propType, propMainType);
                     break;
@@ -234,7 +229,7 @@ namespace RIAPP.DataService.Utils
             return result;
         }
 
-        public virtual string ConvertToString(object value, Type propType)
+        public virtual string ConvertToWireFormat(object value, Type propType)
         {
             if (value == null)
                 return null;
@@ -278,10 +273,6 @@ namespace RIAPP.DataService.Utils
                 {
                     return (string)Convert.ChangeType(value, typeof(string), System.Globalization.CultureInfo.InvariantCulture);
                 }
-                else if (realType.FullName == "System.Data.Linq.Binary")
-                {
-                    return LinqBinaryToString(value);
-                }
                 else
                 {
                     return value.ToString();
@@ -315,9 +306,6 @@ namespace RIAPP.DataService.Utils
                     }
                     else
                         return DataType.Integer;
-                case "System.Data.Linq.Binary":
-                    return DataType.Binary;
-                case "System.Xml.Linq.XElement":
                 case "System.String":
                     return DataType.String;
                 case "System.Int16":

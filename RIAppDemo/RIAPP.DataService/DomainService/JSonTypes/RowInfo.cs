@@ -85,49 +85,5 @@ namespace RIAPP.DataService
             set;
         }
        
-        public ValueChange GetValue(string fieldName)
-        {
-            ValueChange fv = this.values.Single(v => v.fieldName == fieldName);
-            return fv;
-        }
-
-        public string[] GetChangedFieldNames()
-        {
-            return this.values.Where(fv => (fv.flags & ValueFlags.Changed) == ValueFlags.Changed).Select(fv => fv.fieldName).ToArray();
-        }
-
-        public object[] GetPKValues()
-        {
-            Type entityType = this.dbSetInfo.EntityType;
-            FieldInfo[] finfos = this.dbSetInfo.GetPKFieldInfos();
-            object[] result = new object[finfos.Length];
-            for (int i = 0; i < finfos.Length; ++i)
-            {
-                ValueChange fv = this.GetValue(finfos[i].fieldName);
-                result[i] = fv.GetTypedValue(entityType, this.dbSetInfo);
-            }
-            return result;
-        }
-
-        public string GetRowKeyAsString(DbSetInfo dbSetInfo)
-        {
-            FieldInfo[] finfos = dbSetInfo.GetPKFieldInfos();
-            string[] vals = new string[finfos.Length];
-            for (int i = 0; i < finfos.Length; ++i)
-            {
-                ValueChange fv =this.GetValue(finfos[i].fieldName);
-                vals[i] = fv.val;
-            }
-            return string.Join(";", vals);
-        }
-        
-        /// <summary>
-        /// FieldNames which values has been changed by client
-        /// </summary>
-        /// <returns></returns>
-        public string[] GetNamesOfChanged()
-        {
-            return this.values.Where(fv => (fv.flags | ValueFlags.Changed) == ValueFlags.Changed).Select(fv => fv.fieldName).ToArray();
-        }
     }
 }
