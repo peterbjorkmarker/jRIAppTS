@@ -2,16 +2,13 @@
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Text;
 using System.Security.Principal;
-using System.Linq.DynamicQuery;
 using System.Reflection;
 using System.Collections;
 using StaThreadSyncronizer;
 using RIAPP.DataService.Resources;
 using RIAPP.DataService.Utils;
 using RIAPP.DataService.Security;
-using System.Runtime.Serialization;
 
 namespace RIAPP.DataService
 {

@@ -147,6 +147,7 @@ namespace RIAPP.DataService
 
         [ScriptIgnore]
         [IgnoreDataMember]
+        [DefaultValue("")]
         public string refreshDataMethod
         {
             get;
@@ -156,6 +157,7 @@ namespace RIAPP.DataService
 
         [ScriptIgnore]
         [IgnoreDataMember]
+        [DefaultValue("")]
         public string validateDataMethod
         {
             get;
