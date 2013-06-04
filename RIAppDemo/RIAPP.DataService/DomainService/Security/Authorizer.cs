@@ -10,13 +10,13 @@ using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService.Security
 {
-    public class Authorizer : IAuthorizer
+    public class AuthorizerClass : IAuthorizer
     {
         private Type _serviceType = null;
         private IEnumerable<string> _serviceRoles = null;
         private IPrincipal _principal;
 
-        public Authorizer(Type serviceType, IPrincipal principal)
+        public AuthorizerClass(Type serviceType, IPrincipal principal)
         {
             this._serviceType = serviceType;
             if (principal == null)

@@ -21,7 +21,7 @@ namespace RIAPP.DataService
        
         public MetadataInfo()
         {
-            this.serverTimezone = DataHelper.GetLocalDateTimezoneOffset(DateTime.Now);
+            this.serverTimezone = DataHelperClass.GetLocalDateTimezoneOffset(DateTime.Now);
         }
 
         [DataMember]

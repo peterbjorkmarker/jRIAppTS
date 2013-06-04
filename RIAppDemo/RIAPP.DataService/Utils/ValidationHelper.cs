@@ -7,10 +7,10 @@ using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService.Utils
 {
-    public class ValidationHelper
+    public class ValidationHelperClass
     {
-        private DataHelper _dataHelper;
-        public ValidationHelper(DataHelper dataHelper)
+        private DataHelperClass _dataHelper;
+        public ValidationHelperClass(DataHelperClass dataHelper)
         {
             this._dataHelper = dataHelper;
         }

@@ -19,7 +19,7 @@ namespace RIAPP.DataService
        
         public PermissionsInfo()
         {
-            this.serverTimezone = DataHelper.GetLocalDateTimezoneOffset(DateTime.Now);
+            this.serverTimezone = DataHelperClass.GetLocalDateTimezoneOffset(DateTime.Now);
         }
 
         [DataMember]

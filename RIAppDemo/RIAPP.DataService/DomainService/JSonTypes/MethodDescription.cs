@@ -89,12 +89,12 @@ namespace RIAPP.DataService
         /// </summary>
         /// <param name="pinfo"></param>
         /// <returns></returns>
-        public static ParamMetadataInfo FromParamInfo(ParameterInfo pinfo, DataHelper dataHelper) {
+        public static ParamMetadataInfo FromParamInfo(ParameterInfo pinfo, DataHelperClass dataHelper) {
             Type ptype = pinfo.ParameterType;
             if (pinfo.IsOut)
                 throw new DomainServiceException("Out parameters are not supported in service methods");
             ParamMetadataInfo res = new ParamMetadataInfo();
-            res.isNullable = DataHelper.IsNullableType(ptype);
+            res.isNullable = DataHelperClass.IsNullableType(ptype);
             res.name = pinfo.Name;
             res.ParameterType = ptype;
             Type realType = null;
@@ -161,7 +161,7 @@ namespace RIAPP.DataService
             set;
         }
 
-        public static MethodDescription FromMethodInfo(MethodInfo methodInfo, bool isQuery, DataHelper dataHelper)
+        public static MethodDescription FromMethodInfo(MethodInfo methodInfo, bool isQuery, DataHelperClass dataHelper)
         {
             Type returnType = methodInfo.ReturnType;
             bool isVoid = returnType == typeof(void);

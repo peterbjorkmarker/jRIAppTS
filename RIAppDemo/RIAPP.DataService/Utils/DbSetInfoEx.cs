@@ -124,7 +124,7 @@ namespace RIAPP.DataService.Utils
                 {
                     string operName = fl.GetValue(null).ToString();
                     string methodName = dbSetInfo.getOperationMethodName(operName);
-                    MethodInfo minfo = DataHelper.GetMethodInfo(serviceType, methodName);
+                    MethodInfo minfo = DataHelperClass.GetMethodInfo(serviceType, methodName);
                     if (minfo != null)
                     {
                         switch (operName)

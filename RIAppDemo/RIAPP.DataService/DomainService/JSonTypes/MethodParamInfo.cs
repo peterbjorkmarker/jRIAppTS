@@ -53,7 +53,7 @@ namespace RIAPP.DataService
             set;
         }
 
-        public object GetValue(string name, MethodDescription methodDescription, DataHelper dataHelper)
+        public object GetValue(string name, MethodDescription methodDescription, DataHelperClass dataHelper)
         {
             var par = this.parameters.Where(p => p.name == name).FirstOrDefault();
             if (par == null)

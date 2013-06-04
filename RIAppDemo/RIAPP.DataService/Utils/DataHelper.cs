@@ -7,9 +7,9 @@ using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService.Utils
 {
-    public class DataHelper
+    public class DataHelperClass
     {
-        public DataHelper(ValueConverter converter)
+        public DataHelperClass(ValueConverter converter)
         {
             this._converter = converter;
         }
@@ -117,7 +117,7 @@ namespace RIAPP.DataService.Utils
             }
 
             Type propType = pinfo.PropertyType;
-            bool IsNullableType = DataHelper.IsNullableType(propType);
+            bool IsNullableType = DataHelperClass.IsNullableType(propType);
             object val = this._converter.ConvertToTyped(propType, finfo.dataType, finfo.dateConversion, value);
 
             if (val != null)
@@ -204,7 +204,7 @@ namespace RIAPP.DataService.Utils
                 string[] arr = (string[])SerializationHelper.DeSerialize(val, typeof(string[]));
                 if (arr == null)
                     return null;
-                IList list = (IList)typeof(DataHelper).GetMethod("CreateList", BindingFlags.NonPublic | BindingFlags.Static)
+                IList list = (IList)typeof(DataHelperClass).GetMethod("CreateList", BindingFlags.NonPublic | BindingFlags.Static)
                     .MakeGenericMethod(paramType.GetElementType())
                     .Invoke(null, new object[] { });
                 foreach (var v in arr)
@@ -212,7 +212,7 @@ namespace RIAPP.DataService.Utils
                     list.Add(ParseParameter(paramType.GetElementType(), pinfo, false, v));
                 }
 
-                return typeof(DataHelper).GetMethod("CreateArray", BindingFlags.NonPublic | BindingFlags.Static)
+                return typeof(DataHelperClass).GetMethod("CreateArray", BindingFlags.NonPublic | BindingFlags.Static)
                     .MakeGenericMethod(paramType.GetElementType())
                     .Invoke(null, new object[] { list });
             }

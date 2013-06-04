@@ -9,18 +9,18 @@ using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService.Utils
 {
-    public class QueryHelper
+    public class QueryHelperClass
     {
-        private DataHelper _dataHelper;
+        private DataHelperClass _dataHelper;
 
-        public QueryHelper(DataHelper dataHelper)
+        public QueryHelperClass(DataHelperClass dataHelper)
         {
             this._dataHelper = dataHelper;
         }
 
         public static object FindEntity(IQueryable entities, RowInfo rowInfo, object[] keyValue)
         {
-            string predicate =  QueryHelper.GetWherePKPredicate(rowInfo);
+            string predicate =  QueryHelperClass.GetWherePKPredicate(rowInfo);
 
             if (keyValue == null || keyValue.Length < 1 || keyValue.Any((kv) => kv == null))
             {
@@ -176,7 +176,7 @@ namespace RIAPP.DataService.Utils
              where T : class
         {
             object[] keyValue = info.rowInfo.GetPKValues(this._dataHelper);
-            object dbEntity = QueryHelper.FindEntity(entities, info.rowInfo, keyValue);
+            object dbEntity = QueryHelperClass.FindEntity(entities, info.rowInfo, keyValue);
             return (T)dbEntity;
         }
 

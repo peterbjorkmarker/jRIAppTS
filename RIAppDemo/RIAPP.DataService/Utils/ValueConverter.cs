@@ -25,7 +25,7 @@ namespace RIAPP.DataService.Utils
         {
             if (value == null)
                 return null;
-            DateTime dt = DataHelper.ParseDateTimeValue(value, dateConversion);
+            DateTime dt = DataHelperClass.ParseDateTimeValue(value, dateConversion);
             if (IsNullableType)
                 return new Nullable<DateTime>(dt);
             else
@@ -50,7 +50,7 @@ namespace RIAPP.DataService.Utils
             object typedVal = Convert.ChangeType(value, propMainType, System.Globalization.CultureInfo.InvariantCulture);
             if (IsNullableType)
             {
-                return DataHelper.CreateGenericInstance(propType, propMainType, new object[] { typedVal });
+                return DataHelperClass.CreateGenericInstance(propType, propMainType, new object[] { typedVal });
             }
             else
                 return typedVal;
@@ -131,7 +131,7 @@ namespace RIAPP.DataService.Utils
 
             if (IsNullableType)
             {
-                return DataHelper.CreateGenericInstance(propType, propMainType, new object[] { typedVal });
+                return DataHelperClass.CreateGenericInstance(propType, propMainType, new object[] { typedVal });
             }
             else
                 return typedVal;
@@ -145,17 +145,17 @@ namespace RIAPP.DataService.Utils
         protected virtual string DateOffsetToString(object value, bool IsNullable)
         {
             if (IsNullable)
-                return DataHelper.DateOffsetToValue(((Nullable<DateTimeOffset>)value).Value);
+                return DataHelperClass.DateOffsetToValue(((Nullable<DateTimeOffset>)value).Value);
             else
-                return DataHelper.DateOffsetToValue((DateTimeOffset)value);
+                return DataHelperClass.DateOffsetToValue((DateTimeOffset)value);
         }
 
         protected virtual string DateToString(object value, bool IsNullable)
         {
             if (IsNullable)
-                return DataHelper.DateToValue(((Nullable<DateTime>)value).Value);
+                return DataHelperClass.DateToValue(((Nullable<DateTime>)value).Value);
             else
-                return DataHelper.DateToValue((DateTime)value);
+                return DataHelperClass.DateToValue((DateTime)value);
         }
 
         protected virtual string BoolToString(object value)
@@ -181,7 +181,7 @@ namespace RIAPP.DataService.Utils
         public virtual object ConvertToTyped(Type propType, DataType dataType, DateConversion dateConversion, string value)
         {
             object result = null;
-            bool IsNullableType = DataHelper.IsNullableType(propType);
+            bool IsNullableType = DataHelperClass.IsNullableType(propType);
             Type propMainType = null;
             if (!IsNullableType)
                 propMainType = propType;
@@ -233,7 +233,7 @@ namespace RIAPP.DataService.Utils
         {
             if (value == null)
                 return null;
-            bool isNullable = DataHelper.IsNullableType(propType);
+            bool isNullable = DataHelperClass.IsNullableType(propType);
             Type realType = null;
             if (!isNullable)
                 realType = propType;
@@ -282,7 +282,7 @@ namespace RIAPP.DataService.Utils
    
         public virtual DataType DataTypeFromType(Type type, out bool isArray)
         {
-            bool isNullable = DataHelper.IsNullableType(type);
+            bool isNullable = DataHelperClass.IsNullableType(type);
             isArray = false;
             Type realType = null;
             if (!isNullable)
