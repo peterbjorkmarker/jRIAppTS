@@ -6,11 +6,9 @@ using System.Text;
 using System.Security.Principal;
 using RIAPP.DataService;
 using RIAPP.DataService.LinqSql;
-using RIAPP.DataService.Utils;
 using RIAppDemo.DAL;
 using System.Data.SqlClient;
 using System.Transactions;
-using System.Collections;
 using System.Data.Common;
 using RIAppDemo.BLL.Utils;
 using RIAppDemo.BLL.Models;
@@ -75,9 +73,13 @@ namespace RIAppDemo.BLL.DataServices
         protected override Metadata GetMetadata()
         {
           //uncomment and place breakpoint to get raw (draft version) of metadata XAML
-          //string xml = this.GetMetadataDraft();
-          
+          //string metadataDraft = this.GetMetadataDraft();
+
            var res = (Metadata)(new RIAppDemoMetadata().Resources["MainDemo"]);
+           
+           //uncomment and place breakpoint to get raw (draft version) of data service methods
+           //string methodsDraft = RIAPP.DataService.LinqSql.Utils.DataServiceMethodsHelper.CreateMethods(res, this.DB);
+          
            return res;
         }
 
