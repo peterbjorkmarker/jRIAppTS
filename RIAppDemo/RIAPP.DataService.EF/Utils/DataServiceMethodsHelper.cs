@@ -52,7 +52,8 @@ namespace RIAPP.DataService.EF.Utils
             sb.AppendLine("");
             sb.AppendLine("{");
             sb.AppendLine(string.Format("\t{0} orig = this.GetOriginal<{0}>();", dbSetInfo.EntityType.Name));
-            sb.AppendLine(string.Format("\tthis.DB.{0}.AttachAsModified({1},  orig);", tableName, dbSetInfo.dbSetName.ToLower()));
+            sb.AppendLine(string.Format("\tthis.DB.{0}.Attach({1});", tableName, dbSetInfo.dbSetName.ToLower()));
+            sb.AppendLine(string.Format("\tthis.DB.{0}.ApplyOriginalValues(orig);", tableName));
             sb.AppendLine("}");
             sb.AppendLine("");
 
