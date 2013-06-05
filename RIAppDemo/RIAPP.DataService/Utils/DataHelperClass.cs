@@ -6,14 +6,14 @@ using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService.Utils
 {
-    public class DataHelperClass
+    public class DataHelperClass : RIAPP.DataService.Utils.IDataHelper
     {
-        public DataHelperClass(ValueConverter converter)
+        protected readonly IValueConverter _converter;
+
+        public DataHelperClass(IValueConverter converter)
         {
             this._converter = converter;
         }
-
-        public readonly ValueConverter _converter;
 
         private static IList CreateList<T>()
         {
@@ -25,7 +25,19 @@ namespace RIAPP.DataService.Utils
             return list.ToArray();
         }
 
-        public static bool SetProperty(object entity, string propertyName, object value)
+        public bool IsNullableType(Type propType)
+        {
+            return this._converter.IsNullableType(propType);
+        }
+      
+        public static int GetLocalDateTimezoneOffset(DateTime dt)
+        {
+            DateTime uval = dt.ToUniversalTime();
+            TimeSpan tspn = uval - dt;
+            return (int)tspn.TotalMinutes;
+        }
+
+        public bool SetProperty(object entity, string propertyName, object value)
         {
             Type enityType = entity.GetType();
             PropertyInfo pinfo = enityType.GetProperty(propertyName);
@@ -40,69 +52,13 @@ namespace RIAPP.DataService.Utils
             return true;
         }
 
-        public static object GetProperty(object entity, string propertyName)
+        public object GetProperty(object entity, string propertyName)
         {
             Type enityType = entity.GetType();
             PropertyInfo pinfo = enityType.GetProperty(propertyName);
             if (pinfo == null)
                 return null;
             return pinfo.GetValue(entity, null);
-        }
-
-        public static object CreateGenericInstance(Type propType, Type propMainType, object[] constructorArgs)
-        {
-            Type typeToConstruct = propType.GetGenericTypeDefinition();
-            Type[] argsType = new Type[] { propMainType };
-            Type nullableType = typeToConstruct.MakeGenericType(argsType);
-            object val = Activator.CreateInstance(nullableType, constructorArgs);
-            return val;
-        }
-
-        public static bool IsNullableType(Type propType)
-        {
-            return propType.IsGenericType && propType.GetGenericTypeDefinition() == typeof(Nullable<int>).GetGenericTypeDefinition();
-        }
-
-        public static MethodInfo GetMethodInfo(Type t, string name)
-        {
-            MethodInfo meth = null;
-            if (!string.IsNullOrEmpty(name))
-                meth = t.GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
-            return meth;
-        }
-
-        public static DateTime ParseDateTimeValue(string val, DateConversion dateConversion)
-        {
-            string[] parts = val.Split("&".ToCharArray());
-            if (parts.Length != 7)
-            {
-                throw new ArgumentException(string.Format(ErrorStrings.ERR_VAL_DATEFORMAT_INVALID,val));
-            }
-            DateTime dt = new DateTime(int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]), int.Parse(parts[3]), int.Parse(parts[4]), int.Parse(parts[5]), String.IsNullOrEmpty(parts[6])?0:int.Parse(parts[6]), DateTimeKind.Unspecified);
-            return dt;
-        }
-
-        public DataType DataTypeFromType(Type type, out bool isArray)
-        {
-            return this._converter.DataTypeFromType(type, out isArray);
-        }
-
-        public static string DateToValue(DateTime dt)
-        {
-            string v = string.Format("{0}&{1}&{2}&{3}&{4}&{5}&{6}", dt.Year,dt.Month, dt.Day,dt.Hour,dt.Minute,dt.Second,dt.Millisecond);
-            return v;
-        }
-
-        public static string DateOffsetToValue(DateTimeOffset dtoff)
-        {
-            return DateToValue(dtoff.DateTime);
-        }
-
-        public static int GetLocalDateTimezoneOffset(DateTime dt)
-        {
-            DateTime uval = dt.ToUniversalTime();
-            TimeSpan tspn = uval - dt;
-            return (int)tspn.TotalMinutes;
         }
 
         public object SetValue(object entity, FieldInfo finfo, string value)
@@ -116,7 +72,7 @@ namespace RIAPP.DataService.Utils
             }
 
             Type propType = pinfo.PropertyType;
-            bool IsNullableType = DataHelperClass.IsNullableType(propType);
+            bool IsNullableType = this._converter.IsNullableType(propType);
             object val = this._converter.ConvertToTyped(propType, finfo.dataType, finfo.dateConversion, value);
 
             if (val != null)
@@ -130,7 +86,11 @@ namespace RIAPP.DataService.Utils
             return val;
         }
 
-       
+        public DataType DataTypeFromType(Type type, out bool isArray)
+        {
+            return this._converter.DataTypeFromType(type, out isArray);
+        }
+
         public string GetFieldValueAsString(object entity, string fieldName)
         {
             string val;

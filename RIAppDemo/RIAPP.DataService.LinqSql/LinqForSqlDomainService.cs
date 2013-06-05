@@ -25,7 +25,7 @@ namespace RIAPP.DataService.LinqSql
            
         }
 
-        protected override DataHelperClass CreateDataHelper()
+        protected override IDataHelper CreateDataHelper()
         {
             return new DataHelperClass(new LinqValueConverter());
         }
@@ -58,7 +58,7 @@ namespace RIAPP.DataService.LinqSql
                     }
                     bool isArray = false;
                     fieldInfo.dataType = this.DataHelper.DataTypeFromType(propInfo2.PropertyType, out isArray);
-                    fieldInfo.isNullable = DataHelperClass.IsNullableType(propInfo2.PropertyType) || colAttr.CanBeNull;
+                    fieldInfo.isNullable = this.DataHelper.IsNullableType(propInfo2.PropertyType) || colAttr.CanBeNull;
                     fieldInfo.isRowTimeStamp = colAttr.IsVersion;
                     fieldInfo.isReadOnly = !propInfo2.CanWrite;
                     dbSetInfo.fieldInfos.Add(fieldInfo);

@@ -6,36 +6,13 @@ using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService.Utils
 {
-    public class QueryHelperClass
+    public class QueryHelperClass : RIAPP.DataService.Utils.IQueryHelper
     {
-        private DataHelperClass _dataHelper;
+        private IDataHelper _dataHelper;
 
-        public QueryHelperClass(DataHelperClass dataHelper)
+        public QueryHelperClass(IDataHelper dataHelper)
         {
             this._dataHelper = dataHelper;
-        }
-
-        public static object FindEntity(IQueryable entities, RowInfo rowInfo, object[] keyValue)
-        {
-            string predicate =  QueryHelperClass.GetWherePKPredicate(rowInfo);
-
-            if (keyValue == null || keyValue.Length < 1 || keyValue.Any((kv) => kv == null))
-            {
-                throw new DomainServiceException(string.Format(ErrorStrings.ERR_ROWINFO_PKVAL_INVALID, rowInfo.dbSetInfo.EntityType.Name, string.Join(";", keyValue)));
-            }
-
-            IQueryable query = entities.Where(predicate, keyValue);
-            object dbEntity = null;
-            int cnt = 0;
-            foreach (var entity in query)
-            {
-                dbEntity = entity;
-                ++cnt;
-                if (cnt > 1)
-                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_ROWINFO_PKVAL_INVALID, rowInfo.dbSetInfo.EntityType.Name, string.Join(";", keyValue)));
-            }
-
-            return dbEntity;
         }
 
         public IQueryable<T> PerformSort<T>(IQueryable<T> entities, SortInfo sort)
@@ -173,7 +150,7 @@ namespace RIAPP.DataService.Utils
              where T : class
         {
             object[] keyValue = info.rowInfo.GetPKValues(this._dataHelper);
-            object dbEntity = QueryHelperClass.FindEntity(entities, info.rowInfo, keyValue);
+            object dbEntity = this.FindEntity(entities, info.rowInfo, keyValue);
             return (T)dbEntity;
         }
 
@@ -199,5 +176,27 @@ namespace RIAPP.DataService.Utils
             return predicate;
         }
 
+        protected virtual object FindEntity(IQueryable entities, RowInfo rowInfo, object[] pkValues)
+        {
+            string predicate = QueryHelperClass.GetWherePKPredicate(rowInfo);
+
+            if (pkValues == null || pkValues.Length < 1 || pkValues.Any((kv) => kv == null))
+            {
+                throw new DomainServiceException(string.Format(ErrorStrings.ERR_ROWINFO_PKVAL_INVALID, rowInfo.dbSetInfo.EntityType.Name, string.Join(";", pkValues)));
+            }
+
+            IQueryable query = entities.Where(predicate, pkValues);
+            object dbEntity = null;
+            int cnt = 0;
+            foreach (var entity in query)
+            {
+                dbEntity = entity;
+                ++cnt;
+                if (cnt > 1)
+                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_ROWINFO_PKVAL_INVALID, rowInfo.dbSetInfo.EntityType.Name, string.Join(";", pkValues)));
+            }
+
+            return dbEntity;
+        }
     }
 }

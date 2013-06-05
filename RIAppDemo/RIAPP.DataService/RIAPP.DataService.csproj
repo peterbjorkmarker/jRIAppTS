@@ -56,6 +56,10 @@
     <Compile Include="DomainService\JSonTypes\TrackAssoc.cs" />
     <Compile Include="DomainService\Security\SecurityHelper.cs" />
     <Compile Include="DomainService\TypedLists.cs" />
+    <Compile Include="Utils\IDataHelper.cs" />
+    <Compile Include="Utils\IQueryHelper.cs" />
+    <Compile Include="Utils\IValidationHelper.cs" />
+    <Compile Include="Utils\IValueConverter.cs" />
     <Compile Include="Utils\RowInfoEx.cs" />
     <Compile Include="Utils\DbSetInfoEx.cs" />
     <Compile Include="Utils\FieldInfoEx.cs" />
@@ -68,8 +72,8 @@
     <Compile Include="Utils\TemplateParser.cs" />
     <Compile Include="Utils\TypeScriptHelper.cs" />
     <Compile Include="Utils\ValueConverter.cs" />
-    <Compile Include="Utils\ValidationHelper.cs" />
-    <Compile Include="Utils\QueryHelper.cs" />
+    <Compile Include="Utils\ValidationHelperClass.cs" />
+    <Compile Include="Utils\QueryHelperClass.cs" />
     <Compile Include="DomainService\JSonTypes\ValidationErrorInfo.cs" />
     <Compile Include="DomainService\JSonTypes\Value.cs" />
     <Compile Include="DomainService\JSonTypes\Row.cs" />
@@ -95,7 +99,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>ErrorStrings.resx</DependentUpon>
     </Compile>
-    <Compile Include="Utils\DataHelper.cs" />
+    <Compile Include="Utils\DataHelperClass.cs" />
     <Compile Include="DomainService\JSonTypes\Enums.cs" />
     <Compile Include="DomainService\JSonTypes\FieldInfo.cs" />
     <Compile Include="DomainService\JSonTypes\ValueChange.cs" />

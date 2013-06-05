@@ -46,7 +46,7 @@ namespace RIAPP.DataService
             set;
         }
 
-        public object GetTypedValue(Type entityType, DbSetInfo dbSetInfo, DataHelperClass dataHelper)
+        public object GetTypedValue(Type entityType, DbSetInfo dbSetInfo, IDataHelper dataHelper)
         {
             FieldInfo fi = dbSetInfo.GetFieldByNames()[this.fieldName];
             PropertyInfo pinfo = entityType.GetProperty(fi.fieldName);

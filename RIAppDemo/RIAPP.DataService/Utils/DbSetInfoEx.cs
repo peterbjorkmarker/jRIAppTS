@@ -10,6 +10,13 @@ namespace RIAPP.DataService.Utils
 {
     public static class DbSetInfoEx
     {
+        public static MethodInfo GetMethodInfo(Type t, string name)
+        {
+            MethodInfo meth = null;
+            if (!string.IsNullOrEmpty(name))
+                meth = t.GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+            return meth;
+        }
 
         public static FieldInfo[] GetPKFieldInfos(this DbSetInfo dbSetInfo)
         {
@@ -124,7 +131,7 @@ namespace RIAPP.DataService.Utils
                 {
                     string operName = fl.GetValue(null).ToString();
                     string methodName = dbSetInfo.getOperationMethodName(operName);
-                    MethodInfo minfo = DataHelperClass.GetMethodInfo(serviceType, methodName);
+                    MethodInfo minfo = DbSetInfoEx.GetMethodInfo(serviceType, methodName);
                     if (minfo != null)
                     {
                         switch (operName)

@@ -5,8 +5,39 @@ using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService.Utils
 {
-    public class ValueConverter
+    public class ValueConverter : RIAPP.DataService.Utils.IValueConverter
     {
+       protected object CreateGenericInstance(Type propType, Type propMainType, object[] constructorArgs)
+        {
+            Type typeToConstruct = propType.GetGenericTypeDefinition();
+            Type[] argsType = new Type[] { propMainType };
+            Type nullableType = typeToConstruct.MakeGenericType(argsType);
+            object val = Activator.CreateInstance(nullableType, constructorArgs);
+            return val;
+        }
+
+        protected DateTime ParseDateTimeValue(string val, DateConversion dateConversion)
+        {
+            string[] parts = val.Split("&".ToCharArray());
+            if (parts.Length != 7)
+            {
+                throw new ArgumentException(string.Format(ErrorStrings.ERR_VAL_DATEFORMAT_INVALID, val));
+            }
+            DateTime dt = new DateTime(int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]), int.Parse(parts[3]), int.Parse(parts[4]), int.Parse(parts[5]), String.IsNullOrEmpty(parts[6]) ? 0 : int.Parse(parts[6]), DateTimeKind.Unspecified);
+            return dt;
+        }
+
+        protected string DateToValue(DateTime dt)
+        {
+            string v = string.Format("{0}&{1}&{2}&{3}&{4}&{5}&{6}", dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second, dt.Millisecond);
+            return v;
+        }
+
+        protected string DateOffsetToValue(DateTimeOffset dtoff)
+        {
+            return this.DateToValue(dtoff.DateTime);
+        }
+
         protected virtual object ConvertToBool(string value, bool IsNullableType)
         {
             if (value == null)
@@ -21,7 +52,7 @@ namespace RIAPP.DataService.Utils
         {
             if (value == null)
                 return null;
-            DateTime dt = DataHelperClass.ParseDateTimeValue(value, dateConversion);
+            DateTime dt = this.ParseDateTimeValue(value, dateConversion);
             if (IsNullableType)
                 return new Nullable<DateTime>(dt);
             else
@@ -46,7 +77,7 @@ namespace RIAPP.DataService.Utils
             object typedVal = Convert.ChangeType(value, propMainType, System.Globalization.CultureInfo.InvariantCulture);
             if (IsNullableType)
             {
-                return DataHelperClass.CreateGenericInstance(propType, propMainType, new object[] { typedVal });
+                return this.CreateGenericInstance(propType, propMainType, new object[] { typedVal });
             }
             else
                 return typedVal;
@@ -127,7 +158,7 @@ namespace RIAPP.DataService.Utils
 
             if (IsNullableType)
             {
-                return DataHelperClass.CreateGenericInstance(propType, propMainType, new object[] { typedVal });
+                return this.CreateGenericInstance(propType, propMainType, new object[] { typedVal });
             }
             else
                 return typedVal;
@@ -141,17 +172,17 @@ namespace RIAPP.DataService.Utils
         protected virtual string DateOffsetToString(object value, bool IsNullable)
         {
             if (IsNullable)
-                return DataHelperClass.DateOffsetToValue(((Nullable<DateTimeOffset>)value).Value);
+                return this.DateOffsetToValue(((Nullable<DateTimeOffset>)value).Value);
             else
-                return DataHelperClass.DateOffsetToValue((DateTimeOffset)value);
+                return this.DateOffsetToValue((DateTimeOffset)value);
         }
 
         protected virtual string DateToString(object value, bool IsNullable)
         {
             if (IsNullable)
-                return DataHelperClass.DateToValue(((Nullable<DateTime>)value).Value);
+                return this.DateToValue(((Nullable<DateTime>)value).Value);
             else
-                return DataHelperClass.DateToValue((DateTime)value);
+                return this.DateToValue((DateTime)value);
         }
 
         protected virtual string BoolToString(object value)
@@ -173,11 +204,16 @@ namespace RIAPP.DataService.Utils
             sb.Append("]");
             return sb.ToString();
         }
-  
+
+        public bool IsNullableType(Type propType)
+        {
+            return propType.IsGenericType && propType.GetGenericTypeDefinition() == typeof(Nullable<int>).GetGenericTypeDefinition();
+        }
+
         public virtual object ConvertToTyped(Type propType, DataType dataType, DateConversion dateConversion, string value)
         {
             object result = null;
-            bool IsNullableType = DataHelperClass.IsNullableType(propType);
+            bool IsNullableType = this.IsNullableType(propType);
             Type propMainType = null;
             if (!IsNullableType)
                 propMainType = propType;
@@ -229,7 +265,7 @@ namespace RIAPP.DataService.Utils
         {
             if (value == null)
                 return null;
-            bool isNullable = DataHelperClass.IsNullableType(propType);
+            bool isNullable = this.IsNullableType(propType);
             Type realType = null;
             if (!isNullable)
                 realType = propType;
@@ -278,7 +314,7 @@ namespace RIAPP.DataService.Utils
    
         public virtual DataType DataTypeFromType(Type type, out bool isArray)
         {
-            bool isNullable = DataHelperClass.IsNullableType(type);
+            bool isNullable = this.IsNullableType(type);
             isArray = false;
             Type realType = null;
             if (!isNullable)

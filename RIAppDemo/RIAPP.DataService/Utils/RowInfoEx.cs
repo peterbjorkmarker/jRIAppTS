@@ -16,7 +16,7 @@ namespace RIAPP.DataService.Utils
             return rowInfo.values.Where(fv => (fv.flags & ValueFlags.Changed) == ValueFlags.Changed).Select(fv => fv.fieldName).ToArray();
         }
 
-        public static object[] GetPKValues(this RowInfo rowInfo, DataHelperClass dataHelper)
+        public static object[] GetPKValues(this RowInfo rowInfo, IDataHelper dataHelper)
         {
             Type entityType = rowInfo.dbSetInfo.EntityType;
             FieldInfo[] finfos = rowInfo.dbSetInfo.GetPKFieldInfos();

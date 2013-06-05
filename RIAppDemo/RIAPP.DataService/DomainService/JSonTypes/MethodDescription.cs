@@ -85,31 +85,29 @@ namespace RIAPP.DataService
 
         /// <summary>
         /// Extracts from ParameterInfo all information about method parameter
-        /// returns InvokeParamInfo
         /// </summary>
-        /// <param name="pinfo"></param>
-        /// <returns></returns>
-        public static ParamMetadataInfo FromParamInfo(ParameterInfo pinfo, DataHelperClass dataHelper) {
+        /// <returns>ParamMetadataInfo</returns>
+        public static ParamMetadataInfo FromParamInfo(ParameterInfo pinfo, IDataHelper dataHelper) {
             Type ptype = pinfo.ParameterType;
             if (pinfo.IsOut)
                 throw new DomainServiceException("Out parameters are not supported in service methods");
-            ParamMetadataInfo res = new ParamMetadataInfo();
-            res.isNullable = DataHelperClass.IsNullableType(ptype);
-            res.name = pinfo.Name;
-            res.ParameterType = ptype;
+            ParamMetadataInfo paramInfo = new ParamMetadataInfo();
+            paramInfo.isNullable = dataHelper.IsNullableType(ptype);
+            paramInfo.name = pinfo.Name;
+            paramInfo.ParameterType = ptype;
             Type realType = null;
-            if (!res.isNullable)
+            if (!paramInfo.isNullable)
                 realType = ptype;
             else
                 realType = Nullable.GetUnderlyingType(ptype);
             object[] dtops = pinfo.GetCustomAttributes(typeof(DateOptionAttribute), false);
             if (dtops.Length > 0) {
-               res.dateConversion = (dtops[0] as DateOptionAttribute).dateConversion;
+               paramInfo.dateConversion = (dtops[0] as DateOptionAttribute).dateConversion;
             }
             bool isArray = false;
-            res.dataType = dataHelper.DataTypeFromType(realType, out isArray);
-            res.isArray = isArray;
-            return res;
+            paramInfo.dataType = dataHelper.DataTypeFromType(realType, out isArray);
+            paramInfo.isArray = isArray;
+            return paramInfo;
         }
     }
 
@@ -160,18 +158,26 @@ namespace RIAPP.DataService
             get;
             set;
         }
-
-        public static MethodDescription FromMethodInfo(MethodInfo methodInfo, bool isQuery, DataHelperClass dataHelper)
+        
+        /// <summary>
+        /// Generates Data Services' method description which is convertable to JSON
+        /// and can be consumed by clients
+        /// </summary>
+        /// <param name="methodInfo"></param>
+        /// <param name="isQuery"></param>
+        /// <param name="dataHelper"></param>
+        /// <returns></returns>
+        public static MethodDescription FromMethodInfo(MethodInfo methodInfo, bool isQuery, IDataHelper dataHelper)
         {
             Type returnType = methodInfo.ReturnType;
             bool isVoid = returnType == typeof(void);
-            MethodDescription invInfo = new MethodDescription();
-            invInfo.methodInfo = methodInfo;
-            invInfo.methodName = methodInfo.Name;
-            invInfo.isQuery = isQuery;
+            MethodDescription methDescription = new MethodDescription();
+            methDescription.methodInfo = methodInfo;
+            methDescription.methodName = methodInfo.Name;
+            methDescription.isQuery = isQuery;
 
             if (!isVoid)
-                invInfo.methodResult = true;
+                methDescription.methodResult = true;
             //else Result is Converted to JSON
             ParameterInfo[] paramsInfo = methodInfo.GetParameters();
             for (var i = 0; i < paramsInfo.Length; ++i) {
@@ -179,9 +185,9 @@ namespace RIAPP.DataService
                     continue;
                 ParamMetadataInfo param = ParamMetadataInfo.FromParamInfo(paramsInfo[i], dataHelper);
                 param.ordinal = i;
-                invInfo.parameters.Add(param);
+                methDescription.parameters.Add(param);
             }
-            return invInfo;
+            return methDescription;
         }
     }
 

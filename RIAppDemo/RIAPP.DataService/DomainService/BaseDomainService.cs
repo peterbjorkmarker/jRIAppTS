@@ -26,23 +26,23 @@ namespace RIAPP.DataService
         private ServiceOperationType _currentOperation;
         private IPrincipal _principal;
         private IAuthorizer _authorizer;
-        private DataHelperClass _dataHelper;
-        private ValidationHelperClass _validationHelper;
-        private QueryHelperClass _queryHelper;
+        private IDataHelper _dataHelper;
+        private IValidationHelper _validationHelper;
+        private IQueryHelper _queryHelper;
 
         protected IAuthorizer Authorizer
         {
             get
             {
                 if (this._authorizer == null)
-                    this._authorizer = this.GetAuthorizer();
+                    this._authorizer = this.CreateAuthorizer();
                 return this._authorizer;
             }
         }
 
         #endregion
 
-        public DataHelperClass DataHelper
+        public IDataHelper DataHelper
         {
             get
             {
@@ -50,7 +50,7 @@ namespace RIAPP.DataService
             }
         }
 
-        public QueryHelperClass QueryHelper
+        public IQueryHelper QueryHelper
         {
             get
             {
@@ -58,7 +58,7 @@ namespace RIAPP.DataService
             }
         }
 
-        public ValidationHelperClass ValidationHelper
+        public IValidationHelper ValidationHelper
         {
             get
             {
@@ -189,7 +189,7 @@ namespace RIAPP.DataService
             LinkedList<object> resultEntities = new LinkedList<object>();
             foreach(object entity in inputEntities)
             {
-                propValue = DataHelperClass.GetProperty(entity, propertyName);
+                propValue = this.DataHelper.GetProperty(entity, propertyName);
                 if (isChildProperty && propValue is IEnumerable)
                 {
                     foreach (object childEntity in (IEnumerable)propValue)
@@ -356,12 +356,6 @@ namespace RIAPP.DataService
             BaseDomainService._metadataCache.TryAdd(self.GetType(), metadata);
         }
 
-        protected MethodInfo GetMethodInfo(string name)
-        {
-            Type thisType = this.GetType();
-            return DataHelperClass.GetMethodInfo(thisType, name);
-        }
-
         protected MethodInfo GetOperMethodInfo(DbSetInfo dbSetInfo, string oper)
         {
             return dbSetInfo.getOperationMethodInfo(oper);
@@ -461,7 +455,7 @@ namespace RIAPP.DataService
             {
                 foreach (var pn in rowInfo.changeState.ParentRows)
                 {
-                    if (!DataHelperClass.SetProperty(entity, pn.association.childToParentName, pn.ParentRow.changeState.Entity))
+                    if (!this.DataHelper.SetProperty(entity, pn.association.childToParentName, pn.ParentRow.changeState.Entity))
                     {
                         throw new DomainServiceException(string.Format(ErrorStrings.ERR_CAN_NOT_SET_PARENT_FIELD, pn.association.childToParentName, rowInfo.dbSetInfo.EntityType.Name));
                     }
@@ -669,22 +663,22 @@ namespace RIAPP.DataService
         #region Overridable Methods
         protected abstract Metadata GetMetadata();
 
-        protected virtual IAuthorizer GetAuthorizer()
+        protected virtual IAuthorizer CreateAuthorizer()
         {
             return new AuthorizerClass(this.GetType(), this.CurrentPrincipal);
         }
 
-        protected virtual DataHelperClass CreateDataHelper()
+        protected virtual IDataHelper CreateDataHelper()
         {
             return new DataHelperClass(new ValueConverter());
         }
 
-        protected virtual ValidationHelperClass CreateValidationHelper()
+        protected virtual IValidationHelper CreateValidationHelper()
         {
             return new ValidationHelperClass(this.DataHelper);
         }
 
-        protected virtual QueryHelperClass CreateQueryHelper()
+        protected virtual IQueryHelper CreateQueryHelper()
         {
             return new QueryHelperClass(this.DataHelper);
         }
@@ -754,10 +748,7 @@ namespace RIAPP.DataService
         protected virtual T GetRefreshedEntity<T>(IQueryable<T> entities, RefreshRowInfo info)
             where T : class
         {
-
-            object[] keyValue = info.rowInfo.GetPKValues(this.DataHelper);
-            object dbEntity = QueryHelperClass.FindEntity(entities, info.rowInfo, keyValue);
-            return (T)dbEntity;
+            return this.QueryHelper.GetRefreshedEntity<T>(entities, info);
         }
         #endregion
 
