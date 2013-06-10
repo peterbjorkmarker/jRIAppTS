@@ -44,8 +44,6 @@ namespace RIAPP.DataService.Utils
                 this.WriteStringLine(this.createDbSetType(dbSetInfo));
                 this.WriteLine();
             });
-            this.WriteStringLine(this.createIDbSets());
-            this.WriteLine();
             this.WriteStringLine(this.createIAssocs());
             this.WriteLine();
             this.WriteStringLine(this.createDbContextType());
@@ -53,18 +51,15 @@ namespace RIAPP.DataService.Utils
             return _sb.ToString();
         }
 
-        private string createIDbSets()
+        private string createDbSetProps()
         {
             var sb = new StringBuilder(512);
-            sb.AppendLine("export interface IDbSets");
-            sb.AppendLine("{");
             this._metadata.dbSets.ForEach((dbSetInfo) =>
             {
                 var dbSetType = GetDbSetTypeName(dbSetInfo.dbSetName);
-                sb.AppendFormat("\t{0}: {1};", dbSetInfo.dbSetName,dbSetType);
+                sb.AppendFormat("\tget {0}() {{ return <{1}>this.getDbSet(\"{0}\"); }}", dbSetInfo.dbSetName,dbSetType);
                 sb.AppendLine();
             });
-            sb.AppendLine("}");
             return sb.ToString();
         }
 
@@ -194,12 +189,12 @@ namespace RIAPP.DataService.Utils
             var sb = new StringBuilder(512);
             string[] dbSetNames = this._metadata.dbSets.Select(d => d.dbSetName).ToArray();
             var parts = (new TemplateParser("DbContext.txt")).DocParts.ToList();
-            var sbDbSets = new StringBuilder(512);
+            var sbCreateDbSets = new StringBuilder(512);
             this._metadata.dbSets.ForEach((dbSetInfo) =>
             {
                 var dbSetType = GetDbSetTypeName(dbSetInfo.dbSetName);
-                sbDbSets.AppendFormat("\t\tself._dbSets.{0} = new {1}(this);", dbSetInfo.dbSetName, dbSetType);
-                sbDbSets.AppendLine();
+                sbCreateDbSets.AppendFormat("\t\tthis._createDbSet(\"{0}\",{1});", dbSetInfo.dbSetName, dbSetType);
+                sbCreateDbSets.AppendLine();
             });
 
          
@@ -216,8 +211,11 @@ namespace RIAPP.DataService.Utils
                         case "DBSETS_NAMES":
                             sb.Append(SerializationHelper.Serialize<string[]>(dbSetNames));
                             break;
+                        case "DBSETS_PROPS":
+                            sb.Append(this.createDbSetProps());
+                            break;
                         case "DBSETS":
-                            sb.Append(sbDbSets);
+                            sb.Append(sbCreateDbSets);
                             break;
                         case "TIMEZONE":
                             sb.Append(this._metadata.serverTimezone.ToString());

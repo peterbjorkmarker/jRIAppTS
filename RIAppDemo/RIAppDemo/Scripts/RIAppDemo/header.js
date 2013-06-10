@@ -1,4 +1,5 @@
 var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
@@ -12,23 +13,23 @@ var RIAPP;
         HEADER.contentPanel;
         HEADER.topPanel = "#demoHeader";
         HEADER.contentPanel = "#demoContent";
+
         var HeaderVM = (function (_super) {
             __extends(HeaderVM, _super);
             function HeaderVM(app) {
-                        _super.call(this, app);
+                _super.call(this, app);
                 var self = this;
                 this._$topPanel = global.$(HEADER.topPanel);
                 this._$contentPanel = global.$(HEADER.contentPanel);
                 this._contentPanelHeight = 0;
-                if(!!this._$contentPanel) {
+                if (!!this._$contentPanel)
                     this._contentPanelHeight = this._$contentPanel.height();
-                }
+
                 this._expanderCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
-                    if(sender.isExpanded) {
+                    if (sender.isExpanded) {
                         self.expand();
-                    } else {
+                    } else
                         self.collapse();
-                    }
                 }, self, null);
             }
             HeaderVM.prototype.expand = function () {
@@ -44,12 +45,10 @@ var RIAPP;
                 });
             };
             HeaderVM.prototype.updateUI = function (isUp) {
-                if(!!this._$contentPanel) {
-                    if(isUp) {
-                        this._$contentPanel.height(this._contentPanelHeight);
-                    } else {
+                if (!!this._$contentPanel) {
+                    if (isUp)
+                        this._$contentPanel.height(this._contentPanelHeight); else
                         this._$contentPanel.height(this._contentPanelHeight - this._$topPanel.height());
-                    }
                 }
             };
             Object.defineProperty(HeaderVM.prototype, "expanderCommand", {
@@ -61,7 +60,8 @@ var RIAPP;
             });
             return HeaderVM;
         })(RIAPP.MOD.mvvm.BaseViewModel);
-        HEADER.HeaderVM = HeaderVM;        
+        HEADER.HeaderVM = HeaderVM;
+
         function initModule(app) {
             return HEADER;
         }

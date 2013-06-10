@@ -540,7 +540,7 @@ module RIAPP
             get propChangeCommand() { return this._propChangeCommand; }
             get orderStatuses() { return this._orderStatuses; }
             get currentCustomer() { return this._currentCustomer; }
-            set currentCustomer(v) {
+            set currentCustomer(v: DEMODB.Customer) {
                 if (v !== this._currentCustomer) {
                     this._currentCustomer = v;
                     this.raisePropertyChanged('currentCustomer');

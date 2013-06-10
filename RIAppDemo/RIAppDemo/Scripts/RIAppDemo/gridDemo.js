@@ -1,4 +1,5 @@
 var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
@@ -10,42 +11,37 @@ var __extends = this.__extends || function (d, b) {
 var RIAPP;
 (function (RIAPP) {
     'use strict';
+
     //data grid demo module
     (function (GRIDDEMO) {
         var global = RIAPP.global, utils = global.utils;
+
         function addTextQuery(query, fldName, val) {
             var tmp;
-            if(!!val) {
-                if(utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
+            if (!!val) {
+                if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'contains', [
-                        tmp
-                    ]);
-                } else if(utils.str.startsWith(val, '%')) {
+                    query.where(fldName, 'contains', [tmp]);
+                } else if (utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'endswith', [
-                        tmp
-                    ]);
-                } else if(utils.str.endsWith(val, '%')) {
+                    query.where(fldName, 'endswith', [tmp]);
+                } else if (utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'startswith', [
-                        tmp
-                    ]);
+                    query.where(fldName, 'startswith', [tmp]);
                 } else {
                     tmp = utils.str.trim(val);
-                    query.where(fldName, '=', [
-                        tmp
-                    ]);
+                    query.where(fldName, '=', [tmp]);
                 }
             }
             return query;
         }
         GRIDDEMO.addTextQuery = addTextQuery;
         ;
+
         var ProductsFilter = (function (_super) {
             __extends(ProductsFilter, _super);
             function ProductsFilter(app) {
-                        _super.call(this);
+                _super.call(this);
                 var self = this;
                 this._app = app;
                 this._prodNumber = null;
@@ -55,6 +51,7 @@ var RIAPP;
                 this._selectedCategory = null;
                 this._selectedModel = null;
                 this._modelID = null;
+
                 //filters top level product categories
                 this._parentCategories = new RIAPP.MOD.db.DataView({
                     dataSource: this.ProductCategories,
@@ -65,6 +62,7 @@ var RIAPP;
                         return item.ParentProductCategoryID == null;
                     }
                 });
+
                 //filters product categories which have parent category
                 this._childCategories = new RIAPP.MOD.db.DataView({
                     dataSource: this.ProductCategories,
@@ -75,6 +73,7 @@ var RIAPP;
                         return item.ParentProductCategoryID !== null && item.ParentProductCategoryID == self.parentCategoryID;
                     }
                 });
+
                 this._resetCommand = new RIAPP.MOD.mvvm.Command(function (sender, data) {
                     self.reset();
                 }, self, null);
@@ -82,20 +81,24 @@ var RIAPP;
             ProductsFilter.prototype._loadCategories = function () {
                 var query = this.ProductCategories.createReadProductCategoryQuery();
                 query.orderBy('Name', 'ASC');
+
                 //returns promise
                 return this.dbContext.load(query);
             };
-            ProductsFilter.prototype._loadProductModels = //returns promise
-            function () {
+
+            //returns promise
+            ProductsFilter.prototype._loadProductModels = function () {
                 var query = this.ProductModels.createReadProductModelQuery();
                 query.orderBy('Name', 'ASC');
+
                 //returns promise
                 return this.dbContext.load(query);
             };
-            ProductsFilter.prototype.load = //returns promise
-            function () {
+
+            //returns promise
+            ProductsFilter.prototype.load = function () {
                 //load two dbsets simultanously
-                                var promise1 = this._loadCategories(), promise2 = this._loadProductModels();
+                var promise1 = this._loadCategories(), promise2 = this._loadProductModels();
                 return global.$.when(promise1, promise2);
             };
             ProductsFilter.prototype.reset = function () {
@@ -112,7 +115,7 @@ var RIAPP;
                     return this._prodNumber;
                 },
                 set: function (v) {
-                    if(this._prodNumber != v) {
+                    if (this._prodNumber != v) {
                         this._prodNumber = v;
                         this.raisePropertyChanged('prodNumber');
                     }
@@ -125,7 +128,7 @@ var RIAPP;
                     return this._name;
                 },
                 set: function (v) {
-                    if(this._name != v) {
+                    if (this._name != v) {
                         this._name = v;
                         this.raisePropertyChanged('name');
                     }
@@ -138,7 +141,7 @@ var RIAPP;
                     return this._parentCategoryID;
                 },
                 set: function (v) {
-                    if(this._parentCategoryID != v) {
+                    if (this._parentCategoryID != v) {
                         this._parentCategoryID = v;
                         this.raisePropertyChanged('parentCategoryID');
                         this._childCategories.refresh();
@@ -152,7 +155,7 @@ var RIAPP;
                     return this._childCategoryID;
                 },
                 set: function (v) {
-                    if(this._childCategoryID != v) {
+                    if (this._childCategoryID != v) {
                         this._childCategoryID = v;
                         this.raisePropertyChanged('childCategoryID');
                     }
@@ -165,7 +168,7 @@ var RIAPP;
                     return this._modelID;
                 },
                 set: function (v) {
-                    if(this._modelID != v) {
+                    if (this._modelID != v) {
                         this._modelID = v;
                         this.raisePropertyChanged('modelID');
                     }
@@ -227,7 +230,7 @@ var RIAPP;
                     return this._selectedCategory;
                 },
                 set: function (v) {
-                    if(this._selectedCategory != v) {
+                    if (this._selectedCategory != v) {
                         this._selectedCategory = v;
                         this.raisePropertyChanged('selectedCategory');
                     }
@@ -240,7 +243,7 @@ var RIAPP;
                     return this._selectedModel;
                 },
                 set: function (v) {
-                    if(this._selectedModel != v) {
+                    if (this._selectedModel != v) {
                         this._selectedModel = v;
                         this.raisePropertyChanged('selectedModel');
                     }
@@ -271,101 +274,100 @@ var RIAPP;
             });
             return ProductsFilter;
         })(RIAPP.BaseObject);
-        GRIDDEMO.ProductsFilter = ProductsFilter;        
+        GRIDDEMO.ProductsFilter = ProductsFilter;
+
         var ProductViewModel = (function (_super) {
             __extends(ProductViewModel, _super);
             function ProductViewModel(app) {
-                        _super.call(this, app);
+                _super.call(this, app);
                 var self = this;
                 this._filter = new ProductsFilter(app);
                 this._dbSet = this.dbSets.Product;
                 this._dataGrid = null;
                 this._propWatcher = new RIAPP.MOD.utils.PropWatcher();
-                this._selected = {
-                };
+                this._selected = {};
                 this._selectedCount = 0;
                 this._invokeResult = null;
+
                 //this._templateID = 'productEditTemplate';
                 //when currentItem property changes, invoke our viewmodel's method
                 this._dbSet.addOnPropertyChange('currentItem', function (sender, data) {
                     self._onCurrentChanged();
                 }, self.uniqueID);
+
                 //if we need to confirm the deletion, this is how it is done
                 this._dbSet.addOnItemDeleting(function (sender, args) {
-                    if(!confirm('Are you sure that you want to delete ' + (args.item).Name + ' ?')) {
+                    if (!confirm('Are you sure that you want to delete ' + (args.item).Name + ' ?'))
                         args.isCancel = true;
-                    }
                 }, self.uniqueID);
+
                 //the end edit event- the entity potentially changed its data. we can recheck conditions based on
                 //entities data here
                 this._dbSet.addOnEndEdit(function (sender, args) {
-                    if(!args.isCanceled) {
+                    if (!args.isCanceled) {
                         //at the end of the editing, let the command will check: can it be executed?
                         self._testInvokeCommand.raiseCanExecuteChanged();
                     }
                 }, self.uniqueID);
+
                 //auto submit changes when an entity is deleted
                 this._dbSet.isSubmitOnDelete = true;
+
                 this._dbSet.addOnFill(function (s, a) {
-                    //when fill is ended
-                    if(!a.isBegin) {
-                        if(!a.isPageChanged) {
-                            //clear products selection when the dbSet is refilled (but not when page is changed)
+                    if (!a.isBegin) {
+                        if (!a.isPageChanged)
                             self._clearSelection();
-                        }
                     }
                 }, self.uniqueID);
+
                 //example of using custom validation on client (in addition to builtin validation)
                 this._dbSet.addOnValidate(function (sender, args) {
                     var item = args.item;
-                    if(!args.fieldName) {
-                        //full item validation
-                        if(!!item.SellEndDate) {
-                            //check it must be after Start Date
-                            if(item.SellEndDate < item.SellStartDate) {
+                    if (!args.fieldName) {
+                        if (!!item.SellEndDate) {
+                            if (item.SellEndDate < item.SellStartDate) {
                                 args.errors.push('End Date must be after Start Date');
                             }
                         }
-                    } else//validation of field value
-                     {
-                        if(args.fieldName == "Weight") {
-                            if(args.item[args.fieldName] > 20000) {
+                    } else {
+                        if (args.fieldName == "Weight") {
+                            if (args.item[args.fieldName] > 20000) {
                                 args.errors.push('Weight must be less than 20000');
                             }
                         }
                     }
                 }, self.uniqueID);
+
                 //an example of getting notifications in viewmodel on the tabs events
                 this._tabsEventCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     var index = param.args.index, tab = param.args.tab, panel = param.args.panel;
-
                 }, self, null);
+
                 //adds new product - uses dialog to enter the data
                 this._addNewCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     //grid will show the edit dialog, because we set grid options isHandleAddNew:true
                     //see the options for the grid on the HTML demo page
                     var item = self._dbSet.addNew();
-                    //P.S. - grids editor options also has submitOnOK:true, which means
-                    //on clicking OK button all changes are submitted to the service
-                                    }, self, function (sender, param) {
+                }, self, function (sender, param) {
                     return true;
                 });
+
                 //loads data from the server for the products
                 this._loadCommand = new RIAPP.MOD.mvvm.Command(function (sender, data) {
                     self.load();
                 }, self, null);
+
                 //example of getting instance of databounded dataGrid by using elView's propChangedCommand
                 //we can name this command just how we like it (here i named it propChangeCommand)
                 //look at the datagrid's databinding on the demo page
                 this._propChangeCommand = new RIAPP.MOD.baseElView.PropChangedCommand(function (sender, data) {
-                    if(data.property == '*' || data.property == 'grid') {
-                        if(self._dataGrid === sender.grid) {
+                    if (data.property == '*' || data.property == 'grid') {
+                        if (self._dataGrid === sender.grid)
                             return;
-                        }
                         self._dataGrid = sender.grid;
                     }
-                    //example of binding to dataGrid events
-                    if(!!self._dataGrid) {
+
+                    if (!!self._dataGrid) {
                         self._dataGrid.addOnPageChanged(function (s, a) {
                             self._onGridPageChanged();
                         }, self.uniqueID);
@@ -376,53 +378,43 @@ var RIAPP;
                             self._onGridRowExpanded(a.old_expandedRow, a.expandedRow, a.isExpanded);
                         }, self.uniqueID);
                         self._dataGrid.addOnRowStateChanged(function (s, a) {
-                            if(!a.val) {
+                            if (!a.val) {
                                 a.css = 'rowInactive';
                             }
                         }, self.uniqueID);
                     }
                 }, self, null);
+
                 //example of using a method invocation on the service
                 //invokes test service method with parameters and displays result with alert
                 this._testInvokeCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     self.invokeResult = null;
-                    var promise = self.dbContext.serviceMethods.TestInvoke({
-                        param1: [
-                            10, 
-                            11, 
-                            12, 
-                            13, 
-                            14
-                        ],
-                        param2: param.Name
-                    });
+                    var promise = self.dbContext.serviceMethods.TestInvoke({ param1: [10, 11, 12, 13, 14], param2: param.Name });
                     promise.done(function (res) {
                         self.invokeResult = res;
                         self._dialogVM.showDialog('testDialog', self);
                     });
+
                     promise.fail(function () {
-                        //do something on fail if you need
-                        //but the error message display is automatically shown
-                                            });
+                    });
                 }, self, function (sender, param) {
                     //just for the test: this command can be executed only when this condition is true!
                     return self.currentItem !== null;
                 });
+
                 //the property watcher helps us handling properties changes
                 //more convenient than using addOnPropertyChange
-                this._propWatcher.addWatch(self, [
-                    'currentItem'
-                ], function (property) {
+                this._propWatcher.addWatch(self, ['currentItem'], function (property) {
                     self._testInvokeCommand.raiseCanExecuteChanged();
                 });
+
                 this._dialogVM = new RIAPP.COMMON.DialogVM(app);
                 var dialogOptions = {
                     templateID: 'invokeResultTemplate',
                     width: 600,
                     height: 250,
                     canCancel: false,
-                    title: //no cancel button
-                    'Result of a service method invocation',
+                    title: 'Result of a service method invocation',
                     fn_OnClose: function (dialog) {
                         self.invokeResult = null;
                     }
@@ -431,14 +423,13 @@ var RIAPP;
             }
             ProductViewModel.prototype._onGridPageChanged = function () {
                 //when moving to any page, select rows which was previously selected on that page (restore selection)
-                                var self = this, keys = self.selectedIDs, grid = self._dataGrid;
+                var self = this, keys = self.selectedIDs, grid = self._dataGrid;
                 keys.forEach(function (key) {
                     var item = self.dbSet.getItemByKey(key), row;
-                    if(!!item) {
+                    if (!!item) {
                         row = grid.findRowByItem(item);
-                        if(!!row) {
+                        if (!!row)
                             row.isSelected = true;
-                        }
                     }
                 });
             };
@@ -446,31 +437,28 @@ var RIAPP;
                 this._productSelected(row.item, row.isSelected);
             };
             ProductViewModel.prototype._onGridRowExpanded = function (oldRow, row, isExpanded) {
-                //just for example
-                //we could retrieve additional data from the server when grid's row is expanded
-                            };
+            };
             ProductViewModel.prototype._onCurrentChanged = function () {
                 this.raisePropertyChanged('currentItem');
             };
             ProductViewModel.prototype._clearSelection = function () {
                 //clear all selection
-                this._selected = {
-                };
+                this._selected = {};
                 this.selectedCount = 0;
             };
-            ProductViewModel.prototype._productSelected = //when product is selected (unselected) by user in the grid (clicking checkboxes)
+
+            //when product is selected (unselected) by user in the grid (clicking checkboxes)
             //we store the entities keys in the map (it survives going to another page and return back)
-            function (item, isSelected) {
-                if(!item) {
+            ProductViewModel.prototype._productSelected = function (item, isSelected) {
+                if (!item)
                     return;
-                }
-                if(isSelected) {
-                    if(!this._selected[item._key]) {
+                if (isSelected) {
+                    if (!this._selected[item._key]) {
                         this._selected[item._key] = item;
                         this.selectedCount += 1;
                     }
                 } else {
-                    if(!!this._selected[item._key]) {
+                    if (!!this._selected[item._key]) {
                         delete this._selected[item._key];
                         this.selectedCount -= 1;
                     }
@@ -480,47 +468,33 @@ var RIAPP;
                 //you can create several methods on the service which return the same entity type
                 //but they must have different names (no overloads)
                 //the query'service method can accept additional parameters which you can supply with query
-                var query = this.dbSet.createReadProductQuery({
-                    param1: [
-                        10, 
-                        11, 
-                        12, 
-                        13, 
-                        14
-                    ],
-                    param2: 'Test'
-                });
+                var query = this.dbSet.createReadProductQuery({ param1: [10, 11, 12, 13, 14], param2: 'Test' });
                 query.pageSize = 50;
-                query.loadPageCount = 20//load 20 pages at once (only one will be visible, others will be in local cache)
-                ;
-                query.isClearCacheOnEveryLoad = true//clear local cache when a new batch of data is loaded from the server
-                ;
+                query.loadPageCount = 20;
+                query.isClearCacheOnEveryLoad = true;
                 addTextQuery(query, 'ProductNumber', this._filter.prodNumber);
                 addTextQuery(query, 'Name', this._filter.name);
-                if(!utils.check.isNt(this._filter.childCategoryID)) {
-                    query.where('ProductCategoryID', '=', [
-                        this._filter.childCategoryID
-                    ]);
+                if (!utils.check.isNt(this._filter.childCategoryID)) {
+                    query.where('ProductCategoryID', '=', [this._filter.childCategoryID]);
                 }
-                if(!utils.check.isNt(this._filter.modelID)) {
-                    query.where('ProductModelID', '=', [
-                        this._filter.modelID
-                    ]);
+                if (!utils.check.isNt(this._filter.modelID)) {
+                    query.where('ProductModelID', '=', [this._filter.modelID]);
                 }
+
                 query.orderBy('Name', 'ASC').thenBy('SellStartDate', 'DESC');
                 return this.dbContext.load(query);
             };
             ProductViewModel.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed)
                     return;
-                }
                 this._isDestroyCalled = true;
                 this._propWatcher.destroy();
                 this._propWatcher = null;
-                if(!!this._dbSet) {
+
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
-                if(!!this._dataGrid) {
+                if (!!this._dataGrid) {
                     this._dataGrid.removeNSHandlers(this.uniqueID);
                 }
                 _super.prototype.destroy.call(this);
@@ -539,6 +513,7 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
+
             Object.defineProperty(ProductViewModel.prototype, "testInvokeCommand", {
                 get: //get templateID() { return this._templateID; }
                 function () {
@@ -609,7 +584,7 @@ var RIAPP;
                 },
                 set: function (v) {
                     var old = this._selectedCount;
-                    if(old !== v) {
+                    if (old !== v) {
                         this._selectedCount = v;
                         this.raisePropertyChanged('selectedCount');
                     }
@@ -630,7 +605,7 @@ var RIAPP;
                 },
                 set: function (v) {
                     var old = this._invokeResult;
-                    if(old !== v) {
+                    if (old !== v) {
                         this._invokeResult = v;
                         this.raisePropertyChanged('invokeResult');
                     }
@@ -640,11 +615,12 @@ var RIAPP;
             });
             return ProductViewModel;
         })(RIAPP.MOD.mvvm.BaseViewModel);
-        GRIDDEMO.ProductViewModel = ProductViewModel;        
+        GRIDDEMO.ProductViewModel = ProductViewModel;
+
         var BaseUploadVM = (function (_super) {
             __extends(BaseUploadVM, _super);
             function BaseUploadVM(url) {
-                        _super.call(this);
+                _super.call(this);
                 var self = this;
                 this._uploadUrl = url;
                 this._formEl = null;
@@ -655,6 +631,7 @@ var RIAPP;
                 this._fileInfo = null;
                 this._id = null;
                 this._fileUploaded = false;
+
                 this._initOk = this._initXhr();
                 this._uploadCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     try  {
@@ -668,7 +645,7 @@ var RIAPP;
             }
             BaseUploadVM.prototype._initXhr = function () {
                 this.xhr = new XMLHttpRequest();
-                if(!this.xhr.upload) {
+                if (!this.xhr.upload) {
                     this.xhr = null;
                     this._onError('Browser dose not support HTML5 files upload interface', this);
                     return false;
@@ -680,50 +657,56 @@ var RIAPP;
                     self._percentageCalc.html("0%");
                     self._progressDiv.show();
                 };
+
                 upload.onprogress = function (e) {
                     var progressBar = $("#progressBar");
                     var percentageDiv = $("#percentageCalc");
-                    if(!!e.lengthComputable) {
+                    if (!!e.lengthComputable) {
                         self._progressBar.prop("max", e.total);
                         self._progressBar.prop("value", e.loaded);
                         self._percentageCalc.html(Math.round(e.loaded / e.total * 100) + "%");
                     }
                 };
+
                 //File uploaded
                 upload.onload = function (e) {
                     self.fileInfo = 'the File is uploaded';
                     self._progressDiv.hide();
                     self._onFileUploaded();
                 };
+
                 upload.onerror = function (e) {
                     self.fileInfo = null;
-                    self._onError(new Error('File upload error'), self);
+                    self._progressDiv.hide();
+                    self._onError(new Error('File uploading error'), self);
                 };
+
                 xhr.onreadystatechange = function (e) {
-                    if(xhr.readyState === 4) {
-                        if(xhr.status >= 400) {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status >= 400) {
                             self._onError(new Error(utils.format("File upload error: {0}", xhr.statusText)), self);
                         }
                     }
                 };
+
                 return true;
             };
             BaseUploadVM.prototype._onFileUploaded = function () {
                 this._fileUploaded = true;
             };
             BaseUploadVM.prototype.uploadFiles = function (fileList) {
-                if(!!fileList) {
-                    for(var i = 0, l = fileList.length; i < l; i++) {
+                if (!!fileList) {
+                    for (var i = 0, l = fileList.length; i < l; i++) {
                         this.uploadFile(fileList[i]);
                     }
                 }
             };
             BaseUploadVM.prototype.uploadFile = function (file) {
-                if(!this._initOk) {
+                if (!this._initOk)
                     return;
-                }
                 var xhr = this.xhr;
                 xhr.open("post", this._uploadUrl, true);
+
                 // Set appropriate headers
                 // We're going to use these in the UploadFile method
                 // To determine what is being uploaded.
@@ -732,6 +715,7 @@ var RIAPP;
                 xhr.setRequestHeader("X-File-Size", file.size.toString());
                 xhr.setRequestHeader("X-File-Type", file.type);
                 xhr.setRequestHeader("X-Data-ID", this._getDataID());
+
                 // Send the file
                 xhr.send(file);
             };
@@ -749,7 +733,7 @@ var RIAPP;
                     return this._fileInfo;
                 },
                 set: function (v) {
-                    if(this._fileInfo !== v) {
+                    if (this._fileInfo !== v) {
                         this._fileInfo = v;
                         this.raisePropertyChanged('fileInfo');
                         this._uploadCommand.raiseCanExecuteChanged();
@@ -771,7 +755,7 @@ var RIAPP;
                 },
                 set: function (v) {
                     var old = this._id;
-                    if(old !== v) {
+                    if (old !== v) {
                         this._id = v;
                         this.raisePropertyChanged('id');
                         this._onIDChanged();
@@ -782,23 +766,25 @@ var RIAPP;
             });
             return BaseUploadVM;
         })(RIAPP.BaseObject);
-        GRIDDEMO.BaseUploadVM = BaseUploadVM;        
+        GRIDDEMO.BaseUploadVM = BaseUploadVM;
+
         //helper function to get html DOM element  inside template's instance
         //by custom data-name attribute value
         var fn_getTemplateElement = function (template, name) {
             var t = template;
             var els = t.findElByDataName(name);
-            if(els.length < 1) {
+            if (els.length < 1)
                 return null;
-            }
             return els[0];
         };
+
         var UploadThumbnailVM = (function (_super) {
             __extends(UploadThumbnailVM, _super);
             function UploadThumbnailVM(app, url) {
-                        _super.call(this, url);
+                _super.call(this, url);
                 var self = this;
                 this._product = null;
+
                 //we defined this custom type in common.js
                 this._dialogVM = new RIAPP.COMMON.DialogVM(app);
                 var dialogOptions = {
@@ -820,11 +806,12 @@ var RIAPP;
                             e.stopPropagation();
                             var fileList = fileEl.files, txt = '';
                             self.fileInfo = null;
-                            for(var i = 0, l = fileList.length; i < l; i++) {
+                            for (var i = 0, l = fileList.length; i < l; i++) {
                                 txt += utils.format('<p>{0} ({1} KB)</p>', fileList[i].name, utils.str.formatNumber(fileList[i].size / 1024, 2, '.', ','));
                             }
                             self.fileInfo = txt;
                         });
+
                         var templEl = template.el, $fileEl = global.$(self._fileEl);
                         $fileEl.change(function (e) {
                             global.$('input[data-name="files-input"]', templEl).val(global.$(this).val());
@@ -841,17 +828,16 @@ var RIAPP;
                         self._fileUploaded = false;
                     },
                     fn_OnClose: function (dialog) {
-                        if(dialog.result == 'ok' && self._onDialogClose()) {
+                        if (dialog.result == 'ok' && self._onDialogClose()) {
                             //raise our custom event
-                            self.raiseEvent('files_uploaded', {
-                                id: self.id,
-                                product: self._product
-                            });
+                            self.raiseEvent('files_uploaded', { id: self.id, product: self._product });
                         }
                     }
                 };
+
                 //dialogs are distinguished by their given names
                 this._dialogVM.createDialog('uploadDialog', dialogOptions);
+
                 //shows dialog when executed
                 this._dialogCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     try  {
@@ -865,14 +851,15 @@ var RIAPP;
                 }, self, function (sender, param) {
                     return true;
                 });
+
                 //executed when template is loaded or unloading
                 this._templateCommand = new RIAPP.MOD.baseElView.TemplateCommand(function (sender, param) {
                     try  {
                         var template = param.template, $ = global.$, fileEl = $('input[data-name="files-to-upload"]', template.el);
-                        if(fileEl.length == 0) {
+                        if (fileEl.length == 0)
                             return;
-                        }
-                        if(param.isLoaded) {
+
+                        if (param.isLoaded) {
                             fileEl.change(function (e) {
                                 $('input[data-name="files-input"]', template.el).val($(this).val());
                             });
@@ -894,9 +881,7 @@ var RIAPP;
             }
             UploadThumbnailVM.prototype._getEventNames = function () {
                 var base_events = _super.prototype._getEventNames.call(this);
-                return [
-                    'files_uploaded'
-                ].concat(base_events);
+                return ['files_uploaded'].concat(base_events);
             };
             UploadThumbnailVM.prototype.addOnFilesUploaded = function (fn, namespace) {
                 this.addHandler('files_uploaded', fn, namespace);
@@ -922,9 +907,8 @@ var RIAPP;
                 configurable: true
             });
             UploadThumbnailVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed)
                     return;
-                }
                 this._isDestroyCalled = true;
                 this._dialogVM.destroy();
                 this._dialogVM = null;
@@ -932,12 +916,13 @@ var RIAPP;
             };
             return UploadThumbnailVM;
         })(BaseUploadVM);
-        GRIDDEMO.UploadThumbnailVM = UploadThumbnailVM;        
+        GRIDDEMO.UploadThumbnailVM = UploadThumbnailVM;
+
         //strongly typed aplication's class
         var DemoApplication = (function (_super) {
             __extends(DemoApplication, _super);
             function DemoApplication(options) {
-                        _super.call(this, options);
+                _super.call(this, options);
                 var self = this;
                 this._dbContext = null;
                 this._errorVM = null;
@@ -948,18 +933,14 @@ var RIAPP;
             DemoApplication.prototype.onStartUp = function () {
                 var self = this, options = self.options;
                 this._dbContext = new RIAPP.DEMODB.DbContext();
-                this._dbContext.initialize({
-                    serviceUrl: options.service_url,
-                    permissions: options.permissionInfo
-                });
+                this._dbContext.initialize({ serviceUrl: options.service_url, permissions: options.permissionInfo });
                 function toText(str) {
-                    if(str === null) {
-                        return '';
-                    } else {
+                    if (str === null)
+                        return ''; else
                         return str;
-                    }
                 }
                 ;
+
                 this._dbContext.dbSets.Product.defineIsActiveField(function () {
                     return !this.SellEndDate;
                 });
@@ -971,9 +952,11 @@ var RIAPP;
                     self._handleError(sender, data);
                 }
                 ;
+
                 //here we could process application's errors
                 this.addOnError(handleError);
                 this._dbContext.addOnError(handleError);
+
                 //adding event handler for our custom event
                 this._uploadVM.addOnFilesUploaded(function (s, a) {
                     //need to update ThumbnailPhotoFileName
@@ -982,22 +965,21 @@ var RIAPP;
                 this.productVM.filter.modelData = options.modelData;
                 this.productVM.filter.categoryData = options.categoryData;
                 this.productVM.load().done(function (loadRes) {
-                    /*alert(loadRes.outOfBandData.test);*/ return;
+                    return;
                 });
                 _super.prototype.onStartUp.call(this);
             };
             DemoApplication.prototype._handleError = function (sender, data) {
                 debugger;
-
                 data.isHandled = true;
                 this.errorVM.error = data.error;
                 this.errorVM.showDialog();
             };
-            DemoApplication.prototype.destroy = //really, the destroy method is redundant here because the application lives while the page lives
-            function () {
-                if(this._isDestroyed) {
+
+            //really, the destroy method is redundant here because the application lives while the page lives
+            DemoApplication.prototype.destroy = function () {
+                if (this._isDestroyed)
                     return;
-                }
                 this._isDestroyCalled = true;
                 var self = this;
                 try  {
@@ -1006,7 +988,7 @@ var RIAPP;
                     self._productVM.destroy();
                     self._uploadVM.destroy();
                     self._dbContext.destroy();
-                }finally {
+                } finally {
                     _super.prototype.destroy.call(this);
                 }
             };
@@ -1054,22 +1036,27 @@ var RIAPP;
             });
             return DemoApplication;
         })(RIAPP.Application);
-        GRIDDEMO.DemoApplication = DemoApplication;        
+        GRIDDEMO.DemoApplication = DemoApplication;
+
         //global error handler - the last resort (typically display message to the user)
         RIAPP.global.addOnError(function (sender, args) {
             debugger;
-
             alert(args.error.message);
         });
+
         //create and start application here
         RIAPP.global.addOnLoad(function (sender, a) {
             var global = sender;
+
             //initialize images folder path
             global.defaults.imagesPath = GRIDDEMO.mainOptions.images_path;
+
             //create and then start application
             var thisApp = new DemoApplication(GRIDDEMO.mainOptions);
+
             //example of how to preload a group of templates from the server - see spaDEMO.ts for a better way
             thisApp.loadTemplates(GRIDDEMO.mainOptions.templates_url);
+
             //***here are two examples how we can register template's loader functions for individual templates***
             //this registered function will be invoked every  time when the template with that name is needed
             //P.S. - but the best way how to load templates is to register templates' groups
@@ -1077,35 +1064,29 @@ var RIAPP;
             thisApp.registerTemplateLoader('productEditTemplate', function () {
                 return thisApp.global.$.get(GRIDDEMO.mainOptions.productEditTemplate_url);
             });
+
             //using memoize pattern so there will not be repeated loads of the same template
             thisApp.registerTemplateLoader('sizeDisplayTemplate', ((function () {
                 var savePromise;
                 return function () {
-                    if(!!savePromise) {
+                    if (!!savePromise)
                         return savePromise;
-                    }
                     savePromise = thisApp.global.$.get(GRIDDEMO.mainOptions.sizeDisplayTemplate_url);
                     return savePromise;
                 };
             })()));
+
             thisApp.startUp(function (app) {
-                /*
-                //example of how to do ajax calls to load lookups - first load lookups, then load products
-                //at the end it displays in an alert out of band data returned from the server (see ReadProduct data service method)
-                
-                thisApp.productVM.filter.load().pipe(function()
-                {
-                return thisApp.productVM.load();}
-                ).pipe(function(data: MOD.db.ILoadResult){alert( data.outOfBandData.test);},function(){alert('load failed');});
-                */
-                            });
+            });
         });
+
         //this function is executed when the application is created
         //it can be used to initialize application's specific resources in the module
         function initModule(app) {
             return GRIDDEMO;
         }
         ;
+
         //properties must be initialized on HTML page
         GRIDDEMO.mainOptions = {
             service_url: null,
@@ -1118,18 +1099,9 @@ var RIAPP;
             modelData: null,
             categoryData: null,
             user_modules: [
-                {
-                    name: "COMMON",
-                    initFn: RIAPP.COMMON.initModule
-                }, 
-                {
-                    name: "HEADER",
-                    initFn: RIAPP.HEADER.initModule
-                }, 
-                {
-                    name: "GRIDDEMO",
-                    initFn: initModule
-                }
+                { name: "COMMON", initFn: RIAPP.COMMON.initModule },
+                { name: "HEADER", initFn: RIAPP.HEADER.initModule },
+                { name: "GRIDDEMO", initFn: initModule }
             ]
         };
     })(RIAPP.GRIDDEMO || (RIAPP.GRIDDEMO = {}));

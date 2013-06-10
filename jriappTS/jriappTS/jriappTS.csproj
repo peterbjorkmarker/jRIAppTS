@@ -60,6 +60,13 @@
     <TypeScriptCompile Include="user_modules\filesDemo.ts" />
     <TypeScriptCompile Include="user_modules\folderBrowserSvc.ts" />
     <TypeScriptCompile Include="user_modules\collectionDemo.ts" />
+    <TypeScriptCompile Include="user_modules2\mailDB.ts" />
+    <TypeScriptCompile Include="user_modules2\mail.ts" />
+    <TypeScriptCompile Include="user_modules2\ppl.ts" />
+    <TypeScriptCompile Include="user_modules2\accounts.ts" />
+    <TypeScriptCompile Include="user_modules2\accountDB.ts" />
+    <TypeScriptCompile Include="user_modules2\sqlDB.ts" />
+    <Content Include="SVM2\svmDB.ts" />
     <Content Include="web.config" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>

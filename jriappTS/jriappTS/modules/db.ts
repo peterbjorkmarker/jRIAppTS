@@ -1691,11 +1691,69 @@ module RIAPP {
                 done(...doneCallbacks: { (res: ILoadResult): any; }[]): JQueryPromise;
             }
 
+            export interface IDbSetConstructor {
+                new (dbContext: DbContext): DbSet;
+            }
+
+            //implements lazy initialization pattern for creating DbSet's instances
+            export class DbSets extends RIAPP.BaseObject {
+                _dbSetNames: string[];
+                private _dbContext: DbContext;
+                private _dbSets: { [name: string]: () => DbSet; };
+                private _arrDbSets: MOD.db.DbSet[];
+
+                constructor(dbContext: DbContext) {
+                    super();
+                    this._dbContext = dbContext;
+                    this._arrDbSets = [];
+                    this._dbSets = {};
+                    this._dbSetNames = [];
+                }
+                _dbSetCreated(dbSet: MOD.db.DbSet) {
+                    var self = this;
+                    this._arrDbSets.push(dbSet);
+                    dbSet.addOnPropertyChange('hasChanges', function (sender, args) {
+                        self._dbContext._onDbSetHasChangesChanged(sender);
+                    }, null);
+                }
+                _createDbSet(name:string, dbSetType: IDbSetConstructor) {
+                   var self = this, dbContext = this._dbContext;
+                   self._dbSets[name] = function () {
+                       var t = new dbSetType(dbContext);
+                        var f = function () {
+                            return t;
+                        };
+                        self._dbSets[name] = f;
+                        self._dbSetCreated(t);
+                        return f();
+                    };
+                }
+                get dbSetNames() {
+                    return this._dbSetNames;
+                }
+                get arrDbSets() {
+                    return this._arrDbSets;
+                }
+                getDbSet(name:string) {
+                    var f = this._dbSets[name];
+                    if (!f)
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, name));
+                    return f();
+                }
+                destroy() {
+                    this._arrDbSets.forEach(function (dbSet) {
+                        dbSet.destroy();
+                    });
+                    this._arrDbSets = [];
+                    this._dbSets =null;
+                    this._dbContext = null;
+                    super.destroy();
+                }
+            }
+
             export class DbContext extends RIAPP.BaseObject {
                 _isInitialized: bool;
-                _dbSetNames: string[];
-                _dbSets: any;
-                _arrDbSets: DbSet[];
+                _dbSets: DbSets;
                 //_svcMethods: {[methodName: string]: (args: { [paramName: string]: any; }) => JQueryPromise; };
                 _svcMethods: any;
                 //_assoc: { [getname: string]: () => Association; };
@@ -1713,9 +1771,7 @@ module RIAPP {
                 constructor() {
                     super();
                     this._isInitialized = false;
-                    this._dbSets = {};
-                    this._dbSetNames = [];
-                    this._arrDbSets = [];
+                    this._dbSets = null;
                     this._svcMethods = {};
                     this._assoc = {};
                     this._arrAssoc = [];
@@ -1744,22 +1800,9 @@ module RIAPP {
                 _getQueryInfo(name:string) {
                     return this._queryInf[name];
                 }
-                _createDbSets() {
-                    var self = this;
-                    //IS OVERRIDEN IN DESCENDANT TYPE
-                    this._dbSetNames.forEach(function (dbSetName) {
-                        var eSet: MOD.db.DbSet = self._dbSets[dbSetName];
-                        self._arrDbSets.push(eSet);
-                        eSet.addOnPropertyChange('hasChanges', function (sender, args) {
-                            self._onDbSetHasChangesChanged(sender);
-                        }, null);
-                    });
-                    Object.freeze(this._dbSets);
-                }
                 _initDbSets() {
                     if (this._isInitialized)
                         throw new Error(RIAPP.ERRS.ERR_DOMAIN_CONTEXT_INITIALIZED);
-                    this._createDbSets();
                 }
                 _initAssociations(associations: IAssociationInfo[]) {
                     var self = this;
@@ -1792,8 +1835,8 @@ module RIAPP {
                         this._hasChanges = true;
                     }
                     else {
-                        for (var i = 0, len = this._arrDbSets.length; i < len; i += 1) {
-                            test = this._arrDbSets[i];
+                        for (var i = 0, len = this._dbSets.arrDbSets.length; i < len; i += 1) {
+                            test = this._dbSets.arrDbSets[i];
                             if (test.hasChanges) {
                                 this._hasChanges = true;
                                 break;
@@ -2031,7 +2074,7 @@ module RIAPP {
                 }
                 _getChanges() {
                     var changeSet:IChangeSet = { dbSets: [], error: null, trackAssocs: [] };
-                    this._arrDbSets.forEach(function (eSet) {
+                    this._dbSets.arrDbSets.forEach(function (eSet) {
                         eSet.endEdit();
                         var changes:IRowInfo[] = eSet._getChanges();
                         if (changes.length === 0)
@@ -2341,10 +2384,7 @@ module RIAPP {
                     return deferred.promise();
                 }
                 getDbSet(name:string) {
-                    var eSet = this._dbSets[name];
-                    if (!eSet)
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, name));
-                    return <DbSet>eSet;
+                    return this._dbSets.getDbSet(name);
                 }
                 getAssociation(name: string) {
                     var name2 = "get" + name;
@@ -2437,12 +2477,12 @@ module RIAPP {
                     return this._load(query, false);
                 }
                 acceptChanges() {
-                    this._arrDbSets.forEach(function (eSet) {
+                    this._dbSets.arrDbSets.forEach(function (eSet) {
                         eSet.acceptChanges();
                     });
                 }
                 rejectChanges() {
-                    this._arrDbSets.forEach(function (eSet) {
+                    this._dbSets.arrDbSets.forEach(function (eSet) {
                         eSet.rejectChanges();
                     });
                 }
@@ -2543,11 +2583,8 @@ module RIAPP {
                     });
                     this._arrAssoc = [];
                     this._assoc = {};
-                    this._arrDbSets.forEach(function (dbSet) {
-                        dbSet.destroy();
-                    });
-                    this._arrDbSets = [];
-                    this._dbSets = {};
+                    this._dbSets.destroy();
+                    this._dbSets = null;
                     this._svcMethods = {};
                     this._queryInf = {};
                     this._serviceUrl = null;
@@ -2584,7 +2621,6 @@ module RIAPP {
                 }
                 get serverTimezone() { return this._serverTimezone; }
                 get dbSets() { return this._dbSets; }
-                get arrDbSets() { return this._arrDbSets; }
                 get serviceMethods() { return this._svcMethods; }
                 get hasChanges() { return this._hasChanges; }
             }
@@ -2628,8 +2664,8 @@ module RIAPP {
                     this._name = opts.name;
                     this._dbContext = opts.dbContext;
                     this._onDeleteAction = opts.onDeleteAction;
-                    this._parentDS = opts.dbContext.dbSets[opts.parentName];
-                    this._childDS = opts.dbContext.dbSets[opts.childName];
+                    this._parentDS = opts.dbContext.getDbSet(opts.parentName);
+                    this._childDS = opts.dbContext.getDbSet(opts.childName);
                     this._parentFldInfos = opts.parentKeyFields.map(function (name) {
                         return self._parentDS.getFieldInfo(name);
                     });

@@ -1,20 +1,23 @@
-﻿export class DbContext extends MOD.db.DbContext
-{
-	constructor() {
-		super();
+﻿export class DbSets extends MOD.db.DbSets{
+	constructor(dbContext:DbContext) {
+		super(dbContext);
 		this._dbSetNames = {{DBSETS_NAMES}};
-		this._serverTimezone = {{TIMEZONE}};
-	}
-	_createDbSets(){
-		var self=this;
 {{DBSETS}}
-		super._createDbSets();
+	}
+{{DBSETS_PROPS}}
+}
+
+export class DbContext extends MOD.db.DbContext
+{
+	_initDbSets(){
+		super._initDbSets();
+		this._dbSets = new DbSets(this);
 		var associations ={{ASSOCIATIONS}};
-		self._initAssociations(associations);
+		this._initAssociations(associations);
 		var methods ={{METHODS}};
-        self._initMethods(methods);
+		this._initMethods(methods);
 	}
 	get associations() { return <IAssocs>this._assoc; }
-	get dbSets() { return <IDbSets>this._dbSets; }
+	get dbSets() { return <DbSets>this._dbSets; }
 	get serviceMethods() { return <ISvcMethods>this._svcMethods; }
 }
