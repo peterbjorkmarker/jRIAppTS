@@ -92,10 +92,135 @@ module RIAPP {
                 methodResult: bool;
                 parameters: IQueryParamInfo[];
             }
-            export interface IFilterInfo{ filterItems: { fieldName: string; kind: number; values: any[]; }[]; };
-            export interface ISortInfo { sortItems: { fieldName: string; sortOrder: number; }[]; };
+            export interface IFilterInfo{ filterItems: { fieldName: string; kind: number; values: any[]; }[]; }
+            export interface ISortInfo { sortItems: { fieldName: string; sortOrder: number; }[]; }
             export interface IEntityConstructor {
                 new (dbSet: DbSet, row: IRowData, names: string[]): Entity;
+            }
+            export interface IValueChange {
+                val: any;
+                orig: any;
+                fieldName: string;
+                flags: number;
+            }
+            export interface IValidationErrorInfo {
+                fieldName: string;
+                message: string;
+            }
+            export interface IRowInfo {
+                values: IValueChange[];
+                changeType: number;
+                serverKey: string;
+                clientKey: string;
+                error: string;
+                invalid?: IValidationErrorInfo[];
+            }
+            export interface IPermissions extends collection.IPermissions { dbSetName: string; }
+            export interface IPermissionsInfo {
+                serverTimezone: number;
+                permissions: IPermissions[];
+            }
+
+            export interface IParamInfo { parameters: { name: string; value: any; }[]; }
+            export interface IMethodInvokeInfo { methodName: string; paramInfo: IParamInfo; }
+            export interface IDbSetInfo {
+                dbSetName: string;
+                enablePaging: bool;
+                pageSize: number;
+                fieldInfos: collection.IFieldInfo[];
+            }
+            export interface IRefreshRowInfo {
+                dbSetName: string;
+                rowInfo: IRowInfo;
+                error: { name: string; message: string; };
+            }
+            export interface IDbSetConstuctorOptions {
+                dbContext: DbContext;
+                dbSetInfo: IDbSetInfo;
+                childAssoc: IAssociationInfo[];
+                parentAssoc: IAssociationInfo[];
+            }
+            export interface IAssocConstructorOptions {
+                dbContext: DbContext;
+                parentName: string;
+                childName: string;
+                onDeleteAction: number;
+                parentKeyFields: string[];
+                childKeyFields: string[];
+                parentToChildrenName: string;
+                childToParentName: string;
+                name: string;
+            }
+            export interface IAssociationInfo {
+                childDbSetName: string;
+                childToParentName: string;
+                name: string;
+                onDeleteAction: number;
+                parentDbSetName: string;
+                parentToChildrenName: string;
+                fieldRels: { childField: string; parentField: string; }[];
+            }
+            export interface IDbSetOptions extends collection.ICollectionOptions {
+                dbSetName: string;
+            }
+            export interface IFieldInfo extends collection.IFieldInfo {
+                dependents: string[];
+            }
+            export interface IMetadata {
+                associations: IAssociationInfo[];
+                dbSets: IDbSetInfo[];
+                methods: IQueryInfo[];
+                serverTimezone: number;
+            }
+            export interface ITrackAssoc {
+                assocName: string;
+                parentKey: string;
+                childKey: string;
+            }
+            export interface IChangeSet {
+                dbSets: { dbSetName: string; rows: IRowInfo[]; }[];
+                error: { name: string; message: string; };
+                trackAssocs: ITrackAssoc[];
+            }
+            export interface IGetDataInfo {
+                dbSetName: string;
+                pageIndex: number;
+                pageSize: number;
+                pageCount: number;
+                isIncludeTotalCount: bool;
+                filterInfo: IFilterInfo;
+                sortInfo: ISortInfo;
+                paramInfo: IParamInfo;
+                queryName: string;
+            }
+
+            export interface ILoadResult { fetchedItems: Entity[]; newItems: Entity[]; isPageChanged: bool; outOfBandData: any; }
+            export interface IIncludedResult {
+                names: string[];
+                rows: { key: string; values: string[]; }[];
+                rowCount: number;
+                dbSetName: string;
+            }
+            export interface IRowData {
+                key: string; values: string[];
+            }
+            export interface IGetDataResult {
+                names: string[];
+                rows: IRowData[];
+                rowCount: number;
+                dbSetName: string;
+                pageIndex: number;
+                pageCount: number;
+                totalCount: number;
+                extraInfo: any;
+                error: { name: string; message: string; };
+                included: IIncludedResult[];
+            }
+            export interface ILoadPromise extends JQueryPromise {
+                done(...doneCallbacks: { (res: ILoadResult): any; }[]): JQueryPromise;
+            }
+            export interface IDbSetConstructor {
+                new (dbContext: DbContext): DbSet;
             }
 
             export class DataCache extends RIAPP.BaseObject {
@@ -464,6 +589,9 @@ module RIAPP {
                 _resetCacheInvalidated() {
                     this._cacheInvalidated = false;
                 }
+                load() {
+                    return this.dbSet.dbContext.load(this);
+                }
                 destroy() {
                     if (this._isDestroyed)
                         return;
@@ -528,145 +656,7 @@ module RIAPP {
                 }
                 get isCacheValid() { return !!this._dataCache && !this._cacheInvalidated; }
             }
-
-            export interface IValueChange {
-                val: any;
-                orig: any;
-                fieldName: string;
-                flags: number;
-            }
-
-            export interface IValidationErrorInfo {
-                fieldName: string;
-                message: string;
-            }
-
-            export interface IRowInfo{
-                 values: IValueChange[];
-                 changeType: number;
-                 serverKey: string;
-                 clientKey: string;
-                 error: string;
-                 invalid?: IValidationErrorInfo[];
-            }
-
-            export interface IPermissions extends collection.IPermissions { dbSetName: string; }
-            export interface IPermissionsInfo {
-                serverTimezone: number;
-                permissions: IPermissions[];
-            }
-
-            export interface IParamInfo { parameters: { name: string; value: any; }[]; }
-            export interface IMethodInvokeInfo { methodName: string; paramInfo: IParamInfo; }
-            export interface IDbSetInfo {
-                dbSetName: string;
-                enablePaging: bool;
-                pageSize: number;
-                fieldInfos: collection.IFieldInfo[];
-            }
-
-            export interface IRefreshRowInfo {
-                dbSetName: string;
-                rowInfo: IRowInfo;
-                error: { name: string; message: string; };
-            }
-
-            export interface IDbSetConstuctorOptions {
-                dbContext: DbContext;
-                dbSetInfo: IDbSetInfo;
-                childAssoc: IAssociationInfo[];
-                parentAssoc: IAssociationInfo[];
-            }
-
-            export interface IAssocConstructorOptions {
-                dbContext: DbContext;
-                parentName: string;
-                childName: string;
-                onDeleteAction: number;
-                parentKeyFields: string[];
-                childKeyFields: string[];
-                parentToChildrenName: string;
-                childToParentName: string;
-                name: string;
-            }
-
-            export interface IAssociationInfo {
-                childDbSetName: string;
-                childToParentName: string;
-                name: string;
-                onDeleteAction: number;
-                parentDbSetName: string;
-                parentToChildrenName: string;
-                fieldRels: { childField: string; parentField: string; }[];
-            }
-
-            export interface IDbSetOptions extends collection.ICollectionOptions {
-                dbSetName: string;
-            }
-
-            export interface IFieldInfo extends collection.IFieldInfo {
-                dependents: string[];
-            }
-
-            export interface IMetadata {
-                associations: IAssociationInfo[];
-                dbSets: IDbSetInfo[];
-                methods: IQueryInfo[];
-                serverTimezone: number;
-            }
-
-            export interface ITrackAssoc {
-                assocName: string;
-                parentKey: string;
-                childKey: string;
-            }
-
-            export interface IChangeSet {
-                dbSets: { dbSetName: string; rows: IRowInfo[]; }[];
-                error: { name: string; message: string; };
-                trackAssocs: ITrackAssoc[];
-            }
-
-
-            export interface IGetDataInfo {
-                dbSetName: string;
-                pageIndex: number;
-                pageSize: number;
-                pageCount: number;
-                isIncludeTotalCount: bool;
-                filterInfo: IFilterInfo;
-                sortInfo: ISortInfo;
-                paramInfo: IParamInfo;
-                queryName: string;
-            }
-
-            export interface ILoadResult { fetchedItems: Entity[]; newItems: Entity[]; isPageChanged: bool; outOfBandData: any; }
-
-            export interface IIncludedResult {
-                names: string[];
-                rows: { key: string; values: string[]; }[];
-                rowCount: number;
-                dbSetName: string;
-            }
-
-            export interface IRowData {
-                key: string; values: string[];
-            }
-
-            export interface IGetDataResult {
-                names: string[];
-                rows: IRowData[];
-                rowCount: number;
-                dbSetName: string;
-                pageIndex: number;
-                pageCount: number;
-                totalCount: number;
-                extraInfo: any;
-                error: { name: string; message: string; };
-                included: IIncludedResult[];
-            }
-
-
+         
             export class Entity extends collection.CollectionItem {
                 private __changeType: number;
                 private __isRefreshing: bool;
@@ -1686,15 +1676,7 @@ module RIAPP {
                     }
                 }
             }
-
-            export interface ILoadPromise extends JQueryPromise {
-                done(...doneCallbacks: { (res: ILoadResult): any; }[]): JQueryPromise;
-            }
-
-            export interface IDbSetConstructor {
-                new (dbContext: DbContext): DbSet;
-            }
-
+        
             //implements lazy initialization pattern for creating DbSet's instances
             export class DbSets extends RIAPP.BaseObject {
                 _dbSetNames: string[];
@@ -2495,19 +2477,31 @@ module RIAPP {
                     } = utils.extend(false, {
                         serviceUrl: null,
                         permissions: null
-                    }, options);
-                    this._serviceUrl = opts.serviceUrl;
-                    this._initDbSets();
+                    }, options), loadUrl, operType;
 
-                    if (!!opts.permissions) {
-                        self._updatePermissions(opts.permissions);
-                        self._isInitialized = true;
-                        self.raisePropertyChanged('isInitialized');
-                        return;
+                    try
+                    {
+                        if (!utils.check.isString(opts.serviceUrl)) {
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, "serviceUrl", opts.serviceUrl));
+                        }
+                        this._serviceUrl = opts.serviceUrl;
+                        this._initDbSets();
+
+                        if (!!opts.permissions) {
+                            self._updatePermissions(opts.permissions);
+                            self._isInitialized = true;
+                            self.raisePropertyChanged('isInitialized');
+                            return;
+                        }
+
+                        //initialize by obtaining metadata from the data service by ajax call
+                        loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = DATA_OPER.INIT;
+                    }
+                    catch (ex) {
+                        this._onError(ex, this);
+                        global._throwDummy(ex);
                     }
 
-                    //initialize by obtaining metadata from the data service by ajax call
-                    var loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = DATA_OPER.INIT;
                     try {
                         this.isBusy = true;
                         utils.performAjaxCall(

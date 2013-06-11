@@ -7804,9 +7804,6 @@ var RIAPP;
             }
             ;
 
-            ;
-            ;
-
             var DataCache = (function (_super) {
                 __extends(DataCache, _super);
                 function DataCache(query) {
@@ -8183,6 +8180,9 @@ var RIAPP;
                 };
                 DataQuery.prototype._resetCacheInvalidated = function () {
                     this._cacheInvalidated = false;
+                };
+                DataQuery.prototype.load = function () {
+                    return this.dbSet.dbContext.load(this);
                 };
                 DataQuery.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -10171,18 +10171,28 @@ var RIAPP;
                     var self = this, opts = utils.extend(false, {
                         serviceUrl: null,
                         permissions: null
-                    }, options);
-                    this._serviceUrl = opts.serviceUrl;
-                    this._initDbSets();
+                    }, options), loadUrl, operType;
 
-                    if (!!opts.permissions) {
-                        self._updatePermissions(opts.permissions);
-                        self._isInitialized = true;
-                        self.raisePropertyChanged('isInitialized');
-                        return;
+                    try  {
+                        if (!utils.check.isString(opts.serviceUrl)) {
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, "serviceUrl", opts.serviceUrl));
+                        }
+                        this._serviceUrl = opts.serviceUrl;
+                        this._initDbSets();
+
+                        if (!!opts.permissions) {
+                            self._updatePermissions(opts.permissions);
+                            self._isInitialized = true;
+                            self.raisePropertyChanged('isInitialized');
+                            return;
+                        }
+
+                        loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = DATA_OPER.INIT;
+                    } catch (ex) {
+                        this._onError(ex, this);
+                        RIAPP.global._throwDummy(ex);
                     }
 
-                    var loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = DATA_OPER.INIT;
                     try  {
                         this.isBusy = true;
                         utils.performAjaxCall(loadUrl, undefined, true, function (permissions) {
@@ -16856,10 +16866,15 @@ var RIAPP;
 
         Application.prototype.startUp = function (fn_sandbox) {
             var self = this, fn_init = function () {
-                self.onStartUp();
-                if (!!fn_sandbox)
-                    fn_sandbox.apply(self, [self]);
-                self._setUpBindings();
+                try  {
+                    self.onStartUp();
+                    if (!!fn_sandbox)
+                        fn_sandbox.apply(self, [self]);
+                    self._setUpBindings();
+                } catch (ex) {
+                    self._onError(ex, self);
+                    RIAPP.global._throwDummy(ex);
+                }
             };
 
             try  {
