@@ -452,8 +452,7 @@ module RIAPP {
                 }
             }
 
-            export class DynaContentElView extends BaseElView
-            {
+            export class DynaContentElView extends BaseElView {
                 _dataContext: any;
                 _template: MOD.template.Template;
                 constructor(app: Application, el: HTMLElement, options: IViewOptions) {
@@ -526,7 +525,7 @@ module RIAPP {
                 }
             }
 
-            export class CheckBoxElView extends InputElView{
+            export class CheckBoxElView extends InputElView {
                 _val: bool;
                 _init(options: IViewOptions) {
                     var self = this;
@@ -573,6 +572,80 @@ module RIAPP {
                         }
                         else
                             this.$el.css("opacity", 1.0);
+                        this.raisePropertyChanged('checked');
+                    }
+                }
+            }
+
+            export class CheckBoxThreeStateElView extends InputElView {
+                _val: bool;
+                _cbxVal: number;
+                _init(options: IViewOptions) {
+                    var self = this;
+                    super._init(options);
+                    this._val = this.el.checked;
+                    this._cbxVal = this._val == null ? 1 : (!!this._val ? 2 : 0);
+                    var $el = this.$el;
+                    $el.on('change.' + this._objId, function (e) {
+                        e.stopPropagation();
+                        switch (self._cbxVal) {
+                            // unchecked, going indeterminate
+                            case 0:
+                                self._cbxVal = 1;
+                                break;
+                            // indeterminate, going checked
+                            case 1:
+                                self._cbxVal = 2;
+                                break;
+                            // checked, going unchecked
+                            default:
+                                self._cbxVal = 0;
+                        
+                        }
+                        self.checked = (self._cbxVal == 1) ? null : ((self._cbxVal == 2) ? true : false);
+                    });
+                }
+                _setFieldError(isError: bool) {
+                    var $el = this.$el;
+                    if (isError) {
+                        var span = global.$('<div></div>').addClass(css.fieldError);
+                        $el.wrap(span);
+                    }
+                    else {
+                        if ($el.parent('.' + css.fieldError).length > 0)
+                            $el.unwrap();
+                    }
+                }
+                destroy() {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this.$el.off('.' + this._objId);
+                    super.destroy();
+                }
+                toString() {
+                    return 'CheckBoxThreeStateElView';
+                }
+                get checked() { return this._val; }
+                set checked(v) {
+                    var $el= this.$el;
+                    if (v !== this._val) {
+                        this._val = v;
+                        switch (this._val) {
+                            case null:
+                                $el.prop('indeterminate', true);
+                                this._cbxVal = 1;
+                                break;
+                            case true:
+                                $el.prop('indeterminate', false);
+                                $el.prop('checked', true);
+                                this._cbxVal = 2;
+                                break;
+                           default:
+                                $el.prop('indeterminate', false);
+                                $el.prop('checked', false);
+                                this._cbxVal = 0;
+                        }
                         this.raisePropertyChanged('checked');
                     }
                 }
@@ -1358,6 +1431,7 @@ module RIAPP {
             global.registerElView(global.consts.ELVIEW_NM.DYNACONT, DynaContentElView);
             global.registerType('CheckBoxElView', CheckBoxElView);
             global.registerElView('input:checkbox', CheckBoxElView);
+            global.registerElView('threeState', CheckBoxThreeStateElView);
             global.registerType('TextBoxElView', TextBoxElView);
             global.registerElView('input:text', TextBoxElView);
             global.registerType('HiddenElView', HiddenElView);

@@ -3540,6 +3540,87 @@ var RIAPP;
             })(InputElView);
             baseElView.CheckBoxElView = CheckBoxElView;
 
+            var CheckBoxThreeStateElView = (function (_super) {
+                __extends(CheckBoxThreeStateElView, _super);
+                function CheckBoxThreeStateElView() {
+                    _super.apply(this, arguments);
+                }
+                CheckBoxThreeStateElView.prototype._init = function (options) {
+                    var self = this;
+                    _super.prototype._init.call(this, options);
+                    this._val = this.el.checked;
+                    this._cbxVal = this._val == null ? 1 : (!!this._val ? 2 : 0);
+                    var $el = this.$el;
+                    $el.on('change.' + this._objId, function (e) {
+                        e.stopPropagation();
+                        switch (self._cbxVal) {
+                            case 0:
+                                self._cbxVal = 1;
+                                break;
+
+                            case 1:
+                                self._cbxVal = 2;
+                                break;
+
+                            default:
+                                self._cbxVal = 0;
+                        }
+                        self.checked = (self._cbxVal == 1) ? null : ((self._cbxVal == 2) ? true : false);
+                    });
+                };
+                CheckBoxThreeStateElView.prototype._setFieldError = function (isError) {
+                    var $el = this.$el;
+                    if (isError) {
+                        var span = RIAPP.global.$('<div></div>').addClass(baseElView.css.fieldError);
+                        $el.wrap(span);
+                    } else {
+                        if ($el.parent('.' + baseElView.css.fieldError).length > 0)
+                            $el.unwrap();
+                    }
+                };
+                CheckBoxThreeStateElView.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this.$el.off('.' + this._objId);
+                    _super.prototype.destroy.call(this);
+                };
+                CheckBoxThreeStateElView.prototype.toString = function () {
+                    return 'CheckBoxThreeStateElView';
+                };
+                Object.defineProperty(CheckBoxThreeStateElView.prototype, "checked", {
+                    get: function () {
+                        return this._val;
+                    },
+                    set: function (v) {
+                        var $el = this.$el;
+                        if (v !== this._val) {
+                            this._val = v;
+                            switch (this._val) {
+                                case null:
+                                    $el.prop('indeterminate', true);
+                                    this._cbxVal = 1;
+                                    break;
+                                case true:
+                                    $el.prop('indeterminate', false);
+                                    $el.prop('checked', true);
+                                    this._cbxVal = 2;
+                                    break;
+                                default:
+                                    $el.prop('indeterminate', false);
+                                    $el.prop('checked', false);
+                                    this._cbxVal = 0;
+                            }
+                            this.raisePropertyChanged('checked');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return CheckBoxThreeStateElView;
+            })(InputElView);
+            baseElView.CheckBoxThreeStateElView = CheckBoxThreeStateElView;
+
             var TextBoxElView = (function (_super) {
                 __extends(TextBoxElView, _super);
                 function TextBoxElView() {
@@ -4489,6 +4570,7 @@ var RIAPP;
             RIAPP.global.registerElView(RIAPP.global.consts.ELVIEW_NM.DYNACONT, DynaContentElView);
             RIAPP.global.registerType('CheckBoxElView', CheckBoxElView);
             RIAPP.global.registerElView('input:checkbox', CheckBoxElView);
+            RIAPP.global.registerElView('threeState', CheckBoxThreeStateElView);
             RIAPP.global.registerType('TextBoxElView', TextBoxElView);
             RIAPP.global.registerElView('input:text', TextBoxElView);
             RIAPP.global.registerType('HiddenElView', HiddenElView);
