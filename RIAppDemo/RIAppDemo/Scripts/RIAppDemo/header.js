@@ -32,6 +32,13 @@ var RIAPP;
                         self.collapse();
                 }, self, null);
             }
+            HeaderVM.prototype._getEventNames = function () {
+                var base_events = _super.prototype._getEventNames.call(this);
+                return ['updateUI'].concat(base_events);
+            };
+            HeaderVM.prototype.addOnUpdateUI = function (fn, namespace) {
+                this.addHandler('updateUI', fn, namespace);
+            };
             HeaderVM.prototype.expand = function () {
                 var self = this;
                 this._$topPanel.slideDown('fast', function () {
@@ -45,15 +52,33 @@ var RIAPP;
                 });
             };
             HeaderVM.prototype.updateUI = function (isUp) {
+                var args = { isHandled: false, isUp: isUp };
+                this.raiseEvent('updateUI', args);
+                if (args.isHandled)
+                    return;
                 if (!!this._$contentPanel) {
                     if (isUp)
                         this._$contentPanel.height(this._contentPanelHeight); else
-                        this._$contentPanel.height(this._contentPanelHeight - this._$topPanel.height());
+                        this._$contentPanel.height(this._contentPanelHeight - this._$topPanel.outerHeight());
                 }
             };
             Object.defineProperty(HeaderVM.prototype, "expanderCommand", {
                 get: function () {
                     return this._expanderCommand;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(HeaderVM.prototype, "$contentPanel", {
+                get: function () {
+                    return this._$contentPanel;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(HeaderVM.prototype, "$topPanel", {
+                get: function () {
+                    return this._$topPanel;
                 },
                 enumerable: true,
                 configurable: true

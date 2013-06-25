@@ -32,6 +32,13 @@ module RIAPP
                 }, self, null);
 
             }
+            _getEventNames() {
+                var base_events = super._getEventNames();
+                return ['updateUI'].concat(base_events);
+            }
+            addOnUpdateUI(fn: (sender: HeaderVM, args: { isHandled: bool; isUp: bool; }) => void , namespace?: string) {
+                this.addHandler('updateUI', fn, namespace);
+            }
             expand() {
                 var self = this;
                 this._$topPanel.slideDown('fast', function () { self.updateUI(false); });
@@ -40,15 +47,21 @@ module RIAPP
                 var self = this;
                 this._$topPanel.slideUp('fast', function () { self.updateUI(true); });
             }
-            updateUI(isUp:bool) {
+            updateUI(isUp: bool) {
+                var args = { isHandled: false, isUp: isUp };
+                this.raiseEvent('updateUI', args);
+                if (args.isHandled)
+                    return;
                 if (!!this._$contentPanel) {
                     if (isUp)
                         this._$contentPanel.height(this._contentPanelHeight);
                     else
-                        this._$contentPanel.height(this._contentPanelHeight - this._$topPanel.height());
+                        this._$contentPanel.height(this._contentPanelHeight - this._$topPanel.outerHeight());
                 }
             }
             get expanderCommand() { return this._expanderCommand; }
+            get $contentPanel() { return this._$contentPanel; }
+            get $topPanel() { return this._$topPanel; }
         }
 
         export function initModule(app: Application) {
