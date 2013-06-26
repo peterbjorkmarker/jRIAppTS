@@ -410,14 +410,13 @@ module RIAPP {
                     return this._objId;
                 }
                 get target() { return this._target; }
-                set target(v:BaseObject) {
+                set target(v: BaseObject) {
                     if (!!this._state) {
                         this._state.target = v;
                         return;
                     }
                     if (this._target !== v) {
-                        var tgtObj = this._targetObj;
-                        if (!!tgtObj && !tgtObj._isDestroyCalled) {
+                        if (!!this._targetObj && !this._targetObj._isDestroyCalled) {
                             this._ignoreTgtChange = true;
                             try {
                                 this.targetValue = null;
