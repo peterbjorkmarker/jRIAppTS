@@ -79,6 +79,7 @@ namespace RIAPP.DataService.Utils
 
         private string createISvcMethods()
         {
+            CSharp2TS csharp2TS = new CSharp2TS();
             var sb = new StringBuilder(512);
             sb.AppendLine("export interface ISvcMethods");
             sb.AppendLine("{");
@@ -88,18 +89,44 @@ namespace RIAPP.DataService.Utils
                 if (!methodInfo.isQuery)
                 {
                     sbArgs.Length = 0;
-                    sbArgs.AppendLine("(args: {");
-                    methodInfo.parameters.ForEach((paramInfo)=>{
-                        sbArgs.AppendFormat("\t\t{0}{1}: {2}{3};", paramInfo.name,paramInfo.isNullable?"?":"", this.GetTSType(paramInfo.dataType), paramInfo.isArray?"[]":"");
-                        sbArgs.AppendLine();
-                    });
-                    sbArgs.Append("\t}) => JQueryPromise");
+                    if (methodInfo.parameters.Count() > 0)
+                    {
+                        sbArgs.AppendLine("(args: {");
+                        methodInfo.parameters.ForEach((paramInfo) =>
+                        {
+                            sbArgs.AppendFormat("\t\t{0}{1}: {2}{3};", paramInfo.name, paramInfo.isNullable ? "?" : "", CSharp2TS.GetTSType(paramInfo.dataType), paramInfo.isArray ? "[]" : "");
+                            sbArgs.AppendLine();
+                        });
+                        if (methodInfo.methodResult){
+                            sbArgs.Append("\t}) => IPromise<");
+                            sbArgs.Append(csharp2TS.GetTSTypeName(methodInfo.methodInfo.ReturnType));
+                            sbArgs.Append(">");
+                        }
+                        else{
+                             sbArgs.Append("\t}) => JQueryPromise");
+                        }
+                    }
+                    else
+                    {
+                        if (methodInfo.methodResult){
+                          sbArgs.Append("() => IPromise<");
+                          sbArgs.Append(csharp2TS.GetTSTypeName(methodInfo.methodInfo.ReturnType));
+                          sbArgs.Append(">");
+                        }
+                        else{
+                            sbArgs.Append("() => JQueryPromise");
+                        }
+                    }
+
                     sb.AppendFormat("\t{0}: {1};", methodInfo.methodName, sbArgs.ToString() );
                     sb.AppendLine();
                 }
             });
             sb.AppendLine("}");
-            return sb.ToString();
+
+            StringBuilder sbResult = csharp2TS.GetInterfaceDeclarations();
+            sbResult.Append(sb.ToString());
+            return sbResult.ToString();
         }
 
         /*
@@ -140,7 +167,7 @@ namespace RIAPP.DataService.Utils
                 sbArgs.AppendLine("args?: {");
                 methodInfo.parameters.ForEach((paramInfo) =>
                 {
-                    sbArgs.AppendFormat("\t\t{0}{1}: {2}{3};", paramInfo.name, paramInfo.isNullable ? "?" : "", this.GetTSType(paramInfo.dataType), paramInfo.isArray ? "[]" : "");
+                    sbArgs.AppendFormat("\t\t{0}{1}: {2}{3};", paramInfo.name, paramInfo.isNullable ? "?" : "", CSharp2TS.GetTSType(paramInfo.dataType), paramInfo.isArray ? "[]" : "");
                     sbArgs.AppendLine();
                 });
                 sbArgs.Append("\t}");
@@ -403,36 +430,7 @@ namespace RIAPP.DataService.Utils
             }
             else
             {
-                fieldType = this.GetTSType(dataType);
-            }
-            return fieldType;
-        }
-
-        private string GetTSType(DataType dataType)
-        {
-            string fieldType = "any";
-            switch (dataType)
-            {
-                case DataType.Binary:
-                    fieldType = "number[]";
-                    break;
-                case DataType.Bool:
-                    fieldType = "bool";
-                    break;
-                case DataType.DateTime:
-                case DataType.Date:
-                case DataType.Time:
-                    fieldType = "Date";
-                    break;
-                case DataType.Integer:
-                case DataType.Decimal:
-                case DataType.Float:
-                    fieldType = "number";
-                    break;
-                case DataType.Guid:
-                case DataType.String:
-                    fieldType = "string";
-                    break;
+                fieldType = CSharp2TS.GetTSType(dataType);
             }
             return fieldType;
         }

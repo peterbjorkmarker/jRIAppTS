@@ -382,8 +382,7 @@ module RIAPP {
                     }
                 }
                 get selectedValue() {
-                    var item = this.selectedItem;
-                    return this._getRealValue(item);
+                    return this._getRealValue(this.selectedItem);
                 }
                 set selectedValue(v) {
                     if (this.selectedValue !== v) {

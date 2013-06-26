@@ -56,6 +56,7 @@
     <Compile Include="DomainService\JSonTypes\TrackAssoc.cs" />
     <Compile Include="DomainService\Security\SecurityHelper.cs" />
     <Compile Include="DomainService\TypedLists.cs" />
+    <Compile Include="Utils\CSharp2TS.cs" />
     <Compile Include="Utils\IDataHelper.cs" />
     <Compile Include="Utils\IQueryHelper.cs" />
     <Compile Include="Utils\IValidationHelper.cs" />

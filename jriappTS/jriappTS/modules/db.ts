@@ -216,9 +216,6 @@ module RIAPP {
                 error: { name: string; message: string; };
                 included: IIncludedResult[];
             }
-            export interface ILoadPromise extends JQueryPromise {
-                done(...doneCallbacks: { (res: ILoadResult): any; }[]): JQueryPromise;
-            }
             export interface IDbSetConstructor {
                 new (dbContext: DbContext): DbSet;
             }
@@ -2218,7 +2215,7 @@ module RIAPP {
                         query._clearCache();
                     }
                 }
-                _load(query:DataQuery, isPageChanged:bool):ILoadPromise {
+                _load(query: DataQuery, isPageChanged: bool): IPromise<ILoadResult> {
                     if (!query) {
                         throw new Error(RIAPP.ERRS.ERR_DB_LOAD_NO_QUERY);
                     }
@@ -2363,7 +2360,7 @@ module RIAPP {
 
                     }, [], isPageChanged ? 'paging' : null);
 
-                    return deferred.promise();
+                    return <any>deferred.promise();
                 }
                 getDbSet(name:string) {
                     return this._dbSets.getDbSet(name);

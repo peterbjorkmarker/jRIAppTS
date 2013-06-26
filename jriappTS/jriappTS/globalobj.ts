@@ -10,7 +10,9 @@ module RIAPP {
     export interface IExports {
         _exports: { [name: string]: any; };
     }
-
+    export interface IPromise<T> extends JQueryPromise {
+        done(...doneCallbacks: { (res: T): any; }[]): JQueryPromise;
+    }
     export class Global extends BaseObject implements IExports {
         public static vesion = '2.0.0.1';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
