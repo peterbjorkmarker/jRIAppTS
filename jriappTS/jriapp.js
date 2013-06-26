@@ -4992,7 +4992,8 @@ var RIAPP;
                             return;
                         }
                         if (this._target !== v) {
-                            if (!!this._targetObj && !this._targetObj._isDestroyCalled) {
+                            var tgtObj = this._targetObj;
+                            if (!!tgtObj && !tgtObj._isDestroyCalled) {
                                 this._ignoreTgtChange = true;
                                 try  {
                                     this.targetValue = null;
@@ -12033,7 +12034,8 @@ var RIAPP;
                 });
                 Object.defineProperty(ListBox.prototype, "selectedValue", {
                     get: function () {
-                        return this._getRealValue(this.selectedItem);
+                        var item = this.selectedItem;
+                        return this._getRealValue(item);
                     },
                     set: function (v) {
                         if (this.selectedValue !== v) {
@@ -12160,7 +12162,7 @@ var RIAPP;
                         return this._dataSource;
                     },
                     set: function (v) {
-                        this.self = this;;
+                        var self = this;
                         if (this._dataSource !== v) {
                             this._dataSource = v;
                             if (!!this._listBox)
@@ -13771,9 +13773,9 @@ var RIAPP;
                         return this._parentRow;
                     },
                     set: function (v) {
-                        this.self = this;;
+                        var self = this;
                         if (v !== this._parentRow) {
-                            this.$cell = RIAPP.global.$(this._cell._template.el);;
+                            var $cell = RIAPP.global.$(this._cell._template.el);
                             if (!!self._parentRow) {
                                 $cell.slideUp('fast', function () {
                                     self._setParentRow(v);
@@ -15039,7 +15041,7 @@ var RIAPP;
                         return this._currentRow;
                     },
                     set: function (row) {
-                        this.ds = this._dataSource;;this.old = this._currentRow;;this.isChanged = false;;
+                        var ds = this._dataSource, old = this._currentRow, isChanged = false;
                         if (!ds)
                             return;
                         if (old !== row) {
@@ -15716,7 +15718,7 @@ var RIAPP;
                         return this._dataSource;
                     },
                     set: function (v) {
-                        this.self = this;;
+                        var self = this;
                         if (this._dataSource !== v) {
                             this._dataSource = v;
                             if (!!this._pager)
@@ -16137,7 +16139,7 @@ var RIAPP;
                         return this._dataSource;
                     },
                     set: function (v) {
-                        this.self = this;;
+                        var self = this;
                         if (this._dataSource !== v) {
                             this._dataSource = v;
                             if (!!this._panel)
@@ -16406,7 +16408,7 @@ var RIAPP;
                         return this._dataContext;
                     },
                     set: function (v) {
-                        this.dataContext;;
+                        var dataContext;
                         try  {
                             if (v === this._dataContext)
                                 return;
@@ -16575,7 +16577,7 @@ var RIAPP;
                         return this._dataContext;
                     },
                     set: function (v) {
-                        this.self = this;;
+                        var self = this;
                         if (this._dataContext !== v) {
                             this._dataContext = v;
                             if (!this._form)
