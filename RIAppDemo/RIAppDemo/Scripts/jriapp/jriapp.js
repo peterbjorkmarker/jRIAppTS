@@ -4992,8 +4992,7 @@ var RIAPP;
                             return;
                         }
                         if (this._target !== v) {
-                            this.tgtObj = this._targetObj;;
-                            if (!!tgtObj && !tgtObj._isDestroyCalled) {
+                            if (!!this._targetObj && !this._targetObj._isDestroyCalled) {
                                 this._ignoreTgtChange = true;
                                 try  {
                                     this.targetValue = null;
