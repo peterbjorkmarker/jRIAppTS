@@ -219,6 +219,9 @@ module RIAPP {
             export interface IDbSetConstructor {
                 new (dbContext: DbContext): DbSet;
             }
+            export interface ILoadPromise extends JQueryPromise {
+                done(...doneCallbacks: { (res: ILoadResult ): any; }[]): JQueryPromise;
+            }
 
             export class DataCache extends RIAPP.BaseObject {
                 _query: DataQuery;
@@ -2215,7 +2218,7 @@ module RIAPP {
                         query._clearCache();
                     }
                 }
-                _load(query: DataQuery, isPageChanged: bool): IPromise<ILoadResult> {
+                _load(query: DataQuery, isPageChanged: bool): ILoadPromise {
                     if (!query) {
                         throw new Error(RIAPP.ERRS.ERR_DB_LOAD_NO_QUERY);
                     }

@@ -4992,8 +4992,7 @@ var RIAPP;
                             return;
                         }
                         if (this._target !== v) {
-                            var tgtObj = this._targetObj;
-                            if (!!tgtObj && !tgtObj._isDestroyCalled) {
+                            if (!!this._targetObj && !this._targetObj._isDestroyCalled) {
                                 this._ignoreTgtChange = true;
                                 try  {
                                     this.targetValue = null;
@@ -12034,8 +12033,7 @@ var RIAPP;
                 });
                 Object.defineProperty(ListBox.prototype, "selectedValue", {
                     get: function () {
-                        var item = this.selectedItem;
-                        return this._getRealValue(item);
+                        return this._getRealValue(this.selectedItem);
                     },
                     set: function (v) {
                         if (this.selectedValue !== v) {
