@@ -219,10 +219,7 @@ module RIAPP {
             export interface IDbSetConstructor {
                 new (dbContext: DbContext): DbSet;
             }
-            export interface ILoadPromise extends JQueryPromise {
-                done(...doneCallbacks: { (res: ILoadResult ): any; }[]): JQueryPromise;
-            }
-
+ 
             export class DataCache extends RIAPP.BaseObject {
                 _query: DataQuery;
                 _cache: ICachedPage[];
@@ -589,7 +586,7 @@ module RIAPP {
                 _resetCacheInvalidated() {
                     this._cacheInvalidated = false;
                 }
-                load() {
+                load():IPromise<ILoadResult> {
                     return this.dbSet.dbContext.load(this);
                 }
                 destroy() {
@@ -2218,7 +2215,7 @@ module RIAPP {
                         query._clearCache();
                     }
                 }
-                _load(query: DataQuery, isPageChanged: bool): ILoadPromise {
+                _load(query: DataQuery, isPageChanged: bool): IPromise<ILoadResult> {
                     if (!query) {
                         throw new Error(RIAPP.ERRS.ERR_DB_LOAD_NO_QUERY);
                     }
@@ -2455,7 +2452,7 @@ module RIAPP {
                     return submitState.deferred.promise();
                 }
                 //returns promise
-                load(query:DataQuery) {
+                load(query: DataQuery): IPromise<ILoadResult> {
                     return this._load(query, false);
                 }
                 acceptChanges() {

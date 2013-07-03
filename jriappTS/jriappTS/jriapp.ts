@@ -375,10 +375,17 @@ module RIAPP {
         //set up application - use fn_sandbox callback to setUp handlers on objects, create viewModels and etc.
         startUp(fn_sandbox?:(app:Application)=>void) {
             var self = this, fn_init = function () {
-                self.onStartUp();
-                if (!!fn_sandbox)
-                    fn_sandbox.apply(self, [self]);
-                self._setUpBindings();
+                try {
+                    self.onStartUp();
+                    if (!!fn_sandbox)
+                        fn_sandbox.apply(self, [self]);
+                    self._setUpBindings();
+                }
+                catch (ex)
+                {
+                    self._onError(ex, self);
+                    global._throwDummy(ex);
+                }
             };
 
             try {
