@@ -9,7 +9,7 @@ module RIAPP
             TestInvoke: (args: {
                 param1: number[];
                 param2: string;
-            }) => JQueryPromise;
+            }) => IPromise<string>;
         }
 
         export interface ICustomer extends MOD.utils.IEditable, MOD.utils.ISubmittable {
@@ -1166,5 +1166,6 @@ module RIAPP
             get dbSets() { return <DbSets>this._dbSets; }
             get serviceMethods() { return <ISvcMethods>this._svcMethods; }
         }
+
     }
 }
