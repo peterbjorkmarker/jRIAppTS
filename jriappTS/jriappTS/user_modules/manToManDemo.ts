@@ -521,7 +521,7 @@ module RIAPP
                 }, self, null);
             }
             get _isCanSubmit(): bool { return true; }
-            submitChanges(): JQueryPromise { return this.dbContext.submitChanges(); }
+            submitChanges(): IPromise<any> { return this.dbContext.submitChanges(); }
             _cancelAddNewAddress() {
                 var self = this;
                 self._newAddress.cancelEdit();

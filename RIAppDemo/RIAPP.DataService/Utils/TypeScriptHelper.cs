@@ -103,7 +103,7 @@ namespace RIAPP.DataService.Utils
                             sbArgs.Append(">");
                         }
                         else{
-                             sbArgs.Append("\t}) => JQueryPromise");
+                            sbArgs.Append("\t}) => IPromise<any>");
                         }
                     }
                     else
@@ -114,7 +114,7 @@ namespace RIAPP.DataService.Utils
                           sbArgs.Append(">");
                         }
                         else{
-                            sbArgs.Append("() => JQueryPromise");
+                            sbArgs.Append("() => IPromise<any>");
                         }
                     }
 

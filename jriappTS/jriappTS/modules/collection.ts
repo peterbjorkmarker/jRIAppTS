@@ -274,7 +274,7 @@ module RIAPP {
                     });
                     return res.join('|');
                 }
-                submitChanges(): JQueryPromise {
+                submitChanges(): IPromise<any> {
                     var deffered = utils.createDeferred();
                     deffered.reject();
                     return deffered.promise();

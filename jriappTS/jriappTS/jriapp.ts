@@ -404,13 +404,13 @@ module RIAPP {
             });
         }
         //loads a group of templates from the server
-        loadTemplatesAsync(fn_loader: () => JQueryPromise) {
+        loadTemplatesAsync(fn_loader: () => IPromise<string>) {
             global._loadTemplatesAsync(fn_loader, this);
         }
         /*
             fn_loader must load template and return promise which resolves with loaded HTML string
         */
-        registerTemplateLoader(name:string, fn_loader: () => JQueryPromise) {
+        registerTemplateLoader(name:string, fn_loader: () => IPromise<string>) {
             global._registerTemplateLoader(this.appName + '.' + name, {
                 fn_loader: fn_loader
             });
@@ -423,12 +423,12 @@ module RIAPP {
             return res;
         }
         registerTemplateGroup(name: string, group: {
-            fn_loader?: () => JQueryPromise;
+            fn_loader?: () => IPromise<string>;
             url?: string;
             names: string[];
         }) {
-            var group: {
-                fn_loader?: () => JQueryPromise;
+            var group2: {
+                fn_loader?: () => IPromise<string>;
                 url?: string;
                 names: string[];
                 app: Application;
@@ -438,7 +438,7 @@ module RIAPP {
                 names: null,
                 app: this
             }, group);
-            global._registerTemplateGroup(this.appName + '.' + name, group);
+            global._registerTemplateGroup(this.appName + '.' + name, group2);
         }
         destroy() {
             if (this._isDestroyed)

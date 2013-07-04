@@ -42,7 +42,7 @@ module RIAPP {
                 _result: string;
                 private _options: any;
                 private _dialogCreated: bool;
-                private _fn_submitOnOK: () => JQueryPromise;
+                private _fn_submitOnOK: () => IPromise<any>;
                 private _app: Application;
                 //save global's currentSelectable  before showing and restore it on dialog's closing
                 private _currentSelectable: ISelectable;

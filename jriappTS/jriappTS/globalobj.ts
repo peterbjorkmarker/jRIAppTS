@@ -10,9 +10,25 @@ module RIAPP {
     export interface IExports {
         _exports: { [name: string]: any; };
     }
-    export interface IPromise<T> extends JQueryPromise {
-        done(...doneCallbacks: { (res: T): any; }[]): JQueryPromise;
+    
+    export interface IPromise<T>{
+        always(...alwaysCallbacks: { (res: any): void; }[]): IPromise<any>;
+        done(...doneCallbacks: { (res: T): void; }[]): IPromise<any>;
+        fail(...failCallbacks: { (res: any): void; }[]): IPromise<any>;
+        progress(...progressCallbacks: { (res: any): void; }[]): IPromise<any>;
+        state(): string;
+        then(doneCallbacks: (res: T) => any, failCallbacks?: (res: any) => any, progressCallbacks?: (res: any) => any): IPromise<any>;
     }
+    export interface IDeferred<T> extends IPromise<T>{
+        notify(arg: any): IDeferred<any>;
+        notifyWith(context: any, arg: any): IDeferred<any>
+        reject(arg?: any): IDeferred<any>;
+        rejectWith(context: any, arg?: any): IDeferred<any>;
+        resolve(arg?: T): IDeferred<any>;
+        resolveWith(context: any, arg?: T): IDeferred<any>;
+        promise(): IPromise<T>;
+    }
+
     export class Global extends BaseObject implements IExports {
         public static vesion = '2.0.0.1';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
@@ -26,7 +42,7 @@ module RIAPP {
         private _utils: MOD.utils.Utils;
         private _templateLoaders: any;
         private _templateGroups: any;
-        private _promises: JQueryPromise[];
+        private _promises: IPromise<string>[];
         private _isReady: bool;
         private _waitQueue: MOD.utils.WaitQueue;
         private _parser: MOD.parser.Parser;
@@ -244,19 +260,19 @@ module RIAPP {
                 });
             });
         }
-        private _registerTemplateLoaderCore(name: string, loader: { fn_loader: () => JQueryPromise; groupName?: string; }) {
+        private _registerTemplateLoaderCore(name: string, loader: { fn_loader: () => IPromise<string>; groupName?: string; }) {
             return this._registerObjectCore(this._templateLoaders, name, loader, false);
         }
-        private _getTemplateLoaderCore(name: string): { fn_loader: () => JQueryPromise; groupName?: string; } {
+        private _getTemplateLoaderCore(name: string): { fn_loader: () => IPromise<string>; groupName?: string; } {
             return this._getObjectCore(this._templateLoaders, name);
         }
-        _loadTemplatesAsync(fn_loader: () => JQueryPromise, app: Application) {
+        _loadTemplatesAsync(fn_loader: () => IPromise<string>, app: Application) {
             var self = this, promise = fn_loader(), old = self.isLoading;
             self._promises.push(promise);
             if (self.isLoading !== old)
                 self.raisePropertyChanged('isLoading');
             var deferred = self.utils.createDeferred();
-            promise.done(function (html) {
+            promise.done(function (html:string) {
                 self.utils.removeFromArray(self._promises, promise);
                 try {
                     var tmpDiv = self.document.createElement('div');
@@ -290,7 +306,7 @@ module RIAPP {
         /*
          fn_loader must load template and return promise which resolves with loaded HTML string
          */
-        _registerTemplateLoader(name, loader: { fn_loader: () => JQueryPromise; groupName?: string; }) {
+        _registerTemplateLoader(name, loader: { fn_loader: () => IPromise<string>; groupName?: string; }) {
             var self = this;
             loader = self.utils.extend(false, {
                 fn_loader: null,
@@ -311,7 +327,7 @@ module RIAPP {
             return self._registerTemplateLoaderCore(name, loader);
         }
         _getTemplateLoader(name: string) {
-            var self = this, loader: { fn_loader: () => JQueryPromise; groupName?: string; } = self._getTemplateLoaderCore(name);
+            var self = this, loader: { fn_loader: () => IPromise<string>; groupName?: string; } = self._getTemplateLoaderCore(name);
             if (!loader)
                 return null;
             if (!loader.fn_loader && !!loader.groupName) {
@@ -369,17 +385,18 @@ module RIAPP {
                 return loader.fn_loader;
         }
         _registerTemplateGroup(groupName: string, group: {
-            fn_loader?: () => JQueryPromise;
+            fn_loader?: () => IPromise<string>;
             url?: string;
             names: string[];
             app?: Application;
         }) {
-            var self = this, group: {
-                fn_loader?: () => JQueryPromise;
+            var self = this;
+            var group2:{
+                fn_loader?: () =>IPromise<string>;
                 url?: string;
                 names: string[];
                 app?: Application;
-                promise?: JQueryPromise;
+                promise?: IPromise<string>;
             } = self.utils.extend(false, {
                 fn_loader: null,
                 url: null,
@@ -388,17 +405,17 @@ module RIAPP {
                 promise: null
             }, group);
 
-            if (!!group.url && !group.fn_loader) {
-                //make function to load from this url
-                group.fn_loader = function () {
-                    return self.utils.performAjaxGet(group.url);
+            if (!!group2.url && !group2.fn_loader) {
+                //make a function to load from this url
+                group2.fn_loader = function () {
+                    return self.utils.performAjaxGet(group2.url);
                 };
             }
 
-            this._registerObjectCore(self._templateGroups, groupName, group, true);
-            group.names.forEach(function (name) {
-                if (!!group.app) {
-                    name = group.app.appName + '.' + name;
+            this._registerObjectCore(self._templateGroups, groupName, group2, true);
+            group2.names.forEach(function (name) {
+                if (!!group2.app) {
+                    name = group2.app.appName + '.' + name;
                 }
                 //for each template in the group register dummy loader function which has only group name
                 //when template will be requested, this dummy loader will be replaced with the real one
@@ -409,11 +426,11 @@ module RIAPP {
             });
         }
         _getTemplateGroup(name: string): {
-                fn_loader?: () => JQueryPromise;
+                fn_loader?: () => IPromise<string>;
                 url?: string;
                 names: string[];
                 app?: Application;
-                promise?: JQueryPromise;
+                promise?: IPromise<string>;
         } {
             return this._getObjectCore(this._templateGroups, name);
         }

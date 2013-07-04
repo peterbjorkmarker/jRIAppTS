@@ -974,7 +974,7 @@ module RIAPP {
                         eset._onCommitChanges(this, false, true, oldCT);
                     }
                 }
-                submitChanges(): JQueryPromise {
+                submitChanges(): IPromise<any> {
                     var dbContext = this.getDbContext(), uniqueID = utils.uuid();
                     dbContext.addOnSubmitError(function (sender, args) {
                         if (args.error instanceof db.SubmitError) {
@@ -1016,7 +1016,7 @@ module RIAPP {
                     this.raisePropertyChanged('isEditing');
                     return true;
                 }
-                getDbContext() {
+                getDbContext():DbContext {
                     return this.__dbSet.dbContext;
                 }
                 getDbSet() {
@@ -1650,7 +1650,7 @@ module RIAPP {
                     return this._options.dbSetName;
                 }
                 get items() { return <Entity[]>this._items; }
-                get dbContext() {
+                get dbContext():DbContext {
                     return this._dbContext;
                 }
                 get dbSetName() { return this._options.dbSetName; }
@@ -1733,7 +1733,7 @@ module RIAPP {
             export class DbContext extends RIAPP.BaseObject {
                 _isInitialized: bool;
                 _dbSets: DbSets;
-                //_svcMethods: {[methodName: string]: (args: { [paramName: string]: any; }) => JQueryPromise; };
+                //_svcMethods: {[methodName: string]: (args: { [paramName: string]: any; }) => IPromise<any>; };
                 _svcMethods: any;
                 //_assoc: { [getname: string]: () => Association; };
                 _assoc: any;
@@ -1743,7 +1743,7 @@ module RIAPP {
                 _isBusy: number;
                 _isSubmiting: bool;
                 _hasChanges: bool;
-                _pendingSubmit: { deferred: JQueryDeferred;  };
+                _pendingSubmit: { deferred: IDeferred<any>;  };
                 _serverTimezone: number;
                 _waitQueue: MOD.utils.WaitQueue;
 
@@ -2373,7 +2373,7 @@ module RIAPP {
                     return f();
                 }
                 //returns promise
-                submitChanges() {
+                submitChanges(): IPromise<any> {
                     //dont submit when the submit already in the queue
                     if (!!this._pendingSubmit) {
                         //return promise for the already enqueued submit
@@ -2449,7 +2449,7 @@ module RIAPP {
                             fn_onErr(ex);
                         }
                     }, []);
-                    return submitState.deferred.promise();
+                    return <any>submitState.deferred.promise();
                 }
                 //returns promise
                 load(query: DataQuery): IPromise<ILoadResult> {

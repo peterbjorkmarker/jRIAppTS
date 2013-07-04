@@ -1250,7 +1250,7 @@ module RIAPP
                     this._addressInfosView.removeItem(item);
                 }
             }
-            submitChanges():JQueryPromise { return this.dbContext.submitChanges(); }
+            submitChanges():IPromise<any> { return this.dbContext.submitChanges(); }
             destroy() {
                 if (this._isDestroyed)
                     return;

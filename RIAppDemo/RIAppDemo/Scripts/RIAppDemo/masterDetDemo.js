@@ -1,4 +1,5 @@
 var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
@@ -10,30 +11,32 @@ var __extends = this.__extends || function (d, b) {
 var RIAPP;
 (function (RIAPP) {
     'use strict';
+
     //master-details demo module
     (function (MDETDEMO) {
         var global = RIAPP.global, utils = global.utils;
+
         var CustomerVM = (function (_super) {
             __extends(CustomerVM, _super);
             function CustomerVM(app) {
-                        _super.call(this, app);
+                _super.call(this, app);
                 var self = this;
                 this._dataGrid = null;
                 this._dbSet = this.dbSets.Customer;
                 this._dbSet.isSubmitOnDelete = true;
                 this._propWatcher = new RIAPP.MOD.utils.PropWatcher();
+
                 this._dbSet.addOnItemDeleting(function (sender, args) {
-                    if(!confirm('Are you sure that you want to delete customer ?')) {
+                    if (!confirm('Are you sure that you want to delete customer ?'))
                         args.isCancel = true;
-                    }
                 }, self.uniqueID);
+
                 this._dbSet.addOnFill(function (sender, args) {
-                    //when fill is ended
-                    if(args.isBegin && args.isPageChanged) {
-                        self.raiseEvent('page_changed', {
-                        });
+                    if (args.isBegin && args.isPageChanged) {
+                        self.raiseEvent('page_changed', {});
                     }
                 }, self.uniqueID);
+
                 //adds new customer - uses dialog to enter the data
                 this._addNewCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     //showing of the dialog is handled by the datagrid
@@ -42,6 +45,7 @@ var RIAPP;
                     //the command is always enabled
                     return true;
                 });
+
                 //saves changes (submitts them to the service)
                 this._saveCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     self.dbContext.submitChanges();
@@ -49,23 +53,26 @@ var RIAPP;
                     //the command is enabled when there are pending changes
                     return self.dbContext.hasChanges;
                 });
+
                 this._undoCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     self.dbContext.rejectChanges();
                 }, self, function (s, p) {
                     //the command is enabled when there are pending changes
                     return self.dbContext.hasChanges;
                 });
+
                 //load data from the server
                 this._loadCommand = new RIAPP.MOD.mvvm.Command(function (sender, args) {
                     self.load();
                 }, self, null);
+
                 //example of getting instance of bounded dataGrid by using elView's propChangedCommand
                 this._propChangeCommand = new RIAPP.MOD.mvvm.Command(function (sender, args) {
-                    if(args.property == '*' || args.property == 'grid') {
+                    if (args.property == '*' || args.property == 'grid') {
                         self._dataGrid = sender.grid;
                     }
-                    //example of binding to dataGrid events
-                    if(!!self._dataGrid) {
+
+                    if (!!self._dataGrid) {
                         self._dataGrid.addHandler('page_changed', function (s, a) {
                             self._onGridPageChanged();
                         }, self.uniqueID);
@@ -77,24 +84,29 @@ var RIAPP;
                         }, self.uniqueID);
                     }
                 }, self, null);
+
                 //it is not needed here, but can be used when we want to respond to the tabs events
                 this._tabsEventCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
-                    //alert(param.eventName);
-                                    }, self, null);
+                }, self, null);
+
                 //the property watcher helps us handling properties changes
                 //more convenient than using addOnPropertyChange
                 this._propWatcher.addPropWatch(self.dbContext, 'hasChanges', function (prop) {
                     self._saveCommand.raiseCanExecuteChanged();
                     self._undoCommand.raiseCanExecuteChanged();
                 });
+
                 this._propWatcher.addPropWatch(this._dbSet, 'currentItem', function (prop) {
                     self._onCurrentChanged();
                 });
+
                 this._dbSet.addOnCleared(function (s, a) {
                     self.dbSets.CustomerAddress.clear();
                     self.dbSets.Address.clear();
                 }, self.uniqueID);
+
                 var custAssoc = self.dbContext.associations.getCustAddrToCustomer();
+
                 //the view to filter CustomerAddresses related to the current customer only
                 this._custAdressView = new RIAPP.MOD.db.ChildDataView({
                     association: custAssoc,
@@ -102,14 +114,12 @@ var RIAPP;
                         return a.AddressID - b.AddressID;
                     }
                 });
+
                 this._ordersVM = new OrderVM(this);
             }
             CustomerVM.prototype._getEventNames = function () {
                 var base_events = _super.prototype._getEventNames.call(this);
-                return [
-                    'row_expanded', 
-                    'page_changed'
-                ].concat(base_events);
+                return ['row_expanded', 'page_changed'].concat(base_events);
             };
             CustomerVM.prototype._onGridPageChanged = function () {
             };
@@ -117,43 +127,42 @@ var RIAPP;
             };
             CustomerVM.prototype._onGridRowExpanded = function (oldRow, row, isExpanded) {
                 var r = row;
-                if(!isExpanded) {
+                if (!isExpanded) {
                     r = oldRow;
                 }
-                this.raiseEvent('row_expanded', {
-                    customer: r.item,
-                    isExpanded: isExpanded
-                });
+                this.raiseEvent('row_expanded', { customer: r.item, isExpanded: isExpanded });
             };
             CustomerVM.prototype._onCurrentChanged = function () {
                 this._custAdressView.parentItem = this._dbSet.currentItem;
                 this.raisePropertyChanged('currentItem');
             };
-            CustomerVM.prototype.load = //returns promise
-            function () {
-                var query = this._dbSet.createReadCustomerQuery({
-                    includeNav: true
-                });
+
+            //returns promise
+            CustomerVM.prototype.load = function () {
+                var query = this._dbSet.createReadCustomerQuery({ includeNav: true });
                 query.pageSize = 50;
+
                 //load ten pages at once -- 500 rows
                 query.loadPageCount = 10;
+
                 //load without filtering
                 query.orderBy('LastName', 'ASC').thenBy('MiddleName', 'ASC').thenBy('FirstName', 'ASC');
                 return this.dbContext.load(query);
             };
             CustomerVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed)
                     return;
-                }
                 this._isDestroyCalled = true;
                 this._propWatcher.destroy();
                 this._propWatcher = null;
-                if(!!this._dbSet) {
+
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
-                if(!!this._dataGrid) {
+                if (!!this._dataGrid) {
                     this._dataGrid.removeNSHandlers(this.uniqueID);
                 }
+
                 this._ordersVM.destroy();
                 this._ordersVM = null;
                 _super.prototype.destroy.call(this);
@@ -251,72 +260,57 @@ var RIAPP;
             });
             return CustomerVM;
         })(RIAPP.MOD.mvvm.BaseViewModel);
-        MDETDEMO.CustomerVM = CustomerVM;        
+        MDETDEMO.CustomerVM = CustomerVM;
+
         var OrderVM = (function (_super) {
             __extends(OrderVM, _super);
             function OrderVM(customerVM) {
-                        _super.call(this, customerVM.app);
+                _super.call(this, customerVM.app);
                 var self = this;
                 this._customerVM = customerVM;
                 this._dbSet = this.dbSets.SalesOrderHeader;
                 this._currentCustomer = null;
                 this._dataGrid = null;
                 this._selectedTabIndex = null;
-                this._orderStatuses = new RIAPP.MOD.collection.Dictionary('orderStatus', {
-                    key: 0,
-                    val: ''
-                }, 'key');
+                this._orderStatuses = new RIAPP.MOD.collection.Dictionary('orderStatus', { key: 0, val: '' }, 'key');
                 this._orderStatuses.fillItems([
-                    {
-                        key: 0,
-                        val: 'New Order'
-                    }, 
-                    {
-                        key: 1,
-                        val: 'Status 1'
-                    }, 
-                    {
-                        key: 2,
-                        val: 'Status 2'
-                    }, 
-                    {
-                        key: 3,
-                        val: 'Status 3'
-                    }, 
-                    {
-                        key: 4,
-                        val: 'Status 4'
-                    }, 
-                    {
-                        key: 5,
-                        val: 'Completed Order'
-                    }
+                    { key: 0, val: 'New Order' },
+                    { key: 1, val: 'Status 1' },
+                    { key: 2, val: 'Status 2' },
+                    { key: 3, val: 'Status 3' },
+                    { key: 4, val: 'Status 4' },
+                    { key: 5, val: 'Completed Order' }
                 ], true);
+
                 //loads the data only when customer's row is expanded
                 this._customerVM.addHandler('row_expanded', function (sender, args) {
-                    if(args.isExpanded) {
+                    if (args.isExpanded) {
                         self.currentCustomer = args.customer;
                     } else {
                         self.currentCustomer = null;
                     }
                 }, self.uniqueID);
+
                 this._dbSet.addOnPropertyChange('currentItem', function (sender, args) {
                     self._onCurrentChanged();
                 }, self.uniqueID);
+
                 this._dbSet.addOnItemDeleting(function (sender, args) {
-                    if(!confirm('Are you sure that you want to delete order ?')) {
+                    if (!confirm('Are you sure that you want to delete order ?'))
                         args.isCancel = true;
-                    }
                 }, self.uniqueID);
+
                 this._dbSet.addOnItemAdded(function (sender, args) {
                     //can be solved soon with generics
                     var item = args.item;
                     item.Customer = self.currentCustomer;
+
                     //datejs extension
                     item.OrderDate = (Date).today();
                     item.DueDate = (Date).today().add(6).days();
                     item.OnlineOrderFlag = false;
                 }, self.uniqueID);
+
                 //adds new order - uses dialog to fill the data
                 this._addNewCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     //the dialog shown by the datagrid
@@ -324,13 +318,14 @@ var RIAPP;
                 }, self, function (sender, param) {
                     return true;
                 });
+
                 //example of getting instance of bounded dataGrid by using elView's propChangedCommand
                 this._propChangeCommand = new RIAPP.MOD.mvvm.Command(function (sender, args) {
-                    if(args.property == '*' || args.property == 'grid') {
+                    if (args.property == '*' || args.property == 'grid') {
                         self._dataGrid = sender.grid;
                     }
-                    //example of binding to dataGrid events
-                    if(!!self._dataGrid) {
+
+                    if (!!self._dataGrid) {
                         self._dataGrid.addHandler('page_changed', function (s, a) {
                             self._onGridPageChanged();
                         }, self.uniqueID);
@@ -342,9 +337,9 @@ var RIAPP;
                         }, self.uniqueID);
                     }
                 }, self, null);
+
                 this._tabsEventCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
-                    //here we can handle tabs events
-                    switch(param.eventName) {
+                    switch (param.eventName) {
                         case "select":
                             this._onTabSelected(param.args.index);
                             break;
@@ -352,19 +347,19 @@ var RIAPP;
                             break;
                     }
                 }, self, null);
+
                 this._addressVM = new AddressVM(this);
                 this._orderDetailVM = new OrderDetailVM(this);
             }
             OrderVM.prototype._getEventNames = function () {
                 var base_events = _super.prototype._getEventNames.call(this);
-                return [
-                    'row_expanded'
-                ].concat(base_events);
+                return ['row_expanded'].concat(base_events);
             };
             OrderVM.prototype._onTabSelected = function (index) {
                 this._selectedTabIndex = index;
                 this.raisePropertyChanged('selectedTabIndex');
-                if(index === 2) {
+
+                if (index === 2) {
                     //load details only when tab which contain details grid is selected
                     this._orderDetailVM.currentOrder = this.dbSet.currentItem;
                 }
@@ -375,14 +370,11 @@ var RIAPP;
             };
             OrderVM.prototype._onGridRowExpanded = function (oldRow, row, isExpanded) {
                 var r = row;
-                if(!isExpanded) {
+                if (!isExpanded) {
                     r = oldRow;
                 }
-                this.raiseEvent('row_expanded', {
-                    order: r.item,
-                    isExpanded: isExpanded
-                });
-                if(isExpanded) {
+                this.raiseEvent('row_expanded', { order: r.item, isExpanded: isExpanded });
+                if (isExpanded) {
                     this._onTabSelected(this.selectedTabIndex);
                 }
             };
@@ -392,31 +384,29 @@ var RIAPP;
             OrderVM.prototype.clear = function () {
                 this.dbSet.clear();
             };
-            OrderVM.prototype.load = //returns promise
-            function () {
+
+            //returns promise
+            OrderVM.prototype.load = function () {
                 //explicitly clear before every load
                 this.clear();
-                if(!this.currentCustomer || this.currentCustomer.getIsNew()) {
+                if (!this.currentCustomer || this.currentCustomer.getIsNew()) {
                     var deferred = utils.createDeferred();
                     deferred.reject();
                     return deferred.promise();
                 }
                 var query = this.dbSet.createReadSalesOrderHeaderQuery();
-                query.where('CustomerID', '=', [
-                    this.currentCustomer.CustomerID
-                ]);
+                query.where('CustomerID', '=', [this.currentCustomer.CustomerID]);
                 query.orderBy('OrderDate', 'ASC').thenBy('SalesOrderID', 'ASC');
                 return this.dbContext.load(query);
             };
             OrderVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed)
                     return;
-                }
                 this._isDestroyCalled = true;
-                if(!!this._dbSet) {
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
-                if(!!this._dataGrid) {
+                if (!!this._dataGrid) {
                     this._dataGrid.removeNSHandlers(this.uniqueID);
                 }
                 this.currentCustomer = null;
@@ -495,7 +485,7 @@ var RIAPP;
                     return this._currentCustomer;
                 },
                 set: function (v) {
-                    if(v !== this._currentCustomer) {
+                    if (v !== this._currentCustomer) {
                         this._currentCustomer = v;
                         this.raisePropertyChanged('currentCustomer');
                         this.load();
@@ -527,38 +517,42 @@ var RIAPP;
             });
             return OrderVM;
         })(RIAPP.MOD.mvvm.BaseViewModel);
-        MDETDEMO.OrderVM = OrderVM;        
+        MDETDEMO.OrderVM = OrderVM;
+
         var OrderDetailVM = (function (_super) {
             __extends(OrderDetailVM, _super);
             function OrderDetailVM(orderVM) {
-                        _super.call(this, orderVM.app);
+                _super.call(this, orderVM.app);
                 var self = this;
                 this._dbSet = this.dbSets.SalesOrderDetail;
                 this._orderVM = orderVM;
                 this._currentOrder = null;
+
                 this._orderVM.dbSet.addOnCleared(function (s, a) {
                     self.clear();
                 }, self.uniqueID);
+
                 this._dbSet.addOnPropertyChange('currentItem', function (sender, args) {
                     self._onCurrentChanged();
                 }, self.uniqueID);
+
                 this._productVM = new ProductVM(this);
             }
             OrderDetailVM.prototype._onCurrentChanged = function () {
                 this.raisePropertyChanged('currentItem');
             };
-            OrderDetailVM.prototype.load = //returns promise
-            function () {
+
+            //returns promise
+            OrderDetailVM.prototype.load = function () {
                 this.clear();
-                if(!this.currentOrder || this.currentOrder.getIsNew()) {
+
+                if (!this.currentOrder || this.currentOrder.getIsNew()) {
                     var deferred = new global.$.Deferred();
                     deferred.reject();
                     return deferred.promise();
                 }
                 var query = this.dbSet.createQuery('ReadSalesOrderDetail');
-                query.where('SalesOrderID', '=', [
-                    this.currentOrder.SalesOrderID
-                ]);
+                query.where('SalesOrderID', '=', [this.currentOrder.SalesOrderID]);
                 query.orderBy('SalesOrderDetailID', 'ASC');
                 return this.dbContext.load(query);
             };
@@ -566,11 +560,10 @@ var RIAPP;
                 this.dbSet.clear();
             };
             OrderDetailVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed)
                     return;
-                }
                 this._isDestroyCalled = true;
-                if(!!this._dbSet) {
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
                 this.currentOrder = null;
@@ -620,7 +613,7 @@ var RIAPP;
                     return this._currentOrder;
                 },
                 set: function (v) {
-                    if(v !== this._currentOrder) {
+                    if (v !== this._currentOrder) {
                         this._currentOrder = v;
                         this.raisePropertyChanged('currentOrder');
                         this.load();
@@ -638,19 +631,20 @@ var RIAPP;
             });
             return OrderDetailVM;
         })(RIAPP.MOD.mvvm.BaseViewModel);
-        MDETDEMO.OrderDetailVM = OrderDetailVM;        
+        MDETDEMO.OrderDetailVM = OrderDetailVM;
+
         var AddressVM = (function (_super) {
             __extends(AddressVM, _super);
             function AddressVM(orderVM) {
-                        _super.call(this, orderVM.app);
+                _super.call(this, orderVM.app);
                 var self = this;
                 this._orderVM = orderVM;
                 this._dbSet = this.dbSets.Address;
                 this._orderVM.dbSet.addOnFill(function (sender, args) {
-                    if(!args.isBegin) {
+                    if (!args.isBegin)
                         self.loadAddressesForOrders(args.fetchedItems);
-                    }
                 }, self.uniqueID);
+
                 this._dbSet.addOnPropertyChange('currentItem', function (sender, args) {
                     self._onCurrentChanged();
                 }, self.uniqueID);
@@ -658,8 +652,9 @@ var RIAPP;
             AddressVM.prototype._onCurrentChanged = function () {
                 this.raisePropertyChanged('currentItem');
             };
-            AddressVM.prototype.loadAddressesForOrders = //returns promise
-            function (orders) {
+
+            //returns promise
+            AddressVM.prototype.loadAddressesForOrders = function (orders) {
                 var ids1 = orders.map(function (item) {
                     return item.ShipToAddressID;
                 });
@@ -671,11 +666,11 @@ var RIAPP;
                 });
                 return this.load(RIAPP.ArrayHelper.distinct(ids), false);
             };
-            AddressVM.prototype.load = //returns promise
-            function (ids, isClearTable) {
-                var query = this.dbSet.createReadAddressByIdsQuery({
-                    addressIDs: ids
-                });
+
+            //returns promise
+            AddressVM.prototype.load = function (ids, isClearTable) {
+                var query = this.dbSet.createReadAddressByIdsQuery({ addressIDs: ids });
+
                 //if true, previous data will be cleared when the new is loaded
                 query.isClearPrevData = isClearTable;
                 return this.dbContext.load(query);
@@ -684,11 +679,10 @@ var RIAPP;
                 this.dbSet.clear();
             };
             AddressVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed)
                     return;
-                }
                 this._isDestroyCalled = true;
-                if(!!this._dbSet) {
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
                 this._customerDbSet.removeNSHandlers(this.uniqueID);
@@ -748,12 +742,12 @@ var RIAPP;
             });
             return AddressVM;
         })(RIAPP.MOD.mvvm.BaseViewModel);
-        MDETDEMO.AddressVM = AddressVM;        
+        MDETDEMO.AddressVM = AddressVM;
+
         var ProductAutoComplete = (function (_super) {
             __extends(ProductAutoComplete, _super);
             function ProductAutoComplete() {
                 _super.apply(this, arguments);
-
             }
             ProductAutoComplete.prototype._init = function (options) {
                 _super.prototype._init.call(this, options);
@@ -764,9 +758,10 @@ var RIAPP;
                     self._updateValue();
                 }, self._objId);
             };
-            ProductAutoComplete.prototype._updateSelection = //overriden base method
-            function () {
-                if(!!this.dataContext) {
+
+            //overriden base method
+            ProductAutoComplete.prototype._updateSelection = function () {
+                if (!!this.dataContext) {
                     var id = this.currentSelection;
                     this.dataContext.ProductID = id;
                 }
@@ -775,32 +770,31 @@ var RIAPP;
                 _super.prototype._onHide.call(this);
                 this._updateValue();
             };
-            ProductAutoComplete.prototype._updateValue = //new method
-            function () {
-                if(!this.dataContext) {
+
+            //new method
+            ProductAutoComplete.prototype._updateValue = function () {
+                if (!this.dataContext) {
                     this.value = '';
                     return;
                 }
                 var productID = this.dataContext.ProductID;
+
                 //casting will be solved with generics soon
                 var product = this._lookupSource.findByPK(productID);
-                if(!!product) {
+                if (!!product) {
                     this.value = product.Name;
                 } else {
                     this.value = '';
-                    if(this._lastLoadedID !== productID) {
+                    if (this._lastLoadedID !== productID) {
                         //this prevents the cicles of loading of the same item
                         this._lastLoadedID = productID;
-                        var query = this._lookupSource.createReadProductByIdsQuery({
-                            productIDs: [
-                                productID
-                            ]
-                        });
+                        var query = this._lookupSource.createReadProductByIdsQuery({ productIDs: [productID] });
                         query.isClearPrevData = false;
                         this.dbContext.load(query);
                     }
                 }
             };
+
             Object.defineProperty(ProductAutoComplete.prototype, "dataContext", {
                 get: //overriden base property
                 function () {
@@ -808,12 +802,12 @@ var RIAPP;
                 },
                 set: function (v) {
                     var self = this;
-                    if(this._dataContext !== v) {
-                        if(!!this._dataContext) {
+                    if (this._dataContext !== v) {
+                        if (!!this._dataContext) {
                             this._dataContext.removeNSHandlers(this.uniqueID);
                         }
                         this._dataContext = v;
-                        if(!!this._dataContext) {
+                        if (!!this._dataContext) {
                             this._dataContext.addOnPropertyChange('ProductID', function (sender, a) {
                                 self._updateValue();
                             }, this.uniqueID);
@@ -825,14 +819,13 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
+
             Object.defineProperty(ProductAutoComplete.prototype, "currentSelection", {
                 get: //overriden base property
                 function () {
-                    if(!!this._dbSet.currentItem) {
-                        return this._dbSet.currentItem['ProductID'];
-                    } else {
+                    if (!!this._dbSet.currentItem)
+                        return this._dbSet.currentItem['ProductID']; else
                         return null;
-                    }
                 },
                 enumerable: true,
                 configurable: true
@@ -846,23 +839,26 @@ var RIAPP;
             });
             return ProductAutoComplete;
         })(RIAPP.AUTOCOMPLETE.AutoCompleteElView);
-        MDETDEMO.ProductAutoComplete = ProductAutoComplete;        
+        MDETDEMO.ProductAutoComplete = ProductAutoComplete;
+
         var ProductVM = (function (_super) {
             __extends(ProductVM, _super);
             function ProductVM(orderDetailVM) {
-                        _super.call(this, orderDetailVM.app);
+                _super.call(this, orderDetailVM.app);
                 var self = this;
                 this._orderDetailVM = orderDetailVM;
                 this._dbSet = this.dbSets.Product;
+
                 this._customerDbSet.addOnCleared(function (s, a) {
                     self.clear();
                 }, self.uniqueID);
+
                 //here we load products which are referenced in order details
                 this._orderDetailVM.dbSet.addOnFill(function (sender, args) {
-                    if(!args.isBegin) {
+                    if (!args.isBegin)
                         self.loadProductsForOrderDetails(args.fetchedItems);
-                    }
                 }, self.uniqueID);
+
                 this._dbSet.addOnPropertyChange('currentItem', function (sender, args) {
                     self._onCurrentChanged();
                 }, self.uniqueID);
@@ -873,29 +869,29 @@ var RIAPP;
             ProductVM.prototype.clear = function () {
                 this.dbSet.clear();
             };
-            ProductVM.prototype.loadProductsForOrderDetails = //returns promise
-            function (orderDetails) {
+
+            //returns promise
+            ProductVM.prototype.loadProductsForOrderDetails = function (orderDetails) {
                 var ids = orderDetails.map(function (item) {
                     return item.ProductID;
                 }).filter(function (id) {
                     return id !== null;
                 });
+
                 return this.load(RIAPP.ArrayHelper.distinct(ids), false);
             };
-            ProductVM.prototype.load = //returns promise
-            function (ids, isClearTable) {
-                var query = this.dbSet.createReadProductByIdsQuery({
-                    productIDs: ids
-                });
+
+            //returns promise
+            ProductVM.prototype.load = function (ids, isClearTable) {
+                var query = this.dbSet.createReadProductByIdsQuery({ productIDs: ids });
                 query.isClearPrevData = isClearTable;
                 return this.dbContext.load(query);
             };
             ProductVM.prototype.destroy = function () {
-                if(this._isDestroyed) {
+                if (this._isDestroyed)
                     return;
-                }
                 this._isDestroyCalled = true;
-                if(!!this._dbSet) {
+                if (!!this._dbSet) {
                     this._dbSet.removeNSHandlers(this.uniqueID);
                 }
                 this._customerDbSet.removeNSHandlers(this.uniqueID);
@@ -948,11 +944,12 @@ var RIAPP;
             });
             return ProductVM;
         })(RIAPP.MOD.mvvm.BaseViewModel);
-        MDETDEMO.ProductVM = ProductVM;        
+        MDETDEMO.ProductVM = ProductVM;
+
         var DemoApplication = (function (_super) {
             __extends(DemoApplication, _super);
             function DemoApplication(options) {
-                        _super.call(this, options);
+                _super.call(this, options);
                 var self = this;
                 this._dbContext = null;
                 this._errorVM = null;
@@ -961,53 +958,51 @@ var RIAPP;
             DemoApplication.prototype.onStartUp = function () {
                 var self = this, options = self.options;
                 this._dbContext = new RIAPP.DEMODB.DbContext();
-                this._dbContext.initialize({
-                    serviceUrl: options.service_url,
-                    permissions: options.permissionInfo
-                });
+                this._dbContext.initialize({ serviceUrl: options.service_url, permissions: options.permissionInfo });
                 function toText(str) {
-                    if(str === null) {
-                        return '';
-                    } else {
+                    if (str === null)
+                        return ''; else
                         return str;
-                    }
                 }
                 ;
+
                 this._dbContext.dbSets.Customer.defineNameField(function () {
                     return toText(this.LastName) + '  ' + toText(this.MiddleName) + '  ' + toText(this.FirstName);
                 });
                 this.registerObject('dbContext', this._dbContext);
                 this._errorVM = new RIAPP.COMMON.ErrorViewModel(this);
                 this._customerVM = new CustomerVM(this);
+
                 function handleError(sender, data) {
                     self._handleError(sender, data);
                 }
                 ;
+
                 //here we could process application's errors
                 this.addOnError(handleError);
                 this._dbContext.addOnError(handleError);
+
                 _super.prototype.onStartUp.call(this);
                 this._customerVM.load();
             };
             DemoApplication.prototype._handleError = function (sender, data) {
                 debugger;
-
                 data.isHandled = true;
                 this.errorVM.error = data.error;
                 this.errorVM.showDialog();
             };
-            DemoApplication.prototype.destroy = //really, the destroy method is redundant here because the application lives while the page lives
-            function () {
-                if(this._isDestroyed) {
+
+            //really, the destroy method is redundant here because the application lives while the page lives
+            DemoApplication.prototype.destroy = function () {
+                if (this._isDestroyed)
                     return;
-                }
                 this._isDestroyCalled = true;
                 var self = this;
                 try  {
                     self._errorVM.destroy();
                     self._customerVM.destroy();
                     self._dbContext.destroy();
-                }finally {
+                } finally {
                     _super.prototype.destroy.call(this);
                 }
             };
@@ -1048,23 +1043,27 @@ var RIAPP;
             });
             return DemoApplication;
         })(RIAPP.Application);
-        MDETDEMO.DemoApplication = DemoApplication;        
+        MDETDEMO.DemoApplication = DemoApplication;
+
         //global error handler - the last resort (typically display message to the user)
         RIAPP.global.addOnError(function (sender, args) {
             debugger;
-
             alert(args.error.message);
         });
+
         //create and start application here
         RIAPP.global.addOnLoad(function (sender, a) {
             var global = sender;
+
             //initialize images folder path
             global.defaults.imagesPath = MDETDEMO.mainOptions.images_path;
+
             //create and then start application
             var thisApp = new DemoApplication(MDETDEMO.mainOptions);
             thisApp.startUp(function (app) {
             });
         });
+
         //this function is executed when the application is created
         //it can be used to initialize application's specific resources in the module
         function initModule(app) {
@@ -1072,24 +1071,16 @@ var RIAPP;
             return MDETDEMO;
         }
         ;
+
         //properties must be initialized on HTML page
         MDETDEMO.mainOptions = {
             service_url: null,
             permissionInfo: null,
             images_path: null,
             user_modules: [
-                {
-                    name: "COMMON",
-                    initFn: RIAPP.COMMON.initModule
-                }, 
-                {
-                    name: "AUTOCOMPLETE",
-                    initFn: RIAPP.AUTOCOMPLETE.initModule
-                }, 
-                {
-                    name: "MDETDEMO",
-                    initFn: initModule
-                }
+                { name: "COMMON", initFn: RIAPP.COMMON.initModule },
+                { name: "AUTOCOMPLETE", initFn: RIAPP.AUTOCOMPLETE.initModule },
+                { name: "MDETDEMO", initFn: initModule }
             ]
         };
     })(RIAPP.MDETDEMO || (RIAPP.MDETDEMO = {}));

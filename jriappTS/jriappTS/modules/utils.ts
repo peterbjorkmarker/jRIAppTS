@@ -54,9 +54,8 @@ module RIAPP {
                 isEditing: bool;
             };
 
-
             export interface ISubmittable {
-                submitChanges(): JQueryPromise;
+                submitChanges(): IPromise<any>;
                 _isCanSubmit: bool;
             }
 
@@ -263,7 +262,6 @@ module RIAPP {
                 compareVals(v1, v2, dataType:number): bool;
                 stringifyValue(v, dcnv:number, stz:number): string;
                 parseValue(v: string, dataType, dcnv, stz): any;
-
             }
             
             export var valueUtils: IValueUtils = {
@@ -684,7 +682,7 @@ module RIAPP {
                 round(num:number, decimals:number) {
                     return parseFloat(num.toFixed(decimals));
                 }
-                performAjaxCall(url: string, postData: string, async: bool, fn_success: (res: string) => void , fn_error:(res: any) => void , context:any) {
+                performAjaxCall(url: string, postData: string, async: bool, fn_success: (res: string) => void , fn_error:(res: any) => void , context:any):IPromise<string> {
                     var req = new XMLHttpRequest(), mimeType = 'application/json; charset=utf-8';
                     req.open('POST', url, async);
                     var deferred = this.createDeferred();
@@ -704,7 +702,7 @@ module RIAPP {
                     req.timeout = global.defaults.ajaxTimeOut * 1000;
                     req.setRequestHeader('Content-Type', mimeType);
                     req.send(postData);
-                    var promise = deferred.promise();
+                    var promise:any = deferred.promise();
 
                     if (!!fn_success) {
                         promise.done(function (data) {
@@ -719,7 +717,7 @@ module RIAPP {
                     }
                     return promise;
                 }
-                performAjaxGet(url:string) {
+                performAjaxGet(url:string):IPromise<string> {
                     var req = new XMLHttpRequest();
                     req.open('GET', url, true); /* always async mode */
                     var deferred = this.createDeferred();
@@ -738,7 +736,7 @@ module RIAPP {
                     };
                     req.timeout = global.defaults.ajaxTimeOut * 1000;
                     req.send(null);
-                    var promise = deferred.promise();
+                    var promise:any = deferred.promise();
                     return promise;
                 }
                 format = base_utils.format;
@@ -819,8 +817,8 @@ module RIAPP {
                         }
                     }
                 }
-                createDeferred() {
-                    return global.$.Deferred();
+                createDeferred(): IDeferred<any> {
+                    return <any>global.$.Deferred();
                 }
                 cloneObj(o, mergeIntoObj) {
                     var c, i, len, self = this;

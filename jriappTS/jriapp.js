@@ -768,7 +768,8 @@ var RIAPP;
                 return loader.fn_loader;
         };
         Global.prototype._registerTemplateGroup = function (groupName, group) {
-            var self = this, group = self.utils.extend(false, {
+            var self = this;
+            var group2 = self.utils.extend(false, {
                 fn_loader: null,
                 url: null,
                 names: null,
@@ -776,16 +777,16 @@ var RIAPP;
                 promise: null
             }, group);
 
-            if (!!group.url && !group.fn_loader) {
-                group.fn_loader = function () {
-                    return self.utils.performAjaxGet(group.url);
+            if (!!group2.url && !group2.fn_loader) {
+                group2.fn_loader = function () {
+                    return self.utils.performAjaxGet(group2.url);
                 };
             }
 
-            this._registerObjectCore(self._templateGroups, groupName, group, true);
-            group.names.forEach(function (name) {
-                if (!!group.app) {
-                    name = group.app.appName + '.' + name;
+            this._registerObjectCore(self._templateGroups, groupName, group2, true);
+            group2.names.forEach(function (name) {
+                if (!!group2.app) {
+                    name = group2.app.appName + '.' + name;
                 }
 
                 self._registerTemplateLoader(name, {
@@ -16989,13 +16990,13 @@ var RIAPP;
             return res;
         };
         Application.prototype.registerTemplateGroup = function (name, group) {
-            var group = RIAPP.global.utils.extend(false, {
+            var group2 = RIAPP.global.utils.extend(false, {
                 fn_loader: null,
                 url: null,
                 names: null,
                 app: this
             }, group);
-            RIAPP.global._registerTemplateGroup(this.appName + '.' + name, group);
+            RIAPP.global._registerTemplateGroup(this.appName + '.' + name, group2);
         };
         Application.prototype.destroy = function () {
             if (this._isDestroyed)
