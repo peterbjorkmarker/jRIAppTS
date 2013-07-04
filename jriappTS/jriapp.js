@@ -1089,6 +1089,9 @@ var RIAPP;
             ;
 
             function extend(typeConstructor, superType) {
+                for (var p in superType)
+                    if (superType.hasOwnProperty(p))
+                        typeConstructor[p] = superType[p];
                 function __() {
                     this.constructor = typeConstructor;
                 }
