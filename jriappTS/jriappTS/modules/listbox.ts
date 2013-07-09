@@ -28,6 +28,7 @@ module RIAPP {
                 _keyMap: { [key: string]: IMappedItem; };
                 _valMap: { [val: string]: IMappedItem; };
                 _saveVal: any;
+                _selectedValue: any;
 
                 constructor(el: HTMLSelectElement, dataSource: collection.Collection, options: IListBoxOptions) {
                     super();
@@ -53,6 +54,7 @@ module RIAPP {
                     this._keyMap = {};
                     this._valMap = {};
                     this._saveVal = undefined;
+                    this._selectedValue = undefined;
                     this.dataSource = dataSource;
                 }
                 destroy() {
@@ -331,7 +333,14 @@ module RIAPP {
                                 self._addOption(item, false);
                             });
                         }
-                        this._el.selectedIndex = this._findItemIndex(oldItem);
+                        if (this._selectedValue === undefined) {
+                            this._el.selectedIndex = this._findItemIndex(oldItem);
+                        }
+                        else
+                        {
+                            oldItem = self.findItemByValue(this._selectedValue);
+                            self.selectedItem = oldItem;
+                        }
                     } finally {
                         this._isRefreshing = false;
                     }
@@ -382,19 +391,27 @@ module RIAPP {
                     }
                 }
                 get selectedValue() {
-                    return this._getRealValue(this.selectedItem);
+                    if (this._selectedValue === undefined)
+                        return this._getRealValue(this.selectedItem);
+                    else
+                        return this._selectedValue;
                 }
                 set selectedValue(v) {
+                    var self = this;
                     if (this.selectedValue !== v) {
-                        var item = this.findItemByValue(v);
-                        this.selectedItem = item;
+                        var item = self.findItemByValue(v);
+                        self.selectedItem = item;
+                        if (!item)
+                            this._selectedValue = v;
                     }
                 }
                 get selectedItem() { return this._selectedItem; }
                 set selectedItem(v: collection.CollectionItem) {
                     if (this._selectedItem !== v) {
-                        if (!!this._selectedItem)
+                        if (!!this._selectedItem) {
                             this._saveSelected = this._selectedItem;
+                            this._selectedValue = undefined;
+                        }
                         this._selectedItem = v;
                         this._el.selectedIndex = this._findItemIndex(this._selectedItem);
                         this.raisePropertyChanged('selectedItem');

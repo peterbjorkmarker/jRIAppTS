@@ -48,9 +48,10 @@ var RIAPP;
                 this._fieldName = options.fieldName;
                 this._dbSetName = options.dbSetName;
                 this._queryName = options.queryName;
-                this._dbContext = this.app.getObject(options.dbContext);
+                this._dbContextName = options.dbContext;
+                this._minTextLength = (!!options.minTextLength) ? options.minTextLength : 1;
                 this._template = null;
-                this._dbSet = null;
+                this._gridDataSource = null;
                 this._prevText = null;
                 this._selectedItem = null;
                 this._template = null;
@@ -77,7 +78,7 @@ var RIAPP;
                 });
 
                 this._isOpen = false;
-                this._createDbSet();
+                this._createGridDataSource();
                 this._template = this._createTemplate();
                 this._$dropDown = global.$(global.document.createElement("div"));
                 this._$dropDown.css({
@@ -121,11 +122,18 @@ var RIAPP;
                     return arr[0]; else
                     return null;
             };
-            AutoCompleteElView.prototype._createDbSet = function () {
-                this._dbSet = this.dbContext.dbSets[this._dbSetName];
-                if (!this._dbSet) {
+            AutoCompleteElView.prototype._createGridDataSource = function () {
+                this._gridDataSource = this._getDbContext().getDbSet(this._dbSetName);
+                if (!this._gridDataSource) {
                     throw new Error(utils.format('dbContext does not contain dbSet with the name: {0}', this._dbSetName));
                 }
+            };
+            AutoCompleteElView.prototype._getDbContext = function () {
+                var dbContext = this.app.getObject(this._dbContextName);
+                if (!dbContext) {
+                    throw new Error(utils.format('dbContext with the name: {0} is not registered', this._dbContextName));
+                }
+                return dbContext;
             };
             AutoCompleteElView.prototype._getEventNames = function () {
                 var base_events = _super.prototype._getEventNames.call(this);
@@ -139,7 +147,7 @@ var RIAPP;
             AutoCompleteElView.prototype._onTextChange = function (text) {
                 var self = this;
                 clearTimeout(this._loadTimeout);
-                if (!!text && text.length > 1) {
+                if (!!text && text.length >= self._minTextLength) {
                     this._loadTimeout = setTimeout(function () {
                         if (self._isDestroyCalled)
                             return;
@@ -151,7 +159,8 @@ var RIAPP;
                             self.load(text);
                         }
                     }, 500);
-                }
+                } else
+                    self.gridDataSource.clear();
             };
             AutoCompleteElView.prototype._onKeyPress = function (keyCode) {
                 if (keyCode === global.consts.KEYS.esc) {
@@ -232,14 +241,14 @@ var RIAPP;
                 this._onHide();
             };
             AutoCompleteElView.prototype.load = function (str) {
-                var self = this, query = this.dbSet.createQuery(this._queryName);
+                var self = this, query = (this.gridDataSource).createQuery(this._queryName);
                 query.pageSize = 50;
                 query.isClearPrevData = true;
                 addTextQuery(query, this._fieldName, str + '%');
                 query.orderBy(this._fieldName, 'ASC');
                 this._isLoading = true;
                 this.raisePropertyChanged('isLoading');
-                this.dbContext.load(query).always(function () {
+                query.load().always(function (res) {
                     self._isLoading = false;
                     self.raisePropertyChanged('isLoading');
                 });
@@ -258,17 +267,10 @@ var RIAPP;
                     this._template = null;
                     this._$dropDown = null;
                 }
-                this._dbSet = null;
+                this._gridDataSource = null;
                 this._dataContext = null;
                 _super.prototype.destroy.call(this);
             };
-            Object.defineProperty(AutoCompleteElView.prototype, "dbContext", {
-                get: function () {
-                    return this._dbContext;
-                },
-                enumerable: true,
-                configurable: true
-            });
 
             Object.defineProperty(AutoCompleteElView.prototype, "fieldName", {
                 get: //field name for lookup in dbSet
@@ -287,8 +289,8 @@ var RIAPP;
             });
             Object.defineProperty(AutoCompleteElView.prototype, "currentSelection", {
                 get: function () {
-                    if (this._dbSet.currentItem)
-                        return this._dbSet.currentItem[this._fieldName]; else
+                    if (this._gridDataSource.currentItem)
+                        return this._gridDataSource.currentItem[this._fieldName]; else
                         return null;
                 },
                 enumerable: true,
@@ -319,10 +321,10 @@ var RIAPP;
                 configurable: true
             });
 
-            Object.defineProperty(AutoCompleteElView.prototype, "dbSet", {
+            Object.defineProperty(AutoCompleteElView.prototype, "gridDataSource", {
                 get: //dbSet for a datagrid's dataSource (for lookup values)
                 function () {
-                    return this._dbSet;
+                    return this._gridDataSource;
                 },
                 enumerable: true,
                 configurable: true

@@ -507,7 +507,7 @@
 <div id="prodAutocompleteTemplate" data-role="template" style="height: 98%; margin: 0px; padding: 2px; position: relative;">
     <div style="position: relative; margin-left: 1px; vertical-align: top;"
         data-bind="{this.isBusy,to=isLoading}" data-view="name=busy_indicator">
-        <table style="position: relative" data-name="lookupGrid" data-bind="{this.dataSource,to=dbSet}"
+        <table style="position: relative" data-name="lookupGrid" data-bind="{this.dataSource,to=gridDataSource}"
             data-view="options={wrapCss:autocompleteTableWrap,headerCss:autocompleteTableHeader}">
             <thead>
                 <tr>
@@ -520,10 +520,10 @@
     </div>
     <div style="position: relative; text-align: left;">
         <!--pager-->
-        <div style="float: left;" data-bind="{this.dataSource,to=dbSet}" data-view="name=pager,options={sliderSize:4,hideOnSinglePage=true}">
+        <div style="float: left;" data-bind="{this.dataSource,to=gridDataSource}" data-view="name=pager,options={sliderSize:4,hideOnSinglePage=true}">
         </div>
         <div style="float: left; padding-left: 10px; padding-top: 10px;">
-            <span>Total:</span>&nbsp;<span data-bind="{this.value,to=dbSet.totalCount}"></span>
+            <span>Total:</span>&nbsp;<span data-bind="{this.value,to=gridDataSource.totalCount}"></span>
         </div>
     </div>
     <br style="clear: left" />

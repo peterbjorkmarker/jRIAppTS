@@ -1017,7 +1017,7 @@ var RIAPP;
                 _super.prototype._init.call(this, options);
                 var self = this;
                 this._lastLoadedID = null;
-                this._lookupSource = this.dbContext.dbSets.Product;
+                this._lookupSource = this._getDbContext().getDbSet('Product');
                 this._lookupSource.addOnCollChanged(function (sender, args) {
                     self._updateValue();
                 }, self._objId);
@@ -1054,7 +1054,7 @@ var RIAPP;
                         this._lastLoadedID = productID;
                         var query = this._lookupSource.createReadProductByIdsQuery({ productIDs: [productID] });
                         query.isClearPrevData = false;
-                        this.dbContext.load(query);
+                        query.load();
                     }
                 }
             };
@@ -1087,16 +1087,9 @@ var RIAPP;
             Object.defineProperty(ProductAutoComplete.prototype, "currentSelection", {
                 get: //overriden base property
                 function () {
-                    if (!!this._dbSet.currentItem)
-                        return this._dbSet.currentItem['ProductID']; else
+                    if (!!this.gridDataSource.currentItem)
+                        return this.gridDataSource.currentItem['ProductID']; else
                         return null;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(ProductAutoComplete.prototype, "dbContext", {
-                get: function () {
-                    return this._dbContext;
                 },
                 enumerable: true,
                 configurable: true

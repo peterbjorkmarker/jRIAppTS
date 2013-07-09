@@ -11707,6 +11707,7 @@ var RIAPP;
                     this._keyMap = {};
                     this._valMap = {};
                     this._saveVal = undefined;
+                    this._selectedValue = undefined;
                     this.dataSource = dataSource;
                 }
                 ListBox.prototype.destroy = function () {
@@ -11980,7 +11981,12 @@ var RIAPP;
                                 self._addOption(item, false);
                             });
                         }
-                        this._el.selectedIndex = this._findItemIndex(oldItem);
+                        if (this._selectedValue === undefined) {
+                            this._el.selectedIndex = this._findItemIndex(oldItem);
+                        } else {
+                            oldItem = self.findItemByValue(this._selectedValue);
+                            self.selectedItem = oldItem;
+                        }
                     } finally {
                         this._isRefreshing = false;
                     }
@@ -12037,12 +12043,17 @@ var RIAPP;
                 });
                 Object.defineProperty(ListBox.prototype, "selectedValue", {
                     get: function () {
-                        return this._getRealValue(this.selectedItem);
+                        if (this._selectedValue === undefined)
+                            return this._getRealValue(this.selectedItem); else
+                            return this._selectedValue;
                     },
                     set: function (v) {
+                        var self = this;
                         if (this.selectedValue !== v) {
-                            var item = this.findItemByValue(v);
-                            this.selectedItem = item;
+                            var item = self.findItemByValue(v);
+                            self.selectedItem = item;
+                            if (!item)
+                                this._selectedValue = v;
                         }
                     },
                     enumerable: true,
@@ -12054,8 +12065,10 @@ var RIAPP;
                     },
                     set: function (v) {
                         if (this._selectedItem !== v) {
-                            if (!!this._selectedItem)
+                            if (!!this._selectedItem) {
                                 this._saveSelected = this._selectedItem;
+                                this._selectedValue = undefined;
+                            }
                             this._selectedItem = v;
                             this._el.selectedIndex = this._findItemIndex(this._selectedItem);
                             this.raisePropertyChanged('selectedItem');
