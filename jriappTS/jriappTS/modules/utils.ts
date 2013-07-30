@@ -141,6 +141,8 @@ module RIAPP {
                 static isDataForm(el: HTMLElement) {
                     if (!el)
                         return false;
+                    if (el.hasAttribute(global.consts.DATA_ATTR.DATA_FORM))
+                        return true;
                     var attr = el.getAttribute(global.consts.DATA_ATTR.DATA_VIEW);
                     if (!attr) {
                         return false;
@@ -148,7 +150,7 @@ module RIAPP {
                     var opts = global.parser.parseOptions(attr);
                     return (opts.length > 0 && opts[0].name === global.consts.ELVIEW_NM.DATAFORM);
                 }
-                    //check if element is placed inside DataForm
+                //check if element is placed inside DataForm
                 static isInsideDataForm(el:HTMLElement) {
                     if (!el)
                         return false;

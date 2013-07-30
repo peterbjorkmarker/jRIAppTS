@@ -165,16 +165,19 @@ module RIAPP {
 
             selectedElem.forEach(function (el) {
                 var op: MOD.binding.IBindingOptions, j: number, len: number, binding: MOD.binding.Binding, bind_attr: string, temp_opts: any[],
-                    elView: MOD.baseElView.BaseElView;
-                if (self.global.utils.check.isInsideDataForm(el))
+                    elView: MOD.baseElView.BaseElView, checks = self.global.utils.check;
+                if (checks.isInsideDataForm(el))
                     return;
                 //first create element view
                 elView = self.getElementView(el);
                 lftm.addObj(elView);
                 if (el.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
                     el.removeAttribute(global.consts.DATA_ATTR.DATA_VIEW);
+                    if (elView instanceof MOD.dataform.DataFormElView)
+                        el.setAttribute(global.consts.DATA_ATTR.DATA_FORM, 'yes');
                 }
                 
+           
                 //then create databinding if element has data-bind attribute
                 bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);
                 if (!!bind_attr) {

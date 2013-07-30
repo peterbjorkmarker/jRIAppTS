@@ -61,11 +61,11 @@ namespace RIAPP.DataService.LinqSql.Utils
              return sb.ToString();
         }
 
-        public static string CreateMethods(Metadata metadata, System.Data.Linq.DataContext DB) 
+        public static string CreateMethods(MetadataInfo metadata, System.Data.Linq.DataContext DB) 
         {
             var sb = new StringBuilder(4096);
 
-            metadata.DbSets.ForEach((dbSetInfo) =>
+            metadata.dbSets.ForEach((dbSetInfo) =>
             {
                 string tableName = GetTableName(DB, dbSetInfo.EntityType);
                 if (tableName == string.Empty)

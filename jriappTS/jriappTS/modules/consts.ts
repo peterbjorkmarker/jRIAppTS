@@ -12,7 +12,8 @@ module RIAPP {
                 DATA_ITEM_KEY: 'data-key',
                 DATA_CONTENT: 'data-content',
                 DATA_COLUMN: 'data-column',
-                DATA_NAME: 'data-name'
+                DATA_NAME: 'data-name',
+                DATA_FORM: 'data-form'
             };
             export var DATA_TYPE =
             {

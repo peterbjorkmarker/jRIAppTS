@@ -1010,7 +1010,8 @@ var RIAPP;
                 DATA_ITEM_KEY: 'data-key',
                 DATA_CONTENT: 'data-content',
                 DATA_COLUMN: 'data-column',
-                DATA_NAME: 'data-name'
+                DATA_NAME: 'data-name',
+                DATA_FORM: 'data-form'
             };
             consts.DATA_TYPE = {
                 None: 0,
@@ -1204,6 +1205,8 @@ var RIAPP;
                 Checks.isDataForm = function (el) {
                     if (!el)
                         return false;
+                    if (el.hasAttribute(RIAPP.global.consts.DATA_ATTR.DATA_FORM))
+                        return true;
                     var attr = el.getAttribute(RIAPP.global.consts.DATA_ATTR.DATA_VIEW);
                     if (!attr) {
                         return false;
@@ -16760,14 +16763,16 @@ var RIAPP;
             }
 
             selectedElem.forEach(function (el) {
-                var op, j, len, binding, bind_attr, temp_opts, elView;
-                if (self.global.utils.check.isInsideDataForm(el))
+                var op, j, len, binding, bind_attr, temp_opts, elView, checks = self.global.utils.check;
+                if (checks.isInsideDataForm(el))
                     return;
 
                 elView = self.getElementView(el);
                 lftm.addObj(elView);
                 if (el.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
                     el.removeAttribute(global.consts.DATA_ATTR.DATA_VIEW);
+                    if (elView instanceof RIAPP.MOD.dataform.DataFormElView)
+                        el.setAttribute(global.consts.DATA_ATTR.DATA_FORM, 'yes');
                 }
 
                 bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);

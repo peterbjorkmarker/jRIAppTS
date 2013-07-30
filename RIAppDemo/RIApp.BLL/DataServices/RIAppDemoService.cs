@@ -38,12 +38,12 @@ namespace RIAppDemo.BLL.DataServices
         }
 
         /// <summary>
+        /// this METHOD should be commented, in release version!
         /// this is a helper method which can be used to create metadata xaml from data.linq entities
         /// this xaml can be later pasted as metadata in the user control
-        /// and of course it needs to be corrected, but it is faster than type all this from the start
+        /// and of course it needs to be corrected, but it is faster than to type all this from the start in code editor
         /// </summary>
-        /// <returns></returns>
-        public string GetMetadataDraft()
+        public override string ServiceGetXAML()
         {
             var metadata = base.GetMetadata();
             var xaml = System.Windows.Markup.XamlWriter.Save(metadata);
@@ -64,23 +64,31 @@ namespace RIAppDemo.BLL.DataServices
                     XAttribute entityTypeAttr = el.Attributes().Where(a => a.Name.LocalName == "EntityType").First();
                     entityTypeAttr.Value = string.Format("{{x:Type {0}}}", entityTypeAttr.Value);
                 }
-                
+
             }
             xtree.Add(new XAttribute(XNamespace.Xmlns + "data", "clr-namespace:RIAPP.DataService;assembly=RIAPP.DataService"));
             return xtree.ToString();
         }
 
+        /// <summary>
+        /// this METHOD should be commented, in release version!
+        /// this is a helper method which can be used to create c# data service methods from metadata
+        /// this C# code can be later pasted in the data service implemetation
+        /// and of course it needs to be corrected, but it is faster than to type all this from the start in code editor
+        /// </summary>
+        public override string ServiceGetCSharp()
+        {
+            var metadata =  this.ServiceGetMetadata();
+            return RIAPP.DataService.LinqSql.Utils.DataServiceMethodsHelper.CreateMethods(metadata, this.DB);
+        }
+
         protected override Metadata GetMetadata()
         {
-          //uncomment and place breakpoint to get raw (draft version) of metadata XAML
-          //string metadataDraft = this.GetMetadataDraft();
+           //returns draft (uncorrected) metadata
+           //return base.GetMetadata();
 
-           var res = (Metadata)(new RIAppDemoMetadata().Resources["MainDemo"]);
-           
-           //uncomment and place breakpoint to get raw (draft version) of data service methods
-           //string methodsDraft = RIAPP.DataService.LinqSql.Utils.DataServiceMethodsHelper.CreateMethods(res, this.DB);
-          
-           return res;
+           //returns corrected metadata
+           return  (Metadata)(new RIAppDemoMetadata().Resources["MainDemo"]);
         }
 
         #region Product

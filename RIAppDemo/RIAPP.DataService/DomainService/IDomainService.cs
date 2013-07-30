@@ -9,7 +9,10 @@ namespace RIAPP.DataService
     {
         //typescript strongly typed implementation of entities, DbSet and DbContext in the text form
         string ServiceGetTypeScript();
-        //information about permissions to execute service operations for the client
+        string ServiceGetXAML();
+        string ServiceGetCSharp();
+
+       //information about permissions to execute service operations for the client
         PermissionsInfo ServiceGetPermissions();
         //information about service methods, DbSets and their fields information
         MetadataInfo ServiceGetMetadata();

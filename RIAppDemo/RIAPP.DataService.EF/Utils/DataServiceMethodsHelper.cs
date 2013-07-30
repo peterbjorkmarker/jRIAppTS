@@ -76,11 +76,11 @@ namespace RIAPP.DataService.EF.Utils
              return sb.ToString();
         }
 
-        public static string CreateMethods(Metadata metadata, System.Data.Objects.ObjectContext DB) 
+        public static string CreateMethods(MetadataInfo metadata, System.Data.Objects.ObjectContext DB) 
         {
             var sb = new StringBuilder(4096);
 
-            metadata.DbSets.ForEach((dbSetInfo) =>
+            metadata.dbSets.ForEach((dbSetInfo) =>
             {
                 string tableName = GetTableName(DB, dbSetInfo.EntityType);
                 if (tableName == string.Empty)

@@ -12,7 +12,11 @@ namespace RIAPP.DataService.Mvc
     public abstract class DataServiceController<T> : Controller
          where T : BaseDomainService
     {
-        protected abstract IDomainService CreateDomainService();
+        protected virtual IDomainService CreateDomainService()
+        {
+            return (IDomainService)Activator.CreateInstance(typeof(T), this.User);
+        }
+
         private IDomainService _DomainService;
 
         [ChildActionOnly]
@@ -33,6 +37,28 @@ namespace RIAPP.DataService.Mvc
         public ActionResult GetTypeScript()
         {
             var info = this.DomainService.ServiceGetTypeScript();
+            var res = new ContentResult();
+            res.ContentEncoding = System.Text.Encoding.UTF8;
+            res.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            res.Content = info;
+            return res;
+        }
+
+        [HttpGet]
+        public ActionResult GetXAML()
+        {
+            var info = this.DomainService.ServiceGetXAML();
+            var res = new ContentResult();
+            res.ContentEncoding = System.Text.Encoding.UTF8;
+            res.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            res.Content = info;
+            return res;
+        }
+
+        [HttpGet]
+        public ActionResult GetCSharp()
+        {
+            var info = this.DomainService.ServiceGetCSharp();
             var res = new ContentResult();
             res.ContentEncoding = System.Text.Encoding.UTF8;
             res.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
