@@ -766,6 +766,27 @@ module RIAPP {
                 getProps(obj) {
                     return Object.getOwnPropertyNames(obj);
                 }
+                /*
+                    in case of dataforms nesting, element's parent dataform can be nested dataform
+                    this function returns element dataform
+                */
+                getParentDataForm(rootForm: HTMLElement, el: HTMLElement): HTMLElement {
+                    if (!el)
+                        return null;
+                    var parent = el.parentElement, document = global.document, attr: string, opts: any[];
+                    if (!!parent) {
+                        if (parent === rootForm)
+                            return rootForm;
+                        if (Checks.isDataForm(parent))
+                        {
+                            return parent;
+                        }
+                        else
+                            return this.getParentDataForm(rootForm, parent);
+                    }
+
+                    return null;
+                }
                 forEachProp(obj:any, fn:(name:string)=>void) {
                     var names = Object.getOwnPropertyNames(obj);
                     names.forEach(fn);

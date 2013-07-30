@@ -43,7 +43,7 @@ module RIAPP {
                     this._supportErrNotify = false;
                     this._parentDataForm = null;
                     this._errors = null;
-                    parent = this._getParentDataForm(this._el);
+                    parent = utils.getParentDataForm(null, this._el);
                     //if this form is nested inside another dataform
                     //subscribe for parent's destroy event
                     if (!!parent) {
@@ -117,7 +117,7 @@ module RIAPP {
 
                     elements.forEach(function (el) {
                         //check if the element inside nested dataform
-                        if (self._getParentDataForm(el) !== self._el)
+                        if (utils.getParentDataForm(self._el, el) !== self._el)
                             return;
                         var attr = el.getAttribute(consts.DATA_ATTR.DATA_CONTENT), op = baseContent.parseContentAttr(attr);
                         if (!!op.fieldName && !op.fieldInfo) {
@@ -138,31 +138,6 @@ module RIAPP {
                     });
                     this._lfTime = self.app._bindElements(this._el, dctx, true);
                     this._contentCreated = true;
-                }
-                /*
-                    in case of dataforms nesting, elements parent dataform can be nested dataform
-                    this function returns element dataform
-                */
-                private _getParentDataForm(el: HTMLElement): HTMLElement {
-                    if (!el)
-                        return null;
-                    var parent = el.parentElement, document = global.document, attr:string, opts:any[];
-                    if (!!parent) {
-                        if (parent === this._el)
-                            return this._el;
-                        attr = parent.getAttribute(consts.DATA_ATTR.DATA_VIEW);
-                        if (!attr) {
-                            return this._getParentDataForm(parent);
-                        }
-                        opts = global.parser.parseOptions(attr);
-                        if (opts.length > 0 && opts[0].name == consts.ELVIEW_NM.DATAFORM) {
-                            return parent;
-                        }
-                        else
-                            return this._getParentDataForm(parent);
-                    }
-
-                    return null;
                 }
                 _onDSErrorsChanged() {
                     var dataContext: binding.IErrorNotification = <any>this._dataContext;

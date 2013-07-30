@@ -14,13 +14,14 @@
 /// <reference path="modules\collection.ts"/>
 /// <reference path="modules\template.ts"/>
 /// <reference path="modules\baseContent.ts"/>
+/// <reference path="modules\dataform.ts"/>
+//*** the rest are optional modules, which can be removed if not needed ***
 /// <reference path="modules\db.ts"/>
 /// <reference path="modules\listbox.ts"/>
 /// <reference path="modules\datadialog.ts"/>
 /// <reference path="modules\datagrid.ts"/>
 /// <reference path="modules\pager.ts"/>
 /// <reference path="modules\stackpanel.ts"/>
-/// <reference path="modules\dataform.ts"/>
 
 module RIAPP {
     export interface IAppOptions {
@@ -158,14 +159,15 @@ module RIAPP {
         }
         _bindTemplateElements(templateEl: HTMLElement) {
             var self = this, global = self.global, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR,
-                selectedElem = ArrayHelper.fromList(templateEl.querySelectorAll(selector)), lftm = MOD.utils.LifeTimeScope.create();
+                selectedElem = ArrayHelper.fromList(templateEl.querySelectorAll(selector)), lftm = new MOD.utils.LifeTimeScope(),
+                checks = global.utils.check;
             if (templateEl.hasAttribute(global.consts.DATA_ATTR.DATA_BIND) || templateEl.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
                 selectedElem.push(templateEl);
             }
 
             selectedElem.forEach(function (el) {
                 var op: MOD.binding.IBindingOptions, j: number, len: number, binding: MOD.binding.Binding, bind_attr: string, temp_opts: any[],
-                    elView: MOD.baseElView.BaseElView, checks = self.global.utils.check;
+                    elView: MOD.baseElView.BaseElView;
                 if (checks.isInsideDataForm(el))
                     return;
                 //first create element view
@@ -194,21 +196,26 @@ module RIAPP {
 
             return lftm;
         }
-        _bindElements(scope: { querySelectorAll: (selectors: string) => NodeList; }, dctx, isDataForm: bool) {
-            var self = this, global = self.global;
+        _bindElements(scope: { querySelectorAll: (selectors: string) => NodeList; }, dctx, isDataFormBind: bool) {
+            var self = this, global = self.global, checks = global.utils.check, isDataForm = false;
             scope = scope || global.document;
             //select all elements with binding attributes inside templates
             var selectedElem: HTMLElement[] = ArrayHelper.fromList(scope.querySelectorAll(self._DATA_BIND_SELECTOR +', '+self._DATA_VIEW_SELECTOR));
-            var lftm = MOD.utils.LifeTimeScope.create();
+            var lftm = new MOD.utils.LifeTimeScope();
 
             selectedElem.forEach(function (el) {
                 var app_name: string, bind_attr:string, temp_opts:any[], bind_op: MOD.binding.IBindingOptions, elView: MOD.baseElView.BaseElView;
-                //skip elements inside dataform, they are databound when dataform is databound
-                if (!isDataForm && global.utils.check.isInsideDataForm(el)) {
-                    return;
+                
+                if (isDataFormBind) {
+                    //check, that the current element not inside a nested dataform
+                    if (!(global.utils.getParentDataForm(<any>scope, el) === scope))
+                        return;
                 }
+                else {
+                    //skip elements inside dataform, they are databound when dataform is databound
+                    if (checks.isInsideDataForm(el))
+                        return;
 
-                if (!isDataForm) {
                     if (el.hasAttribute(global.consts.DATA_ATTR.DATA_APP)) {
                         app_name = el.getAttribute(global.consts.DATA_ATTR.DATA_APP);
                     }
@@ -219,12 +226,17 @@ module RIAPP {
                     if (!app_name && self.appName !== 'default')
                         return;
                 }
+
                 //first create element view
                 elView = self.getElementView(el);
                 lftm.addObj(elView);
+                isDataForm = (elView instanceof MOD.dataform.DataFormElView);
+
+                if (isDataForm && !el.hasAttribute(global.consts.DATA_ATTR.DATA_FORM))
+                    el.setAttribute(global.consts.DATA_ATTR.DATA_FORM, 'yes');
 
                 bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);
-                //if it has data-bind attribute then proceed create binding
+                //if it has data-bind attribute then proceed to create binding
                 if (!!bind_attr) {
                     temp_opts = global.parser.parseOptions(bind_attr);
                     for (var i = 0, len = temp_opts.length; i < len; i += 1) {

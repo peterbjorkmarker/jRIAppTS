@@ -75,7 +75,7 @@ The DataService now exposes two other methods to get XAML version of the metadat
  http://YOURSERVER/RIAppDemoService/GetXAML<br/>
  http://YOURSERVER/RIAppDemoService/GetCSharp
 </p>
-
+<p>2013-07-30  Fix for nested dataform data binding - one dataform inside another dataform - and so on...</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 
