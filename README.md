@@ -68,12 +68,13 @@ You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
 
-2013-07-30   Bug fix in a dataform usage inside templates. Corrected data bindings in these cases.
-2013-07-30   The DataService class enhancements.Now besides getting typescript like, for example, http://YOURSERVER/RIAppDemoService/GetTypeScript
-The DataService now exposes two other methods to get XAML version of the metadata and C# implementation of the dataservice's methods.
- You can test them in the DEMO using
- http://YOURSERVER/RIAppDemoService/GetXAML
+<p>2013-07-30   Bug fix in a dataform usage inside templates. Corrected data bindings in these cases.</p>
+<p>2013-07-30   The DataService class enhancements.Now besides getting typescript like, for example, http://YOURSERVER/RIAppDemoService/GetTypeScript<br/>
+The DataService now exposes two other methods to get XAML version of the metadata and C# implementation of the dataservice's methods.<br/>
+ You can test them in the DEMO using<br/>
+ http://YOURSERVER/RIAppDemoService/GetXAML<br/>
  http://YOURSERVER/RIAppDemoService/GetCSharp
+</p>
 
 --
 Maxim V. Tsapov<br/>
