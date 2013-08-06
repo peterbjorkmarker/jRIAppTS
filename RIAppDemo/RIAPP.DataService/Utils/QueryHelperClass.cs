@@ -126,7 +126,7 @@ namespace RIAPP.DataService.Utils
             where T : class
         {
             IQueryable<T> result = entities;
-            if (!dbInfo.enablePaging)
+            if (!dbInfo.enablePaging ||  pageIndex < 0)
                 return result;
             int skipRows = pageIndex * pageSize;
             result = entities.Skip(skipRows).Take(pageSize * pageCount);
