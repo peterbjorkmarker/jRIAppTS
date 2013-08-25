@@ -15,12 +15,12 @@ module RIAPP
         }
 
         export interface IFolderBrowserOptions extends IMainOptions {
-            includeFiles: bool;
+            includeFiles: boolean;
             $tree: JQuery;
         }
 
         export class FolderBrowser extends BaseObject {
-            _includeFiles: bool;
+            _includeFiles: boolean;
             _$tree: JQuery;
             _$treeRoot: any;
             _dbContext: FOLDERBROWSER_SVC.DbContext;
@@ -185,10 +185,10 @@ module RIAPP
             _selectedItem: FOLDERBROWSER_SVC.FileSystemObject;
             _dialogVM: COMMON.DialogVM;
             _folderBrowser: FolderBrowser;
-            _includeFiles: bool;
+            _includeFiles: boolean;
             _dialogCommand: MOD.mvvm.ICommand;
 
-            constructor(app: DemoApplication, includeFiles:bool) {
+            constructor(app: DemoApplication, includeFiles:boolean) {
                 super(app);
                 var self = this;
                 this._selectedItem = null;

@@ -19,7 +19,7 @@ module RIAPP {
                 _$el: JQuery;
                 _objId: string;
                 _dataSource: collection.Collection;
-                _isDSFilling: bool;
+                _isDSFilling: boolean;
                 _orientation: string;
                 _templateID: string;
                 _currentItem: collection.CollectionItem;
@@ -97,7 +97,7 @@ module RIAPP {
                 }
                 _onKeyUp(key:number, event: Event) {
                 }
-                _updateCurrent(item: collection.CollectionItem, withScroll:bool) {
+                _updateCurrent(item: collection.CollectionItem, withScroll:boolean) {
                     var self = this, old = self._currentItem, obj: { div: HTMLElement; template: template.Template; item: collection.CollectionItem; };
                     if (old !== item) {
                         this._currentItem = item;

@@ -19,8 +19,8 @@ module RIAPP {
                 _$el: JQuery;
                 _objId: string;
                 _dataSource: collection.Collection;
-                _isRefreshing: bool;
-                _isDSFilling: bool;
+                _isRefreshing: boolean;
+                _isDSFilling: boolean;
                 _valuePath: string;
                 _textPath: string;
                 _selectedItem: collection.CollectionItem;
@@ -151,7 +151,7 @@ module RIAPP {
                         this._isDSFilling = true;
                     }
                 }
-                _onEdit(item: collection.CollectionItem, isBegin:bool, isCanceled:bool) {
+                _onEdit(item: collection.CollectionItem, isBegin:boolean, isCanceled:boolean) {
                     var self = this, key, data, oldVal, val;
                     if (isBegin) {
                         this._saveVal = this._getValue(item);
@@ -188,7 +188,7 @@ module RIAPP {
                         this._removeOption(item);
                     }
                 }
-                _onCommitChanges(item: collection.CollectionItem, isBegin:bool, isRejected:bool, changeType:number) {
+                _onCommitChanges(item: collection.CollectionItem, isBegin:boolean, isRejected:boolean, changeType:number) {
                     var self = this, ct = consts.CHANGE_TYPE, oldVal, val, data;
                     if (isBegin) {
                         if (isRejected && changeType === ct.ADDED) {
@@ -256,7 +256,7 @@ module RIAPP {
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
-                _addOption(item: collection.CollectionItem, first:bool) {
+                _addOption(item: collection.CollectionItem, first:boolean) {
                     if (this._isDestroyCalled)
                         return null;
                     var oOption, key = '', val, text;
@@ -308,7 +308,7 @@ module RIAPP {
                         }
                     }
                 }
-                _clear(isDestroy:bool) {
+                _clear(isDestroy:boolean) {
                     this._el.options.length = 0;
                     this._keyMap = {};
                     this._valMap = {};
@@ -367,7 +367,7 @@ module RIAPP {
                     else
                         return data.op.text;
                 }
-                _setIsEnabled(el: HTMLSelectElement, v:bool) {
+                _setIsEnabled(el: HTMLSelectElement, v:boolean) {
                     el.disabled = !v;
                 }
                 _getIsEnabled(el: HTMLSelectElement) {
@@ -471,7 +471,7 @@ module RIAPP {
                     return 'SelectElView';
                 }
                 get isEnabled() { return !this.el.disabled; }
-                set isEnabled(v: bool) {
+                set isEnabled(v: boolean) {
                     v = !!v;
                     if (v !== this.isEnabled) {
                         this.el.disabled = !v;
@@ -534,10 +534,10 @@ module RIAPP {
                 _valBinding: binding.Binding;
                 _listBinding: binding.Binding;
                 _selectView: SelectElView;
-                _isListBoxCachedExternally: bool;
+                _isListBoxCachedExternally: boolean;
                 _value: any;
 
-                constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: bool) {
+                constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean) {
                     if (options.name != 'lookup') {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'lookup'"));
                     }
@@ -558,7 +558,7 @@ module RIAPP {
                     var base_events = super._getEventNames();
                     return ['object_created', 'object_needed'].concat(base_events);
                 }
-                addOnObjectCreated(fn: (sender: any, args: { objectKey: string; object: BaseObject; isCachedExternally: bool; }) => void , namespace?: string) {
+                addOnObjectCreated(fn: (sender: any, args: { objectKey: string; object: BaseObject; isCachedExternally: boolean; }) => void , namespace?: string) {
                     this.addHandler('object_created', fn, namespace);
                 }
                 removeOnObjectCreated(namespace?: string) {
@@ -742,12 +742,12 @@ module RIAPP {
                         throw new Error(RIAPP.ERRS.ERR_BINDING_CONTENT_NOT_FOUND);
                 }
 
-                createContent(parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: bool): baseContent.IContent {
+                createContent(parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean): baseContent.IContent {
                     var contentType = this.getContentType(options);
                     return new contentType(this._app, parentEl, options, dctx, isEditing);
                 }
 
-                isExternallyCachable(contentType): bool {
+                isExternallyCachable(contentType): boolean {
                     if (LookupContent === contentType)
                         return true;
                     return this._nextFactory.isExternallyCachable(contentType);

@@ -118,7 +118,7 @@ module RIAPP {
                 self._modules[mod.name] = mod.initFn(self);
             });
         }
-        _onError(error, source):bool {
+        _onError(error, source):boolean {
             if (global._checkIsDummy(error)) {
                 return true;
             }
@@ -196,7 +196,7 @@ module RIAPP {
 
             return lftm;
         }
-        _bindElements(scope: { querySelectorAll: (selectors: string) => NodeList; }, dctx, isDataFormBind: bool) {
+        _bindElements(scope: { querySelectorAll: (selectors: string) => NodeList; }, dctx, isDataFormBind: boolean) {
             var self = this, global = self.global, checks = global.utils.check, isDataForm = false;
             scope = scope || global.document;
             //select all elements with binding attributes inside templates
@@ -248,7 +248,7 @@ module RIAPP {
             return lftm;
         }
         //used as a factory to create Data Contents
-        _getContent(contentType: MOD.baseContent.IContentType, options: MOD.baseContent.IContentOptions, parentEl: HTMLElement, dctx, isEditing: bool) {
+        _getContent(contentType: MOD.baseContent.IContentType, options: MOD.baseContent.IContentOptions, parentEl: HTMLElement, dctx, isEditing: boolean) {
             var content: MOD.baseContent.IContent;
             return new contentType(this, parentEl, options, dctx, isEditing);
         }

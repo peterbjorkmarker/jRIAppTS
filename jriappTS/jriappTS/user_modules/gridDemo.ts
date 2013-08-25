@@ -354,7 +354,7 @@ module RIAPP
             _onGridRowSelected(row: MOD.datagrid.Row) {
                 this._productSelected(row.item, row.isSelected);
             }
-            _onGridRowExpanded(oldRow: MOD.datagrid.Row, row: MOD.datagrid.Row, isExpanded:bool) {
+            _onGridRowExpanded(oldRow: MOD.datagrid.Row, row: MOD.datagrid.Row, isExpanded:boolean) {
                 //just for example
                 //we could retrieve additional data from the server when grid's row is expanded
             }
@@ -368,7 +368,7 @@ module RIAPP
             }
             //when product is selected (unselected) by user in the grid (clicking checkboxes)
             //we store the entities keys in the map (it survives going to another page and return back)
-            _productSelected(item: MOD.collection.CollectionItem, isSelected:bool) {
+            _productSelected(item: MOD.collection.CollectionItem, isSelected:boolean) {
                 if (!item)
                     return;
                 if (isSelected) {
@@ -459,8 +459,8 @@ module RIAPP
             _progressDiv: JQuery;
             _fileInfo: string;
             _id: string;
-            _fileUploaded: bool;
-            _initOk: bool;
+            _fileUploaded: boolean;
+            _initOk: boolean;
             _uploadCommand: MOD.mvvm.ICommand;
             private xhr: XMLHttpRequest;
 

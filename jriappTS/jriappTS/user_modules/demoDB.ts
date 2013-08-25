@@ -14,7 +14,7 @@ module RIAPP
 
         export interface ICustomer extends MOD.utils.IEditable, MOD.utils.ISubmittable {
             CustomerID: number;
-            NameStyle: bool;
+            NameStyle: boolean;
             Title: string;
             FirstName: string;
             MiddleName: string;
@@ -38,8 +38,8 @@ module RIAPP
 
         export class Customer extends MOD.db.Entity implements ICustomer {
             get CustomerID() { return <number>this._getFieldVal('CustomerID'); }
-            get NameStyle() { return <bool>this._getFieldVal('NameStyle'); }
-            set NameStyle(v: bool) { this._setFieldVal('NameStyle', v); }
+            get NameStyle() { return <boolean>this._getFieldVal('NameStyle'); }
+            set NameStyle(v: boolean) { this._setFieldVal('NameStyle', v); }
             get Title() { return <string>this._getFieldVal('Title'); }
             set Title(v: string) { this._setFieldVal('Title', v); }
             get FirstName() { return <string>this._getFieldVal('FirstName'); }
@@ -105,7 +105,7 @@ module RIAPP
                 self._mapAssocFields();
             }
             createReadCustomerQuery(args?: {
-                includeNav?: bool;
+                includeNav?: boolean;
             }) {
                 var query = this.createQuery('ReadCustomer');
                 query.params = args;
@@ -355,7 +355,7 @@ module RIAPP
             DiscontinuedDate: Date;
             rowguid: string;
             ModifiedDate: Date;
-            IsActive: bool;
+            IsActive: boolean;
             ThumbnailPhotoFileName: string;
             SalesOrderDetails: SalesOrderDetail[];
 
@@ -392,7 +392,7 @@ module RIAPP
             set DiscontinuedDate(v: Date) { this._setFieldVal('DiscontinuedDate', v); }
             get rowguid() { return <string>this._getFieldVal('rowguid'); }
             get ModifiedDate() { return <Date>this._getFieldVal('ModifiedDate'); }
-            get IsActive() { return <bool>this._dbSet._calcfldMap['IsActive'].getFunc.call(this); }
+            get IsActive() { return <boolean>this._dbSet._calcfldMap['IsActive'].getFunc.call(this); }
             get ThumbnailPhotoFileName() { return <string>this._getFieldVal('ThumbnailPhotoFileName'); }
             set ThumbnailPhotoFileName(v: string) { this._setFieldVal('ThumbnailPhotoFileName', v); }
             get SalesOrderDetails() { return <SalesOrderDetail[]>this._dbSet._navfldMap['SalesOrderDetails'].getFunc.call(this); }
@@ -452,7 +452,7 @@ module RIAPP
                 return query;
             }
 
-            defineIsActiveField(getFunc: () => bool) { this.defineCalculatedField('IsActive', getFunc); }
+            defineIsActiveField(getFunc: () => boolean) { this.defineCalculatedField('IsActive', getFunc); }
 
             addNew() {
                 return <Product>super.addNew();
@@ -557,7 +557,7 @@ module RIAPP
             DueDate: Date;
             ShipDate: Date;
             Status: number;
-            OnlineOrderFlag: bool;
+            OnlineOrderFlag: boolean;
             SalesOrderNumber: string;
             PurchaseOrderNumber: string;
             AccountNumber: string;
@@ -593,8 +593,8 @@ module RIAPP
             get ShipDate() { return <Date>this._getFieldVal('ShipDate'); }
             set ShipDate(v: Date) { this._setFieldVal('ShipDate', v); }
             get Status() { return <number>this._getFieldVal('Status'); }
-            get OnlineOrderFlag() { return <bool>this._getFieldVal('OnlineOrderFlag'); }
-            set OnlineOrderFlag(v: bool) { this._setFieldVal('OnlineOrderFlag', v); }
+            get OnlineOrderFlag() { return <boolean>this._getFieldVal('OnlineOrderFlag'); }
+            set OnlineOrderFlag(v: boolean) { this._setFieldVal('OnlineOrderFlag', v); }
             get SalesOrderNumber() { return <string>this._getFieldVal('SalesOrderNumber'); }
             get PurchaseOrderNumber() { return <string>this._getFieldVal('PurchaseOrderNumber'); }
             get AccountNumber() { return <string>this._getFieldVal('AccountNumber'); }

@@ -12,9 +12,9 @@ module RIAPP {
                 width?: any;
                 height?: any;
                 title?: string;
-                submitOnOK?: bool;
-                canRefresh?: bool;
-                canCancel?: bool;
+                submitOnOK?: boolean;
+                canRefresh?: boolean;
+                canCancel?: boolean;
                 fn_OnClose?: (dialog: DataEditDialog) => void;
                 fn_OnOK?: (dialog: DataEditDialog) => number;
                 fn_OnShow?: (dialog: DataEditDialog) => void;
@@ -27,21 +27,21 @@ module RIAPP {
                 _objId: string;
                 _dataContext: any;
                 _templateID: string;
-                _submitOnOK: bool;
-                _canRefresh: bool;
-                _canCancel: bool;
+                _submitOnOK: boolean;
+                _canRefresh: boolean;
+                _canCancel: boolean;
                 _fn_OnClose: (dialog: DataEditDialog) => void;
                 _fn_OnOK: (dialog: DataEditDialog) => number;
                 _fn_OnShow: (dialog: DataEditDialog) => void;
                 _fn_OnCancel: (dialog: DataEditDialog) => number;
                 _fn_OnTemplateCreated: (template: template.Template) => void;
                 _fn_OnTemplateDestroy: (template: template.Template) => void;
-                _isEditable: bool;
+                _isEditable: boolean;
                 _template: template.Template;
                 _$template: JQuery;
                 _result: string;
                 private _options: any;
-                private _dialogCreated: bool;
+                private _dialogCreated: boolean;
                 private _fn_submitOnOK: () => IPromise<any>;
                 private _app: Application;
                 //save global's currentSelectable  before showing and restore it on dialog's closing
@@ -114,7 +114,7 @@ module RIAPP {
                 removeOnClose(namespace?: string) {
                     this.removeHandler('close', namespace);
                 }
-                addOnRefresh(fn: (sender: any, args: { isHandled: bool; }) => void , namespace?: string) {
+                addOnRefresh(fn: (sender: any, args: { isHandled: boolean; }) => void , namespace?: string) {
                     this.addHandler('refresh', fn, namespace);
                 }
                 removeOnRefresh(namespace?: string) {
@@ -203,14 +203,14 @@ module RIAPP {
                 _getAllButtons() {
                     return [this._getOkButton(), this._getCancelButton(), this._getRefreshButton()];
                 }
-                _disableButtons(isDisable:bool) {
+                _disableButtons(isDisable:boolean) {
                     var btns = this._getAllButtons();
                     btns.forEach(function ($btn) {
                         $btn.prop("disabled", !!isDisable);
                     });
                 }
                 _onOk() {
-                    var self = this, canCommit:bool, action = DIALOG_ACTION.Default;
+                    var self = this, canCommit:boolean, action = DIALOG_ACTION.Default;
                     if (!!this._fn_OnOK) {
                         action = this._fn_OnOK(this);
                     }

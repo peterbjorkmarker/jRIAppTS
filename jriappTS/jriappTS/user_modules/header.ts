@@ -36,7 +36,7 @@ module RIAPP
                 var base_events = super._getEventNames();
                 return ['updateUI'].concat(base_events);
             }
-            addOnUpdateUI(fn: (sender: HeaderVM, args: { isHandled: bool; isUp: bool; }) => void , namespace?: string) {
+            addOnUpdateUI(fn: (sender: HeaderVM, args: { isHandled: boolean; isUp: boolean; }) => void , namespace?: string) {
                 this.addHandler('updateUI', fn, namespace);
             }
             expand() {
@@ -47,7 +47,7 @@ module RIAPP
                 var self = this;
                 this._$topPanel.slideUp('fast', function () { self.updateUI(true); });
             }
-            updateUI(isUp: bool) {
+            updateUI(isUp: boolean) {
                 var args = { isHandled: false, isUp: isUp };
                 this.raiseEvent('updateUI', args);
                 if (args.isHandled)

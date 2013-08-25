@@ -75,7 +75,7 @@ module RIAPP {
         ERR_UNEXPECTED_SVC_ERROR: 'Unexpected service error: {0}',
         ERR_ASSOC_NAME_INVALID: 'Invalid association name: {0}',
         ERR_DATAVIEW_DATASRC_INVALID: 'DataView datasource must not be null and should be descendant of Collection type',
-        ERR_DATAVIEW_FILTER_INVALID: 'DataView fn_filter option must be valid function which accepts entity and returns bool value'
+        ERR_DATAVIEW_FILTER_INVALID: 'DataView fn_filter option must be valid function which accepts entity and returns boolean value'
     }
 
     export interface ILocaleText {

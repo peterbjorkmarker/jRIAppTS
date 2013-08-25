@@ -43,7 +43,7 @@ module RIAPP {
         private _templateLoaders: any;
         private _templateGroups: any;
         private _promises: IPromise<string>[];
-        private _isReady: bool;
+        private _isReady: boolean;
         private _waitQueue: MOD.utils.WaitQueue;
         private _parser: MOD.parser.Parser;
         //all loaded modules
@@ -105,14 +105,14 @@ module RIAPP {
             });
             //this way to attach for correct work in firefox
             self.window.onerror = function (msg, url, linenumber) {
-                if (!!msg && msg.indexOf("DUMMY_ERROR") > -1) {
+                if (!!msg && (<any>msg).indexOf("DUMMY_ERROR") > -1) {
                     return true;
                 }
                 alert('Error message: ' + msg + '\nURL: ' + url + '\nLine Number: ' + linenumber);
                 return false;
             }
         }
-        private _registerObjectCore(root: any, name: string, obj: any, checkOverwrite: bool) {
+        private _registerObjectCore(root: any, name: string, obj: any, checkOverwrite: boolean) {
             var parts = name.split('.'),
                 parent = root,
                 i:number;
@@ -173,7 +173,7 @@ module RIAPP {
         addOnUnLoad(fn: (sender: Global, args: any) => void , namespace?: string) {
             this._addHandler('unload', fn, namespace, false);
         }
-        _addHandler(name: string, fn: (sender, args) => void , namespace?: string, prepend?: bool) {
+        _addHandler(name: string, fn: (sender, args) => void , namespace?: string, prepend?: boolean) {
             var self = this;
             if (name == 'load' && self._isReady) {
                 setTimeout(function () { fn.apply(self, [self, {}]); }, 0); //when already is ready, immediately raise the event
@@ -471,7 +471,7 @@ module RIAPP {
                     break;
             }
         }
-        isModuleLoaded(name: string): bool {
+        isModuleLoaded(name: string): boolean {
             return this._moduleNames.indexOf(name) > -1;
         }
         findApp(name:string) {

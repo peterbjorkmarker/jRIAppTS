@@ -12,13 +12,13 @@ module RIAPP {
             var PAGER_TXT = RIAPP.localizable.PAGER;
 
             export interface IPagerOptions {
-                showTip?: bool;
-                showInfo?: bool;
-                showNumbers?: bool;
-                showFirstAndLast?: bool;
-                showPreviousAndNext?: bool;
-                useSlider?: bool;
-                hideOnSinglePage?: bool;
+                showTip?: boolean;
+                showInfo?: boolean;
+                showNumbers?: boolean;
+                showFirstAndLast?: boolean;
+                showPreviousAndNext?: boolean;
+                useSlider?: boolean;
+                hideOnSinglePage?: boolean;
                 sliderSize?: number;
             }
 
@@ -27,17 +27,17 @@ module RIAPP {
                 _$el: JQuery;
                 _objId: string;
                 _dataSource: collection.Collection;
-                _showTip: bool;
-                _showInfo: bool;
-                _showFirstAndLast: bool;
-                _showPreviousAndNext: bool;
-                _showNumbers: bool;
+                _showTip: boolean;
+                _showInfo: boolean;
+                _showFirstAndLast: boolean;
+                _showPreviousAndNext: boolean;
+                _showNumbers: boolean;
                 _rowsPerPage: number;
                 _rowCount: number;
                 _currentPage: number;
-                _useSlider: bool;
+                _useSlider: boolean;
                 _sliderSize: number;
-                _hideOnSinglePage: bool;
+                _hideOnSinglePage: boolean;
 
                 constructor(el:HTMLElement, dataSource: collection.Collection, options:IPagerOptions) {
                     super();

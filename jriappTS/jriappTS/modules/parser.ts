@@ -178,7 +178,7 @@ module RIAPP {
                     return this._resolvePath(obj, parts);
                 }
                 //extract top level braces
-                getBraceParts(val:string, firstOnly:bool) {
+                getBraceParts(val:string, firstOnly:boolean) {
                     var i, s = '', ch, literal, cnt = 0, parts = [];
                     for (i = 0; i < val.length; i += 1) {
                         ch = val.charAt(i);

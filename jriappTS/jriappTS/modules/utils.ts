@@ -49,15 +49,15 @@ module RIAPP {
             }
 
             export interface IEditable {
-                beginEdit(): bool;
-                endEdit(): bool;
-                cancelEdit(): bool;
-                isEditing: bool;
+                beginEdit(): boolean;
+                endEdit(): boolean;
+                cancelEdit(): boolean;
+                isEditing: boolean;
             };
 
             export interface ISubmittable {
                 submitChanges(): IPromise<any>;
-                _isCanSubmit: bool;
+                _isCanSubmit: boolean;
             }
 
             export class Checks {
@@ -262,7 +262,7 @@ module RIAPP {
             export interface IValueUtils {
                 valueToDate(val:string, dtcnv:number, stz:number): Date;
                 dateToValue(dt: Date, dtcnv:number, stz:number): string;
-                compareVals(v1, v2, dataType:number): bool;
+                compareVals(v1, v2, dataType:number): boolean;
                 stringifyValue(v, dcnv:number, stz:number): string;
                 parseValue(v: string, dataType, dcnv, stz): any;
             }
@@ -318,7 +318,7 @@ module RIAPP {
                     }
                     return ("" + dt.getFullYear() + "&" + (dt.getMonth() + 1) + "&" + dt.getDate() + "&" + dt.getHours() + "&" + dt.getMinutes() + "&" + dt.getSeconds() + "&" + dt.getMilliseconds());
                 },
-                compareVals: function (v1, v2, dataType: number): bool {
+                compareVals: function (v1, v2, dataType: number): boolean {
                     if ((v1 === null && v2 !== null) || (v1 !== null && v2 === null))
                         return false;
                     var DATA_TYPE = consts.DATA_TYPE;
@@ -685,7 +685,7 @@ module RIAPP {
                 round(num:number, decimals:number) {
                     return parseFloat(num.toFixed(decimals));
                 }
-                performAjaxCall(url: string, postData: string, async: bool, fn_success: (res: string) => void , fn_error:(res: any) => void , context:any):IPromise<string> {
+                performAjaxCall(url: string, postData: string, async: boolean, fn_success: (res: string) => void , fn_error:(res: any) => void , context:any):IPromise<string> {
                     var req = new XMLHttpRequest(), mimeType = 'application/json; charset=utf-8';
                     req.open('POST', url, async);
                     var deferred = this.createDeferred();
@@ -743,7 +743,7 @@ module RIAPP {
                     return promise;
                 }
                 format = base_utils.format;
-                extend(deep:bool, defaults:any, options:any) {
+                extend(deep:boolean, defaults:any, options:any) {
                     if (deep)
                         return this.cloneObj(options, defaults);
                     else
@@ -826,7 +826,7 @@ module RIAPP {
                         $el['qtip'](options);
                     }
                 }
-                hasProp(obj, prop:string):bool {
+                hasProp(obj, prop:string):boolean {
                     if (!obj)
                         return false;
                     var res = obj.hasOwnProperty(prop);

@@ -30,16 +30,16 @@ module RIAPP {
  
     //essential basic utils
     export class baseUtils {
-        static isFunc(a): bool {
+        static isFunc(a): boolean {
             if (!a)
                 return false;
             var rx = /Function/;
             return (typeof (a) === 'function') ? rx.test(a.constructor.toString()) : false;
         }
-        static endsWith(str, suffix): bool {
+        static endsWith(str, suffix): boolean {
             return (str.substr(str.length - suffix.length) === suffix);
         }
-        static startsWith(str, prefix): bool {
+        static startsWith(str, prefix): boolean {
             return (str.substr(0, prefix.length) === prefix);
         }
         static fastTrim(str): string {
@@ -59,7 +59,7 @@ module RIAPP {
             chars = chars || "\\s";
             return str.replace(new RegExp("[" + chars + "]+$", "g"), "");
         }
-        static isArray(o: any): bool {
+        static isArray(o: any): boolean {
             if (!o)
                 return false;
             return Array.isArray(o);
@@ -115,8 +115,8 @@ module RIAPP {
     }
 
     export class BaseObject {
-        _isDestroyed: bool;
-        _isDestroyCalled: bool;
+        _isDestroyed: boolean;
+        _isDestroyCalled: boolean;
         __events: any;
 
         constructor() {
@@ -127,7 +127,7 @@ module RIAPP {
         _getEventNames(): string[] {
             return ['error', 'destroyed'];
         }
-        _addHandler(name: string, fn: (sender,args)=>void, namespace?: string, prepend?: bool) {
+        _addHandler(name: string, fn: (sender,args)=>void, namespace?: string, prepend?: boolean) {
             if (this._isDestroyed)
                 return;
 
@@ -238,7 +238,7 @@ module RIAPP {
                 });
             }
         }
-        _onError(error: any, source: any): bool {
+        _onError(error: any, source: any): boolean {
             if (!!RIAPP.global && RIAPP.global._checkIsDummy(error)) {
                 return true;
             }
@@ -273,7 +273,7 @@ module RIAPP {
         removeOnDestroyed(namespace?: string) {
             this._removeHandler('destroyed', namespace);
         }
-        addOnError(fn: (sender, args: { error: any; source: any; isHandled: bool; }) => void , namespace?: string) {
+        addOnError(fn: (sender, args: { error: any; source: any; isHandled: boolean; }) => void , namespace?: string) {
             this._addHandler('error', fn, namespace, false);
         }
         removeOnError(namespace?: string) {

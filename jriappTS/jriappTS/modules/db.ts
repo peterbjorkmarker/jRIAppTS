@@ -81,15 +81,15 @@ module RIAPP {
             export interface IQueryParamInfo {
                 dataType: number;
                 dateConversion: number;
-                isArray: bool;
-                isNullable: bool;
+                isArray: boolean;
+                isNullable: boolean;
                 name: string;
                 ordinal: number;
             }
             export interface IQueryInfo {
-                isQuery: bool;
+                isQuery: boolean;
                 methodName: string;
-                methodResult: bool;
+                methodResult: boolean;
                 parameters: IQueryParamInfo[];
             }
             export interface IFilterInfo{ filterItems: { fieldName: string; kind: number; values: any[]; }[]; }
@@ -125,7 +125,7 @@ module RIAPP {
             export interface IMethodInvokeInfo { methodName: string; paramInfo: IParamInfo; }
             export interface IDbSetInfo {
                 dbSetName: string;
-                enablePaging: bool;
+                enablePaging: boolean;
                 pageSize: number;
                 fieldInfos: collection.IFieldInfo[];
             }
@@ -187,14 +187,14 @@ module RIAPP {
                 pageIndex: number;
                 pageSize: number;
                 pageCount: number;
-                isIncludeTotalCount: bool;
+                isIncludeTotalCount: boolean;
                 filterInfo: IFilterInfo;
                 sortInfo: ISortInfo;
                 paramInfo: IParamInfo;
                 queryName: string;
             }
 
-            export interface ILoadResult { fetchedItems: Entity[]; newItems: Entity[]; isPageChanged: bool; outOfBandData: any; }
+            export interface ILoadResult { fetchedItems: Entity[]; newItems: Entity[]; isPageChanged: boolean; outOfBandData: any; }
             export interface IIncludedResult {
                 names: string[];
                 rows: { key: string; values: string[]; }[];
@@ -425,15 +425,15 @@ module RIAPP {
                 __queryInfo: IQueryInfo;
                 _filterInfo: IFilterInfo;
                 _sortInfo: ISortInfo;
-                _isIncludeTotalCount: bool;
-                _isClearPrevData: bool;
+                _isIncludeTotalCount: boolean;
+                _isClearPrevData: boolean;
                 _pageSize: number;
                 _pageIndex: number;
                 _params: { [name: string]: any; };
                 _loadPageCount: number;
-                _isClearCacheOnEveryLoad: bool;
+                _isClearCacheOnEveryLoad: boolean;
                 _dataCache: DataCache;
-                _cacheInvalidated: bool;
+                _cacheInvalidated: boolean;
 
                 constructor(dbSet:DbSet, queryInfo: IQueryInfo) {
                     super();
@@ -608,9 +608,9 @@ module RIAPP {
                 get filterInfo() { return this._filterInfo; }
                 get sortInfo() { return this._sortInfo; }
                 get isIncludeTotalCount() { return this._isIncludeTotalCount; }
-                set isIncludeTotalCount(v: bool) { this._isIncludeTotalCount = v; }
+                set isIncludeTotalCount(v: boolean) { this._isIncludeTotalCount = v; }
                 get isClearPrevData() { return this._isClearPrevData; }
-                set isClearPrevData(v:bool) { this._isClearPrevData = v; }
+                set isClearPrevData(v:boolean) { this._isClearPrevData = v; }
                 get pageSize() { return this._pageSize; }
                 set pageSize(v:number) {
                     if (this._pageSize != v) {
@@ -656,8 +656,8 @@ module RIAPP {
          
             export class Entity extends collection.CollectionItem {
                 private __changeType: number;
-                private __isRefreshing: bool;
-                private __isCached: bool;
+                private __isRefreshing: boolean;
+                private __isCached: boolean;
                 private __dbSet: DbSet;
                 private _srvRowKey: string;
                 _origVals: { [name: string]: any; };
@@ -783,7 +783,7 @@ module RIAPP {
                             self.raisePropertyChanged(d);
                         });
                 }
-                _getStrValues(changedOnly:bool) {
+                _getStrValues(changedOnly:boolean) {
                     var self = this, names = this.getFieldNames(), dbSet = this._dbSet, res: IValueChange[], res2: IValueChange[];
                     res = names.map(function (name) {
                         var fld = self.getFieldInfo(name);
@@ -1072,7 +1072,7 @@ module RIAPP {
             
             export class DbSet extends collection.Collection {
                 private _dbContext: DbContext;
-                private _isSubmitOnDelete: bool;
+                private _isSubmitOnDelete: boolean;
                 private _trackAssoc: { [name: string]: IAssociationInfo; };
                 private _trackAssocMap: { [childFieldName: string]: string[]; };
                 private _childAssocMap: { [fieldName: string]: IAssociationInfo; };
@@ -1084,7 +1084,7 @@ module RIAPP {
                 _calcfldMap: { [fieldName: string]: { getFunc: () => any; }; };
                 _itemsByKey: { [key: string]: Entity; };
                 _entityType: IEntityConstructor;
-                _ignorePageChanged: bool;
+                _ignorePageChanged: boolean;
                 _query: DataQuery;
 
                 constructor(opts: IDbSetConstuctorOptions) {
@@ -1130,7 +1130,7 @@ module RIAPP {
                     }
                     throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
                 }
-                _onError(error, source):bool {
+                _onError(error, source):boolean {
                     return this.dbContext._onError(error, source);
                 }
                 _mapAssocFields() {
@@ -1252,7 +1252,7 @@ module RIAPP {
                     }
                     return result;
                 }
-                _fillFromService(data: { res: IGetDataResult; isPageChanged: bool; fn_beforeFillEnd: () => void; }): ILoadResult {
+                _fillFromService(data: { res: IGetDataResult; isPageChanged: boolean; fn_beforeFillEnd: () => void; }): ILoadResult {
                     data = utils.extend(false, {
                         res: { names: [], rows: [], pageIndex: null, pageCount: null, dbSetName: this.dbSetName, totalCount: null },
                         isPageChanged: false,
@@ -1350,7 +1350,7 @@ module RIAPP {
                     this.moveFirst();
                     return { fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
                 }
-                _fillFromCache(data: { isPageChanged: bool; fn_beforeFillEnd: () => void; }): ILoadResult {
+                _fillFromCache(data: { isPageChanged: boolean; fn_beforeFillEnd: () => void; }): ILoadResult {
                     data = utils.extend(false, {
                         isPageChanged: false,
                         fn_beforeFillEnd: null
@@ -1731,7 +1731,7 @@ module RIAPP {
             }
 
             export class DbContext extends RIAPP.BaseObject {
-                _isInitialized: bool;
+                _isInitialized: boolean;
                 _dbSets: DbSets;
                 //_svcMethods: {[methodName: string]: (args: { [paramName: string]: any; }) => IPromise<any>; };
                 _svcMethods: any;
@@ -1741,8 +1741,8 @@ module RIAPP {
                 _queryInf: { [queryName: string]: IQueryInfo; };
                 _serviceUrl: string;
                 _isBusy: number;
-                _isSubmiting: bool;
-                _hasChanges: bool;
+                _isSubmiting: boolean;
+                _hasChanges: boolean;
                 _pendingSubmit: { deferred: IDeferred<any>;  };
                 _serverTimezone: number;
                 _waitQueue: MOD.utils.WaitQueue;
@@ -1767,7 +1767,7 @@ module RIAPP {
                     var base_events = super._getEventNames();
                     return ['submit_error'].concat(base_events);
                 }
-                addOnSubmitError(fn: (sender: DbContext, args: { error: any; isHandled: bool; }) => void , namespace?: string) {
+                addOnSubmitError(fn: (sender: DbContext, args: { error: any; isHandled: boolean; }) => void , namespace?: string) {
                     this.addHandler('submit_error', fn, namespace);
                 }
                 removeOnSubmitError(namespace?: string) {
@@ -1966,7 +1966,7 @@ module RIAPP {
                         global._throwDummy(ex);
                     }
                 }
-                _loadFromCache(query:DataQuery, isPageChanged:bool) {
+                _loadFromCache(query:DataQuery, isPageChanged:boolean) {
                     var operType = DATA_OPER.LOAD, dbSet = query._dbSet, methRes: ILoadResult;
                     try {
                         methRes = dbSet._fillFromCache({ isPageChanged: isPageChanged, fn_beforeFillEnd: null });
@@ -1988,7 +1988,7 @@ module RIAPP {
                         dbSet.fillItems(subset);
                     });
                 }
-                _onLoaded(res: IGetDataResult, isPageChanged: bool) {
+                _onLoaded(res: IGetDataResult, isPageChanged: boolean) {
                     var self = this, operType = DATA_OPER.LOAD, dbSetName, dbSet:DbSet, loadRes:ILoadResult;
                     try {
                         if (!res)
@@ -2157,7 +2157,7 @@ module RIAPP {
                     }, [], null);
                     return deferred.promise();
                 }
-                _onError(error, source) {
+                _onError(error, source):boolean {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
                         return global._onError(error, source);
@@ -2215,12 +2215,12 @@ module RIAPP {
                         query._clearCache();
                     }
                 }
-                _load(query: DataQuery, isPageChanged: bool): IPromise<ILoadResult> {
+                _load(query: DataQuery, isPageChanged: boolean): IPromise<ILoadResult> {
                     if (!query) {
                         throw new Error(RIAPP.ERRS.ERR_DB_LOAD_NO_QUERY);
                     }
                     var self = this, deferred = utils.createDeferred();
-                    var fn_onComplete = function (isOk:bool, res:ILoadResult) {
+                    var fn_onComplete = function (isOk:boolean, res:ILoadResult) {
                         if (isOk) {
                             deferred.resolve(res);
                         }
@@ -2588,7 +2588,7 @@ module RIAPP {
                 get service_url() { return this._serviceUrl; }
                 get isInitialized() { return this._isInitialized; }
                 get isBusy() { return this._isBusy > 0; }
-                set isBusy(v:bool) {
+                set isBusy(v:boolean) {
                     var old = this._isBusy > 0, cur;
                     if (!v) {
                         this._isBusy -= 1;
@@ -2629,8 +2629,8 @@ module RIAPP {
                 _childToParentName: string;
                 _parentMap: { [key: string]: Entity; };
                 _childMap: { [key: string]: Entity[]; };
-                _isParentFilling: bool;
-                _isChildFilling: bool;
+                _isParentFilling: boolean;
+                _isChildFilling: boolean;
                 _saveParentFKey: string;
                 _saveChildFKey: string;
                 _changedTimeout: number;
@@ -2680,7 +2680,7 @@ module RIAPP {
                     self._notifyParentChanged(changed1);
                     self._notifyChildrenChanged(changed2);
                 }
-                _onError(error, source) {
+                _onError(error, source):boolean {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
                         return global._onError(error, source);
@@ -2796,7 +2796,7 @@ module RIAPP {
                         self._isParentFilling = true;
                     }
                 }
-                _onParentEdit(item:Entity, isBegin:bool, isCanceled:bool) {
+                _onParentEdit(item:Entity, isBegin:boolean, isCanceled:boolean) {
                     var self = this;
                     if (isBegin) {
                         self._storeParentFKey(item);
@@ -2808,7 +2808,7 @@ module RIAPP {
                             self._saveParentFKey = null;
                     }
                 }
-                _onParentCommitChanges(item:Entity, isBegin:bool, isRejected:bool, changeType:number) {
+                _onParentCommitChanges(item:Entity, isBegin:boolean, isRejected:boolean, changeType:number) {
                     var self = this, fkey;
                     if (isBegin) {
                         if (isRejected && changeType === CHANGE_TYPE.ADDED) {
@@ -2995,7 +2995,7 @@ module RIAPP {
                         self._isChildFilling = true;
                     }
                 }
-                _onChildEdit(item:Entity, isBegin:bool, isCanceled:bool) {
+                _onChildEdit(item:Entity, isBegin:boolean, isCanceled:boolean) {
                     var self = this;
                     if (isBegin) {
                         self._storeChildFKey(item);
@@ -3008,7 +3008,7 @@ module RIAPP {
                         }
                     }
                 }
-                _onChildCommitChanges(item:Entity, isBegin:bool, isRejected:bool, changeType:number) {
+                _onChildCommitChanges(item:Entity, isBegin:boolean, isRejected:boolean, changeType:number) {
                     var self = this, fkey:string;
                     if (isBegin) {
                         if (isRejected && changeType === CHANGE_TYPE.ADDED) {
@@ -3263,23 +3263,23 @@ module RIAPP {
 
             export class DataView extends collection.Collection {
                 _dataSource: collection.Collection;
-                _fn_filter: (item: collection.CollectionItem) => bool;
+                _fn_filter: (item: collection.CollectionItem) => boolean;
                 _fn_sort: (item1: collection.CollectionItem, item2: collection.CollectionItem) => number;
                 _fn_itemsProvider: (ds: collection.Collection) => collection.CollectionItem[];
-                _isDSFilling: bool;
-                _isAddingNew: bool;
+                _isDSFilling: boolean;
+                _isAddingNew: boolean;
                 _objId: string;
 
                 constructor(options: {
                     dataSource: collection.Collection;
-                    fn_filter?: (item: collection.CollectionItem) => bool;
+                    fn_filter?: (item: collection.CollectionItem) => boolean;
                     fn_sort?: (item1: collection.CollectionItem, item2: collection.CollectionItem) => number;
                     fn_itemsProvider?: (ds: collection.Collection) => collection.CollectionItem[];
                 }) {
                     super();
                     var opts: {
                         dataSource: collection.Collection;
-                        fn_filter?: (item: collection.CollectionItem) => bool;
+                        fn_filter?: (item: collection.CollectionItem) => boolean;
                         fn_sort?: (item1: collection.CollectionItem, item2: collection.CollectionItem) => number;
                         fn_itemsProvider?: (ds: collection.Collection) => collection.CollectionItem[];
                     } = utils.extend(false, {
@@ -3335,7 +3335,7 @@ module RIAPP {
                 _onViewRefreshed(args: {}) {
                     this.raiseEvent('view_refreshed', args);
                 }
-                _refresh(isPageChanged:bool) {
+                _refresh(isPageChanged:boolean) {
                     var items;
                     var ds = this._dataSource;
                     if (!ds)
@@ -3356,9 +3356,9 @@ module RIAPP {
                 }
                 _fillItems(data:{
                     items: collection.CollectionItem[];
-                        isPageChanged: bool;
-                        clear: bool;
-                        isAppend: bool;
+                        isPageChanged: boolean;
+                        clear: boolean;
+                        isAppend: boolean;
                     }) {
                     data = utils.extend(false, {
                         items: [],
@@ -3691,7 +3691,7 @@ module RIAPP {
                 }
                 get permissions() { return this._dataSource.permissions; }
                 get fn_filter() { return this._fn_filter; }
-                set fn_filter(v: (item: collection.CollectionItem) => bool) {
+                set fn_filter(v: (item: collection.CollectionItem) => boolean) {
                     if (this._fn_filter !== v) {
                         this._fn_filter = v;
                         this._refresh(false);
@@ -3720,14 +3720,14 @@ module RIAPP {
 
                 constructor(options: {
                     association: Association;
-                    fn_filter?: (item: collection.CollectionItem) => bool;
+                    fn_filter?: (item: collection.CollectionItem) => boolean;
                 }) {
                     this._parentItem = null;
                     this._refreshTimeout = null;
                     this._association = options.association;
                     var opts: {
                         dataSource: collection.Collection;
-                        fn_filter?: (item: collection.CollectionItem) => bool;
+                        fn_filter?: (item: collection.CollectionItem) => boolean;
                         fn_sort?: (item1: collection.CollectionItem, item2: collection.CollectionItem) => number;
                         fn_itemsProvider?: (ds: collection.Collection) => collection.CollectionItem[];
                     } = utils.extend(false, {

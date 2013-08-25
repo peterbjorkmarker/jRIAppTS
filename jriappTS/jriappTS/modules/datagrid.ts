@@ -82,7 +82,7 @@ module RIAPP {
                     }
                     return isHandled;
                 }
-                scrollIntoView(isUp:bool) {
+                scrollIntoView(isUp:boolean) {
                     var div = this._div;
                     div.scrollIntoView(!!isUp);
                 }
@@ -221,7 +221,7 @@ module RIAPP {
             }
 
             export class ActionsCell extends BaseCell {
-                _isEditing: bool;
+                _isEditing: boolean;
                 constructor(row: Row, options: { td: HTMLTableCellElement; column: any; }) {
                     this._isEditing = false;
                     super(row, options);
@@ -250,7 +250,7 @@ module RIAPP {
                     });
                     super.destroy();
                 }
-                _createButtons(editing:bool) {
+                _createButtons(editing:boolean) {
                     if (!this._el)
                         return;
                     var self = this, $ = global.$, $div = global.$(this._div), $newElems:JQuery;
@@ -382,9 +382,9 @@ module RIAPP {
                 _expanderCell: any;
                 _actionsCell: any;
                 _rowSelectorCell: any;
-                _isCurrent: bool;
-                _isDeleted: bool;
-                _isSelected: bool;
+                _isCurrent: boolean;
+                _isDeleted: boolean;
+                _isSelected: boolean;
 
                 constructor(grid: DataGrid, options: { tr: HTMLElement; item: collection.CollectionItem; }) {
                     var self = this;
@@ -419,7 +419,7 @@ module RIAPP {
                 _onItemDestroyed() {
                     this.destroy();
                 }
-                _onError(error, source):bool {
+                _onError(error, source):boolean {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
                         return this.grid._onError(error, source);
@@ -464,7 +464,7 @@ module RIAPP {
                     if (!!this._actionsCell)
                         this._actionsCell.update();
                 }
-                _onEndEdit(isCanceled:bool) {
+                _onEndEdit(isCanceled:boolean) {
                     var self = this;
                     self._cells.forEach(function (cell) {
                         if (cell instanceof DataCell) {
@@ -523,7 +523,7 @@ module RIAPP {
                     else
                         $el.removeClass(css.rowError);
                 }
-                scrollIntoView(isUp:bool) {
+                scrollIntoView(isUp:boolean) {
                     if (!!this._cells && this._cells.length > 0) {
                         this._cells[0].scrollIntoView(isUp);
                     }
@@ -709,7 +709,7 @@ module RIAPP {
             export interface IColumnInfo {
                 type?: string;
                 title?: string;
-                sortable?: bool;
+                sortable?: boolean;
                 sortMemberName?: string;
                 colCellCss?: string;
                 rowCellCss?: string;
@@ -721,7 +721,7 @@ module RIAPP {
                 _grid: DataGrid;
                 _el: HTMLTableHeaderCellElement;
                 _options: IColumnInfo;
-                _isSelected: bool;
+                _isSelected: boolean;
                 _objId: string;
                 _$extcol: JQuery;
                 _$div: JQuery;
@@ -803,7 +803,7 @@ module RIAPP {
                     this._grid = null;
                     super.destroy();
                 }
-                scrollIntoView(isUp:bool) {
+                scrollIntoView(isUp:boolean) {
                     if (!this._$div)
                         return;
                     var div = this._$div.get(0);
@@ -919,7 +919,7 @@ module RIAPP {
             }
 
             export class RowSelectorColumn extends BaseColumn {
-                _val: bool;
+                _val: boolean;
                 _$chk: JQuery;
                 _init() {
                     super._init();
@@ -938,7 +938,7 @@ module RIAPP {
                         self.checked = this.checked;
                     });
                 }
-                _onCheckBoxClicked(isChecked:bool) {
+                _onCheckBoxClicked(isChecked:boolean) {
                     this.grid.selectRows(isChecked);
                 }
                 toString() {
@@ -1025,15 +1025,15 @@ module RIAPP {
             }
 
             export interface IGridOptions {
-                isUseScrollInto: bool;
-                isUseScrollIntoDetails: bool;
+                isUseScrollInto: boolean;
+                isUseScrollIntoDetails: boolean;
                 containerCss: string;
                 wrapCss: string;
                 headerCss: string;
                 rowStateField: string;
-                isCanEdit: bool;
-                isCanDelete: bool;
-                isHandleAddNew: bool;
+                isCanEdit: boolean;
+                isCanDelete: boolean;
+                isHandleAddNew: boolean;
                 details?: { templateID: string; };
                 editor?: datadialog.IDialogConstructorOptions;
             }
@@ -1048,8 +1048,8 @@ module RIAPP {
                 _rowMap: { [key: string]: Row; };
                 _rows: Row[];
                 _columns: BaseColumn[];
-                _isClearing: bool;
-                _isDSFilling: bool;
+                _isClearing: boolean;
+                _isDSFilling: boolean;
                 _currentRow: Row;
                 _expandedRow: Row;
                 _details: DetailsRow;
@@ -1058,7 +1058,7 @@ module RIAPP {
                 _rowSelectorCol: RowSelectorColumn;
                 _currentColumn: BaseColumn;
                 _editingRow: Row;
-                _isSorting: bool;
+                _isSorting: boolean;
                 _dialog: datadialog.DataEditDialog;
                 _$headerDiv: JQuery;
                 _$wrapDiv: JQuery;
@@ -1123,7 +1123,7 @@ module RIAPP {
                     return ['row_expanded', 'row_selected', 'page_changed', 'row_state_changed',
                         'cell_dblclicked'].concat(base_events);
                 }
-                addOnRowExpanded(fn: (sender: DataGrid, args: { old_expandedRow: Row; expandedRow: Row; isExpanded: bool; }) => void , namespace?: string) {
+                addOnRowExpanded(fn: (sender: DataGrid, args: { old_expandedRow: Row; expandedRow: Row; isExpanded: boolean; }) => void , namespace?: string) {
                     this.addHandler('row_expanded', fn, namespace);
                 }
                 removeOnRowExpanded(namespace?: string) {
@@ -1184,7 +1184,7 @@ module RIAPP {
 
                     return options;
                 }
-                _findUndeleted(row:Row, isUp:bool) {
+                _findUndeleted(row:Row, isUp:boolean) {
                     if (!row)
                         return null;
                     if (!row.isDeleted)
@@ -1217,12 +1217,12 @@ module RIAPP {
                     }
                     return row;
                 }
-                _updateCurrent(row: Row, withScroll:bool) {
+                _updateCurrent(row: Row, withScroll:boolean) {
                     this.currentRow = row;
                     if (withScroll && !!row && !row.isDeleted)
                         this._scrollToCurrent(true);
                 }
-                _scrollToCurrent(isUp:bool) {
+                _scrollToCurrent(isUp:boolean) {
                     var row = this.currentRow;
                     if (!!row) {
                         row.scrollIntoView(isUp);
@@ -1237,7 +1237,7 @@ module RIAPP {
                     var args = { cell: cell };
                     this.raiseEvent('cell_dblclicked', args);
                 }
-                _onError(error, source) {
+                _onError(error, source):boolean {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
                         return global._onError(error, source);
@@ -1711,7 +1711,7 @@ module RIAPP {
                     var tr: HTMLTableRowElement = <HTMLTableRowElement>global.document.createElement('tr');
                     return new DetailsRow(this, { tr: tr, details_id: details_id });
                 }
-                _expandDetails(parentRow:Row, expanded:bool) {
+                _expandDetails(parentRow:Row, expanded:boolean) {
                     if (!this._options.details)
                         return;
                     if (!this._details) {
@@ -1752,7 +1752,7 @@ module RIAPP {
                         self._isSorting = false;
                     });
                 }
-                selectRows(isSelect:bool) {
+                selectRows(isSelect:boolean) {
                     this._rows.forEach(function (row) {
                         if (row.isDeleted)
                             return;
@@ -1804,7 +1804,7 @@ module RIAPP {
                     this._dialog.show();
                     return true;
                 }
-                scrollToCurrent(isUp:bool) {
+                scrollToCurrent(isUp:boolean) {
                     this._scrollToCurrent(isUp);
                 }
                 addNew() {

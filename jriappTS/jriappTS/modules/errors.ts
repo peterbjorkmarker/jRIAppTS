@@ -3,7 +3,7 @@ module RIAPP {
         export module errors {
             export class BaseError extends RIAPP.BaseObject{
                 _message: string;
-                _isDummy: bool;
+                _isDummy: boolean;
                 _origError: any;
 
                 constructor(message:string) {

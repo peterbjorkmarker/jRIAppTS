@@ -13,8 +13,8 @@ module RIAPP
             ParentKey: string;
             Name: string;
             Level: number;
-            HasSubDirs: bool;
-            IsFolder: bool;
+            HasSubDirs: boolean;
+            IsFolder: boolean;
             fullPath: string;
             Parent: FileSystemObject;
             Children: FileSystemObject[];
@@ -29,8 +29,8 @@ module RIAPP
             get ParentKey() { return <string>this._getFieldVal('ParentKey'); }
             get Name() { return <string>this._getFieldVal('Name'); }
             get Level() { return <number>this._getFieldVal('Level'); }
-            get HasSubDirs() { return <bool>this._getFieldVal('HasSubDirs'); }
-            get IsFolder() { return <bool>this._getFieldVal('IsFolder'); }
+            get HasSubDirs() { return <boolean>this._getFieldVal('HasSubDirs'); }
+            get IsFolder() { return <boolean>this._getFieldVal('IsFolder'); }
             get fullPath() { return <string>this._dbSet._calcfldMap['fullPath'].getFunc.call(this); }
             get Parent() { return <FileSystemObject>this._dbSet._navfldMap['Parent'].getFunc.call(this); }
             set Parent(v: FileSystemObject) { this._dbSet._navfldMap['Parent'].setFunc.call(this, v); }
@@ -76,7 +76,7 @@ module RIAPP
                 self._mapAssocFields();
             }
             createReadRootQuery(args?: {
-                includeFiles: bool;
+                includeFiles: boolean;
             }) {
                 var query = this.createQuery('ReadRoot');
                 query.params = args;
@@ -86,7 +86,7 @@ module RIAPP
                 parentKey: string;
                 level: number;
                 path: string;
-                includeFiles: bool;
+                includeFiles: boolean;
             }) {
                 var query = this.createQuery('ReadChildren');
                 query.params = args;

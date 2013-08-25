@@ -16,7 +16,7 @@ module RIAPP {
                 sourcePath?: string;
                 target?: BaseObject;
                 source?: any;
-                isSourceFixed?: bool;
+                isSourceFixed?: boolean;
             }
 
             export interface IValidationInfo {
@@ -25,7 +25,7 @@ module RIAPP {
             }
 
             export interface IErrorNotification {
-                getIsHasErrors(): bool;
+                getIsHasErrors(): boolean;
                 addOnErrorsChanged(fn: (sender: any, args: {}) => void , namespace?: string): void;
                 removeOnErrorsChanged(namespace?: string): void;
                 getFieldErrors(fieldName): IValidationInfo[];
@@ -75,11 +75,11 @@ module RIAPP {
                 _converterParam: any;
                 _srcPath:string[];
                 _tgtPath:string[];
-                _isSourceFixed: bool;
+                _isSourceFixed: boolean;
                 _bounds: { [key: string]: BaseObject; };
                 _objId: string;
-                _ignoreSrcChange: bool;
-                _ignoreTgtChange: bool;
+                _ignoreSrcChange: boolean;
+                _ignoreTgtChange: boolean;
                 _sourceObj: any;
                 _targetObj: any;
                 _source: any;
@@ -174,7 +174,7 @@ module RIAPP {
                         (<baseElView.BaseElView>tgt).validationErrors = errors;
                     }
                 }
-                _onError(error: any, source: any):bool {
+                _onError(error: any, source: any):boolean {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
                         return global._onError(error, source);

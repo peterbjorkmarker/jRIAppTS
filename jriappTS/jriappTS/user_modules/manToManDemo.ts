@@ -31,7 +31,7 @@ module RIAPP
         };
 
         export class CustomerVM extends MOD.mvvm.BaseViewModel {
-            _includeDetailsOnLoad: bool;
+            _includeDetailsOnLoad: boolean;
             _dbSet: DEMODB.CustomerDb;
             _addNewCommand: MOD.mvvm.ICommand;
             _saveCommand: MOD.mvvm.ICommand;
@@ -279,7 +279,7 @@ module RIAPP
 
             }
             //async load, returns promise
-            _loadAddresses(addressIDs:number[], isClearTable:bool) {
+            _loadAddresses(addressIDs:number[], isClearTable:boolean) {
                 var query = this._addressesDb.createReadAddressByIdsQuery({ addressIDs: addressIDs });
                 //if true, we clear all previous data in the DbSet
                 query.isClearPrevData = isClearTable;
@@ -374,7 +374,7 @@ module RIAPP
             _newAddress: DEMODB.Address;
             _adressInfosGrid: MOD.datagrid.DataGrid;
             _searchString: string;
-            _isAddingNew: bool;
+            _isAddingNew: boolean;
             _dialogVM: COMMON.DialogVM;
             _addressInfosView: MOD.db.DataView;
             _linkCommand: MOD.mvvm.ICommand;
@@ -520,7 +520,7 @@ module RIAPP
                     }
                 }, self, null);
             }
-            get _isCanSubmit(): bool { return true; }
+            get _isCanSubmit(): boolean { return true; }
             submitChanges(): IPromise<any> { return this.dbContext.submitChanges(); }
             _cancelAddNewAddress() {
                 var self = this;
@@ -552,7 +552,7 @@ module RIAPP
                     return;
                 }
                 adrID = adrInfo.AddressID;
-                var existedAddr:bool = adrView.items.some(function (item) {
+                var existedAddr:boolean = adrView.items.some(function (item) {
                     return (<any>item).AddressID === adrID;
                 });
 

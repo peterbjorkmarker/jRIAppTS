@@ -14,13 +14,13 @@ module RIAPP {
                 _$el: JQuery;
                 _objId: string;
                 _dataContext: BaseObject;
-                _isEditing: bool;
-                _isDisabled: bool;
+                _isEditing: boolean;
+                _isDisabled: boolean;
                 _content: baseContent.IContent[];
                 _lfTime: MOD.utils.LifeTimeScope;
-                _contentCreated: bool;
-                _supportEdit: bool;
-                _supportErrNotify: bool;
+                _contentCreated: boolean;
+                _supportEdit: boolean;
+                _supportErrNotify: boolean;
                 _parentDataForm: baseElView.BaseElView;
                 _errors: binding.IValidationInfo[];
                 _app: Application;
@@ -284,7 +284,7 @@ module RIAPP {
                     }
                 }
                 get isDisabled() { return this._isDisabled; }
-                set isDisabled(v: bool) {
+                set isDisabled(v: boolean) {
                     if (this._isDisabled !== v) {
                         this._isDisabled = !!v;
                         this._updateIsDisabled();

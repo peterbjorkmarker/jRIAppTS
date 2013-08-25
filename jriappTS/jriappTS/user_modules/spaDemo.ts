@@ -660,7 +660,7 @@ module RIAPP
                 return this.load(ArrayHelper.distinct(ids), false);
             }
             //returns promise
-            load(ids: number[], isClearTable: bool) {
+            load(ids: number[], isClearTable: boolean) {
                 var query = this.dbSet.createReadAddressByIdsQuery({ addressIDs: ids });
                 //if true, previous data will be cleared when the new is loaded
                 query.isClearPrevData = isClearTable;
@@ -809,7 +809,7 @@ module RIAPP
                 return this.load(ArrayHelper.distinct(ids), false);
             }
             //returns promise
-            load(ids: number[], isClearTable: bool) {
+            load(ids: number[], isClearTable: boolean) {
                 var query = this.dbSet.createReadProductByIdsQuery({ productIDs: ids });
                 query.isClearPrevData = isClearTable;
                 return this.dbContext.load(query);
@@ -920,7 +920,7 @@ module RIAPP
 
             }
             //async load, returns promise
-            _loadAddresses(addressIDs: number[], isClearTable: bool) {
+            _loadAddresses(addressIDs: number[], isClearTable: boolean) {
                 var query = this._addressesDb.createReadAddressByIdsQuery({ addressIDs: addressIDs });
                 //if true, we clear all previous data in the DbSet
                 query.isClearPrevData = isClearTable;
@@ -1180,7 +1180,7 @@ module RIAPP
                     return;
                 }
                 adrID = adrInfo.AddressID;
-                var existedAddr: bool = adrView.items.some(function (item) {
+                var existedAddr: boolean = adrView.items.some(function (item) {
                     return (<any>item).AddressID === adrID;
                 });
 
@@ -1274,7 +1274,7 @@ module RIAPP
             get app() { return <DemoApplication>this._app; }
             get dbContext() { return this.app.dbContext; }
             get dbSets() { return this.dbContext.dbSets; }
-            get _isCanSubmit():bool { return true; }
+            get _isCanSubmit():boolean { return true; }
             get addressInfosDb() { return this._addressInfosDb; }
             get addressInfosView() { return this._addressInfosView; }
             get addressesView() { return this._customerAddressVM._addressesView; }

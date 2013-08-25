@@ -4,7 +4,7 @@ module RIAPP {
            //local variables for optimization
             var utils = global.utils, consts = global.consts;
             export interface ICommand {
-                canExecute: (sender, param) => bool;
+                canExecute: (sender, param) => boolean;
                 execute: (sender, param) => void;
                 raiseCanExecuteChanged: () => void;
             }
@@ -12,10 +12,10 @@ module RIAPP {
             export class Command extends RIAPP.BaseObject implements ICommand {
                 _action: (sender, param) => void;
                 _thisObj: any;
-                _canExecute: (sender, param) => bool;
+                _canExecute: (sender, param) => boolean;
                 _objId: string;
 
-                constructor(fn_action: (sender, param) => void , thisObj, fn_canExecute: (sender, param) => bool) {
+                constructor(fn_action: (sender, param) => void , thisObj, fn_canExecute: (sender, param) => boolean) {
                     super();
                     this._action = fn_action;
                     this._thisObj = thisObj;
@@ -32,7 +32,7 @@ module RIAPP {
                 removeOnCanExecuteChanged(namespace?: string) {
                     this.removeHandler('canExecute_changed', namespace);
                 }
-                canExecute(sender, param):bool {
+                canExecute(sender, param):boolean {
                     if (!this._canExecute)
                         return true;
                     return this._canExecute.apply(this._thisObj, [sender, param]);
@@ -68,7 +68,7 @@ module RIAPP {
                     this._app = app;
                     this._objId = 'vm' + utils.getNewID();
                 }
-                _onError(error, source):bool {
+                _onError(error, source):boolean {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
                         return this._app._onError(error, source);

@@ -30,7 +30,7 @@ module RIAPP {
             //the result of parsing od data-content attribute
             export interface IDataContentAttr {
                 fieldName?: string;
-                readOnly?: bool;
+                readOnly?: boolean;
                 css?: { displayCss: string; editCss: string; };
                 template?: ITemplateInfo;
                 name?: string;
@@ -39,13 +39,13 @@ module RIAPP {
 
 
             export interface IExternallyCachable {
-                addOnObjectCreated(fn: (sender: any, args: { objectKey: string; object: BaseObject; isCachedExternally: bool; }) => void , namespace?: string): void;
+                addOnObjectCreated(fn: (sender: any, args: { objectKey: string; object: BaseObject; isCachedExternally: boolean; }) => void , namespace?: string): void;
                 addOnObjectNeeded(fn: (sender: any, args: { objectKey: string; object: BaseObject; }) => void , namespace?: string): void;
             }
 
             export interface IContentOptions {
                 name?: string;
-                readOnly?: bool;
+                readOnly?: boolean;
                 initContentFn?: (content: IExternallyCachable) => void;
                 fieldInfo?: collection.IFieldInfo;
                 bindingInfo?: IBindingInfo;
@@ -56,13 +56,13 @@ module RIAPP {
             };
 
             export interface IContentType {
-                new (app: Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: bool): IContent;
+                new (app: Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean): IContent;
             }
 
             export interface IContentFactory {
                 getContentType(options: IContentOptions): IContentType;
-                createContent(parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: bool): IContent;
-                isExternallyCachable(contentType): bool;
+                createContent(parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean): IContent;
+                isExternallyCachable(contentType): boolean;
             }
 
             export function parseContentAttr(content_attr: string): IContentOptions {
@@ -174,7 +174,7 @@ module RIAPP {
             };
 
             export interface IContent {
-                isEditing: bool;
+                isEditing: boolean;
                 dataContext: any;
                 destroy(): void;
             };
@@ -183,15 +183,15 @@ module RIAPP {
                 _parentEl: HTMLElement;
                 _el: HTMLElement;
                 _options: IContentOptions;
-                _isReadOnly: bool;
-                _isEditing: bool;
+                _isReadOnly: boolean;
+                _isEditing: boolean;
                 _dctx: any;
                 _lfScope: MOD.utils.LifeTimeScope;
                 //the target of dataBinding
                 _tgt: baseElView.BaseElView;
                 _app: Application;
 
-                constructor(app: Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: bool) {
+                constructor(app: Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean) {
                     super();
                     this._app = app;
                     this._parentEl = parentEl;
@@ -369,11 +369,11 @@ module RIAPP {
                 _parentEl: HTMLElement;
                 _template: template.Template;
                 _templateInfo: ITemplateInfo;
-                _isEditing: bool;
+                _isEditing: boolean;
                 _dctx: any;
                 _app: Application;
                 
-                constructor(app: Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: bool) {
+                constructor(app: Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean) {
                     super();
                     var templateInfo: ITemplateInfo = options.templateInfo;
                     this._app = app;
@@ -521,7 +521,7 @@ module RIAPP {
 
             export class DateContent extends BindingContent {
                 _fn_cleanup: () => void;
-                constructor(app: Application, parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: bool) {
+                constructor(app: Application, parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean) {
                     super(app, parentEl, options, dctx, isEditing);
                     this._fn_cleanup = null;
                 }
@@ -671,7 +671,7 @@ module RIAPP {
                     }
                     return MultyLineContent.__allowedKeys;
                 }
-                constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: bool) {
+                constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean) {
                     if (options.name != 'multyline') {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'multyline'"));
                     }
@@ -779,11 +779,11 @@ module RIAPP {
                     return res;
                 }
 
-                createContent(parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: bool): IContent {
+                createContent(parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean): IContent {
                     var contentType = this.getContentType(options);
                     return new contentType(this._app, parentEl, options, dctx, isEditing);
                 }
-                isExternallyCachable(contentType): bool {
+                isExternallyCachable(contentType): boolean {
                     return false;
                 }
                 get app() { return this._app; }

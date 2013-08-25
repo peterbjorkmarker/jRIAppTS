@@ -53,11 +53,11 @@ module RIAPP
             _$dropDown: JQuery;
             _loadTimeout: any;
             _dataContext: any;
-            _isLoading: bool;
+            _isLoading: boolean;
             _width: any;
             _height: any;
             _$dlg: JQuery;
-            _isOpen: bool;
+            _isOpen: boolean;
             _lookupGrid: MOD.datagrid.DataGrid;
             _btnOk: HTMLElement;
             _btnCancel: HTMLElement;

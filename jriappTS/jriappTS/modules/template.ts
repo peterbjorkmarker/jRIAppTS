@@ -11,7 +11,7 @@ module RIAPP {
             export class Template extends RIAPP.BaseObject {
                 _dctxt: any;
                 _el: HTMLElement;
-                _isDisabled: bool;
+                _isDisabled: boolean;
                 _lfTime: MOD.utils.LifeTimeScope;
                 _templateID: string;
                 _templElView: MOD.baseElView.TemplateElView;

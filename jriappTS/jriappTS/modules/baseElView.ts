@@ -6,7 +6,7 @@ module RIAPP {
             var ERRTEXT = RIAPP.localizable.VALIDATE;
 
             export class PropChangedCommand extends MOD.mvvm.Command {
-                constructor(fn_action: (sender:any, param: { property: string; }) => void , thisObj, fn_canExecute: (sender: any, param: { property: string; }) => bool) {
+                constructor(fn_action: (sender:any, param: { property: string; }) => void , thisObj, fn_canExecute: (sender: any, param: { property: string; }) => boolean) {
                     super(fn_action, thisObj, fn_canExecute);
                 }
             }
@@ -101,7 +101,7 @@ module RIAPP {
                     });
                     return tip.join('');
                 }
-                _setFieldError(isError:bool) {
+                _setFieldError(isError:boolean) {
                     var $el = this.$el;
                     if (isError) {
                         $el.addClass(css.fieldError);
@@ -124,7 +124,7 @@ module RIAPP {
                         this._setFieldError(false);
                     }
                 }
-                _onError(error, source):bool {
+                _onError(error, source):boolean {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
                         return global._onError(error, source);
@@ -209,7 +209,7 @@ module RIAPP {
                     super(app, el, options);
                 }
                 get isEnabled() { return !this.el.disabled; }
-                set isEnabled(v:bool) {
+                set isEnabled(v:boolean) {
                     v = !!v;
                     if (v !== this.isEnabled) {
                         this.el.disabled = !v;
@@ -293,7 +293,7 @@ module RIAPP {
                     return 'CommandElView';
                 }
                 get isEnabled() { return !(this.$el.prop('disabled')); }
-                set isEnabled(v:bool) {
+                set isEnabled(v:boolean) {
                     if (v !== this.isEnabled) {
                         this.$el.prop('disabled', !v);
                         if (!v)
@@ -316,14 +316,14 @@ module RIAPP {
 
             //typed parameters
             export class TemplateCommand extends MOD.mvvm.Command {
-                constructor(fn_action: (sender: TemplateElView, param: { template: template.Template; isLoaded: bool; }) => void , thisObj, fn_canExecute: (sender: TemplateElView, param: { template: template.Template; isLoaded: bool; }) => bool) {
+                constructor(fn_action: (sender: TemplateElView, param: { template: template.Template; isLoaded: boolean; }) => void , thisObj, fn_canExecute: (sender: TemplateElView, param: { template: template.Template; isLoaded: boolean; }) => boolean) {
                     super(fn_action, thisObj, fn_canExecute);
                 }
             }
 
             export class TemplateElView extends CommandElView {
                 _template: MOD.template.Template;
-                _isEnabled: bool;
+                _isEnabled: boolean;
                 constructor(app: Application, el: HTMLElement, options: IViewOptions) {
                     super(app, el, options);
                     this._template = null;
@@ -354,7 +354,7 @@ module RIAPP {
                     return 'TemplateElView';
                 }
                 get isEnabled() { return this._isEnabled; }
-                set isEnabled(v:bool) {
+                set isEnabled(v:boolean) {
                     if (this._isEnabled !== v) {
                         this._isEnabled = v;
                         if (!!this._template) {
@@ -370,7 +370,7 @@ module RIAPP {
                 _timeOut: number;
                 _loaderPath: string;
                 _$loader: any;
-                _isBusy: bool;
+                _isBusy: boolean;
                 constructor(app: Application, el: HTMLElement, options: IViewOptions) {
                     super(app, el, options);
                 }
@@ -526,7 +526,7 @@ module RIAPP {
             }
 
             export class CheckBoxElView extends InputElView {
-                _val: bool;
+                _val: boolean;
                 _init(options: IViewOptions) {
                     var self = this;
                     super._init(options);
@@ -536,7 +536,7 @@ module RIAPP {
                         self.checked = this.checked;
                     });
                 }
-                _setFieldError(isError:bool) {
+                _setFieldError(isError:boolean) {
                     var $el = this.$el;
                     if (isError) {
                         var span = global.$('<div></div>').addClass(css.fieldError);
@@ -578,7 +578,7 @@ module RIAPP {
             }
 
             export class CheckBoxThreeStateElView extends InputElView {
-                _val: bool;
+                _val: boolean;
                 _cbxVal: number;
                 _init(options: IViewOptions) {
                     var self = this;
@@ -605,7 +605,7 @@ module RIAPP {
                         self.checked = (self._cbxVal == 1) ? null : ((self._cbxVal == 2) ? true : false);
                     });
                 }
-                _setFieldError(isError: bool) {
+                _setFieldError(isError: boolean) {
                     var $el = this.$el;
                     if (isError) {
                         var span = global.$('<div></div>').addClass(css.fieldError);
@@ -652,7 +652,7 @@ module RIAPP {
             }
 
             export interface ITextBoxOptions extends IViewOptions {
-                updateOnKeyUp?: bool;
+                updateOnKeyUp?: boolean;
             }
 
             export class TextBoxElView extends InputElView {
@@ -682,7 +682,7 @@ module RIAPP {
                     var base_events = super._getEventNames();
                     return ['keypress'].concat(base_events);
                 }
-                addOnKeyPress(fn: (sender: TextBoxElView, args: { keyCode: number; value: string; isCancel: bool; }) => void , namespace?: string) {
+                addOnKeyPress(fn: (sender: TextBoxElView, args: { keyCode: number; value: string; isCancel: boolean; }) => void , namespace?: string) {
                     this.addHandler('keypress', fn, namespace);
                 }
                 removeOnKeyPress(namespace?: string) {
@@ -756,7 +756,7 @@ module RIAPP {
                     var base_events = super._getEventNames();
                     return ['keypress'].concat(base_events);
                 }
-                addOnKeyPress(fn: (sender: TextAreaElView, args: { keyCode: number; value: string; isCancel: bool; }) => void , namespace?: string) {
+                addOnKeyPress(fn: (sender: TextAreaElView, args: { keyCode: number; value: string; isCancel: boolean; }) => void , namespace?: string) {
                     this.addHandler('keypress', fn, namespace);
                 }
                 removeOnKeyPress(namespace?: string) {
@@ -785,7 +785,7 @@ module RIAPP {
                     }
                 }
                 get isEnabled() { return !this.el.disabled; }
-                set isEnabled(v: bool) {
+                set isEnabled(v: boolean) {
                     v = !!v;
                     if (v !== this.isEnabled) {
                         this.el.disabled = !v;
@@ -848,7 +848,7 @@ module RIAPP {
             }
 
             export class RadioElView extends InputElView {
-                _val: bool;
+                _val: boolean;
                 _init(options: IViewOptions) {
                     var self = this;
                     super._init(options);
@@ -876,7 +876,7 @@ module RIAPP {
                         }
                     });
                 }
-                _setFieldError(isError:bool) {
+                _setFieldError(isError:boolean) {
                     var $el = this.$el;
                     if (isError) {
                         var span = global.$('<div></div>').addClass(css.fieldError);
@@ -925,11 +925,11 @@ module RIAPP {
             }
 
             export interface IButtonOptions extends IViewOptions {
-                preventDefault?: bool;
+                preventDefault?: boolean;
             }
 
             export class ButtonElView extends CommandElView {
-                _preventDefault: bool;
+                _preventDefault: boolean;
                 constructor(app: Application, el: HTMLElement, options: IAncorOptions) {
                     this._preventDefault = false;
                     super(app, el, options);
@@ -1012,7 +1012,7 @@ module RIAPP {
                 get preventDefault() {
                     return this._preventDefault;
                 }
-                set preventDefault(v: bool) {
+                set preventDefault(v: boolean) {
                     if (this._preventDefault !== v) {
                         this._preventDefault = v;
                         this.raisePropertyChanged('preventDefault');
@@ -1027,7 +1027,7 @@ module RIAPP {
             export class AnchorElView extends CommandElView{
                 _imageSrc: string;
                 _image: HTMLImageElement;
-                _preventDefault: bool;
+                _preventDefault: boolean;
                 constructor(app: Application, el: HTMLAnchorElement, options: IAncorOptions) {
                     this._imageSrc = null;
                     this._image = null;
@@ -1161,7 +1161,7 @@ module RIAPP {
                 get preventDefault() {
                     return this._preventDefault;
                 }
-                set preventDefault(v:bool) {
+                set preventDefault(v:boolean) {
                     if (this._preventDefault !== v) {
                         this._preventDefault = v;
                         this.raisePropertyChanged('preventDefault');
@@ -1172,13 +1172,13 @@ module RIAPP {
             export interface IExpanderOptions {
                 expandedsrc?: string;
                 collapsedsrc?: string;
-                isExpanded?: bool;
+                isExpanded?: boolean;
             }
 
             export class ExpanderElView extends AnchorElView {
                 _expandedsrc: string;
                 _collapsedsrc: string;
-                _isExpanded: bool;
+                _isExpanded: boolean;
                 _init(options: IExpanderOptions) {
                     this._expandedsrc = options.expandedsrc || global.getImagePath('collapse.jpg');
                     this._collapsedsrc = options.collapsedsrc || global.getImagePath('expand.jpg');

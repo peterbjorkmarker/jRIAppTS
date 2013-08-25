@@ -478,7 +478,7 @@ module RIAPP
                 return this.load(ArrayHelper.distinct(ids), false);
             }
             //returns promise
-            load(ids:number[], isClearTable:bool) {
+            load(ids:number[], isClearTable:boolean) {
                 var query = this.dbSet.createReadAddressByIdsQuery({ addressIDs: ids });
                 //if true, previous data will be cleared when the new is loaded
                 query.isClearPrevData = isClearTable;
@@ -627,7 +627,7 @@ module RIAPP
                 return this.load(ArrayHelper.distinct(ids), false);
             }
            //returns promise
-            load(ids:number[], isClearTable:bool) {
+            load(ids:number[], isClearTable:boolean) {
                 var query = this.dbSet.createReadProductByIdsQuery({ productIDs: ids });
                 query.isClearPrevData = isClearTable;
                 return this.dbContext.load(query);
