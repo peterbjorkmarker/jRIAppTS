@@ -10497,7 +10497,7 @@ else {
                             __checkError(res.error, DATA_OPER.SUBMIT);
                         } catch (ex) {
                             res.dbSets.forEach(function (jsDB) {
-                                var eSet = self._dbSets[jsDB.dbSetName];
+                                var eSet = self._dbSets.getDbSet(jsDB.dbSetName);
                                 jsDB.rows.forEach(function (row) {
                                     var item = eSet.getItemByKey(row.clientKey);
                                     if (!item) {
@@ -10514,7 +10514,7 @@ else {
                         }
 
                         res.dbSets.forEach(function (jsDB) {
-                            self._dbSets[jsDB.dbSetName]._commitChanges(jsDB.rows);
+                            self._dbSets.getDbSet(jsDB.dbSetName)._commitChanges(jsDB.rows);
                         });
                     } catch (ex) {
                         if (RIAPP.global._checkIsDummy(ex)) {
