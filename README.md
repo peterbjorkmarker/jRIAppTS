@@ -77,8 +77,8 @@ The DataService now exposes two other methods to get XAML version of the metadat
 </p>
 <p>2013-07-30  Fix for nested dataform data binding - one dataform inside another dataform - and so on...</p>
 <p>2013-08-25  Updated files to be compilable with 0.9.1.1 version of the compiler</p>
-<p>2013-08-30  Last update in this version to be compilable with 0.9.1.1 version of the compiler. Next version
-will have larger generics support and published as a new branch.</p>
+<p>2013-08-30  Update of this version - <b>tested to work and to be compilable with 0.9.1.1 version of the compiler.</b><br/>
+The Next version will have generics support for collection classes and will be published as a new branch.</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 
