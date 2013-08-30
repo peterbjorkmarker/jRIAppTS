@@ -6651,14 +6651,14 @@ jQuery.fn.extend({
 		return showHide( this );
 	},
 	toggle: function( state, fn2 ) {
-		var bool = typeof state === "boolean";
+		var boolean = typeof state === "boolean";
 
 		if ( jQuery.isFunction( state ) && jQuery.isFunction( fn2 ) ) {
 			return eventsToggle.apply( this, arguments );
 		}
 
 		return this.each(function() {
-			if ( bool ? state : isHidden( this ) ) {
+			if ( boolean ? state : isHidden( this ) ) {
 				jQuery( this ).show();
 			} else {
 				jQuery( this ).hide();

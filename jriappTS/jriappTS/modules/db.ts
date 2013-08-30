@@ -475,7 +475,7 @@ module RIAPP {
                     var stz = this._serverTimezone, dcnv = fld.dateConversion, val = value;
                     if (!utils.check.isArray(val))
                         val = [value];
-                    var tmp = ArrayHelper.clone(val);
+                    var tmp = RIAPP.ArrayHelper.clone(val);
                     val = tmp.map(function (el) {
                         return valueUtils.stringifyValue(el, dcnv, stz);
                     });
@@ -2023,7 +2023,7 @@ module RIAPP {
                         }
                         catch (ex) {
                             res.dbSets.forEach(function (jsDB) {
-                                var eSet:DbSet = self._dbSets[jsDB.dbSetName];
+                                var eSet = self._dbSets.getDbSet(jsDB.dbSetName);
                                 jsDB.rows.forEach(function (row) {
                                     var item:collection.CollectionItem = eSet.getItemByKey(row.clientKey);
                                     if (!item) {
@@ -2040,7 +2040,7 @@ module RIAPP {
                         }
 
                         res.dbSets.forEach(function (jsDB) {
-                            self._dbSets[jsDB.dbSetName]._commitChanges(jsDB.rows);
+                            self._dbSets.getDbSet(jsDB.dbSetName)._commitChanges(jsDB.rows);
                         });
                     }
                     catch (ex) {
