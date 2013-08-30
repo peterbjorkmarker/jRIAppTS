@@ -1,4 +1,4 @@
-﻿export class {{DBSET_TYPE}} extends MOD.db.DbSet
+﻿export class {{DBSET_TYPE}} extends RIAPP.MOD.db.DbSet
 {
 	constructor(dbContext: DbContext) {
 		var self =this, opts: MOD.db.IDbSetConstuctorOptions = {

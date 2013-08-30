@@ -128,7 +128,8 @@ var RIAPP;
                 if (utils.check.isNt(path))
                     path = '';
                 if (!path)
-                    part = ''; else
+                    part = '';
+else
                     part = '\\' + path;
                 var parent = this._assoc.getParentItem(item);
                 if (!parent) {
@@ -397,4 +398,4 @@ var RIAPP;
     })(RIAPP.FILESDEMO || (RIAPP.FILESDEMO = {}));
     var FILESDEMO = RIAPP.FILESDEMO;
 })(RIAPP || (RIAPP = {}));
-//@ sourceMappingURL=filesDemo.js.map
+//# sourceMappingURL=filesDemo.js.map

@@ -1260,7 +1260,7 @@ module RIAPP {
                     }, data);
 
                     var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length,
-                        entityType = this._entityType, newItems = [], positions = [], created_items:Entity[] = [], fetchedItems = [],
+                        entityType = this._entityType, newItems:Entity[] = [], positions:number[] = [], created_items:Entity[] = [], fetchedItems:Entity[] = [],
                         isPagingEnabled = this.isPagingEnabled, RM = REFRESH_MODE.RefreshCurrent, query = this.query, clearAll = true, dataCache;
 
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
@@ -1320,17 +1320,17 @@ module RIAPP {
                         }
 
                         created_items.forEach(function (item) {
-                            var oldItem = this._itemsByKey[item._key];
+                            var oldItem = self._itemsByKey[item._key];
                             if (!oldItem) {
-                                this._items.push(item);
-                                this._itemsByKey[item._key] = item;
+                                self._items.push(item);
+                                positions.push(self._items.length - 1);
+                                self._itemsByKey[item._key] = item;
                                 newItems.push(item);
-                                positions.push(this._items.length - 1);
                                 fetchedItems.push(item);
                             }
                             else
                                 fetchedItems.push(oldItem);
-                        }, this);
+                        });
 
                         if (newItems.length > 0) {
                             this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
@@ -2023,7 +2023,7 @@ module RIAPP {
                         }
                         catch (ex) {
                             res.dbSets.forEach(function (jsDB) {
-                                var eSet = self._dbSets.getDbSet(jsDB.dbSetName);
+                                var eSet:DbSet = self._dbSets.getDbSet(jsDB.dbSetName);
                                 jsDB.rows.forEach(function (row) {
                                     var item:collection.CollectionItem = eSet.getItemByKey(row.clientKey);
                                     if (!item) {

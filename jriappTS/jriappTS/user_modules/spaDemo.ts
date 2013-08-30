@@ -699,7 +699,7 @@ module RIAPP
                 super._init(options);
                 var self = this;
                 this._lastLoadedID = null;
-                this._lookupSource = this.dbContext.dbSets.Product;
+                this._lookupSource = <DEMODB.ProductDb>this._getDbContext().getDbSet('Product');
                 this._lookupSource.addOnCollChanged(function (sender, args) {
                     self._updateValue();
                 }, self._objId);
@@ -734,7 +734,7 @@ module RIAPP
                         this._lastLoadedID = productID;
                         var query = this._lookupSource.createReadProductByIdsQuery({ productIDs: [productID] });
                         query.isClearPrevData = false;
-                        this.dbContext.load(query);
+                        query.load();
                     }
                 }
             }
@@ -758,13 +758,10 @@ module RIAPP
             }
             //overriden base property
             get currentSelection() {
-                if (!!this._dbSet.currentItem)
-                    return <number>this._dbSet.currentItem['ProductID'];
+                if (!!this.gridDataSource.currentItem)
+                    return <number>this.gridDataSource.currentItem['ProductID'];
                 else
                     return null;
-            }
-            get dbContext() {
-                return <DEMODB.DbContext>this._dbContext;
             }
         }
 

@@ -37,6 +37,7 @@ module RIAPP
             fieldName: string;
             dbSetName: string;
             queryName: string;
+            minTextLength: number;
             width?: any;
             height?: any;
         }
@@ -47,9 +48,9 @@ module RIAPP
             _dbSetName: string;
             _queryName: string;
             _template: MOD.template.Template;
-            _dbSet: MOD.db.DbSet;
+            _gridDataSource: MOD.collection.Collection;
             _prevText: string;
-            _selectedItem: MOD.db.Entity;
+            _selectedItem: MOD.collection.CollectionItem;
             _$dropDown: JQuery;
             _loadTimeout: any;
             _dataContext: any;
@@ -61,7 +62,8 @@ module RIAPP
             _lookupGrid: MOD.datagrid.DataGrid;
             _btnOk: HTMLElement;
             _btnCancel: HTMLElement;
-            _dbContext: MOD.db.DbContext;
+            _dbContextName: string;
+            _minTextLength: number;
 
             _init(options: IAutocompleteOptions) {
                 var self = this;
@@ -71,9 +73,10 @@ module RIAPP
                 this._fieldName = options.fieldName;
                 this._dbSetName = options.dbSetName;
                 this._queryName = options.queryName;
-                this._dbContext = this.app.getObject(options.dbContext);
+                this._dbContextName = options.dbContext;
+                this._minTextLength = (!!options.minTextLength)? options.minTextLength: 1;
                 this._template = null;
-                this._dbSet = null;
+                this._gridDataSource = null;
                 this._prevText = null;
                 this._selectedItem = null;
                 this._template = null;
@@ -101,7 +104,7 @@ module RIAPP
                 });
 
                 this._isOpen = false;
-                this._createDbSet();
+                this._createGridDataSource();
                 this._template = this._createTemplate();
                 this._$dropDown = global.$(global.document.createElement("div"));
                 this._$dropDown.css({
@@ -147,11 +150,18 @@ module RIAPP
                 else
                     return null;
             }
-            _createDbSet() {
-                this._dbSet = this.dbContext.dbSets[this._dbSetName];
-                if (!this._dbSet) {
+            _createGridDataSource() {
+                this._gridDataSource = this._getDbContext().getDbSet(this._dbSetName);
+                if (!this._gridDataSource) {
                     throw new Error(utils.format('dbContext does not contain dbSet with the name: {0}', this._dbSetName))
                 }
+            }
+            _getDbContext() {
+                var dbContext: MOD.db.DbContext = this.app.getObject(this._dbContextName);
+                if (!dbContext) {
+                    throw new Error(utils.format('dbContext with the name: {0} is not registered', this._dbContextName))
+                }
+                return dbContext;
             }
             _getEventNames() {
                 var base_events = super._getEventNames();
@@ -165,7 +175,7 @@ module RIAPP
             _onTextChange(text:string) {
                 var self = this;
                 clearTimeout(this._loadTimeout);
-                if (!!text && text.length > 1) {
+                if (!!text && text.length >= self._minTextLength) {
                     this._loadTimeout = setTimeout(function () {
                         if (self._isDestroyCalled)
                             return;
@@ -178,6 +188,8 @@ module RIAPP
                         }
                     }, 500);
                 }
+                else
+                    self.gridDataSource.clear();
             }
             _onKeyPress(keyCode:number) {
                 if (keyCode === global.consts.KEYS.esc) {
@@ -258,14 +270,14 @@ module RIAPP
                 this._onHide();
             }
             load(str:string) {
-                var self = this, query = this.dbSet.createQuery(this._queryName);
+                var self = this, query = (<MOD.db.DbSet>this.gridDataSource).createQuery(this._queryName);
                 query.pageSize = 50;
                 query.isClearPrevData = true;
                 addTextQuery(query, this._fieldName, str + '%');
                 query.orderBy(this._fieldName, 'ASC');
                 this._isLoading = true;
                 this.raisePropertyChanged('isLoading');
-                this.dbContext.load(query).always(function () {
+                query.load().always(function (res) {
                     self._isLoading = false;
                     self.raisePropertyChanged('isLoading');
                 });
@@ -284,19 +296,16 @@ module RIAPP
                     this._template = null;
                     this._$dropDown = null;
                 }
-                this._dbSet = null;
+                this._gridDataSource = null;
                 this._dataContext = null;
                 super.destroy();
-            }
-            get dbContext() {
-                return this._dbContext;
             }
             //field name for lookup in dbSet
             get fieldName() { return this._fieldName; }
             get templateId() { return this._templateId; }
             get currentSelection() {
-                if (this._dbSet.currentItem)
-                    return this._dbSet.currentItem[this._fieldName];
+                if (this._gridDataSource.currentItem)
+                    return this._gridDataSource.currentItem[this._fieldName];
                 else
                     return null;
             }
@@ -311,7 +320,7 @@ module RIAPP
                 }
             }
             //dbSet for a datagrid's dataSource (for lookup values)
-            get dbSet() { return this._dbSet; }
+            get gridDataSource() { return this._gridDataSource; }
             get value() {
                 var el = this.el;
                 if (!el)

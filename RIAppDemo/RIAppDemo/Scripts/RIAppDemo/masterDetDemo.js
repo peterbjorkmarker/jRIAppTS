@@ -87,6 +87,7 @@ var RIAPP;
 
                 //it is not needed here, but can be used when we want to respond to the tabs events
                 this._tabsEventCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
+                    //alert(param.eventName);
                 }, self, null);
 
                 //the property watcher helps us handling properties changes
@@ -824,7 +825,8 @@ var RIAPP;
                 get: //overriden base property
                 function () {
                     if (!!this.gridDataSource.currentItem)
-                        return this.gridDataSource.currentItem['ProductID']; else
+                        return this.gridDataSource.currentItem['ProductID'];
+else
                         return null;
                 },
                 enumerable: true,
@@ -954,7 +956,8 @@ var RIAPP;
                 this._dbContext.initialize({ serviceUrl: options.service_url, permissions: options.permissionInfo });
                 function toText(str) {
                     if (str === null)
-                        return ''; else
+                        return '';
+else
                         return str;
                 }
                 ;
@@ -1079,4 +1082,4 @@ var RIAPP;
     })(RIAPP.MDETDEMO || (RIAPP.MDETDEMO = {}));
     var MDETDEMO = RIAPP.MDETDEMO;
 })(RIAPP || (RIAPP = {}));
-//@ sourceMappingURL=masterDetDemo.js.map
+//# sourceMappingURL=masterDetDemo.js.map

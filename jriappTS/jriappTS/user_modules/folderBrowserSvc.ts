@@ -8,7 +8,7 @@ module RIAPP
         export interface ISvcMethods {
         }
 
-        export interface IFileSystemObject extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface IFileSystemObject extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             Key: string;
             ParentKey: string;
             Name: string;
@@ -24,7 +24,7 @@ module RIAPP
             _dbSet: FileSystemObjectDb;
         }
 
-        export class FileSystemObject extends MOD.db.Entity implements IFileSystemObject {
+        export class FileSystemObject extends RIAPP.MOD.db.Entity implements IFileSystemObject {
             get Key() { return <string>this._getFieldVal('Key'); }
             get ParentKey() { return <string>this._getFieldVal('ParentKey'); }
             get Name() { return <string>this._getFieldVal('Name'); }
@@ -48,7 +48,7 @@ module RIAPP
             }
         }
 
-        export class FileSystemObjectDb extends MOD.db.DbSet {
+        export class FileSystemObjectDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -119,7 +119,7 @@ module RIAPP
         }
 
 
-        export class DbSets extends MOD.db.DbSets {
+        export class DbSets extends RIAPP.MOD.db.DbSets {
             constructor(dbContext: DbContext) {
                 super(dbContext);
                 this._dbSetNames = ["FileSystemObject"];
@@ -130,7 +130,7 @@ module RIAPP
 
         }
 
-        export class DbContext extends MOD.db.DbContext {
+        export class DbContext extends RIAPP.MOD.db.DbContext {
             _initDbSets() {
                 super._initDbSets();
                 this._dbSets = new DbSets(this);

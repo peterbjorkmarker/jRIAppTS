@@ -1,13 +1,13 @@
+/// <reference path="..\jriapp.ts"/>
+/// <reference path="..\modules\db.ts"/>
+/// <reference path="..\modules\template.ts"/>
+/// <reference path="..\modules\datagrid.ts"/>
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-/// <reference path="..\jriapp.ts"/>
-/// <reference path="..\modules\db.ts"/>
-/// <reference path="..\modules\template.ts"/>
-/// <reference path="..\modules\datagrid.ts"/>
 var RIAPP;
 (function (RIAPP) {
     (function (AUTOCOMPLETE) {
@@ -113,13 +113,15 @@ var RIAPP;
                 //look by data-name attribute value
                 var arr = this._template.findElViewsByDataName(name);
                 if (!!arr && arr.length > 0)
-                    return arr[0]; else
+                    return arr[0];
+else
                     return null;
             };
             AutoCompleteElView.prototype._findElemInTemplate = function (name) {
                 var arr = this._template.findElByDataName(name);
                 if (!!arr && arr.length > 0)
-                    return arr[0]; else
+                    return arr[0];
+else
                     return null;
             };
             AutoCompleteElView.prototype._createGridDataSource = function () {
@@ -290,7 +292,8 @@ var RIAPP;
             Object.defineProperty(AutoCompleteElView.prototype, "currentSelection", {
                 get: function () {
                     if (this._gridDataSource.currentItem)
-                        return this._gridDataSource.currentItem[this._fieldName]; else
+                        return this._gridDataSource.currentItem[this._fieldName];
+else
                         return null;
                 },
                 enumerable: true,
@@ -366,4 +369,4 @@ var RIAPP;
     })(RIAPP.AUTOCOMPLETE || (RIAPP.AUTOCOMPLETE = {}));
     var AUTOCOMPLETE = RIAPP.AUTOCOMPLETE;
 })(RIAPP || (RIAPP = {}));
-//@ sourceMappingURL=autocomplete.js.map
+//# sourceMappingURL=autocomplete.js.map

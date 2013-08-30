@@ -1,13 +1,13 @@
+/// <reference path="..\jriapp.ts"/>
+/// <reference path="common.ts"/>
+/// <reference path="autocomplete.ts"/>
+/// <reference path="demoDB.ts"/>
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-/// <reference path="..\jriapp.ts"/>
-/// <reference path="common.ts"/>
-/// <reference path="autocomplete.ts"/>
-/// <reference path="demoDB.ts"/>
 var RIAPP;
 (function (RIAPP) {
     (function (SPADEMO) {
@@ -279,6 +279,7 @@ var RIAPP;
 
                 //it is not needed here, but can be used when we want to respond to the tabs events
                 this._tabsEventCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
+                    //alert(param.eventName);
                 }, self, null);
 
                 this._switchViewCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
@@ -1088,7 +1089,8 @@ var RIAPP;
                 get: //overriden base property
                 function () {
                     if (!!this.gridDataSource.currentItem)
-                        return this.gridDataSource.currentItem['ProductID']; else
+                        return this.gridDataSource.currentItem['ProductID'];
+else
                         return null;
                 },
                 enumerable: true,
@@ -1856,7 +1858,8 @@ var RIAPP;
                 this._dbContext.initialize({ serviceUrl: options.service_url, permissions: options.permissionInfo });
                 function toText(str) {
                     if (str === null)
-                        return ''; else
+                        return '';
+else
                         return str;
                 }
                 ;
@@ -2014,4 +2017,4 @@ var RIAPP;
     })(RIAPP.SPADEMO || (RIAPP.SPADEMO = {}));
     var SPADEMO = RIAPP.SPADEMO;
 })(RIAPP || (RIAPP = {}));
-//@ sourceMappingURL=spaDemo.js.map
+//# sourceMappingURL=spaDemo.js.map

@@ -1,4 +1,4 @@
-﻿export class DbSets extends MOD.db.DbSets{
+﻿export class DbSets extends RIAPP.MOD.db.DbSets{
 	constructor(dbContext:DbContext) {
 		super(dbContext);
 		this._dbSetNames = {{DBSETS_NAMES}};
@@ -7,7 +7,7 @@
 {{DBSETS_PROPS}}
 }
 
-export class DbContext extends MOD.db.DbContext
+export class DbContext extends RIAPP.MOD.db.DbContext
 {
 	_initDbSets(){
 		super._initDbSets();

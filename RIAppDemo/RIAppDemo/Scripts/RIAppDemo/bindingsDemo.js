@@ -19,12 +19,14 @@ var RIAPP;
             }
             UppercaseConverter.prototype.convertToSource = function (val, param, dataContext) {
                 if (utils.check.isString(val))
-                    return val.toLowerCase(); else
+                    return val.toLowerCase();
+else
                     return val;
             };
             UppercaseConverter.prototype.convertToTarget = function (val, param, dataContext) {
                 if (utils.check.isString(val))
-                    return val.toUpperCase(); else
+                    return val.toUpperCase();
+else
                     return val;
             };
             return UppercaseConverter;
@@ -238,4 +240,4 @@ var RIAPP;
     })(RIAPP.BINDDEMO || (RIAPP.BINDDEMO = {}));
     var BINDDEMO = RIAPP.BINDDEMO;
 })(RIAPP || (RIAPP = {}));
-//@ sourceMappingURL=bindingsDemo.js.map
+//# sourceMappingURL=bindingsDemo.js.map

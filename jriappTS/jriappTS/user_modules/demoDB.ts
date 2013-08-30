@@ -12,7 +12,7 @@ module RIAPP
             }) => IPromise<string>;
         }
 
-        export interface ICustomer extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface ICustomer extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             CustomerID: number;
             NameStyle: boolean;
             Title: string;
@@ -36,7 +36,7 @@ module RIAPP
             _dbSet: CustomerDb;
         }
 
-        export class Customer extends MOD.db.Entity implements ICustomer {
+        export class Customer extends RIAPP.MOD.db.Entity implements ICustomer {
             get CustomerID() { return <number>this._getFieldVal('CustomerID'); }
             get NameStyle() { return <boolean>this._getFieldVal('NameStyle'); }
             set NameStyle(v: boolean) { this._setFieldVal('NameStyle', v); }
@@ -77,7 +77,7 @@ module RIAPP
             }
         }
 
-        export class CustomerDb extends MOD.db.DbSet {
+        export class CustomerDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -133,7 +133,7 @@ module RIAPP
             }
         }
 
-        export interface ICustomerAddress extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface ICustomerAddress extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             CustomerID: number;
             AddressID: number;
             AddressType: string;
@@ -148,7 +148,7 @@ module RIAPP
             _dbSet: CustomerAddressDb;
         }
 
-        export class CustomerAddress extends MOD.db.Entity implements ICustomerAddress {
+        export class CustomerAddress extends RIAPP.MOD.db.Entity implements ICustomerAddress {
             get CustomerID() { return <number>this._getFieldVal('CustomerID'); }
             set CustomerID(v: number) { this._setFieldVal('CustomerID', v); }
             get AddressID() { return <number>this._getFieldVal('AddressID'); }
@@ -176,7 +176,7 @@ module RIAPP
             }
         }
 
-        export class CustomerAddressDb extends MOD.db.DbSet {
+        export class CustomerAddressDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -234,7 +234,7 @@ module RIAPP
             }
         }
 
-        export interface IAddress extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface IAddress extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             AddressID: number;
             AddressLine1: string;
             AddressLine2: string;
@@ -251,7 +251,7 @@ module RIAPP
             _dbSet: AddressDb;
         }
 
-        export class Address extends MOD.db.Entity implements IAddress {
+        export class Address extends RIAPP.MOD.db.Entity implements IAddress {
             get AddressID() { return <number>this._getFieldVal('AddressID'); }
             get AddressLine1() { return <string>this._getFieldVal('AddressLine1'); }
             set AddressLine1(v: string) { this._setFieldVal('AddressLine1', v); }
@@ -281,7 +281,7 @@ module RIAPP
             }
         }
 
-        export class AddressDb extends MOD.db.DbSet {
+        export class AddressDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -339,7 +339,7 @@ module RIAPP
             }
         }
 
-        export interface IProduct extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface IProduct extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             ProductID: number;
             Name: string;
             ProductNumber: string;
@@ -364,7 +364,7 @@ module RIAPP
             _dbSet: ProductDb;
         }
 
-        export class Product extends MOD.db.Entity implements IProduct {
+        export class Product extends RIAPP.MOD.db.Entity implements IProduct {
             get ProductID() { return <number>this._getFieldVal('ProductID'); }
             get Name() { return <string>this._getFieldVal('Name'); }
             set Name(v: string) { this._setFieldVal('Name', v); }
@@ -409,7 +409,7 @@ module RIAPP
             }
         }
 
-        export class ProductDb extends MOD.db.DbSet {
+        export class ProductDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -473,7 +473,7 @@ module RIAPP
             }
         }
 
-        export interface IProductModel extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface IProductModel extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             ProductModelID: number;
             Name: string;
 
@@ -482,7 +482,7 @@ module RIAPP
             _dbSet: ProductModelDb;
         }
 
-        export class ProductModel extends MOD.db.Entity implements IProductModel {
+        export class ProductModel extends RIAPP.MOD.db.Entity implements IProductModel {
             get ProductModelID() { return <number>this._getFieldVal('ProductModelID'); }
             get Name() { return <string>this._getFieldVal('Name'); }
             set Name(v: string) { this._setFieldVal('Name', v); }
@@ -499,7 +499,7 @@ module RIAPP
             }
         }
 
-        export class ProductModelDb extends MOD.db.DbSet {
+        export class ProductModelDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -550,7 +550,7 @@ module RIAPP
             }
         }
 
-        export interface ISalesOrderHeader extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface ISalesOrderHeader extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             SalesOrderID: number;
             RevisionNumber: number;
             OrderDate: Date;
@@ -583,7 +583,7 @@ module RIAPP
             _dbSet: SalesOrderHeaderDb;
         }
 
-        export class SalesOrderHeader extends MOD.db.Entity implements ISalesOrderHeader {
+        export class SalesOrderHeader extends RIAPP.MOD.db.Entity implements ISalesOrderHeader {
             get SalesOrderID() { return <number>this._getFieldVal('SalesOrderID'); }
             get RevisionNumber() { return <number>this._getFieldVal('RevisionNumber'); }
             get OrderDate() { return <Date>this._getFieldVal('OrderDate'); }
@@ -637,7 +637,7 @@ module RIAPP
             }
         }
 
-        export class SalesOrderHeaderDb extends MOD.db.DbSet {
+        export class SalesOrderHeaderDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -688,7 +688,7 @@ module RIAPP
             }
         }
 
-        export interface ISalesOrderDetail extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface ISalesOrderDetail extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             SalesOrderID: number;
             SalesOrderDetailID: number;
             OrderQty: number;
@@ -706,7 +706,7 @@ module RIAPP
             _dbSet: SalesOrderDetailDb;
         }
 
-        export class SalesOrderDetail extends MOD.db.Entity implements ISalesOrderDetail {
+        export class SalesOrderDetail extends RIAPP.MOD.db.Entity implements ISalesOrderDetail {
             get SalesOrderID() { return <number>this._getFieldVal('SalesOrderID'); }
             set SalesOrderID(v: number) { this._setFieldVal('SalesOrderID', v); }
             get SalesOrderDetailID() { return <number>this._getFieldVal('SalesOrderDetailID'); }
@@ -736,7 +736,7 @@ module RIAPP
             }
         }
 
-        export class SalesOrderDetailDb extends MOD.db.DbSet {
+        export class SalesOrderDetailDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -787,7 +787,7 @@ module RIAPP
             }
         }
 
-        export interface IProductCategory extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface IProductCategory extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             ProductCategoryID: number;
             ParentProductCategoryID: number;
             Name: string;
@@ -799,7 +799,7 @@ module RIAPP
             _dbSet: ProductCategoryDb;
         }
 
-        export class ProductCategory extends MOD.db.Entity implements IProductCategory {
+        export class ProductCategory extends RIAPP.MOD.db.Entity implements IProductCategory {
             get ProductCategoryID() { return <number>this._getFieldVal('ProductCategoryID'); }
             get ParentProductCategoryID() { return <number>this._getFieldVal('ParentProductCategoryID'); }
             set ParentProductCategoryID(v: number) { this._setFieldVal('ParentProductCategoryID', v); }
@@ -822,7 +822,7 @@ module RIAPP
             }
         }
 
-        export class ProductCategoryDb extends MOD.db.DbSet {
+        export class ProductCategoryDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -873,7 +873,7 @@ module RIAPP
             }
         }
 
-        export interface ISalesInfo extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface ISalesInfo extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             SalesPerson: string;
 
             getDbContext(): DbContext;
@@ -881,7 +881,7 @@ module RIAPP
             _dbSet: SalesInfoDb;
         }
 
-        export class SalesInfo extends MOD.db.Entity implements ISalesInfo {
+        export class SalesInfo extends RIAPP.MOD.db.Entity implements ISalesInfo {
             get SalesPerson() { return <string>this._getFieldVal('SalesPerson'); }
             set SalesPerson(v: string) { this._setFieldVal('SalesPerson', v); }
 
@@ -897,7 +897,7 @@ module RIAPP
             }
         }
 
-        export class SalesInfoDb extends MOD.db.DbSet {
+        export class SalesInfoDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -948,7 +948,7 @@ module RIAPP
             }
         }
 
-        export interface ILookUpProduct extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface ILookUpProduct extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             ProductID: number;
             Name: string;
 
@@ -957,7 +957,7 @@ module RIAPP
             _dbSet: LookUpProductDb;
         }
 
-        export class LookUpProduct extends MOD.db.Entity implements ILookUpProduct {
+        export class LookUpProduct extends RIAPP.MOD.db.Entity implements ILookUpProduct {
             get ProductID() { return <number>this._getFieldVal('ProductID'); }
             set ProductID(v: number) { this._setFieldVal('ProductID', v); }
             get Name() { return <string>this._getFieldVal('Name'); }
@@ -975,7 +975,7 @@ module RIAPP
             }
         }
 
-        export class LookUpProductDb extends MOD.db.DbSet {
+        export class LookUpProductDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -1026,7 +1026,7 @@ module RIAPP
             }
         }
 
-        export interface IAddressInfo extends MOD.utils.IEditable, MOD.utils.ISubmittable {
+        export interface IAddressInfo extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             AddressID: number;
             AddressLine1: string;
             City: string;
@@ -1039,7 +1039,7 @@ module RIAPP
             _dbSet: AddressInfoDb;
         }
 
-        export class AddressInfo extends MOD.db.Entity implements IAddressInfo {
+        export class AddressInfo extends RIAPP.MOD.db.Entity implements IAddressInfo {
             get AddressID() { return <number>this._getFieldVal('AddressID'); }
             get AddressLine1() { return <string>this._getFieldVal('AddressLine1'); }
             get City() { return <string>this._getFieldVal('City'); }
@@ -1059,7 +1059,7 @@ module RIAPP
             }
         }
 
-        export class AddressInfoDb extends MOD.db.DbSet {
+        export class AddressInfoDb extends RIAPP.MOD.db.DbSet {
             constructor(dbContext: DbContext) {
                 var self = this, opts: MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
@@ -1122,7 +1122,7 @@ module RIAPP
         }
 
 
-        export class DbSets extends MOD.db.DbSets {
+        export class DbSets extends RIAPP.MOD.db.DbSets {
             constructor(dbContext: DbContext) {
                 super(dbContext);
                 this._dbSetNames = ["Customer", "CustomerAddress", "Address", "Product", "ProductModel", "SalesOrderHeader", "SalesOrderDetail", "ProductCategory", "SalesInfo", "LookUpProduct", "AddressInfo"];
@@ -1153,7 +1153,7 @@ module RIAPP
 
         }
 
-        export class DbContext extends MOD.db.DbContext {
+        export class DbContext extends RIAPP.MOD.db.DbContext {
             _initDbSets() {
                 super._initDbSets();
                 this._dbSets = new DbSets(this);
@@ -1166,6 +1166,5 @@ module RIAPP
             get dbSets() { return <DbSets>this._dbSets; }
             get serviceMethods() { return <ISvcMethods>this._svcMethods; }
         }
-
     }
 }

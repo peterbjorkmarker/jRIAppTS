@@ -917,7 +917,8 @@ var RIAPP;
                 this._dbContext.initialize({ serviceUrl: options.service_url, permissions: options.permissionInfo });
                 function toText(str) {
                     if (str === null)
-                        return ''; else
+                        return '';
+else
                         return str;
                 }
                 ;
@@ -1038,4 +1039,4 @@ var RIAPP;
     })(RIAPP.MTMDEMO || (RIAPP.MTMDEMO = {}));
     var MTMDEMO = RIAPP.MTMDEMO;
 })(RIAPP || (RIAPP = {}));
-//@ sourceMappingURL=manToManDemo.js.map
+//# sourceMappingURL=manToManDemo.js.map

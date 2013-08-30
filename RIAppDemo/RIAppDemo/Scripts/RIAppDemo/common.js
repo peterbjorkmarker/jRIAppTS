@@ -96,7 +96,8 @@ var RIAPP;
                     var $el = this.$el;
                     var x = $el.text();
                     if (v === null)
-                        v = ''; else
+                        v = '';
+else
                         v = '' + v;
                     if (x !== v) {
                         $el.text(v);
@@ -117,7 +118,8 @@ var RIAPP;
                         return;
                     var x = this.$el.prop('href');
                     if (v === null)
-                        v = ''; else
+                        v = '';
+else
                         v = '' + v;
                     if (x !== v) {
                         this.$el.prop('href', v);
@@ -134,7 +136,8 @@ var RIAPP;
                 set: function (v) {
                     var x = this._id;
                     if (v === null)
-                        v = ''; else
+                        v = '';
+else
                         v = '' + v;
                     if (x !== v) {
                         this._id = v;
@@ -201,7 +204,8 @@ var RIAPP;
                     var el = this.$el;
                     var x = el.prop('src');
                     if (v === null)
-                        v = ''; else
+                        v = '';
+else
                         v = '' + v;
                     if (x !== v) {
                         el.prop('src', v);
@@ -218,12 +222,14 @@ var RIAPP;
                 set: function (v) {
                     var x = this._id;
                     if (v === null)
-                        v = ''; else
+                        v = '';
+else
                         v = '' + v;
                     if (x !== v) {
                         this._id = v;
                         if (!this._id)
-                            this.src = null; else
+                            this.src = null;
+else
                             this.src = this._baseUri + '/' + this._id;
                         this.raisePropertyChanged('id');
                     }
@@ -258,11 +264,16 @@ var RIAPP;
                         }
 
                         if (self.error instanceof RIAPP.MOD.db.AccessDeniedError)
-                            self.title = "ACCESS DENIED"; else if (self.error instanceof RIAPP.MOD.db.ConcurrencyError)
-                            self.title = "CONCURRENCY ERROR"; else if (self.error instanceof RIAPP.MOD.binding.ValidationError)
-                            self.title = "VALIDATION ERROR"; else if (self.error instanceof RIAPP.MOD.db.SvcValidationError)
-                            self.title = "VALIDATION ERROR"; else if (self.error instanceof RIAPP.MOD.db.DataOperationError)
-                            self.title = "DATA OPERATION ERROR"; else
+                            self.title = "ACCESS DENIED";
+else if (self.error instanceof RIAPP.MOD.db.ConcurrencyError)
+                            self.title = "CONCURRENCY ERROR";
+else if (self.error instanceof RIAPP.MOD.binding.ValidationError)
+                            self.title = "VALIDATION ERROR";
+else if (self.error instanceof RIAPP.MOD.db.SvcValidationError)
+                            self.title = "VALIDATION ERROR";
+else if (self.error instanceof RIAPP.MOD.db.DataOperationError)
+                            self.title = "DATA OPERATION ERROR";
+else
                             self.title = "UNEXPECTED ERROR";
 
                         self.message = (!self.error.message) ? ('' + self.error) : self.error.message;
@@ -348,4 +359,4 @@ var RIAPP;
     })(RIAPP.COMMON || (RIAPP.COMMON = {}));
     var COMMON = RIAPP.COMMON;
 })(RIAPP || (RIAPP = {}));
-//@ sourceMappingURL=common.js.map
+//# sourceMappingURL=common.js.map

@@ -206,4 +206,4 @@ var RIAPP;
     })(RIAPP.COLLDEMO || (RIAPP.COLLDEMO = {}));
     var COLLDEMO = RIAPP.COLLDEMO;
 })(RIAPP || (RIAPP = {}));
-//@ sourceMappingURL=collectionDemo.js.map
+//# sourceMappingURL=collectionDemo.js.map

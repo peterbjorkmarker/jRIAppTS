@@ -241,4 +241,4 @@ var RIAPP;
     })(RIAPP.FOLDERBROWSER_SVC || (RIAPP.FOLDERBROWSER_SVC = {}));
     var FOLDERBROWSER_SVC = RIAPP.FOLDERBROWSER_SVC;
 })(RIAPP || (RIAPP = {}));
-//@ sourceMappingURL=folderBrowserSvc.js.map
+//# sourceMappingURL=folderBrowserSvc.js.map

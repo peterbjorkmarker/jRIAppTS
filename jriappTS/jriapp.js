@@ -9769,16 +9769,16 @@ else
                         }
 
                         created_items.forEach(function (item) {
-                            var oldItem = this._itemsByKey[item._key];
+                            var oldItem = self._itemsByKey[item._key];
                             if (!oldItem) {
-                                this._items.push(item);
-                                this._itemsByKey[item._key] = item;
+                                self._items.push(item);
+                                positions.push(self._items.length - 1);
+                                self._itemsByKey[item._key] = item;
                                 newItems.push(item);
-                                positions.push(this._items.length - 1);
                                 fetchedItems.push(item);
                             } else
                                 fetchedItems.push(oldItem);
-                        }, this);
+                        });
 
                         if (newItems.length > 0) {
                             this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });

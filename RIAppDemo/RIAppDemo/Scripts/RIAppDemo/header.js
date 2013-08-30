@@ -58,7 +58,8 @@ var RIAPP;
                     return;
                 if (!!this._$contentPanel) {
                     if (isUp)
-                        this._$contentPanel.height(this._contentPanelHeight); else
+                        this._$contentPanel.height(this._contentPanelHeight);
+else
                         this._$contentPanel.height(this._contentPanelHeight - this._$topPanel.outerHeight());
                 }
             };
@@ -95,4 +96,4 @@ var RIAPP;
     })(RIAPP.HEADER || (RIAPP.HEADER = {}));
     var HEADER = RIAPP.HEADER;
 })(RIAPP || (RIAPP = {}));
-//@ sourceMappingURL=header.js.map
+//# sourceMappingURL=header.js.map

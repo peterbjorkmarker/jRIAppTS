@@ -341,6 +341,7 @@ var RIAPP;
                 //an example of getting notifications in viewmodel on the tabs events
                 this._tabsEventCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     var index = param.args.index, tab = param.args.tab, panel = param.args.panel;
+                    //alert('event: '+ param.eventName + ' was triggered on tab: '+index);
                 }, self, null);
 
                 //adds new product - uses dialog to enter the data
@@ -348,6 +349,8 @@ var RIAPP;
                     //grid will show the edit dialog, because we set grid options isHandleAddNew:true
                     //see the options for the grid on the HTML demo page
                     var item = self._dbSet.addNew();
+                    //P.S. - grids editor options also has submitOnOK:true, which means
+                    //on clicking OK button all changes are submitted to the service
                 }, self, function (sender, param) {
                     return true;
                 });
@@ -396,6 +399,8 @@ var RIAPP;
                     });
 
                     promise.fail(function () {
+                        //do something on fail if you need
+                        //but the error message display is automatically shown
                     });
                 }, self, function (sender, param) {
                     //just for the test: this command can be executed only when this condition is true!
@@ -437,6 +442,8 @@ var RIAPP;
                 this._productSelected(row.item, row.isSelected);
             };
             ProductViewModel.prototype._onGridRowExpanded = function (oldRow, row, isExpanded) {
+                //just for example
+                //we could retrieve additional data from the server when grid's row is expanded
             };
             ProductViewModel.prototype._onCurrentChanged = function () {
                 this.raisePropertyChanged('currentItem');
@@ -936,7 +943,8 @@ var RIAPP;
                 this._dbContext.initialize({ serviceUrl: options.service_url, permissions: options.permissionInfo });
                 function toText(str) {
                     if (str === null)
-                        return ''; else
+                        return '';
+else
                         return str;
                 }
                 ;
@@ -1077,6 +1085,15 @@ var RIAPP;
             })()));
 
             thisApp.startUp(function (app) {
+                /*
+                //example of how to do ajax calls to load lookups - first load lookups, then load products
+                //at the end it displays in an alert out of band data returned from the server (see ReadProduct data service method)
+                
+                thisApp.productVM.filter.load().pipe(function()
+                {
+                return thisApp.productVM.load();}
+                ).pipe(function(data: MOD.db.ILoadResult){alert( data.outOfBandData.test);},function(){alert('load failed');});
+                */
             });
         });
 
@@ -1107,4 +1124,4 @@ var RIAPP;
     })(RIAPP.GRIDDEMO || (RIAPP.GRIDDEMO = {}));
     var GRIDDEMO = RIAPP.GRIDDEMO;
 })(RIAPP || (RIAPP = {}));
-//@ sourceMappingURL=gridDemo.js.map
+//# sourceMappingURL=gridDemo.js.map

@@ -117,7 +117,7 @@ namespace RIAPP.DataService.Utils
                     fieldType = "number[]";
                     break;
                 case DataType.Bool:
-                    fieldType = "bool";
+                    fieldType = "boolean";
                     break;
                 case DataType.DateTime:
                 case DataType.Date:
