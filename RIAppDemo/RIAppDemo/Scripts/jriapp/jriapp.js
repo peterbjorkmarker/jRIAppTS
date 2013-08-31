@@ -5315,9 +5315,6 @@ var RIAPP;
                 COLL_CHANGE_TYPE: { REMOVE: '0', ADDED: '1', RESET: '2', REMAP_KEY: '3' }
             };
             var DATA_TYPE = collection.consts.DATA_TYPE, COLL_CHANGE_TYPE = collection.consts.COLL_CHANGE_TYPE, valueUtils = RIAPP.MOD.utils.valueUtils;
-            ;
-
-            ;
 
             var CollectionItem = (function (_super) {
                 __extends(CollectionItem, _super);
@@ -5710,9 +5707,6 @@ var RIAPP;
                 return CollectionItem;
             })(RIAPP.BaseObject);
             collection.CollectionItem = CollectionItem;
-            ;
-
-            ;
 
             var Collection = (function (_super) {
                 __extends(Collection, _super);

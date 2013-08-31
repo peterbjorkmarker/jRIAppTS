@@ -11,7 +11,7 @@ module RIAPP {
                 COLL_CHANGE_TYPE: { REMOVE: '0', ADDED: '1', RESET: '2', REMAP_KEY: '3' },
             };
            var DATA_TYPE = consts.DATA_TYPE, COLL_CHANGE_TYPE = consts.COLL_CHANGE_TYPE, valueUtils = MOD.utils.valueUtils;
-           export interface IPermissions { canAddRow: boolean; canEditRow: boolean; canDeleteRow: boolean; canRefreshRow: boolean; };
+           export interface IPermissions { canAddRow: boolean; canEditRow: boolean; canDeleteRow: boolean; canRefreshRow: boolean; }
            export interface IFieldInfo {
                isPrimaryKey: number;
                isRowTimeStamp: boolean;
@@ -31,7 +31,7 @@ module RIAPP {
                isNavigation: boolean;
                fieldName: string;
                dependents?: string[];
-           };
+           }
 
            export class CollectionItem extends RIAPP.BaseObject implements binding.IErrorNotification, MOD.utils.IEditable, MOD.utils.ISubmittable {
                 _fkey: string;
@@ -383,11 +383,11 @@ module RIAPP {
                     return coll.isUpdating;
                 }
                 get isEditing() { return this._isEditing; }
-            };
+            }
 
            export interface ICollectionOptions {
                 enablePaging: boolean; pageSize: number;
-            };
+            }
 
            export interface ICollChangedArgs { change_type: string; items: CollectionItem[]; pos?: number[]; old_key?: string; new_key?: string; }
            export interface ICollFillArgs { isBegin: boolean; rowCount: number; time: Date; isPageChanged: boolean; resetUI?: boolean; fetchedItems?: CollectionItem[]; newItems?: CollectionItem[]; }
