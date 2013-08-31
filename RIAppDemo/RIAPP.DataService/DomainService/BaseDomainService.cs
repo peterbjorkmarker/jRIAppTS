@@ -1011,7 +1011,7 @@ namespace RIAPP.DataService
         public virtual string ServiceGetTypeScript()
         {
             MetadataInfo metadata = this.ServiceGetMetadata();
-            TypeScriptHelper helper = new TypeScriptHelper(metadata);
+            TypeScriptHelper helper = new TypeScriptHelper(metadata, this.GetClientTypes());
             return helper.CreateTypeScript();
         }
 
@@ -1023,6 +1023,11 @@ namespace RIAPP.DataService
         public virtual string ServiceGetCSharp()
         {
             throw new NotImplementedException();
+        }
+
+        protected virtual IEnumerable<Type> GetClientTypes()
+        {
+            return Enumerable.Empty<Type>();
         }
 
         public PermissionsInfo ServiceGetPermissions()

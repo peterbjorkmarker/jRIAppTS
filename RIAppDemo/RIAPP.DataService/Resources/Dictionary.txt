@@ -1,0 +1,7 @@
+﻿export class {{DICT_NAME}} extends RIAPP.MOD.collection.BaseDictionary<{{ITEM_TYPE_NAME}},{{INTERF_TYPE_NAME}}> {
+		constructor() {
+			super({{ITEM_TYPE_NAME}}, '{{KEY_NAME}}',{{PROPS}});
+			this._type_name = '{{DICT_NAME}}';
+		}
+		get items2()  { return <{{INTERF_TYPE_NAME}}[]>this.items; }
+}

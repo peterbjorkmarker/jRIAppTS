@@ -40,8 +40,8 @@ module RIAPP
             _selectedCategory: any;
             _selectedModel: any;
             _modelID: number;
-            _parentCategories: MOD.db.DataView;
-            _childCategories: MOD.db.DataView;
+            _parentCategories: MOD.db.DataView<DEMODB.ProductCategory>;
+            _childCategories: MOD.db.DataView<DEMODB.ProductCategory>;
             _resetCommand: MOD.mvvm.Command;
             _app: DemoApplication;
 
@@ -57,7 +57,7 @@ module RIAPP
                 this._selectedModel = null;
                 this._modelID = null;
                 //filters top level product categories
-                this._parentCategories = new MOD.db.DataView(
+                this._parentCategories = new MOD.db.DataView<DEMODB.ProductCategory>(
                     {
                         dataSource: this.ProductCategories,
                         fn_sort: function (a: DEMODB.ProductCategory, b: DEMODB.ProductCategory) { return a.ProductCategoryID - b.ProductCategoryID; },
@@ -66,7 +66,7 @@ module RIAPP
                 
                 
                 //filters product categories which have parent category
-                this._childCategories = new MOD.db.DataView(
+                this._childCategories = new MOD.db.DataView<DEMODB.ProductCategory>(
                     {
                         dataSource: this.ProductCategories,
                         fn_sort: function (a: DEMODB.ProductCategory, b: DEMODB.ProductCategory) { return a.ProductCategoryID - b.ProductCategoryID; },
@@ -82,14 +82,14 @@ module RIAPP
                 var query = this.ProductCategories.createReadProductCategoryQuery();
                 query.orderBy('Name', 'ASC');
                 //returns promise
-                return this.dbContext.load(query);
+                return query.load();
             }
             //returns promise
             _loadProductModels() {
                 var query = this.ProductModels.createReadProductModelQuery();
                 query.orderBy('Name', 'ASC');
                 //returns promise
-                return this.dbContext.load(query);
+                return query.load();
             }
             //returns promise
             load() {
@@ -204,7 +204,7 @@ module RIAPP
 
                 //if we need to confirm the deletion, this is how it is done
                 this._dbSet.addOnItemDeleting(function (sender, args) {
-                    if (!confirm('Are you sure that you want to delete ' + (<any>args.item).Name + ' ?'))
+                    if (!confirm('Are you sure that you want to delete ' + args.item.Name + ' ?'))
                         args.isCancel = true;
                 }, self.uniqueID);
 
@@ -230,7 +230,7 @@ module RIAPP
 
                 //example of using custom validation on client (in addition to builtin validation)
                 this._dbSet.addOnValidate(function (sender, args) {
-                    var item: any = args.item;
+                    var item = args.item;
                     if (!args.fieldName) { //full item validation
                         if (!!item.SellEndDate) { //check it must be after Start Date
                             if (item.SellEndDate < item.SellStartDate) {
@@ -402,7 +402,7 @@ module RIAPP
                 }
 
                 query.orderBy('Name', 'ASC').thenBy('SellStartDate', 'DESC');
-                return this.dbContext.load(query);
+                return query.load();
             }
             destroy() {
                 if (this._isDestroyed)

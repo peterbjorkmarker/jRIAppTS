@@ -26,7 +26,7 @@ module RIAPP {
                 _el: HTMLElement;
                 _$el: JQuery;
                 _objId: string;
-                _dataSource: collection.Collection;
+                _dataSource: collection.BaseCollection<collection.CollectionItem>;
                 _showTip: boolean;
                 _showInfo: boolean;
                 _showFirstAndLast: boolean;
@@ -39,12 +39,12 @@ module RIAPP {
                 _sliderSize: number;
                 _hideOnSinglePage: boolean;
 
-                constructor(el:HTMLElement, dataSource: collection.Collection, options:IPagerOptions) {
+                constructor(el:HTMLElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options:IPagerOptions) {
                     super();
                     this._el = el;
                     this._$el = global.$(this._el);
                     this._objId = 'pgr' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof collection.Collection))
+                    if (!!dataSource && !(dataSource instanceof collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_PAGER_DATASRC_INVALID);
                     this._dataSource = dataSource;
                     this._showTip = utils.check.isNt(options.showTip) ? true : !!options.showTip;
@@ -154,13 +154,13 @@ module RIAPP {
                 _setDSPageIndex(page:number) {
                     this.dataSource.pageIndex = page - 1;
                 }
-                _onPageSizeChanged(ds: collection.Collection) {
+                _onPageSizeChanged(ds: collection.BaseCollection<collection.CollectionItem>) {
                     this.rowsPerPage = ds.pageSize;
                 }
-                _onPageIndexChanged(ds: collection.Collection) {
+                _onPageIndexChanged(ds: collection.BaseCollection<collection.CollectionItem>) {
                     this.currentPage = ds.pageIndex + 1;
                 }
-                _onTotalCountChanged(ds: collection.Collection) {
+                _onTotalCountChanged(ds: collection.BaseCollection<collection.CollectionItem>) {
                     this.rowCount = ds.totalCount;
                 }
                 destroy() {
@@ -299,7 +299,7 @@ module RIAPP {
                 }
                 get el() { return this._el; }
                 get dataSource() { return this._dataSource; }
-                set dataSource(v: collection.Collection) {
+                set dataSource(v: collection.BaseCollection<collection.CollectionItem>) {
                     if (v === this._dataSource)
                         return;
                     if (this._dataSource !== null) {
@@ -412,7 +412,7 @@ module RIAPP {
 
             export class PagerElView extends baseElView.BaseElView {
                 _options: IPagerOptions;
-                _dataSource: collection.Collection;
+                _dataSource: collection.BaseCollection<collection.CollectionItem>;
                 _pager: Pager;
                 constructor(app: Application, el: HTMLElement, options: IPagerViewOptions) {
                     this._dataSource = null;

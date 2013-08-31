@@ -83,7 +83,7 @@ var RIAPP;
                 query.orderBy('Name', 'ASC');
 
                 //returns promise
-                return this.dbContext.load(query);
+                return query.load();
             };
 
             //returns promise
@@ -92,7 +92,7 @@ var RIAPP;
                 query.orderBy('Name', 'ASC');
 
                 //returns promise
-                return this.dbContext.load(query);
+                return query.load();
             };
 
             //returns promise
@@ -297,7 +297,7 @@ var RIAPP;
 
                 //if we need to confirm the deletion, this is how it is done
                 this._dbSet.addOnItemDeleting(function (sender, args) {
-                    if (!confirm('Are you sure that you want to delete ' + (args.item).Name + ' ?'))
+                    if (!confirm('Are you sure that you want to delete ' + args.item.Name + ' ?'))
                         args.isCancel = true;
                 }, self.uniqueID);
 
@@ -489,7 +489,7 @@ var RIAPP;
                 }
 
                 query.orderBy('Name', 'ASC').thenBy('SellStartDate', 'DESC');
-                return this.dbContext.load(query);
+                return query.load();
             };
             ProductViewModel.prototype.destroy = function () {
                 if (this._isDestroyed)

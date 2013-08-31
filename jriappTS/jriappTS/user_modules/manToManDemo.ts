@@ -4,6 +4,7 @@
 /// <reference path="demoDB.ts"/>
 module RIAPP
 {
+    'use strict';
     export module MTMDEMO {
         var global = RIAPP.global, utils = global.utils;
          //private helper function (used inside this module only)
@@ -73,7 +74,7 @@ module RIAPP
 
                 //initialize new item with default values
                 this._dbSet.addOnItemAdded(function (sender, args) {
-                    var item =<DEMODB.ICustomer><any>args.item;
+                    var item = args.item;
                     item.NameStyle = false;
                 }, self.uniqueID);
 
@@ -134,7 +135,7 @@ module RIAPP
                 //we clear previous cache date for every loading data from the server
                 query.isClearCacheOnEveryLoad = true;
                 query.orderBy('LastName', 'ASC').thenBy('MiddleName', 'ASC').thenBy('FirstName', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             }
             destroy() {
                 if (this._isDestroyed)
@@ -181,8 +182,8 @@ module RIAPP
             _custAdressDb: DEMODB.CustomerAddressDb;
             _currentCustomer: DEMODB.Customer;
             _addAddressVM: AddAddressVM;
-            _custAdressView: MOD.db.ChildDataView;
-            _addressesView: MOD.db.DataView;
+            _custAdressView: MOD.db.ChildDataView<DEMODB.CustomerAddress>;
+            _addressesView: MOD.db.DataView<DEMODB.Address>;
 
             constructor(customerVM: CustomerVM) {
                 super(customerVM.app);
@@ -199,7 +200,7 @@ module RIAPP
                 }, self.uniqueID);
 
                 this._custAdressDb.addOnBeginEdit(function (sender, args) {
-                    var item = <DEMODB.ICustomerAddress><any>args.item;
+                    var item = args.item.asInterface();
                     //start editing Address entity, when CustomerAddress begins editing
                     //p.s.- Address is navigation property
                     var address = item.Address;
@@ -208,7 +209,7 @@ module RIAPP
                 }, self.uniqueID);
 
                 this._custAdressDb.addOnEndEdit(function (sender, args) {
-                    var item = <DEMODB.ICustomerAddress><any>args.item;
+                    var item = args.item;
                     var address = item.Address;
                     if (!args.isCanceled) {
                         if (!!address)
@@ -231,20 +232,20 @@ module RIAPP
                     //if details are not included with customers entities when they are loaded
                     //then load addresses related to the customers separately
                     if (!self._customerVM.includeDetailsOnLoad)
-                        self.load(<DEMODB.Customer[]>args.fetchedItems);
+                        self.load(args.fetchedItems);
                 }, self.uniqueID);
 
                 var custAssoc = self.dbContext.associations.getCustAddrToCustomer();
 
                 //the view to filter CustomerAddresses related to the current customer only
-                this._custAdressView = new MOD.db.ChildDataView(
+                this._custAdressView = new MOD.db.ChildDataView<DEMODB.CustomerAddress>(
                     {
                         association: custAssoc,
                         fn_sort: function (a, b) { return a.AddressID - b.AddressID; }
                     });
 
                 //the view to filter addresses related to the current customer
-                this._addressesView = new MOD.db.DataView(
+                this._addressesView = new MOD.db.DataView<DEMODB.Address>(
                     {
                         dataSource: this._addressesDb,
                         fn_sort: function (a: DEMODB.Address, b: DEMODB.Address) { return a.AddressID - b.AddressID; },
@@ -281,20 +282,20 @@ module RIAPP
             //async load, returns promise
             _loadAddresses(addressIDs:number[], isClearTable:boolean) {
                 var query = this._addressesDb.createReadAddressByIdsQuery({ addressIDs: addressIDs });
-                //if true, we clear all previous data in the DbSet
+                //if true, we clear all previous data in the TDbSet
                 query.isClearPrevData = isClearTable;
                 //returns promise
-                return this.dbContext.load(query);
+                return query.load();
             }
             _addNewAddress() {
-                //use the DataView, not DbSet
-                var adr = <DEMODB.Address>this.addressesView.addNew();
+                //use the TDataView, not TDbSet
+                var adr = this.addressesView.addNew();
                 return adr;
             }
             _addNewCustAddress(address:DEMODB.Address) {
                 var cust = this.currentCustomer;
-                //to add item here, use the DataView, not DbSet
-                var ca = <DEMODB.CustomerAddress>this.custAdressView.addNew();
+                //to add item here, use the TDataView, not TDbSet
+                var ca = this.custAdressView.addNew();
                 ca.CustomerID = cust.CustomerID;
                 //this is default, can edit later
                 ca.AddressType = "Main Office"; 
@@ -313,14 +314,14 @@ module RIAPP
                 });
 
                 var query = this._custAdressDb.createReadAddressForCustomersQuery({ custIDs: custIDs });
-                var promise = this.dbContext.load(query);
+                var promise = query.load();
 
                 //if we did not included details when we had loaded customers
                 //then load them now
                 if (!this._customerVM.includeDetailsOnLoad) {
                     //load related addresses based on what customerAddress items just loaded
                     promise.done(function (res) {
-                        var addressIDs = res.fetchedItems.map(function (item: DEMODB.CustomerAddress) {
+                        var addressIDs = res.fetchedItems.map(function (item) {
                             return item.AddressID;
                         });
                         //load new addresses and clear all previous addresses
@@ -376,7 +377,7 @@ module RIAPP
             _searchString: string;
             _isAddingNew: boolean;
             _dialogVM: COMMON.DialogVM;
-            _addressInfosView: MOD.db.DataView;
+            _addressInfosView: MOD.db.DataView<DEMODB.AddressInfo>;
             _linkCommand: MOD.mvvm.ICommand;
             _addNewCommand: MOD.mvvm.ICommand;
             _unLinkCommand: MOD.mvvm.ICommand;
@@ -443,7 +444,7 @@ module RIAPP
                 this._dialogVM.createDialog('addressDialog', dialogOptions);
 
                 //this data displayed in the right panel - contains available (existing in db) addresses
-                this._addressInfosView = new MOD.db.DataView(
+                this._addressInfosView = new MOD.db.DataView<DEMODB.AddressInfo>(
                     {
                         dataSource: this._addressInfosDb,
                         fn_sort: function (a: DEMODB.AddressInfo, b: DEMODB.AddressInfo) { return a.AddressID - b.AddressID; },
@@ -537,7 +538,7 @@ module RIAPP
                 query.isClearPrevData = true;
                 addTextQuery(query, 'AddressLine1', '%' + this.searchString + '%');
                 query.orderBy('AddressLine1', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             }
             _addNewAddress() {
                 this._newAddress = this._customerAddressVM._addNewAddress();
@@ -553,7 +554,7 @@ module RIAPP
                 }
                 adrID = adrInfo.AddressID;
                 var existedAddr:boolean = adrView.items.some(function (item) {
-                    return (<any>item).AddressID === adrID;
+                    return item.AddressID === adrID;
                 });
 
                 if (existedAddr) {
@@ -577,7 +578,7 @@ module RIAPP
                 if (!item) {
                     return;
                 }
-                var id = (<any>item).AddressID;
+                var id = item.AddressID;
                 //delete it from the left panel
                 if (item.deleteItem())
                     //and then add the address to the right panel (really adds an addressInfo, not the address entity)
@@ -587,7 +588,7 @@ module RIAPP
             _addAddressRP(addressID:number) {
                 //if address already on client, just make it be displayed in the view
                 if (this._checkAddressInRP(addressID)) {
-                    var deferred = new global.$.Deferred();
+                    var deferred = utils.createDeferred();
                     deferred.reject();
                     return deferred.promise();
                 }
@@ -596,7 +597,7 @@ module RIAPP
                 //dont clear, append to the existing
                 query.isClearPrevData = false;
                 query.where('AddressID', '=', [addressID]);
-                var promise = this.dbContext.load(query);
+                var promise = query.load();
                 promise.done(function () {
                     self._checkAddressInRP(addressID);
                 });
@@ -604,7 +605,7 @@ module RIAPP
             }
             //make sure if the addressInfo already on the client, adds it to the view
             _checkAddressInRP(addressID) {
-                //try to find it in the DbSet
+                //try to find it in the TDbSet
                 var item = this._addressInfosDb.findByPK(addressID);
                 if (!!item) {
                     //if found, try append to the view

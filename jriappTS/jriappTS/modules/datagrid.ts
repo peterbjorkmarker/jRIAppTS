@@ -1044,7 +1044,7 @@ module RIAPP {
                 _$tableEl: JQuery;
                 _name: string;
                 _objId: string;
-                _dataSource: collection.Collection;
+                _dataSource: collection.BaseCollection<collection.CollectionItem>;
                 _rowMap: { [key: string]: Row; };
                 _rows: Row[];
                 _columns: BaseColumn[];
@@ -1066,9 +1066,9 @@ module RIAPP {
                 _chkWidthInterval: number;
                 _app: Application;
 
-                constructor(app:Application, el: HTMLTableElement, dataSource: collection.Collection, options: IGridOptions) {
+                constructor(app:Application, el: HTMLTableElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options: IGridOptions) {
                     super();
-                    if (!!dataSource && !(dataSource instanceof collection.Collection))
+                    if (!!dataSource && !(dataSource instanceof collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
                     this._options = utils.extend(false,
                         {
@@ -1254,7 +1254,7 @@ module RIAPP {
                         this._updateCurrent(this._rowMap[cur._key], false);
                     }
                 }
-                _onDSCollectionChanged(args: collection.ICollChangedArgs) {
+                _onDSCollectionChanged(args: collection.ICollChangedArgs<collection.CollectionItem>) {
                     var self = this, row: Row, CH_T = collection.consts.COLL_CHANGE_TYPE, items = args.items;
                     switch (args.change_type) {
                         case CH_T.RESET:
@@ -1286,7 +1286,7 @@ module RIAPP {
                             throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
-                _onDSFill(args: collection.ICollFillArgs) {
+                _onDSFill(args: collection.ICollFillArgs<collection.CollectionItem>) {
                     var isEnd = !args.isBegin, self = this;
                     if (isEnd) {
                         self._isDSFilling = false;
@@ -1337,7 +1337,7 @@ module RIAPP {
                     }
                     this.raisePropertyChanged('editingRow');
                 }
-                _onItemAdded(args: collection.ICollItemAddedArgs) {
+                _onItemAdded(args: collection.ICollItemAddedArgs<collection.CollectionItem>) {
                     var item = args.item, row = this._rowMap[item._key];
                     if (!row)
                         return;
@@ -1863,7 +1863,7 @@ module RIAPP {
                 get uniqueID() { return this._objId; }
                 get name() { return this._name; }
                 get dataSource() { return this._dataSource; }
-                set dataSource(v: collection.Collection) {
+                set dataSource(v: collection.BaseCollection<collection.CollectionItem>) {
                     if (v === this._dataSource)
                         return;
                     if (this._dataSource !== null) {

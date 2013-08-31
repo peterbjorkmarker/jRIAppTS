@@ -48,7 +48,7 @@ module RIAPP
             _dbSetName: string;
             _queryName: string;
             _template: MOD.template.Template;
-            _gridDataSource: MOD.collection.Collection;
+            _gridDataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
             _prevText: string;
             _selectedItem: MOD.collection.CollectionItem;
             _$dropDown: JQuery;
@@ -270,7 +270,7 @@ module RIAPP
                 this._onHide();
             }
             load(str:string) {
-                var self = this, query = (<MOD.db.DbSet>this.gridDataSource).createQuery(this._queryName);
+                var self = this, query = (<MOD.db.TDbSet>this.gridDataSource).createQuery(this._queryName);
                 query.pageSize = 50;
                 query.isClearPrevData = true;
                 addTextQuery(query, this._fieldName, str + '%');

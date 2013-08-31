@@ -18,7 +18,7 @@ module RIAPP {
                 _el: HTMLSelectElement;
                 _$el: JQuery;
                 _objId: string;
-                _dataSource: collection.Collection;
+                _dataSource: collection.BaseCollection<collection.CollectionItem>;
                 _isRefreshing: boolean;
                 _isDSFilling: boolean;
                 _valuePath: string;
@@ -30,13 +30,13 @@ module RIAPP {
                 _saveVal: any;
                 _selectedValue: any;
 
-                constructor(el: HTMLSelectElement, dataSource: collection.Collection, options: IListBoxOptions) {
+                constructor(el: HTMLSelectElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options: IListBoxOptions) {
                     super();
                     var self = this;
                     this._el = el;
                     this._$el = global.$(this._el);
                     this._objId = 'lst' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof collection.Collection))
+                    if (!!dataSource && !(dataSource instanceof collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_LISTBOX_DATASRC_INVALID);
                     this._$el.on('change.' + this._objId, function (e) {
                         e.stopPropagation();
@@ -110,7 +110,7 @@ module RIAPP {
                     else
                         return '' + this._getValue(item);
                 }
-                _onDSCollectionChanged(args: collection.ICollChangedArgs) {
+                _onDSCollectionChanged(args: collection.ICollChangedArgs<collection.CollectionItem>) {
                     var self = this, CH_T = collection.consts.COLL_CHANGE_TYPE, data;
                     switch (args.change_type) {
                         case CH_T.RESET:
@@ -141,7 +141,7 @@ module RIAPP {
                             }
                     }
                 }
-                _onDSFill(args: collection.ICollFillArgs) {
+                _onDSFill(args: collection.ICollFillArgs<collection.CollectionItem>) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -377,7 +377,7 @@ module RIAPP {
                     return 'ListBox';
                 }
                 get dataSource() { return this._dataSource; }
-                set dataSource(v: collection.Collection) {
+                set dataSource(v: collection.BaseCollection<collection.CollectionItem>) {
                     if (this._dataSource !== v) {
                         if (!!this._dataSource)
                             this._unbindDS();
@@ -447,7 +447,7 @@ module RIAPP {
             }
 
             export class SelectElView extends baseElView.BaseElView {
-                _dataSource: collection.Collection;
+                _dataSource: collection.BaseCollection<collection.CollectionItem>;
                 _listBox: ListBox;
                 _options: ISelectViewOptions;
                 constructor(app: Application, el: HTMLSelectElement, options: ISelectViewOptions) {

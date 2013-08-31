@@ -10,6 +10,7 @@ var __extends = this.__extends || function (d, b) {
 };
 var RIAPP;
 (function (RIAPP) {
+    'use strict';
     (function (SPADEMO) {
         var global = RIAPP.global, utils = global.utils;
 
@@ -537,7 +538,7 @@ var RIAPP;
                 this._currentCustomer = null;
                 this._dataGrid = null;
                 this._selectedTabIndex = null;
-                this._orderStatuses = new RIAPP.MOD.collection.Dictionary('orderStatus', { key: 0, val: '' }, 'key');
+                this._orderStatuses = new RIAPP.DEMODB.KeyValDictionary();
                 this._orderStatuses.fillItems([
                     { key: 0, val: 'New Order' },
                     { key: 1, val: 'Status 1' },
@@ -566,7 +567,6 @@ var RIAPP;
                 }, self.uniqueID);
 
                 this._dbSet.addOnItemAdded(function (sender, args) {
-                    //can be solved soon with generics
                     var item = args.item;
                     item.Customer = self.currentCustomer;
 
@@ -662,7 +662,7 @@ var RIAPP;
                 var query = this.dbSet.createReadSalesOrderHeaderQuery();
                 query.where('CustomerID', '=', [this.currentCustomer.CustomerID]);
                 query.orderBy('OrderDate', 'ASC').thenBy('SalesOrderID', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             };
             OrderVM.prototype.destroy = function () {
                 if (this._isDestroyed)
@@ -812,14 +812,14 @@ var RIAPP;
                 this.clear();
 
                 if (!this.currentOrder || this.currentOrder.getIsNew()) {
-                    var deferred = new global.$.Deferred();
+                    var deferred = utils.createDeferred();
                     deferred.reject();
                     return deferred.promise();
                 }
                 var query = this.dbSet.createQuery('ReadSalesOrderDetail');
                 query.where('SalesOrderID', '=', [this.currentOrder.SalesOrderID]);
                 query.orderBy('SalesOrderDetailID', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             };
             OrderDetailVM.prototype.clear = function () {
                 this.dbSet.clear();
@@ -938,7 +938,7 @@ var RIAPP;
 
                 //if true, previous data will be cleared when the new is loaded
                 query.isClearPrevData = isClearTable;
-                return this.dbContext.load(query);
+                return query.load();
             };
             AddressVM.prototype.clear = function () {
                 this.dbSet.clear();
@@ -1144,7 +1144,7 @@ else
             ProductVM.prototype.load = function (ids, isClearTable) {
                 var query = this.dbSet.createReadProductByIdsQuery({ productIDs: ids });
                 query.isClearPrevData = isClearTable;
-                return this.dbContext.load(query);
+                return query.load();
             };
             ProductVM.prototype.destroy = function () {
                 if (this._isDestroyed)
@@ -1222,7 +1222,7 @@ else
                 }, self.uniqueID);
 
                 this._custAdressDb.addOnBeginEdit(function (sender, args) {
-                    var item = args.item;
+                    var item = args.item.asInterface();
 
                     //start editing Address entity, when CustomerAddress begins editing
                     //p.s.- Address is navigation property
@@ -1286,21 +1286,21 @@ else
             CustomerAddressVM.prototype._loadAddresses = function (addressIDs, isClearTable) {
                 var query = this._addressesDb.createReadAddressByIdsQuery({ addressIDs: addressIDs });
 
-                //if true, we clear all previous data in the DbSet
+                //if true, we clear all previous data in the TDbSet
                 query.isClearPrevData = isClearTable;
 
                 //returns promise
-                return this.dbContext.load(query);
+                return query.load();
             };
             CustomerAddressVM.prototype._addNewAddress = function () {
-                //use the DataView, not DbSet
+                //use the TDataView, not TDbSet
                 var adr = this.addressesView.addNew();
                 return adr;
             };
             CustomerAddressVM.prototype._addNewCustAddress = function (address) {
                 var cust = this.currentCustomer;
 
-                //to add item here, use the DataView, not DbSet
+                //to add item here, use the TDataView, not TDbSet
                 var ca = this.custAdressView.addNew();
                 ca.CustomerID = cust.CustomerID;
 
@@ -1322,7 +1322,7 @@ else
                 });
 
                 var query = this._custAdressDb.createReadAddressForCustomersQuery({ custIDs: custIDs });
-                this.dbContext.load(query);
+                query.load();
             };
             CustomerAddressVM.prototype.destroy = function () {
                 if (this._isDestroyed)
@@ -1579,7 +1579,7 @@ else
                 query.isClearPrevData = true;
                 addTextQuery(query, 'AddressLine1', '%' + this.searchString + '%');
                 query.orderBy('AddressLine1', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             };
             AddAddressVM.prototype._addNewAddress = function () {
                 this._newAddress = this._customerAddressVM._addNewAddress();
@@ -1594,7 +1594,7 @@ else
                 }
                 adrID = adrInfo.AddressID;
                 var existedAddr = adrView.items.some(function (item) {
-                    return (item).AddressID === adrID;
+                    return item.AddressID === adrID;
                 });
 
                 if (existedAddr) {
@@ -1619,7 +1619,7 @@ else
                 if (!item) {
                     return;
                 }
-                var id = (item).AddressID;
+                var id = item.AddressID;
 
                 if (item.deleteItem())
                     //and then add the address to the right panel (really adds an addressInfo, not the address entity)
@@ -1629,7 +1629,7 @@ else
             //adds an addressInfo to the right panel
             AddAddressVM.prototype._addAddressRP = function (addressID) {
                 if (this._checkAddressInRP(addressID)) {
-                    var deferred = new global.$.Deferred();
+                    var deferred = utils.createDeferred();
                     deferred.reject();
                     return deferred.promise();
                 }
@@ -1640,7 +1640,7 @@ else
                 //dont clear, append to the existing
                 query.isClearPrevData = false;
                 query.where('AddressID', '=', [addressID]);
-                var promise = this.dbContext.load(query);
+                var promise = query.load();
                 promise.done(function () {
                     self._checkAddressInRP(addressID);
                 });
@@ -1649,7 +1649,7 @@ else
 
             //make sure if the addressInfo already on the client, adds it to the view
             AddAddressVM.prototype._checkAddressInRP = function (addressID) {
-                //try to find it in the DbSet
+                //try to find it in the TDbSet
                 var item = this._addressInfosDb.findByPK(addressID);
                 if (!!item) {
                     //if found, try append to the view

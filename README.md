@@ -1,19 +1,15 @@
 jRIAppTS
 ======
 
-<b>RIA application framework for building LOB applications</b>
+<b>RIA application framework for building LOB applications - Generics Version</b>
 <br/>
 This is a typescript version of the previous <a href="https://github.com/BBGONE/jRIApp" target="_blank">jRIApp framework</a>
 You can watch video of the demo on <a href="http://youtu.be/m2lxFWhJghA" target="_blank">YouTube SPA</a>
 <br/>
 
+
 <b>Future enhancements:</b>
 <br/>
-When typescript's version 0.9 will be available then it will be possible to make all event handlers in descendants to have arguments really typed.
-Now typed DbSets's descendant use base types in event handlers arguments, such as Entity or CollectionItem.
-With generics instead of base Entity type there will be concrete type of the entity such as Customer, Product, ... etc.
-Also, it will be possible to have the real entity type in DataView and ChildView classes.
-
 When the typescript will allow to define get and set properties in interfaces, there will be possible to see errors at design time when
 one is trying to assign value to a read only property. Now it is only runtime errors those will notify about this.
 
@@ -75,10 +71,7 @@ The DataService now exposes two other methods to get XAML version of the metadat
  http://YOURSERVER/RIAppDemoService/GetXAML<br/>
  http://YOURSERVER/RIAppDemoService/GetCSharp
 </p>
-<p>2013-07-30  Fix for nested dataform data binding - one dataform inside another dataform - and so on...</p>
-<p>2013-08-25  Updated files to be compilable with 0.9.1.1 version of the compiler</p>
-<p>2013-08-30  Update of this version - <b>tested to work and to be compilable with 0.9.1.1 version of the compiler.</b><br/>
-The Next version will have generics support for collection classes and will be published as a new branch.</p>
+<p>2013-08-31  Published generics version of the framework - <b>tested to work and to be compilable with 0.9.1.1 version of the compiler.</b><br/>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 

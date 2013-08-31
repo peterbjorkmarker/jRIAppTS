@@ -10,6 +10,7 @@ var __extends = this.__extends || function (d, b) {
 /// <reference path="demoDB.ts"/>
 var RIAPP;
 (function (RIAPP) {
+    'use strict';
     (function (MTMDEMO) {
         var global = RIAPP.global, utils = global.utils;
 
@@ -128,7 +129,7 @@ var RIAPP;
                 //we clear previous cache date for every loading data from the server
                 query.isClearCacheOnEveryLoad = true;
                 query.orderBy('LastName', 'ASC').thenBy('MiddleName', 'ASC').thenBy('FirstName', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             };
             CustomerVM.prototype.destroy = function () {
                 if (this._isDestroyed)
@@ -259,7 +260,7 @@ var RIAPP;
                 }, self.uniqueID);
 
                 this._custAdressDb.addOnBeginEdit(function (sender, args) {
-                    var item = args.item;
+                    var item = args.item.asInterface();
 
                     //start editing Address entity, when CustomerAddress begins editing
                     //p.s.- Address is navigation property
@@ -342,21 +343,21 @@ var RIAPP;
             CustomerAddressVM.prototype._loadAddresses = function (addressIDs, isClearTable) {
                 var query = this._addressesDb.createReadAddressByIdsQuery({ addressIDs: addressIDs });
 
-                //if true, we clear all previous data in the DbSet
+                //if true, we clear all previous data in the TDbSet
                 query.isClearPrevData = isClearTable;
 
                 //returns promise
-                return this.dbContext.load(query);
+                return query.load();
             };
             CustomerAddressVM.prototype._addNewAddress = function () {
-                //use the DataView, not DbSet
+                //use the TDataView, not TDbSet
                 var adr = this.addressesView.addNew();
                 return adr;
             };
             CustomerAddressVM.prototype._addNewCustAddress = function (address) {
                 var cust = this.currentCustomer;
 
-                //to add item here, use the DataView, not DbSet
+                //to add item here, use the TDataView, not TDbSet
                 var ca = this.custAdressView.addNew();
                 ca.CustomerID = cust.CustomerID;
 
@@ -378,7 +379,7 @@ var RIAPP;
                 });
 
                 var query = this._custAdressDb.createReadAddressForCustomersQuery({ custIDs: custIDs });
-                var promise = this.dbContext.load(query);
+                var promise = query.load();
 
                 if (!this._customerVM.includeDetailsOnLoad) {
                     //load related addresses based on what customerAddress items just loaded
@@ -647,7 +648,7 @@ var RIAPP;
                 query.isClearPrevData = true;
                 addTextQuery(query, 'AddressLine1', '%' + this.searchString + '%');
                 query.orderBy('AddressLine1', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             };
             AddAddressVM.prototype._addNewAddress = function () {
                 this._newAddress = this._customerAddressVM._addNewAddress();
@@ -663,7 +664,7 @@ var RIAPP;
                 }
                 adrID = adrInfo.AddressID;
                 var existedAddr = adrView.items.some(function (item) {
-                    return (item).AddressID === adrID;
+                    return item.AddressID === adrID;
                 });
 
                 if (existedAddr) {
@@ -688,7 +689,7 @@ var RIAPP;
                 if (!item) {
                     return;
                 }
-                var id = (item).AddressID;
+                var id = item.AddressID;
 
                 if (item.deleteItem())
                     //and then add the address to the right panel (really adds an addressInfo, not the address entity)
@@ -698,7 +699,7 @@ var RIAPP;
             //adds an addressInfo to the right panel
             AddAddressVM.prototype._addAddressRP = function (addressID) {
                 if (this._checkAddressInRP(addressID)) {
-                    var deferred = new global.$.Deferred();
+                    var deferred = utils.createDeferred();
                     deferred.reject();
                     return deferred.promise();
                 }
@@ -709,7 +710,7 @@ var RIAPP;
                 //dont clear, append to the existing
                 query.isClearPrevData = false;
                 query.where('AddressID', '=', [addressID]);
-                var promise = this.dbContext.load(query);
+                var promise = query.load();
                 promise.done(function () {
                     self._checkAddressInRP(addressID);
                 });
@@ -718,7 +719,7 @@ var RIAPP;
 
             //make sure if the addressInfo already on the client, adds it to the view
             AddAddressVM.prototype._checkAddressInRP = function (addressID) {
-                //try to find it in the DbSet
+                //try to find it in the TDbSet
                 var item = this._addressInfosDb.findByPK(addressID);
                 if (!!item) {
                     //if found, try append to the view

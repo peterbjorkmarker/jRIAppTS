@@ -10,11 +10,15 @@ namespace RIAPP.DataService.Utils
     public class TypeScriptHelper
     {
         MetadataInfo _metadata;
+        IEnumerable<Type> _clientTypes;
         StringBuilder _sb = new StringBuilder(4096);
 
-        public TypeScriptHelper(MetadataInfo metadata)
+        public TypeScriptHelper(MetadataInfo metadata, IEnumerable<Type> clientTypes)
         {
+            if (metadata == null)
+                throw new ArgumentException("metadata parameter must not be null", "metadata");
             this._metadata = metadata;
+            this._clientTypes = clientTypes==null?Enumerable.Empty<Type>():clientTypes;
         }
 
         private void WriteString(string str)
@@ -123,10 +127,150 @@ namespace RIAPP.DataService.Utils
                 }
             });
             sb.AppendLine("}");
+            
+            sb.AppendLine("");
+            
+            //create typed Lists and Dictionaries
+            sb.Append(this.createClientTypes(csharp2TS));
 
             StringBuilder sbResult = csharp2TS.GetInterfaceDeclarations();
             sbResult.Append(sb.ToString());
             return sbResult.ToString();
+        }
+
+        private string createClientTypes(CSharp2TS csharp2TS)
+        {
+            var sb = new StringBuilder(1024);
+            foreach (Type type in this._clientTypes)
+            {
+                sb.Append(this.createClientType(csharp2TS, type));
+            }
+
+            return sb.ToString();
+        }
+
+        private string createClientType(CSharp2TS csharp2TS, Type type)
+        {
+            var dictAttr = type.GetCustomAttributes(typeof(DictionaryAttribute), false).OfType<DictionaryAttribute>().FirstOrDefault();
+            var listAttr = type.GetCustomAttributes(typeof(ListAttribute), false).OfType<ListAttribute>().FirstOrDefault();
+
+            if (dictAttr != null && dictAttr.KeyName == null)
+                throw new ArgumentException("DictionaryAttribute KeyName property must not be null");
+            var sb = new StringBuilder(512);
+            string dictName = null; string listName = null;
+            if (dictAttr != null)
+                dictName = dictAttr.DictionaryName == null ? string.Format("{0}Dict", type.Name) : dictAttr.DictionaryName;
+            if (listAttr != null)
+                listName = listAttr.ListName == null ? string.Format("{0}List", type.Name) : listAttr.ListName;
+
+            string interfItemName = csharp2TS.GetTSTypeName(type);
+            string listItemName = string.Format("{0}ListItem", type.Name);
+            var propList = type.GetProperties().ToList();
+
+            sb.AppendLine(string.Format("export class {0} extends RIAPP.MOD.collection.ListItem implements {1}", listItemName, interfItemName));
+            sb.AppendLine("{");
+            sb.AppendLine(string.Format("\tconstructor(coll: RIAPP.MOD.collection.BaseList<{0}, {1}>, obj?: {1})", listItemName, interfItemName));
+            sb.AppendLine("\t{");
+            sb.AppendLine("\t\tsuper(coll,obj);");
+            sb.AppendLine("\t}");
+            propList.ForEach((propInfo) =>
+            {
+                sb.AppendLine(string.Format("\tget {0}() {{ return <{1}>this._getProp('{0}'); }}", propInfo.Name, csharp2TS.GetTSTypeName(propInfo.PropertyType)));
+                sb.AppendLine(string.Format("\tset {0}(v:{1}) {{ this._setProp('{0}', v); }}", propInfo.Name, csharp2TS.GetTSTypeName(propInfo.PropertyType)));
+            });
+            sb.AppendLine("}");
+            sb.AppendLine();
+
+            var sbDict = new StringBuilder(512);
+            var sbList = new StringBuilder(512);
+            var sbProps = new StringBuilder(256);
+
+            sbProps.Append("[");
+            bool isFirst = true;
+            propList.ForEach((propInfo) =>
+            {
+                if (!isFirst)
+                    sbProps.Append(",");
+                sbProps.Append(string.Format("'{0}'", propInfo.Name));
+                isFirst = false;
+            });
+            sbProps.Append("]");
+
+            if (dictAttr != null)
+            {
+                var parts = (new TemplateParser("Dictionary.txt")).DocParts.ToList();
+                parts.ForEach((part) =>
+                {
+                    if (!part.isPlaceHolder)
+                    {
+                        sbDict.Append(part.value);
+                    }
+                    else
+                    {
+                        switch (part.value)
+                        {
+                            case "DICT_NAME":
+                                sbDict.Append(dictName);
+                                break;
+                            case "ITEM_TYPE_NAME":
+                                sbDict.Append(listItemName);
+                                break;
+                            case "INTERF_TYPE_NAME":
+                                sbDict.Append(interfItemName);
+                                break;
+                            case "KEY_NAME":
+                                sbDict.Append(dictAttr.KeyName);
+                                break;
+                            case "PROPS":
+                                {
+                                    sbDict.Append(sbProps.ToString());
+                                }
+                                break;
+                        }
+                    }
+
+                });
+                sb.AppendLine(sbDict.ToString());
+                sb.AppendLine();
+            }
+
+            if (listAttr != null)
+            {
+                var parts = (new TemplateParser("List.txt")).DocParts.ToList();
+                parts.ForEach((part) =>
+                {
+                    if (!part.isPlaceHolder)
+                    {
+                        sbList.Append(part.value);
+                    }
+                    else
+                    {
+                        switch (part.value)
+                        {
+                            case "LIST_NAME":
+                                sbList.Append(listName);
+                                break;
+                            case "ITEM_TYPE_NAME":
+                                sbList.Append(listItemName);
+                                break;
+                            case "INTERF_TYPE_NAME":
+                                sbList.Append(interfItemName);
+                                break;
+                            case "PROPS":
+                                {
+                                    sbList.Append(sbProps.ToString());
+                                }
+                                break;
+                        }
+                    }
+
+                });
+
+                sb.AppendLine(sbList.ToString());
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
         }
 
         /*

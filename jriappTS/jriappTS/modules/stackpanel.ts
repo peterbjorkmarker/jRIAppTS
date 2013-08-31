@@ -18,7 +18,7 @@ module RIAPP {
                 _el: HTMLElement;
                 _$el: JQuery;
                 _objId: string;
-                _dataSource: collection.Collection;
+                _dataSource: collection.BaseCollection<collection.CollectionItem>;
                 _isDSFilling: boolean;
                 _orientation: string;
                 _templateID: string;
@@ -26,13 +26,13 @@ module RIAPP {
                 _itemMap: { [key: string]: { div: HTMLElement; template: template.Template; item: collection.CollectionItem; }; };
                 _app: Application;
 
-                constructor(app:Application, el:HTMLElement, dataSource:collection.Collection, options: IStackPanelOptions) {
+                constructor(app:Application, el:HTMLElement, dataSource:collection.BaseCollection<collection.CollectionItem>, options: IStackPanelOptions) {
                     super();
                     this._app = app;
                     this._el = el;
                     this._$el = global.$(this._el);
                     this._objId = 'pnl' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof collection.Collection))
+                    if (!!dataSource && !(dataSource instanceof collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_STACKPNL_DATASRC_INVALID);
                     this._dataSource = dataSource;
                     this._isDSFilling = false;
@@ -318,7 +318,7 @@ module RIAPP {
                 get containerEl() { return this._el; }
                 get uniqueID() { return this._objId; }
                 get dataSource() { return this._dataSource; }
-                set dataSource(v: collection.Collection) {
+                set dataSource(v: collection.BaseCollection<collection.CollectionItem>) {
                     if (v === this._dataSource)
                         return;
                     if (this._dataSource !== null) {
@@ -336,7 +336,7 @@ module RIAPP {
             }
 
             export class StackPanelElView extends baseElView.BaseElView {
-                _dataSource: collection.Collection;
+                _dataSource: collection.BaseCollection<collection.CollectionItem>;
                 _panel: StackPanel;
                 _options: IStackPanelOptions;
                 constructor(app: Application, el: HTMLSelectElement, options: IStackPanelViewOptions) {

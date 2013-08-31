@@ -37,10 +37,10 @@ module RIAPP {
                         return obj;
                     if (utils.str.startsWith(prop, '[')) { //it is indexed property, obj must be of collection type
                         prop = this.trimQuotes(this.trimBrackets(prop));
-                        if (obj instanceof MOD.collection.Dictionary) {
+                        if (obj instanceof collection.BaseDictionary) {
                             return obj.getItemByKey(prop);
                         }
-                        else if (obj instanceof MOD.collection.Collection) {
+                        else if (obj instanceof collection.BaseCollection) {
                             return obj.getItemByPos(parseInt(prop, 10));
                         }
                         else if (utils.check.isArray(obj)) {

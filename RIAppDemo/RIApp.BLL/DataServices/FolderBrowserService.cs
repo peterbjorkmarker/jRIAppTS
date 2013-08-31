@@ -57,7 +57,7 @@ namespace RIAppDemo.BLL.DataServices
             }
         }
 
-        public void DeleteFoldersDB(FolderModel dummy)
+        public void DeleteFileSystemObject(FolderModel dummy)
         {
             throw new NotImplementedException();
         }

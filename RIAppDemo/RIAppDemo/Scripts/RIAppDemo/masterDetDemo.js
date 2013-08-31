@@ -148,7 +148,7 @@ var RIAPP;
 
                 //load without filtering
                 query.orderBy('LastName', 'ASC').thenBy('MiddleName', 'ASC').thenBy('FirstName', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             };
             CustomerVM.prototype.destroy = function () {
                 if (this._isDestroyed)
@@ -273,7 +273,7 @@ var RIAPP;
                 this._currentCustomer = null;
                 this._dataGrid = null;
                 this._selectedTabIndex = null;
-                this._orderStatuses = new RIAPP.MOD.collection.Dictionary('orderStatus', { key: 0, val: '' }, 'key');
+                this._orderStatuses = new RIAPP.DEMODB.KeyValDictionary();
                 this._orderStatuses.fillItems([
                     { key: 0, val: 'New Order' },
                     { key: 1, val: 'Status 1' },
@@ -398,7 +398,7 @@ var RIAPP;
                 var query = this.dbSet.createReadSalesOrderHeaderQuery();
                 query.where('CustomerID', '=', [this.currentCustomer.CustomerID]);
                 query.orderBy('OrderDate', 'ASC').thenBy('SalesOrderID', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             };
             OrderVM.prototype.destroy = function () {
                 if (this._isDestroyed)
@@ -548,14 +548,14 @@ var RIAPP;
                 this.clear();
 
                 if (!this.currentOrder || this.currentOrder.getIsNew()) {
-                    var deferred = new global.$.Deferred();
+                    var deferred = utils.createDeferred();
                     deferred.reject();
                     return deferred.promise();
                 }
-                var query = this.dbSet.createQuery('ReadSalesOrderDetail');
+                var query = this.dbSet.createReadSalesOrderDetailQuery();
                 query.where('SalesOrderID', '=', [this.currentOrder.SalesOrderID]);
                 query.orderBy('SalesOrderDetailID', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             };
             OrderDetailVM.prototype.clear = function () {
                 this.dbSet.clear();
@@ -674,7 +674,7 @@ var RIAPP;
 
                 //if true, previous data will be cleared when the new is loaded
                 query.isClearPrevData = isClearTable;
-                return this.dbContext.load(query);
+                return query.load();
             };
             AddressVM.prototype.clear = function () {
                 this.dbSet.clear();
@@ -880,7 +880,7 @@ else
             ProductVM.prototype.load = function (ids, isClearTable) {
                 var query = this.dbSet.createReadProductByIdsQuery({ productIDs: ids });
                 query.isClearPrevData = isClearTable;
-                return this.dbContext.load(query);
+                return query.load();
             };
             ProductVM.prototype.destroy = function () {
                 if (this._isDestroyed)

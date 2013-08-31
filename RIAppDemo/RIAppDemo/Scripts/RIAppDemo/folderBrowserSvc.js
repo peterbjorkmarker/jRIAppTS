@@ -100,6 +100,12 @@ var RIAPP;
             FileSystemObject.prototype.toString = function () {
                 return 'FileSystemObject';
             };
+            FileSystemObject.prototype.asEntity = function () {
+                return this;
+            };
+            FileSystemObject.prototype.asInterface = function () {
+                return this;
+            };
             return FileSystemObject;
         })(RIAPP.MOD.db.Entity);
         FOLDERBROWSER_SVC.FileSystemObject = FileSystemObject;
@@ -146,35 +152,9 @@ var RIAPP;
                 this.defineCalculatedField('fullPath', getFunc);
             };
 
-            FileSystemObjectDb.prototype.addNew = function () {
-                return _super.prototype.addNew.call(this);
-            };
-            FileSystemObjectDb.prototype.getItemByPos = function (pos) {
-                return _super.prototype.getItemByPos.call(this, pos);
-            };
-            FileSystemObjectDb.prototype.getItemByKey = function (key) {
-                return _super.prototype.getItemByKey.call(this, key);
-            };
-            FileSystemObjectDb.prototype.findByPK = function () {
-                var vals = [];
-                for (var _i = 0; _i < (arguments.length - 0); _i++) {
-                    vals[_i] = arguments[_i + 0];
-                }
-                return _super.prototype.findByPK.call(this, vals);
-            };
-            Object.defineProperty(FileSystemObjectDb.prototype, "items", {
+            Object.defineProperty(FileSystemObjectDb.prototype, "items2", {
                 get: function () {
-                    return this._items;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(FileSystemObjectDb.prototype, "currentItem", {
-                get: function () {
-                    return this.getItemByPos(this._currentPos);
-                },
-                set: function (v) {
-                    this._setCurrentItem(v);
+                    return this.items;
                 },
                 enumerable: true,
                 configurable: true

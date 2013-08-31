@@ -1,7 +1,7 @@
-﻿export class {{DBSET_TYPE}} extends RIAPP.MOD.db.DbSet
+﻿export class {{DBSET_TYPE}} extends RIAPP.MOD.db.DbSet<{{ENTITY_TYPE}}>
 {
 	constructor(dbContext: DbContext) {
-		var self =this, opts: MOD.db.IDbSetConstuctorOptions = {
+		var self =this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
 			dbContext: dbContext,
 			dbSetInfo: {{DBSET_INFO}},
 			childAssoc: {{CHILD_ASSOC}},
@@ -28,21 +28,5 @@
 	}
 {{QUERIES}}
 {{CALC_FIELDS}}
-	addNew(){
-		return <{{ENTITY_TYPE}}>super.addNew();
-	}
-	getItemByPos(pos:number){
-		return <{{ENTITY_TYPE}}>super.getItemByPos(pos);
-	}
-	getItemByKey(key:string){
-		return <{{ENTITY_TYPE}}>super.getItemByKey(key);
-	}
-	findByPK(...vals: any[]) {
-		return <{{ENTITY_TYPE}}>super.findByPK(vals);
-	}
-	get items() { return <{{ENTITY_TYPE}}[]>this._items; }
-	get currentItem() { return this.getItemByPos(this._currentPos); }
-	set currentItem(v:{{ENTITY_TYPE}}) { 
-		this._setCurrentItem(v);
-	}
+	get items2()  { return <I{{ENTITY_TYPE}}[]><any>this.items; }
 }

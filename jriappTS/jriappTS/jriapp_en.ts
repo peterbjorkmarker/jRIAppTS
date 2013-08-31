@@ -3,8 +3,8 @@ module RIAPP {
         ERR_APP_NEED_JQUERY: 'The project is dependent on JQuery',
         ERR_ASSERTION_FAILED: 'Assertion "{0}" was not satisfied',
         ERR_BINDING_CONTENT_NOT_FOUND: 'BindingContent is not found',
-        ERR_DBSET_READONLY: 'DbSet: {0} is readOnly and can not be edited',
-        ERR_DBSET_INVALID_FIELDNAME: 'DbSet: {0} has no field with the name: {1}',
+        ERR_DBSET_READONLY: 'TDbSet: {0} is readOnly and can not be edited',
+        ERR_DBSET_INVALID_FIELDNAME: 'TDbSet: {0} has no field with the name: {1}',
         ERR_FIELD_READONLY: 'Field is readOnly and can not be edited',
         ERR_FIELD_ISNOT_NULLABLE: 'Field is not nullable and can not be set to null',
         ERR_FIELD_WRONG_TYPE: 'Value: {0} can not be assigned to {1} type field',
@@ -31,7 +31,7 @@ module RIAPP {
         ERR_ITEM_IS_ATTACHED: 'Operation invalid, reason: Item already has been attached',
         ERR_ITEM_IS_DETACHED: 'Operation invalid, reason: Item is detached',
         ERR_ITEM_IS_NOTFOUND: 'Operation invalid, reason: Item is not found',
-        ERR_ITEM_NAME_COLLISION: 'The "{0}" DbSet\'s field name: "{1}" is invalid, because a property with that name already exists on the entity type.',
+        ERR_ITEM_NAME_COLLISION: 'The "{0}" TDbSet\'s field name: "{1}" is invalid, because a property with that name already exists on the entity type.',
         ERR_DICTKEY_IS_NOTFOUND: "Dictionary keyName: {0} does not exist in item's properties",
         ERR_DICTKEY_IS_EMPTY: 'Dictionary key property: {0} must be not empty',
         ERR_CONV_INVALID_DATE: 'Converter cannot parse datetime string value: {0}',
@@ -74,8 +74,8 @@ module RIAPP {
         ERR_SVC_ERROR: 'Service error: {0}',
         ERR_UNEXPECTED_SVC_ERROR: 'Unexpected service error: {0}',
         ERR_ASSOC_NAME_INVALID: 'Invalid association name: {0}',
-        ERR_DATAVIEW_DATASRC_INVALID: 'DataView datasource must not be null and should be descendant of Collection type',
-        ERR_DATAVIEW_FILTER_INVALID: 'DataView fn_filter option must be valid function which accepts entity and returns boolean value'
+        ERR_DATAVIEW_DATASRC_INVALID: 'TDataView datasource must not be null and should be descendant of Collection type',
+        ERR_DATAVIEW_FILTER_INVALID: 'TDataView fn_filter option must be valid function which accepts entity and returns boolean value'
     }
 
     export interface ILocaleText {

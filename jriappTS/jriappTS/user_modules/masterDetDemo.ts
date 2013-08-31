@@ -19,7 +19,7 @@ module RIAPP
             _loadCommand: MOD.mvvm.ICommand;
             _propChangeCommand: MOD.mvvm.ICommand;
             _tabsEventCommand: MOD.mvvm.ICommand;
-            _custAdressView: MOD.db.ChildDataView;
+            _custAdressView: MOD.db.ChildDataView<DEMODB.CustomerAddress>;
             _ordersVM: OrderVM;
 
             constructor(app: DemoApplication) {
@@ -115,7 +115,7 @@ module RIAPP
                 var custAssoc = self.dbContext.associations.getCustAddrToCustomer();
 
                 //the view to filter CustomerAddresses related to the current customer only
-                this._custAdressView = new MOD.db.ChildDataView(
+                this._custAdressView = new MOD.db.ChildDataView<DEMODB.CustomerAddress>(
                     {
                         association: custAssoc,
                         fn_sort: function (a, b) { return a.AddressID - b.AddressID; }
@@ -150,7 +150,7 @@ module RIAPP
                 query.loadPageCount = 10; 
                 //load without filtering
                 query.orderBy('LastName', 'ASC').thenBy('MiddleName', 'ASC').thenBy('FirstName', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             }
             destroy() {
                 if (this._isDestroyed)
@@ -191,7 +191,7 @@ module RIAPP
             _currentCustomer: DEMODB.Customer;
             _dataGrid: MOD.datagrid.DataGrid;
             _selectedTabIndex: number;
-            _orderStatuses: MOD.collection.Dictionary;
+            _orderStatuses: DEMODB.KeyValDictionary;
             _addNewCommand: MOD.mvvm.ICommand;
             _propChangeCommand: MOD.mvvm.ICommand;
             _tabsEventCommand: MOD.mvvm.ICommand;
@@ -206,7 +206,7 @@ module RIAPP
                 this._currentCustomer = null;
                 this._dataGrid = null;
                 this._selectedTabIndex = null;
-                this._orderStatuses = new MOD.collection.Dictionary('orderStatus', { key: 0, val: '' }, 'key');
+                this._orderStatuses = new DEMODB.KeyValDictionary();
                 this._orderStatuses.fillItems([{ key: 0, val: 'New Order' }, { key: 1, val: 'Status 1' },
                     { key: 2, val: 'Status 2' }, { key: 3, val: 'Status 3' },
                     { key: 4, val: 'Status 4' }, { key: 5, val: 'Completed Order' }], true);
@@ -233,7 +233,7 @@ module RIAPP
 
                 this._dbSet.addOnItemAdded(function (sender, args) {
                     //can be solved soon with generics
-                    var item: DEMODB.ISalesOrderHeader = <DEMODB.ISalesOrderHeader><any>args.item;
+                    var item = args.item;
                     item.Customer = self.currentCustomer;
                     //datejs extension
                     item.OrderDate = (<any>Date).today();
@@ -328,7 +328,7 @@ module RIAPP
                 var query = this.dbSet.createReadSalesOrderHeaderQuery();
                 query.where('CustomerID', '=', [this.currentCustomer.CustomerID]);
                 query.orderBy('OrderDate', 'ASC').thenBy('SalesOrderID', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             }
             destroy() {
                 if (this._isDestroyed)
@@ -401,14 +401,14 @@ module RIAPP
                 this.clear();
 
                 if (!this.currentOrder || this.currentOrder.getIsNew()) {
-                    var deferred = new global.$.Deferred();
+                    var deferred = utils.createDeferred();
                     deferred.reject();
                     return deferred.promise();
                 }
-                var query = this.dbSet.createQuery('ReadSalesOrderDetail');
+                var query = this.dbSet.createReadSalesOrderDetailQuery();
                 query.where('SalesOrderID', '=', [this.currentOrder.SalesOrderID]);
                 query.orderBy('SalesOrderDetailID', 'ASC');
-                return this.dbContext.load(query);
+                return query.load();
             }
             clear() {
                 this.dbSet.clear();
@@ -454,7 +454,7 @@ module RIAPP
                 this._dbSet = this.dbSets.Address;
                 this._orderVM.dbSet.addOnFill(function (sender, args) {
                     if (!args.isBegin)
-                        self.loadAddressesForOrders(<DEMODB.SalesOrderHeader[]>args.fetchedItems);
+                        self.loadAddressesForOrders(args.fetchedItems);
                 }, self.uniqueID);
 
                 this._dbSet.addOnPropertyChange('currentItem', function (sender, args) {
@@ -482,7 +482,7 @@ module RIAPP
                 var query = this.dbSet.createReadAddressByIdsQuery({ addressIDs: ids });
                 //if true, previous data will be cleared when the new is loaded
                 query.isClearPrevData = isClearTable;
-                return this.dbContext.load(query);
+                return query.load();
             }
             clear() {
                 this.dbSet.clear();
@@ -600,7 +600,7 @@ module RIAPP
                 //here we load products which are referenced in order details
                 this._orderDetailVM.dbSet.addOnFill(function (sender, args) {
                     if (!args.isBegin)
-                        self.loadProductsForOrderDetails(<DEMODB.SalesOrderDetail[]>args.fetchedItems);
+                        self.loadProductsForOrderDetails(args.fetchedItems);
                 }, self.uniqueID);
 
                 this._dbSet.addOnPropertyChange('currentItem', function (sender, args) {
@@ -627,7 +627,7 @@ module RIAPP
             load(ids:number[], isClearTable:boolean) {
                 var query = this.dbSet.createReadProductByIdsQuery({ productIDs: ids });
                 query.isClearPrevData = isClearTable;
-                return this.dbContext.load(query);
+                return query.load();
             }
             destroy() {
                 if (this._isDestroyed)

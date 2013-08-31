@@ -52,36 +52,72 @@ namespace RIAPP.DataService.Utils
             catch
             {
                 //complex type
-                try
-                {
-                    string typeName = string.Format("I{0}", t.Name);
-                    res = this.GetTSInterface(t, typeName);
-                    if (isArray || isEnumerable)
-                        return string.Format("{0}[]", typeName);
-                    else
-                        return typeName;
-                }
-                catch
-                {
-                    return "any";
-                }
+                return this.GetTsComplexTypeName(t, isArray, isEnumerable);
             }
         }
 
+        private string GetTsComplexTypeName(Type t, bool isArray, bool isEnumerable)
+        {
+            string res = "any";
+            try
+            {
+                string typeName = string.Format("I{0}", t.Name);
+                var typeNameAttr = t.GetCustomAttributes(typeof(TypeNameAttribute), false).OfType<TypeNameAttribute>().FirstOrDefault();
+                if (typeNameAttr != null)
+                    typeName = typeNameAttr.Name;
+                var extendsAttr = t.GetCustomAttributes(typeof(ExtendsAttribute), false).OfType<ExtendsAttribute>().FirstOrDefault();
+                StringBuilder extendsSb = null;
+                if (extendsAttr != null && extendsAttr.InterfaceNames.Length>0)
+                {
+                    extendsSb = new StringBuilder("extends ");
+                    bool isFirst = true;
+                    foreach (string intfName in extendsAttr.InterfaceNames) {
+                        if (!isFirst)
+                            extendsSb.Append(", ");
+                        extendsSb.Append(intfName);
+                        isFirst = false;
+                    }
+                }
+                res = this.GetTSInterface(t, typeName, extendsSb == null ? null : extendsSb.ToString());
+                if (isArray || isEnumerable)
+                    return string.Format("{0}[]", typeName);
+                else
+                    return typeName;
+            }
+            catch
+            {
+                return "any";
+            }
+        }
         /// <summary>
         /// converts object to TS interface declaration
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private string GetTSInterface(Type t, string typeName)
+        private string GetTSInterface(Type t, string typeName, string extends)
         {
             string name = typeName;
             if (string.IsNullOrEmpty(typeName))
                 name = this.GetTSTypeName(t);
             if (this._tsTypes.ContainsKey(name))
                 return this._tsTypes[name];
+
+            var commentAttr = t.GetCustomAttributes(typeof(CommentAttribute), false).OfType<CommentAttribute>().FirstOrDefault();
+
             StringBuilder sb = new StringBuilder();
+            if (commentAttr != null && !string.IsNullOrWhiteSpace(commentAttr.Text))
+            {
+                sb.AppendLine("/*");
+                sb.Append("    ");
+                sb.AppendLine(commentAttr.Text);
+                sb.AppendLine("*/");
+            }
             sb.AppendFormat("export interface {0}", name);
+            if (!string.IsNullOrWhiteSpace(extends))
+            {
+                sb.Append(" ");
+                sb.Append(extends);
+            }
             sb.AppendLine();
             sb.AppendLine("{");
             var objProps = t.GetProperties();
@@ -135,6 +171,11 @@ namespace RIAPP.DataService.Utils
                     break;
             }
             return fieldType;
+        }
+
+        public RIAPP.DataService.DataType DataTypeFromType(Type type, out bool isArray)
+        {
+            return this.valConverter.DataTypeFromType(type, out isArray);
         }
     }
 }

@@ -45,6 +45,11 @@
   <ItemGroup>
     <Compile Include="DomainService\Attributes\AuthorizeAttribute.cs" />
     <Compile Include="DomainService\Attributes\AllowAnonymousAttribute.cs" />
+    <Compile Include="DomainService\Attributes\CommentAttribute.cs" />
+    <Compile Include="DomainService\Attributes\ExtendsAttribute.cs" />
+    <Compile Include="DomainService\Attributes\TypeNameAttribute.cs" />
+    <Compile Include="DomainService\Attributes\ListAttribute.cs" />
+    <Compile Include="DomainService\Attributes\DictionaryAttribute.cs" />
     <Compile Include="DomainService\JSonTypes\PermissionsInfo.cs" />
     <Compile Include="DomainService\Security\Authorizer.cs" />
     <Compile Include="DomainService\BaseDomainService.cs" />
@@ -132,6 +137,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\DbContext.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Dictionary.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\List.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

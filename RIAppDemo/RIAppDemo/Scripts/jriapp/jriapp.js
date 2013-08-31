@@ -4,8 +4,8 @@ var RIAPP;
         ERR_APP_NEED_JQUERY: 'The project is dependent on JQuery',
         ERR_ASSERTION_FAILED: 'Assertion "{0}" was not satisfied',
         ERR_BINDING_CONTENT_NOT_FOUND: 'BindingContent is not found',
-        ERR_DBSET_READONLY: 'DbSet: {0} is readOnly and can not be edited',
-        ERR_DBSET_INVALID_FIELDNAME: 'DbSet: {0} has no field with the name: {1}',
+        ERR_DBSET_READONLY: 'TDbSet: {0} is readOnly and can not be edited',
+        ERR_DBSET_INVALID_FIELDNAME: 'TDbSet: {0} has no field with the name: {1}',
         ERR_FIELD_READONLY: 'Field is readOnly and can not be edited',
         ERR_FIELD_ISNOT_NULLABLE: 'Field is not nullable and can not be set to null',
         ERR_FIELD_WRONG_TYPE: 'Value: {0} can not be assigned to {1} type field',
@@ -32,7 +32,7 @@ var RIAPP;
         ERR_ITEM_IS_ATTACHED: 'Operation invalid, reason: Item already has been attached',
         ERR_ITEM_IS_DETACHED: 'Operation invalid, reason: Item is detached',
         ERR_ITEM_IS_NOTFOUND: 'Operation invalid, reason: Item is not found',
-        ERR_ITEM_NAME_COLLISION: 'The "{0}" DbSet\'s field name: "{1}" is invalid, because a property with that name already exists on the entity type.',
+        ERR_ITEM_NAME_COLLISION: 'The "{0}" TDbSet\'s field name: "{1}" is invalid, because a property with that name already exists on the entity type.',
         ERR_DICTKEY_IS_NOTFOUND: "Dictionary keyName: {0} does not exist in item's properties",
         ERR_DICTKEY_IS_EMPTY: 'Dictionary key property: {0} must be not empty',
         ERR_CONV_INVALID_DATE: 'Converter cannot parse datetime string value: {0}',
@@ -75,8 +75,8 @@ var RIAPP;
         ERR_SVC_ERROR: 'Service error: {0}',
         ERR_UNEXPECTED_SVC_ERROR: 'Unexpected service error: {0}',
         ERR_ASSOC_NAME_INVALID: 'Invalid association name: {0}',
-        ERR_DATAVIEW_DATASRC_INVALID: 'DataView datasource must not be null and should be descendant of Collection type',
-        ERR_DATAVIEW_FILTER_INVALID: 'DataView fn_filter option must be valid function which accepts entity and returns boolean value'
+        ERR_DATAVIEW_DATASRC_INVALID: 'TDataView datasource must not be null and should be descendant of Collection type',
+        ERR_DATAVIEW_FILTER_INVALID: 'TDataView fn_filter option must be valid function which accepts entity and returns boolean value'
     };
 
     RIAPP.localizable = (function () {
@@ -2628,9 +2628,9 @@ var RIAPP;
                         return obj;
                     if (utils.str.startsWith(prop, '[')) {
                         prop = this.trimQuotes(this.trimBrackets(prop));
-                        if (obj instanceof RIAPP.MOD.collection.Dictionary) {
+                        if (obj instanceof MOD.collection.BaseDictionary) {
                             return obj.getItemByKey(prop);
-                        } else if (obj instanceof RIAPP.MOD.collection.Collection) {
+                        } else if (obj instanceof MOD.collection.BaseCollection) {
                             return obj.getItemByPos(parseInt(prop, 10));
                         } else if (utils.check.isArray(obj)) {
                             return obj[parseInt(prop, 10)];
@@ -5708,9 +5708,9 @@ var RIAPP;
             })(RIAPP.BaseObject);
             collection.CollectionItem = CollectionItem;
 
-            var Collection = (function (_super) {
-                __extends(Collection, _super);
-                function Collection() {
+            var BaseCollection = (function (_super) {
+                __extends(BaseCollection, _super);
+                function BaseCollection() {
                     _super.call(this);
                     this._options = { enablePaging: false, pageSize: 50 };
                     this._isLoading = false;
@@ -5731,7 +5731,7 @@ var RIAPP;
                     this._isUpdating = false;
                     this._waitQueue = new RIAPP.MOD.utils.WaitQueue(this);
                 }
-                Collection.getEmptyFieldInfo = function (fieldName) {
+                BaseCollection.getEmptyFieldInfo = function (fieldName) {
                     var fieldInfo = {
                         isPrimaryKey: 0,
                         isRowTimeStamp: false,
@@ -5753,7 +5753,7 @@ var RIAPP;
                     };
                     return fieldInfo;
                 };
-                Collection.prototype._getEventNames = function () {
+                BaseCollection.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
                     return [
                         'begin_edit',
@@ -5773,101 +5773,101 @@ var RIAPP;
                         'commit_changes'
                     ].concat(base_events);
                 };
-                Collection.prototype.addOnClearing = function (fn, namespace) {
+                BaseCollection.prototype.addOnClearing = function (fn, namespace) {
                     this.addHandler('clearing', fn, namespace);
                 };
-                Collection.prototype.removeOnClearing = function (namespace) {
+                BaseCollection.prototype.removeOnClearing = function (namespace) {
                     this.removeHandler('clearing', namespace);
                 };
-                Collection.prototype.addOnCleared = function (fn, namespace) {
+                BaseCollection.prototype.addOnCleared = function (fn, namespace) {
                     this.addHandler('cleared', fn, namespace);
                 };
-                Collection.prototype.removeOnCleared = function (namespace) {
+                BaseCollection.prototype.removeOnCleared = function (namespace) {
                     this.removeHandler('cleared', namespace);
                 };
-                Collection.prototype.addOnFill = function (fn, namespace) {
+                BaseCollection.prototype.addOnFill = function (fn, namespace) {
                     this.addHandler('fill', fn, namespace);
                 };
-                Collection.prototype.removeOnFill = function (namespace) {
+                BaseCollection.prototype.removeOnFill = function (namespace) {
                     this.removeHandler('fill', namespace);
                 };
-                Collection.prototype.addOnCollChanged = function (fn, namespace) {
+                BaseCollection.prototype.addOnCollChanged = function (fn, namespace) {
                     this.addHandler('coll_changed', fn, namespace);
                 };
-                Collection.prototype.removeOnCollChanged = function (namespace) {
+                BaseCollection.prototype.removeOnCollChanged = function (namespace) {
                     this.removeHandler('coll_changed', namespace);
                 };
-                Collection.prototype.addOnValidate = function (fn, namespace) {
+                BaseCollection.prototype.addOnValidate = function (fn, namespace) {
                     this.addHandler('validate', fn, namespace);
                 };
-                Collection.prototype.removeOnValidate = function (namespace) {
+                BaseCollection.prototype.removeOnValidate = function (namespace) {
                     this.removeHandler('validate', namespace);
                 };
-                Collection.prototype.addOnItemDeleting = function (fn, namespace) {
+                BaseCollection.prototype.addOnItemDeleting = function (fn, namespace) {
                     this.addHandler('item_deleting', fn, namespace);
                 };
-                Collection.prototype.removeOnItemDeleting = function (namespace) {
+                BaseCollection.prototype.removeOnItemDeleting = function (namespace) {
                     this.removeHandler('item_deleting', namespace);
                 };
-                Collection.prototype.addOnItemAdding = function (fn, namespace) {
+                BaseCollection.prototype.addOnItemAdding = function (fn, namespace) {
                     this.addHandler('item_adding', fn, namespace);
                 };
-                Collection.prototype.removeOnItemAdding = function (namespace) {
+                BaseCollection.prototype.removeOnItemAdding = function (namespace) {
                     this.removeHandler('item_adding', namespace);
                 };
-                Collection.prototype.addOnItemAdded = function (fn, namespace) {
+                BaseCollection.prototype.addOnItemAdded = function (fn, namespace) {
                     this.addHandler('item_added', fn, namespace);
                 };
-                Collection.prototype.removeOnItemAdded = function (namespace) {
+                BaseCollection.prototype.removeOnItemAdded = function (namespace) {
                     this.removeHandler('item_added', namespace);
                 };
-                Collection.prototype.addOnCurrentChanging = function (fn, namespace) {
+                BaseCollection.prototype.addOnCurrentChanging = function (fn, namespace) {
                     this.addHandler('current_changing', fn, namespace);
                 };
-                Collection.prototype.removeOnCurrentChanging = function (namespace) {
+                BaseCollection.prototype.removeOnCurrentChanging = function (namespace) {
                     this.removeHandler('current_changing', namespace);
                 };
-                Collection.prototype.addOnPageChanging = function (fn, namespace) {
+                BaseCollection.prototype.addOnPageChanging = function (fn, namespace) {
                     this.addHandler('page_changing', fn, namespace);
                 };
-                Collection.prototype.removeOnPageChanging = function (namespace) {
+                BaseCollection.prototype.removeOnPageChanging = function (namespace) {
                     this.removeHandler('page_changing', namespace);
                 };
-                Collection.prototype.addOnErrorsChanged = function (fn, namespace) {
+                BaseCollection.prototype.addOnErrorsChanged = function (fn, namespace) {
                     this.addHandler('errors_changed', fn, namespace);
                 };
-                Collection.prototype.removeOnErrorsChanged = function (namespace) {
+                BaseCollection.prototype.removeOnErrorsChanged = function (namespace) {
                     this.removeHandler('errors_changed', namespace);
                 };
-                Collection.prototype.addOnBeginEdit = function (fn, namespace) {
+                BaseCollection.prototype.addOnBeginEdit = function (fn, namespace) {
                     this.addHandler('begin_edit', fn, namespace);
                 };
-                Collection.prototype.removeOnBeginEdit = function (namespace) {
+                BaseCollection.prototype.removeOnBeginEdit = function (namespace) {
                     this.removeHandler('begin_edit', namespace);
                 };
-                Collection.prototype.addOnEndEdit = function (fn, namespace) {
+                BaseCollection.prototype.addOnEndEdit = function (fn, namespace) {
                     this.addHandler('end_edit', fn, namespace);
                 };
-                Collection.prototype.removeOnEndEdit = function (namespace) {
+                BaseCollection.prototype.removeOnEndEdit = function (namespace) {
                     this.removeHandler('end_edit', namespace);
                 };
-                Collection.prototype.addOnCommitChanges = function (fn, namespace) {
+                BaseCollection.prototype.addOnCommitChanges = function (fn, namespace) {
                     this.addHandler('commit_changes', fn, namespace);
                 };
-                Collection.prototype.removeOnCommitChanges = function (namespace) {
+                BaseCollection.prototype.removeOnCommitChanges = function (namespace) {
                     this.removeHandler('commit_changes', namespace);
                 };
-                Collection.prototype.addOnStatusChanged = function (fn, namespace) {
+                BaseCollection.prototype.addOnStatusChanged = function (fn, namespace) {
                     this.addHandler('status_changed', fn, namespace);
                 };
-                Collection.prototype.removeOnStatusChanged = function (namespace) {
+                BaseCollection.prototype.removeOnStatusChanged = function (namespace) {
                     this.removeHandler('status_changed', namespace);
                 };
-                Collection.prototype._getStrValue = function (val, fieldInfo) {
+                BaseCollection.prototype._getStrValue = function (val, fieldInfo) {
                     var dcnv = fieldInfo.dateConversion, stz = utils.get_timeZoneOffset();
                     return valueUtils.stringifyValue(val, dcnv, stz);
                 };
-                Collection.prototype._getPKFieldInfos = function () {
+                BaseCollection.prototype._getPKFieldInfos = function () {
                     if (!!this._pkInfo)
                         return this._pkInfo;
                     var fldMap = this._fieldMap, pk = [];
@@ -5882,14 +5882,14 @@ var RIAPP;
                     this._pkInfo = pk;
                     return this._pkInfo;
                 };
-                Collection.prototype._onError = function (error, source) {
+                BaseCollection.prototype._onError = function (error, source) {
                     var isHandled = _super.prototype._onError.call(this, error, source);
                     if (!isHandled) {
                         return RIAPP.global._onError(error, source);
                     }
                     return isHandled;
                 };
-                Collection.prototype._onCurrentChanging = function (newCurrent) {
+                BaseCollection.prototype._onCurrentChanging = function (newCurrent) {
                     try  {
                         this.endEdit();
                     } catch (ex) {
@@ -5897,10 +5897,10 @@ var RIAPP;
                     }
                     this.raiseEvent('current_changing', { newCurrent: newCurrent });
                 };
-                Collection.prototype._onCurrentChanged = function () {
+                BaseCollection.prototype._onCurrentChanged = function () {
                     this.raisePropertyChanged('currentItem');
                 };
-                Collection.prototype._onEditing = function (item, isBegin, isCanceled) {
+                BaseCollection.prototype._onEditing = function (item, isBegin, isCanceled) {
                     if (this._isUpdating)
                         return;
                     if (isBegin) {
@@ -5913,15 +5913,15 @@ var RIAPP;
                 };
 
                 //used by descendants when commiting submits for items
-                Collection.prototype._onCommitChanges = function (item, isBegin, isRejected, changeType) {
+                BaseCollection.prototype._onCommitChanges = function (item, isBegin, isRejected, changeType) {
                     this.raiseEvent('commit_changes', { item: item, isBegin: isBegin, isRejected: isRejected, changeType: changeType });
                 };
 
                 //occurs when item changeType Changed (not used in simple collections)
-                Collection.prototype._onItemStatusChanged = function (item, oldChangeType) {
+                BaseCollection.prototype._onItemStatusChanged = function (item, oldChangeType) {
                     this.raiseEvent('status_changed', { item: item, oldChangeType: oldChangeType, key: item._key });
                 };
-                Collection.prototype._validateItem = function (item) {
+                BaseCollection.prototype._validateItem = function (item) {
                     var args = { item: item, fieldName: null, errors: [] };
                     this.raiseEvent('validate', args);
                     if (!!args.errors && args.errors.length > 0)
@@ -5929,7 +5929,7 @@ var RIAPP;
 else
                         return null;
                 };
-                Collection.prototype._validateItemField = function (item, fieldName) {
+                BaseCollection.prototype._validateItemField = function (item, fieldName) {
                     var args = { item: item, fieldName: fieldName, errors: [] };
                     this.raiseEvent('validate', args);
                     if (!!args.errors && args.errors.length > 0)
@@ -5937,7 +5937,7 @@ else
 else
                         return null;
                 };
-                Collection.prototype._addErrors = function (item, errors) {
+                BaseCollection.prototype._addErrors = function (item, errors) {
                     var self = this;
                     this._ignoreChangeErrors = true;
                     try  {
@@ -5949,7 +5949,7 @@ else
                     }
                     this._onErrorsChanged(item);
                 };
-                Collection.prototype._addError = function (item, fieldName, errors) {
+                BaseCollection.prototype._addError = function (item, fieldName, errors) {
                     if (!fieldName)
                         fieldName = '*';
                     if (!(utils.check.isArray(errors) && errors.length > 0)) {
@@ -5963,7 +5963,7 @@ else
                     if (!this._ignoreChangeErrors)
                         this._onErrorsChanged(item);
                 };
-                Collection.prototype._removeError = function (item, fieldName) {
+                BaseCollection.prototype._removeError = function (item, fieldName) {
                     var itemErrors = this._errors[item._key];
                     if (!itemErrors)
                         return;
@@ -5977,38 +5977,38 @@ else
                     }
                     this._onErrorsChanged(item);
                 };
-                Collection.prototype._removeAllErrors = function (item) {
+                BaseCollection.prototype._removeAllErrors = function (item) {
                     var self = this, itemErrors = this._errors[item._key];
                     if (!itemErrors)
                         return;
                     delete this._errors[item._key];
                     self._onErrorsChanged(item);
                 };
-                Collection.prototype._getErrors = function (item) {
+                BaseCollection.prototype._getErrors = function (item) {
                     return this._errors[item._key];
                 };
-                Collection.prototype._onErrorsChanged = function (item) {
+                BaseCollection.prototype._onErrorsChanged = function (item) {
                     var args = { item: item };
                     this.raiseEvent('errors_changed', args);
                     item._onErrorsChanged(args);
                 };
-                Collection.prototype._onItemDeleting = function (item) {
+                BaseCollection.prototype._onItemDeleting = function (item) {
                     var args = { item: item, isCancel: false };
                     this.raiseEvent('item_deleting', args);
                     return !args.isCancel;
                 };
-                Collection.prototype._onFillStart = function (args) {
+                BaseCollection.prototype._onFillStart = function (args) {
                     this.raiseEvent('fill', args);
                 };
-                Collection.prototype._onFillEnd = function (args) {
+                BaseCollection.prototype._onFillEnd = function (args) {
                     this.raiseEvent('fill', args);
                 };
-                Collection.prototype._onItemsChanged = function (args) {
+                BaseCollection.prototype._onItemsChanged = function (args) {
                     this.raiseEvent('coll_changed', args);
                 };
 
                 //new item is being added, but is not in the collection now
-                Collection.prototype._onItemAdding = function (item) {
+                BaseCollection.prototype._onItemAdding = function (item) {
                     var args = { item: item, isCancel: false };
                     this.raiseEvent('item_adding', args);
                     if (args.isCancel)
@@ -6016,14 +6016,14 @@ else
                 };
 
                 //new item has been added and now is in editing state and is currentItem
-                Collection.prototype._onItemAdded = function (item) {
+                BaseCollection.prototype._onItemAdded = function (item) {
                     var args = { item: item, isAddNewHandled: false };
                     this.raiseEvent('item_added', args);
                 };
-                Collection.prototype._createNew = function () {
-                    return new CollectionItem();
+                BaseCollection.prototype._createNew = function () {
+                    throw new Error('_createNew Not implemented');
                 };
-                Collection.prototype._attach = function (item, itemPos) {
+                BaseCollection.prototype._attach = function (item, itemPos) {
                     if (!!this._itemsByKey[item._key]) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_ATTACHED);
                     }
@@ -6050,16 +6050,16 @@ else
                     this._onCurrentChanged();
                     return pos;
                 };
-                Collection.prototype._onRemoved = function (item, pos) {
+                BaseCollection.prototype._onRemoved = function (item, pos) {
                     try  {
                         this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.REMOVE, items: [item], pos: [pos] });
                     } finally {
                         this.raisePropertyChanged('count');
                     }
                 };
-                Collection.prototype._onPageSizeChanged = function () {
+                BaseCollection.prototype._onPageSizeChanged = function () {
                 };
-                Collection.prototype._onPageChanging = function () {
+                BaseCollection.prototype._onPageChanging = function () {
                     var args = { page: this.pageIndex, isCancel: false };
                     this._raiseEvent('page_changing', args);
                     if (!args.isCancel) {
@@ -6071,9 +6071,9 @@ else
                     }
                     return !args.isCancel;
                 };
-                Collection.prototype._onPageChanged = function () {
+                BaseCollection.prototype._onPageChanged = function () {
                 };
-                Collection.prototype._setCurrentItem = function (v) {
+                BaseCollection.prototype._setCurrentItem = function (v) {
                     var self = this, oldPos = self._currentPos;
                     if (!v) {
                         if (oldPos !== -1) {
@@ -6099,23 +6099,23 @@ else
                         self._onCurrentChanged();
                     }
                 };
-                Collection.prototype._destroyItems = function () {
+                BaseCollection.prototype._destroyItems = function () {
                     this._items.forEach(function (item) {
                         item.destroy();
                     });
                 };
-                Collection.prototype.getFieldInfo = function (fieldName) {
+                BaseCollection.prototype.getFieldInfo = function (fieldName) {
                     return this._fieldMap[fieldName];
                 };
-                Collection.prototype.getFieldNames = function () {
+                BaseCollection.prototype.getFieldNames = function () {
                     var fldMap = this._fieldMap;
                     return utils.getProps(fldMap);
                 };
-                Collection.prototype.cancelEdit = function () {
+                BaseCollection.prototype.cancelEdit = function () {
                     if (this.isEditing)
                         this._EditingItem.cancelEdit();
                 };
-                Collection.prototype.endEdit = function () {
+                BaseCollection.prototype.endEdit = function () {
                     var EditingItem;
                     if (this.isEditing) {
                         EditingItem = this._EditingItem;
@@ -6125,7 +6125,7 @@ else
                         }
                     }
                 };
-                Collection.prototype.getItemsWithErrors = function () {
+                BaseCollection.prototype.getItemsWithErrors = function () {
                     var self = this, res = [];
                     utils.forEachProp(this._errors, function (key) {
                         var item = self.getItemByKey(key);
@@ -6133,7 +6133,7 @@ else
                     });
                     return res;
                 };
-                Collection.prototype.addNew = function () {
+                BaseCollection.prototype.addNew = function () {
                     var item, isHandled;
                     item = this._createNew();
                     this._onItemAdding(item);
@@ -6149,18 +6149,18 @@ else
                     }
                     return item;
                 };
-                Collection.prototype.getItemByPos = function (pos) {
+                BaseCollection.prototype.getItemByPos = function (pos) {
                     if (pos < 0 || pos >= this._items.length)
                         return null;
                     return this._items[pos];
                 };
-                Collection.prototype.getItemByKey = function (key) {
+                BaseCollection.prototype.getItemByKey = function (key) {
                     if (!key)
                         throw new Error(RIAPP.ERRS.ERR_KEY_IS_EMPTY);
                     var map = this._itemsByKey;
                     return map['' + key];
                 };
-                Collection.prototype.findByPK = function () {
+                BaseCollection.prototype.findByPK = function () {
                     var vals = [];
                     for (var _i = 0; _i < (arguments.length - 0); _i++) {
                         vals[_i] = arguments[_i + 0];
@@ -6182,7 +6182,7 @@ else
                     key = arr.join(';');
                     return self.getItemByKey(key);
                 };
-                Collection.prototype.moveFirst = function (skipDeleted) {
+                BaseCollection.prototype.moveFirst = function (skipDeleted) {
                     var pos = 0, old = this._currentPos;
                     if (old === pos)
                         return false;
@@ -6199,7 +6199,7 @@ else
                     this._onCurrentChanged();
                     return true;
                 };
-                Collection.prototype.movePrev = function (skipDeleted) {
+                BaseCollection.prototype.movePrev = function (skipDeleted) {
                     var pos = -1, old = this._currentPos;
                     var item = this.getItemByPos(old);
                     if (!!item) {
@@ -6220,7 +6220,7 @@ else
                     this._onCurrentChanged();
                     return true;
                 };
-                Collection.prototype.moveNext = function (skipDeleted) {
+                BaseCollection.prototype.moveNext = function (skipDeleted) {
                     var pos = -1, old = this._currentPos;
                     var item = this.getItemByPos(old);
                     if (!!item) {
@@ -6241,7 +6241,7 @@ else
                     this._onCurrentChanged();
                     return true;
                 };
-                Collection.prototype.moveLast = function (skipDeleted) {
+                BaseCollection.prototype.moveLast = function (skipDeleted) {
                     var pos = this._items.length - 1, old = this._currentPos;
                     if (old === pos)
                         return false;
@@ -6258,7 +6258,7 @@ else
                     this._onCurrentChanged();
                     return true;
                 };
-                Collection.prototype.goTo = function (pos) {
+                BaseCollection.prototype.goTo = function (pos) {
                     var old = this._currentPos;
                     if (old === pos)
                         return false;
@@ -6270,10 +6270,10 @@ else
                     this._onCurrentChanged();
                     return true;
                 };
-                Collection.prototype.forEach = function (callback, thisObj) {
+                BaseCollection.prototype.forEach = function (callback, thisObj) {
                     this._items.forEach(callback, thisObj);
                 };
-                Collection.prototype.removeItem = function (item) {
+                BaseCollection.prototype.removeItem = function (item) {
                     if (item._key === null) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     }
@@ -6302,12 +6302,12 @@ else
                         this._onCurrentChanged();
                     }
                 };
-                Collection.prototype.getIsHasErrors = function () {
+                BaseCollection.prototype.getIsHasErrors = function () {
                     if (!this._errors)
                         return false;
                     return (utils.getProps(this._errors).length > 0);
                 };
-                Collection.prototype.sort = function (fieldNames, sortOrder) {
+                BaseCollection.prototype.sort = function (fieldNames, sortOrder) {
                     var self = this, deffered = utils.createDeferred();
                     setTimeout(function () {
                         try  {
@@ -6318,7 +6318,7 @@ else
                     }, 0);
                     return deffered.promise();
                 };
-                Collection.prototype.sortLocal = function (fieldNames, sortOrder) {
+                BaseCollection.prototype.sortLocal = function (fieldNames, sortOrder) {
                     var mult = 1;
                     if (!!sortOrder && sortOrder.toUpperCase() === 'DESC')
                         mult = -1;
@@ -6342,7 +6342,7 @@ else
                     };
                     this.sortLocalByFunc(fn_sort);
                 };
-                Collection.prototype.sortLocalByFunc = function (fn) {
+                BaseCollection.prototype.sortLocalByFunc = function (fn) {
                     var self = this;
                     this.waitForNotLoading(function () {
                         var cur = self.currentItem;
@@ -6357,7 +6357,7 @@ else
                         self.currentItem = cur;
                     }, [], false, null);
                 };
-                Collection.prototype.clear = function () {
+                BaseCollection.prototype.clear = function () {
                     this.raiseEvent('clearing', {});
                     this.cancelEdit();
                     this._EditingItem = null;
@@ -6371,7 +6371,7 @@ else
                     this.raiseEvent('cleared', {});
                     this.raisePropertyChanged('count');
                 };
-                Collection.prototype.destroy = function () {
+                BaseCollection.prototype.destroy = function () {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
@@ -6381,7 +6381,7 @@ else
                     this._fieldMap = {};
                     _super.prototype.destroy.call(this);
                 };
-                Collection.prototype.waitForNotLoading = function (callback, callbackArgs, syncCheck, groupName) {
+                BaseCollection.prototype.waitForNotLoading = function (callback, callbackArgs, syncCheck, groupName) {
                     this._waitQueue.enQueue({
                         prop: 'isLoading',
                         groupName: null,
@@ -6394,17 +6394,17 @@ else
                         syncCheck: !!syncCheck
                     });
                 };
-                Collection.prototype.toString = function () {
+                BaseCollection.prototype.toString = function () {
                     return 'Collection';
                 };
-                Object.defineProperty(Collection.prototype, "options", {
+                Object.defineProperty(BaseCollection.prototype, "options", {
                     get: function () {
                         return this._options;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "currentItem", {
+                Object.defineProperty(BaseCollection.prototype, "currentItem", {
                     get: function () {
                         return this.getItemByPos(this._currentPos);
                     },
@@ -6414,14 +6414,14 @@ else
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "count", {
+                Object.defineProperty(BaseCollection.prototype, "count", {
                     get: function () {
                         return this._items.length;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "totalCount", {
+                Object.defineProperty(BaseCollection.prototype, "totalCount", {
                     get: function () {
                         return this._totalCount;
                     },
@@ -6435,7 +6435,7 @@ else
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "pageSize", {
+                Object.defineProperty(BaseCollection.prototype, "pageSize", {
                     get: function () {
                         return this._options.pageSize;
                     },
@@ -6449,7 +6449,7 @@ else
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "pageIndex", {
+                Object.defineProperty(BaseCollection.prototype, "pageIndex", {
                     get: function () {
                         return this._pageIndex;
                     },
@@ -6468,35 +6468,35 @@ else
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "items", {
+                Object.defineProperty(BaseCollection.prototype, "items", {
                     get: function () {
                         return this._items;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "isPagingEnabled", {
+                Object.defineProperty(BaseCollection.prototype, "isPagingEnabled", {
                     get: function () {
                         return this._options.enablePaging;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "permissions", {
+                Object.defineProperty(BaseCollection.prototype, "permissions", {
                     get: function () {
                         return this._perms;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "isEditing", {
+                Object.defineProperty(BaseCollection.prototype, "isEditing", {
                     get: function () {
                         return !!this._EditingItem;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "isLoading", {
+                Object.defineProperty(BaseCollection.prototype, "isLoading", {
                     get: function () {
                         return this._isLoading;
                     },
@@ -6509,7 +6509,7 @@ else
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "isUpdating", {
+                Object.defineProperty(BaseCollection.prototype, "isUpdating", {
                     get: function () {
                         return this._isUpdating;
                     },
@@ -6522,7 +6522,7 @@ else
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(Collection.prototype, "pageCount", {
+                Object.defineProperty(BaseCollection.prototype, "pageCount", {
                     get: function () {
                         var rowCount = this.totalCount, rowPerPage = this.pageSize, result;
 
@@ -6541,15 +6541,25 @@ else
                     enumerable: true,
                     configurable: true
                 });
-                return Collection;
+                return BaseCollection;
             })(RIAPP.BaseObject);
+            collection.BaseCollection = BaseCollection;
+
+            var Collection = (function (_super) {
+                __extends(Collection, _super);
+                function Collection() {
+                    _super.apply(this, arguments);
+                }
+                return Collection;
+            })(BaseCollection);
             collection.Collection = Collection;
 
             var ListItem = (function (_super) {
                 __extends(ListItem, _super);
-                function ListItem(obj) {
+                function ListItem(coll, obj) {
                     _super.call(this);
                     var self = this;
+                    this.__coll = coll;
                     this.__isNew = !obj;
 
                     if (!!obj)
@@ -6592,7 +6602,7 @@ else
                     this.__isNew = false;
                 };
                 ListItem.prototype.toString = function () {
-                    return 'ListItem';
+                    return this._collection.toString() + 'Item';
                 };
                 Object.defineProperty(ListItem.prototype, "_isNew", {
                     get: function () {
@@ -6612,43 +6622,25 @@ else
             })(CollectionItem);
             collection.ListItem = ListItem;
 
-            var List = (function (_super) {
-                __extends(List, _super);
-                function List(type_name, properties) {
+            var BaseList = (function (_super) {
+                __extends(BaseList, _super);
+                function BaseList(itemType, props) {
                     _super.call(this);
-                    this._type_name = type_name;
-                    if (utils.check.isArray(properties)) {
-                        this._props = properties;
-                        if (this._props.length === 0)
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
-                        this._initFieldMap(false, properties);
-                    } else if (properties instanceof CollectionItem) {
-                        //for properties which is collection item, we can obtain names by using getFieldNames();
-                        this._props = properties.getFieldNames();
-                        this._initFieldMap(true, properties);
-                    } else if (!!properties) {
-                        //properties parameter is just simple object
-                        //all its keys will be property names
-                        this._props = Object.keys(properties);
-                        this._initFieldMap(false, properties);
-                    } else
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
-                    this._itemType = null;
-                    this._createItemType();
+                    this._type_name = 'BaseList';
+                    this._itemType = itemType;
+                    this._props = props;
+                    if (!!this._props)
+                        this._updateFieldMap();
                 }
-                List.prototype._initFieldMap = function (isCollectionItem, obj) {
+                BaseList.prototype._updateFieldMap = function () {
                     var self = this;
-                    if (!isCollectionItem) {
-                        this._props.forEach(function (prop) {
-                            self._fieldMap[prop] = Collection.getEmptyFieldInfo(prop);
-                        });
-                    } else {
-                        this._props.forEach(function (prop) {
-                            self._fieldMap[prop] = utils.extend(false, {}, obj.getFieldInfo(prop));
-                        });
-                    }
+                    self._fieldMap = {};
+                    this._props.forEach(function (prop) {
+                        var fldInfo = BaseCollection.getEmptyFieldInfo(prop);
+                        self._fieldMap[prop] = fldInfo;
+                    });
                 };
-                List.prototype._attach = function (item) {
+                BaseList.prototype._attach = function (item) {
                     try  {
                         this.endEdit();
                     } catch (ex) {
@@ -6656,48 +6648,26 @@ else
                     }
                     return _super.prototype._attach.call(this, item);
                 };
-                List.prototype._createNew = function () {
-                    var item = new this._itemType(null);
+                BaseList.prototype._createNew = function () {
+                    var item = new this._itemType(this, null);
                     item._key = this._getNewKey(null);
                     return item;
                 };
-                List.prototype._createItemType = function () {
-                    var propDescriptors = {}, self = this;
-
-                    //create field accessor descriptor for each field
-                    this.getFieldNames().forEach(function (name) {
-                        propDescriptors[name] = {
-                            set: function (x) {
-                                this._setProp(name, x);
-                            },
-                            get: function () {
-                                return this._getProp(name);
-                            }
-                        };
-                    }, this);
-
-                    this._itemType = RIAPP.MOD.utils.__extendType(ListItem, {
-                        __coll: this,
-                        toString: function () {
-                            return self._type_name + 'Item';
-                        }
-                    }, propDescriptors);
-                };
 
                 //here item parameter is not used, but can be used in descendants
-                List.prototype._getNewKey = function (item) {
+                BaseList.prototype._getNewKey = function (item) {
                     var key = 'clkey_' + this._newKey;
                     this._newKey += 1;
                     return key;
                 };
-                List.prototype.fillItems = function (objArray, clearAll) {
+                BaseList.prototype.fillItems = function (objArray, clearAll) {
                     var self = this, newItems = [], positions = [], fetchedItems = [];
                     this._onFillStart({ isBegin: true, rowCount: objArray.length, time: new Date(), isPageChanged: false });
                     try  {
                         if (!!clearAll)
                             this.clear();
                         objArray.forEach(function (obj) {
-                            var item = new self._itemType(obj);
+                            var item = new self._itemType(self, obj);
                             item._key = self._getNewKey(item);
                             var oldItem = self._itemsByKey[item._key];
                             if (!oldItem) {
@@ -6728,21 +6698,103 @@ else
                     }
                     this.moveFirst();
                 };
-                List.prototype.getNewObjects = function () {
+                BaseList.prototype.getNewObjects = function () {
                     return this._items.filter(function (item) {
                         return item._isNew;
                     });
                 };
-                List.prototype.resetNewObjects = function () {
+                BaseList.prototype.resetNewObjects = function () {
                     this._items.forEach(function (item) {
                         item._resetIsNew();
                     });
                 };
-                List.prototype.toString = function () {
+                BaseList.prototype.toString = function () {
                     return this._type_name;
                 };
+                return BaseList;
+            })(BaseCollection);
+            collection.BaseList = BaseList;
+
+            var BaseDictionary = (function (_super) {
+                __extends(BaseDictionary, _super);
+                function BaseDictionary(itemType, keyName, props) {
+                    if (!keyName)
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
+                    this._keyName = keyName;
+                    _super.call(this, itemType, props);
+                    var keyFld = this.getFieldInfo(keyName);
+                    if (!keyFld)
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_NOTFOUND, keyName));
+                    keyFld.isPrimaryKey = 1;
+                }
+                BaseDictionary.prototype._getNewKey = function (item) {
+                    if (!item) {
+                        return _super.prototype._getNewKey.call(this, null);
+                    }
+                    var key = item[this._keyName];
+                    if (utils.check.isNt(key))
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
+                    return '' + key;
+                };
+                return BaseDictionary;
+            })(BaseList);
+            collection.BaseDictionary = BaseDictionary;
+
+            var List = (function (_super) {
+                __extends(List, _super);
+                function List(type_name, properties) {
+                    _super.call(this, null, null);
+                    this._type_name = type_name;
+                    if (utils.check.isArray(properties)) {
+                        this._props = properties;
+                        if (this._props.length === 0)
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
+                        this._initFieldMap(false, properties);
+                    } else if (properties instanceof CollectionItem) {
+                        //for properties which is collection item, we can obtain names by using getFieldNames();
+                        this._props = properties.getFieldNames();
+                        this._initFieldMap(true, properties);
+                    } else if (!!properties) {
+                        //properties parameter is just simple object
+                        //all its keys will be property names
+                        this._props = Object.keys(properties);
+                        this._initFieldMap(false, properties);
+                    } else
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
+                    this._itemType = null;
+                    this._createItemType();
+                }
+                List.prototype._initFieldMap = function (isCollectionItem, obj) {
+                    var self = this;
+                    if (!isCollectionItem) {
+                        this._props.forEach(function (prop) {
+                            self._fieldMap[prop] = BaseCollection.getEmptyFieldInfo(prop);
+                        });
+                    } else {
+                        this._props.forEach(function (prop) {
+                            self._fieldMap[prop] = utils.extend(false, {}, obj.getFieldInfo(prop));
+                        });
+                    }
+                };
+                List.prototype._createItemType = function () {
+                    var propDescriptors = {}, self = this;
+
+                    //create field accessor descriptor for each field
+                    this.getFieldNames().forEach(function (name) {
+                        propDescriptors[name] = {
+                            set: function (x) {
+                                this._setProp(name, x);
+                            },
+                            get: function () {
+                                return this._getProp(name);
+                            }
+                        };
+                    }, this);
+
+                    this._itemType = RIAPP.MOD.utils.__extendType(ListItem, {}, propDescriptors);
+                };
                 return List;
-            })(Collection);
+            })(BaseList);
             collection.List = List;
 
             var Dictionary = (function (_super) {
@@ -8710,9 +8762,9 @@ var RIAPP;
             })(RIAPP.BaseObject);
             db.DataCache = DataCache;
 
-            var DataQuery = (function (_super) {
-                __extends(DataQuery, _super);
-                function DataQuery(dbSet, queryInfo) {
+            var TDataQuery = (function (_super) {
+                __extends(TDataQuery, _super);
+                function TDataQuery(dbSet, queryInfo) {
                     _super.call(this);
                     this._dbSet = dbSet;
                     this.__queryInfo = queryInfo;
@@ -8728,14 +8780,14 @@ var RIAPP;
                     this._dataCache = null;
                     this._cacheInvalidated = false;
                 }
-                DataQuery.prototype.getFieldInfo = function (fieldName) {
+                TDataQuery.prototype.getFieldInfo = function (fieldName) {
                     return this._dbSet.getFieldInfo(fieldName);
                 };
-                DataQuery.prototype.getFieldNames = function () {
+                TDataQuery.prototype.getFieldNames = function () {
                     var fldMap = this._dbSet._fieldMap;
                     return utils.getProps(fldMap);
                 };
-                DataQuery.prototype._addSort = function (fieldName, sortOrder) {
+                TDataQuery.prototype._addSort = function (fieldName, sortOrder) {
                     var sort = SORT_ORDER.ASC, sortInfo = this._sortInfo;
                     if (!!sortOrder && sortOrder.toLowerCase().substr(0, 1) === 'd')
                         sort = SORT_ORDER.DESC;
@@ -8743,7 +8795,7 @@ var RIAPP;
                     sortInfo.sortItems.push(sortItem);
                     this._cacheInvalidated = true;
                 };
-                DataQuery.prototype._addFilterItem = function (fieldName, operand, value) {
+                TDataQuery.prototype._addFilterItem = function (fieldName, operand, value) {
                     var F_TYPE = FILTER_TYPE, fkind = F_TYPE.Equals;
                     var fld = this.getFieldInfo(fieldName);
                     if (!fld)
@@ -8804,135 +8856,135 @@ var RIAPP;
                     this._filterInfo.filterItems.push(filterItem);
                     this._cacheInvalidated = true;
                 };
-                DataQuery.prototype.where = function (fieldName, operand, value) {
+                TDataQuery.prototype.where = function (fieldName, operand, value) {
                     this._addFilterItem(fieldName, operand, value);
                     return this;
                 };
-                DataQuery.prototype.and = function (fieldName, operand, value) {
+                TDataQuery.prototype.and = function (fieldName, operand, value) {
                     this._addFilterItem(fieldName, operand, value);
                     return this;
                 };
-                DataQuery.prototype.orderBy = function (fieldName, sortOrder) {
+                TDataQuery.prototype.orderBy = function (fieldName, sortOrder) {
                     this._addSort(fieldName, sortOrder);
                     return this;
                 };
-                DataQuery.prototype.thenBy = function (fieldName, sortOrder) {
+                TDataQuery.prototype.thenBy = function (fieldName, sortOrder) {
                     this._addSort(fieldName, sortOrder);
                     return this;
                 };
-                DataQuery.prototype.clearSort = function () {
+                TDataQuery.prototype.clearSort = function () {
                     this._sortInfo.sortItems = [];
                     this._cacheInvalidated = true;
                     return this;
                 };
-                DataQuery.prototype.clearFilter = function () {
+                TDataQuery.prototype.clearFilter = function () {
                     this._filterInfo.filterItems = [];
                     this._cacheInvalidated = true;
                     return this;
                 };
-                DataQuery.prototype.clearParams = function () {
+                TDataQuery.prototype.clearParams = function () {
                     this._params = {};
                     this._cacheInvalidated = true;
                     return this;
                 };
-                DataQuery.prototype._clearCache = function () {
+                TDataQuery.prototype._clearCache = function () {
                     if (!!this._dataCache) {
                         this._dataCache.destroy();
                         this._dataCache = null;
                     }
                     this._resetCacheInvalidated();
                 };
-                DataQuery.prototype._getCache = function () {
+                TDataQuery.prototype._getCache = function () {
                     if (!this._dataCache) {
                         this._dataCache = new DataCache(this);
                     }
                     return this._dataCache;
                 };
-                DataQuery.prototype._reindexCache = function () {
+                TDataQuery.prototype._reindexCache = function () {
                     if (!this._dataCache) {
                         return;
                     }
                     this._dataCache.reindexCache();
                 };
-                DataQuery.prototype._isPageCached = function (pageIndex) {
+                TDataQuery.prototype._isPageCached = function (pageIndex) {
                     if (!this._dataCache) {
                         return false;
                     }
                     return this._dataCache.hasPage(pageIndex);
                 };
-                DataQuery.prototype._resetCacheInvalidated = function () {
+                TDataQuery.prototype._resetCacheInvalidated = function () {
                     this._cacheInvalidated = false;
                 };
-                DataQuery.prototype.load = function () {
+                TDataQuery.prototype.load = function () {
                     return this.dbSet.dbContext.load(this);
                 };
-                DataQuery.prototype.destroy = function () {
+                TDataQuery.prototype.destroy = function () {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
                     this._clearCache();
                     _super.prototype.destroy.call(this);
                 };
-                DataQuery.prototype.toString = function () {
+                TDataQuery.prototype.toString = function () {
                     return 'DataQuery';
                 };
-                Object.defineProperty(DataQuery.prototype, "_queryInfo", {
+                Object.defineProperty(TDataQuery.prototype, "_queryInfo", {
                     get: function () {
                         return this.__queryInfo;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "_serverTimezone", {
+                Object.defineProperty(TDataQuery.prototype, "_serverTimezone", {
                     get: function () {
                         return this._dbSet.dbContext.serverTimezone;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "entityType", {
+                Object.defineProperty(TDataQuery.prototype, "entityType", {
                     get: function () {
                         return this._dbSet.entityType;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "dbSet", {
+                Object.defineProperty(TDataQuery.prototype, "dbSet", {
                     get: function () {
                         return this._dbSet;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "dbSetName", {
+                Object.defineProperty(TDataQuery.prototype, "dbSetName", {
                     get: function () {
                         return this._dbSet.dbSetName;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "queryName", {
+                Object.defineProperty(TDataQuery.prototype, "queryName", {
                     get: function () {
                         return this.__queryInfo.methodName;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "filterInfo", {
+                Object.defineProperty(TDataQuery.prototype, "filterInfo", {
                     get: function () {
                         return this._filterInfo;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "sortInfo", {
+                Object.defineProperty(TDataQuery.prototype, "sortInfo", {
                     get: function () {
                         return this._sortInfo;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "isIncludeTotalCount", {
+                Object.defineProperty(TDataQuery.prototype, "isIncludeTotalCount", {
                     get: function () {
                         return this._isIncludeTotalCount;
                     },
@@ -8942,7 +8994,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "isClearPrevData", {
+                Object.defineProperty(TDataQuery.prototype, "isClearPrevData", {
                     get: function () {
                         return this._isClearPrevData;
                     },
@@ -8952,7 +9004,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "pageSize", {
+                Object.defineProperty(TDataQuery.prototype, "pageSize", {
                     get: function () {
                         return this._pageSize;
                     },
@@ -8964,7 +9016,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "pageIndex", {
+                Object.defineProperty(TDataQuery.prototype, "pageIndex", {
                     get: function () {
                         return this._pageIndex;
                     },
@@ -8976,7 +9028,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "params", {
+                Object.defineProperty(TDataQuery.prototype, "params", {
                     get: function () {
                         return this._params;
                     },
@@ -8989,14 +9041,14 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "isPagingEnabled", {
+                Object.defineProperty(TDataQuery.prototype, "isPagingEnabled", {
                     get: function () {
                         return this._dbSet.isPagingEnabled;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "loadPageCount", {
+                Object.defineProperty(TDataQuery.prototype, "loadPageCount", {
                     get: function () {
                         return this._loadPageCount;
                     },
@@ -9015,7 +9067,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "isClearCacheOnEveryLoad", {
+                Object.defineProperty(TDataQuery.prototype, "isClearCacheOnEveryLoad", {
                     get: function () {
                         return this._isClearCacheOnEveryLoad;
                     },
@@ -9028,15 +9080,24 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "isCacheValid", {
+                Object.defineProperty(TDataQuery.prototype, "isCacheValid", {
                     get: function () {
                         return !!this._dataCache && !this._cacheInvalidated;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                return DataQuery;
+                return TDataQuery;
             })(RIAPP.BaseObject);
+            db.TDataQuery = TDataQuery;
+
+            var DataQuery = (function (_super) {
+                __extends(DataQuery, _super);
+                function DataQuery() {
+                    _super.apply(this, arguments);
+                }
+                return DataQuery;
+            })(TDataQuery);
             db.DataQuery = DataQuery;
 
             var Entity = (function (_super) {
@@ -9805,7 +9866,7 @@ else
                     if (!query)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'query is not null'));
                     var dataCache = query._getCache();
-                    var cachedPage = dataCache.getCachedPage(query.pageIndex), items = !cachedPage ? [] : cachedPage.items;
+                    var cachedPage = dataCache.getCachedPage(query.pageIndex), items = (!cachedPage ? [] : cachedPage.items);
 
                     this._onFillStart({ isBegin: true, rowCount: items.length, time: new Date(), isPageChanged: data.isPageChanged });
                     try  {
@@ -10069,7 +10130,7 @@ else
                     if (!queryInfo) {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_QUERY_NAME_NOTFOUND, name));
                     }
-                    return new DataQuery(this, queryInfo);
+                    return new TDataQuery(this, queryInfo);
                 };
                 DbSet.prototype.clearCache = function () {
                     var query = this._query;
@@ -10161,7 +10222,7 @@ else
                     configurable: true
                 });
                 return DbSet;
-            })(MOD.collection.Collection);
+            })(MOD.collection.BaseCollection);
             db.DbSet = DbSet;
 
             //implements lazy initialization pattern for creating DbSet's instances
@@ -11775,7 +11836,7 @@ else
                         fn_itemsProvider: null
                     }, options);
 
-                    if (!opts.dataSource || !utils.check.isProtoOf(MOD.collection.Collection, opts.dataSource))
+                    if (!opts.dataSource || !(opts.dataSource instanceof MOD.collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_DATASRC_INVALID);
                     if (!opts.fn_filter || !utils.check.isFunction(opts.fn_filter))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_FILTER_INVALID);
@@ -12232,7 +12293,7 @@ else
                     configurable: true
                 });
                 return DataView;
-            })(MOD.collection.Collection);
+            })(MOD.collection.BaseCollection);
             db.DataView = DataView;
 
             var ChildDataView = (function (_super) {
@@ -12328,6 +12389,31 @@ else
             })(DataView);
             db.ChildDataView = ChildDataView;
 
+            var TDbSet = (function (_super) {
+                __extends(TDbSet, _super);
+                function TDbSet() {
+                    _super.apply(this, arguments);
+                }
+                return TDbSet;
+            })(DbSet);
+            db.TDbSet = TDbSet;
+            var TDataView = (function (_super) {
+                __extends(TDataView, _super);
+                function TDataView() {
+                    _super.apply(this, arguments);
+                }
+                return TDataView;
+            })(DataView);
+            db.TDataView = TDataView;
+            var TChildDataView = (function (_super) {
+                __extends(TChildDataView, _super);
+                function TChildDataView() {
+                    _super.apply(this, arguments);
+                }
+                return TChildDataView;
+            })(ChildDataView);
+            db.TChildDataView = TChildDataView;
+
             RIAPP.global.onModuleLoaded('db', db);
         })(MOD.db || (MOD.db = {}));
         var db = MOD.db;
@@ -12349,7 +12435,7 @@ var RIAPP;
                     this._el = el;
                     this._$el = RIAPP.global.$(this._el);
                     this._objId = 'lst' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof MOD.collection.Collection))
+                    if (!!dataSource && !(dataSource instanceof MOD.collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_LISTBOX_DATASRC_INVALID);
                     this._$el.on('change.' + this._objId, function (e) {
                         e.stopPropagation();
@@ -14862,7 +14948,7 @@ var RIAPP;
                 __extends(DataGrid, _super);
                 function DataGrid(app, el, dataSource, options) {
                     _super.call(this);
-                    if (!!dataSource && !(dataSource instanceof MOD.collection.Collection))
+                    if (!!dataSource && !(dataSource instanceof MOD.collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
                     this._options = utils.extend(false, {
                         isUseScrollInto: true,
@@ -15956,7 +16042,7 @@ var RIAPP;
                     this._el = el;
                     this._$el = RIAPP.global.$(this._el);
                     this._objId = 'pgr' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof MOD.collection.Collection))
+                    if (!!dataSource && !(dataSource instanceof MOD.collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_PAGER_DATASRC_INVALID);
                     this._dataSource = dataSource;
                     this._showTip = utils.check.isNt(options.showTip) ? true : !!options.showTip;
@@ -16482,7 +16568,7 @@ var RIAPP;
                     this._el = el;
                     this._$el = RIAPP.global.$(this._el);
                     this._objId = 'pnl' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof MOD.collection.Collection))
+                    if (!!dataSource && !(dataSource instanceof MOD.collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_STACKPNL_DATASRC_INVALID);
                     this._dataSource = dataSource;
                     this._isDSFilling = false;

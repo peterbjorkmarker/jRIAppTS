@@ -2,8 +2,9 @@
 {
 {{INTERFACE_FIELDS}}
 	getDbContext():DbContext;
-	getDbSet():{{DBSET_TYPE}};
-	_dbSet:{{DBSET_TYPE}};
+	getDbSet(): RIAPP.MOD.db.DbSet<{{ENTITY_TYPE}}>;
+	_dbSet: RIAPP.MOD.db.DbSet<{{ENTITY_TYPE}}>;
+	asEntity(): {{ENTITY_TYPE}};
 }
 
 export class {{ENTITY_TYPE}} extends RIAPP.MOD.db.Entity implements I{{ENTITY_TYPE}}
@@ -13,10 +14,12 @@ export class {{ENTITY_TYPE}} extends RIAPP.MOD.db.Entity implements I{{ENTITY_TY
 		return <DbContext>super.getDbContext();
 	}
 	getDbSet() {
-		return <{{DBSET_TYPE}}>super.getDbSet();
+		return <RIAPP.MOD.db.DbSet<{{ENTITY_TYPE}}>>super.getDbSet();
 	}
-	get _dbSet() { return <{{DBSET_TYPE}}>this.getDbSet(); }
+	get _dbSet() { return this.getDbSet(); }
 	toString() {
 		return '{{ENTITY_NAME}}';
 	}
+	asEntity() { return this; }
+	asInterface() { return <I{{ENTITY_TYPE}}>this; }
 }
