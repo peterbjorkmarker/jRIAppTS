@@ -1223,22 +1223,21 @@ module RIAPP {
             export class BaseList<TItem extends ListItem, TObj> extends BaseCollection<TItem> {
                 _type_name: string;
                 _itemType: IListItemConstructor<TItem, TObj>;
-                _props: string[];
 
-                constructor(itemType: IListItemConstructor<TItem, TObj>, props:string[]) {
+                constructor(itemType: IListItemConstructor<TItem, TObj>, props: { name: string; dtype: number; }[]) {
                     super();
                     this._type_name = 'BaseList';
                     this._itemType = itemType;
-                    this._props = props;
-                    if (!!this._props)
-                        this._updateFieldMap();
+                    if (!!props)
+                        this._updateFieldMap(props);
                 }
-                _updateFieldMap() {
+                private _updateFieldMap(props: { name: string; dtype: number; }[]) {
                     var self = this;
                     self._fieldMap = {};
-                    this._props.forEach(function (prop) {
-                        var fldInfo = BaseCollection.getEmptyFieldInfo(prop);
-                        self._fieldMap[prop] = fldInfo;
+                    props.forEach(function (prop) {
+                        var fldInfo = BaseCollection.getEmptyFieldInfo(prop.name);
+                        fldInfo.dataType = prop.dtype; 
+                        self._fieldMap[prop.name] = fldInfo;
                     });
                 }
                 _attach(item: TItem) {
@@ -1311,7 +1310,7 @@ module RIAPP {
 
             export class BaseDictionary<TItem extends ListItem, TObj> extends BaseList<TItem, TObj>{
                 _keyName: string;
-                constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: string[]) {
+                constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: { name: string; dtype: number; }[]) {
                     if (!keyName)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
                     this._keyName = keyName;
@@ -1337,36 +1336,33 @@ module RIAPP {
                     super(null,null);
                     this._type_name = type_name;
                     if (utils.check.isArray(properties)) {
-                        this._props = properties;
-                        if (this._props.length === 0)
+                        if (properties.length == 0)
                             throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
-                        this._initFieldMap(false, properties);
+                        this._initFieldMap(false, properties, properties);
                     }
                     else if (properties instanceof CollectionItem) {
                         //for properties which is collection item, we can obtain names by using getFieldNames();
-                        this._props = properties.getFieldNames();
-                        this._initFieldMap(true, properties);
+                        this._initFieldMap(true, properties, properties.getFieldNames());
                     }
                     else if (!!properties) {
                         //properties parameter is just simple object
                         //all its keys will be property names
-                        this._props = Object.keys(properties);
-                        this._initFieldMap(false, properties);
+                        this._initFieldMap(false, properties, Object.keys(properties));
                     }
                     else
                         throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
                     this._itemType = null;
                     this._createItemType();
                 }
-                _initFieldMap(isCollectionItem: boolean, obj) {
+                private _initFieldMap(isCollectionItem: boolean, obj:any, names:string[]) {
                     var self = this;
                     if (!isCollectionItem) {
-                        this._props.forEach(function (prop) {
+                        names.forEach(function (prop) {
                             self._fieldMap[prop] = BaseCollection.getEmptyFieldInfo(prop);
                         });
                     }
                     else {
-                        this._props.forEach(function (prop) {
+                        names.forEach(function (prop) {
                             self._fieldMap[prop] = utils.extend(false, {}, obj.getFieldInfo(prop));
                         });
                     }

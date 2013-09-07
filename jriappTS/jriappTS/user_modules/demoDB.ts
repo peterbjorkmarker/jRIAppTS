@@ -62,7 +62,7 @@ module RIAPP
 
         export class TestDictionary extends RIAPP.MOD.collection.BaseDictionary<TestModelListItem, IClientTestModel> {
             constructor() {
-                super(TestModelListItem, 'Key', ['Key', 'SomeProperty1', 'SomeProperty2', 'SomeProperty3', 'MoreComplexProperty']);
+                super(TestModelListItem, 'Key', [{ name: 'Key', dtype: 1 }, { name: 'SomeProperty1', dtype: 1 }, { name: 'SomeProperty2', dtype: 10 }, { name: 'SomeProperty3', dtype: 0 }, { name: 'MoreComplexProperty', dtype: 0 }]);
                 this._type_name = 'TestDictionary';
             }
             get items2() { return <IClientTestModel[]>this.items; }
@@ -70,7 +70,7 @@ module RIAPP
 
         export class TestList extends RIAPP.MOD.collection.BaseList<TestModelListItem, IClientTestModel> {
             constructor() {
-                super(TestModelListItem, ['Key', 'SomeProperty1', 'SomeProperty2', 'SomeProperty3', 'MoreComplexProperty']);
+                super(TestModelListItem, [{ name: 'Key', dtype: 1 }, { name: 'SomeProperty1', dtype: 1 }, { name: 'SomeProperty2', dtype: 10 }, { name: 'SomeProperty3', dtype: 0 }, { name: 'MoreComplexProperty', dtype: 0 }]);
                 this._type_name = 'TestList';
             }
             get items2() { return <IClientTestModel[]>this.items; }
@@ -88,7 +88,7 @@ module RIAPP
 
         export class KeyValDictionary extends RIAPP.MOD.collection.BaseDictionary<KeyValListItem, IKeyVal> {
             constructor() {
-                super(KeyValListItem, 'key', ['key', 'val']);
+                super(KeyValListItem, 'key', [{ name: 'key', dtype: 3 }, { name: 'val', dtype: 1 }]);
                 this._type_name = 'KeyValDictionary';
             }
             get items2() { return <IKeyVal[]>this.items; }
@@ -106,7 +106,7 @@ module RIAPP
 
         export class HistoryList extends RIAPP.MOD.collection.BaseList<HistoryItemListItem, IHistoryItem> {
             constructor() {
-                super(HistoryItemListItem, ['radioValue', 'time']);
+                super(HistoryItemListItem, [{ name: 'radioValue', dtype: 1 }, { name: 'time', dtype: 6 }]);
                 this._type_name = 'HistoryList';
             }
             get items2() { return <IHistoryItem[]>this.items; }

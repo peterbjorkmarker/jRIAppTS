@@ -95,5 +95,14 @@ namespace RIAPP.DataService.Utils
                 return this._docParts;
             }
         }
+
+        public void ProcessParts(Action<DocPart>  fn_partsHandler)
+        {
+            var parts = this.DocParts.ToList();
+            parts.ForEach((part) =>
+            {
+                fn_partsHandler(part);
+            });
+        }
     }
 }

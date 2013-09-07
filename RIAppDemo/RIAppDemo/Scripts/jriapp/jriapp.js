@@ -6628,16 +6628,16 @@ else
                     _super.call(this);
                     this._type_name = 'BaseList';
                     this._itemType = itemType;
-                    this._props = props;
-                    if (!!this._props)
-                        this._updateFieldMap();
+                    if (!!props)
+                        this._updateFieldMap(props);
                 }
-                BaseList.prototype._updateFieldMap = function () {
+                BaseList.prototype._updateFieldMap = function (props) {
                     var self = this;
                     self._fieldMap = {};
-                    this._props.forEach(function (prop) {
-                        var fldInfo = BaseCollection.getEmptyFieldInfo(prop);
-                        self._fieldMap[prop] = fldInfo;
+                    props.forEach(function (prop) {
+                        var fldInfo = BaseCollection.getEmptyFieldInfo(prop.name);
+                        fldInfo.dataType = prop.dtype;
+                        self._fieldMap[prop.name] = fldInfo;
                     });
                 };
                 BaseList.prototype._attach = function (item) {
@@ -6746,32 +6746,29 @@ else
                     _super.call(this, null, null);
                     this._type_name = type_name;
                     if (utils.check.isArray(properties)) {
-                        this._props = properties;
-                        if (this._props.length === 0)
+                        if (properties.length == 0)
                             throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
-                        this._initFieldMap(false, properties);
+                        this._initFieldMap(false, properties, properties);
                     } else if (properties instanceof CollectionItem) {
                         //for properties which is collection item, we can obtain names by using getFieldNames();
-                        this._props = properties.getFieldNames();
-                        this._initFieldMap(true, properties);
+                        this._initFieldMap(true, properties, properties.getFieldNames());
                     } else if (!!properties) {
                         //properties parameter is just simple object
                         //all its keys will be property names
-                        this._props = Object.keys(properties);
-                        this._initFieldMap(false, properties);
+                        this._initFieldMap(false, properties, Object.keys(properties));
                     } else
                         throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
                     this._itemType = null;
                     this._createItemType();
                 }
-                List.prototype._initFieldMap = function (isCollectionItem, obj) {
+                List.prototype._initFieldMap = function (isCollectionItem, obj, names) {
                     var self = this;
                     if (!isCollectionItem) {
-                        this._props.forEach(function (prop) {
+                        names.forEach(function (prop) {
                             self._fieldMap[prop] = BaseCollection.getEmptyFieldInfo(prop);
                         });
                     } else {
-                        this._props.forEach(function (prop) {
+                        names.forEach(function (prop) {
                             self._fieldMap[prop] = utils.extend(false, {}, obj.getFieldInfo(prop));
                         });
                     }

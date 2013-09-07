@@ -74,7 +74,7 @@ var RIAPP;
         var TestDictionary = (function (_super) {
             __extends(TestDictionary, _super);
             function TestDictionary() {
-                _super.call(this, TestModelListItem, 'Key', ['Key', 'SomeProperty1', 'SomeProperty2', 'SomeProperty3', 'MoreComplexProperty']);
+                _super.call(this, TestModelListItem, 'Key', [{ name: 'Key', dtype: 1 }, { name: 'SomeProperty1', dtype: 1 }, { name: 'SomeProperty2', dtype: 10 }, { name: 'SomeProperty3', dtype: 0 }, { name: 'MoreComplexProperty', dtype: 0 }]);
                 this._type_name = 'TestDictionary';
             }
             Object.defineProperty(TestDictionary.prototype, "items2", {
@@ -91,7 +91,7 @@ var RIAPP;
         var TestList = (function (_super) {
             __extends(TestList, _super);
             function TestList() {
-                _super.call(this, TestModelListItem, ['Key', 'SomeProperty1', 'SomeProperty2', 'SomeProperty3', 'MoreComplexProperty']);
+                _super.call(this, TestModelListItem, [{ name: 'Key', dtype: 1 }, { name: 'SomeProperty1', dtype: 1 }, { name: 'SomeProperty2', dtype: 10 }, { name: 'SomeProperty3', dtype: 0 }, { name: 'MoreComplexProperty', dtype: 0 }]);
                 this._type_name = 'TestList';
             }
             Object.defineProperty(TestList.prototype, "items2", {
@@ -137,7 +137,7 @@ var RIAPP;
         var KeyValDictionary = (function (_super) {
             __extends(KeyValDictionary, _super);
             function KeyValDictionary() {
-                _super.call(this, KeyValListItem, 'key', ['key', 'val']);
+                _super.call(this, KeyValListItem, 'key', [{ name: 'key', dtype: 3 }, { name: 'val', dtype: 1 }]);
                 this._type_name = 'KeyValDictionary';
             }
             Object.defineProperty(KeyValDictionary.prototype, "items2", {
@@ -183,7 +183,7 @@ var RIAPP;
         var HistoryList = (function (_super) {
             __extends(HistoryList, _super);
             function HistoryList() {
-                _super.call(this, HistoryItemListItem, ['radioValue', 'time']);
+                _super.call(this, HistoryItemListItem, [{ name: 'radioValue', dtype: 1 }, { name: 'time', dtype: 6 }]);
                 this._type_name = 'HistoryList';
             }
             Object.defineProperty(HistoryList.prototype, "items2", {

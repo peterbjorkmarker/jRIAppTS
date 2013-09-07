@@ -360,7 +360,7 @@ namespace RIAPP.DataService.Utils
                 case "System.Guid":
                     return DataType.Guid;
                 default:
-                    throw new Exception(string.Format("Unsupported method type {0}", realType.FullName));
+                    throw new UnsupportedTypeException(string.Format("Unsupported method type {0}", realType.FullName));
             }
         }
     }

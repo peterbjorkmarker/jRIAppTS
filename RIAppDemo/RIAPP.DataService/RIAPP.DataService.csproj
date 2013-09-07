@@ -50,6 +50,7 @@
     <Compile Include="DomainService\Attributes\TypeNameAttribute.cs" />
     <Compile Include="DomainService\Attributes\ListAttribute.cs" />
     <Compile Include="DomainService\Attributes\DictionaryAttribute.cs" />
+    <Compile Include="DomainService\Exceptions\UnsupportedTypeException.cs" />
     <Compile Include="DomainService\JSonTypes\PermissionsInfo.cs" />
     <Compile Include="DomainService\Security\Authorizer.cs" />
     <Compile Include="DomainService\BaseDomainService.cs" />

@@ -187,20 +187,32 @@ namespace RIAPP.DataService.Utils
 
             sbProps.Append("[");
             bool isFirst = true;
+            bool isArray = false;
             propList.ForEach((propInfo) =>
             {
                 if (!isFirst)
                     sbProps.Append(",");
-                sbProps.Append(string.Format("'{0}'", propInfo.Name));
+                RIAPP.DataService.DataType dataType = DataType.None;
+                try
+                {
+                    dataType = csharp2TS.DataTypeFromType(propInfo.PropertyType, out isArray);
+                    if (isArray)
+                        dataType = DataType.None;
+                }
+                catch(UnsupportedTypeException)
+                {
+                    dataType = DataType.None;
+                }
+                sbProps.Append("{");
+                sbProps.Append(string.Format("name:'{0}',dtype:{1}", propInfo.Name,(int)dataType));
+                sbProps.Append("}");
                 isFirst = false;
             });
             sbProps.Append("]");
 
             if (dictAttr != null)
             {
-                var parts = (new TemplateParser("Dictionary.txt")).DocParts.ToList();
-                parts.ForEach((part) =>
-                {
+                (new TemplateParser("Dictionary.txt")).ProcessParts((part) => {
                     if (!part.isPlaceHolder)
                     {
                         sbDict.Append(part.value);
@@ -228,7 +240,6 @@ namespace RIAPP.DataService.Utils
                                 break;
                         }
                     }
-
                 });
                 sb.AppendLine(sbDict.ToString());
                 sb.AppendLine();
@@ -236,8 +247,7 @@ namespace RIAPP.DataService.Utils
 
             if (listAttr != null)
             {
-                var parts = (new TemplateParser("List.txt")).DocParts.ToList();
-                parts.ForEach((part) =>
+                (new TemplateParser("List.txt")).ProcessParts((part) =>
                 {
                     if (!part.isPlaceHolder)
                     {
@@ -263,9 +273,7 @@ namespace RIAPP.DataService.Utils
                                 break;
                         }
                     }
-
                 });
-
                 sb.AppendLine(sbList.ToString());
                 sb.AppendLine();
             }
@@ -359,7 +367,6 @@ namespace RIAPP.DataService.Utils
         {
             var sb = new StringBuilder(512);
             string[] dbSetNames = this._metadata.dbSets.Select(d => d.dbSetName).ToArray();
-            var parts = (new TemplateParser("DbContext.txt")).DocParts.ToList();
             var sbCreateDbSets = new StringBuilder(512);
             this._metadata.dbSets.ForEach((dbSetInfo) =>
             {
@@ -368,8 +375,7 @@ namespace RIAPP.DataService.Utils
                 sbCreateDbSets.AppendLine();
             });
 
-         
-            parts.ForEach((part) =>
+            (new TemplateParser("DbContext.txt")).ProcessParts((part) =>
             {
                 if (!part.isPlaceHolder)
                 {
@@ -413,8 +419,7 @@ namespace RIAPP.DataService.Utils
             var parentAssoc = this._metadata.associations.Where(assoc => assoc.parentDbSetName == dbSetInfo.dbSetName).ToList();
             var fieldInfos = dbSetInfo.fieldInfos;
 
-            var parts = (new TemplateParser("DbSet.txt")).DocParts.ToList();
-            parts.ForEach((part) =>
+            (new TemplateParser("DbSet.txt")).ProcessParts((part) =>
             {
                 if (!part.isPlaceHolder)
                 {
@@ -453,7 +458,6 @@ namespace RIAPP.DataService.Utils
                             break;
                     }
                 }
-
             });
             return sb.ToString();
         }
@@ -525,8 +529,7 @@ namespace RIAPP.DataService.Utils
                 }
             });
 
-            var parts = (new TemplateParser("Entity.txt")).DocParts.ToList();
-            parts.ForEach((part) =>
+            (new TemplateParser("Entity.txt")).ProcessParts((part) =>
             {
                 if (!part.isPlaceHolder)
                 {
@@ -554,11 +557,10 @@ namespace RIAPP.DataService.Utils
                         case "INTERFACE_FIELDS":
                             sb.Append(sbFields2.ToString());
                             break;
-          
+
                     }
                 }
             });
-
             return sb.ToString();
         }
            
