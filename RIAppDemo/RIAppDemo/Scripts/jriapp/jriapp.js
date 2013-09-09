@@ -6633,6 +6633,9 @@ else
                 }
                 BaseList.prototype._updateFieldMap = function (props) {
                     var self = this;
+                    if (!utils.check.isArray(props) || props.length == 0)
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'props', props));
+
                     self._fieldMap = {};
                     props.forEach(function (prop) {
                         var fldInfo = BaseCollection.getEmptyFieldInfo(prop.name);
@@ -6740,56 +6743,57 @@ else
             })(BaseList);
             collection.BaseDictionary = BaseDictionary;
 
+            //private helper functions
+            function getItemType(fieldNames) {
+                var propDescriptors = {};
+
+                //create field accessor descriptor for each field
+                fieldNames.forEach(function (name) {
+                    propDescriptors[name] = {
+                        set: function (x) {
+                            this._setProp(name, x);
+                        },
+                        get: function () {
+                            return this._getProp(name);
+                        }
+                    };
+                });
+
+                return RIAPP.MOD.utils.__extendType(ListItem, {}, propDescriptors);
+            }
+            ;
+            function getPropInfos(properties) {
+                var props = null;
+                if (utils.check.isArray(properties)) {
+                    props = (properties).map(function (p) {
+                        return { name: p, dtype: 0 };
+                    });
+                } else if (properties instanceof CollectionItem) {
+                    props = (properties).getFieldNames().map(function (p) {
+                        var fldInfo = (properties).getFieldInfo(p);
+                        return { name: p, dtype: fldInfo.dataType };
+                    });
+                } else if (!!properties) {
+                    props = Object.keys(properties).map(function (p) {
+                        return { name: p, dtype: 0 };
+                    });
+                } else
+                    throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
+                return props;
+            }
+            ;
+
             var List = (function (_super) {
                 __extends(List, _super);
                 function List(type_name, properties) {
-                    _super.call(this, null, null);
+                    var props = getPropInfos(properties);
+                    var fieldNames = props.map(function (p) {
+                        return p.name;
+                    });
+                    var itemType = getItemType(fieldNames);
+                    _super.call(this, itemType, props);
                     this._type_name = type_name;
-                    if (utils.check.isArray(properties)) {
-                        if (properties.length == 0)
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
-                        this._initFieldMap(false, properties, properties);
-                    } else if (properties instanceof CollectionItem) {
-                        //for properties which is collection item, we can obtain names by using getFieldNames();
-                        this._initFieldMap(true, properties, properties.getFieldNames());
-                    } else if (!!properties) {
-                        //properties parameter is just simple object
-                        //all its keys will be property names
-                        this._initFieldMap(false, properties, Object.keys(properties));
-                    } else
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
-                    this._itemType = null;
-                    this._createItemType();
                 }
-                List.prototype._initFieldMap = function (isCollectionItem, obj, names) {
-                    var self = this;
-                    if (!isCollectionItem) {
-                        names.forEach(function (prop) {
-                            self._fieldMap[prop] = BaseCollection.getEmptyFieldInfo(prop);
-                        });
-                    } else {
-                        names.forEach(function (prop) {
-                            self._fieldMap[prop] = utils.extend(false, {}, obj.getFieldInfo(prop));
-                        });
-                    }
-                };
-                List.prototype._createItemType = function () {
-                    var propDescriptors = {}, self = this;
-
-                    //create field accessor descriptor for each field
-                    this.getFieldNames().forEach(function (name) {
-                        propDescriptors[name] = {
-                            set: function (x) {
-                                this._setProp(name, x);
-                            },
-                            get: function () {
-                                return this._getProp(name);
-                            }
-                        };
-                    }, this);
-
-                    this._itemType = RIAPP.MOD.utils.__extendType(ListItem, {}, propDescriptors);
-                };
                 return List;
             })(BaseList);
             collection.List = List;
@@ -6797,14 +6801,13 @@ else
             var Dictionary = (function (_super) {
                 __extends(Dictionary, _super);
                 function Dictionary(type_name, properties, keyName) {
-                    if (!keyName)
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
-                    this._keyName = keyName;
-                    _super.call(this, type_name, properties);
-                    var keyFld = this.getFieldInfo(keyName);
-                    if (!keyFld)
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_NOTFOUND, keyName));
-                    keyFld.isPrimaryKey = 1;
+                    var props = getPropInfos(properties);
+                    var fieldNames = props.map(function (p) {
+                        return p.name;
+                    });
+                    var itemType = getItemType(fieldNames);
+                    _super.call(this, itemType, keyName, props);
+                    this._type_name = type_name;
                 }
                 Dictionary.prototype._getNewKey = function (item) {
                     if (!item) {
@@ -6816,7 +6819,7 @@ else
                     return '' + key;
                 };
                 return Dictionary;
-            })(List);
+            })(BaseDictionary);
             collection.Dictionary = Dictionary;
 
             RIAPP.global.registerType('List', List);

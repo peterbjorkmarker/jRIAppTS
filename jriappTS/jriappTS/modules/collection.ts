@@ -1158,7 +1158,7 @@ module RIAPP {
 
             export class Collection extends BaseCollection<CollectionItem> { }
 
-            export interface IPropInfo { name: string; dataType: number; }
+            export interface IPropInfo { name: string; dtype: number; }
 
             export class ListItem extends CollectionItem {
                 __isNew: boolean;
@@ -1224,15 +1224,18 @@ module RIAPP {
                 _type_name: string;
                 _itemType: IListItemConstructor<TItem, TObj>;
 
-                constructor(itemType: IListItemConstructor<TItem, TObj>, props: { name: string; dtype: number; }[]) {
+                constructor(itemType: IListItemConstructor<TItem, TObj>, props: IPropInfo[]) {
                     super();
                     this._type_name = 'BaseList';
                     this._itemType = itemType;
                     if (!!props)
                         this._updateFieldMap(props);
                 }
-                private _updateFieldMap(props: { name: string; dtype: number; }[]) {
+                private _updateFieldMap(props: IPropInfo[]) {
                     var self = this;
+                    if (!utils.check.isArray(props) || props.length == 0)
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'props', props));
+
                     self._fieldMap = {};
                     props.forEach(function (prop) {
                         var fldInfo = BaseCollection.getEmptyFieldInfo(prop.name);
@@ -1310,7 +1313,7 @@ module RIAPP {
 
             export class BaseDictionary<TItem extends ListItem, TObj> extends BaseList<TItem, TObj>{
                 _keyName: string;
-                constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: { name: string; dtype: number; }[]) {
+                constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]) {
                     if (!keyName)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
                     this._keyName = keyName;
@@ -1331,71 +1334,63 @@ module RIAPP {
                 }
             }
    
+            //private helper functions
+            function getItemType(fieldNames: string[]): IListItemConstructor<ListItem, any> {
+                var propDescriptors = {};
+                //create field accessor descriptor for each field
+                fieldNames.forEach(function (name) {
+                    propDescriptors[name] = {
+                        set: function (x) {
+                            this._setProp(name, x);
+                        },
+                        get: function () {
+                            return this._getProp(name);
+                        }
+                    };
+                });
+
+               return <any>MOD.utils.__extendType(ListItem, {}, propDescriptors);
+            };
+            function getPropInfos(properties: any): IPropInfo[]{
+                var props: IPropInfo[] = null;
+                if (utils.check.isArray(properties)) {
+                    props = (<string[]>properties).map(function (p) {
+                        return { name: p, dtype: 0 };
+                    });
+                }
+                else if (properties instanceof CollectionItem) {
+                    props = (<CollectionItem>properties).getFieldNames().map(function (p) {
+                        var fldInfo = (<CollectionItem>properties).getFieldInfo(p);
+                        return { name: p, dtype: fldInfo.dataType };
+                    });
+                }
+                else if (!!properties) {
+                    props = Object.keys(properties).map(function (p) {
+                        return { name: p, dtype: 0 };
+                    });
+                }
+                else
+                    throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
+                return props;
+            };
+
             export class List extends BaseList<ListItem, any> {
                 constructor(type_name: string, properties: any) {
-                    super(null,null);
+                    var props: IPropInfo[] = getPropInfos(properties);
+                    var fieldNames: string[] = props.map(function (p) { return p.name; });
+                    var itemType = getItemType(fieldNames);
+                    super(itemType, props);
                     this._type_name = type_name;
-                    if (utils.check.isArray(properties)) {
-                        if (properties.length == 0)
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
-                        this._initFieldMap(false, properties, properties);
-                    }
-                    else if (properties instanceof CollectionItem) {
-                        //for properties which is collection item, we can obtain names by using getFieldNames();
-                        this._initFieldMap(true, properties, properties.getFieldNames());
-                    }
-                    else if (!!properties) {
-                        //properties parameter is just simple object
-                        //all its keys will be property names
-                        this._initFieldMap(false, properties, Object.keys(properties));
-                    }
-                    else
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
-                    this._itemType = null;
-                    this._createItemType();
-                }
-                private _initFieldMap(isCollectionItem: boolean, obj:any, names:string[]) {
-                    var self = this;
-                    if (!isCollectionItem) {
-                        names.forEach(function (prop) {
-                            self._fieldMap[prop] = BaseCollection.getEmptyFieldInfo(prop);
-                        });
-                    }
-                    else {
-                        names.forEach(function (prop) {
-                            self._fieldMap[prop] = utils.extend(false, {}, obj.getFieldInfo(prop));
-                        });
-                    }
-                }
-                _createItemType() {
-                    var propDescriptors = {}, self = this;
-                    //create field accessor descriptor for each field
-                    this.getFieldNames().forEach(function (name) {
-                        propDescriptors[name] = {
-                            set: function (x) {
-                                this._setProp(name, x);
-                            },
-                            get: function () {
-                                return this._getProp(name);
-                            }
-                        };
-                    }, this);
-
-                    this._itemType = <any>MOD.utils.__extendType(ListItem, {}, propDescriptors);
                 }
             }
 
-            export class Dictionary extends List {
-                _keyName: string;
+            export class Dictionary extends BaseDictionary<ListItem, any> {
                 constructor(type_name: string, properties: any, keyName: string) {
-                    if (!keyName)
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
-                    this._keyName = keyName;
-                    super(type_name, properties);
-                    var keyFld = this.getFieldInfo(keyName);
-                    if (!keyFld)
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_NOTFOUND, keyName));
-                    keyFld.isPrimaryKey = 1;
+                    var props: IPropInfo[] = getPropInfos(properties);
+                    var fieldNames: string[] = props.map(function (p) { return p.name; });
+                    var itemType = getItemType(fieldNames);
+                    super(itemType, keyName, props);
+                    this._type_name = type_name;
                 }
                 _getNewKey(item: ListItem) {
                     if (!item) {
