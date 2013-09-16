@@ -164,119 +164,126 @@ namespace RIAPP.DataService.Utils
                 listName = listAttr.ListName == null ? string.Format("{0}List", type.Name) : listAttr.ListName;
 
             string interfItemName = csharp2TS.GetTSTypeName(type);
-            string listItemName = string.Format("{0}ListItem", type.Name);
-            var propList = type.GetProperties().ToList();
+            if (!type.IsClass || !(dictAttr != null || listAttr != null))
+                return  sb.ToString();
 
-            sb.AppendLine(string.Format("export class {0} extends RIAPP.MOD.collection.ListItem implements {1}", listItemName, interfItemName));
-            sb.AppendLine("{");
-            sb.AppendLine(string.Format("\tconstructor(coll: RIAPP.MOD.collection.BaseList<{0}, {1}>, obj?: {1})", listItemName, interfItemName));
-            sb.AppendLine("\t{");
-            sb.AppendLine("\t\tsuper(coll,obj);");
-            sb.AppendLine("\t}");
-            propList.ForEach((propInfo) =>
-            {
-                sb.AppendLine(string.Format("\tget {0}() {{ return <{1}>this._getProp('{0}'); }}", propInfo.Name, csharp2TS.GetTSTypeName(propInfo.PropertyType)));
-                sb.AppendLine(string.Format("\tset {0}(v:{1}) {{ this._setProp('{0}', v); }}", propInfo.Name, csharp2TS.GetTSTypeName(propInfo.PropertyType)));
-            });
-            sb.AppendLine("}");
-            sb.AppendLine();
+            
+                string listItemName = string.Format("{0}ListItem", type.Name);
+                var propList = type.GetProperties().ToList();
 
-            var sbDict = new StringBuilder(512);
-            var sbList = new StringBuilder(512);
-            var sbProps = new StringBuilder(256);
-
-            sbProps.Append("[");
-            bool isFirst = true;
-            bool isArray = false;
-            propList.ForEach((propInfo) =>
-            {
-                if (!isFirst)
-                    sbProps.Append(",");
-                RIAPP.DataService.DataType dataType = DataType.None;
-                try
+                sb.AppendLine(string.Format("export class {0} extends RIAPP.MOD.collection.ListItem implements {1}", listItemName, interfItemName));
+                sb.AppendLine("{");
+                sb.AppendLine(string.Format("\tconstructor(coll: RIAPP.MOD.collection.BaseList<{0}, {1}>, obj?: {1})", listItemName, interfItemName));
+                sb.AppendLine("\t{");
+                sb.AppendLine("\t\tsuper(coll,obj);");
+                sb.AppendLine("\t}");
+                propList.ForEach((propInfo) =>
                 {
-                    dataType = csharp2TS.DataTypeFromType(propInfo.PropertyType, out isArray);
-                    if (isArray)
+                    sb.AppendLine(string.Format("\tget {0}() {{ return <{1}>this._getProp('{0}'); }}", propInfo.Name, csharp2TS.GetTSTypeName(propInfo.PropertyType)));
+                    sb.AppendLine(string.Format("\tset {0}(v:{1}) {{ this._setProp('{0}', v); }}", propInfo.Name, csharp2TS.GetTSTypeName(propInfo.PropertyType)));
+                });
+                sb.AppendLine("}");
+                sb.AppendLine();
+
+
+                var sbDict = new StringBuilder(512);
+                var sbList = new StringBuilder(512);
+                var sbProps = new StringBuilder(256);
+
+                sbProps.Append("[");
+                bool isFirst = true;
+                bool isArray = false;
+                propList.ForEach((propInfo) =>
+                {
+                    if (!isFirst)
+                        sbProps.Append(",");
+                    RIAPP.DataService.DataType dataType = DataType.None;
+                    try
+                    {
+                        dataType = csharp2TS.DataTypeFromType(propInfo.PropertyType, out isArray);
+                        if (isArray)
+                            dataType = DataType.None;
+                    }
+                    catch (UnsupportedTypeException)
+                    {
                         dataType = DataType.None;
-                }
-                catch(UnsupportedTypeException)
-                {
-                    dataType = DataType.None;
-                }
-                sbProps.Append("{");
-                sbProps.Append(string.Format("name:'{0}',dtype:{1}", propInfo.Name,(int)dataType));
-                sbProps.Append("}");
-                isFirst = false;
-            });
-            sbProps.Append("]");
-
-            if (dictAttr != null)
-            {
-                (new TemplateParser("Dictionary.txt")).ProcessParts((part) => {
-                    if (!part.isPlaceHolder)
-                    {
-                        sbDict.Append(part.value);
                     }
-                    else
-                    {
-                        switch (part.value)
-                        {
-                            case "DICT_NAME":
-                                sbDict.Append(dictName);
-                                break;
-                            case "ITEM_TYPE_NAME":
-                                sbDict.Append(listItemName);
-                                break;
-                            case "INTERF_TYPE_NAME":
-                                sbDict.Append(interfItemName);
-                                break;
-                            case "KEY_NAME":
-                                sbDict.Append(dictAttr.KeyName);
-                                break;
-                            case "PROPS":
-                                {
-                                    sbDict.Append(sbProps.ToString());
-                                }
-                                break;
-                        }
-                    }
+                    sbProps.Append("{");
+                    sbProps.Append(string.Format("name:'{0}',dtype:{1}", propInfo.Name, (int)dataType));
+                    sbProps.Append("}");
+                    isFirst = false;
                 });
-                sb.AppendLine(sbDict.ToString());
-                sb.AppendLine();
-            }
+                sbProps.Append("]");
 
-            if (listAttr != null)
-            {
-                (new TemplateParser("List.txt")).ProcessParts((part) =>
+                if (dictAttr != null)
                 {
-                    if (!part.isPlaceHolder)
+                    (new TemplateParser("Dictionary.txt")).ProcessParts((part) =>
                     {
-                        sbList.Append(part.value);
-                    }
-                    else
-                    {
-                        switch (part.value)
+                        if (!part.isPlaceHolder)
                         {
-                            case "LIST_NAME":
-                                sbList.Append(listName);
-                                break;
-                            case "ITEM_TYPE_NAME":
-                                sbList.Append(listItemName);
-                                break;
-                            case "INTERF_TYPE_NAME":
-                                sbList.Append(interfItemName);
-                                break;
-                            case "PROPS":
-                                {
-                                    sbList.Append(sbProps.ToString());
-                                }
-                                break;
+                            sbDict.Append(part.value);
                         }
-                    }
-                });
-                sb.AppendLine(sbList.ToString());
-                sb.AppendLine();
-            }
+                        else
+                        {
+                            switch (part.value)
+                            {
+                                case "DICT_NAME":
+                                    sbDict.Append(dictName);
+                                    break;
+                                case "ITEM_TYPE_NAME":
+                                    sbDict.Append(listItemName);
+                                    break;
+                                case "INTERF_TYPE_NAME":
+                                    sbDict.Append(interfItemName);
+                                    break;
+                                case "KEY_NAME":
+                                    sbDict.Append(dictAttr.KeyName);
+                                    break;
+                                case "PROPS":
+                                    {
+                                        sbDict.Append(sbProps.ToString());
+                                    }
+                                    break;
+                            }
+                        }
+                    });
+                    sb.AppendLine(sbDict.ToString());
+                    sb.AppendLine();
+                }
+
+                if (listAttr != null)
+                {
+                    (new TemplateParser("List.txt")).ProcessParts((part) =>
+                    {
+                        if (!part.isPlaceHolder)
+                        {
+                            sbList.Append(part.value);
+                        }
+                        else
+                        {
+                            switch (part.value)
+                            {
+                                case "LIST_NAME":
+                                    sbList.Append(listName);
+                                    break;
+                                case "ITEM_TYPE_NAME":
+                                    sbList.Append(listItemName);
+                                    break;
+                                case "INTERF_TYPE_NAME":
+                                    sbList.Append(interfItemName);
+                                    break;
+                                case "PROPS":
+                                    {
+                                        sbList.Append(sbProps.ToString());
+                                    }
+                                    break;
+                            }
+                        }
+                    });
+                    sb.AppendLine(sbList.ToString());
+                    sb.AppendLine();
+                }
+            
 
             return sb.ToString();
         }

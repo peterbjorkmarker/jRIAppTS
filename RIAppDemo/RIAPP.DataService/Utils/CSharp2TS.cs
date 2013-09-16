@@ -24,9 +24,11 @@ namespace RIAPP.DataService.Utils
         {
             bool isArray = false;
             bool isEnumerable= false;
+            bool isEnum = false;
             string res = "any";
             try
             {
+               
                 if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                 {
                     t = t.GetGenericArguments().First();
@@ -43,6 +45,11 @@ namespace RIAPP.DataService.Utils
                     return "any[]";
                 }
 
+                if (t.IsEnum)
+                {
+                    isEnum = true;
+                }
+
                 DataType dtype = this.valConverter.DataTypeFromType(t, out isArray);
                 res = CSharp2TS.GetTSType(dtype);
                 if (isArray || isEnumerable)
@@ -52,33 +59,44 @@ namespace RIAPP.DataService.Utils
             catch
             {
                 //complex type
-                return this.GetTsComplexTypeName(t, isArray, isEnumerable);
+                return this.GetTsComplexTypeName(t, isArray, isEnumerable, isEnum);
             }
         }
 
-        private string GetTsComplexTypeName(Type t, bool isArray, bool isEnumerable)
+        private string GetTsComplexTypeName(Type t, bool isArray, bool isEnumerable, bool isEnum)
         {
             string res = "any";
             try
             {
-                string typeName = string.Format("I{0}", t.Name);
-                var typeNameAttr = t.GetCustomAttributes(typeof(TypeNameAttribute), false).OfType<TypeNameAttribute>().FirstOrDefault();
+                ExtendsAttribute extendsAttr = null;
+                TypeNameAttribute typeNameAttr = null;
+                string typeName = isEnum?t.Name:string.Format("I{0}", t.Name);
+                typeNameAttr = t.GetCustomAttributes(typeof(TypeNameAttribute), false).OfType<TypeNameAttribute>().FirstOrDefault();
                 if (typeNameAttr != null)
                     typeName = typeNameAttr.Name;
-                var extendsAttr = t.GetCustomAttributes(typeof(ExtendsAttribute), false).OfType<ExtendsAttribute>().FirstOrDefault();
-                StringBuilder extendsSb = null;
-                if (extendsAttr != null && extendsAttr.InterfaceNames.Length>0)
+                if (!isEnum)
                 {
-                    extendsSb = new StringBuilder("extends ");
-                    bool isFirst = true;
-                    foreach (string intfName in extendsAttr.InterfaceNames) {
-                        if (!isFirst)
-                            extendsSb.Append(", ");
-                        extendsSb.Append(intfName);
-                        isFirst = false;
+                    extendsAttr = t.GetCustomAttributes(typeof(ExtendsAttribute), false).OfType<ExtendsAttribute>().FirstOrDefault();
+                    StringBuilder extendsSb = null;
+                    if (extendsAttr != null && extendsAttr.InterfaceNames.Length > 0)
+                    {
+                        extendsSb = new StringBuilder("extends ");
+                        bool isFirst = true;
+                        foreach (string intfName in extendsAttr.InterfaceNames)
+                        {
+                            if (!isFirst)
+                                extendsSb.Append(", ");
+                            extendsSb.Append(intfName);
+                            isFirst = false;
+                        }
                     }
+                    res = this.GetTSInterface(t, typeName, extendsSb == null ? null : extendsSb.ToString());
                 }
-                res = this.GetTSInterface(t, typeName, extendsSb == null ? null : extendsSb.ToString());
+                else
+                {
+                    res = GetTSEnum(t, typeName);
+                }
+              
                 if (isArray || isEnumerable)
                     return string.Format("{0}[]", typeName);
                 else
@@ -127,6 +145,48 @@ namespace RIAPP.DataService.Utils
                 sb.AppendLine();
             }
             );
+            sb.AppendLine("}");
+            this._tsTypes.Add(name, sb.ToString());
+            return this._tsTypes[name];
+        }
+
+        /// <summary>
+        /// converts object to TS enum
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        private string GetTSEnum(Type t, string typeName)
+        {
+            string name = typeName;
+            if (string.IsNullOrEmpty(typeName))
+                name = this.GetTSTypeName(t);
+            if (this._tsTypes.ContainsKey(name))
+                return this._tsTypes[name];
+
+            CommentAttribute commentAttr = t.GetCustomAttributes(typeof(CommentAttribute), false).OfType<CommentAttribute>().FirstOrDefault();
+
+            StringBuilder sb = new StringBuilder();
+            if (commentAttr != null && !string.IsNullOrWhiteSpace(commentAttr.Text))
+            {
+                sb.AppendLine("/*");
+                sb.Append("    ");
+                sb.AppendLine(commentAttr.Text);
+                sb.AppendLine("*/");
+            }
+            sb.AppendFormat("export enum {0}", name);
+            sb.AppendLine();
+            sb.AppendLine("{");
+            var objProps = Enum.GetNames(t);
+            bool isFirst = true;
+            Array.ForEach(objProps, (valname) =>
+            {
+                if (!isFirst)
+                    sb.AppendLine(",");
+                sb.AppendFormat("\t{0}", valname);
+                isFirst = false;
+            }
+            );
+            sb.AppendLine();
             sb.AppendLine("}");
             this._tsTypes.Add(name, sb.ToString());
             return this._tsTypes[name];
