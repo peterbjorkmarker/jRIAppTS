@@ -128,6 +128,8 @@ namespace RIAPP.DataService.Utils
             IQueryable<T> result = entities;
             if (!dbInfo.enablePaging ||  pageIndex < 0)
                 return result;
+            if (pageSize < 0)
+                pageSize = 0;
             int skipRows = pageIndex * pageSize;
             result = entities.Skip(skipRows).Take(pageSize * pageCount);
             return result;

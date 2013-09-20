@@ -162,18 +162,18 @@ namespace RIAPP.DataService.Utils
                 dictName = dictAttr.DictionaryName == null ? string.Format("{0}Dict", type.Name) : dictAttr.DictionaryName;
             if (listAttr != null)
                 listName = listAttr.ListName == null ? string.Format("{0}List", type.Name) : listAttr.ListName;
-
-            string interfItemName = csharp2TS.GetTSTypeName(type);
-            if (!type.IsClass || !(dictAttr != null || listAttr != null))
+            bool isListItem = dictAttr != null || listAttr != null;
+            string interfaceName = csharp2TS.GetTSTypeName(type);
+            if (!type.IsClass || !isListItem)
                 return  sb.ToString();
 
             
                 string listItemName = string.Format("{0}ListItem", type.Name);
                 var propList = type.GetProperties().ToList();
 
-                sb.AppendLine(string.Format("export class {0} extends RIAPP.MOD.collection.ListItem implements {1}", listItemName, interfItemName));
+                sb.AppendLine(string.Format("export class {0} extends RIAPP.MOD.collection.ListItem implements {1}", listItemName, interfaceName));
                 sb.AppendLine("{");
-                sb.AppendLine(string.Format("\tconstructor(coll: RIAPP.MOD.collection.BaseList<{0}, {1}>, obj?: {1})", listItemName, interfItemName));
+                sb.AppendLine(string.Format("\tconstructor(coll: RIAPP.MOD.collection.BaseList<{0}, {1}>, obj?: {1})", listItemName, interfaceName));
                 sb.AppendLine("\t{");
                 sb.AppendLine("\t\tsuper(coll,obj);");
                 sb.AppendLine("\t}");
@@ -182,6 +182,8 @@ namespace RIAPP.DataService.Utils
                     sb.AppendLine(string.Format("\tget {0}() {{ return <{1}>this._getProp('{0}'); }}", propInfo.Name, csharp2TS.GetTSTypeName(propInfo.PropertyType)));
                     sb.AppendLine(string.Format("\tset {0}(v:{1}) {{ this._setProp('{0}', v); }}", propInfo.Name, csharp2TS.GetTSTypeName(propInfo.PropertyType)));
                 });
+                sb.AppendFormat("\tasInterface() {{ return <{0}>this; }}", interfaceName);
+                sb.AppendLine();
                 sb.AppendLine("}");
                 sb.AppendLine();
 
@@ -234,7 +236,7 @@ namespace RIAPP.DataService.Utils
                                     sbDict.Append(listItemName);
                                     break;
                                 case "INTERF_TYPE_NAME":
-                                    sbDict.Append(interfItemName);
+                                    sbDict.Append(interfaceName);
                                     break;
                                 case "KEY_NAME":
                                     sbDict.Append(dictAttr.KeyName);
@@ -270,7 +272,7 @@ namespace RIAPP.DataService.Utils
                                     sbList.Append(listItemName);
                                     break;
                                 case "INTERF_TYPE_NAME":
-                                    sbList.Append(interfItemName);
+                                    sbList.Append(interfaceName);
                                     break;
                                 case "PROPS":
                                     {

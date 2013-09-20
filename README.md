@@ -78,6 +78,7 @@ The DataService now exposes two other methods to get XAML version of the metadat
 <p>2013-08-31  Published generics version of the framework - <b>tested to work and to be compilable with 0.9.1.1 version of the compiler.</b></p>
 <p>2013-09-07  Improved typed List and Dictionary code generation, to include properties' data types.</p>
 <p>2013-09-09  List and Dictionary code modifications</p>
+<p>2013-09-20  CSharp enums to typescript enums dataservice's code generation</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 

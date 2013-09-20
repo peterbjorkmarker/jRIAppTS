@@ -176,13 +176,14 @@ namespace RIAPP.DataService.Utils
             sb.AppendFormat("export enum {0}", name);
             sb.AppendLine();
             sb.AppendLine("{");
-            var objProps = Enum.GetNames(t);
+            var enumVals = Enum.GetValues(t).Cast<int>().ToArray();
             bool isFirst = true;
-            Array.ForEach(objProps, (valname) =>
+            Array.ForEach(enumVals, (val) =>
             {
                 if (!isFirst)
                     sb.AppendLine(",");
-                sb.AppendFormat("\t{0}", valname);
+                string valname = Enum.GetName(t, val);
+                sb.AppendFormat("\t{0}={1}", valname,val);
                 isFirst = false;
             }
             );

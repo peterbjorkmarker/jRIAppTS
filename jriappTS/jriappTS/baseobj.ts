@@ -117,7 +117,7 @@ module RIAPP {
     export class BaseObject {
         _isDestroyed: boolean;
         _isDestroyCalled: boolean;
-        __events: any;
+        private __events: any;
 
         constructor() {
             this._isDestroyed = false;
