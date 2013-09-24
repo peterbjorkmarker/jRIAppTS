@@ -325,9 +325,9 @@ module RIAPP {
                 _template: MOD.template.Template;
                 _isEnabled: boolean;
                 constructor(app: Application, el: HTMLElement, options: IViewOptions) {
-                    super(app, el, options);
                     this._template = null;
                     this._isEnabled = true;
+                    super(app, el, options);
                 }
                 templateLoaded(template: MOD.template.Template) {
                     var self = this, p = self._commandParam;

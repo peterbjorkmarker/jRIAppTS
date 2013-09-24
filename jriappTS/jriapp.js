@@ -3377,9 +3377,9 @@ else
             var TemplateElView = (function (_super) {
                 __extends(TemplateElView, _super);
                 function TemplateElView(app, el, options) {
-                    _super.call(this, app, el, options);
                     this._template = null;
                     this._isEnabled = true;
+                    _super.call(this, app, el, options);
                 }
                 TemplateElView.prototype.templateLoaded = function (template) {
                     var self = this, p = self._commandParam;
