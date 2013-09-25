@@ -401,7 +401,7 @@ module RIAPP {
                     this._isDeleted = false;
                     this._isSelected = false;
                     this._createCells();
-                    this._item.addOnDestroyed(function (sender, args) {
+                    this._item.addOnDestroying(function (sender, args) {
                         self._onItemDestroyed();
                     }, self._objId);
                     this.isDeleted = this._item._isDeleted;

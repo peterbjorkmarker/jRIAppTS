@@ -52,13 +52,19 @@ module RIAPP {
                 }
                 _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['errors_changed'].concat(base_events);
+                    return ['errors_changed', 'destroying'].concat(base_events);
                 }
                 addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string) {
                     this.addHandler('errors_changed', fn, namespace);
                 }
                 removeOnErrorsChanged(namespace?: string) {
                     this.removeHandler('errors_changed', namespace);
+                }
+                addOnDestroying(fn: (sender: CollectionItem, args: {}) => void, namespace?: string) {
+                    this.addHandler('destroying', fn, namespace);
+                }
+                removeOnDestroying(namespace?: string) {
+                    this.removeHandler('destroying', namespace);
                 }
                 _onErrorsChanged(args: any) {
                     this.raiseEvent('errors_changed', args);
@@ -356,6 +362,7 @@ module RIAPP {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
+                    this._raiseEvent('destroying', {});
                     this._fkey = null;
                     this._saveVals = null;
                     this._vals = {};
