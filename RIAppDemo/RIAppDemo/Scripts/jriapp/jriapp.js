@@ -5328,13 +5328,19 @@ var RIAPP;
                 }
                 CollectionItem.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['errors_changed'].concat(base_events);
+                    return ['errors_changed', 'destroying'].concat(base_events);
                 };
                 CollectionItem.prototype.addOnErrorsChanged = function (fn, namespace) {
                     this.addHandler('errors_changed', fn, namespace);
                 };
                 CollectionItem.prototype.removeOnErrorsChanged = function (namespace) {
                     this.removeHandler('errors_changed', namespace);
+                };
+                CollectionItem.prototype.addOnDestroying = function (fn, namespace) {
+                    this.addHandler('destroying', fn, namespace);
+                };
+                CollectionItem.prototype.removeOnDestroying = function (namespace) {
+                    this.removeHandler('destroying', namespace);
                 };
                 CollectionItem.prototype._onErrorsChanged = function (args) {
                     this.raiseEvent('errors_changed', args);
@@ -5631,6 +5637,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
+                    this._raiseEvent('destroying', {});
                     this._fkey = null;
                     this._saveVals = null;
                     this._vals = {};
@@ -14146,7 +14153,7 @@ var RIAPP;
                     this._isDeleted = false;
                     this._isSelected = false;
                     this._createCells();
-                    this._item.addOnDestroyed(function (sender, args) {
+                    this._item.addOnDestroying(function (sender, args) {
                         self._onItemDestroyed();
                     }, self._objId);
                     this.isDeleted = this._item._isDeleted;
