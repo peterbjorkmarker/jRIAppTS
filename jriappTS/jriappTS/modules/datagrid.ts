@@ -401,9 +401,6 @@ module RIAPP {
                     this._isDeleted = false;
                     this._isSelected = false;
                     this._createCells();
-                    this._item.addOnDestroying(function (sender, args) {
-                        self._onItemDestroyed();
-                    }, self._objId);
                     this.isDeleted = this._item._isDeleted;
                     var fn_state = function () {
                         var css = self._grid._onRowStateChanged(self, self._item[self._grid._options.rowStateField]);
@@ -415,9 +412,6 @@ module RIAPP {
                         }, this._objId);
                         fn_state();
                     }
-                }
-                _onItemDestroyed() {
-                    this.destroy();
                 }
                 _onError(error, source):boolean {
                     var isHandled = super._onError(error, source);

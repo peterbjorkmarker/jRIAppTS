@@ -5328,19 +5328,13 @@ var RIAPP;
                 }
                 CollectionItem.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['errors_changed', 'destroying'].concat(base_events);
+                    return ['errors_changed'].concat(base_events);
                 };
                 CollectionItem.prototype.addOnErrorsChanged = function (fn, namespace) {
                     this.addHandler('errors_changed', fn, namespace);
                 };
                 CollectionItem.prototype.removeOnErrorsChanged = function (namespace) {
                     this.removeHandler('errors_changed', namespace);
-                };
-                CollectionItem.prototype.addOnDestroying = function (fn, namespace) {
-                    this.addHandler('destroying', fn, namespace);
-                };
-                CollectionItem.prototype.removeOnDestroying = function (namespace) {
-                    this.removeHandler('destroying', namespace);
                 };
                 CollectionItem.prototype._onErrorsChanged = function (args) {
                     this.raiseEvent('errors_changed', args);
@@ -5637,7 +5631,9 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    this._raiseEvent('destroying', {});
+                    if (!!this._fkey && !!this._collection && !this._collection._isClearing) {
+                        this._collection.removeItem(this);
+                    }
                     this._fkey = null;
                     this._saveVals = null;
                     this._vals = {};
@@ -5721,6 +5717,9 @@ var RIAPP;
                     _super.call(this);
                     this._options = { enablePaging: false, pageSize: 50 };
                     this._isLoading = false;
+                    this._isClearing = false;
+                    this._isUpdating = false;
+
                     this._EditingItem = null;
                     this._perms = { canAddRow: true, canEditRow: true, canDeleteRow: true, canRefreshRow: false };
 
@@ -5735,7 +5734,6 @@ var RIAPP;
                     this._errors = {};
                     this._ignoreChangeErrors = false;
                     this._pkInfo = null;
-                    this._isUpdating = false;
                     this._waitQueue = new RIAPP.MOD.utils.WaitQueue(this);
                 }
                 BaseCollection.getEmptyFieldInfo = function (fieldName) {
@@ -6365,16 +6363,21 @@ else
                     }, [], false, null);
                 };
                 BaseCollection.prototype.clear = function () {
-                    this.raiseEvent('clearing', {});
-                    this.cancelEdit();
-                    this._EditingItem = null;
-                    this._newKey = 0;
-                    this.currentItem = null;
-                    this._destroyItems();
-                    this._items = [];
-                    this._itemsByKey = {};
-                    this._errors = {};
-                    this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.RESET, items: [], pos: [] });
+                    this._isClearing = true;
+                    try  {
+                        this.raiseEvent('clearing', {});
+                        this.cancelEdit();
+                        this._EditingItem = null;
+                        this._newKey = 0;
+                        this.currentItem = null;
+                        this._destroyItems();
+                        this._items = [];
+                        this._itemsByKey = {};
+                        this._errors = {};
+                        this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.RESET, items: [], pos: [] });
+                    } finally {
+                        this._isClearing = false;
+                    }
                     this.raiseEvent('cleared', {});
                     this.raisePropertyChanged('count');
                 };
@@ -14153,9 +14156,6 @@ var RIAPP;
                     this._isDeleted = false;
                     this._isSelected = false;
                     this._createCells();
-                    this._item.addOnDestroying(function (sender, args) {
-                        self._onItemDestroyed();
-                    }, self._objId);
                     this.isDeleted = this._item._isDeleted;
                     var fn_state = function () {
                         var css = self._grid._onRowStateChanged(self, self._item[self._grid._options.rowStateField]);
@@ -14168,9 +14168,6 @@ var RIAPP;
                         fn_state();
                     }
                 }
-                Row.prototype._onItemDestroyed = function () {
-                    this.destroy();
-                };
                 Row.prototype._onError = function (error, source) {
                     var isHandled = _super.prototype._onError.call(this, error, source);
                     if (!isHandled) {

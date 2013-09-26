@@ -52,19 +52,13 @@ module RIAPP {
                 }
                 _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['errors_changed', 'destroying'].concat(base_events);
+                    return ['errors_changed'].concat(base_events);
                 }
                 addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string) {
                     this.addHandler('errors_changed', fn, namespace);
                 }
                 removeOnErrorsChanged(namespace?: string) {
                     this.removeHandler('errors_changed', namespace);
-                }
-                addOnDestroying(fn: (sender: CollectionItem, args: {}) => void, namespace?: string) {
-                    this.addHandler('destroying', fn, namespace);
-                }
-                removeOnDestroying(namespace?: string) {
-                    this.removeHandler('destroying', namespace);
                 }
                 _onErrorsChanged(args: any) {
                     this.raiseEvent('errors_changed', args);
@@ -362,7 +356,9 @@ module RIAPP {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    this._raiseEvent('destroying', {});
+                    if (!!this._fkey && !!this._collection && !this._collection._isClearing) {
+                        this._collection.removeItem(this);
+                    }
                     this._fkey = null;
                     this._saveVals = null;
                     this._vals = {};
@@ -420,12 +416,16 @@ module RIAPP {
                 _ignoreChangeErrors: boolean;
                 _pkInfo: IFieldInfo[];
                 _isUpdating: boolean;
+                _isClearing: boolean;
                 _waitQueue: MOD.utils.WaitQueue;
 
                 constructor() {
                     super();
                     this._options = { enablePaging: false, pageSize: 50 };
                     this._isLoading = false;
+                    this._isClearing = false;
+                    this._isUpdating = false;
+
                     this._EditingItem = null;
                     this._perms = { canAddRow: true, canEditRow: true, canDeleteRow: true, canRefreshRow: false };
                     //includes stored on server
@@ -439,7 +439,6 @@ module RIAPP {
                     this._errors = {};
                     this._ignoreChangeErrors = false;
                     this._pkInfo = null;
-                    this._isUpdating = false;
                     this._waitQueue = new MOD.utils.WaitQueue(this);
                 }
 
@@ -1055,16 +1054,22 @@ module RIAPP {
                     }, [], false, null);
                 }
                 clear() {
-                    this.raiseEvent('clearing', {});
-                    this.cancelEdit();
-                    this._EditingItem = null;
-                    this._newKey = 0;
-                    this.currentItem = null;
-                    this._destroyItems();
-                    this._items = [];
-                    this._itemsByKey = {};
-                    this._errors = {};
-                    this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.RESET, items: [], pos: [] });
+                    this._isClearing = true;
+                    try {
+                        this.raiseEvent('clearing', {});
+                        this.cancelEdit();
+                        this._EditingItem = null;
+                        this._newKey = 0;
+                        this.currentItem = null;
+                        this._destroyItems();
+                        this._items = [];
+                        this._itemsByKey = {};
+                        this._errors = {};
+                        this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.RESET, items: [], pos: [] });
+                    }
+                    finally {
+                        this._isClearing = false;
+                    }
                     this.raiseEvent('cleared', {});
                     this.raisePropertyChanged('count');
                 }
