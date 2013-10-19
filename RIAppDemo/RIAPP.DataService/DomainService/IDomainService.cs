@@ -8,7 +8,7 @@ namespace RIAPP.DataService
     public interface IDomainService: IDisposable
     {
         //typescript strongly typed implementation of entities, DbSet and DbContext in the text form
-        string ServiceGetTypeScript();
+        string ServiceGetTypeScript(string comment=null);
         string ServiceGetXAML();
         string ServiceGetCSharp();
 

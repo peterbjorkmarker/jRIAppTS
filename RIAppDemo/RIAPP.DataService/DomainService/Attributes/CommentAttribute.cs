@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RIAPP.DataService
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple=false, Inherited=false)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum, AllowMultiple=false, Inherited=false)]
     public class CommentAttribute: Attribute
     {
         public CommentAttribute()

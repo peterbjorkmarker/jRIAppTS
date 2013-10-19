@@ -1008,11 +1008,11 @@ namespace RIAPP.DataService
         
 
         #region IDomainService Public Methods
-        public virtual string ServiceGetTypeScript()
+        public virtual string ServiceGetTypeScript(string comment = null)
         {
             MetadataInfo metadata = this.ServiceGetMetadata();
             TypeScriptHelper helper = new TypeScriptHelper(metadata, this.GetClientTypes());
-            return helper.CreateTypeScript();
+            return helper.CreateTypeScript(comment);
         }
 
         public virtual string ServiceGetXAML()

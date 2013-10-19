@@ -36,9 +36,21 @@ namespace RIAPP.DataService.Utils
             this._sb.AppendLine();
         }
 
-        public string CreateTypeScript()
+        private static void addComment(StringBuilder sb, string comment)
+        {
+            sb.AppendLine(@"/*");
+            sb.AppendLine(comment);
+            sb.AppendLine("*/");
+            sb.AppendLine();
+        }
+
+        public string CreateTypeScript(string comment=null)
         {
             _sb.Length = 0;
+            if (!string.IsNullOrWhiteSpace(comment))
+            {
+                TypeScriptHelper.addComment(_sb, comment);
+            }
             this.WriteStringLine(this.createISvcMethods());
             //this.WriteStringLine(this.createQueryNames());
             this._metadata.dbSets.ForEach((dbSetInfo) =>

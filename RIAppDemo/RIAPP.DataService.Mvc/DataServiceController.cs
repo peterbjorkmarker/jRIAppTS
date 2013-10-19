@@ -36,7 +36,8 @@ namespace RIAPP.DataService.Mvc
         [HttpGet]
         public ActionResult GetTypeScript()
         {
-            var info = this.DomainService.ServiceGetTypeScript();
+            string comment = string.Format("\tGenerated from: {0} on {1:yyyy-MM-dd HH:mm} at {1:HH:mm}\r\n\tDon't make manual changes here, because they will be lost when this db interface will be regenerated!", this.ControllerContext.HttpContext.Request.RawUrl, DateTime.Now);
+            var info = this.DomainService.ServiceGetTypeScript(comment);
             var res = new ContentResult();
             res.ContentEncoding = System.Text.Encoding.UTF8;
             res.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;

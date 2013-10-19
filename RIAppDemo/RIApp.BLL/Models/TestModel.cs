@@ -6,6 +6,31 @@ using RIAPP.DataService;
 
 namespace RIAppDemo.BLL.Models
 {
+    /// <summary>
+    /// this enum will be generated in typescript because it is used in exposed TestModel class
+    /// </summary>
+    public enum TestEnum
+    {
+        None = 0,
+
+        OK = 1,
+
+        Error = 2,
+
+        Loading = 3
+    }
+
+    [Comment(Text = "An enum for testing of conversion C# types to typescript")]
+    public enum TestEnum2
+    {
+        None = 0,
+
+        One = 1,
+
+        Two = 2,
+
+        Three = 3
+    }
 
     [Dictionary(KeyName="Key", DictionaryName="TestDictionary")]
     [List(ListName = "TestList")]
@@ -37,6 +62,12 @@ namespace RIAppDemo.BLL.Models
         }
 
         public IEnumerable<LookUpProduct> MoreComplexProperty
+        {
+            get;
+            set;
+        }
+
+        public TestEnum EnumProperty
         {
             get;
             set;

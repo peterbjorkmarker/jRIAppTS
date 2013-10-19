@@ -107,6 +107,15 @@ namespace RIAPP.DataService.Utils
                 return "any";
             }
         }
+
+        private static void addComment(StringBuilder sb, string comment)
+        {
+            sb.AppendLine("/*");
+            sb.Append("\t");
+            sb.AppendLine(comment);
+            sb.AppendLine("*/");
+        }
+
         /// <summary>
         /// converts object to TS interface declaration
         /// </summary>
@@ -125,10 +134,7 @@ namespace RIAPP.DataService.Utils
             StringBuilder sb = new StringBuilder();
             if (commentAttr != null && !string.IsNullOrWhiteSpace(commentAttr.Text))
             {
-                sb.AppendLine("/*");
-                sb.Append("    ");
-                sb.AppendLine(commentAttr.Text);
-                sb.AppendLine("*/");
+                CSharp2TS.addComment(sb, commentAttr.Text);
             }
             sb.AppendFormat("export interface {0}", name);
             if (!string.IsNullOrWhiteSpace(extends))
@@ -168,10 +174,7 @@ namespace RIAPP.DataService.Utils
             StringBuilder sb = new StringBuilder();
             if (commentAttr != null && !string.IsNullOrWhiteSpace(commentAttr.Text))
             {
-                sb.AppendLine("/*");
-                sb.Append("    ");
-                sb.AppendLine(commentAttr.Text);
-                sb.AppendLine("*/");
+                CSharp2TS.addComment(sb, commentAttr.Text);
             }
             sb.AppendFormat("export enum {0}", name);
             sb.AppendLine();

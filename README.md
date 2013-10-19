@@ -80,6 +80,7 @@ The DataService now exposes two other methods to get XAML version of the metadat
 <p>2013-09-09  List and Dictionary code modifications</p>
 <p>2013-09-20  CSharp enums to typescript enums dataservice's code generation</p>
 <p>2013-09-25  Bug fix in the datagrid</p>
+<p>2013-10-19  Improvements in the code generation</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 
