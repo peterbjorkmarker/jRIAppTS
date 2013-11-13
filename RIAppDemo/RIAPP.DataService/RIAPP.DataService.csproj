@@ -43,8 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DomainService\Attributes\AuthorizeAttribute.cs" />
-    <Compile Include="DomainService\Attributes\AllowAnonymousAttribute.cs" />
+    <Compile Include="DomainService\Security\AuthorizeAttribute.cs" />
+    <Compile Include="DomainService\Security\AllowAnonymousAttribute.cs" />
     <Compile Include="DomainService\Attributes\CommentAttribute.cs" />
     <Compile Include="DomainService\Attributes\ExtendsAttribute.cs" />
     <Compile Include="DomainService\Attributes\TypeNameAttribute.cs" />
@@ -62,14 +62,14 @@
     <Compile Include="DomainService\JSonTypes\TrackAssoc.cs" />
     <Compile Include="DomainService\Security\SecurityHelper.cs" />
     <Compile Include="DomainService\TypedLists.cs" />
-    <Compile Include="Utils\CSharp2TS.cs" />
-    <Compile Include="Utils\IDataHelper.cs" />
-    <Compile Include="Utils\IQueryHelper.cs" />
-    <Compile Include="Utils\IValidationHelper.cs" />
-    <Compile Include="Utils\IValueConverter.cs" />
-    <Compile Include="Utils\RowInfoEx.cs" />
-    <Compile Include="Utils\DbSetInfoEx.cs" />
-    <Compile Include="Utils\FieldInfoEx.cs" />
+    <Compile Include="Utils\CodeGen\CSharp2TS.cs" />
+    <Compile Include="Utils\Interfaces\IDataHelper.cs" />
+    <Compile Include="Utils\Interfaces\IQueryHelper.cs" />
+    <Compile Include="Utils\Interfaces\IValidationHelper.cs" />
+    <Compile Include="Utils\Interfaces\IValueConverter.cs" />
+    <Compile Include="Utils\Extensions\RowInfoEx.cs" />
+    <Compile Include="Utils\Extensions\DbSetInfoEx.cs" />
+    <Compile Include="Utils\Extensions\FieldInfoEx.cs" />
     <Compile Include="Utils\ResourceHelper.cs" />
     <Compile Include="Utils\MetadataCache.cs" />
     <Compile Include="DomainService\Exceptions\ValidationException.cs" />
@@ -77,7 +77,7 @@
     <Compile Include="DomainService\JSonTypes\ErrorInfo.cs" />
     <Compile Include="DomainService\Metadata.cs" />
     <Compile Include="Utils\TemplateParser.cs" />
-    <Compile Include="Utils\TypeScriptHelper.cs" />
+    <Compile Include="Utils\CodeGen\TypeScriptHelper.cs" />
     <Compile Include="Utils\ValueConverter.cs" />
     <Compile Include="Utils\ValidationHelperClass.cs" />
     <Compile Include="Utils\QueryHelperClass.cs" />

@@ -210,7 +210,7 @@ namespace RIAPP.DataService.EF
                         dbSetInfo.fieldInfos.Add(fieldInfo);
                     });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     throw;
                 }
@@ -282,7 +282,7 @@ namespace RIAPP.DataService.EF
                             }
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         throw;
                     }
@@ -290,6 +290,14 @@ namespace RIAPP.DataService.EF
             }
             return metadata;
         }
+
+        /*
+        public override string ServiceGetCSharp()
+        {
+            var metadata = this.ServiceGetMetadata();
+            return RIAPP.DataService.EF.Utils.DataServiceMethodsHelper.CreateMethods(metadata, this.DB);
+        }
+        */
         #endregion
 
         protected TDB DB

@@ -82,7 +82,7 @@ var RIAPP;
                 this._$treeRoot = (this._$tree).dynatree("getRoot");
             };
             FolderBrowser.prototype.loadRootFolder = function () {
-                var self = this, query = self._foldersDb.createReadRootQuery({ includeFiles: self._includeFiles });
+                var self = this, query = self._foldersDb.createReadRootQuery({ includeFiles: self._includeFiles, infoType: null });
                 query.isClearPrevData = true;
                 var promise = self._dbContext.load(query);
                 promise.done(function (res) {
@@ -91,7 +91,7 @@ var RIAPP;
                 return promise;
             };
             FolderBrowser.prototype.loadChildren = function (item) {
-                var self = this, query = self._foldersDb.createReadChildrenQuery({ parentKey: item.Key, level: item.Level + 1, path: item.fullPath, includeFiles: self._includeFiles });
+                var self = this, query = self._foldersDb.createReadChildrenQuery({ parentKey: item.Key, level: item.Level + 1, path: item.fullPath, includeFiles: self._includeFiles, infoType: null });
                 query.isClearPrevData = false;
                 var promise = self._dbContext.load(query);
                 promise.done(function (res) {

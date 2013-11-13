@@ -5,6 +5,15 @@ using System.Text;
 
 namespace RIAPP.DataService.Utils
 {
+    public class NewTypeArgs : EventArgs
+    {
+        public readonly Type t;
+        public NewTypeArgs(Type t)
+        {
+            this.t = t;
+        }
+    }
+
     public class CSharp2TS
     {
         ValueConverter _valConverter;
@@ -20,6 +29,8 @@ namespace RIAPP.DataService.Utils
             }
         }
 
+        public event EventHandler<NewTypeArgs> newComplexTypeAdded;
+
         public string GetTSTypeName(Type t)
         {
             bool isArray = false;
@@ -34,12 +45,17 @@ namespace RIAPP.DataService.Utils
                     t = t.GetGenericArguments().First();
                     isEnumerable= true;
                 }
+                else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
+                {
+                    t = t.GetGenericArguments().First();
+                    isEnumerable = true;
+                }
                 else if (t.IsArray)
                 {
                     isEnumerable = true;
                     t = t.GetElementType();
                 }
-                else if (t is System.Collections.IEnumerable)
+                else if (t != typeof(System.String) && typeof(System.Collections.IEnumerable).IsAssignableFrom(t))
                 {
                     isEnumerable = true;
                     return "any[]";
@@ -56,7 +72,7 @@ namespace RIAPP.DataService.Utils
                     res = string.Format("{0}[]", res);
                 return res;
             }
-            catch
+            catch(UnsupportedTypeException)
             {
                 //complex type
                 return this.GetTsComplexTypeName(t, isArray, isEnumerable, isEnum);
@@ -66,46 +82,39 @@ namespace RIAPP.DataService.Utils
         private string GetTsComplexTypeName(Type t, bool isArray, bool isEnumerable, bool isEnum)
         {
             string res = "any";
-            try
+            ExtendsAttribute extendsAttr = null;
+            TypeNameAttribute typeNameAttr = null;
+            string typeName = isEnum ? t.Name : string.Format("I{0}", t.Name);
+            typeNameAttr = t.GetCustomAttributes(typeof(TypeNameAttribute), false).OfType<TypeNameAttribute>().FirstOrDefault();
+            if (typeNameAttr != null)
+                typeName = typeNameAttr.Name;
+            if (!isEnum)
             {
-                ExtendsAttribute extendsAttr = null;
-                TypeNameAttribute typeNameAttr = null;
-                string typeName = isEnum?t.Name:string.Format("I{0}", t.Name);
-                typeNameAttr = t.GetCustomAttributes(typeof(TypeNameAttribute), false).OfType<TypeNameAttribute>().FirstOrDefault();
-                if (typeNameAttr != null)
-                    typeName = typeNameAttr.Name;
-                if (!isEnum)
+                extendsAttr = t.GetCustomAttributes(typeof(ExtendsAttribute), false).OfType<ExtendsAttribute>().FirstOrDefault();
+                StringBuilder extendsSb = null;
+                if (extendsAttr != null && extendsAttr.InterfaceNames.Length > 0)
                 {
-                    extendsAttr = t.GetCustomAttributes(typeof(ExtendsAttribute), false).OfType<ExtendsAttribute>().FirstOrDefault();
-                    StringBuilder extendsSb = null;
-                    if (extendsAttr != null && extendsAttr.InterfaceNames.Length > 0)
+                    extendsSb = new StringBuilder("extends ");
+                    bool isFirst = true;
+                    foreach (string intfName in extendsAttr.InterfaceNames)
                     {
-                        extendsSb = new StringBuilder("extends ");
-                        bool isFirst = true;
-                        foreach (string intfName in extendsAttr.InterfaceNames)
-                        {
-                            if (!isFirst)
-                                extendsSb.Append(", ");
-                            extendsSb.Append(intfName);
-                            isFirst = false;
-                        }
+                        if (!isFirst)
+                            extendsSb.Append(", ");
+                        extendsSb.Append(intfName);
+                        isFirst = false;
                     }
-                    res = this.GetTSInterface(t, typeName, extendsSb == null ? null : extendsSb.ToString());
                 }
-                else
-                {
-                    res = GetTSEnum(t, typeName);
-                }
-              
-                if (isArray || isEnumerable)
-                    return string.Format("{0}[]", typeName);
-                else
-                    return typeName;
+                res = this.GetTSInterface(t, typeName, extendsSb == null ? null : extendsSb.ToString());
             }
-            catch
+            else
             {
-                return "any";
+                res = GetTSEnum(t, typeName);
             }
+
+            if (isArray || isEnumerable)
+                return string.Format("{0}[]", typeName);
+            else
+                return typeName;
         }
 
         private static void addComment(StringBuilder sb, string comment)
@@ -116,6 +125,11 @@ namespace RIAPP.DataService.Utils
             sb.AppendLine("*/");
         }
 
+        public bool IsTypeNameRegistered(string name)
+        {
+            return this._tsTypes.ContainsKey(name);
+        }
+
         /// <summary>
         /// converts object to TS interface declaration
         /// </summary>
@@ -123,6 +137,9 @@ namespace RIAPP.DataService.Utils
         /// <returns></returns>
         private string GetTSInterface(Type t, string typeName, string extends)
         {
+            if (t == typeof(Type))
+                throw new ArgumentException("Can not generate interface for a System.Type");
+
             string name = typeName;
             if (string.IsNullOrEmpty(typeName))
                 name = this.GetTSTypeName(t);
@@ -153,6 +170,10 @@ namespace RIAPP.DataService.Utils
             );
             sb.AppendLine("}");
             this._tsTypes.Add(name, sb.ToString());
+            if (this.newComplexTypeAdded != null)
+            {
+                this.newComplexTypeAdded(this, new NewTypeArgs(t)); 
+            }
             return this._tsTypes[name];
         }
 

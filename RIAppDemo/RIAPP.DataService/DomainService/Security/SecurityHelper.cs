@@ -32,7 +32,8 @@ namespace RIAPP.DataService.Security
                 {
                     //allow unauthenticated access
                     var passthrough_attrs = methInfo.GetCustomAttributes(typeof(AllowAnonymousAttribute), false).OfType<AllowAnonymousAttribute>();
-                    roles_list.AddLast(ALLOW_ANONYMOUS);
+                    if (passthrough_attrs.Count()> 0)
+                        roles_list.AddLast(ALLOW_ANONYMOUS);
                 }
                 else
                 {

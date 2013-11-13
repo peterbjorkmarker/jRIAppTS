@@ -148,13 +148,24 @@ namespace RIAPP.DataService.Utils
         {
             if (value == null)
                 return null;
+            object typedVal = null;
 
             if (!propMainType.IsValueType)
             {
-                throw new Exception(string.Format(ErrorStrings.ERR_VAL_DATATYPE_INVALID, propMainType.FullName));
+                typedVal = SerializationHelper.DeSerialize(value, propMainType);
             }
-          
-            object typedVal = Convert.ChangeType(value, propMainType, System.Globalization.CultureInfo.InvariantCulture);
+            else
+            {
+                try
+                {
+                    typedVal = Convert.ChangeType(value, propMainType, System.Globalization.CultureInfo.InvariantCulture);
+                }
+                catch (System.InvalidCastException)
+                {
+                    typedVal = SerializationHelper.DeSerialize(value, propMainType);
+
+                }
+            }
 
             if (IsNullableType)
             {

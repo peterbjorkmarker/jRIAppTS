@@ -1,4 +1,4 @@
-﻿export interface I{{ENTITY_TYPE}} extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable
+﻿export interface {{ENTITY_INTERFACE}} extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable
 {
 {{INTERFACE_FIELDS}}
 	getDbContext():DbContext;
@@ -7,7 +7,7 @@
 	asEntity(): {{ENTITY_TYPE}};
 }
 
-export class {{ENTITY_TYPE}} extends RIAPP.MOD.db.Entity implements I{{ENTITY_TYPE}}
+export class {{ENTITY_TYPE}} extends RIAPP.MOD.db.Entity implements {{ENTITY_INTERFACE}}
 {
 {{ENTITY_FIELDS}}
 	getDbContext() {
@@ -21,5 +21,5 @@ export class {{ENTITY_TYPE}} extends RIAPP.MOD.db.Entity implements I{{ENTITY_TY
 		return '{{ENTITY_NAME}}';
 	}
 	asEntity() { return this; }
-	asInterface() { return <I{{ENTITY_TYPE}}>this; }
+	asInterface() { return <{{ENTITY_INTERFACE}}>this; }
 }

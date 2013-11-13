@@ -19,6 +19,16 @@ module RIAPP {
         state(): string;
         then(doneCallbacks: (res: T) => any, failCallbacks?: (res: any) => any, progressCallbacks?: (res: any) => any): IPromise<any>;
     }
+
+    export interface IVoidPromise {
+        always(...alwaysCallbacks: { (res: any): void; }[]): IPromise<any>;
+        done(...doneCallbacks: { (): void; }[]): IPromise<any>;
+        fail(...failCallbacks: { (res: any): void; }[]): IPromise<any>;
+        progress(...progressCallbacks: { (res: any): void; }[]): IPromise<any>;
+        state(): string;
+        then(doneCallbacks: () => any, failCallbacks?: (res: any) => any, progressCallbacks?: (res: any) => any): IPromise<any>;
+    }
+
     export interface IDeferred<T> extends IPromise<T>{
         notify(arg: any): IDeferred<any>;
         notifyWith(context: any, arg: any): IDeferred<any>

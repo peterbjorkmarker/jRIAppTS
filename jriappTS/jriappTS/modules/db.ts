@@ -95,7 +95,7 @@ module RIAPP {
             export interface IFilterInfo { filterItems: { fieldName: string; kind: number; values: any[]; }[]; }
             export interface ISortInfo { sortItems: { fieldName: string; sortOrder: number; }[]; }
             export interface IEntityConstructor {
-                new (dbSet: DbSet, row: IRowData, names: string[]): Entity;
+                new (dbSet: DbSet<Entity>, row: IRowData, names: string[]): Entity;
             }
             export interface IValueChange {
                 val: any;

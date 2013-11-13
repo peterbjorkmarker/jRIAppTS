@@ -80,7 +80,7 @@ namespace RIAppDemo.Controllers
 
                 return new HttpStatusCodeResult(200);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return new HttpStatusCodeResult(400);
             }

@@ -25,11 +25,11 @@ namespace RIAPP.DataService.EF.Utils
 
             sb.AppendLine(string.Format("#region {0}", dbSetInfo.dbSetName));
             sb.AppendLine("[Query]");
-            sb.AppendFormat("public QueryResult<{0}> Read{1}(GetDataInfo getInfo)", dbSetInfo.EntityType.Name, dbSetInfo.dbSetName);
+            sb.AppendFormat("public QueryResult<{0}> Read{1}()", dbSetInfo.EntityType.Name, dbSetInfo.dbSetName);
             sb.AppendLine("");
             sb.AppendLine("{");
             sb.AppendLine("\tint? totalCount = null;");
-            sb.AppendLine(string.Format("\tvar res = this.QueryHelper.PerformQuery(this.DB.{0}, getInfo, ref totalCount).AsEnumerable();", tableName));
+            sb.AppendLine(string.Format("\tvar res = this.QueryHelper.PerformQuery(this.DB.{0}, this.CurrentQueryInfo, ref totalCount).AsEnumerable();", tableName));
             sb.AppendLine(string.Format("\treturn new QueryResult<{0}>(res, totalCount);",dbSetInfo.EntityType.Name));
             sb.AppendLine("}");
             sb.AppendLine("");

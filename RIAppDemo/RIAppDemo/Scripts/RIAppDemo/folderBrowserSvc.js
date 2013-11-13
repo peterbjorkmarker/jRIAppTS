@@ -95,7 +95,7 @@ var RIAPP;
                 configurable: true
             });
             FileSystemObject.prototype.toString = function () {
-                return 'FileSystemObject';
+                return 'FileSystemObjectEntity';
             };
             FileSystemObject.prototype.asEntity = function () {
                 return this;
@@ -188,7 +188,7 @@ var RIAPP;
                 this._dbSets = new DbSets(this);
                 var associations = [{ "childDbSetName": "FileSystemObject", "childToParentName": "Parent", "fieldRels": [{ "childField": "ParentKey", "parentField": "Key" }], "name": "ChildToParent", "onDeleteAction": 1, "parentDbSetName": "FileSystemObject", "parentToChildrenName": "Children" }];
                 this._initAssociations(associations);
-                var methods = [{ "isQuery": true, "methodName": "ReadRoot", "methodResult": true, "parameters": [{ "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "includeFiles", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadChildren", "methodResult": true, "parameters": [{ "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "parentKey", "ordinal": 1 }, { "dataType": 3, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "level", "ordinal": 2 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "path", "ordinal": 3 }, { "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "includeFiles", "ordinal": 4 }] }];
+                var methods = [{ "isQuery": true, "methodName": "ReadRoot", "methodResult": true, "parameters": [{ "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "includeFiles", "ordinal": 0 }] }, { "isQuery": true, "methodName": "ReadChildren", "methodResult": true, "parameters": [{ "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "parentKey", "ordinal": 0 }, { "dataType": 3, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "level", "ordinal": 1 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "path", "ordinal": 2 }, { "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "includeFiles", "ordinal": 3 }] }];
                 this._initMethods(methods);
             };
             Object.defineProperty(DbContext.prototype, "associations", {

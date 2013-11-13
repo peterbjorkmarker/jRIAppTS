@@ -415,7 +415,7 @@ module RIAPP
 
 
                 this._dbSet.addOnItemAdded(function (sender, args) {
-                    var item: DEMODB.ISalesOrderHeader = args.item;
+                    var item: DEMODB.ISalesOrderHeaderEntity = args.item;
                     item.Customer = self.currentCustomer;
                     //datejs extension
                     item.OrderDate = (<any>Date).today();

@@ -28,5 +28,5 @@
 	}
 {{QUERIES}}
 {{CALC_FIELDS}}
-	get items2()  { return <I{{ENTITY_TYPE}}[]><any>this.items; }
+	get items2()  { return <{{ENTITY_INTERFACE}}[]>this.items; }
 }

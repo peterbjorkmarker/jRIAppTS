@@ -23,6 +23,7 @@ namespace RIAPP.DataService
         private ChangeSet _currentChangeSet;
         protected DbSet _currentDbSet;
         protected RowInfo _currentRowInfo;
+        private GetDataInfo _currentQueryInfo;
         private ServiceOperationType _currentOperation;
         private IPrincipal _principal;
         private IAuthorizer _authorizer;
@@ -85,7 +86,7 @@ namespace RIAPP.DataService
         public GetDataResult GetQueryData(string dbSetName, string queryName)
         {
             GetDataInfo getInfo = new GetDataInfo { dbSetName = dbSetName, queryName = queryName };
-            return ServiceGetData(getInfo);
+            return this.ServiceGetData(getInfo);
         }
 
         protected IPrincipal CurrentPrincipal
@@ -106,6 +107,11 @@ namespace RIAPP.DataService
         protected EntityChangeState CurrentChangeState
         {
             get { return this._currentRowInfo.changeState; }
+        }
+
+        protected GetDataInfo CurrentQueryInfo
+        {
+            get { return this._currentQueryInfo; }
         }
 
         #region Helper Methods
@@ -695,6 +701,7 @@ namespace RIAPP.DataService
 
         protected virtual void OnError(Exception ex)
         {
+
         }
      
         protected abstract void ExecuteChangeSet();
@@ -752,29 +759,37 @@ namespace RIAPP.DataService
         }
         #endregion
 
-        protected GetDataResult GetData(GetDataInfo getInfo)
+        protected GetDataResult GetData(GetDataInfo queryInfo)
         {
             var metadata = this.EnsureMetadataInitialized();
             List<MethodDescription> methodList = metadata.methodDescriptions;
-            MethodDescription method = methodList.Where((m) => m.methodName == getInfo.queryName && m.isQuery == true).FirstOrDefault();
+            MethodDescription method = methodList.Where((m) => m.methodName == queryInfo.queryName && m.isQuery == true).FirstOrDefault();
             if (method == null)
             {
-                throw new DomainServiceException(string.Format(ErrorStrings.ERR_QUERY_NAME_INVALID, getInfo.queryName));
+                throw new DomainServiceException(string.Format(ErrorStrings.ERR_QUERY_NAME_INVALID, queryInfo.queryName));
             }
 
             this.Authorizer.CheckUserRightsToExecute(method.methodInfo);
-            getInfo.dbSetInfo = metadata.dbSets[getInfo.dbSetName];
-            bool isMultyPageRequest = getInfo.dbSetInfo.enablePaging && getInfo.pageCount > 1;
+            queryInfo.dbSetInfo = metadata.dbSets[queryInfo.dbSetName];
+            bool isMultyPageRequest = queryInfo.dbSetInfo.enablePaging && queryInfo.pageCount > 1;
       
             QueryResult queryResult = null;
             int? totalCount = null;
-            List<object> methParams = new List<object>();
-            methParams.Add(getInfo);
+            LinkedList<object> methParams = new LinkedList<object>();
+          
             for (var i = 0; i < method.parameters.Count; ++i)
             {
-                methParams.Add(getInfo.paramInfo.GetValue(method.parameters[i].name, method, this.DataHelper));
+                 methParams.AddLast(queryInfo.paramInfo.GetValue(method.parameters[i].name, method, this.DataHelper));
             }
-            queryResult = (QueryResult)method.methodInfo.Invoke(this, methParams.ToArray());
+            this._currentQueryInfo = queryInfo;
+            try
+            {
+                queryResult = (QueryResult)method.methodInfo.Invoke(this, methParams.ToArray());
+            }
+            finally
+            {
+                this._currentQueryInfo = null;
+            }
     
             IEnumerable entities = (IEnumerable)queryResult.Result;
             totalCount = queryResult.TotalCount;
@@ -785,20 +800,20 @@ namespace RIAPP.DataService
                 entityList.AddLast(entity);
                 ++rowCnt;
             }
-            var rows = this.CreateRows(getInfo.dbSetInfo, entityList, rowCnt);
-            IEnumerable<IncludedResult> subResults = this.CreateIncludedResults(getInfo.dbSetInfo, entityList, queryResult.includeNavigations);
+            var rows = this.CreateRows(queryInfo.dbSetInfo, entityList, rowCnt);
+            IEnumerable<IncludedResult> subResults = this.CreateIncludedResults(queryInfo.dbSetInfo, entityList, queryResult.includeNavigations);
 
             GetDataResult res = new GetDataResult()
             {
-                pageIndex = getInfo.pageIndex,
-                pageCount = getInfo.pageCount,
-                dbSetName = getInfo.dbSetName,
-                names = getInfo.dbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).Select(fi => fi.fieldName),
+                pageIndex = queryInfo.pageIndex,
+                pageCount = queryInfo.pageCount,
+                dbSetName = queryInfo.dbSetName,
+                names = queryInfo.dbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).Select(fi => fi.fieldName),
                 totalCount = totalCount,
                 extraInfo = queryResult.extraInfo,
                 rows = rows,
                 rowCount = rowCnt,
-                fetchSize= getInfo.dbSetInfo.FetchSize,
+                fetchSize= queryInfo.dbSetInfo.FetchSize,
                 included = subResults,
                 error = null
             };

@@ -32,14 +32,14 @@ namespace RIAppDemo.BLL.DataServices
 
         [Authorize()]
         [Query]
-        public QueryResult<FolderModel> ReadRoot(GetDataInfo getInfo, bool includeFiles)
+        public QueryResult<FolderModel> ReadRoot(bool includeFiles)
         {
-            return ReadChildren(getInfo, null, 0, "", includeFiles);
+            return ReadChildren(null, 0, "", includeFiles);
         }
 
         [Authorize()]
         [Query]
-        public QueryResult<FolderModel> ReadChildren(GetDataInfo getInfo, string parentKey, int level, string path, bool includeFiles)
+        public QueryResult<FolderModel> ReadChildren(string parentKey, int level, string path, bool includeFiles)
         {
             string fullpath = Path.GetFullPath(Path.Combine(ROOT,path));
             DirectoryInfo dinfo = new DirectoryInfo(fullpath);

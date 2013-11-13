@@ -7,7 +7,7 @@ namespace RIAPP.DataService.Utils
         T GetRefreshedEntity<T>(System.Linq.IQueryable<T> entities, RIAPP.DataService.RefreshRowInfo info) where T : class;
         int? GetTotalCount<T>(System.Linq.IQueryable<T> entities, RIAPP.DataService.FilterInfo filter, RIAPP.DataService.DbSetInfo dbSetInfo) where T : class;
         System.Linq.IQueryable<T> PerformFilter<T>(System.Linq.IQueryable<T> entities, RIAPP.DataService.FilterInfo filter, RIAPP.DataService.DbSetInfo dbInfo) where T : class;
-        System.Linq.IQueryable<T> PerformQuery<T>(System.Linq.IQueryable<T> entities, RIAPP.DataService.GetDataInfo getInfo, ref int? totalCount) where T : class;
+        System.Linq.IQueryable<T> PerformQuery<T>(System.Linq.IQueryable<T> entities, RIAPP.DataService.GetDataInfo queryInfo, ref int? totalCount) where T : class;
         System.Linq.IQueryable<T> PerformSort<T>(System.Linq.IQueryable<T> entities, RIAPP.DataService.SortInfo sort) where T : class;
     }
 }

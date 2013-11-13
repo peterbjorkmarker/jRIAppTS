@@ -135,16 +135,16 @@ namespace RIAPP.DataService.Utils
             return result;
         }
 
-        public IQueryable<T> PerformQuery<T>(IQueryable<T> entities, GetDataInfo getInfo, ref int? totalCount)
+        public IQueryable<T> PerformQuery<T>(IQueryable<T> entities, GetDataInfo queryInfo, ref int? totalCount)
           where T : class
         {
-            if (getInfo.isIncludeTotalCount && !totalCount.HasValue)
+            if (queryInfo.isIncludeTotalCount && !totalCount.HasValue)
             {
-                totalCount = this.GetTotalCount(entities, getInfo.filterInfo, getInfo.dbSetInfo);
+                totalCount = this.GetTotalCount(entities, queryInfo.filterInfo, queryInfo.dbSetInfo);
             }
-            entities = this.PerformFilter(entities, getInfo.filterInfo, getInfo.dbSetInfo);
-            entities = this.PerformSort(entities, getInfo.sortInfo);
-            entities = this.GetPage(entities, getInfo.pageIndex, getInfo.pageSize, getInfo.pageCount, getInfo.dbSetInfo);
+            entities = this.PerformFilter(entities, queryInfo.filterInfo, queryInfo.dbSetInfo);
+            entities = this.PerformSort(entities, queryInfo.sortInfo);
+            entities = this.GetPage(entities, queryInfo.pageIndex, queryInfo.pageSize, queryInfo.pageCount, queryInfo.dbSetInfo);
             return entities;
         }
 

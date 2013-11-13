@@ -35,7 +35,7 @@ namespace RIAppDemo.Controllers
                     return res;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return new HttpStatusCodeResult(404);
             }

@@ -401,7 +401,7 @@ var RIAPP;
                 configurable: true
             });
             Customer.prototype.toString = function () {
-                return 'Customer';
+                return 'CustomerEntity';
             };
             Customer.prototype.asEntity = function () {
                 return this;
@@ -555,7 +555,7 @@ var RIAPP;
                 configurable: true
             });
             CustomerAddress.prototype.toString = function () {
-                return 'CustomerAddress';
+                return 'CustomerAddressEntity';
             };
             CustomerAddress.prototype.asEntity = function () {
                 return this;
@@ -722,7 +722,7 @@ var RIAPP;
                 configurable: true
             });
             Address.prototype.toString = function () {
-                return 'Address';
+                return 'AddressEntity';
             };
             Address.prototype.asEntity = function () {
                 return this;
@@ -966,7 +966,7 @@ var RIAPP;
                 configurable: true
             });
             Product.prototype.toString = function () {
-                return 'Product';
+                return 'ProductEntity';
             };
             Product.prototype.asEntity = function () {
                 return this;
@@ -1068,7 +1068,7 @@ var RIAPP;
                 configurable: true
             });
             ProductModel.prototype.toString = function () {
-                return 'ProductModel';
+                return 'ProductModelEntity';
             };
             ProductModel.prototype.asEntity = function () {
                 return this;
@@ -1366,7 +1366,7 @@ var RIAPP;
                 configurable: true
             });
             SalesOrderHeader.prototype.toString = function () {
-                return 'SalesOrderHeader';
+                return 'SalesOrderHeaderEntity';
             };
             SalesOrderHeader.prototype.asEntity = function () {
                 return this;
@@ -1532,7 +1532,7 @@ var RIAPP;
                 configurable: true
             });
             SalesOrderDetail.prototype.toString = function () {
-                return 'SalesOrderDetail';
+                return 'SalesOrderDetailEntity';
             };
             SalesOrderDetail.prototype.asEntity = function () {
                 return this;
@@ -1653,7 +1653,7 @@ var RIAPP;
                 configurable: true
             });
             ProductCategory.prototype.toString = function () {
-                return 'ProductCategory';
+                return 'ProductCategoryEntity';
             };
             ProductCategory.prototype.asEntity = function () {
                 return this;
@@ -1737,7 +1737,7 @@ var RIAPP;
                 configurable: true
             });
             SalesInfo.prototype.toString = function () {
-                return 'SalesInfo';
+                return 'SalesInfoEntity';
             };
             SalesInfo.prototype.asEntity = function () {
                 return this;
@@ -1831,7 +1831,7 @@ var RIAPP;
                 configurable: true
             });
             LookUpProduct.prototype.toString = function () {
-                return 'LookUpProduct';
+                return 'LookUpProductEntity';
             };
             LookUpProduct.prototype.asEntity = function () {
                 return this;
@@ -1947,7 +1947,7 @@ var RIAPP;
                 configurable: true
             });
             AddressInfo.prototype.toString = function () {
-                return 'AddressInfo';
+                return 'AddressInfoEntity';
             };
             AddressInfo.prototype.asEntity = function () {
                 return this;
@@ -2109,7 +2109,7 @@ var RIAPP;
                 this._dbSets = new DbSets(this);
                 var associations = [{ "childDbSetName": "CustomerAddress", "childToParentName": "Customer", "fieldRels": [{ "childField": "CustomerID", "parentField": "CustomerID" }], "name": "CustAddrToCustomer", "onDeleteAction": 0, "parentDbSetName": "Customer", "parentToChildrenName": "CustomerAddresses" }, { "childDbSetName": "CustomerAddress", "childToParentName": "Address", "fieldRels": [{ "childField": "AddressID", "parentField": "AddressID" }], "name": "CustAddrToAddress", "onDeleteAction": 0, "parentDbSetName": "Address", "parentToChildrenName": "CustomerAddresses" }, { "childDbSetName": "CustomerAddress", "childToParentName": "AddressInfo", "fieldRels": [{ "childField": "AddressID", "parentField": "AddressID" }], "name": "CustAddrToAddress2", "onDeleteAction": 0, "parentDbSetName": "AddressInfo", "parentToChildrenName": "CustomerAddresses" }, { "childDbSetName": "SalesOrderDetail", "childToParentName": "SalesOrderHeader", "fieldRels": [{ "childField": "SalesOrderID", "parentField": "SalesOrderID" }], "name": "OrdDetailsToOrder", "onDeleteAction": 1, "parentDbSetName": "SalesOrderHeader", "parentToChildrenName": "SalesOrderDetails" }, { "childDbSetName": "SalesOrderDetail", "childToParentName": "Product", "fieldRels": [{ "childField": "ProductID", "parentField": "ProductID" }], "name": "OrdDetailsToProduct", "onDeleteAction": 0, "parentDbSetName": "Product", "parentToChildrenName": "SalesOrderDetails" }, { "childDbSetName": "SalesOrderHeader", "childToParentName": "Customer", "fieldRels": [{ "childField": "CustomerID", "parentField": "CustomerID" }], "name": "OrdersToCustomer", "onDeleteAction": 0, "parentDbSetName": "Customer", "parentToChildrenName": null }, { "childDbSetName": "SalesOrderHeader", "childToParentName": "Address", "fieldRels": [{ "childField": "ShipToAddressID", "parentField": "AddressID" }], "name": "OrdersToShipAddr", "onDeleteAction": 0, "parentDbSetName": "Address", "parentToChildrenName": null }, { "childDbSetName": "SalesOrderHeader", "childToParentName": "Address1", "fieldRels": [{ "childField": "BillToAddressID", "parentField": "AddressID" }], "name": "OrdersToBillAddr", "onDeleteAction": 0, "parentDbSetName": "Address", "parentToChildrenName": null }];
                 this._initAssociations(associations);
-                var methods = [{ "isQuery": true, "methodName": "ReadProductLookUp", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProduct", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "param1", "ordinal": 1 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param2", "ordinal": 2 }] }, { "isQuery": true, "methodName": "ReadProductByIds", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "productIDs", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadCustomer", "methodResult": true, "parameters": [{ "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": true, "name": "includeNav", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadAddress", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressByIds", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "addressIDs", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadCustomerAddress", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressForCustomers", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "custIDs", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadSalesOrderHeader", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadSalesOrderDetail", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProductCategory", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProductModel", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadSalesInfo", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressInfo", "methodResult": true, "parameters": [] }, { "isQuery": false, "methodName": "TestInvoke", "methodResult": true, "parameters": [{ "dataType": 10, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param1", "ordinal": 0 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param2", "ordinal": 1 }] }];
+                var methods = [{ "isQuery": true, "methodName": "ReadProductLookUp", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProduct", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "param1", "ordinal": 0 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param2", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadProductByIds", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "productIDs", "ordinal": 0 }] }, { "isQuery": true, "methodName": "ReadCustomer", "methodResult": true, "parameters": [{ "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": true, "name": "includeNav", "ordinal": 0 }] }, { "isQuery": true, "methodName": "ReadAddress", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressByIds", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "addressIDs", "ordinal": 0 }] }, { "isQuery": true, "methodName": "ReadCustomerAddress", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressForCustomers", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "custIDs", "ordinal": 0 }] }, { "isQuery": true, "methodName": "ReadSalesOrderHeader", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadSalesOrderDetail", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProductCategory", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProductModel", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadSalesInfo", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressInfo", "methodResult": true, "parameters": [] }, { "isQuery": false, "methodName": "TestInvoke", "methodResult": true, "parameters": [{ "dataType": 10, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param1", "ordinal": 0 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param2", "ordinal": 1 }] }, { "isQuery": false, "methodName": "TestComplexInvoke", "methodResult": false, "parameters": [{ "dataType": 0, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "info", "ordinal": 0 }, { "dataType": 0, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "keys", "ordinal": 1 }] }];
                 this._initMethods(methods);
             };
             Object.defineProperty(DbContext.prototype, "associations", {

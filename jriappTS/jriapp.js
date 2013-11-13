@@ -6675,6 +6675,8 @@ else
                 };
                 BaseList.prototype.fillItems = function (objArray, clearAll) {
                     var self = this, newItems = [], positions = [], fetchedItems = [];
+                    if (!objArray)
+                        objArray = [];
                     this._onFillStart({ isBegin: true, rowCount: objArray.length, time: new Date(), isPageChanged: false });
                     try  {
                         if (!!clearAll)
@@ -17007,7 +17009,9 @@ var RIAPP;
         function Application(options) {
             _super.call(this);
             var self = this, app_name = 'default', user_modules = [];
+            this._options = null;
             if (!!options) {
+                this._options = options;
                 if (!!options.application_name)
                     app_name = options.application_name;
                 if (!!options.user_modules)
@@ -17017,7 +17021,6 @@ var RIAPP;
                 throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_APP_NAME_NOT_UNIQUE, app_name));
             this._app_name = app_name;
             this._objId = 'app:' + RIAPP.global.utils.getNewID();
-            this._options = options;
 
             //lifetime object to store references foo the bindings and element views created by this application
             this._objLifeTime = null;
@@ -17177,22 +17180,13 @@ var RIAPP;
             var lftm = new RIAPP.MOD.utils.LifeTimeScope();
 
             selectedElem.forEach(function (el) {
-                var app_name, bind_attr, temp_opts, bind_op, elView;
+                var bind_attr, temp_opts, bind_op, elView;
 
                 if (isDataFormBind) {
                     if (!(global.utils.getParentDataForm(scope, el) === scope))
                         return;
                 } else {
                     if (checks.isInsideDataForm(el))
-                        return;
-
-                    if (el.hasAttribute(global.consts.DATA_ATTR.DATA_APP)) {
-                        app_name = el.getAttribute(global.consts.DATA_ATTR.DATA_APP);
-                    }
-
-                    if (!!app_name && self.appName !== app_name)
-                        return;
-                    if (!app_name && self.appName !== 'default')
                         return;
                 }
 
@@ -17234,7 +17228,7 @@ var RIAPP;
             }
         };
         Application.prototype._setUpBindings = function () {
-            var defScope = this.global.document, defaultDataCtxt = this;
+            var defScope = this.appRoot, defaultDataCtxt = this;
             this._destroyBindings();
             this._objLifeTime = this._bindElements(defScope, defaultDataCtxt, false);
         };
@@ -17433,6 +17427,7 @@ var RIAPP;
                 self._userCode = {};
                 self._viewModels = {};
                 self._contentFactory = null;
+                self._options = null;
             } finally {
                 _super.prototype.destroy.call(this);
             }
@@ -17464,6 +17459,15 @@ var RIAPP;
         Object.defineProperty(Application.prototype, "appName", {
             get: function () {
                 return this._app_name;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Application.prototype, "appRoot", {
+            get: function () {
+                if (!this._options || !this._options.application_root)
+                    return this.global.document;
+                return this._options.application_root;
             },
             enumerable: true,
             configurable: true

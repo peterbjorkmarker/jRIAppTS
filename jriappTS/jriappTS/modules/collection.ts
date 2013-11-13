@@ -1276,6 +1276,8 @@ module RIAPP {
                 }
                 fillItems(objArray: TObj[], clearAll?: boolean) {
                     var self = this, newItems = [], positions = [], fetchedItems = [];
+                    if (!objArray)
+                        objArray = [];
                     this._onFillStart({ isBegin: true, rowCount: objArray.length, time: new Date(), isPageChanged: false });
                     try {
                         if (!!clearAll) this.clear();

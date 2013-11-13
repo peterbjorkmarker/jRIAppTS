@@ -27,6 +27,7 @@ module RIAPP {
     export interface IAppOptions {
         application_name?: string;
         user_modules?: { name: string; initFn: (app: Application) => any; }[];
+        application_root?: { querySelectorAll: (selectors: string) => NodeList; };
     }
 
     export class Application extends RIAPP.BaseObject implements IExports {
@@ -51,7 +52,9 @@ module RIAPP {
         constructor(options?: IAppOptions) {
             super();
             var self = this, app_name = 'default', user_modules = [];
+            this._options = null;
             if (!!options) {
+                this._options = options;
                 if (!!options.application_name)
                     app_name = options.application_name;
                 if (!!options.user_modules)
@@ -61,7 +64,6 @@ module RIAPP {
                 throw new Error(global.utils.format(RIAPP.ERRS.ERR_APP_NAME_NOT_UNIQUE, app_name));
             this._app_name = app_name;
             this._objId = 'app:' + global.utils.getNewID();
-            this._options = options;
             //lifetime object to store references foo the bindings and element views created by this application
             this._objLifeTime = null;
             this._ELV_STORE_KEY = global.consts.DATA_ATTR.EL_VIEW_KEY + Application._newInstanceNum;
@@ -204,7 +206,7 @@ module RIAPP {
             var lftm = new MOD.utils.LifeTimeScope();
 
             selectedElem.forEach(function (el) {
-                var app_name: string, bind_attr:string, temp_opts:any[], bind_op: MOD.binding.IBindingOptions, elView: MOD.baseElView.BaseElView;
+                var bind_attr:string, temp_opts:any[], bind_op: MOD.binding.IBindingOptions, elView: MOD.baseElView.BaseElView;
                 
                 if (isDataFormBind) {
                     //check, that the current element not inside a nested dataform
@@ -214,16 +216,6 @@ module RIAPP {
                 else {
                     //skip elements inside dataform, they are databound when dataform is databound
                     if (checks.isInsideDataForm(el))
-                        return;
-
-                    if (el.hasAttribute(global.consts.DATA_ATTR.DATA_APP)) {
-                        app_name = el.getAttribute(global.consts.DATA_ATTR.DATA_APP);
-                    }
-
-                    //check for which application this binding is for
-                    if (!!app_name && self.appName !== app_name)
-                        return;
-                    if (!app_name && self.appName !== 'default')
                         return;
                 }
 
@@ -263,7 +255,7 @@ module RIAPP {
             }
         }
         _setUpBindings() {
-            var defScope = this.global.document, defaultDataCtxt = this;
+            var defScope = this.appRoot, defaultDataCtxt = this;
             this._destroyBindings();
             this._objLifeTime = this._bindElements(defScope, defaultDataCtxt, false);
         }
@@ -471,6 +463,7 @@ module RIAPP {
                 self._userCode = {};
                 self._viewModels = {};
                 self._contentFactory = null;
+                self._options = null;
             } finally {
                 super.destroy();
             }
@@ -482,6 +475,10 @@ module RIAPP {
         get options() { return this._options; }
         get contentFactory() { return this._contentFactory; }
         get appName() { return this._app_name; }
+        get appRoot(): { querySelectorAll: (selectors: string) => NodeList; } {
+            if (!this._options || !this._options.application_root) return this.global.document;
+            return this._options.application_root;
+        }
         //loaded app modules which are mapped by their name
         get modules() { return this._modules; }
         get global() { return RIAPP.global; }

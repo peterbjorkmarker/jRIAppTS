@@ -96,7 +96,7 @@ module RIAPP
                 this._$treeRoot = (<any>this._$tree).dynatree("getRoot");
             }
             loadRootFolder() {
-                var self = this, query = self._foldersDb.createReadRootQuery({ includeFiles: self._includeFiles });
+                var self = this, query = self._foldersDb.createReadRootQuery({ includeFiles: self._includeFiles, infoType: null });
                 query.isClearPrevData = true;
                 var promise = self._dbContext.load(query);
                 promise.done(function (res) {
@@ -105,7 +105,7 @@ module RIAPP
                 return promise;
             }
             loadChildren(item: FOLDERBROWSER_SVC.FileSystemObject) {
-                var self = this, query = self._foldersDb.createReadChildrenQuery({ parentKey: item.Key, level: item.Level + 1, path: item.fullPath, includeFiles: self._includeFiles });
+                var self = this, query = self._foldersDb.createReadChildrenQuery({ parentKey: item.Key, level: item.Level + 1, path: item.fullPath, includeFiles: self._includeFiles, infoType: null });
                 query.isClearPrevData = false;
                 var promise = self._dbContext.load(query);
                 promise.done(function (res) {

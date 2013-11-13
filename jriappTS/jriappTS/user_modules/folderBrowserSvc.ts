@@ -4,7 +4,7 @@ module RIAPP
     'use strict';
     export module FOLDERBROWSER_SVC {
         /*
-            Generated from: /FolderBrowserService/GetTypeScript on 2013-10-18 11:22 at 11:22
+            Generated from: /FolderBrowserService/GetTypeScript on 2013-11-13 15:17 at 15:17
             Don't make manual changes here, because they will be lost when this db interface will be regenerated!
         */
 
@@ -12,7 +12,7 @@ module RIAPP
         }
 
 
-        export interface IFileSystemObject extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface IFileSystemObjectEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             Key: string;
             ParentKey: string;
             Name: string;
@@ -29,17 +29,17 @@ module RIAPP
             asEntity(): FileSystemObject;
         }
 
-        export class FileSystemObject extends RIAPP.MOD.db.Entity implements IFileSystemObject {
-            get Key() { return <string>this._getFieldVal('Key'); }
-            get ParentKey() { return <string>this._getFieldVal('ParentKey'); }
-            get Name() { return <string>this._getFieldVal('Name'); }
-            get Level() { return <number>this._getFieldVal('Level'); }
-            get HasSubDirs() { return <boolean>this._getFieldVal('HasSubDirs'); }
-            get IsFolder() { return <boolean>this._getFieldVal('IsFolder'); }
-            get fullPath() { return <string>this._dbSet._calcfldMap['fullPath'].getFunc.call(this); }
-            get Parent() { return <FileSystemObject>this._dbSet._navfldMap['Parent'].getFunc.call(this); }
+        export class FileSystemObject extends RIAPP.MOD.db.Entity implements IFileSystemObjectEntity {
+            get Key(): string { return this._getFieldVal('Key'); }
+            get ParentKey(): string { return this._getFieldVal('ParentKey'); }
+            get Name(): string { return this._getFieldVal('Name'); }
+            get Level(): number { return this._getFieldVal('Level'); }
+            get HasSubDirs(): boolean { return this._getFieldVal('HasSubDirs'); }
+            get IsFolder(): boolean { return this._getFieldVal('IsFolder'); }
+            get fullPath(): string { return this._dbSet._calcfldMap['fullPath'].getFunc.call(this); }
+            get Parent(): FileSystemObject { return this._dbSet._navfldMap['Parent'].getFunc.call(this); }
             set Parent(v: FileSystemObject) { this._dbSet._navfldMap['Parent'].setFunc.call(this, v); }
-            get Children() { return <FileSystemObject[]>this._dbSet._navfldMap['Children'].getFunc.call(this); }
+            get Children(): FileSystemObject[] { return this._dbSet._navfldMap['Children'].getFunc.call(this); }
 
             getDbContext() {
                 return <DbContext>super.getDbContext();
@@ -49,10 +49,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'FileSystemObject';
+                return 'FileSystemObjectEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <IFileSystemObject>this; }
+            asInterface() { return <IFileSystemObjectEntity>this; }
         }
 
         export class FileSystemObjectDb extends RIAPP.MOD.db.DbSet<FileSystemObject>
@@ -103,7 +103,7 @@ module RIAPP
 
             definefullPathField(getFunc: () => string) { this.defineCalculatedField('fullPath', getFunc); }
 
-            get items2() { return <IFileSystemObject[]><any>this.items; }
+            get items2() { return <IFileSystemObjectEntity[]>this.items; }
         }
 
         export interface IAssocs {
@@ -128,7 +128,7 @@ module RIAPP
                 this._dbSets = new DbSets(this);
                 var associations = [{ "childDbSetName": "FileSystemObject", "childToParentName": "Parent", "fieldRels": [{ "childField": "ParentKey", "parentField": "Key" }], "name": "ChildToParent", "onDeleteAction": 1, "parentDbSetName": "FileSystemObject", "parentToChildrenName": "Children" }];
                 this._initAssociations(associations);
-                var methods = [{ "isQuery": true, "methodName": "ReadRoot", "methodResult": true, "parameters": [{ "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "includeFiles", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadChildren", "methodResult": true, "parameters": [{ "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "parentKey", "ordinal": 1 }, { "dataType": 3, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "level", "ordinal": 2 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "path", "ordinal": 3 }, { "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "includeFiles", "ordinal": 4 }] }];
+                var methods = [{ "isQuery": true, "methodName": "ReadRoot", "methodResult": true, "parameters": [{ "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "includeFiles", "ordinal": 0 }] }, { "isQuery": true, "methodName": "ReadChildren", "methodResult": true, "parameters": [{ "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "parentKey", "ordinal": 0 }, { "dataType": 3, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "level", "ordinal": 1 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "path", "ordinal": 2 }, { "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "includeFiles", "ordinal": 3 }] }];
                 this._initMethods(methods);
             }
             get associations() { return <IAssocs>this._assoc; }

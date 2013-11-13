@@ -4,9 +4,25 @@ module RIAPP
     'use strict';
     export module DEMODB {
         /*
-            Generated from: /RiappDemoService/GetTypeScript on 2013-10-18 11:36 at 11:36
+            Generated from: /RiappDemoService/GetTypeScript on 2013-11-13 19:50 at 19:50
             Don't make manual changes here, because they will be lost when this db interface will be regenerated!
         */
+
+        export interface IAddressInfo2 {
+            AddressID: number;
+            AddressLine1: string;
+            City: string;
+            StateProvince: string;
+            CountryRegion: string;
+        }
+
+        /*
+            Generated from C# KeyVal model
+        */
+        export interface IKeyVal {
+            key: number;
+            val: string;
+        }
 
         export interface ITestLookUpProduct {
             ProductID: number;
@@ -33,14 +49,6 @@ module RIAPP
         }
 
         /*
-            Generated from C# KeyVal model
-        */
-        export interface IKeyVal {
-            key: number;
-            val: string;
-        }
-
-        /*
             Generated from C# HistoryItem model
         */
         export interface IHistoryItem extends RIAPP.MOD.utils.IEditable {
@@ -63,23 +71,27 @@ module RIAPP
                 param1: number[];
                 param2: string;
             }) => IPromise<string>;
+            TestComplexInvoke: (args: {
+                info: IAddressInfo2;
+                keys: IKeyVal[];
+            }) => IVoidPromise;
         }
 
         export class TestModelListItem extends RIAPP.MOD.collection.ListItem implements IClientTestModel {
             constructor(coll: RIAPP.MOD.collection.BaseList<TestModelListItem, IClientTestModel>, obj?: IClientTestModel) {
                 super(coll, obj);
             }
-            get Key() { return <string>this._getProp('Key'); }
+            get Key(): string { return <string>this._getProp('Key'); }
             set Key(v: string) { this._setProp('Key', v); }
-            get SomeProperty1() { return <string>this._getProp('SomeProperty1'); }
+            get SomeProperty1(): string { return <string>this._getProp('SomeProperty1'); }
             set SomeProperty1(v: string) { this._setProp('SomeProperty1', v); }
-            get SomeProperty2() { return <number[]>this._getProp('SomeProperty2'); }
+            get SomeProperty2(): number[] { return <number[]>this._getProp('SomeProperty2'); }
             set SomeProperty2(v: number[]) { this._setProp('SomeProperty2', v); }
-            get SomeProperty3() { return <string[]>this._getProp('SomeProperty3'); }
+            get SomeProperty3(): string[] { return <string[]>this._getProp('SomeProperty3'); }
             set SomeProperty3(v: string[]) { this._setProp('SomeProperty3', v); }
-            get MoreComplexProperty() { return <ITestLookUpProduct[]>this._getProp('MoreComplexProperty'); }
+            get MoreComplexProperty(): ITestLookUpProduct[] { return <ITestLookUpProduct[]>this._getProp('MoreComplexProperty'); }
             set MoreComplexProperty(v: ITestLookUpProduct[]) { this._setProp('MoreComplexProperty', v); }
-            get EnumProperty() { return <TestEnum>this._getProp('EnumProperty'); }
+            get EnumProperty(): TestEnum { return <TestEnum>this._getProp('EnumProperty'); }
             set EnumProperty(v: TestEnum) { this._setProp('EnumProperty', v); }
             asInterface() { return <IClientTestModel>this; }
         }
@@ -104,9 +116,9 @@ module RIAPP
             constructor(coll: RIAPP.MOD.collection.BaseList<KeyValListItem, IKeyVal>, obj?: IKeyVal) {
                 super(coll, obj);
             }
-            get key() { return <number>this._getProp('key'); }
+            get key(): number { return <number>this._getProp('key'); }
             set key(v: number) { this._setProp('key', v); }
-            get val() { return <string>this._getProp('val'); }
+            get val(): string { return <string>this._getProp('val'); }
             set val(v: string) { this._setProp('val', v); }
             asInterface() { return <IKeyVal>this; }
         }
@@ -123,9 +135,9 @@ module RIAPP
             constructor(coll: RIAPP.MOD.collection.BaseList<HistoryItemListItem, IHistoryItem>, obj?: IHistoryItem) {
                 super(coll, obj);
             }
-            get radioValue() { return <string>this._getProp('radioValue'); }
+            get radioValue(): string { return <string>this._getProp('radioValue'); }
             set radioValue(v: string) { this._setProp('radioValue', v); }
-            get time() { return <Date>this._getProp('time'); }
+            get time(): Date { return <Date>this._getProp('time'); }
             set time(v: Date) { this._setProp('time', v); }
             asInterface() { return <IHistoryItem>this; }
         }
@@ -139,7 +151,7 @@ module RIAPP
         }
 
 
-        export interface ICustomer extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface ICustomerEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             CustomerID: number;
             NameStyle: boolean;
             Title: string;
@@ -164,34 +176,34 @@ module RIAPP
             asEntity(): Customer;
         }
 
-        export class Customer extends RIAPP.MOD.db.Entity implements ICustomer {
-            get CustomerID() { return <number>this._getFieldVal('CustomerID'); }
-            get NameStyle() { return <boolean>this._getFieldVal('NameStyle'); }
+        export class Customer extends RIAPP.MOD.db.Entity implements ICustomerEntity {
+            get CustomerID(): number { return this._getFieldVal('CustomerID'); }
+            get NameStyle(): boolean { return this._getFieldVal('NameStyle'); }
             set NameStyle(v: boolean) { this._setFieldVal('NameStyle', v); }
-            get Title() { return <string>this._getFieldVal('Title'); }
+            get Title(): string { return this._getFieldVal('Title'); }
             set Title(v: string) { this._setFieldVal('Title', v); }
-            get FirstName() { return <string>this._getFieldVal('FirstName'); }
+            get FirstName(): string { return this._getFieldVal('FirstName'); }
             set FirstName(v: string) { this._setFieldVal('FirstName', v); }
-            get MiddleName() { return <string>this._getFieldVal('MiddleName'); }
+            get MiddleName(): string { return this._getFieldVal('MiddleName'); }
             set MiddleName(v: string) { this._setFieldVal('MiddleName', v); }
-            get LastName() { return <string>this._getFieldVal('LastName'); }
+            get LastName(): string { return this._getFieldVal('LastName'); }
             set LastName(v: string) { this._setFieldVal('LastName', v); }
-            get Suffix() { return <string>this._getFieldVal('Suffix'); }
+            get Suffix(): string { return this._getFieldVal('Suffix'); }
             set Suffix(v: string) { this._setFieldVal('Suffix', v); }
-            get CompanyName() { return <string>this._getFieldVal('CompanyName'); }
+            get CompanyName(): string { return this._getFieldVal('CompanyName'); }
             set CompanyName(v: string) { this._setFieldVal('CompanyName', v); }
-            get SalesPerson() { return <string>this._getFieldVal('SalesPerson'); }
+            get SalesPerson(): string { return this._getFieldVal('SalesPerson'); }
             set SalesPerson(v: string) { this._setFieldVal('SalesPerson', v); }
-            get EmailAddress() { return <string>this._getFieldVal('EmailAddress'); }
+            get EmailAddress(): string { return this._getFieldVal('EmailAddress'); }
             set EmailAddress(v: string) { this._setFieldVal('EmailAddress', v); }
-            get Phone() { return <string>this._getFieldVal('Phone'); }
+            get Phone(): string { return this._getFieldVal('Phone'); }
             set Phone(v: string) { this._setFieldVal('Phone', v); }
-            get PasswordHash() { return <string>this._getFieldVal('PasswordHash'); }
-            get PasswordSalt() { return <string>this._getFieldVal('PasswordSalt'); }
-            get rowguid() { return <string>this._getFieldVal('rowguid'); }
-            get ModifiedDate() { return <Date>this._getFieldVal('ModifiedDate'); }
-            get Name() { return <string>this._dbSet._calcfldMap['Name'].getFunc.call(this); }
-            get CustomerAddresses() { return <CustomerAddress[]>this._dbSet._navfldMap['CustomerAddresses'].getFunc.call(this); }
+            get PasswordHash(): string { return this._getFieldVal('PasswordHash'); }
+            get PasswordSalt(): string { return this._getFieldVal('PasswordSalt'); }
+            get rowguid(): string { return this._getFieldVal('rowguid'); }
+            get ModifiedDate(): Date { return this._getFieldVal('ModifiedDate'); }
+            get Name(): string { return this._dbSet._calcfldMap['Name'].getFunc.call(this); }
+            get CustomerAddresses(): CustomerAddress[] { return this._dbSet._navfldMap['CustomerAddresses'].getFunc.call(this); }
 
             getDbContext() {
                 return <DbContext>super.getDbContext();
@@ -201,10 +213,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'Customer';
+                return 'CustomerEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <ICustomer>this; }
+            asInterface() { return <ICustomerEntity>this; }
         }
 
         export class CustomerDb extends RIAPP.MOD.db.DbSet<Customer>
@@ -245,10 +257,10 @@ module RIAPP
 
             defineNameField(getFunc: () => string) { this.defineCalculatedField('Name', getFunc); }
 
-            get items2() { return <ICustomer[]><any>this.items; }
+            get items2() { return <ICustomerEntity[]>this.items; }
         }
 
-        export interface ICustomerAddress extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface ICustomerAddressEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             CustomerID: number;
             AddressID: number;
             AddressType: string;
@@ -264,20 +276,20 @@ module RIAPP
             asEntity(): CustomerAddress;
         }
 
-        export class CustomerAddress extends RIAPP.MOD.db.Entity implements ICustomerAddress {
-            get CustomerID() { return <number>this._getFieldVal('CustomerID'); }
+        export class CustomerAddress extends RIAPP.MOD.db.Entity implements ICustomerAddressEntity {
+            get CustomerID(): number { return this._getFieldVal('CustomerID'); }
             set CustomerID(v: number) { this._setFieldVal('CustomerID', v); }
-            get AddressID() { return <number>this._getFieldVal('AddressID'); }
+            get AddressID(): number { return this._getFieldVal('AddressID'); }
             set AddressID(v: number) { this._setFieldVal('AddressID', v); }
-            get AddressType() { return <string>this._getFieldVal('AddressType'); }
+            get AddressType(): string { return this._getFieldVal('AddressType'); }
             set AddressType(v: string) { this._setFieldVal('AddressType', v); }
-            get rowguid() { return <string>this._getFieldVal('rowguid'); }
-            get ModifiedDate() { return <Date>this._getFieldVal('ModifiedDate'); }
-            get Customer() { return <Customer>this._dbSet._navfldMap['Customer'].getFunc.call(this); }
+            get rowguid(): string { return this._getFieldVal('rowguid'); }
+            get ModifiedDate(): Date { return this._getFieldVal('ModifiedDate'); }
+            get Customer(): Customer { return this._dbSet._navfldMap['Customer'].getFunc.call(this); }
             set Customer(v: Customer) { this._dbSet._navfldMap['Customer'].setFunc.call(this, v); }
-            get Address() { return <Address>this._dbSet._navfldMap['Address'].getFunc.call(this); }
+            get Address(): Address { return this._dbSet._navfldMap['Address'].getFunc.call(this); }
             set Address(v: Address) { this._dbSet._navfldMap['Address'].setFunc.call(this, v); }
-            get AddressInfo() { return <AddressInfo>this._dbSet._navfldMap['AddressInfo'].getFunc.call(this); }
+            get AddressInfo(): AddressInfo { return this._dbSet._navfldMap['AddressInfo'].getFunc.call(this); }
             set AddressInfo(v: AddressInfo) { this._dbSet._navfldMap['AddressInfo'].setFunc.call(this, v); }
 
             getDbContext() {
@@ -288,10 +300,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'CustomerAddress';
+                return 'CustomerAddressEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <ICustomerAddress>this; }
+            asInterface() { return <ICustomerAddressEntity>this; }
         }
 
         export class CustomerAddressDb extends RIAPP.MOD.db.DbSet<CustomerAddress>
@@ -334,10 +346,10 @@ module RIAPP
             }
 
 
-            get items2() { return <ICustomerAddress[]><any>this.items; }
+            get items2() { return <ICustomerAddressEntity[]>this.items; }
         }
 
-        export interface IAddress extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface IAddressEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             AddressID: number;
             AddressLine1: string;
             AddressLine2: string;
@@ -355,23 +367,23 @@ module RIAPP
             asEntity(): Address;
         }
 
-        export class Address extends RIAPP.MOD.db.Entity implements IAddress {
-            get AddressID() { return <number>this._getFieldVal('AddressID'); }
-            get AddressLine1() { return <string>this._getFieldVal('AddressLine1'); }
+        export class Address extends RIAPP.MOD.db.Entity implements IAddressEntity {
+            get AddressID(): number { return this._getFieldVal('AddressID'); }
+            get AddressLine1(): string { return this._getFieldVal('AddressLine1'); }
             set AddressLine1(v: string) { this._setFieldVal('AddressLine1', v); }
-            get AddressLine2() { return <string>this._getFieldVal('AddressLine2'); }
+            get AddressLine2(): string { return this._getFieldVal('AddressLine2'); }
             set AddressLine2(v: string) { this._setFieldVal('AddressLine2', v); }
-            get City() { return <string>this._getFieldVal('City'); }
+            get City(): string { return this._getFieldVal('City'); }
             set City(v: string) { this._setFieldVal('City', v); }
-            get StateProvince() { return <string>this._getFieldVal('StateProvince'); }
+            get StateProvince(): string { return this._getFieldVal('StateProvince'); }
             set StateProvince(v: string) { this._setFieldVal('StateProvince', v); }
-            get CountryRegion() { return <string>this._getFieldVal('CountryRegion'); }
+            get CountryRegion(): string { return this._getFieldVal('CountryRegion'); }
             set CountryRegion(v: string) { this._setFieldVal('CountryRegion', v); }
-            get PostalCode() { return <string>this._getFieldVal('PostalCode'); }
+            get PostalCode(): string { return this._getFieldVal('PostalCode'); }
             set PostalCode(v: string) { this._setFieldVal('PostalCode', v); }
-            get rowguid() { return <string>this._getFieldVal('rowguid'); }
-            get ModifiedDate() { return <Date>this._getFieldVal('ModifiedDate'); }
-            get CustomerAddresses() { return <CustomerAddress[]>this._dbSet._navfldMap['CustomerAddresses'].getFunc.call(this); }
+            get rowguid(): string { return this._getFieldVal('rowguid'); }
+            get ModifiedDate(): Date { return this._getFieldVal('ModifiedDate'); }
+            get CustomerAddresses(): CustomerAddress[] { return this._dbSet._navfldMap['CustomerAddresses'].getFunc.call(this); }
 
             getDbContext() {
                 return <DbContext>super.getDbContext();
@@ -381,10 +393,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'Address';
+                return 'AddressEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <IAddress>this; }
+            asInterface() { return <IAddressEntity>this; }
         }
 
         export class AddressDb extends RIAPP.MOD.db.DbSet<Address>
@@ -427,10 +439,10 @@ module RIAPP
             }
 
 
-            get items2() { return <IAddress[]><any>this.items; }
+            get items2() { return <IAddressEntity[]>this.items; }
         }
 
-        export interface IProduct extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface IProductEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             ProductID: number;
             Name: string;
             ProductNumber: string;
@@ -456,38 +468,38 @@ module RIAPP
             asEntity(): Product;
         }
 
-        export class Product extends RIAPP.MOD.db.Entity implements IProduct {
-            get ProductID() { return <number>this._getFieldVal('ProductID'); }
-            get Name() { return <string>this._getFieldVal('Name'); }
+        export class Product extends RIAPP.MOD.db.Entity implements IProductEntity {
+            get ProductID(): number { return this._getFieldVal('ProductID'); }
+            get Name(): string { return this._getFieldVal('Name'); }
             set Name(v: string) { this._setFieldVal('Name', v); }
-            get ProductNumber() { return <string>this._getFieldVal('ProductNumber'); }
+            get ProductNumber(): string { return this._getFieldVal('ProductNumber'); }
             set ProductNumber(v: string) { this._setFieldVal('ProductNumber', v); }
-            get Color() { return <string>this._getFieldVal('Color'); }
+            get Color(): string { return this._getFieldVal('Color'); }
             set Color(v: string) { this._setFieldVal('Color', v); }
-            get StandardCost() { return <number>this._getFieldVal('StandardCost'); }
+            get StandardCost(): number { return this._getFieldVal('StandardCost'); }
             set StandardCost(v: number) { this._setFieldVal('StandardCost', v); }
-            get ListPrice() { return <number>this._getFieldVal('ListPrice'); }
+            get ListPrice(): number { return this._getFieldVal('ListPrice'); }
             set ListPrice(v: number) { this._setFieldVal('ListPrice', v); }
-            get Size() { return <string>this._getFieldVal('Size'); }
+            get Size(): string { return this._getFieldVal('Size'); }
             set Size(v: string) { this._setFieldVal('Size', v); }
-            get Weight() { return <number>this._getFieldVal('Weight'); }
+            get Weight(): number { return this._getFieldVal('Weight'); }
             set Weight(v: number) { this._setFieldVal('Weight', v); }
-            get ProductCategoryID() { return <number>this._getFieldVal('ProductCategoryID'); }
+            get ProductCategoryID(): number { return this._getFieldVal('ProductCategoryID'); }
             set ProductCategoryID(v: number) { this._setFieldVal('ProductCategoryID', v); }
-            get ProductModelID() { return <number>this._getFieldVal('ProductModelID'); }
+            get ProductModelID(): number { return this._getFieldVal('ProductModelID'); }
             set ProductModelID(v: number) { this._setFieldVal('ProductModelID', v); }
-            get SellStartDate() { return <Date>this._getFieldVal('SellStartDate'); }
+            get SellStartDate(): Date { return this._getFieldVal('SellStartDate'); }
             set SellStartDate(v: Date) { this._setFieldVal('SellStartDate', v); }
-            get SellEndDate() { return <Date>this._getFieldVal('SellEndDate'); }
+            get SellEndDate(): Date { return this._getFieldVal('SellEndDate'); }
             set SellEndDate(v: Date) { this._setFieldVal('SellEndDate', v); }
-            get DiscontinuedDate() { return <Date>this._getFieldVal('DiscontinuedDate'); }
+            get DiscontinuedDate(): Date { return this._getFieldVal('DiscontinuedDate'); }
             set DiscontinuedDate(v: Date) { this._setFieldVal('DiscontinuedDate', v); }
-            get rowguid() { return <string>this._getFieldVal('rowguid'); }
-            get ModifiedDate() { return <Date>this._getFieldVal('ModifiedDate'); }
-            get IsActive() { return <boolean>this._dbSet._calcfldMap['IsActive'].getFunc.call(this); }
-            get ThumbnailPhotoFileName() { return <string>this._getFieldVal('ThumbnailPhotoFileName'); }
+            get rowguid(): string { return this._getFieldVal('rowguid'); }
+            get ModifiedDate(): Date { return this._getFieldVal('ModifiedDate'); }
+            get IsActive(): boolean { return this._dbSet._calcfldMap['IsActive'].getFunc.call(this); }
+            get ThumbnailPhotoFileName(): string { return this._getFieldVal('ThumbnailPhotoFileName'); }
             set ThumbnailPhotoFileName(v: string) { this._setFieldVal('ThumbnailPhotoFileName', v); }
-            get SalesOrderDetails() { return <SalesOrderDetail[]>this._dbSet._navfldMap['SalesOrderDetails'].getFunc.call(this); }
+            get SalesOrderDetails(): SalesOrderDetail[] { return this._dbSet._navfldMap['SalesOrderDetails'].getFunc.call(this); }
 
             getDbContext() {
                 return <DbContext>super.getDbContext();
@@ -497,10 +509,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'Product';
+                return 'ProductEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <IProduct>this; }
+            asInterface() { return <IProductEntity>this; }
         }
 
         export class ProductDb extends RIAPP.MOD.db.DbSet<Product>
@@ -549,10 +561,10 @@ module RIAPP
 
             defineIsActiveField(getFunc: () => boolean) { this.defineCalculatedField('IsActive', getFunc); }
 
-            get items2() { return <IProduct[]><any>this.items; }
+            get items2() { return <IProductEntity[]>this.items; }
         }
 
-        export interface IProductModel extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface IProductModelEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             ProductModelID: number;
             Name: string;
 
@@ -562,9 +574,9 @@ module RIAPP
             asEntity(): ProductModel;
         }
 
-        export class ProductModel extends RIAPP.MOD.db.Entity implements IProductModel {
-            get ProductModelID() { return <number>this._getFieldVal('ProductModelID'); }
-            get Name() { return <string>this._getFieldVal('Name'); }
+        export class ProductModel extends RIAPP.MOD.db.Entity implements IProductModelEntity {
+            get ProductModelID(): number { return this._getFieldVal('ProductModelID'); }
+            get Name(): string { return this._getFieldVal('Name'); }
             set Name(v: string) { this._setFieldVal('Name', v); }
 
             getDbContext() {
@@ -575,10 +587,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'ProductModel';
+                return 'ProductModelEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <IProductModel>this; }
+            asInterface() { return <IProductModelEntity>this; }
         }
 
         export class ProductModelDb extends RIAPP.MOD.db.DbSet<ProductModel>
@@ -614,10 +626,10 @@ module RIAPP
             }
 
 
-            get items2() { return <IProductModel[]><any>this.items; }
+            get items2() { return <IProductModelEntity[]>this.items; }
         }
 
-        export interface ISalesOrderHeader extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface ISalesOrderHeaderEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             SalesOrderID: number;
             RevisionNumber: number;
             OrderDate: Date;
@@ -651,46 +663,46 @@ module RIAPP
             asEntity(): SalesOrderHeader;
         }
 
-        export class SalesOrderHeader extends RIAPP.MOD.db.Entity implements ISalesOrderHeader {
-            get SalesOrderID() { return <number>this._getFieldVal('SalesOrderID'); }
-            get RevisionNumber() { return <number>this._getFieldVal('RevisionNumber'); }
-            get OrderDate() { return <Date>this._getFieldVal('OrderDate'); }
+        export class SalesOrderHeader extends RIAPP.MOD.db.Entity implements ISalesOrderHeaderEntity {
+            get SalesOrderID(): number { return this._getFieldVal('SalesOrderID'); }
+            get RevisionNumber(): number { return this._getFieldVal('RevisionNumber'); }
+            get OrderDate(): Date { return this._getFieldVal('OrderDate'); }
             set OrderDate(v: Date) { this._setFieldVal('OrderDate', v); }
-            get DueDate() { return <Date>this._getFieldVal('DueDate'); }
+            get DueDate(): Date { return this._getFieldVal('DueDate'); }
             set DueDate(v: Date) { this._setFieldVal('DueDate', v); }
-            get ShipDate() { return <Date>this._getFieldVal('ShipDate'); }
+            get ShipDate(): Date { return this._getFieldVal('ShipDate'); }
             set ShipDate(v: Date) { this._setFieldVal('ShipDate', v); }
-            get Status() { return <number>this._getFieldVal('Status'); }
-            get OnlineOrderFlag() { return <boolean>this._getFieldVal('OnlineOrderFlag'); }
+            get Status(): number { return this._getFieldVal('Status'); }
+            get OnlineOrderFlag(): boolean { return this._getFieldVal('OnlineOrderFlag'); }
             set OnlineOrderFlag(v: boolean) { this._setFieldVal('OnlineOrderFlag', v); }
-            get SalesOrderNumber() { return <string>this._getFieldVal('SalesOrderNumber'); }
-            get PurchaseOrderNumber() { return <string>this._getFieldVal('PurchaseOrderNumber'); }
-            get AccountNumber() { return <string>this._getFieldVal('AccountNumber'); }
+            get SalesOrderNumber(): string { return this._getFieldVal('SalesOrderNumber'); }
+            get PurchaseOrderNumber(): string { return this._getFieldVal('PurchaseOrderNumber'); }
+            get AccountNumber(): string { return this._getFieldVal('AccountNumber'); }
             set AccountNumber(v: string) { this._setFieldVal('AccountNumber', v); }
-            get CustomerID() { return <number>this._getFieldVal('CustomerID'); }
+            get CustomerID(): number { return this._getFieldVal('CustomerID'); }
             set CustomerID(v: number) { this._setFieldVal('CustomerID', v); }
-            get ShipToAddressID() { return <number>this._getFieldVal('ShipToAddressID'); }
+            get ShipToAddressID(): number { return this._getFieldVal('ShipToAddressID'); }
             set ShipToAddressID(v: number) { this._setFieldVal('ShipToAddressID', v); }
-            get BillToAddressID() { return <number>this._getFieldVal('BillToAddressID'); }
+            get BillToAddressID(): number { return this._getFieldVal('BillToAddressID'); }
             set BillToAddressID(v: number) { this._setFieldVal('BillToAddressID', v); }
-            get ShipMethod() { return <string>this._getFieldVal('ShipMethod'); }
+            get ShipMethod(): string { return this._getFieldVal('ShipMethod'); }
             set ShipMethod(v: string) { this._setFieldVal('ShipMethod', v); }
-            get CreditCardApprovalCode() { return <string>this._getFieldVal('CreditCardApprovalCode'); }
+            get CreditCardApprovalCode(): string { return this._getFieldVal('CreditCardApprovalCode'); }
             set CreditCardApprovalCode(v: string) { this._setFieldVal('CreditCardApprovalCode', v); }
-            get SubTotal() { return <number>this._getFieldVal('SubTotal'); }
-            get TaxAmt() { return <number>this._getFieldVal('TaxAmt'); }
-            get Freight() { return <number>this._getFieldVal('Freight'); }
-            get TotalDue() { return <number>this._getFieldVal('TotalDue'); }
-            get Comment() { return <string>this._getFieldVal('Comment'); }
+            get SubTotal(): number { return this._getFieldVal('SubTotal'); }
+            get TaxAmt(): number { return this._getFieldVal('TaxAmt'); }
+            get Freight(): number { return this._getFieldVal('Freight'); }
+            get TotalDue(): number { return this._getFieldVal('TotalDue'); }
+            get Comment(): string { return this._getFieldVal('Comment'); }
             set Comment(v: string) { this._setFieldVal('Comment', v); }
-            get rowguid() { return <string>this._getFieldVal('rowguid'); }
-            get ModifiedDate() { return <Date>this._getFieldVal('ModifiedDate'); }
-            get SalesOrderDetails() { return <SalesOrderDetail[]>this._dbSet._navfldMap['SalesOrderDetails'].getFunc.call(this); }
-            get Customer() { return <Customer>this._dbSet._navfldMap['Customer'].getFunc.call(this); }
+            get rowguid(): string { return this._getFieldVal('rowguid'); }
+            get ModifiedDate(): Date { return this._getFieldVal('ModifiedDate'); }
+            get SalesOrderDetails(): SalesOrderDetail[] { return this._dbSet._navfldMap['SalesOrderDetails'].getFunc.call(this); }
+            get Customer(): Customer { return this._dbSet._navfldMap['Customer'].getFunc.call(this); }
             set Customer(v: Customer) { this._dbSet._navfldMap['Customer'].setFunc.call(this, v); }
-            get Address() { return <Address>this._dbSet._navfldMap['Address'].getFunc.call(this); }
+            get Address(): Address { return this._dbSet._navfldMap['Address'].getFunc.call(this); }
             set Address(v: Address) { this._dbSet._navfldMap['Address'].setFunc.call(this, v); }
-            get Address1() { return <Address>this._dbSet._navfldMap['Address1'].getFunc.call(this); }
+            get Address1(): Address { return this._dbSet._navfldMap['Address1'].getFunc.call(this); }
             set Address1(v: Address) { this._dbSet._navfldMap['Address1'].setFunc.call(this, v); }
 
             getDbContext() {
@@ -701,10 +713,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'SalesOrderHeader';
+                return 'SalesOrderHeaderEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <ISalesOrderHeader>this; }
+            asInterface() { return <ISalesOrderHeaderEntity>this; }
         }
 
         export class SalesOrderHeaderDb extends RIAPP.MOD.db.DbSet<SalesOrderHeader>
@@ -740,10 +752,10 @@ module RIAPP
             }
 
 
-            get items2() { return <ISalesOrderHeader[]><any>this.items; }
+            get items2() { return <ISalesOrderHeaderEntity[]>this.items; }
         }
 
-        export interface ISalesOrderDetail extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface ISalesOrderDetailEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             SalesOrderID: number;
             SalesOrderDetailID: number;
             OrderQty: number;
@@ -762,22 +774,22 @@ module RIAPP
             asEntity(): SalesOrderDetail;
         }
 
-        export class SalesOrderDetail extends RIAPP.MOD.db.Entity implements ISalesOrderDetail {
-            get SalesOrderID() { return <number>this._getFieldVal('SalesOrderID'); }
+        export class SalesOrderDetail extends RIAPP.MOD.db.Entity implements ISalesOrderDetailEntity {
+            get SalesOrderID(): number { return this._getFieldVal('SalesOrderID'); }
             set SalesOrderID(v: number) { this._setFieldVal('SalesOrderID', v); }
-            get SalesOrderDetailID() { return <number>this._getFieldVal('SalesOrderDetailID'); }
-            get OrderQty() { return <number>this._getFieldVal('OrderQty'); }
+            get SalesOrderDetailID(): number { return this._getFieldVal('SalesOrderDetailID'); }
+            get OrderQty(): number { return this._getFieldVal('OrderQty'); }
             set OrderQty(v: number) { this._setFieldVal('OrderQty', v); }
-            get ProductID() { return <number>this._getFieldVal('ProductID'); }
+            get ProductID(): number { return this._getFieldVal('ProductID'); }
             set ProductID(v: number) { this._setFieldVal('ProductID', v); }
-            get UnitPrice() { return <number>this._getFieldVal('UnitPrice'); }
-            get UnitPriceDiscount() { return <number>this._getFieldVal('UnitPriceDiscount'); }
-            get LineTotal() { return <number>this._getFieldVal('LineTotal'); }
-            get rowguid() { return <string>this._getFieldVal('rowguid'); }
-            get ModifiedDate() { return <Date>this._getFieldVal('ModifiedDate'); }
-            get SalesOrderHeader() { return <SalesOrderHeader>this._dbSet._navfldMap['SalesOrderHeader'].getFunc.call(this); }
+            get UnitPrice(): number { return this._getFieldVal('UnitPrice'); }
+            get UnitPriceDiscount(): number { return this._getFieldVal('UnitPriceDiscount'); }
+            get LineTotal(): number { return this._getFieldVal('LineTotal'); }
+            get rowguid(): string { return this._getFieldVal('rowguid'); }
+            get ModifiedDate(): Date { return this._getFieldVal('ModifiedDate'); }
+            get SalesOrderHeader(): SalesOrderHeader { return this._dbSet._navfldMap['SalesOrderHeader'].getFunc.call(this); }
             set SalesOrderHeader(v: SalesOrderHeader) { this._dbSet._navfldMap['SalesOrderHeader'].setFunc.call(this, v); }
-            get Product() { return <Product>this._dbSet._navfldMap['Product'].getFunc.call(this); }
+            get Product(): Product { return this._dbSet._navfldMap['Product'].getFunc.call(this); }
             set Product(v: Product) { this._dbSet._navfldMap['Product'].setFunc.call(this, v); }
 
             getDbContext() {
@@ -788,10 +800,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'SalesOrderDetail';
+                return 'SalesOrderDetailEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <ISalesOrderDetail>this; }
+            asInterface() { return <ISalesOrderDetailEntity>this; }
         }
 
         export class SalesOrderDetailDb extends RIAPP.MOD.db.DbSet<SalesOrderDetail>
@@ -827,10 +839,10 @@ module RIAPP
             }
 
 
-            get items2() { return <ISalesOrderDetail[]><any>this.items; }
+            get items2() { return <ISalesOrderDetailEntity[]>this.items; }
         }
 
-        export interface IProductCategory extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface IProductCategoryEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             ProductCategoryID: number;
             ParentProductCategoryID: number;
             Name: string;
@@ -843,15 +855,15 @@ module RIAPP
             asEntity(): ProductCategory;
         }
 
-        export class ProductCategory extends RIAPP.MOD.db.Entity implements IProductCategory {
-            get ProductCategoryID() { return <number>this._getFieldVal('ProductCategoryID'); }
-            get ParentProductCategoryID() { return <number>this._getFieldVal('ParentProductCategoryID'); }
+        export class ProductCategory extends RIAPP.MOD.db.Entity implements IProductCategoryEntity {
+            get ProductCategoryID(): number { return this._getFieldVal('ProductCategoryID'); }
+            get ParentProductCategoryID(): number { return this._getFieldVal('ParentProductCategoryID'); }
             set ParentProductCategoryID(v: number) { this._setFieldVal('ParentProductCategoryID', v); }
-            get Name() { return <string>this._getFieldVal('Name'); }
+            get Name(): string { return this._getFieldVal('Name'); }
             set Name(v: string) { this._setFieldVal('Name', v); }
-            get rowguid() { return <string>this._getFieldVal('rowguid'); }
+            get rowguid(): string { return this._getFieldVal('rowguid'); }
             set rowguid(v: string) { this._setFieldVal('rowguid', v); }
-            get ModifiedDate() { return <Date>this._getFieldVal('ModifiedDate'); }
+            get ModifiedDate(): Date { return this._getFieldVal('ModifiedDate'); }
             set ModifiedDate(v: Date) { this._setFieldVal('ModifiedDate', v); }
 
             getDbContext() {
@@ -862,10 +874,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'ProductCategory';
+                return 'ProductCategoryEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <IProductCategory>this; }
+            asInterface() { return <IProductCategoryEntity>this; }
         }
 
         export class ProductCategoryDb extends RIAPP.MOD.db.DbSet<ProductCategory>
@@ -901,10 +913,10 @@ module RIAPP
             }
 
 
-            get items2() { return <IProductCategory[]><any>this.items; }
+            get items2() { return <IProductCategoryEntity[]>this.items; }
         }
 
-        export interface ISalesInfo extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface ISalesInfoEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             SalesPerson: string;
 
             getDbContext(): DbContext;
@@ -913,8 +925,8 @@ module RIAPP
             asEntity(): SalesInfo;
         }
 
-        export class SalesInfo extends RIAPP.MOD.db.Entity implements ISalesInfo {
-            get SalesPerson() { return <string>this._getFieldVal('SalesPerson'); }
+        export class SalesInfo extends RIAPP.MOD.db.Entity implements ISalesInfoEntity {
+            get SalesPerson(): string { return this._getFieldVal('SalesPerson'); }
             set SalesPerson(v: string) { this._setFieldVal('SalesPerson', v); }
 
             getDbContext() {
@@ -925,10 +937,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'SalesInfo';
+                return 'SalesInfoEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <ISalesInfo>this; }
+            asInterface() { return <ISalesInfoEntity>this; }
         }
 
         export class SalesInfoDb extends RIAPP.MOD.db.DbSet<SalesInfo>
@@ -964,10 +976,10 @@ module RIAPP
             }
 
 
-            get items2() { return <ISalesInfo[]><any>this.items; }
+            get items2() { return <ISalesInfoEntity[]>this.items; }
         }
 
-        export interface ILookUpProduct extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface ILookUpProductEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             ProductID: number;
             Name: string;
 
@@ -977,10 +989,10 @@ module RIAPP
             asEntity(): LookUpProduct;
         }
 
-        export class LookUpProduct extends RIAPP.MOD.db.Entity implements ILookUpProduct {
-            get ProductID() { return <number>this._getFieldVal('ProductID'); }
+        export class LookUpProduct extends RIAPP.MOD.db.Entity implements ILookUpProductEntity {
+            get ProductID(): number { return this._getFieldVal('ProductID'); }
             set ProductID(v: number) { this._setFieldVal('ProductID', v); }
-            get Name() { return <string>this._getFieldVal('Name'); }
+            get Name(): string { return this._getFieldVal('Name'); }
             set Name(v: string) { this._setFieldVal('Name', v); }
 
             getDbContext() {
@@ -991,10 +1003,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'LookUpProduct';
+                return 'LookUpProductEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <ILookUpProduct>this; }
+            asInterface() { return <ILookUpProductEntity>this; }
         }
 
         export class LookUpProductDb extends RIAPP.MOD.db.DbSet<LookUpProduct>
@@ -1030,10 +1042,10 @@ module RIAPP
             }
 
 
-            get items2() { return <ILookUpProduct[]><any>this.items; }
+            get items2() { return <ILookUpProductEntity[]>this.items; }
         }
 
-        export interface IAddressInfo extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+        export interface IAddressInfoEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             AddressID: number;
             AddressLine1: string;
             City: string;
@@ -1047,13 +1059,13 @@ module RIAPP
             asEntity(): AddressInfo;
         }
 
-        export class AddressInfo extends RIAPP.MOD.db.Entity implements IAddressInfo {
-            get AddressID() { return <number>this._getFieldVal('AddressID'); }
-            get AddressLine1() { return <string>this._getFieldVal('AddressLine1'); }
-            get City() { return <string>this._getFieldVal('City'); }
-            get StateProvince() { return <string>this._getFieldVal('StateProvince'); }
-            get CountryRegion() { return <string>this._getFieldVal('CountryRegion'); }
-            get CustomerAddresses() { return <CustomerAddress[]>this._dbSet._navfldMap['CustomerAddresses'].getFunc.call(this); }
+        export class AddressInfo extends RIAPP.MOD.db.Entity implements IAddressInfoEntity {
+            get AddressID(): number { return this._getFieldVal('AddressID'); }
+            get AddressLine1(): string { return this._getFieldVal('AddressLine1'); }
+            get City(): string { return this._getFieldVal('City'); }
+            get StateProvince(): string { return this._getFieldVal('StateProvince'); }
+            get CountryRegion(): string { return this._getFieldVal('CountryRegion'); }
+            get CustomerAddresses(): CustomerAddress[] { return this._dbSet._navfldMap['CustomerAddresses'].getFunc.call(this); }
 
             getDbContext() {
                 return <DbContext>super.getDbContext();
@@ -1063,10 +1075,10 @@ module RIAPP
             }
             get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'AddressInfo';
+                return 'AddressInfoEntity';
             }
             asEntity() { return this; }
-            asInterface() { return <IAddressInfo>this; }
+            asInterface() { return <IAddressInfoEntity>this; }
         }
 
         export class AddressInfoDb extends RIAPP.MOD.db.DbSet<AddressInfo>
@@ -1102,7 +1114,7 @@ module RIAPP
             }
 
 
-            get items2() { return <IAddressInfo[]><any>this.items; }
+            get items2() { return <IAddressInfoEntity[]>this.items; }
         }
 
         export interface IAssocs {
@@ -1154,7 +1166,7 @@ module RIAPP
                 this._dbSets = new DbSets(this);
                 var associations = [{ "childDbSetName": "CustomerAddress", "childToParentName": "Customer", "fieldRels": [{ "childField": "CustomerID", "parentField": "CustomerID" }], "name": "CustAddrToCustomer", "onDeleteAction": 0, "parentDbSetName": "Customer", "parentToChildrenName": "CustomerAddresses" }, { "childDbSetName": "CustomerAddress", "childToParentName": "Address", "fieldRels": [{ "childField": "AddressID", "parentField": "AddressID" }], "name": "CustAddrToAddress", "onDeleteAction": 0, "parentDbSetName": "Address", "parentToChildrenName": "CustomerAddresses" }, { "childDbSetName": "CustomerAddress", "childToParentName": "AddressInfo", "fieldRels": [{ "childField": "AddressID", "parentField": "AddressID" }], "name": "CustAddrToAddress2", "onDeleteAction": 0, "parentDbSetName": "AddressInfo", "parentToChildrenName": "CustomerAddresses" }, { "childDbSetName": "SalesOrderDetail", "childToParentName": "SalesOrderHeader", "fieldRels": [{ "childField": "SalesOrderID", "parentField": "SalesOrderID" }], "name": "OrdDetailsToOrder", "onDeleteAction": 1, "parentDbSetName": "SalesOrderHeader", "parentToChildrenName": "SalesOrderDetails" }, { "childDbSetName": "SalesOrderDetail", "childToParentName": "Product", "fieldRels": [{ "childField": "ProductID", "parentField": "ProductID" }], "name": "OrdDetailsToProduct", "onDeleteAction": 0, "parentDbSetName": "Product", "parentToChildrenName": "SalesOrderDetails" }, { "childDbSetName": "SalesOrderHeader", "childToParentName": "Customer", "fieldRels": [{ "childField": "CustomerID", "parentField": "CustomerID" }], "name": "OrdersToCustomer", "onDeleteAction": 0, "parentDbSetName": "Customer", "parentToChildrenName": null }, { "childDbSetName": "SalesOrderHeader", "childToParentName": "Address", "fieldRels": [{ "childField": "ShipToAddressID", "parentField": "AddressID" }], "name": "OrdersToShipAddr", "onDeleteAction": 0, "parentDbSetName": "Address", "parentToChildrenName": null }, { "childDbSetName": "SalesOrderHeader", "childToParentName": "Address1", "fieldRels": [{ "childField": "BillToAddressID", "parentField": "AddressID" }], "name": "OrdersToBillAddr", "onDeleteAction": 0, "parentDbSetName": "Address", "parentToChildrenName": null }];
                 this._initAssociations(associations);
-                var methods = [{ "isQuery": true, "methodName": "ReadProductLookUp", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProduct", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "param1", "ordinal": 1 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param2", "ordinal": 2 }] }, { "isQuery": true, "methodName": "ReadProductByIds", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "productIDs", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadCustomer", "methodResult": true, "parameters": [{ "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": true, "name": "includeNav", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadAddress", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressByIds", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "addressIDs", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadCustomerAddress", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressForCustomers", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "custIDs", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadSalesOrderHeader", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadSalesOrderDetail", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProductCategory", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProductModel", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadSalesInfo", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressInfo", "methodResult": true, "parameters": [] }, { "isQuery": false, "methodName": "TestInvoke", "methodResult": true, "parameters": [{ "dataType": 10, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param1", "ordinal": 0 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param2", "ordinal": 1 }] }];
+                var methods = [{ "isQuery": true, "methodName": "ReadProductLookUp", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProduct", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "param1", "ordinal": 0 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param2", "ordinal": 1 }] }, { "isQuery": true, "methodName": "ReadProductByIds", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "productIDs", "ordinal": 0 }] }, { "isQuery": true, "methodName": "ReadCustomer", "methodResult": true, "parameters": [{ "dataType": 2, "dateConversion": 0, "isArray": false, "isNullable": true, "name": "includeNav", "ordinal": 0 }] }, { "isQuery": true, "methodName": "ReadAddress", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressByIds", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "addressIDs", "ordinal": 0 }] }, { "isQuery": true, "methodName": "ReadCustomerAddress", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressForCustomers", "methodResult": true, "parameters": [{ "dataType": 3, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "custIDs", "ordinal": 0 }] }, { "isQuery": true, "methodName": "ReadSalesOrderHeader", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadSalesOrderDetail", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProductCategory", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadProductModel", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadSalesInfo", "methodResult": true, "parameters": [] }, { "isQuery": true, "methodName": "ReadAddressInfo", "methodResult": true, "parameters": [] }, { "isQuery": false, "methodName": "TestInvoke", "methodResult": true, "parameters": [{ "dataType": 10, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param1", "ordinal": 0 }, { "dataType": 1, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "param2", "ordinal": 1 }] }, { "isQuery": false, "methodName": "TestComplexInvoke", "methodResult": false, "parameters": [{ "dataType": 0, "dateConversion": 0, "isArray": false, "isNullable": false, "name": "info", "ordinal": 0 }, { "dataType": 0, "dateConversion": 0, "isArray": true, "isNullable": false, "name": "keys", "ordinal": 1 }] }];
                 this._initMethods(methods);
             }
             get associations() { return <IAssocs>this._assoc; }

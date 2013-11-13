@@ -83,6 +83,7 @@ namespace RIAPP.DataService
             set;
         }
 
+
         /// <summary>
         /// Extracts from ParameterInfo all information about method parameter
         /// </summary>
@@ -105,7 +106,14 @@ namespace RIAPP.DataService
                paramInfo.dateConversion = (dtops[0] as DateOptionAttribute).dateConversion;
             }
             bool isArray = false;
-            paramInfo.dataType = dataHelper.DataTypeFromType(realType, out isArray);
+            try
+            {
+                paramInfo.dataType = dataHelper.DataTypeFromType(realType, out isArray);
+            }
+            catch (UnsupportedTypeException)
+            {
+                paramInfo.dataType = DataType.None;
+            }
             paramInfo.isArray = isArray;
             return paramInfo;
         }
@@ -158,7 +166,8 @@ namespace RIAPP.DataService
             get;
             set;
         }
-        
+
+      
         /// <summary>
         /// Generates Data Services' method description which is convertable to JSON
         /// and can be consumed by clients
@@ -181,8 +190,6 @@ namespace RIAPP.DataService
             //else Result is Converted to JSON
             ParameterInfo[] paramsInfo = methodInfo.GetParameters();
             for (var i = 0; i < paramsInfo.Length; ++i) {
-                if (isQuery && paramsInfo[i].ParameterType == typeof(GetDataInfo))
-                    continue;
                 ParamMetadataInfo param = ParamMetadataInfo.FromParamInfo(paramsInfo[i], dataHelper);
                 param.ordinal = i;
                 methDescription.parameters.Add(param);

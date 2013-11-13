@@ -93,19 +93,19 @@ namespace RIAppDemo.BLL.DataServices
 
         #region Product
         [Query]
-        public QueryResult<LookUpProduct> ReadProductLookUp(GetDataInfo getInfo)
+        public QueryResult<LookUpProduct> ReadProductLookUp()
         {
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.Products, getInfo, ref totalCount).Select(p => new LookUpProduct { ProductID = p.ProductID, Name = p.Name }).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(this.DB.Products, this.CurrentQueryInfo, ref totalCount).Select(p => new LookUpProduct { ProductID = p.ProductID, Name = p.Name }).AsEnumerable();
             var queryResult = new QueryResult<LookUpProduct>(res, totalCount);
             return queryResult;
         }
 
         [Query]
-        public QueryResult<Product> ReadProduct(GetDataInfo getInfo, int[] param1, string param2)
+        public QueryResult<Product> ReadProduct(int[] param1, string param2)
         {
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.Products, getInfo, ref totalCount).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(this.DB.Products,this.CurrentQueryInfo, ref totalCount).AsEnumerable();
             var queryResult = new QueryResult<Product>(res, totalCount);
             //example of returning out of band information and use it on the client (of it can be more useful than it)
             queryResult.extraInfo = new { test = "ReadProduct Extra Info: " + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") };
@@ -113,7 +113,7 @@ namespace RIAppDemo.BLL.DataServices
         }
 
         [Query]
-        public QueryResult<Product> ReadProductByIds(GetDataInfo getInfo, int[] productIDs)
+        public QueryResult<Product> ReadProductByIds(int[] productIDs)
         {
             int? totalCount = null;
             var res = this.DB.Products.Where(ca => productIDs.Contains(ca.ProductID));
@@ -165,7 +165,7 @@ namespace RIAppDemo.BLL.DataServices
 
         #region Customer
         [Query]
-        public QueryResult<Customer> ReadCustomer(GetDataInfo getInfo, bool? includeNav)
+        public QueryResult<Customer> ReadCustomer(bool? includeNav)
         {
             string[] includeHierarchy = new string[0];
             if (includeNav == true)
@@ -183,7 +183,7 @@ namespace RIAppDemo.BLL.DataServices
             }
 
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.Customers, getInfo, ref totalCount).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(this.DB.Customers, this.CurrentQueryInfo, ref totalCount).AsEnumerable();
             return new QueryResult<Customer>(res, totalCount, includeHierarchy);
         }
 
@@ -219,15 +219,15 @@ namespace RIAppDemo.BLL.DataServices
 
         #region Address
         [Query]
-        public QueryResult<Address> ReadAddress(GetDataInfo getInfo)
+        public QueryResult<Address> ReadAddress()
         {
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.Addresses, getInfo, ref totalCount).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(this.DB.Addresses, this.CurrentQueryInfo, ref totalCount).AsEnumerable();
             return new QueryResult<Address>(res, totalCount);
         }
 
         [Query]
-        public QueryResult<Address> ReadAddressByIds(GetDataInfo getInfo, int[] addressIDs)
+        public QueryResult<Address> ReadAddressByIds(int[] addressIDs)
         {
             int? totalCount = null;
             var res = this.DB.Addresses.Where(ca => addressIDs.Contains(ca.AddressID));
@@ -265,15 +265,15 @@ namespace RIAppDemo.BLL.DataServices
 
         #region CustomerAddress
         [Query]
-        public QueryResult<CustomerAddress> ReadCustomerAddress(GetDataInfo getInfo)
+        public QueryResult<CustomerAddress> ReadCustomerAddress()
         {
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.CustomerAddresses, getInfo, ref totalCount).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(this.DB.CustomerAddresses, this.CurrentQueryInfo, ref totalCount).AsEnumerable();
             return new QueryResult<CustomerAddress>(res, totalCount);
         }
 
         [Query]
-        public QueryResult<CustomerAddress> ReadAddressForCustomers(GetDataInfo getInfo, int[] custIDs)
+        public QueryResult<CustomerAddress> ReadAddressForCustomers(int[] custIDs)
         {
             int? totalCount = null;
             var res = this.DB.CustomerAddresses.Where(ca => custIDs.Contains(ca.CustomerID));
@@ -305,10 +305,10 @@ namespace RIAppDemo.BLL.DataServices
 
         #region SalesOrderHeader
         [Query]
-        public QueryResult<SalesOrderHeader> ReadSalesOrderHeader(GetDataInfo getInfo)
+        public QueryResult<SalesOrderHeader> ReadSalesOrderHeader()
         {
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.SalesOrderHeaders, getInfo, ref totalCount).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(this.DB.SalesOrderHeaders, this.CurrentQueryInfo, ref totalCount).AsEnumerable();
             return new QueryResult<SalesOrderHeader>(res, totalCount);
         }
 
@@ -338,10 +338,10 @@ namespace RIAppDemo.BLL.DataServices
         #region SalesOrderDetail
        
         [Query]
-        public QueryResult<SalesOrderDetail> ReadSalesOrderDetail(GetDataInfo getInfo)
+        public QueryResult<SalesOrderDetail> ReadSalesOrderDetail()
         {
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.SalesOrderDetails, getInfo, ref totalCount).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(this.DB.SalesOrderDetails, this.CurrentQueryInfo, ref totalCount).AsEnumerable();
             return new QueryResult<SalesOrderDetail>(res, totalCount);
         }
 
@@ -370,36 +370,36 @@ namespace RIAppDemo.BLL.DataServices
 
         [AllowAnonymous()]
         [Query]
-        public QueryResult<ProductCategory> ReadProductCategory(GetDataInfo getInfo)
+        public QueryResult<ProductCategory> ReadProductCategory()
         {
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.ProductCategories, getInfo, ref totalCount).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(this.DB.ProductCategories, this.CurrentQueryInfo, ref totalCount).AsEnumerable();
             return new QueryResult<ProductCategory>(res, totalCount);
         }
 
         [AllowAnonymous()]
         [Query]
-        public QueryResult<ProductModel> ReadProductModel(GetDataInfo getInfo)
+        public QueryResult<ProductModel> ReadProductModel()
         {
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.ProductModels, getInfo, ref totalCount).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(this.DB.ProductModels, this.CurrentQueryInfo, ref totalCount).AsEnumerable();
             return new QueryResult<ProductModel>(res, totalCount);
         }
 
         [Query]
-        public QueryResult<SalesInfo> ReadSalesInfo(GetDataInfo getInfo)
+        public QueryResult<SalesInfo> ReadSalesInfo()
         {
 
-            var res = this.DB.Customers.Where(c => c.SalesPerson.StartsWith(getInfo.filterInfo.filterItems[0].values.First().TrimEnd('%'))).Select(s => s.SalesPerson).Distinct().Select(s => new SalesInfo { SalesPerson = s });
-            var res2 = res.Skip(getInfo.pageIndex * getInfo.pageSize).Take(getInfo.pageSize);
+            var res = this.DB.Customers.Where(c => c.SalesPerson.StartsWith(this.CurrentQueryInfo.filterInfo.filterItems[0].values.First().TrimEnd('%'))).Select(s => s.SalesPerson).Distinct().Select(s => new SalesInfo { SalesPerson = s });
+            var res2 = res.Skip(this.CurrentQueryInfo.pageIndex * this.CurrentQueryInfo.pageSize).Take(this.CurrentQueryInfo.pageSize);
             return new QueryResult<SalesInfo>(res2, res.Count());
         }
 
         [Query]
-        public QueryResult<AddressInfo> ReadAddressInfo(GetDataInfo getInfo)
+        public QueryResult<AddressInfo> ReadAddressInfo()
         {
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.Addresses, getInfo, ref totalCount).Select(a => new AddressInfo { AddressID = a.AddressID, AddressLine1 = a.AddressLine1, City = a.City, CountryRegion = a.CountryRegion }).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(this.DB.Addresses, this.CurrentQueryInfo, ref totalCount).Select(a => new AddressInfo { AddressID = a.AddressID, AddressLine1 = a.AddressLine1, City = a.City, CountryRegion = a.CountryRegion }).AsEnumerable();
             return new QueryResult<AddressInfo>(res, totalCount);
         }
         
@@ -421,6 +421,12 @@ namespace RIAppDemo.BLL.DataServices
             */
 
             return string.Format("TestInvoke method invoked with<br/><br/><b>param1:</b> {0}<br/> <b>param2:</b> {1}", sb, param2);
+        }
+
+        [Invoke()]
+        public void TestComplexInvoke(AddressInfo info, KeyVal[] keys)
+        {
+            //p.s. do something with info and keys
         }
 
         #region Helper Methods
