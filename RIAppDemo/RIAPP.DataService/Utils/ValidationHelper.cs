@@ -1,13 +1,14 @@
 ﻿using System;
 using RIAPP.DataService.Resources;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService.Utils
 {
-    public class ValidationHelperClass : RIAPP.DataService.Utils.IValidationHelper
+    public class ValidationHelper : IValidationHelper
     {
         private IDataHelper _dataHelper;
 
-        public ValidationHelperClass(IDataHelper dataHelper)
+        public ValidationHelper(IDataHelper dataHelper)
         {
             this._dataHelper = dataHelper;
         }
@@ -102,6 +103,5 @@ namespace RIAPP.DataService.Utils
             }
             this.CheckRange(fieldInfo, val);
         }
-
     }
 }

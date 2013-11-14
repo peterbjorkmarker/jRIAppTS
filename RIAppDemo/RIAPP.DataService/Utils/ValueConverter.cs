@@ -1,13 +1,21 @@
 ﻿using System;
 using System.Text;
 using RIAPP.DataService.Resources;
+using RIAPP.DataService.Utils.Interfaces;
 
 
 namespace RIAPP.DataService.Utils
 {
-    public class ValueConverter : RIAPP.DataService.Utils.IValueConverter
+    public class ValueConverter : IValueConverter
     {
-       protected object CreateGenericInstance(Type propType, Type propMainType, object[] constructorArgs)
+        private ISerializer _serializer;
+
+        public ValueConverter(ISerializer serializer)
+        {
+            this._serializer = serializer;
+        }
+
+        protected object CreateGenericInstance(Type propType, Type propMainType, object[] constructorArgs)
         {
             Type typeToConstruct = propType.GetGenericTypeDefinition();
             Type[] argsType = new Type[] { propMainType };
@@ -152,7 +160,7 @@ namespace RIAPP.DataService.Utils
 
             if (!propMainType.IsValueType)
             {
-                typedVal = SerializationHelper.DeSerialize(value, propMainType);
+                typedVal = this.Serializer.DeSerialize(value, propMainType);
             }
             else
             {
@@ -162,8 +170,7 @@ namespace RIAPP.DataService.Utils
                 }
                 catch (System.InvalidCastException)
                 {
-                    typedVal = SerializationHelper.DeSerialize(value, propMainType);
-
+                    typedVal = this.Serializer.DeSerialize(value, propMainType);
                 }
             }
 
@@ -214,6 +221,11 @@ namespace RIAPP.DataService.Utils
             }
             sb.Append("]");
             return sb.ToString();
+        }
+
+        public ISerializer Serializer
+        {
+            get { return this._serializer; }
         }
 
         public bool IsNullableType(Type propType)

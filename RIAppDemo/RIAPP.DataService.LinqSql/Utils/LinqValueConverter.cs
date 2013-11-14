@@ -1,11 +1,12 @@
 ﻿using System;
+using RIAPP.DataService.Utils.Interfaces;
 
 
 namespace RIAPP.DataService.Utils
 {
     public class LinqValueConverter: ValueConverter
     {
-        public LinqValueConverter()
+        public LinqValueConverter(ISerializer serializer):base(serializer)
         {
         }
 

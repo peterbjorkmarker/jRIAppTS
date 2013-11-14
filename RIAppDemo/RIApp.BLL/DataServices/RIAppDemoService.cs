@@ -24,8 +24,8 @@ namespace RIAppDemo.BLL.DataServices
         private const string USERS_ROLE = "Users";
         private const string ADMINS_ROLE = "Admins";
 
-        public RIAppDemoService(IPrincipal principal)
-            : base(principal)
+        public RIAppDemoService(IServiceArgs args)
+            : base(args)
         { 
         }
 

@@ -3,6 +3,7 @@ using System.Runtime.Serialization;
 using System.Reflection;
 using RIAPP.DataService.Resources;
 using RIAPP.DataService.Utils;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService
 {

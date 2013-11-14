@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DomainService\ServiceArgs.cs" />
+    <Compile Include="DomainService\Interfaces\IServiceArgs.cs" />
     <Compile Include="DomainService\Security\AuthorizeAttribute.cs" />
     <Compile Include="DomainService\Security\AllowAnonymousAttribute.cs" />
     <Compile Include="DomainService\Attributes\CommentAttribute.cs" />
@@ -58,13 +60,14 @@
     <Compile Include="DomainService\Attributes\DateOptionAttribute.cs" />
     <Compile Include="DomainService\Attributes\InvokeAttribute.cs" />
     <Compile Include="DomainService\ChangesetGraph.cs" />
-    <Compile Include="DomainService\Security\IAuthorizer.cs" />
+    <Compile Include="DomainService\Interfaces\IAuthorizer.cs" />
     <Compile Include="DomainService\JSonTypes\TrackAssoc.cs" />
     <Compile Include="DomainService\Security\SecurityHelper.cs" />
-    <Compile Include="DomainService\TypedLists.cs" />
+    <Compile Include="Resources\TypedLists.cs" />
     <Compile Include="Utils\CodeGen\CSharp2TS.cs" />
     <Compile Include="Utils\Interfaces\IDataHelper.cs" />
     <Compile Include="Utils\Interfaces\IQueryHelper.cs" />
+    <Compile Include="Utils\Interfaces\ISerializer.cs" />
     <Compile Include="Utils\Interfaces\IValidationHelper.cs" />
     <Compile Include="Utils\Interfaces\IValueConverter.cs" />
     <Compile Include="Utils\Extensions\RowInfoEx.cs" />
@@ -79,8 +82,8 @@
     <Compile Include="Utils\TemplateParser.cs" />
     <Compile Include="Utils\CodeGen\TypeScriptHelper.cs" />
     <Compile Include="Utils\ValueConverter.cs" />
-    <Compile Include="Utils\ValidationHelperClass.cs" />
-    <Compile Include="Utils\QueryHelperClass.cs" />
+    <Compile Include="Utils\ValidationHelper.cs" />
+    <Compile Include="Utils\QueryHelper.cs" />
     <Compile Include="DomainService\JSonTypes\ValidationErrorInfo.cs" />
     <Compile Include="DomainService\JSonTypes\Value.cs" />
     <Compile Include="DomainService\JSonTypes\Row.cs" />
@@ -93,7 +96,7 @@
     <Compile Include="DomainService\Exceptions\ConcurrencyException.cs" />
     <Compile Include="DomainService\Exceptions\AccessDeniedException.cs" />
     <Compile Include="DomainService\Exceptions\DomainServiceException.cs" />
-    <Compile Include="DomainService\IDomainService.cs" />
+    <Compile Include="DomainService\Interfaces\IDomainService.cs" />
     <Compile Include="DomainService\JSonTypes\MetadataInfo.cs" />
     <Compile Include="DomainService\JSonTypes\DbSetInfo.cs" />
     <Compile Include="DomainService\ServiceOperationType.cs" />
@@ -106,7 +109,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>ErrorStrings.resx</DependentUpon>
     </Compile>
-    <Compile Include="Utils\DataHelperClass.cs" />
+    <Compile Include="Utils\DataHelper.cs" />
     <Compile Include="DomainService\JSonTypes\Enums.cs" />
     <Compile Include="DomainService\JSonTypes\FieldInfo.cs" />
     <Compile Include="DomainService\JSonTypes\ValueChange.cs" />
@@ -117,7 +120,6 @@
     <Compile Include="DomainService\JSonTypes\SortInfo.cs" />
     <Compile Include="DomainService\JSonTypes\ChangeSet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Utils\SerializationHelper.cs" />
     <Compile Include="Utils\STAThreadSync\BlockingQueue.cs" />
     <Compile Include="Utils\STAThreadSync\SendOrPostCallbackItem.cs" />
     <Compile Include="Utils\STAThreadSync\StaSynchronizationContext.cs" />

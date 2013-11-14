@@ -6,15 +6,25 @@ using System.Web.Mvc;
 using System.Web.SessionState;
 using RIAPP.DataService;
 using RIAPP.DataService.Utils;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService.Mvc
 {
     public abstract class DataServiceController<T> : Controller
          where T : BaseDomainService
     {
+        private readonly ISerializer _serializer;
+
+        public DataServiceController()
+        {
+            this._serializer = new Serializer();
+        }
+
         protected virtual IDomainService CreateDomainService()
         {
-            return (IDomainService)Activator.CreateInstance(typeof(T), this.User);
+            ServiceArgs args = new ServiceArgs() { principal= this.User, serializer = this.Serializer };
+            var service = (IDomainService)Activator.CreateInstance(typeof(T), args);
+            return service;
         }
 
         private IDomainService _DomainService;
@@ -23,14 +33,14 @@ namespace RIAPP.DataService.Mvc
         public string Metadata()
         {
             var info = this.DomainService.ServiceGetMetadata();
-            return info.ToJSON();
+            return this._serializer.Serialize(info);
         }
 
         [ChildActionOnly]
         public string PermissionsInfo()
         {
             var info = this.DomainService.ServiceGetPermissions();
-            return info.ToJSON();
+            return this._serializer.Serialize(info);
         }
 
         [HttpGet]
@@ -122,6 +132,11 @@ namespace RIAPP.DataService.Mvc
         protected T GetDomainService()
         {
             return (T)this.DomainService;
+        }
+
+        public ISerializer Serializer
+        {
+            get { return this._serializer; }
         }
 
         protected override void Dispose(bool disposing)

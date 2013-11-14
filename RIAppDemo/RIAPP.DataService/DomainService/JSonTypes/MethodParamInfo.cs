@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using RIAPP.DataService.Utils;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService
 {

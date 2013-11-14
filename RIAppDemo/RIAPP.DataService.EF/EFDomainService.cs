@@ -15,15 +15,15 @@ namespace RIAPP.DataService.EF
     {
         private TDB _db;
         private bool _ownsDb = false;
-        
-        public EFDomainService(TDB db, IPrincipal principal)
-            :base(principal)
+
+        public EFDomainService(TDB db, IServiceArgs args)
+            :base(args)
         {
             this._db = db;
         }
 
-        public EFDomainService(IPrincipal principal)
-            : this(null,principal)
+        public EFDomainService(IServiceArgs args)
+            : this(null,args)
         {
             
         }
@@ -210,7 +210,7 @@ namespace RIAPP.DataService.EF
                         dbSetInfo.fieldInfos.Add(fieldInfo);
                     });
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     throw;
                 }

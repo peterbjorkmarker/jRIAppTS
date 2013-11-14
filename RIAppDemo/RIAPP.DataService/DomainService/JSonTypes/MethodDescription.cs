@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Web.Script.Serialization;
 using System.Linq;
 using RIAPP.DataService.Utils;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService
 {

@@ -6,7 +6,7 @@ using System.Web.Mvc;
 using System.IO;
 using System.Web.SessionState;
 using RIAppDemo.BLL.DataServices;
-
+using RIAPP.DataService.Mvc;
 
 namespace RIAppDemo.Controllers
 {
@@ -22,7 +22,8 @@ namespace RIAppDemo.Controllers
         {
             try
             {
-                RIAppDemoService svc = new RIAppDemoService(this.User);
+                var args = new RIAPP.DataService.ServiceArgs() { principal = this.User, serializer = new Serializer() };
+                RIAppDemoService svc = new RIAppDemoService(args);
                 using (svc)
                 {
                     MemoryStream stream = new MemoryStream();

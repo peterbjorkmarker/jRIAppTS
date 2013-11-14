@@ -4,6 +4,7 @@ using System.Security.Principal;
 using System.Reflection;
 using System.Transactions;
 using RIAPP.DataService.Utils;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService.LinqSql
 {
@@ -12,23 +13,24 @@ namespace RIAPP.DataService.LinqSql
     {
         private TDB _db;
         private bool _ownsDb = false;
-        
-        public LinqForSqlDomainService(TDB db, IPrincipal principal)
-            :base(principal)
+
+        public LinqForSqlDomainService(TDB db, IServiceArgs args)
+            :base(args)
         {
             this._db = db;
         }
 
-        public LinqForSqlDomainService(IPrincipal principal)
-            : this(null,principal)
+        public LinqForSqlDomainService(IServiceArgs args)
+            : this(null,args)
         {
            
         }
 
-        protected override IDataHelper CreateDataHelper()
+        protected override IValueConverter CreateValueConverter()
         {
-            return new DataHelperClass(new LinqValueConverter());
+            return new LinqValueConverter(this.Serializer);
         }
+
 
         #region Overridable Methods
         protected virtual TDB CreateDataContext() {

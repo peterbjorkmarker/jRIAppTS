@@ -3,14 +3,15 @@ using System.Linq;
 using System.Text;
 using System.Linq.DynamicQuery;
 using RIAPP.DataService.Resources;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService.Utils
 {
-    public class QueryHelperClass : RIAPP.DataService.Utils.IQueryHelper
+    public class QueryHelper : IQueryHelper
     {
         private IDataHelper _dataHelper;
 
-        public QueryHelperClass(IDataHelper dataHelper)
+        public QueryHelper(IDataHelper dataHelper)
         {
             this._dataHelper = dataHelper;
         }
@@ -180,7 +181,7 @@ namespace RIAPP.DataService.Utils
 
         protected virtual object FindEntity(IQueryable entities, RowInfo rowInfo, object[] pkValues)
         {
-            string predicate = QueryHelperClass.GetWherePKPredicate(rowInfo);
+            string predicate = QueryHelper.GetWherePKPredicate(rowInfo);
 
             if (pkValues == null || pkValues.Length < 1 || pkValues.Any((kv) => kv == null))
             {

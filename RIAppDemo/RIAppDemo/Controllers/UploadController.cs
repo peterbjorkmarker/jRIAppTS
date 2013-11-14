@@ -7,7 +7,7 @@ using System.IO;
 using System.Web.SessionState;
 using RIAppDemo.BLL.DataServices;
 using RIAppDemo.Models;
-
+using RIAPP.DataService.Mvc;
 
 namespace RIAppDemo.Controllers
 {
@@ -70,7 +70,8 @@ namespace RIAppDemo.Controllers
                     string filename = Path.GetFileName(file.FileName);
                     if (filename != null)
                     {
-                          RIAppDemoService svc = new RIAppDemoService(this.User);
+                          var args = new RIAPP.DataService.ServiceArgs() { principal = this.User, serializer = new Serializer() };
+                          RIAppDemoService svc = new RIAppDemoService(args);
                           using (svc)
                           {
                              svc.SaveThumbnail(file.DataID, file.FileName, file.Contents);

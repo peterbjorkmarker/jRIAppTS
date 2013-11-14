@@ -3,14 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using RIAPP.DataService.Resources;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService.Utils
 {
-    public class DataHelperClass : RIAPP.DataService.Utils.IDataHelper
+    public class DataHelper : IDataHelper
     {
         protected readonly IValueConverter _converter;
 
-        public DataHelperClass(IValueConverter converter)
+        public DataHelper(IValueConverter converter)
         {
             this._converter = converter;
         }
@@ -153,17 +154,16 @@ namespace RIAPP.DataService.Utils
             return this._converter.ConvertToWireFormat(value, propType);
         }
 
-
         public object ParseParameter(Type paramType, ParamMetadataInfo pinfo, bool isArray, string val)
         {
             DataType dataType = pinfo.dataType;
 
             if (isArray && val != null)
             {
-                string[] arr = (string[])SerializationHelper.DeSerialize(val, typeof(string[]));
+                string[] arr = (string[])this._converter.Serializer.DeSerialize(val, typeof(string[]));
                 if (arr == null)
                     return null;
-                IList list = (IList)typeof(DataHelperClass).GetMethod("CreateList", BindingFlags.NonPublic | BindingFlags.Static)
+                IList list = (IList)typeof(DataHelper).GetMethod("CreateList", BindingFlags.NonPublic | BindingFlags.Static)
                     .MakeGenericMethod(paramType.GetElementType())
                     .Invoke(null, new object[] { });
                 foreach (var v in arr)
@@ -171,13 +171,12 @@ namespace RIAPP.DataService.Utils
                     list.Add(ParseParameter(paramType.GetElementType(), pinfo, false, v));
                 }
 
-                return typeof(DataHelperClass).GetMethod("CreateArray", BindingFlags.NonPublic | BindingFlags.Static)
+                return typeof(DataHelper).GetMethod("CreateArray", BindingFlags.NonPublic | BindingFlags.Static)
                     .MakeGenericMethod(paramType.GetElementType())
                     .Invoke(null, new object[] { list });
             }
             else
                 return this.ConvertToTyped(paramType, dataType, pinfo.dateConversion, val);
         }
-
     }
 }

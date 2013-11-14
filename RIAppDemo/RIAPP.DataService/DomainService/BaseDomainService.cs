@@ -9,6 +9,7 @@ using StaThreadSyncronizer;
 using RIAPP.DataService.Resources;
 using RIAPP.DataService.Utils;
 using RIAPP.DataService.Security;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService
 {
@@ -30,6 +31,8 @@ namespace RIAPP.DataService
         private IDataHelper _dataHelper;
         private IValidationHelper _validationHelper;
         private IQueryHelper _queryHelper;
+        private ISerializer _serializer;
+        private IValueConverter _converter;
 
         protected IAuthorizer Authorizer
         {
@@ -40,8 +43,17 @@ namespace RIAPP.DataService
                 return this._authorizer;
             }
         }
-
         #endregion
+
+        public ISerializer Serializer
+        {
+            get { return this._serializer; }
+        }
+
+        public IValueConverter ValueConverter
+        {
+            get { return this._converter; }
+        }
 
         public IDataHelper DataHelper
         {
@@ -67,13 +79,16 @@ namespace RIAPP.DataService
             }
         }
 
-        public BaseDomainService(IPrincipal principal)
+        public BaseDomainService(IServiceArgs args)
         {
-            this._principal = principal;
+            if (args.serializer == null)
+                throw new ArgumentException("Domain service class expects Serializer!");
+            this._principal = args.principal;
+            this._serializer = args.serializer;
+            this._converter = this.CreateValueConverter();
             this._dataHelper = this.CreateDataHelper();
             this._validationHelper = this.CreateValidationHelper();
             this._queryHelper = this.CreateQueryHelper();
-         
         }
 
         /// <summary>
@@ -674,19 +689,24 @@ namespace RIAPP.DataService
             return new AuthorizerClass(this.GetType(), this.CurrentPrincipal);
         }
 
+        protected virtual IValueConverter CreateValueConverter()
+        {
+            return new ValueConverter(this.Serializer);
+        }
+
         protected virtual IDataHelper CreateDataHelper()
         {
-            return new DataHelperClass(new ValueConverter());
+            return new DataHelper(this.ValueConverter);
         }
 
         protected virtual IValidationHelper CreateValidationHelper()
         {
-            return new ValidationHelperClass(this.DataHelper);
+            return new ValidationHelper(this.DataHelper);
         }
 
         protected virtual IQueryHelper CreateQueryHelper()
         {
-            return new QueryHelperClass(this.DataHelper);
+            return new QueryHelper(this.DataHelper);
         }
 
         /// <summary>
@@ -1026,7 +1046,7 @@ namespace RIAPP.DataService
         public virtual string ServiceGetTypeScript(string comment = null)
         {
             MetadataInfo metadata = this.ServiceGetMetadata();
-            TypeScriptHelper helper = new TypeScriptHelper(metadata, this.GetClientTypes());
+            TypeScriptHelper helper = new TypeScriptHelper(this.ValueConverter, metadata, this.GetClientTypes());
             return helper.CreateTypeScript(comment);
         }
 
@@ -1051,7 +1071,7 @@ namespace RIAPP.DataService
             {
                 ServiceMetadata metadata = this.EnsureMetadataInitialized();
                 PermissionsInfo result = new PermissionsInfo();
-                result.serverTimezone = DataHelperClass.GetLocalDateTimezoneOffset(DateTime.Now);
+                result.serverTimezone = RIAPP.DataService.Utils.DataHelper.GetLocalDateTimezoneOffset(DateTime.Now);
                 foreach (var dbInfo in metadata.dbSets.Values)
                 {
                     var permissions = dbInfo.CalculatePermissions(this.Authorizer);
@@ -1066,7 +1086,6 @@ namespace RIAPP.DataService
                 throw;
             }
         }
-
 
         public MetadataInfo ServiceGetMetadata()
         {
@@ -1186,7 +1205,17 @@ namespace RIAPP.DataService
 
         protected virtual void Dispose(bool isDisposing)
         {
-
+           this._serviceMetadata=null;
+           this._currentChangeSet = null;
+           this._currentDbSet = null;
+           this._currentRowInfo = null;
+           this._currentQueryInfo = null;
+           this._principal = null;
+           this._authorizer = null;
+           this._dataHelper = null;
+           this._validationHelper = null;
+           this._queryHelper = null;
+           this._serializer = null;
         }
 
         #region IDisposable Members

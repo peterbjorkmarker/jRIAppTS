@@ -1,5 +1,5 @@
 ﻿using System;
-namespace RIAPP.DataService.Utils
+namespace RIAPP.DataService.Utils.Interfaces
 {
     public interface IQueryHelper
     {

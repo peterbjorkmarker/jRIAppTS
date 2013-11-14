@@ -14,10 +14,6 @@ namespace RIAppDemo.Controllers
     [SessionState(SessionStateBehavior.Disabled)]
     public class FolderBrowserServiceController : DataServiceController<FolderBrowserService>
     {
-        protected override IDomainService CreateDomainService()
-        {
-            IDomainService svc = new FolderBrowserService(this.User);
-            return svc;
-        }
+        
     }
 }

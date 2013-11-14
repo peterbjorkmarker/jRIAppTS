@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using RIAPP.DataService.Security;
 using System.Reflection;
+using RIAPP.DataService.Utils.Interfaces;
 
 
 namespace RIAPP.DataService.Utils

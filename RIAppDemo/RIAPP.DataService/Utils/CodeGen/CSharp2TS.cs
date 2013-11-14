@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService.Utils
 {
@@ -16,17 +17,20 @@ namespace RIAPP.DataService.Utils
 
     public class CSharp2TS
     {
-        ValueConverter _valConverter;
+        IValueConverter _valConverter;
         Dictionary<string, string> _tsTypes = new Dictionary<string, string>();
 
-        private ValueConverter valConverter
+        protected IValueConverter valConverter
         {
             get
             {
-                if (this._valConverter == null)
-                    this._valConverter = new ValueConverter();
                 return this._valConverter;
             }
+        }
+
+        public CSharp2TS(IValueConverter converter)
+        {
+            this._valConverter = converter;
         }
 
         public event EventHandler<NewTypeArgs> newComplexTypeAdded;
