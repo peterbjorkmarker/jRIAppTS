@@ -83,6 +83,7 @@ The DataService now exposes two other methods to get XAML version of the metadat
 <p>2013-10-19  Improvements in the code generation</p>
 <p>2013-11-13  Changes in dataservice's query methods. Now, they don't accept GetDataInfo parameter as a method's argument!
 It is accessible now through dataservice's CurrentQueryInfo property. See demo detaservice for example.
+<p>2013-11-14  Improvements in the dataservice's code</p>
 
 Now query methods and service methods can accept complex type arguments.
 Fixed bug in dataservice's authorizer class.
