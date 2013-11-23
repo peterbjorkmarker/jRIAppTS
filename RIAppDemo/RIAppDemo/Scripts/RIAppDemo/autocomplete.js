@@ -70,7 +70,7 @@ var RIAPP;
                 });
                 $el.on('keyup.' + this._objId, function (e) {
                     e.stopPropagation();
-                    self._onTextChange((e.target).value);
+                    self._onTextChange(e.target.value);
                 });
                 $el.on('keypress.' + this._objId, function (e) {
                     e.stopPropagation();
@@ -114,14 +114,14 @@ var RIAPP;
                 var arr = this._template.findElViewsByDataName(name);
                 if (!!arr && arr.length > 0)
                     return arr[0];
-else
+                else
                     return null;
             };
             AutoCompleteElView.prototype._findElemInTemplate = function (name) {
                 var arr = this._template.findElByDataName(name);
                 if (!!arr && arr.length > 0)
                     return arr[0];
-else
+                else
                     return null;
             };
             AutoCompleteElView.prototype._createGridDataSource = function () {
@@ -198,10 +198,12 @@ else
                 var self = this;
 
                 this._$dlg = this.$el.closest(".ui-dialog");
-                this._$dlg.on("dialogdrag." + this._objId, function (event, ui) {
+                var ns = "dialogdrag." + this._objId;
+                this._$dlg.on(ns, null, function (event) {
                     if (!self._isOpen)
-                        return;
+                        return null;
                     self._updatePosition();
+                    return null;
                 });
 
                 this._updatePosition();
@@ -243,7 +245,7 @@ else
                 this._onHide();
             };
             AutoCompleteElView.prototype.load = function (str) {
-                var self = this, query = (this.gridDataSource).createQuery(this._queryName);
+                var self = this, query = this.gridDataSource.createQuery(this._queryName);
                 query.pageSize = 50;
                 query.isClearPrevData = true;
                 addTextQuery(query, this._fieldName, str + '%');
@@ -275,8 +277,8 @@ else
             };
 
             Object.defineProperty(AutoCompleteElView.prototype, "fieldName", {
-                get: //field name for lookup in dbSet
-                function () {
+                //field name for lookup in dbSet
+                get: function () {
                     return this._fieldName;
                 },
                 enumerable: true,
@@ -293,7 +295,7 @@ else
                 get: function () {
                     if (this._gridDataSource.currentItem)
                         return this._gridDataSource.currentItem[this._fieldName];
-else
+                    else
                         return null;
                 },
                 enumerable: true,
@@ -301,8 +303,8 @@ else
             });
 
             Object.defineProperty(AutoCompleteElView.prototype, "template", {
-                get: //template instance of drop down area (which contains datagrid) under textbox
-                function () {
+                //template instance of drop down area (which contains datagrid) under textbox
+                get: function () {
                     return this._template;
                 },
                 enumerable: true,
@@ -310,8 +312,8 @@ else
             });
 
             Object.defineProperty(AutoCompleteElView.prototype, "dataContext", {
-                get: //Entity which is databound to the textbox
-                function () {
+                //Entity which is databound to the textbox
+                get: function () {
                     return this._dataContext;
                 },
                 set: function (v) {
@@ -325,8 +327,8 @@ else
             });
 
             Object.defineProperty(AutoCompleteElView.prototype, "gridDataSource", {
-                get: //dbSet for a datagrid's dataSource (for lookup values)
-                function () {
+                //dbSet for a datagrid's dataSource (for lookup values)
+                get: function () {
                     return this._gridDataSource;
                 },
                 enumerable: true,

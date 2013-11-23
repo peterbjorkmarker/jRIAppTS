@@ -50,7 +50,7 @@ var RIAPP;
             };
             FolderBrowser.prototype._createDynaTree = function () {
                 var self = this;
-                (this._$tree).dynatree({
+                this._$tree.dynatree({
                     onActivate: function (node) {
                         self.raiseEvent('node_selected', { item: node.data.item });
                     },
@@ -79,7 +79,7 @@ var RIAPP;
                         });
                     }
                 });
-                this._$treeRoot = (this._$tree).dynatree("getRoot");
+                this._$treeRoot = this._$tree.dynatree("getRoot");
             };
             FolderBrowser.prototype.loadRootFolder = function () {
                 var self = this, query = self._foldersDb.createReadRootQuery({ includeFiles: self._includeFiles, infoType: null });
@@ -129,7 +129,7 @@ var RIAPP;
                     path = '';
                 if (!path)
                     part = '';
-else
+                else
                     part = '\\' + path;
                 var parent = this._assoc.getParentItem(item);
                 if (!parent) {
@@ -392,8 +392,7 @@ else
             images_path: null,
             user_modules: [
                 { name: "COMMON", initFn: RIAPP.COMMON.initModule },
-                { name: "FILESDEMO", initFn: initModule }
-            ]
+                { name: "FILESDEMO", initFn: initModule }]
         };
     })(RIAPP.FILESDEMO || (RIAPP.FILESDEMO = {}));
     var FILESDEMO = RIAPP.FILESDEMO;

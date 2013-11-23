@@ -9,6 +9,10 @@ var RIAPP;
 (function (RIAPP) {
     'use strict';
     (function (DEMODB) {
+        
+
+        
+
         (function (TestEnum) {
             TestEnum[TestEnum["None"] = 0] = "None";
             TestEnum[TestEnum["OK"] = 1] = "OK";
@@ -16,6 +20,10 @@ var RIAPP;
             TestEnum[TestEnum["Loading"] = 3] = "Loading";
         })(DEMODB.TestEnum || (DEMODB.TestEnum = {}));
         var TestEnum = DEMODB.TestEnum;
+
+        
+
+        
 
         /*
         An enum for testing of conversion C# types to typescript

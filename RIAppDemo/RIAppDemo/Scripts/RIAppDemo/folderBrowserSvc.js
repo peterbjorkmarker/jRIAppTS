@@ -9,6 +9,8 @@ var RIAPP;
 (function (RIAPP) {
     'use strict';
     (function (FOLDERBROWSER_SVC) {
+        
+
         var FileSystemObject = (function (_super) {
             __extends(FileSystemObject, _super);
             function FileSystemObject() {

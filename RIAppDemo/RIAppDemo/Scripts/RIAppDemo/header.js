@@ -59,7 +59,7 @@ var RIAPP;
                 if (!!this._$contentPanel) {
                     if (isUp)
                         this._$contentPanel.height(this._contentPanelHeight);
-else
+                    else
                         this._$contentPanel.height(this._contentPanelHeight - this._$topPanel.outerHeight());
                 }
             };

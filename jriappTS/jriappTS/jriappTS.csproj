@@ -16,7 +16,6 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="app.css" />
     <TypeScriptCompile Include="jriapp_en.ts" />
     <TypeScriptCompile Include="modules\converter.ts" />
     <TypeScriptCompile Include="modules\binding.ts" />
@@ -35,7 +34,6 @@
     <TypeScriptCompile Include="modules\dataform.ts" />
     <TypeScriptCompile Include="baseobj.ts" />
     <TypeScriptCompile Include="globalobj.ts" />
-    <Content Include="default4.htm" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="jriapp.ts" />
@@ -45,8 +43,6 @@
     <TypeScriptCompile Include="modules\consts.ts" />
     <TypeScriptCompile Include="modules\defaults.ts" />
     <TypeScriptCompile Include="modules\errors.ts" />
-    <Content Include="jquery\jquery-1.8.3.js" />
-    <Content Include="jquery\jquery-tests.ts" />
     <Content Include="jquery\jquery.d.ts" />
     <TypeScriptCompile Include="user_modules\gridDemo.ts" />
     <TypeScriptCompile Include="user_modules\common.ts" />
@@ -60,13 +56,6 @@
     <TypeScriptCompile Include="user_modules\filesDemo.ts" />
     <TypeScriptCompile Include="user_modules\folderBrowserSvc.ts" />
     <TypeScriptCompile Include="user_modules\collectionDemo.ts" />
-    <Content Include="web.config" />
-    <None Include="web.Debug.config">
-      <DependentUpon>web.config</DependentUpon>
-    </None>
-    <None Include="web.Release.config">
-      <DependentUpon>web.config</DependentUpon>
-    </None>
   </ItemGroup>
   <ItemGroup />
   <PropertyGroup>

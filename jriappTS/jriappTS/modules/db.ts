@@ -76,7 +76,6 @@ module RIAPP {
                             svcError.message), oper);
                 }
             };
-
             export interface ICachedPage { items: Entity[]; pageIndex: number; }
             export interface IQueryParamInfo {
                 dataType: number;
@@ -123,11 +122,14 @@ module RIAPP {
 
             export interface IParamInfo { parameters: { name: string; value: any; }[]; }
             export interface IMethodInvokeInfo { methodName: string; paramInfo: IParamInfo; }
+            export interface IFieldInfo extends collection.IFieldInfo {
+                dependents: string[];
+            }
             export interface IDbSetInfo {
                 dbSetName: string;
                 enablePaging: boolean;
                 pageSize: number;
-                fieldInfos: collection.IFieldInfo[];
+                fieldInfos: MOD.collection.IFieldInfo[];
             }
             export interface IRefreshRowInfo {
                 dbSetName: string;
@@ -163,9 +165,7 @@ module RIAPP {
             export interface IDbSetOptions extends collection.ICollectionOptions {
                 dbSetName: string;
             }
-            export interface IFieldInfo extends collection.IFieldInfo {
-                dependents: string[];
-            }
+          
             export interface IMetadata {
                 associations: IAssociationInfo[];
                 dbSets: IDbSetInfo[];
@@ -429,7 +429,7 @@ module RIAPP {
                 _isClearPrevData: boolean;
                 _pageSize: number;
                 _pageIndex: number;
-                _params: { [name: string]: any; };
+                _params: any; //{ [name: string]: any; };
                 _loadPageCount: number;
                 _isClearCacheOnEveryLoad: boolean;
                 _dataCache: DataCache;
@@ -624,7 +624,7 @@ module RIAPP {
                     }
                 }
                 get params() { return this._params; }
-                set params(v: { [name: string]: any; }) {
+                set params(v:any) {
                     if (this._params !== v) {
                         this._params = v;
                         this._cacheInvalidated = true;
@@ -708,7 +708,7 @@ module RIAPP {
                     }
                 }
                 _refreshValue(val, fieldName: string, refreshMode: number) {
-                    var self = this, fld: IFieldInfo = self.getFieldInfo(fieldName);
+                    var self = this, fld = <IFieldInfo>self.getFieldInfo(fieldName);
                     if (!fld)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this._dbSetName, fieldName));
                     var stz = self._serverTimezone, newVal, oldVal, oldValOrig,
@@ -858,7 +858,7 @@ module RIAPP {
                 }
                 _setFieldVal(fieldName: string, val) {
                     var validation_error, error, dbSetName = this._dbSetName, coll = this._collection,
-                        ERRS = RIAPP.ERRS, oldV = this._vals[fieldName], newV = val, fld = this.getFieldInfo(fieldName);
+                        ERRS = RIAPP.ERRS, oldV = this._vals[fieldName], newV = val, fld = <IFieldInfo>this.getFieldInfo(fieldName);
                     if (!fld)
                         throw new Error(utils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
                     if (!this._isEditing && !this._isUpdating)
@@ -1122,7 +1122,7 @@ module RIAPP {
                     //for example Customer.Name
                     var assoc: IAssociationInfo, parentDB: DbSet<Entity>, names = fieldName.split('.');
                     if (names.length == 1)
-                        return this._fieldMap[fieldName];
+                        return <IFieldInfo>this._fieldMap[fieldName];
                     else if (names.length > 1) {
                         assoc = this._childAssocMap[names[0]];
                         if (!!assoc) {
@@ -1161,7 +1161,7 @@ module RIAPP {
                     var dcnv = fieldInfo.dateConversion, stz = this.dbContext.serverTimezone;
                     return valueUtils.stringifyValue(val, dcnv, stz);
                 }
-                _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: IFieldInfo) {
+                _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: MOD.collection.IFieldInfo) {
                     var self = this, isChild = true, result: { getFunc: () => any; setFunc: (v: any) => void; } = { getFunc: () => { throw new Error('Function is not implemented'); }, setFunc: function (v: any) { throw new Error('Function is not implemented'); } };
                     var assocs = opts.childAssoc.filter(function (a) {
                         return a.childToParentName == fInfo.fieldName;
@@ -1233,7 +1233,7 @@ module RIAPP {
                     }
                     return result;
                 }
-                _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: IFieldInfo) {
+                _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: MOD.collection.IFieldInfo) {
                     var self = this, result: { getFunc: () => any; } = { getFunc: () => { throw new Error(utils.format("Calculated field:'{0}' is not initialized", fInfo.fieldName)); } };
                     function doDependants(f: IFieldInfo) {
                         var deps: string[] = f.dependentOn.split(',');
@@ -1251,7 +1251,7 @@ module RIAPP {
                     fInfo.isClientOnly = true;
                     fInfo.isReadOnly = true;
                     if (!!fInfo.dependentOn) {
-                        doDependants(fInfo);
+                        doDependants(<IFieldInfo>fInfo);
                     }
                     return result;
                 }
@@ -1358,7 +1358,7 @@ module RIAPP {
                         isPageChanged: false,
                         fn_beforeFillEnd: null
                     }, data);
-                    var self = this, positions = [], fetchedItems:TEntity[] = [], query = this.query;
+                    var self = this, positions:number[] = [], fetchedItems:TEntity[] = [], query = this.query;
                     if (!query)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'query is not null'));
                     var dataCache = query._getCache();
@@ -3762,7 +3762,7 @@ module RIAPP {
                     self._refreshTimeout = setTimeout(function () {
                         if (self._isDestroyCalled)
                             return;
-                        var items = self._association.getChildItems(self._parentItem);
+                        var items = <TEntity[]>self._association.getChildItems(self._parentItem);
                         if (!!self._fn_filter) {
                             items = items.filter(self._fn_filter);
                         }

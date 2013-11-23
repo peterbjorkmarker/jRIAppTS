@@ -32,6 +32,7 @@ var RIAPP;
                 }, self.uniqueID);
 
                 this._dbSet.addOnFill(function (sender, args) {
+                    //when fill is ended
                     if (args.isBegin && args.isPageChanged) {
                         self.raiseEvent('page_changed', {});
                     }
@@ -72,6 +73,7 @@ var RIAPP;
                         self._dataGrid = sender.grid;
                     }
 
+                    //example of binding to dataGrid events
                     if (!!self._dataGrid) {
                         self._dataGrid.addHandler('page_changed', function (s, a) {
                             self._onGridPageChanged();
@@ -275,13 +277,9 @@ var RIAPP;
                 this._selectedTabIndex = null;
                 this._orderStatuses = new RIAPP.DEMODB.KeyValDictionary();
                 this._orderStatuses.fillItems([
-                    { key: 0, val: 'New Order' },
-                    { key: 1, val: 'Status 1' },
-                    { key: 2, val: 'Status 2' },
-                    { key: 3, val: 'Status 3' },
-                    { key: 4, val: 'Status 4' },
-                    { key: 5, val: 'Completed Order' }
-                ], true);
+                    { key: 0, val: 'New Order' }, { key: 1, val: 'Status 1' },
+                    { key: 2, val: 'Status 2' }, { key: 3, val: 'Status 3' },
+                    { key: 4, val: 'Status 4' }, { key: 5, val: 'Completed Order' }], true);
 
                 //loads the data only when customer's row is expanded
                 this._customerVM.addHandler('row_expanded', function (sender, args) {
@@ -307,8 +305,8 @@ var RIAPP;
                     item.Customer = self.currentCustomer;
 
                     //datejs extension
-                    item.OrderDate = (Date).today();
-                    item.DueDate = (Date).today().add(6).days();
+                    item.OrderDate = Date.today();
+                    item.DueDate = Date.today().add(6).days();
                     item.OnlineOrderFlag = false;
                 }, self.uniqueID);
 
@@ -326,6 +324,7 @@ var RIAPP;
                         self._dataGrid = sender.grid;
                     }
 
+                    //example of binding to dataGrid events
                     if (!!self._dataGrid) {
                         self._dataGrid.addHandler('page_changed', function (s, a) {
                             self._onGridPageChanged();
@@ -797,8 +796,8 @@ var RIAPP;
             };
 
             Object.defineProperty(ProductAutoComplete.prototype, "dataContext", {
-                get: //overriden base property
-                function () {
+                //overriden base property
+                get: function () {
                     return this._dataContext;
                 },
                 set: function (v) {
@@ -822,11 +821,11 @@ var RIAPP;
             });
 
             Object.defineProperty(ProductAutoComplete.prototype, "currentSelection", {
-                get: //overriden base property
-                function () {
+                //overriden base property
+                get: function () {
                     if (!!this.gridDataSource.currentItem)
                         return this.gridDataSource.currentItem['ProductID'];
-else
+                    else
                         return null;
                 },
                 enumerable: true,
@@ -957,7 +956,7 @@ else
                 function toText(str) {
                     if (str === null)
                         return '';
-else
+                    else
                         return str;
                 }
                 ;
@@ -1076,8 +1075,7 @@ else
             user_modules: [
                 { name: "COMMON", initFn: RIAPP.COMMON.initModule },
                 { name: "AUTOCOMPLETE", initFn: RIAPP.AUTOCOMPLETE.initModule },
-                { name: "MDETDEMO", initFn: initModule }
-            ]
+                { name: "MDETDEMO", initFn: initModule }]
         };
     })(RIAPP.MDETDEMO || (RIAPP.MDETDEMO = {}));
     var MDETDEMO = RIAPP.MDETDEMO;

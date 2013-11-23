@@ -16,7 +16,6 @@ module RIAPP {
         done(...doneCallbacks: { (res: T): void; }[]): IPromise<any>;
         fail(...failCallbacks: { (res: any): void; }[]): IPromise<any>;
         progress(...progressCallbacks: { (res: any): void; }[]): IPromise<any>;
-        state(): string;
         then(doneCallbacks: (res: T) => any, failCallbacks?: (res: any) => any, progressCallbacks?: (res: any) => any): IPromise<any>;
     }
 
@@ -25,7 +24,6 @@ module RIAPP {
         done(...doneCallbacks: { (): void; }[]): IPromise<any>;
         fail(...failCallbacks: { (res: any): void; }[]): IPromise<any>;
         progress(...progressCallbacks: { (res: any): void; }[]): IPromise<any>;
-        state(): string;
         then(doneCallbacks: () => any, failCallbacks?: (res: any) => any, progressCallbacks?: (res: any) => any): IPromise<any>;
     }
 
@@ -37,6 +35,7 @@ module RIAPP {
         resolve(arg?: T): IDeferred<any>;
         resolveWith(context: any, arg?: T): IDeferred<any>;
         promise(): IPromise<T>;
+        state(): string;
     }
 
     export class Global extends BaseObject implements IExports {

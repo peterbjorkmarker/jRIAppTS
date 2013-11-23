@@ -191,11 +191,11 @@ var RIAPP;
             return Array.isArray(o);
         };
 
-        baseUtils.format = /**
+        /**
         *    Usage:     format('test {0}={1}', 'x', 100);
         *    result:    test x=100
         **/
-        function (format_str) {
+        baseUtils.format = function (format_str) {
             var args = [];
             for (var _i = 0; _i < (arguments.length - 1); _i++) {
                 args[_i] = arguments[_i + 1];
@@ -283,7 +283,7 @@ var RIAPP;
             })) {
                 if (!prepend)
                     arr.push({ fn: fn, ns: ns });
-else
+                else
                     arr.unshift({ fn: fn, ns: ns });
             }
         };
@@ -296,6 +296,7 @@ else
                 ns = '' + namespace;
             var arr, toRemove, i;
 
+            //arguments supplyed name (and optionally namespace)
             if (!!n) {
                 if (!ev[n])
                     return;
@@ -320,6 +321,7 @@ else
                 return;
             }
 
+            //arguments supplyed only namespace
             if (ns != '*') {
                 var keys = Object.keys(ev);
                 keys.forEach(function (n) {
@@ -352,8 +354,9 @@ else
             }
 
             if (!!name) {
+                //property changed
                 if (name != '0*' && RIAPP.baseUtils.startsWith(name, '0')) {
-                    this._raiseEvent('0*', data);
+                    this._raiseEvent('0*', data); //who subscribed for all property changes
                 }
                 if (!ev[name])
                     return;
@@ -514,7 +517,7 @@ var RIAPP;
 
             //this way to attach for correct work in firefox
             self.window.onerror = function (msg, url, linenumber) {
-                if (!!msg && (msg).indexOf("DUMMY_ERROR") > -1) {
+                if (!!msg && msg.indexOf("DUMMY_ERROR") > -1) {
                     return true;
                 }
                 alert('Error message: ' + msg + '\nURL: ' + url + '\nLine Number: ' + linenumber);
@@ -524,6 +527,7 @@ var RIAPP;
         Global.prototype._registerObjectCore = function (root, name, obj, checkOverwrite) {
             var parts = name.split('.'), parent = root, i;
             for (i = 0; i < parts.length - 1; i += 1) {
+                // create a property if it doesn't exist
                 if (!parent[parts[i]]) {
                     parent[parts[i]] = {};
                 }
@@ -583,7 +587,7 @@ var RIAPP;
             if (name == 'load' && self._isReady) {
                 setTimeout(function () {
                     fn.apply(self, [self, {}]);
-                }, 0);
+                }, 0); //when already is ready, immediately raise the event
                 return;
             }
             _super.prototype._addHandler.call(this, name, fn, namespace, prepend);
@@ -723,6 +727,7 @@ var RIAPP;
             }
             var prevLoader = self._getTemplateLoaderCore(name);
             if (!!prevLoader) {
+                //can overwrite previous loader with new one, only if the old did not have loader function and the new has it
                 if ((!prevLoader.fn_loader && !!prevLoader.groupName) && (!loader.groupName && !!loader.fn_loader)) {
                     return self._registerTemplateLoaderCore(name, loader);
                 }
@@ -835,7 +840,7 @@ var RIAPP;
         Global.prototype.reThrow = function (ex, isHandled) {
             if (!!isHandled)
                 this._throwDummy(ex);
-else
+            else
                 throw ex;
         };
         Global.prototype.onModuleLoaded = function (name, module_obj) {
@@ -1039,17 +1044,8 @@ var RIAPP;
                 DATA_FORM: 'data-form'
             };
             consts.DATA_TYPE = {
-                None: 0,
-                String: 1,
-                Bool: 2,
-                Integer: 3,
-                Decimal: 4,
-                Float: 5,
-                DateTime: 6,
-                Date: 7,
-                Time: 8,
-                Guid: 9,
-                Binary: 10
+                None: 0, String: 1, Bool: 2, Integer: 3, Decimal: 4, Float: 5, DateTime: 6, Date: 7, Time: 8,
+                Guid: 9, Binary: 10
             };
             consts.DATE_CONVERSION = { None: 0, ServerLocalToClientLocal: 1, UtcToClientLocal: 2 };
             consts.CHANGE_TYPE = { NONE: 0, ADDED: 1, UPDATED: 2, DELETED: 3 };
@@ -1150,8 +1146,8 @@ var RIAPP;
                     return a === undefined;
                 };
 
-                Checks.isNt = //checking for null type
-                function (a) {
+                //checking for null type
+                Checks.isNt = function (a) {
                     return (a === null || a === undefined);
                 };
 
@@ -1243,8 +1239,8 @@ var RIAPP;
                     return (opts.length > 0 && opts[0].name === RIAPP.global.consts.ELVIEW_NM.DATAFORM);
                 };
 
-                Checks.isInsideDataForm = //check if element is placed inside DataForm
-                function (el) {
+                //check if element is placed inside DataForm
+                Checks.isInsideDataForm = function (el) {
                     if (!el)
                         return false;
                     var parent = el.parentElement;
@@ -1266,11 +1262,11 @@ var RIAPP;
             var StringUtils = (function () {
                 function StringUtils() {
                 }
-                StringUtils.formatNumber = /**
+                /**
                 *    Usage:     formatNumber(123456.789, 2, '.', ',');
                 *    result:    123,456.79
                 **/
-                function (num, decimals, dec_point, thousands_sep) {
+                StringUtils.formatNumber = function (num, decimals, dec_point, thousands_sep) {
                     num = (num + '').replace(/[^0-9+-Ee.]/g, '');
                     var n = !isFinite(+num) ? 0 : +num, prec = !isFinite(+decimals) ? 0 : Math.abs(decimals), sep = (thousands_sep === undefined) ? ',' : thousands_sep, dec = (dec_point === undefined) ? '.' : dec_point, s = [''], toFixedFix = function (n, prec) {
                         var k = Math.pow(10, prec);
@@ -1368,18 +1364,18 @@ var RIAPP;
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'val', val));
                     }
                     var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), parseInt(parts[3], 10), parseInt(parts[4], 10), parseInt(parts[5], 10), (!!parts[6]) ? parseInt(parts[6], 10) : 0);
-                    var DATE_CONVERSION = MOD.consts.DATE_CONVERSION;
+                    var DATE_CONVERSION = RIAPP.MOD.consts.DATE_CONVERSION;
                     var ctz = RIAPP.global.utils.get_timeZoneOffset();
 
                     switch (dtcnv) {
                         case DATE_CONVERSION.None:
                             break;
                         case DATE_CONVERSION.ServerLocalToClientLocal:
-                            dt.setMinutes(dt.getMinutes() + stz);
-                            dt.setMinutes(dt.getMinutes() - ctz);
+                            dt.setMinutes(dt.getMinutes() + stz); //ServerToUTC
+                            dt.setMinutes(dt.getMinutes() - ctz); //UtcToLocal
                             break;
                         case DATE_CONVERSION.UtcToClientLocal:
-                            dt.setMinutes(dt.getMinutes() - ctz);
+                            dt.setMinutes(dt.getMinutes() - ctz); //UtcToLocal
                             break;
                         default:
                             throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dtcnv', dtcnv));
@@ -1391,17 +1387,17 @@ var RIAPP;
                         return null;
                     if (!Checks.isDate(dt))
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dt', dt));
-                    var DATE_CONVERSION = MOD.consts.DATE_CONVERSION;
+                    var DATE_CONVERSION = RIAPP.MOD.consts.DATE_CONVERSION;
                     var ctz = RIAPP.global.utils.get_timeZoneOffset();
                     switch (dtcnv) {
                         case DATE_CONVERSION.None:
                             break;
                         case DATE_CONVERSION.ServerLocalToClientLocal:
-                            dt.setMinutes(dt.getMinutes() + ctz);
-                            dt.setMinutes(dt.getMinutes() - serverTZ);
+                            dt.setMinutes(dt.getMinutes() + ctz); //LocalToUTC
+                            dt.setMinutes(dt.getMinutes() - serverTZ); //UtcToServer
                             break;
                         case DATE_CONVERSION.UtcToClientLocal:
-                            dt.setMinutes(dt.getMinutes() + ctz);
+                            dt.setMinutes(dt.getMinutes() + ctz); //LocalToUTC
                             break;
                         default:
                             throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dtcnv', dtcnv));
@@ -1411,14 +1407,14 @@ var RIAPP;
                 compareVals: function (v1, v2, dataType) {
                     if ((v1 === null && v2 !== null) || (v1 !== null && v2 === null))
                         return false;
-                    var DATA_TYPE = MOD.consts.DATA_TYPE;
+                    var DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE;
                     switch (dataType) {
                         case DATA_TYPE.DateTime:
                         case DATA_TYPE.Date:
                         case DATA_TYPE.Time:
                             if (Checks.isDate(v1) && Checks.isDate(v2))
                                 return v1.getTime() === v2.getTime();
-else
+                            else
                                 return false;
                         default:
                             return v1 === v2;
@@ -1429,11 +1425,11 @@ else
                         return null;
                     if (Checks.isDate(v))
                         return utils.valueUtils.dateToValue(v, dcnv, stz);
-else if (Checks.isArray(v))
+                    else if (Checks.isArray(v))
                         return JSON.stringify(v);
-else if (Checks.isString(v))
+                    else if (Checks.isString(v))
                         return v;
-else
+                    else
                         return JSON.stringify(v);
                 },
                 parseValue: function (v, dataType, dcnv, stz) {
@@ -1441,7 +1437,7 @@ else
 
                     if (v === undefined || v === null)
                         return res;
-                    var DATA_TYPE = MOD.consts.DATA_TYPE;
+                    var DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE;
                     switch (dataType) {
                         case DATA_TYPE.None:
                             res = v;
@@ -1615,7 +1611,7 @@ else
                                     groups.group = task.group;
                                 }
                                 if (groups.group === task.group) {
-                                    groups.arr.push(task);
+                                    groups.arr.push(task); //if the task in the same group, add it to the array
                                 }
                             }
                         }
@@ -1633,9 +1629,9 @@ else
 
                             if (firstWins.lastWins) {
                                 if (found.length == 0)
-                                    found.push(task);
+                                    found.push(task); //add only the last task, the rest just remove from queue
                             } else
-                                found.push(task);
+                                found.push(task); //add all tasks in the group, they will be executed all
                             forRemoval.push(task);
                         }
                     }
@@ -1895,7 +1891,7 @@ else
                 };
                 Utils.prototype.performAjaxGet = function (url) {
                     var req = new XMLHttpRequest();
-                    req.open('GET', url, true);
+                    req.open('GET', url, true); /* always async mode */
                     var deferred = this.createDeferred();
                     req.responseType = 'text';
                     req.onload = function (e) {
@@ -1919,7 +1915,7 @@ else
                 Utils.prototype.extend = function (deep, defaults, options) {
                     if (deep)
                         return this.cloneObj(options, defaults);
-else
+                    else
                         return this.mergeObj(options, defaults);
                 };
                 Utils.prototype.removeNode = function (node) {
@@ -1933,7 +1929,7 @@ else
                     var parent = referenceNode.parentNode;
                     if (parent.lastChild === referenceNode)
                         parent.appendChild(newNode);
-else
+                    else
                         parent.insertBefore(newNode, referenceNode.nextSibling);
                 };
                 Utils.prototype.getProps = function (obj) {
@@ -2002,10 +1998,10 @@ else
                     var res = obj.hasOwnProperty(prop);
                     if (res)
                         return true;
-else {
+                    else {
                         if (Object === obj)
                             return false;
-else {
+                        else {
                             var pr = Object.getPrototypeOf(obj);
                             return this.hasProp(pr, prop);
                         }
@@ -2428,8 +2424,8 @@ var RIAPP;
                 };
 
                 Object.defineProperty(Defaults.prototype, "ajaxTimeOut", {
-                    get: //timeout for server requests in seconds
-                    function () {
+                    //timeout for server requests in seconds
+                    get: function () {
                         return this._ajaxTimeOut;
                     },
                     set: function (v) {
@@ -2443,8 +2439,8 @@ var RIAPP;
                 });
 
                 Object.defineProperty(Defaults.prototype, "dateFormat", {
-                    get: //uses jQuery datepicker format
-                    function () {
+                    //uses jQuery datepicker format
+                    get: function () {
                         return this._datepickerDefaults.dateFormat;
                     },
                     set: function (v) {
@@ -2460,8 +2456,8 @@ var RIAPP;
                 });
 
                 Object.defineProperty(Defaults.prototype, "timeFormat", {
-                    get: //uses datejs format http://code.google.com/p/datejs/
-                    function () {
+                    //uses datejs format http://code.google.com/p/datejs/
+                    get: function () {
                         return this._timeFormat;
                     },
                     set: function (v) {
@@ -2475,8 +2471,8 @@ var RIAPP;
                 });
 
                 Object.defineProperty(Defaults.prototype, "dateTimeFormat", {
-                    get: //uses datejs format http://code.google.com/p/datejs/
-                    function () {
+                    //uses datejs format http://code.google.com/p/datejs/
+                    get: function () {
                         return this._dateTimeFormat;
                     },
                     set: function (v) {
@@ -2524,10 +2520,10 @@ var RIAPP;
                 });
 
                 Object.defineProperty(Defaults.prototype, "imagesPath", {
-                    get: /*
+                    /*
                     path where application images are stored
                     */
-                    function () {
+                    get: function () {
                         return this._imagesPath;
                     },
                     set: function (v) {
@@ -2572,8 +2568,8 @@ var RIAPP;
                 });
 
                 Object.defineProperty(Defaults.prototype, "decPrecision", {
-                    get: //money decimal presision defaults to 2
-                    function () {
+                    //money decimal presision defaults to 2
+                    get: function () {
                         return this._decPrecision;
                     },
                     set: function (v) {
@@ -2628,9 +2624,9 @@ var RIAPP;
                         return obj;
                     if (utils.str.startsWith(prop, '[')) {
                         prop = this.trimQuotes(this.trimBrackets(prop));
-                        if (obj instanceof MOD.collection.BaseDictionary) {
+                        if (obj instanceof RIAPP.MOD.collection.BaseDictionary) {
                             return obj.getItemByKey(prop);
-                        } else if (obj instanceof MOD.collection.BaseCollection) {
+                        } else if (obj instanceof RIAPP.MOD.collection.BaseCollection) {
                             return obj.getItemByPos(parseInt(prop, 10));
                         } else if (utils.check.isArray(obj)) {
                             return obj[parseInt(prop, 10)];
@@ -2655,7 +2651,7 @@ var RIAPP;
                 };
                 Parser.prototype._setPropertyValue = function (obj, prop, val) {
                     if (utils.str.startsWith(prop, '[')) {
-                        prop = this.trimQuotes(this.trimBrackets(prop));
+                        prop = this.trimQuotes(this.trimBrackets(prop)); //remove brakets from string like: [index]
                         if (utils.check.isArray(obj)) {
                             obj[parseInt(prop, 10)] = val;
                         } else
@@ -2680,8 +2676,9 @@ var RIAPP;
                     };
 
                     var checkTokens = function (kv) {
+                        //key starts with this like used in binding expressions this.property
                         if (kv.val === '' && utils.str.startsWith(kv.key, 'this.')) {
-                            kv.val = kv.key.substr(5);
+                            kv.val = kv.key.substr(5); //extract property
                             kv.key = 'targetPath';
                         }
                     };
@@ -2689,13 +2686,15 @@ var RIAPP;
                     for (i = 0; i < val.length; i += 1) {
                         ch = val.charAt(i);
 
+                        //is this content inside '' or "" ?
                         if (ch === "'" || ch === '"') {
                             if (!literal)
                                 literal = ch;
-else if (literal === ch)
+                            else if (literal === ch)
                                 literal = null;
                         }
 
+                        //value inside braces
                         if (!literal && ch === "{" && !isKey) {
                             bracePart = val.substr(i);
                             bracePart = this.getBraceParts(bracePart, true)[0];
@@ -2708,14 +2707,14 @@ else if (literal === ch)
                             if (!!kv.key) {
                                 addNewKeyValPair(kv);
                                 kv = { key: '', val: '' };
-                                isKey = true;
+                                isKey = true; //currently parsing key value
                             }
                         } else if (!literal && (ch === vd1 || ch === vd2)) {
-                            isKey = false;
+                            isKey = false; //begin parsing value
                         } else {
                             if (isKey)
                                 kv.key += ch;
-else
+                            else
                                 kv.val += ch;
                         }
                     }
@@ -2763,10 +2762,11 @@ else
                     for (i = 0; i < val.length; i += 1) {
                         ch = val.charAt(i);
 
+                        //is this content inside '' or "" ?
                         if (ch === "'" || ch === '"') {
                             if (!literal)
                                 literal = ch;
-else if (literal === ch)
+                            else if (literal === ch)
                                 literal = null;
                         }
 
@@ -2813,10 +2813,10 @@ else if (literal === ch)
                         var isString = utils.check.isString(kv.val);
                         if (isString && self.isWithOuterBraces(kv.val))
                             res[kv.key] = self.parseOption(kv.val);
-else {
+                        else {
                             if (isString)
                                 res[kv.key] = self.trimQuotes(kv.val);
-else
+                            else
                                 res[kv.key] = kv.val;
                         }
                     });
@@ -3125,7 +3125,7 @@ var RIAPP;
                             } else {
                                 if (!!this._oldDisplay)
                                     this.el.style.display = this._oldDisplay;
-else
+                                else
                                     this.el.style.display = '';
                             }
                             this.raisePropertyChanged('isVisible');
@@ -3328,7 +3328,7 @@ else
                             this.$el.prop('disabled', !v);
                             if (!v)
                                 this.$el.addClass('disabled');
-else
+                            else
                                 this.$el.removeClass('disabled');
                             this.raisePropertyChanged('isEnabled');
                         }
@@ -3435,7 +3435,7 @@ else
                     var img;
                     if (!!options.img)
                         img = options.img;
-else
+                    else
                         img = consts.LOADER_GIF.NORMAL;
                     this._delay = 400;
                     this._timeOut = null;
@@ -3768,7 +3768,7 @@ else
                     });
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
-                        var args = { keyCode: e.which, value: (e.target).value, isCancel: false };
+                        var args = { keyCode: e.which, value: e.target.value, isCancel: false };
                         self.raiseEvent('keypress', args);
                         if (args.isCancel)
                             e.preventDefault();
@@ -3849,7 +3849,7 @@ else
                     });
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
-                        var args = { keyCode: e.which, value: (e.target).value, isCancel: false };
+                        var args = { keyCode: e.which, value: e.target.value, isCancel: false };
                         self.raiseEvent('keypress', args);
                         if (args.isCancel)
                             e.preventDefault();
@@ -4121,7 +4121,7 @@ else
                         var x = this.$el.val();
                         if (v === null)
                             v = '';
-else
+                        else
                             v = '' + v;
                         if (x !== v) {
                             this.$el.val(v);
@@ -4144,7 +4144,7 @@ else
                         var x = this.$el.text();
                         if (v === null)
                             v = '';
-else
+                        else
                             v = '' + v;
                         if (x !== v) {
                             this.$el.text(v);
@@ -4167,7 +4167,7 @@ else
                         var x = this.$el.html();
                         if (v === null)
                             v = '';
-else
+                        else
                             v = '' + v;
                         if (x !== v) {
                             this.$el.html(v);
@@ -4291,7 +4291,7 @@ else
                         var x = this.$el.html();
                         if (v === null)
                             v = '';
-else
+                        else
                             v = '' + v;
                         if (x !== v) {
                             this.$el.html(v);
@@ -4314,7 +4314,7 @@ else
                         var x = this.$el.text();
                         if (v === null)
                             v = '';
-else
+                        else
                             v = '' + v;
                         if (x !== v) {
                             this.$el.text(v);
@@ -4337,7 +4337,7 @@ else
                         var x = this.href;
                         if (v === null)
                             v = '';
-else
+                        else
                             v = '' + v;
                         if (x !== v) {
                             this.el.href = v;
@@ -4652,7 +4652,7 @@ else
                         }
                     };
                     tabOpts = utils.extend(false, tabOpts, self._tabOpts);
-                    ($el).tabs(tabOpts);
+                    $el.tabs(tabOpts);
                 };
                 TabsElView.prototype._destroyTabs = function () {
                     var $el = this.$el;
@@ -4774,7 +4774,7 @@ var RIAPP;
                             message = message + '\r\n';
                         if (!!err.fieldName)
                             message = message + ' ' + RIAPP.localizable.TEXT.txtField + ': ' + err.fieldName + ' -> ' + err.errors.join(', ');
-else
+                        else
                             message = message + err.errors.join(', ');
                         i += 1;
                     });
@@ -4806,14 +4806,9 @@ else
                 function Binding(options) {
                     _super.call(this);
                     var opts = utils.extend(false, {
-                        target: null,
-                        source: null,
-                        targetPath: null,
-                        sourcePath: null,
-                        mode: binding.BINDING_MODE[1],
-                        converter: null,
-                        converterParam: null,
-                        isSourceFixed: false
+                        target: null, source: null,
+                        targetPath: null, sourcePath: null, mode: binding.BINDING_MODE[1],
+                        converter: null, converterParam: null, isSourceFixed: false
                     }, options);
 
                     if (!opts.target) {
@@ -4832,7 +4827,7 @@ else
                         throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
                     }
 
-                    this._state = null;
+                    this._state = null; //save state - source and target when binding is disabled
                     this._mode = opts.mode;
                     this._converter = opts.converter || RIAPP.global._getConverter('BaseConverter');
                     this._converterParam = opts.converterParam;
@@ -4852,7 +4847,7 @@ else
                     this.target = opts.target;
                     this.source = opts.source;
                     if (!!this._sourceObj && utils.check.isFunction(this._sourceObj.getIErrorNotification)) {
-                        if ((this._sourceObj).getIsHasErrors())
+                        if (this._sourceObj.getIsHasErrors())
                             this._onSrcErrorsChanged();
                     }
                 }
@@ -4894,9 +4889,9 @@ else
                     if (!!tgt && utils.check.isElView(tgt)) {
                         if (!!src && srcPath.length > 0) {
                             var prop = srcPath[srcPath.length - 1];
-                            errors = (src).getFieldErrors(prop);
+                            errors = src.getFieldErrors(prop);
                         }
-                        (tgt).validationErrors = errors;
+                        tgt.validationErrors = errors;
                     }
                 };
                 Binding.prototype._onError = function (error, source) {
@@ -4912,7 +4907,7 @@ else
                         if (restPath.length > 0) {
                             self._checkBounded(null, 'target', lvl, restPath);
                         }
-                        self._parseTgtPath(val, restPath, lvl);
+                        self._parseTgtPath(val, restPath, lvl); //bind and trigger target update
                     };
                     return fn;
                 };
@@ -4964,7 +4959,7 @@ else
                             obj.addOnPropertyChange(path[0], self._getUpdTgtProxy(), this._objId);
                         }
                         if (!!obj && utils.check.isFunction(obj.getIErrorNotification)) {
-                            (obj).addOnErrorsChanged(self._getSrcErrChangedProxy(), self._objId);
+                            obj.addOnErrorsChanged(self._getSrcErrChangedProxy(), self._objId);
                         }
                         this._sourceObj = obj;
                     }
@@ -4977,7 +4972,7 @@ else
                     } else
                         self._parseTgtPath2(obj, path, lvl);
                     if (!!self._targetObj)
-                        self._updateTarget();
+                        self._updateTarget(); //update target (not source!)
                 };
                 Binding.prototype._parseTgtPath2 = function (obj, path, lvl) {
                     var self = this, nextObj;
@@ -5042,7 +5037,7 @@ else
                         return;
                     if (sender === self.source)
                         self.source = null;
-else {
+                    else {
                         self._checkBounded(null, 'source', 0, self._srcPath);
                         setTimeout(function () {
                             if (self._isDestroyCalled)
@@ -5087,7 +5082,7 @@ else {
                             //we only need to invoke _onError in other cases
                             //1) when target is not BaseElView
                             //2) when error is not ValidationError
-                            this._updateTarget();
+                            this._updateTarget(); //resync target with source
                             if (!this._onError(ex, this))
                                 throw ex;
                         }
@@ -5306,7 +5301,7 @@ var RIAPP;
     (function (MOD) {
         (function (collection) {
             //local variables for optimization
-            var utils = RIAPP.global.utils, ValidationError = MOD.binding.ValidationError;
+            var utils = RIAPP.global.utils, ValidationError = RIAPP.MOD.binding.ValidationError;
 
             collection.consts = {
                 DATA_TYPE: RIAPP.MOD.consts.DATA_TYPE,
@@ -5376,7 +5371,7 @@ var RIAPP;
                     if (this.getIsHasErrors()) {
                         return false;
                     }
-                    coll._removeAllErrors(this);
+                    coll._removeAllErrors(this); //revalidate all
                     validation_errors = this._validateAll();
                     if (validation_errors.length > 0) {
                         coll._addErrors(self, validation_errors);
@@ -5761,22 +5756,9 @@ var RIAPP;
                 BaseCollection.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
                     return [
-                        'begin_edit',
-                        'end_edit',
-                        'fill',
-                        'coll_changed',
-                        'item_deleting',
-                        'item_adding',
-                        'item_added',
-                        'validate',
-                        'current_changing',
-                        'page_changing',
-                        'errors_changed',
-                        'status_changed',
-                        'clearing',
-                        'cleared',
-                        'commit_changes'
-                    ].concat(base_events);
+                        'begin_edit', 'end_edit', 'fill', 'coll_changed', 'item_deleting', 'item_adding', 'item_added',
+                        'validate', 'current_changing', 'page_changing', 'errors_changed', 'status_changed', 'clearing',
+                        'cleared', 'commit_changes'].concat(base_events);
                 };
                 BaseCollection.prototype.addOnClearing = function (fn, namespace) {
                     this.addHandler('clearing', fn, namespace);
@@ -5931,7 +5913,7 @@ var RIAPP;
                     this.raiseEvent('validate', args);
                     if (!!args.errors && args.errors.length > 0)
                         return { fieldName: null, errors: args.errors };
-else
+                    else
                         return null;
                 };
                 BaseCollection.prototype._validateItemField = function (item, fieldName) {
@@ -5939,7 +5921,7 @@ else
                     this.raiseEvent('validate', args);
                     if (!!args.errors && args.errors.length > 0)
                         return { fieldName: fieldName, errors: args.errors };
-else
+                    else
                         return null;
                 };
                 BaseCollection.prototype._addErrors = function (item, errors) {
@@ -6295,6 +6277,7 @@ else
                     item.removeHandler(null, null);
                     var test = this.getItemByPos(oldPos), curPos = this._currentPos;
 
+                    //if detached item was current item
                     if (curPos === oldPos) {
                         if (!test) {
                             this._currentPos = curPos - 1;
@@ -6335,9 +6318,9 @@ else
                             bf = b[fieldName];
                             if (af < bf)
                                 res = -1 * mult;
-else if (af > bf)
+                            else if (af > bf)
                                 res = mult;
-else
+                            else
                                 res = 0;
 
                             if (res !== 0)
@@ -6572,6 +6555,7 @@ else
                     this.__coll = coll;
                     this.__isNew = !obj;
 
+                    //if object provided then all properties are exposed from the object
                     if (!!obj)
                         this._vals = obj;
 
@@ -6663,7 +6647,7 @@ else
                 };
                 BaseList.prototype._createNew = function () {
                     var item = new this._itemType(this, null);
-                    item._key = this._getNewKey(null);
+                    item._key = this._getNewKey(null); //client item ID
                     return item;
                 };
 
@@ -6702,13 +6686,8 @@ else
                         }
                     } finally {
                         this._onFillEnd({
-                            isBegin: false,
-                            rowCount: fetchedItems.length,
-                            time: new Date(),
-                            resetUI: !!clearAll,
-                            fetchedItems: fetchedItems,
-                            newItems: newItems,
-                            isPageChanged: false
+                            isBegin: false, rowCount: fetchedItems.length, time: new Date(), resetUI: !!clearAll,
+                            fetchedItems: fetchedItems, newItems: newItems, isPageChanged: false
                         });
                     }
                     this.moveFirst();
@@ -6777,12 +6756,12 @@ else
             function getPropInfos(properties) {
                 var props = null;
                 if (utils.check.isArray(properties)) {
-                    props = (properties).map(function (p) {
+                    props = properties.map(function (p) {
                         return { name: p, dtype: 0 };
                     });
                 } else if (properties instanceof CollectionItem) {
-                    props = (properties).getFieldNames().map(function (p) {
-                        var fldInfo = (properties).getFieldInfo(p);
+                    props = properties.getFieldNames().map(function (p) {
+                        var fldInfo = properties.getFieldInfo(p);
                         return { name: p, dtype: fldInfo.dataType };
                     });
                 } else if (!!properties) {
@@ -6944,7 +6923,7 @@ var RIAPP;
                 Template.prototype._loadTemplate = function () {
                     var self = this, tid = self._templateID, promise, deffered, tmpDiv, asyncLoad = false;
                     if (!!self._promise) {
-                        self._promise.reject('cancel');
+                        self._promise.reject('cancel'); //cancel previous load
                         self._promise = null;
                     }
                     self._unloadTemplate();
@@ -7001,7 +6980,7 @@ var RIAPP;
                             if (!!arg) {
                                 if (!!arg.message)
                                     ex = arg;
-else if (!!arg.statusText) {
+                                else if (!!arg.statusText) {
                                     ex = new Error(arg.statusText);
                                 } else if (utils.check.isString(arg)) {
                                     ex = new Error(arg);
@@ -7174,10 +7153,13 @@ var RIAPP;
                 required: 'ria-required-field'
             };
 
+            
             ;
 
+            
             ;
 
+            
             ;
 
             ;
@@ -7198,13 +7180,9 @@ var RIAPP;
                 var attr = temp_opts[0];
                 if (!attr.template && !!attr.fieldName) {
                     var bindOpt = {
-                        target: null,
-                        source: null,
-                        targetPath: null,
-                        sourcePath: attr.fieldName,
-                        mode: "OneWay",
-                        converter: null,
-                        converterParam: null
+                        target: null, source: null,
+                        targetPath: null, sourcePath: attr.fieldName, mode: "OneWay",
+                        converter: null, converterParam: null
                     };
                     res.bindingInfo = bindOpt;
                     res.displayInfo = attr.css;
@@ -7225,7 +7203,7 @@ var RIAPP;
             ;
 
             function getBindingOptions(app, options, defaultTarget, defaultSource) {
-                var BINDING_MODE = MOD.binding.BINDING_MODE, opts = {
+                var BINDING_MODE = RIAPP.MOD.binding.BINDING_MODE, opts = {
                     mode: BINDING_MODE[1],
                     converterParam: null,
                     converter: null,
@@ -7240,7 +7218,7 @@ var RIAPP;
 
                 if (!options.sourcePath && !!options.to)
                     opts.sourcePath = options.to;
-else if (!!options.sourcePath)
+                else if (!!options.sourcePath)
                     opts.sourcePath = options.sourcePath;
                 if (!!options.targetPath)
                     opts.targetPath = options.targetPath;
@@ -7252,17 +7230,17 @@ else if (!!options.sourcePath)
                 if (!!options.converter) {
                     if (utils.check.isString(options.converter))
                         opts.converter = app.getConverter(options.converter);
-else
+                    else
                         opts.converter = options.converter;
                 }
 
                 if (!fixedTarget)
                     opts.target = defaultTarget;
-else {
+                else {
                     if (utils.check.isString(fixedTarget)) {
                         if (fixedTarget == 'this')
                             opts.target = defaultTarget;
-else {
+                        else {
                             //if no fixed target, then target evaluation starts from this app
                             opts.target = RIAPP.global.parser.resolveBindingSource(app, RIAPP.global.parser._getPathParts(fixedTarget));
                         }
@@ -7365,7 +7343,7 @@ else {
                     var options = getBindingOptions(this.app, bindingInfo, tgt, dctx);
                     if (this.isEditing && this._canBeEdited())
                         options.mode = 'TwoWay';
-else
+                    else
                         options.mode = 'OneWay';
                     if (!!targetPath)
                         options.targetPath = targetPath;
@@ -7635,7 +7613,7 @@ else
                 BoolContent.prototype._createCheckBoxView = function () {
                     var el = RIAPP.global.document.createElement('input');
                     el.setAttribute('type', 'checkbox');
-                    var chbxView = new MOD.baseElView.CheckBoxElView(this.app, el, {});
+                    var chbxView = new RIAPP.MOD.baseElView.CheckBoxElView(this.app, el, {});
                     return chbxView;
                 };
                 BoolContent.prototype._createTargetElement = function () {
@@ -7785,8 +7763,8 @@ else
                 NumberContent.prototype.update = function () {
                     _super.prototype.update.call(this);
                     var self = this;
-                    if (self._tgt instanceof MOD.baseElView.TextBoxElView) {
-                        (self._tgt).addOnKeyPress(function (sender, args) {
+                    if (self._tgt instanceof RIAPP.MOD.baseElView.TextBoxElView) {
+                        self._tgt.addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(args.keyCode, args.value);
                         });
                     }
@@ -7803,7 +7781,7 @@ else
                     if (ch === defaults.decimalPoint) {
                         if (value.length === 0)
                             return false;
-else
+                        else
                             return value.indexOf(ch) < 0;
                     }
                     if (!!ch && ch !== defaults.thousandSep)
@@ -7837,8 +7815,8 @@ else
                 StringContent.prototype.update = function () {
                     _super.prototype.update.call(this);
                     var self = this, fieldInfo = self.getFieldInfo();
-                    if (self._tgt instanceof MOD.baseElView.TextBoxElView) {
-                        (self._tgt).addOnKeyPress(function (sender, args) {
+                    if (self._tgt instanceof RIAPP.MOD.baseElView.TextBoxElView) {
+                        self._tgt.addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(fieldInfo, args.keyCode, args.value);
                         });
                     }
@@ -7888,8 +7866,8 @@ else
                     _super.prototype.update.call(this);
                     var self = this, fieldInfo = self.getFieldInfo();
 
-                    if (self._tgt instanceof MOD.baseElView.TextAreaElView) {
-                        (self._tgt).addOnKeyPress(function (sender, args) {
+                    if (self._tgt instanceof RIAPP.MOD.baseElView.TextAreaElView) {
+                        self._tgt.addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(fieldInfo, args.keyCode, args.value);
                         });
                         var multylnOpt = this._options.options;
@@ -7939,7 +7917,7 @@ else
                         case DATA_TYPE.String:
                             if (options.name == 'multyline')
                                 res = MultyLineContent;
-else
+                            else
                                 res = StringContent;
                             break;
                         case DATA_TYPE.Bool:
@@ -8042,9 +8020,12 @@ var RIAPP;
                     this._errors = null;
                     parent = utils.getParentDataForm(null, this._el);
 
+                    //if this form is nested inside another dataform
+                    //subscribe for parent's destroy event
                     if (!!parent) {
                         self._parentDataForm = app.getElementView(parent);
                         self._parentDataForm.addOnDestroyed(function (sender, args) {
+                            //destroy itself if parent form is destroyed
                             if (!self._isDestroyCalled)
                                 self.destroy();
                         }, self._objId);
@@ -8086,8 +8067,8 @@ var RIAPP;
                     }
                     for (i = 0, len = elViews.length; i < len; i += 1) {
                         vw = elViews[i];
-                        if ((vw instanceof DataFormElView) && !!(vw).form) {
-                            (vw).form.isDisabled = this._isDisabled;
+                        if ((vw instanceof DataFormElView) && !!vw.form) {
+                            vw.form.isDisabled = this._isDisabled;
                         }
                     }
                 };
@@ -8117,9 +8098,10 @@ var RIAPP;
                     var elements = RIAPP.ArrayHelper.fromList(this._el.querySelectorAll(self._DATA_CONTENT_SELECTOR)), isEditing = this.isEditing;
 
                     elements.forEach(function (el) {
+                        //check if the element inside nested dataform
                         if (utils.getParentDataForm(self._el, el) !== self._el)
                             return;
-                        var attr = el.getAttribute(consts.DATA_ATTR.DATA_CONTENT), op = MOD.baseContent.parseContentAttr(attr);
+                        var attr = el.getAttribute(consts.DATA_ATTR.DATA_CONTENT), op = RIAPP.MOD.baseContent.parseContentAttr(attr);
                         if (!!op.fieldName && !op.fieldInfo) {
                             if (!supportsGetFieldInfo) {
                                 throw new Error(RIAPP.ERRS.ERR_DCTX_HAS_NO_FIELDINFO);
@@ -8158,7 +8140,7 @@ var RIAPP;
                     }
 
                     if (this._supportErrNotify) {
-                        (dataContext).addOnErrorsChanged(function (sender, args) {
+                        dataContext.addOnErrorsChanged(function (sender, args) {
                             self._onDSErrorsChanged();
                         }, self._objId);
                     }
@@ -8237,14 +8219,14 @@ var RIAPP;
 
                             if (!!dataContext) {
                                 this._supportEdit = utils.check.isEditable(dataContext);
-                                this._supportErrNotify = MOD.binding._checkIsErrorNotification(dataContext);
+                                this._supportErrNotify = RIAPP.MOD.binding._checkIsErrorNotification(dataContext);
                             }
                             this._bindDS();
                             this._updateContent();
                             this.raisePropertyChanged('dataContext');
                             if (!!dataContext) {
-                                if (this._supportEdit && this._isEditing !== (dataContext).isEditing) {
-                                    this.isEditing = (dataContext).isEditing;
+                                if (this._supportEdit && this._isEditing !== dataContext.isEditing) {
+                                    this.isEditing = dataContext.isEditing;
                                 }
                                 if (this._supportErrNotify) {
                                     this._onDSErrorsChanged();
@@ -8347,7 +8329,7 @@ var RIAPP;
                         info.errors.forEach(function (str) {
                             if (!!res)
                                 res = res + ' -> ' + str;
-else
+                            else
                                 res = str;
                         });
                         tip.push('<li>' + res + '</li>');
@@ -8366,7 +8348,7 @@ else
                         $img = RIAPP.global.$('<img name="error_info" alt="error_info" class="error-info" />');
                         $el.prepend($img);
                         $img.get(0).src = image_src;
-                        utils.addToolTip($img, this._getErrorTipInfo(errors), MOD.baseElView.css.errorTip);
+                        utils.addToolTip($img, this._getErrorTipInfo(errors), RIAPP.MOD.baseElView.css.errorTip);
                         this._setFieldError(true);
                     } else {
                         $el.children('img[name="error_info"]').remove();
@@ -8418,7 +8400,7 @@ else
                     configurable: true
                 });
                 return DataFormElView;
-            })(MOD.baseElView.BaseElView);
+            })(RIAPP.MOD.baseElView.BaseElView);
             dataform.DataFormElView = DataFormElView;
 
             RIAPP.global.registerType('DataFormElView', DataFormElView);
@@ -8434,16 +8416,12 @@ var RIAPP;
     (function (MOD) {
         (function (db) {
             //local variables for optimization
-            var utils = RIAPP.global.utils, consts = RIAPP.global.consts, ValidationError = MOD.binding.ValidationError;
-            var valueUtils = RIAPP.MOD.utils.valueUtils, COLL_CHANGE_TYPE = RIAPP.MOD.collection.consts.COLL_CHANGE_TYPE, CHANGE_TYPE = RIAPP.MOD.consts.CHANGE_TYPE, FLAGS = { None: 0, Changed: 1, Setted: 2, Refreshed: 4 }, FILTER_TYPE = { Equals: 0, Between: 1, StartsWith: 2, EndsWith: 3, Contains: 4, Gt: 5, Lt: 6, GtEq: 7, LtEq: 8, NotEq: 9 }, SORT_ORDER = MOD.collection.consts.SORT_ORDER;
+            var utils = RIAPP.global.utils, consts = RIAPP.global.consts, ValidationError = RIAPP.MOD.binding.ValidationError;
+            var valueUtils = RIAPP.MOD.utils.valueUtils, COLL_CHANGE_TYPE = RIAPP.MOD.collection.consts.COLL_CHANGE_TYPE, CHANGE_TYPE = RIAPP.MOD.consts.CHANGE_TYPE, FLAGS = { None: 0, Changed: 1, Setted: 2, Refreshed: 4 }, FILTER_TYPE = { Equals: 0, Between: 1, StartsWith: 2, EndsWith: 3, Contains: 4, Gt: 5, Lt: 6, GtEq: 7, LtEq: 8, NotEq: 9 }, SORT_ORDER = RIAPP.MOD.collection.consts.SORT_ORDER;
             var DATA_OPER = { SUBMIT: 'submit', LOAD: 'load', INVOKE: 'invoke', REFRESH: 'refresh', INIT: 'initDbContext' };
             var DATA_SVC_METH = {
-                Invoke: 'InvokeMethod',
-                LoadData: 'GetItems',
-                GetMetadata: 'GetMetadata',
-                GetPermissions: 'GetPermissions',
-                Submit: 'SaveChanges',
-                Refresh: 'RefreshItem'
+                Invoke: 'InvokeMethod', LoadData: 'GetItems', GetMetadata: 'GetMetadata', GetPermissions: 'GetPermissions',
+                Submit: 'SaveChanges', Refresh: 'RefreshItem'
             };
             var REFRESH_MODE = { NONE: 0, RefreshCurrent: 1, MergeIntoCurrent: 2, CommitChanges: 3 };
             var DELETE_ACTION = { NoAction: 0, Cascade: 1, SetNulls: 2 };
@@ -8611,6 +8589,7 @@ var RIAPP;
                         above = this._pageCount - 1;
                     }
 
+                    //once again check for previous cached range
                     if (below <= prev) {
                         above += (prev - below + 1);
                         below += (prev - below + 1);
@@ -9191,6 +9170,7 @@ var RIAPP;
                                     self._origVals[fieldName] = newVal;
                                 }
                                 if (oldValOrig === undefined || valueUtils.compareVals(oldValOrig, oldVal, dataType)) {
+                                    //unmodified
                                     if (!valueUtils.compareVals(newVal, oldVal, dataType)) {
                                         self._vals[fieldName] = newVal;
                                         self._onFieldChanged(fld);
@@ -9241,9 +9221,9 @@ var RIAPP;
                         var newVal = dbSet._getStrValue(self._vals[name], fld), oldV = self._origVals === null ? newVal : dbSet._getStrValue(self._origVals[name], fld), isChanged = (oldV !== newVal);
                         if (isChanged)
                             return { val: newVal, orig: oldV, fieldName: name, flags: (FLAGS.Changed | FLAGS.Setted) };
-else if (fld.isPrimaryKey > 0 || fld.isRowTimeStamp || fld.isNeedOriginal)
+                        else if (fld.isPrimaryKey > 0 || fld.isRowTimeStamp || fld.isNeedOriginal)
                             return { val: newVal, orig: oldV, fieldName: name, flags: FLAGS.Setted };
-else
+                        else
                             return { val: null, orig: null, fieldName: name, flags: FLAGS.None };
                     });
 
@@ -9497,7 +9477,7 @@ else
                             this.__changeType = v;
                             if (v !== CHANGE_TYPE.NONE)
                                 this._dbSet._addToChanged(this);
-else
+                            else
                                 this._dbSet._removeFromChanged(this._key);
                             this._dbSet._onItemStatusChanged(this, oldChangeType);
                         }
@@ -9592,7 +9572,7 @@ else
                     configurable: true
                 });
                 return Entity;
-            })(MOD.collection.CollectionItem);
+            })(RIAPP.MOD.collection.CollectionItem);
             db.Entity = Entity;
 
             var DbSet = (function (_super) {
@@ -9633,7 +9613,7 @@ else
                     var assoc, parentDB, names = fieldName.split('.');
                     if (names.length == 1)
                         return this._fieldMap[fieldName];
-else if (names.length > 1) {
+                    else if (names.length > 1) {
                         assoc = this._childAssocMap[names[0]];
                         if (!!assoc) {
                             parentDB = this.dbContext.getDbSet(assoc.parentDbSetName);
@@ -9807,7 +9787,7 @@ else if (names.length > 1) {
                                 }
                                 if (!item)
                                     item = new entityType(self, row, fieldNames);
-else {
+                                else {
                                     row.values.forEach(function (val, index) {
                                         item._refreshValue(val, fieldNames[index], RM);
                                     });
@@ -9830,7 +9810,7 @@ else {
                                 var pg = dataCache.getCachedPage(query.pageIndex);
                                 if (!!pg)
                                     created_items = pg.items;
-else
+                                else
                                     created_items = [];
                             }
                         }
@@ -9857,13 +9837,8 @@ else
                         }
                     } finally {
                         this._onFillEnd({
-                            isBegin: false,
-                            rowCount: fetchedItems.length,
-                            time: new Date(),
-                            resetUI: clearAll,
-                            fetchedItems: fetchedItems,
-                            newItems: newItems,
-                            isPageChanged: data.isPageChanged
+                            isBegin: false, rowCount: fetchedItems.length, time: new Date(), resetUI: clearAll,
+                            fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged
                         });
                     }
                     this.moveFirst();
@@ -9901,13 +9876,8 @@ else
                         }
                     } finally {
                         this._onFillEnd({
-                            isBegin: false,
-                            rowCount: fetchedItems.length,
-                            time: new Date(),
-                            resetUI: true,
-                            fetchedItems: fetchedItems,
-                            newItems: fetchedItems,
-                            isPageChanged: data.isPageChanged
+                            isBegin: false, rowCount: fetchedItems.length, time: new Date(), resetUI: true,
+                            fetchedItems: fetchedItems, newItems: fetchedItems, isPageChanged: data.isPageChanged
                         });
                     }
                     this.moveFirst();
@@ -10061,7 +10031,7 @@ else
                     this._items.forEach(function (item) {
                         if (item._isCached)
                             item.removeHandler(null, null);
-else
+                        else
                             item.destroy();
                     });
                 };
@@ -10072,7 +10042,7 @@ else
                         for (var i = 0; i < fieldNames.length; i += 1) {
                             if (i == 0)
                                 query.orderBy(fieldNames[i], sortOrder);
-else
+                            else
                                 query.thenBy(fieldNames[i], sortOrder);
                         }
 
@@ -10234,7 +10204,7 @@ else
                     configurable: true
                 });
                 return DbSet;
-            })(MOD.collection.BaseCollection);
+            })(RIAPP.MOD.collection.BaseCollection);
             db.DbSet = DbSet;
 
             //implements lazy initialization pattern for creating DbSet's instances
@@ -10348,7 +10318,7 @@ else
                     methods.forEach(function (info) {
                         if (info.isQuery)
                             self._queryInf[info.methodName] = info;
-else {
+                        else {
                             //service method info
                             self._initMethod(info);
                         }
@@ -10454,6 +10424,7 @@ else {
                         }
                         value = null;
 
+                        //byte arrays are optimized for serialization
                         if (pinfo.dataType == consts.DATA_TYPE.Binary && utils.check.isArray(val)) {
                             value = JSON.stringify(val);
                         } else if (utils.check.isArray(val)) {
@@ -10699,7 +10670,7 @@ else {
                     var er;
                     if (ex instanceof DataOperationError)
                         er = ex;
-else
+                    else
                         er = new DataOperationError(ex, oper);
                     return this._onError(er, this);
                 };
@@ -10834,6 +10805,7 @@ else
                                             var allRows, getDataResult = data[0];
                                             var hasIncluded = !!getDataResult.included && getDataResult.included.length > 0;
                                             try  {
+                                                //rows was loaded separately from GetDataResult
                                                 if (data.length > 1) {
                                                     allRows = data[1];
                                                     if (allRows && allRows.length > 0) {
@@ -10884,6 +10856,7 @@ else
 
                 //returns promise
                 DbContext.prototype.submitChanges = function () {
+                    //dont submit when the submit already in the queue
                     if (!!this._pendingSubmit) {
                         //return promise for the already enqueued submit
                         return this._pendingSubmit.deferred.promise();
@@ -10915,7 +10888,7 @@ else
                         try  {
                             self.isBusy = true;
                             self.isSubmiting = true;
-                            self._pendingSubmit = null;
+                            self._pendingSubmit = null; //allow to post new submit
                             url = self._getUrl(DATA_SVC_METH.Submit);
                             changeSet = self._getChanges();
 
@@ -11334,7 +11307,7 @@ else
                     } else {
                         if (!isCanceled)
                             self._checkParentFKey(item);
-else
+                        else
                             self._saveParentFKey = null;
                     }
                 };
@@ -11472,7 +11445,7 @@ else
                             var res = self._changed[key];
                             if (!res)
                                 res = 1;
-else
+                            else
                                 res = res | 1;
                             self._changed[key] = res;
                         });
@@ -11480,7 +11453,7 @@ else
                             var res = self._changed[key];
                             if (!res)
                                 res = 2;
-else
+                            else
                                 res = res | 2;
                             self._changed[key] = res;
                         });
@@ -11526,7 +11499,7 @@ else
                     } else {
                         if (!isCanceled)
                             self._checkChildFKey(item);
-else {
+                        else {
                             self._saveChildFKey = null;
                         }
                     }
@@ -11748,7 +11721,7 @@ else {
                     var obj = this._parentMap[fkey];
                     if (!!obj)
                         return obj;
-else
+                    else
                         return null;
                 };
                 Association.prototype.refreshParentMap = function () {
@@ -11848,7 +11821,7 @@ else
                         fn_itemsProvider: null
                     }, options);
 
-                    if (!opts.dataSource || !(opts.dataSource instanceof MOD.collection.BaseCollection))
+                    if (!opts.dataSource || !(opts.dataSource instanceof RIAPP.MOD.collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_DATASRC_INVALID);
                     if (!opts.fn_filter || !utils.check.isFunction(opts.fn_filter))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_FILTER_INVALID);
@@ -11948,18 +11921,13 @@ else
                         }
                     } finally {
                         this._onFillEnd({
-                            isBegin: false,
-                            rowCount: fetchedItems.length,
-                            time: new Date(),
-                            resetUI: !!data.clear,
-                            fetchedItems: fetchedItems,
-                            newItems: newItems,
-                            isPageChanged: data.isPageChanged
+                            isBegin: false, rowCount: fetchedItems.length, time: new Date(), resetUI: !!data.clear,
+                            fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged
                         });
                     }
                     if (!!data.clear)
                         this.totalCount = data.items.length;
-else
+                    else
                         this.totalCount = this.totalCount + newItems.length;
                     this.moveFirst();
                     return newItems;
@@ -12008,7 +11976,7 @@ else
                         this._isDSFilling = false;
                         if (args.resetUI)
                             this._refresh(false);
-else {
+                        else {
                             if (!!self._fn_filter) {
                                 items = items.filter(self._fn_filter);
                             }
@@ -12180,6 +12148,7 @@ else {
                     this._onRemoved(item, oldPos);
                     var test = this.getItemByPos(oldPos), curPos = this._currentPos;
 
+                    //if detached item was current item
                     if (curPos === oldPos) {
                         if (!test) {
                             this._currentPos = curPos - 1;
@@ -12204,9 +12173,9 @@ else {
                             bf = parser.resolvePath(b, fieldName);
                             if (af < bf)
                                 res = -1 * mult;
-else if (af > bf)
+                            else if (af > bf)
                                 res = mult;
-else
+                            else
                                 res = 0;
 
                             if (res !== 0)
@@ -12305,7 +12274,7 @@ else
                     configurable: true
                 });
                 return DataView;
-            })(MOD.collection.BaseCollection);
+            })(RIAPP.MOD.collection.BaseCollection);
             db.DataView = DataView;
 
             var ChildDataView = (function (_super) {
@@ -12335,7 +12304,7 @@ else
                             return false;
                         if (!save_fn_filter)
                             return true;
-else
+                        else
                             return save_fn_filter(item);
                     };
                     _super.call(this, opts);
@@ -12447,7 +12416,7 @@ var RIAPP;
                     this._el = el;
                     this._$el = RIAPP.global.$(this._el);
                     this._objId = 'lst' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof MOD.collection.BaseCollection))
+                    if (!!dataSource && !(dataSource instanceof RIAPP.MOD.collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_LISTBOX_DATASRC_INVALID);
                     this._$el.on('change.' + this._objId, function (e) {
                         e.stopPropagation();
@@ -12482,7 +12451,7 @@ var RIAPP;
                 ListBox.prototype._onChanged = function () {
                     var op = null, key, data;
                     if (this._el.selectedIndex >= 0) {
-                        op = (this._el.options)[this._el.selectedIndex];
+                        op = this._el.options[this._el.selectedIndex];
                         key = op.value;
                         data = this._keyMap[key];
                     }
@@ -12519,7 +12488,7 @@ var RIAPP;
                         return '' + this._getValue(item);
                 };
                 ListBox.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, CH_T = MOD.collection.consts.COLL_CHANGE_TYPE, data;
+                    var self = this, CH_T = RIAPP.MOD.collection.consts.COLL_CHANGE_TYPE, data;
                     switch (args.change_type) {
                         case CH_T.RESET:
                             if (!this._isDSFilling)
@@ -12687,8 +12656,8 @@ var RIAPP;
                     if (!!first) {
                         if (this._el.options.length < 2)
                             this._el.add(oOption, null);
-else
-                            this._el.add(oOption, (this._el).options[1]);
+                        else
+                            this._el.add(oOption, this._el.options[1]);
                     } else
                         this._el.add(oOption, null);
                     return oOption;
@@ -12769,7 +12738,7 @@ else
                     var data = this._valMap[val];
                     if (!data)
                         return '';
-else
+                    else
                         return data.op.text;
                 };
                 ListBox.prototype._setIsEnabled = function (el, v) {
@@ -12805,7 +12774,7 @@ else
                     get: function () {
                         if (this._selectedValue === undefined)
                             return this._getRealValue(this.selectedItem);
-else
+                        else
                             return this._selectedValue;
                     },
                     set: function (v) {
@@ -12997,7 +12966,7 @@ else
                     configurable: true
                 });
                 return SelectElView;
-            })(MOD.baseElView.BaseElView);
+            })(RIAPP.MOD.baseElView.BaseElView);
             listbox.SelectElView = SelectElView;
 
             var LookupContent = (function (_super) {
@@ -13085,7 +13054,7 @@ else
                         return this._spanView;
                     }
                     var el = RIAPP.global.document.createElement('span'), displayInfo = this._getDisplayInfo();
-                    var spanView = new MOD.baseElView.SpanElView(this.app, el, {});
+                    var spanView = new RIAPP.MOD.baseElView.SpanElView(this.app, el, {});
                     if (!!displayInfo) {
                         if (!!displayInfo.displayCss) {
                             spanView.$el.addClass(displayInfo.displayCss);
@@ -13144,32 +13113,22 @@ else
                         return null;
 
                     var options = {
-                        target: this,
-                        source: this._dctx,
-                        targetPath: 'value',
-                        sourcePath: this._options.fieldName,
-                        mode: "OneWay",
-                        converter: null,
-                        converterParam: null,
-                        isSourceFixed: false
+                        target: this, source: this._dctx,
+                        targetPath: 'value', sourcePath: this._options.fieldName, mode: "OneWay",
+                        converter: null, converterParam: null, isSourceFixed: false
                     };
-                    return new MOD.binding.Binding(options);
+                    return new RIAPP.MOD.binding.Binding(options);
                 };
                 LookupContent.prototype._bindToList = function (selectView) {
                     if (!this._options.fieldName)
                         return null;
 
                     var options = {
-                        target: selectView,
-                        source: this._dctx,
-                        targetPath: 'selectedValue',
-                        sourcePath: this._options.fieldName,
-                        mode: "TwoWay",
-                        converter: null,
-                        converterParam: null,
-                        isSourceFixed: false
+                        target: selectView, source: this._dctx,
+                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: "TwoWay",
+                        converter: null, converterParam: null, isSourceFixed: false
                     };
-                    return new MOD.binding.Binding(options);
+                    return new RIAPP.MOD.binding.Binding(options);
                 };
                 LookupContent.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -13204,7 +13163,7 @@ else
                     configurable: true
                 });
                 return LookupContent;
-            })(MOD.baseContent.BindingContent);
+            })(RIAPP.MOD.baseContent.BindingContent);
             listbox.LookupContent = LookupContent;
 
             var ContentFactory = (function () {
@@ -13218,7 +13177,7 @@ else
                     }
                     if (!!this._nextFactory)
                         return this._nextFactory.getContentType(options);
-else
+                    else
                         throw new Error(RIAPP.ERRS.ERR_BINDING_CONTENT_NOT_FOUND);
                 };
 
@@ -13352,7 +13311,7 @@ var RIAPP;
                     this._template = this._createTemplate(dctx);
                     this._$template = RIAPP.global.$(this._template.el);
                     RIAPP.global.document.body.appendChild(this._template.el);
-                    (this._$template).dialog(this._options);
+                    this._$template.dialog(this._options);
                     this._dialogCreated = true;
                     if (!!this._fn_OnTemplateCreated) {
                         this._fn_OnTemplateCreated(this._template);
@@ -13363,7 +13322,7 @@ var RIAPP;
                     return ['close', 'refresh'].concat(base_events);
                 };
                 DataEditDialog.prototype._createTemplate = function (dcxt) {
-                    var t = new MOD.template.Template(this._app, this._templateID);
+                    var t = new RIAPP.MOD.template.Template(this._app, this._templateID);
 
                     //create template in disabled state
                     t.isDisabled = true;
@@ -13447,7 +13406,7 @@ var RIAPP;
 
                     if (this._isEditable)
                         canCommit = this._dataContext.endEdit();
-else
+                    else
                         canCommit = true;
 
                     if (canCommit) {
@@ -13465,6 +13424,7 @@ else
                                 self.hide();
                             });
                             promise.fail(function () {
+                                //resume editing if fn_onEndEdit callback returns false in isOk argument
                                 if (self._isEditable)
                                     self._dataContext.beginEdit();
                             });
@@ -13524,19 +13484,19 @@ else
                 };
                 DataEditDialog.prototype.show = function () {
                     this._result = null;
-                    (this._$template).dialog("option", "buttons", this._getButtons());
+                    this._$template.dialog("option", "buttons", this._getButtons());
                     this._template.isDisabled = false;
                     this._onShow();
-                    (this._$template).dialog("open");
+                    this._$template.dialog("open");
                 };
                 DataEditDialog.prototype.hide = function () {
-                    (this._$template).dialog("close");
+                    this._$template.dialog("close");
                 };
                 DataEditDialog.prototype.getOption = function (name) {
-                    return (this._$template).dialog('option', name);
+                    return this._$template.dialog('option', name);
                 };
                 DataEditDialog.prototype.setOption = function (name, value) {
-                    (this._$template).dialog('option', name, value);
+                    this._$template.dialog('option', name, value);
                 };
                 DataEditDialog.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -13720,7 +13680,7 @@ var RIAPP;
                     return 'RowSelectContent';
                 };
                 return RowSelectContent;
-            })(MOD.baseContent.BoolContent);
+            })(RIAPP.MOD.baseContent.BoolContent);
             datagrid.RowSelectContent = RowSelectContent;
 
             var BaseCell = (function (_super) {
@@ -14047,13 +14007,9 @@ var RIAPP;
                     var $el = RIAPP.global.$(this.el);
                     $el.addClass(datagrid.css.rowSelector);
                     var bindOpt = {
-                        target: null,
-                        source: null,
-                        targetPath: null,
-                        sourcePath: 'isSelected',
-                        mode: 'TwoWay',
-                        converter: null,
-                        converterParam: null
+                        target: null, source: null,
+                        targetPath: null, sourcePath: 'isSelected', mode: 'TwoWay',
+                        converter: null, converterParam: null
                     }, op = { fieldName: 'isSelected', bindingInfo: bindOpt, displayInfo: null };
                     this._content = new RowSelectContent(this.grid.app, this._div, op, this.row, true);
                 };
@@ -14086,7 +14042,7 @@ var RIAPP;
                     var details_id = options.details_id;
                     if (!details_id)
                         return;
-                    this._template = new MOD.template.Template(this.grid.app, details_id);
+                    this._template = new RIAPP.MOD.template.Template(this.grid.app, details_id);
                     this._el.colSpan = this.grid.columns.length;
                     this._el.appendChild(this._template.el);
                     this._row.el.appendChild(this._el);
@@ -14206,7 +14162,7 @@ var RIAPP;
                     var self = this;
                     self._cells.forEach(function (cell) {
                         if (cell instanceof DataCell) {
-                            (cell)._beginEdit();
+                            cell._beginEdit();
                         }
                     });
                     if (!!this._actionsCell)
@@ -14216,7 +14172,7 @@ var RIAPP;
                     var self = this;
                     self._cells.forEach(function (cell) {
                         if (cell instanceof DataCell) {
-                            (cell)._endEdit(isCanceled);
+                            cell._endEdit(isCanceled);
                         }
                     });
                     if (!!this._actionsCell)
@@ -14278,7 +14234,7 @@ var RIAPP;
                 Row.prototype._setState = function (css) {
                     this.cells.forEach(function (cell) {
                         if (cell instanceof DataCell) {
-                            (cell)._setState(css);
+                            cell._setState(css);
                         }
                     });
                 };
@@ -14954,7 +14910,7 @@ var RIAPP;
                 __extends(DataGrid, _super);
                 function DataGrid(app, el, dataSource, options) {
                     _super.call(this);
-                    if (!!dataSource && !(dataSource instanceof MOD.collection.BaseCollection))
+                    if (!!dataSource && !(dataSource instanceof RIAPP.MOD.collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
                     this._options = utils.extend(false, {
                         isUseScrollInto: true,
@@ -15007,12 +14963,8 @@ var RIAPP;
                 DataGrid.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
                     return [
-                        'row_expanded',
-                        'row_selected',
-                        'page_changed',
-                        'row_state_changed',
-                        'cell_dblclicked'
-                    ].concat(base_events);
+                        'row_expanded', 'row_selected', 'page_changed', 'row_state_changed',
+                        'cell_dblclicked'].concat(base_events);
                 };
                 DataGrid.prototype.addOnRowExpanded = function (fn, namespace) {
                     this.addHandler('row_expanded', fn, namespace);
@@ -15064,11 +15016,11 @@ var RIAPP;
                     var temp_opts = RIAPP.global.parser.parseOptions(column_attr);
                     if (temp_opts.length > 0)
                         options = utils.extend(false, defaultOp, temp_opts[0]);
-else
+                    else
                         options = defaultOp;
 
                     if (!!content_attr) {
-                        options.content = MOD.baseContent.parseContentAttr(content_attr);
+                        options.content = RIAPP.MOD.baseContent.parseContentAttr(content_attr);
                         if (!options.sortMemberName && !!options.content.fieldName)
                             options.sortMemberName = options.content.fieldName;
                     }
@@ -15141,12 +15093,12 @@ else
                         cur = ds.currentItem;
                     if (!cur)
                         this._updateCurrent(null, false);
-else {
+                    else {
                         this._updateCurrent(this._rowMap[cur._key], false);
                     }
                 };
                 DataGrid.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, row, CH_T = MOD.collection.consts.COLL_CHANGE_TYPE, items = args.items;
+                    var self = this, row, CH_T = RIAPP.MOD.collection.consts.COLL_CHANGE_TYPE, items = args.items;
                     switch (args.change_type) {
                         case CH_T.RESET:
                             if (!this._isDSFilling)
@@ -15183,7 +15135,7 @@ else {
                         self._isDSFilling = false;
                         if (args.resetUI)
                             self._refreshGrid();
-else
+                        else
                             self._appendItems(args.newItems);
 
                         if (!!args.isPageChanged) {
@@ -15232,6 +15184,7 @@ else
                         return;
                     this._updateCurrent(row, true);
 
+                    //row.isExpanded = true;
                     if (this._options.isHandleAddNew && !args.isAddNewHandled) {
                         args.isAddNewHandled = this.showEditDialog();
                     }
@@ -15266,7 +15219,7 @@ else
                 DataGrid.prototype._resetColumnsSort = function () {
                     this.columns.forEach(function (col) {
                         if (col instanceof DataColumn) {
-                            (col).sortOrder = null;
+                            col.sortOrder = null;
                         }
                     });
                 };
@@ -15319,7 +15272,7 @@ else
                     }
                     if (row.isDeleted)
                         return null;
-else
+                    else
                         return row;
                 };
                 DataGrid.prototype._removeRow = function (row) {
@@ -15503,6 +15456,12 @@ else
                             }
                             break;
                         case Keys.pageDown:
+                            /*
+                            if (!!this._currentRow && !!this._currentRow.expanderCell && !this._currentRow.isExpanded) {
+                            this._currentRow.expanderCell._onCellClicked();
+                            event.preventDefault();
+                            }
+                            */
                             if (ds.pageIndex > 0)
                                 ds.pageIndex = ds.pageIndex - 1;
                             break;
@@ -15681,7 +15640,7 @@ else
                         editorOptions = utils.extend(false, {
                             dataContext: item
                         }, this._options.editor);
-                        this._dialog = new MOD.datadialog.DataEditDialog(this.app, editorOptions);
+                        this._dialog = new RIAPP.MOD.datadialog.DataEditDialog(this.app, editorOptions);
                     } else
                         this._dialog.dataContext = item;
                     this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._isNew;
@@ -16016,7 +15975,7 @@ else
                     configurable: true
                 });
                 return GridElView;
-            })(MOD.baseElView.BaseElView);
+            })(RIAPP.MOD.baseElView.BaseElView);
             datagrid.GridElView = GridElView;
 
             RIAPP.global.registerElView('table', GridElView);
@@ -16048,7 +16007,7 @@ var RIAPP;
                     this._el = el;
                     this._$el = RIAPP.global.$(this._el);
                     this._objId = 'pgr' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof MOD.collection.BaseCollection))
+                    if (!!dataSource && !(dataSource instanceof RIAPP.MOD.collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_PAGER_DATASRC_INVALID);
                     this._dataSource = dataSource;
                     this._showTip = utils.check.isNt(options.showTip) ? true : !!options.showTip;
@@ -16544,7 +16503,7 @@ var RIAPP;
                     configurable: true
                 });
                 return PagerElView;
-            })(MOD.baseElView.BaseElView);
+            })(RIAPP.MOD.baseElView.BaseElView);
             pager.PagerElView = PagerElView;
 
             RIAPP.global.registerElView('pager', PagerElView);
@@ -16574,7 +16533,7 @@ var RIAPP;
                     this._el = el;
                     this._$el = RIAPP.global.$(this._el);
                     this._objId = 'pnl' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof MOD.collection.BaseCollection))
+                    if (!!dataSource && !(dataSource instanceof RIAPP.MOD.collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_STACKPNL_DATASRC_INVALID);
                     this._dataSource = dataSource;
                     this._isDSFilling = false;
@@ -16663,12 +16622,12 @@ var RIAPP;
                     var ds = this._dataSource, cur = ds.currentItem;
                     if (!cur)
                         this._updateCurrent(null, false);
-else {
+                    else {
                         this._updateCurrent(cur, true);
                     }
                 };
                 StackPanel.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, CH_T = MOD.collection.consts.COLL_CHANGE_TYPE, items = args.items;
+                    var self = this, CH_T = RIAPP.MOD.collection.consts.COLL_CHANGE_TYPE, items = args.items;
                     switch (args.change_type) {
                         case CH_T.RESET:
                             if (!this._isDSFilling)
@@ -16703,7 +16662,7 @@ else {
                         this._isDSFilling = false;
                         if (args.resetUI)
                             this._refresh();
-else
+                        else
                             this._appendItems(args.newItems);
                     } else {
                         this._isDSFilling = true;
@@ -16721,7 +16680,7 @@ else
                     }
                 };
                 StackPanel.prototype._createTemplate = function (dcxt) {
-                    var t = new MOD.template.Template(this.app, this._templateID);
+                    var t = new RIAPP.MOD.template.Template(this.app, this._templateID);
                     t.dataContext = dcxt;
                     return t;
                 };
@@ -16968,7 +16927,7 @@ else
                     configurable: true
                 });
                 return StackPanelElView;
-            })(MOD.baseElView.BaseElView);
+            })(RIAPP.MOD.baseElView.BaseElView);
             stackpanel.StackPanelElView = StackPanelElView;
 
             RIAPP.global.registerElView('stackpanel', StackPanelElView);
@@ -17074,8 +17033,8 @@ var RIAPP;
                 RIAPP.global.utils.forEachProp(objMap, function (name) {
                     var obj = objMap[name];
                     if (obj instanceof RIAPP.BaseObject) {
-                        if (!(obj)._isDestroyed) {
-                            (obj).removeNSHandlers(self.uniqueID);
+                        if (!obj._isDestroyed) {
+                            obj.removeNSHandlers(self.uniqueID);
                         }
                     }
                 });
@@ -17085,6 +17044,7 @@ var RIAPP;
         Application.prototype._initModules = function () {
             var self = this;
             self.global.moduleNames.forEach(function (mod_name) {
+                //checks for initModule function and executes it if the module has it
                 if (!!RIAPP.MOD[mod_name] && !!RIAPP.MOD[mod_name].initModule) {
                     RIAPP.MOD[mod_name].initModule(self);
                 }
@@ -17183,9 +17143,11 @@ var RIAPP;
                 var bind_attr, temp_opts, bind_op, elView;
 
                 if (isDataFormBind) {
+                    //check, that the current element not inside a nested dataform
                     if (!(global.utils.getParentDataForm(scope, el) === scope))
                         return;
                 } else {
+                    //skip elements inside dataform, they are databound when dataform is databound
                     if (checks.isInsideDataForm(el))
                         return;
                 }
@@ -17200,6 +17162,7 @@ var RIAPP;
 
                 bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);
 
+                //if it has data-bind attribute then proceed to create binding
                 if (!!bind_attr) {
                     temp_opts = global.parser.parseOptions(bind_attr);
                     for (var i = 0, len = temp_opts.length; i < len; i += 1) {
@@ -17246,9 +17209,11 @@ var RIAPP;
 
             elView = this._getElView(el);
 
+            //check if element view is already created for this element
             if (!!elView)
                 return elView;
 
+            //if not, then proceed to create new element view...
             if (el.hasAttribute(RIAPP.global.consts.DATA_ATTR.DATA_VIEW)) {
                 attr = el.getAttribute(RIAPP.global.consts.DATA_ATTR.DATA_VIEW);
                 data_view_op_arr = RIAPP.global.parser.parseOptions(attr);
@@ -17335,7 +17300,7 @@ var RIAPP;
         Application.prototype.registerObject = function (name, obj) {
             var self = this, name2 = 'objects.' + name;
             if (obj instanceof RIAPP.BaseObject) {
-                (obj).addOnDestroyed(function (s, a) {
+                obj.addOnDestroyed(function (s, a) {
                     RIAPP.global._removeObject(self, name2);
                 }, self.uniqueID);
             }
@@ -17474,8 +17439,8 @@ var RIAPP;
         });
 
         Object.defineProperty(Application.prototype, "modules", {
-            get: //loaded app modules which are mapped by their name
-            function () {
+            //loaded app modules which are mapped by their name
+            get: function () {
                 return this._modules;
             },
             enumerable: true,
@@ -17490,8 +17455,8 @@ var RIAPP;
         });
 
         Object.defineProperty(Application.prototype, "UC", {
-            get: //Namespace for attaching custom user code (functions and objects)
-            function () {
+            //Namespace for attaching custom user code (functions and objects)
+            get: function () {
                 return this._userCode;
             },
             enumerable: true,
@@ -17499,8 +17464,8 @@ var RIAPP;
         });
 
         Object.defineProperty(Application.prototype, "VM", {
-            get: //Namespace for attaching application view models
-            function () {
+            //Namespace for attaching application view models
+            get: function () {
                 return this._viewModels;
             },
             enumerable: true,

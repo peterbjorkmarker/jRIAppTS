@@ -61,6 +61,7 @@ var RIAPP;
                 }, self.uniqueID);
 
                 this._dbSet.addOnFill(function (sender, args) {
+                    //when filled, then raise our custom event
                     if (!args.isBegin) {
                         self.raiseEvent('data_filled', args);
                     }
@@ -225,9 +226,9 @@ var RIAPP;
             });
 
             Object.defineProperty(CustomerVM.prototype, "includeDetailsOnLoad", {
-                get: //if it's true, then when loading, a customer entity, it also loads related CustomerAddress and Address entities
+                //if it's true, then when loading, a customer entity, it also loads related CustomerAddress and Address entities
                 //when it's false then we load those entities separately, using our own load methods
-                function () {
+                get: function () {
                     return this._includeDetailsOnLoad;
                 },
                 set: function (v) {
@@ -290,6 +291,8 @@ var RIAPP;
                     if (args.isBegin)
                         return;
 
+                    //if details are not included with customers entities when they are loaded
+                    //then load addresses related to the customers separately
                     if (!self._customerVM.includeDetailsOnLoad)
                         self.load(args.fetchedItems);
                 }, self.uniqueID);
@@ -381,6 +384,8 @@ var RIAPP;
                 var query = this._custAdressDb.createReadAddressForCustomersQuery({ custIDs: custIDs });
                 var promise = query.load();
 
+                //if we did not included details when we had loaded customers
+                //then load them now
                 if (!this._customerVM.includeDetailsOnLoad) {
                     //load related addresses based on what customerAddress items just loaded
                     promise.done(function (res) {
@@ -507,6 +512,7 @@ var RIAPP;
                     submitOnOK: true,
                     fn_OnClose: function (dialog) {
                         if (dialog.result != 'ok') {
+                            //if new address is not explicitly accepted then reject added address
                             if (!!self._newAddress) {
                                 self._cancelAddNewAddress();
                             }
@@ -691,6 +697,7 @@ var RIAPP;
                 }
                 var id = item.AddressID;
 
+                //delete it from the left panel
                 if (item.deleteItem())
                     //and then add the address to the right panel (really adds an addressInfo, not the address entity)
                     this._addAddressRP(id);
@@ -698,6 +705,7 @@ var RIAPP;
 
             //adds an addressInfo to the right panel
             AddAddressVM.prototype._addAddressRP = function (addressID) {
+                //if address already on client, just make it be displayed in the view
                 if (this._checkAddressInRP(addressID)) {
                     var deferred = utils.createDeferred();
                     deferred.reject();
@@ -850,8 +858,8 @@ var RIAPP;
             });
 
             Object.defineProperty(AddAddressVM.prototype, "linkCommand", {
-                get: //links an address to the customer
-                function () {
+                //links an address to the customer
+                get: function () {
                     return this._linkCommand;
                 },
                 enumerable: true,
@@ -919,7 +927,7 @@ var RIAPP;
                 function toText(str) {
                     if (str === null)
                         return '';
-else
+                    else
                         return str;
                 }
                 ;
@@ -1034,8 +1042,7 @@ else
             user_modules: [
                 { name: "COMMON", initFn: RIAPP.COMMON.initModule },
                 { name: "AUTOCOMPLETE", initFn: RIAPP.AUTOCOMPLETE.initModule },
-                { name: "MTMDEMO", initFn: initModule }
-            ]
+                { name: "MTMDEMO", initFn: initModule }]
         };
     })(RIAPP.MTMDEMO || (RIAPP.MTMDEMO = {}));
     var MTMDEMO = RIAPP.MTMDEMO;

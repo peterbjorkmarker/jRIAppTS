@@ -206,7 +206,7 @@ module RIAPP
                 this.value = this.currentSelection;
             }
             _updatePosition() {
-                this._$dropDown.position({
+                (<any>this._$dropDown).position(<any>{
                     my: "left top",
                     at: "left bottom",
                     of: global.$(this.el),
@@ -225,10 +225,12 @@ module RIAPP
                 var self = this;
 
                 this._$dlg = this.$el.closest(".ui-dialog");
-                this._$dlg.on("dialogdrag." + this._objId, function (event, ui) {
+                var ns = "dialogdrag." + this._objId;
+                this._$dlg.on(ns, null, (event) => {
                     if (!self._isOpen)
-                        return;
+                        return null;
                     self._updatePosition();
+                    return null;
                 });
 
                 this._updatePosition();

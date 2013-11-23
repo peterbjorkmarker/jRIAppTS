@@ -1477,7 +1477,7 @@ module RIAPP {
                             of: headerDiv,
                             offset: "" + col.el.offsetLeft + " 0"
                         };
-                        col.$extcol.position(posArgs);
+                        (<any>col.$extcol).position(posArgs);
                     });
                 }
                 _wrapTable() {

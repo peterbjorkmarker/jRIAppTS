@@ -4,7 +4,7 @@ module RIAPP
     'use strict';
     export module DEMODB {
         /*
-            Generated from: /RiappDemoService/GetTypeScript on 2013-11-13 19:50 at 19:50
+            Generated from: /RiappDemoService/GetTypeScript on 2013-11-13 15:16 at 15:16
             Don't make manual changes here, because they will be lost when this db interface will be regenerated!
         */
 

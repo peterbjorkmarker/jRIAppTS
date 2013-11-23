@@ -20,13 +20,13 @@ var RIAPP;
             UppercaseConverter.prototype.convertToSource = function (val, param, dataContext) {
                 if (utils.check.isString(val))
                     return val.toLowerCase();
-else
+                else
                     return val;
             };
             UppercaseConverter.prototype.convertToTarget = function (val, param, dataContext) {
                 if (utils.check.isString(val))
                     return val.toUpperCase();
-else
+                else
                     return val;
             };
             return UppercaseConverter;
@@ -50,19 +50,10 @@ else
                 this._month = new Date().getMonth() + 1;
                 this._months = new RIAPP.MOD.collection.Dictionary('MonthType', { key: 0, val: '' }, 'key');
                 this._months.fillItems([
-                    { key: 1, val: 'January' },
-                    { key: 2, val: 'February' },
-                    { key: 3, val: 'March' },
-                    { key: 4, val: 'April' },
-                    { key: 5, val: 'May' },
-                    { key: 6, val: 'June' },
-                    { key: 7, val: 'July' },
-                    { key: 8, val: 'August' },
-                    { key: 9, val: 'September' },
-                    { key: 10, val: 'October' },
-                    { key: 11, val: 'November' },
-                    { key: 12, val: 'December' }
-                ], true);
+                    { key: 1, val: 'January' }, { key: 2, val: 'February' }, { key: 3, val: 'March' },
+                    { key: 4, val: 'April' }, { key: 5, val: 'May' }, { key: 6, val: 'June' },
+                    { key: 7, val: 'July' }, { key: 8, val: 'August' }, { key: 9, val: 'September' }, { key: 10, val: 'October' },
+                    { key: 11, val: 'November' }, { key: 12, val: 'December' }], true);
 
                 this._format = 'PDF';
                 this._formats = new RIAPP.MOD.collection.Dictionary('format', { key: 0, val: '' }, 'key');
@@ -234,8 +225,7 @@ else
         BINDDEMO.appOptions = {
             user_modules: [
                 { name: "COMMON", initFn: RIAPP.COMMON.initModule },
-                { name: "BINDDEMO", initFn: initModule }
-            ]
+                { name: "BINDDEMO", initFn: initModule }]
         };
     })(RIAPP.BINDDEMO || (RIAPP.BINDDEMO = {}));
     var BINDDEMO = RIAPP.BINDDEMO;

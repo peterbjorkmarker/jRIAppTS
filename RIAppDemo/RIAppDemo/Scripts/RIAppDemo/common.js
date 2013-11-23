@@ -97,7 +97,7 @@ var RIAPP;
                     var x = $el.text();
                     if (v === null)
                         v = '';
-else
+                    else
                         v = '' + v;
                     if (x !== v) {
                         $el.text(v);
@@ -119,7 +119,7 @@ else
                     var x = this.$el.prop('href');
                     if (v === null)
                         v = '';
-else
+                    else
                         v = '' + v;
                     if (x !== v) {
                         this.$el.prop('href', v);
@@ -137,7 +137,7 @@ else
                     var x = this._id;
                     if (v === null)
                         v = '';
-else
+                    else
                         v = '' + v;
                     if (x !== v) {
                         this._id = v;
@@ -205,7 +205,7 @@ else
                     var x = el.prop('src');
                     if (v === null)
                         v = '';
-else
+                    else
                         v = '' + v;
                     if (x !== v) {
                         el.prop('src', v);
@@ -223,13 +223,13 @@ else
                     var x = this._id;
                     if (v === null)
                         v = '';
-else
+                    else
                         v = '' + v;
                     if (x !== v) {
                         this._id = v;
                         if (!this._id)
                             this.src = null;
-else
+                        else
                             this.src = this._baseUri + '/' + this._id;
                         this.raisePropertyChanged('id');
                     }
@@ -265,15 +265,15 @@ else
 
                         if (self.error instanceof RIAPP.MOD.db.AccessDeniedError)
                             self.title = "ACCESS DENIED";
-else if (self.error instanceof RIAPP.MOD.db.ConcurrencyError)
+                        else if (self.error instanceof RIAPP.MOD.db.ConcurrencyError)
                             self.title = "CONCURRENCY ERROR";
-else if (self.error instanceof RIAPP.MOD.binding.ValidationError)
+                        else if (self.error instanceof RIAPP.MOD.binding.ValidationError)
                             self.title = "VALIDATION ERROR";
-else if (self.error instanceof RIAPP.MOD.db.SvcValidationError)
+                        else if (self.error instanceof RIAPP.MOD.db.SvcValidationError)
                             self.title = "VALIDATION ERROR";
-else if (self.error instanceof RIAPP.MOD.db.DataOperationError)
+                        else if (self.error instanceof RIAPP.MOD.db.DataOperationError)
                             self.title = "DATA OPERATION ERROR";
-else
+                        else
                             self.title = "UNEXPECTED ERROR";
 
                         self.message = (!self.error.message) ? ('' + self.error) : self.error.message;

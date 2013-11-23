@@ -1264,7 +1264,7 @@ module RIAPP {
                     return super._attach(item);
                 }
                 _createNew() {
-                    var item: CollectionItem = new this._itemType(this, null);
+                    var item: TItem = new this._itemType(this, null);
                     item._key = this._getNewKey(null); //client item ID
                     return item;
                 }
@@ -1275,7 +1275,7 @@ module RIAPP {
                     return key;
                 }
                 fillItems(objArray: TObj[], clearAll?: boolean) {
-                    var self = this, newItems = [], positions = [], fetchedItems = [];
+                    var self = this, newItems:TItem[] = [], positions:number[] = [], fetchedItems:TItem[] = [];
                     if (!objArray)
                         objArray = [];
                     this._onFillStart({ isBegin: true, rowCount: objArray.length, time: new Date(), isPageChanged: false });

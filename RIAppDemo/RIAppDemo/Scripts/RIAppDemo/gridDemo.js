@@ -314,6 +314,7 @@ var RIAPP;
                 this._dbSet.isSubmitOnDelete = true;
 
                 this._dbSet.addOnFill(function (s, a) {
+                    //when fill is ended
                     if (!a.isBegin) {
                         if (!a.isPageChanged)
                             self._clearSelection();
@@ -370,6 +371,7 @@ var RIAPP;
                         self._dataGrid = sender.grid;
                     }
 
+                    //example of binding to dataGrid events
                     if (!!self._dataGrid) {
                         self._dataGrid.addOnPageChanged(function (s, a) {
                             self._onGridPageChanged();
@@ -477,8 +479,8 @@ var RIAPP;
                 //the query'service method can accept additional parameters which you can supply with query
                 var query = this.dbSet.createReadProductQuery({ param1: [10, 11, 12, 13, 14], param2: 'Test' });
                 query.pageSize = 50;
-                query.loadPageCount = 20;
-                query.isClearCacheOnEveryLoad = true;
+                query.loadPageCount = 20; //load 20 pages at once (only one will be visible, others will be in local cache)
+                query.isClearCacheOnEveryLoad = true; //clear local cache when a new batch of data is loaded from the server
                 addTextQuery(query, 'ProductNumber', this._filter.prodNumber);
                 addTextQuery(query, 'Name', this._filter.name);
                 if (!utils.check.isNt(this._filter.childCategoryID)) {
@@ -522,8 +524,8 @@ var RIAPP;
             });
 
             Object.defineProperty(ProductViewModel.prototype, "testInvokeCommand", {
-                get: //get templateID() { return this._templateID; }
-                function () {
+                //get templateID() { return this._templateID; }
+                get: function () {
                     return this._testInvokeCommand;
                 },
                 enumerable: true,
@@ -944,7 +946,7 @@ var RIAPP;
                 function toText(str) {
                     if (str === null)
                         return '';
-else
+                    else
                         return str;
                 }
                 ;
@@ -1074,7 +1076,7 @@ else
             });
 
             //using memoize pattern so there will not be repeated loads of the same template
-            thisApp.registerTemplateLoader('sizeDisplayTemplate', ((function () {
+            thisApp.registerTemplateLoader('sizeDisplayTemplate', (function () {
                 var savePromise;
                 return function () {
                     if (!!savePromise)
@@ -1082,7 +1084,7 @@ else
                     savePromise = thisApp.global.$.get(GRIDDEMO.mainOptions.sizeDisplayTemplate_url);
                     return savePromise;
                 };
-            })()));
+            }()));
 
             thisApp.startUp(function (app) {
                 /*
@@ -1118,8 +1120,7 @@ else
             user_modules: [
                 { name: "COMMON", initFn: RIAPP.COMMON.initModule },
                 { name: "HEADER", initFn: RIAPP.HEADER.initModule },
-                { name: "GRIDDEMO", initFn: initModule }
-            ]
+                { name: "GRIDDEMO", initFn: initModule }]
         };
     })(RIAPP.GRIDDEMO || (RIAPP.GRIDDEMO = {}));
     var GRIDDEMO = RIAPP.GRIDDEMO;
