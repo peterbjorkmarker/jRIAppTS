@@ -61,14 +61,9 @@ The DataService now exposes two other methods to get XAML version of the metadat
 <p>2013-09-25  Bug fix in the datagrid</p>
 <p>2013-10-19  Improvements in the code generation</p>
 <p>2013-11-13  Changes in dataservice's query methods. Now, they don't accept GetDataInfo parameter as a method's argument!
-It is accessible now through dataservice's CurrentQueryInfo property. See demo detaservice for example.
-<p>2013-11-14  Improvements in the dataservice's code</p>
+It is accessible now through dataservice's CurrentQueryInfo property. See demo detaservice for example.</p>
+<p>2013-11-14  Improvements in the dataservice's code. Now query methods and service methods can accept complex type arguments. Fixed bug in dataservice's authorizer class. Improved code generation.</p>
 <p>2013-11-23  Updated jriappTS code to be compilable using typescript 0.95 beta compiler</p>
-
-Now query methods and service methods can accept complex type arguments.
-Fixed bug in dataservice's authorizer class.
-Improved code generation.
-</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 
