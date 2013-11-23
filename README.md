@@ -38,7 +38,7 @@ DbContext – the control used as a data manager to store collections of data (DbS
 
 It has also special element view registered by the name dynacontent, which helps to create templated content regions on a page. The templates in these regions are easily switchable. This feature enables to create real world single page applications.
 
-This is just an overview of the main features, they and the other ones will be discussed in more details later in this user guide.
+This is just an overview of the main features, they and the other ones will be discussed in more details the docs attached to this framework.
 
 After minification jriapp.js has size about 290 KB. But it can be further gzipped, for it to reach the size of about 65 KB.
 In my real world applications i use ASP.NET MVC 4 bundling feature. For desktop applications it will suffice.
@@ -63,7 +63,7 @@ The DataService now exposes two other methods to get XAML version of the metadat
 <p>2013-11-13  Changes in dataservice's query methods. Now, they don't accept GetDataInfo parameter as a method's argument!
 It is accessible now through dataservice's CurrentQueryInfo property. See demo detaservice for example.</p>
 <p>2013-11-14  Improvements in the dataservice's code. Now query methods and service methods can accept complex type arguments. Fixed bug in dataservice's authorizer class. Improved code generation.</p>
-<p>2013-11-23  Updated jriappTS code to be compilable using typescript 0.95 beta compiler</p>
+<p>2013-11-23  Updated jriappTS code to be compilable using <b>the typescript v0.95 beta compiler</b></p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 
