@@ -111,13 +111,13 @@ module RIAPP {
                         return '' + this._getValue(item);
                 }
                 _onDSCollectionChanged(args: collection.ICollChangedArgs<collection.CollectionItem>) {
-                    var self = this, CH_T = collection.consts.COLL_CHANGE_TYPE, data;
+                    var self = this, data;
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case collection.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh();
                             break;
-                        case CH_T.ADDED:
+                        case collection.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isDSFilling) //if items are filling then it will be appended when fill ends
                             {
                                 args.items.forEach(function (item) {
@@ -125,12 +125,12 @@ module RIAPP {
                                 });
                             }
                             break;
-                        case CH_T.REMOVE:
+                        case collection.COLL_CHANGE_TYPE.REMOVE:
                             args.items.forEach(function (item) {
                                 self._removeOption(item);
                             });
                             break;
-                        case CH_T.REMAP_KEY:
+                        case collection.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 data = self._keyMap[args.old_key];
                                 if (!!data) {
@@ -183,13 +183,13 @@ module RIAPP {
                     }
                 }
                 _onStatusChanged(item: collection.CollectionItem, oldChangeType:number) {
-                    var DEL_STATUS = consts.CHANGE_TYPE.DELETED, newChangeType = item._changeType;
+                    var DEL_STATUS = collection.STATUS.DELETED, newChangeType = item._changeType;
                     if (newChangeType === DEL_STATUS) {
                         this._removeOption(item);
                     }
                 }
-                _onCommitChanges(item: collection.CollectionItem, isBegin:boolean, isRejected:boolean, changeType:number) {
-                    var self = this, ct = consts.CHANGE_TYPE, oldVal, val, data;
+                _onCommitChanges(item: collection.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collection.STATUS) {
+                    var self = this, ct = collection.STATUS, oldVal, val, data;
                     if (isBegin) {
                         if (isRejected && changeType === ct.ADDED) {
                             return;

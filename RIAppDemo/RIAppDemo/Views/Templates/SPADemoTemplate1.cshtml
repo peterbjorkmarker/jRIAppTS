@@ -11,7 +11,7 @@
 @*first page view of customers*@
 <div id="SPAcustTemplate" data-role="template">
     <div style="height: 85%; vertical-align: top;">
-        <table data-app='default' data-name="gridCustomers" data-bind="@Model.BindGridCustomers"  data-view="@Model.OptionsGridCustomers">
+        <table data-name="gridCustomers" data-bind="@Model.BindGridCustomers"  data-view="@Model.OptionsGridCustomers">
             <thead>
                 <tr>
                     <th data-column="width:35px,type:row_expander" ></th>
@@ -193,7 +193,7 @@
                     world it should never be done in this way.<br />
                 It is here just to show you the capabilties you have with the framework to manage
                     master-details.
-                    <table style="font-size:9pt; margin-bottom:3px;" data-app='default' data-name="tblOrders" data-bind="@Model.BindTableCustOrders" data-view="@Model.OptionsTableCustOrders">
+                    <table style="font-size:9pt; margin-bottom:3px;" data-name="tblOrders" data-bind="@Model.BindTableCustOrders" data-view="@Model.OptionsTableCustOrders">
                         <thead>
                             <tr>
                                 <th data-column="width:20px,type:row_expander"></th>
@@ -471,7 +471,7 @@
                 </form>
             </div>
             <div id="ode">
-                <table style="font-size: 9pt;" data-app='default' data-name="tblOrderDetails" data-bind="{this.dataSource,to=dbSet,source=customerVM.ordersVM.orderDetailsVM}"
+                <table style="font-size: 9pt;" data-name="tblOrderDetails" data-bind="{this.dataSource,to=dbSet,source=customerVM.ordersVM.orderDetailsVM}"
                     data-view="options={wrapCss:orderDetailTableWrap,isHandleAddNew:true,editor:{templateID:orderDetEditTemplate,width:650,height:550,title:'Order Detail editing'}}">
                     <thead>
                         <tr>

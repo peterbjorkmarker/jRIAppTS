@@ -1035,7 +1035,6 @@ var RIAPP;
                 EL_VIEW_KEY: 'data-elvwkey',
                 DATA_BIND: 'data-bind',
                 DATA_VIEW: 'data-view',
-                DATA_APP: 'data-app',
                 DATA_EVENT_SCOPE: 'data-scope',
                 DATA_ITEM_KEY: 'data-key',
                 DATA_CONTENT: 'data-content',
@@ -1043,12 +1042,27 @@ var RIAPP;
                 DATA_NAME: 'data-name',
                 DATA_FORM: 'data-form'
             };
-            consts.DATA_TYPE = {
-                None: 0, String: 1, Bool: 2, Integer: 3, Decimal: 4, Float: 5, DateTime: 6, Date: 7, Time: 8,
-                Guid: 9, Binary: 10
-            };
-            consts.DATE_CONVERSION = { None: 0, ServerLocalToClientLocal: 1, UtcToClientLocal: 2 };
-            consts.CHANGE_TYPE = { NONE: 0, ADDED: 1, UPDATED: 2, DELETED: 3 };
+            (function (DATE_CONVERSION) {
+                DATE_CONVERSION[DATE_CONVERSION["None"] = 0] = "None";
+                DATE_CONVERSION[DATE_CONVERSION["ServerLocalToClientLocal"] = 1] = "ServerLocalToClientLocal";
+                DATE_CONVERSION[DATE_CONVERSION["UtcToClientLocal"] = 2] = "UtcToClientLocal";
+            })(consts.DATE_CONVERSION || (consts.DATE_CONVERSION = {}));
+            var DATE_CONVERSION = consts.DATE_CONVERSION;
+            ;
+            (function (DATA_TYPE) {
+                DATA_TYPE[DATA_TYPE["None"] = 0] = "None";
+                DATA_TYPE[DATA_TYPE["String"] = 1] = "String";
+                DATA_TYPE[DATA_TYPE["Bool"] = 2] = "Bool";
+                DATA_TYPE[DATA_TYPE["Integer"] = 3] = "Integer";
+                DATA_TYPE[DATA_TYPE["Decimal"] = 4] = "Decimal";
+                DATA_TYPE[DATA_TYPE["Float"] = 5] = "Float";
+                DATA_TYPE[DATA_TYPE["DateTime"] = 6] = "DateTime";
+                DATA_TYPE[DATA_TYPE["Date"] = 7] = "Date";
+                DATA_TYPE[DATA_TYPE["Time"] = 8] = "Time";
+                DATA_TYPE[DATA_TYPE["Guid"] = 9] = "Guid";
+                DATA_TYPE[DATA_TYPE["Binary"] = 10] = "Binary";
+            })(consts.DATA_TYPE || (consts.DATA_TYPE = {}));
+            var DATA_TYPE = consts.DATA_TYPE;
             consts.KEYS = {
                 backspace: 8,
                 tab: 9,
@@ -1368,13 +1382,13 @@ var RIAPP;
                     var ctz = RIAPP.global.utils.get_timeZoneOffset();
 
                     switch (dtcnv) {
-                        case DATE_CONVERSION.None:
+                        case 0 /* None */:
                             break;
-                        case DATE_CONVERSION.ServerLocalToClientLocal:
+                        case 1 /* ServerLocalToClientLocal */:
                             dt.setMinutes(dt.getMinutes() + stz); //ServerToUTC
                             dt.setMinutes(dt.getMinutes() - ctz); //UtcToLocal
                             break;
-                        case DATE_CONVERSION.UtcToClientLocal:
+                        case 2 /* UtcToClientLocal */:
                             dt.setMinutes(dt.getMinutes() - ctz); //UtcToLocal
                             break;
                         default:
@@ -1390,13 +1404,13 @@ var RIAPP;
                     var DATE_CONVERSION = RIAPP.MOD.consts.DATE_CONVERSION;
                     var ctz = RIAPP.global.utils.get_timeZoneOffset();
                     switch (dtcnv) {
-                        case DATE_CONVERSION.None:
+                        case 0 /* None */:
                             break;
-                        case DATE_CONVERSION.ServerLocalToClientLocal:
+                        case 1 /* ServerLocalToClientLocal */:
                             dt.setMinutes(dt.getMinutes() + ctz); //LocalToUTC
                             dt.setMinutes(dt.getMinutes() - serverTZ); //UtcToServer
                             break;
-                        case DATE_CONVERSION.UtcToClientLocal:
+                        case 2 /* UtcToClientLocal */:
                             dt.setMinutes(dt.getMinutes() + ctz); //LocalToUTC
                             break;
                         default:
@@ -1409,9 +1423,9 @@ var RIAPP;
                         return false;
                     var DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE;
                     switch (dataType) {
-                        case DATA_TYPE.DateTime:
-                        case DATA_TYPE.Date:
-                        case DATA_TYPE.Time:
+                        case 6 /* DateTime */:
+                        case 7 /* Date */:
+                        case 8 /* Time */:
                             if (Checks.isDate(v1) && Checks.isDate(v2))
                                 return v1.getTime() === v2.getTime();
                             else
@@ -1439,29 +1453,29 @@ var RIAPP;
                         return res;
                     var DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE;
                     switch (dataType) {
-                        case DATA_TYPE.None:
+                        case 0 /* None */:
                             res = v;
                             break;
-                        case DATA_TYPE.String:
-                        case DATA_TYPE.Guid:
+                        case 1 /* String */:
+                        case 9 /* Guid */:
                             res = v;
                             break;
-                        case DATA_TYPE.Bool:
+                        case 2 /* Bool */:
                             res = RIAPP.global.utils.parseBool(v);
                             break;
-                        case DATA_TYPE.Integer:
+                        case 3 /* Integer */:
                             res = parseInt(v, 10);
                             break;
-                        case DATA_TYPE.Decimal:
-                        case DATA_TYPE.Float:
+                        case 4 /* Decimal */:
+                        case 5 /* Float */:
                             res = parseFloat(v);
                             break;
-                        case DATA_TYPE.DateTime:
-                        case DATA_TYPE.Date:
-                        case DATA_TYPE.Time:
+                        case 6 /* DateTime */:
+                        case 7 /* Date */:
+                        case 8 /* Time */:
                             res = utils.valueUtils.valueToDate(v, dcnv, stz);
                             break;
-                        case DATA_TYPE.Binary:
+                        case 10 /* Binary */:
                             res = JSON.parse(v);
                             break;
                         default:
@@ -5301,15 +5315,27 @@ var RIAPP;
     (function (MOD) {
         (function (collection) {
             //local variables for optimization
-            var utils = RIAPP.global.utils, ValidationError = RIAPP.MOD.binding.ValidationError;
+            var utils = RIAPP.global.utils, ValidationError = RIAPP.MOD.binding.ValidationError, DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE, valueUtils = RIAPP.MOD.utils.valueUtils;
 
-            collection.consts = {
-                DATA_TYPE: RIAPP.MOD.consts.DATA_TYPE,
-                DATE_CONVERSION: RIAPP.MOD.consts.DATE_CONVERSION,
-                SORT_ORDER: { ASC: 0, DESC: 1 },
-                COLL_CHANGE_TYPE: { REMOVE: '0', ADDED: '1', RESET: '2', REMAP_KEY: '3' }
-            };
-            var DATA_TYPE = collection.consts.DATA_TYPE, COLL_CHANGE_TYPE = collection.consts.COLL_CHANGE_TYPE, valueUtils = RIAPP.MOD.utils.valueUtils;
+            (function (STATUS) {
+                STATUS[STATUS["NONE"] = 0] = "NONE";
+                STATUS[STATUS["ADDED"] = 1] = "ADDED";
+                STATUS[STATUS["UPDATED"] = 2] = "UPDATED";
+                STATUS[STATUS["DELETED"] = 3] = "DELETED";
+            })(collection.STATUS || (collection.STATUS = {}));
+            var STATUS = collection.STATUS;
+            (function (COLL_CHANGE_TYPE) {
+                COLL_CHANGE_TYPE[COLL_CHANGE_TYPE["REMOVE"] = 0] = "REMOVE";
+                COLL_CHANGE_TYPE[COLL_CHANGE_TYPE["ADDED"] = 1] = "ADDED";
+                COLL_CHANGE_TYPE[COLL_CHANGE_TYPE["RESET"] = 2] = "RESET";
+                COLL_CHANGE_TYPE[COLL_CHANGE_TYPE["REMAP_KEY"] = 3] = "REMAP_KEY";
+            })(collection.COLL_CHANGE_TYPE || (collection.COLL_CHANGE_TYPE = {}));
+            var COLL_CHANGE_TYPE = collection.COLL_CHANGE_TYPE;
+            (function (SORT_ORDER) {
+                SORT_ORDER[SORT_ORDER["ASC"] = 0] = "ASC";
+                SORT_ORDER[SORT_ORDER["DESC"] = 1] = "DESC";
+            })(collection.SORT_ORDER || (collection.SORT_ORDER = {}));
+            var SORT_ORDER = collection.SORT_ORDER;
 
             var CollectionItem = (function (_super) {
                 __extends(CollectionItem, _super);
@@ -5439,10 +5465,10 @@ var RIAPP;
                         return val;
 
                     switch (fieldInfo.dataType) {
-                        case DATA_TYPE.None:
+                        case 0 /* None */:
                             break;
-                        case DATA_TYPE.Guid:
-                        case DATA_TYPE.String:
+                        case 9 /* Guid */:
+                        case 1 /* String */:
                             if (!utils.check.isString(val)) {
                                 throw new Error(utils.format(ERRS.ERR_FIELD_WRONG_TYPE, val, 'String'));
                             }
@@ -5457,35 +5483,35 @@ var RIAPP;
                                 }
                             }
                             break;
-                        case DATA_TYPE.Binary:
+                        case 10 /* Binary */:
                             if (!utils.check.isArray(val)) {
                                 throw new Error(utils.format(ERRS.ERR_FIELD_WRONG_TYPE, val, 'Array'));
                             }
                             if (fieldInfo.maxLength > 0 && val.length > fieldInfo.maxLength)
                                 throw new Error(utils.format(ERRS.ERR_FIELD_MAXLEN, fieldInfo.maxLength));
                             break;
-                        case DATA_TYPE.Bool:
+                        case 2 /* Bool */:
                             if (!utils.check.isBoolean(val))
                                 throw new Error(utils.format(ERRS.ERR_FIELD_WRONG_TYPE, val, 'Boolean'));
                             break;
-                        case DATA_TYPE.Integer:
-                        case DATA_TYPE.Decimal:
-                        case DATA_TYPE.Float:
+                        case 3 /* Integer */:
+                        case 4 /* Decimal */:
+                        case 5 /* Float */:
                             if (!utils.check.isNumber(val))
                                 throw new Error(utils.format(ERRS.ERR_FIELD_WRONG_TYPE, val, 'Number'));
                             if (!!fieldInfo.range) {
                                 utils.validation.checkNumRange(Number(val), fieldInfo.range);
                             }
                             break;
-                        case DATA_TYPE.DateTime:
-                        case DATA_TYPE.Date:
+                        case 6 /* DateTime */:
+                        case 7 /* Date */:
                             if (!utils.check.isDate(val))
                                 throw new Error(utils.format(ERRS.ERR_FIELD_WRONG_TYPE, val, 'Date'));
                             if (!!fieldInfo.range) {
                                 utils.validation.checkDateRange(val, fieldInfo.range);
                             }
                             break;
-                        case DATA_TYPE.Time:
+                        case 8 /* Time */:
                             if (!utils.check.isDate(val))
                                 throw new Error(utils.format(ERRS.ERR_FIELD_WRONG_TYPE, val, 'Time'));
                             break;
@@ -5495,6 +5521,8 @@ var RIAPP;
                     return res;
                 };
                 CollectionItem.prototype._resetIsNew = function () {
+                    //can reset _isNew on all items in the collection
+                    //the list descendant does it
                 };
                 CollectionItem.prototype._onAttaching = function () {
                 };
@@ -5647,7 +5675,7 @@ var RIAPP;
                 });
                 Object.defineProperty(CollectionItem.prototype, "_changeType", {
                     get: function () {
-                        return 0;
+                        return 0 /* NONE */;
                     },
                     enumerable: true,
                     configurable: true
@@ -5735,13 +5763,13 @@ var RIAPP;
                     var fieldInfo = {
                         isPrimaryKey: 0,
                         isRowTimeStamp: false,
-                        dataType: DATA_TYPE.None,
+                        dataType: 0 /* None */,
                         isNullable: true,
                         maxLength: -1,
                         isReadOnly: false,
                         isAutoGenerated: false,
                         allowClientDefault: false,
-                        dateConversion: collection.consts.DATE_CONVERSION.None,
+                        dateConversion: 0 /* None */,
                         isClientOnly: true,
                         isCalculated: false,
                         isNeedOriginal: false,
@@ -6029,7 +6057,7 @@ var RIAPP;
                         utils.insertIntoArray(this._items, item, pos);
                     }
                     this._itemsByKey[item._key] = item;
-                    this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: [item], pos: [pos] });
+                    this._onItemsChanged({ change_type: 1 /* ADDED */, items: [item], pos: [pos] });
                     item._onAttach();
                     this.raisePropertyChanged('count');
                     this._onCurrentChanging(item);
@@ -6039,7 +6067,7 @@ var RIAPP;
                 };
                 BaseCollection.prototype._onRemoved = function (item, pos) {
                     try  {
-                        this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.REMOVE, items: [item], pos: [pos] });
+                        this._onItemsChanged({ change_type: 0 /* REMOVE */, items: [item], pos: [pos] });
                     } finally {
                         this.raisePropertyChanged('count');
                     }
@@ -6337,7 +6365,7 @@ var RIAPP;
                         self.isLoading = true;
                         try  {
                             self._items.sort(fn);
-                            self._onItemsChanged({ change_type: COLL_CHANGE_TYPE.RESET, items: [], pos: [] });
+                            self._onItemsChanged({ change_type: 2 /* RESET */, items: [], pos: [] });
                         } finally {
                             self.isLoading = false;
                         }
@@ -6357,7 +6385,7 @@ var RIAPP;
                         this._items = [];
                         this._itemsByKey = {};
                         this._errors = {};
-                        this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.RESET, items: [], pos: [] });
+                        this._onItemsChanged({ change_type: 2 /* RESET */, items: [], pos: [] });
                     } finally {
                         this._isClearing = false;
                     }
@@ -6681,7 +6709,7 @@ var RIAPP;
                         });
 
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
+                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
                     } finally {
@@ -7709,10 +7737,10 @@ var RIAPP;
                     options.converter = this.app.getConverter('dateTimeConverter');
                     var finf = this.getFieldInfo(), defaults = RIAPP.global.defaults;
                     switch (finf.dataType) {
-                        case consts.DATA_TYPE.DateTime:
+                        case 6 /* DateTime */:
                             options.converterParam = defaults.dateTimeFormat;
                             break;
-                        case consts.DATA_TYPE.Time:
+                        case 8 /* Time */:
                             options.converterParam = defaults.timeFormat;
                             break;
                         default:
@@ -7748,10 +7776,10 @@ var RIAPP;
                     var options = _super.prototype._getBindingOption.call(this, bindingInfo, tgt, dctx, targetPath);
                     var finf = this.getFieldInfo();
                     switch (finf.dataType) {
-                        case consts.DATA_TYPE.Integer:
+                        case 3 /* Integer */:
                             options.converter = this.app.getConverter('integerConverter');
                             break;
-                        case consts.DATA_TYPE.Decimal:
+                        case 4 /* Decimal */:
                             options.converter = this.app.getConverter('decimalConverter');
                             break;
                         default:
@@ -7909,36 +7937,36 @@ var RIAPP;
                     if (!options.bindingInfo)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'options', 'bindingInfo'));
 
-                    var DATA_TYPE = consts.DATA_TYPE, fieldInfo = options.fieldInfo, res;
+                    var fieldInfo = options.fieldInfo, res;
                     switch (fieldInfo.dataType) {
-                        case DATA_TYPE.None:
+                        case 0 /* None */:
                             res = BindingContent;
                             break;
-                        case DATA_TYPE.String:
+                        case 1 /* String */:
                             if (options.name == 'multyline')
                                 res = MultyLineContent;
                             else
                                 res = StringContent;
                             break;
-                        case DATA_TYPE.Bool:
+                        case 2 /* Bool */:
                             res = BoolContent;
                             break;
-                        case DATA_TYPE.Integer:
+                        case 3 /* Integer */:
                             res = NumberContent;
                             break;
-                        case DATA_TYPE.Decimal:
-                        case DATA_TYPE.Float:
+                        case 4 /* Decimal */:
+                        case 5 /* Float */:
                             res = NumberContent;
                             break;
-                        case DATA_TYPE.DateTime:
-                        case DATA_TYPE.Time:
+                        case 6 /* DateTime */:
+                        case 8 /* Time */:
                             res = DateTimeContent;
                             break;
-                        case DATA_TYPE.Date:
+                        case 7 /* Date */:
                             res = DateContent;
                             break;
-                        case DATA_TYPE.Guid:
-                        case DATA_TYPE.Binary:
+                        case 9 /* Guid */:
+                        case 10 /* Binary */:
                             res = BindingContent;
                             break;
                         default:
@@ -8416,15 +8444,47 @@ var RIAPP;
     (function (MOD) {
         (function (db) {
             //local variables for optimization
-            var utils = RIAPP.global.utils, consts = RIAPP.global.consts, ValidationError = RIAPP.MOD.binding.ValidationError;
-            var valueUtils = RIAPP.MOD.utils.valueUtils, COLL_CHANGE_TYPE = RIAPP.MOD.collection.consts.COLL_CHANGE_TYPE, CHANGE_TYPE = RIAPP.MOD.consts.CHANGE_TYPE, FLAGS = { None: 0, Changed: 1, Setted: 2, Refreshed: 4 }, FILTER_TYPE = { Equals: 0, Between: 1, StartsWith: 2, EndsWith: 3, Contains: 4, Gt: 5, Lt: 6, GtEq: 7, LtEq: 8, NotEq: 9 }, SORT_ORDER = RIAPP.MOD.collection.consts.SORT_ORDER;
+            var utils = RIAPP.global.utils, consts = RIAPP.global.consts, ValidationError = RIAPP.MOD.binding.ValidationError, valueUtils = RIAPP.MOD.utils.valueUtils;
+            (function (FLAGS) {
+                FLAGS[FLAGS["None"] = 0] = "None";
+                FLAGS[FLAGS["Changed"] = 1] = "Changed";
+                FLAGS[FLAGS["Setted"] = 2] = "Setted";
+                FLAGS[FLAGS["Refreshed"] = 4] = "Refreshed";
+            })(db.FLAGS || (db.FLAGS = {}));
+            var FLAGS = db.FLAGS;
+            (function (FILTER_TYPE) {
+                FILTER_TYPE[FILTER_TYPE["Equals"] = 0] = "Equals";
+                FILTER_TYPE[FILTER_TYPE["Between"] = 1] = "Between";
+                FILTER_TYPE[FILTER_TYPE["StartsWith"] = 2] = "StartsWith";
+                FILTER_TYPE[FILTER_TYPE["EndsWith"] = 3] = "EndsWith";
+                FILTER_TYPE[FILTER_TYPE["Contains"] = 4] = "Contains";
+                FILTER_TYPE[FILTER_TYPE["Gt"] = 5] = "Gt";
+                FILTER_TYPE[FILTER_TYPE["Lt"] = 6] = "Lt";
+                FILTER_TYPE[FILTER_TYPE["GtEq"] = 7] = "GtEq";
+                FILTER_TYPE[FILTER_TYPE["LtEq"] = 8] = "LtEq";
+                FILTER_TYPE[FILTER_TYPE["NotEq"] = 9] = "NotEq";
+            })(db.FILTER_TYPE || (db.FILTER_TYPE = {}));
+            var FILTER_TYPE = db.FILTER_TYPE;
+            (function (REFRESH_MODE) {
+                REFRESH_MODE[REFRESH_MODE["NONE"] = 0] = "NONE";
+                REFRESH_MODE[REFRESH_MODE["RefreshCurrent"] = 1] = "RefreshCurrent";
+                REFRESH_MODE[REFRESH_MODE["MergeIntoCurrent"] = 2] = "MergeIntoCurrent";
+                REFRESH_MODE[REFRESH_MODE["CommitChanges"] = 3] = "CommitChanges";
+            })(db.REFRESH_MODE || (db.REFRESH_MODE = {}));
+            var REFRESH_MODE = db.REFRESH_MODE;
+            (function (DELETE_ACTION) {
+                DELETE_ACTION[DELETE_ACTION["NoAction"] = 0] = "NoAction";
+                DELETE_ACTION[DELETE_ACTION["Cascade"] = 1] = "Cascade";
+                DELETE_ACTION[DELETE_ACTION["SetNulls"] = 2] = "SetNulls";
+            })(db.DELETE_ACTION || (db.DELETE_ACTION = {}));
+            var DELETE_ACTION = db.DELETE_ACTION;
+
             var DATA_OPER = { SUBMIT: 'submit', LOAD: 'load', INVOKE: 'invoke', REFRESH: 'refresh', INIT: 'initDbContext' };
             var DATA_SVC_METH = {
                 Invoke: 'InvokeMethod', LoadData: 'GetItems', GetMetadata: 'GetMetadata', GetPermissions: 'GetPermissions',
                 Submit: 'SaveChanges', Refresh: 'RefreshItem'
             };
-            var REFRESH_MODE = { NONE: 0, RefreshCurrent: 1, MergeIntoCurrent: 2, CommitChanges: 3 };
-            var DELETE_ACTION = { NoAction: 0, Cascade: 1, SetNulls: 2 };
+
             var DataOperationError = (function (_super) {
                 __extends(DataOperationError, _super);
                 function DataOperationError(ex, operationName) {
@@ -8779,15 +8839,15 @@ var RIAPP;
                     return utils.getProps(fldMap);
                 };
                 TDataQuery.prototype._addSort = function (fieldName, sortOrder) {
-                    var sort = SORT_ORDER.ASC, sortInfo = this._sortInfo;
+                    var sort = 0 /* ASC */;
                     if (!!sortOrder && sortOrder.toLowerCase().substr(0, 1) === 'd')
-                        sort = SORT_ORDER.DESC;
+                        sort = 1 /* DESC */;
                     var sortItem = { fieldName: fieldName, sortOrder: sort };
-                    sortInfo.sortItems.push(sortItem);
+                    this._sortInfo.sortItems.push(sortItem);
                     this._cacheInvalidated = true;
                 };
                 TDataQuery.prototype._addFilterItem = function (fieldName, operand, value) {
-                    var F_TYPE = FILTER_TYPE, fkind = F_TYPE.Equals;
+                    var fkind = 0 /* Equals */;
                     var fld = this.getFieldInfo(fieldName);
                     if (!fld)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
@@ -8803,42 +8863,42 @@ var RIAPP;
                     switch (operand.toLowerCase()) {
                         case "equals":
                         case "=":
-                            fkind = F_TYPE.Equals;
+                            fkind = 0 /* Equals */;
                             break;
                         case "noteq":
                         case "!=":
                         case "<>":
-                            fkind = F_TYPE.NotEq;
+                            fkind = 9 /* NotEq */;
                             break;
                         case "between":
-                            fkind = F_TYPE.Between;
+                            fkind = 1 /* Between */;
                             if (value.length != 2)
                                 throw new Error(RIAPP.ERRS.ERR_QUERY_BETWEEN);
                             break;
                         case "startswith":
-                            fkind = F_TYPE.StartsWith;
+                            fkind = 2 /* StartsWith */;
                             break;
                         case "endswith":
-                            fkind = F_TYPE.EndsWith;
+                            fkind = 3 /* EndsWith */;
                             break;
                         case "contains":
-                            fkind = F_TYPE.Contains;
+                            fkind = 4 /* Contains */;
                             break;
                         case "gt":
                         case ">":
-                            fkind = F_TYPE.Gt;
+                            fkind = 5 /* Gt */;
                             break;
                         case "gteq":
                         case ">=":
-                            fkind = F_TYPE.GtEq;
+                            fkind = 7 /* GtEq */;
                             break;
                         case "lt":
                         case "<":
-                            fkind = F_TYPE.Lt;
+                            fkind = 6 /* Lt */;
                             break;
                         case "lteq":
                         case "<=":
-                            fkind = F_TYPE.LtEq;
+                            fkind = 8 /* LtEq */;
                             break;
                         default:
                             throw new Error(utils.format(RIAPP.ERRS.ERR_QUERY_OPERATOR_INVALID, operand));
@@ -9096,7 +9156,7 @@ var RIAPP;
                 function Entity(dbSet, row, names) {
                     this.__dbSet = dbSet;
                     _super.call(this);
-                    this.__changeType = CHANGE_TYPE.NONE;
+                    this.__changeType = 0 /* NONE */;
                     this.__isRefreshing = false;
                     this.__isCached = false;
 
@@ -9129,7 +9189,7 @@ var RIAPP;
                     });
                 };
                 Entity.prototype._checkCanRefresh = function () {
-                    if (this._key === null || this._changeType === CHANGE_TYPE.ADDED) {
+                    if (this._key === null || this._changeType === 1 /* ADDED */) {
                         throw new Error(RIAPP.ERRS.ERR_OPER_REFRESH_INVALID);
                     }
                 };
@@ -9141,7 +9201,7 @@ var RIAPP;
                     newVal = valueUtils.parseValue(val, dataType, dcnv, stz);
                     oldVal = self._vals[fieldName];
                     switch (refreshMode) {
-                        case REFRESH_MODE.CommitChanges:
+                        case 3 /* CommitChanges */:
                              {
                                 if (!valueUtils.compareVals(newVal, oldVal, dataType)) {
                                     self._vals[fieldName] = newVal;
@@ -9149,7 +9209,7 @@ var RIAPP;
                                 }
                             }
                             break;
-                        case REFRESH_MODE.RefreshCurrent:
+                        case 1 /* RefreshCurrent */:
                              {
                                 if (!!self._origVals) {
                                     self._origVals[fieldName] = newVal;
@@ -9163,7 +9223,7 @@ var RIAPP;
                                 }
                             }
                             break;
-                        case REFRESH_MODE.MergeIntoCurrent:
+                        case 2 /* MergeIntoCurrent */:
                              {
                                 if (!!self._origVals) {
                                     oldValOrig = self._origVals[fieldName];
@@ -9186,19 +9246,19 @@ var RIAPP;
                     var self = this, oldCT = this._changeType;
                     if (!this._isDestroyed) {
                         if (!refreshMode) {
-                            refreshMode = REFRESH_MODE.RefreshCurrent;
+                            refreshMode = 1 /* RefreshCurrent */;
                         }
                         rowInfo.values.forEach(function (val) {
-                            if (!((val.flags & FLAGS.Refreshed) === FLAGS.Refreshed))
+                            if (!((val.flags & 4 /* Refreshed */) === 4 /* Refreshed */))
                                 return;
                             self._refreshValue(val.val, val.fieldName, refreshMode);
                         });
 
-                        if (oldCT === CHANGE_TYPE.UPDATED) {
+                        if (oldCT === 2 /* UPDATED */) {
                             var changes = this._getStrValues(true);
                             if (changes.length === 0) {
                                 this._origVals = null;
-                                this._changeType = CHANGE_TYPE.NONE;
+                                this._changeType = 0 /* NONE */;
                             }
                         }
                     }
@@ -9220,17 +9280,17 @@ var RIAPP;
 
                         var newVal = dbSet._getStrValue(self._vals[name], fld), oldV = self._origVals === null ? newVal : dbSet._getStrValue(self._origVals[name], fld), isChanged = (oldV !== newVal);
                         if (isChanged)
-                            return { val: newVal, orig: oldV, fieldName: name, flags: (FLAGS.Changed | FLAGS.Setted) };
+                            return { val: newVal, orig: oldV, fieldName: name, flags: (1 /* Changed */ | 2 /* Setted */) };
                         else if (fld.isPrimaryKey > 0 || fld.isRowTimeStamp || fld.isNeedOriginal)
-                            return { val: newVal, orig: oldV, fieldName: name, flags: FLAGS.Setted };
+                            return { val: newVal, orig: oldV, fieldName: name, flags: 2 /* Setted */ };
                         else
-                            return { val: null, orig: null, fieldName: name, flags: FLAGS.None };
+                            return { val: null, orig: null, fieldName: name, flags: 0 /* None */ };
                     });
 
                     res2 = res.filter(function (v) {
                         if (!v)
                             return false;
-                        return changedOnly ? ((v.flags & FLAGS.Changed) === FLAGS.Changed) : true;
+                        return changedOnly ? ((v.flags & 1 /* Changed */) === 1 /* Changed */) : true;
                     });
                     return res2;
                 };
@@ -9253,8 +9313,8 @@ var RIAPP;
                 Entity.prototype._fldChanged = function (fieldInfo, oldV, newV) {
                     if (!fieldInfo.isClientOnly) {
                         switch (this._changeType) {
-                            case CHANGE_TYPE.NONE:
-                                this._changeType = CHANGE_TYPE.UPDATED;
+                            case 0 /* NONE */:
+                                this._changeType = 2 /* UPDATED */;
                                 break;
                         }
                     }
@@ -9312,7 +9372,7 @@ var RIAPP;
                 };
                 Entity.prototype._onAttaching = function () {
                     _super.prototype._onAttaching.call(this);
-                    this.__changeType = CHANGE_TYPE.ADDED;
+                    this.__changeType = 1 /* ADDED */;
                 };
                 Entity.prototype._onAttach = function () {
                     _super.prototype._onAttach.call(this);
@@ -9342,30 +9402,30 @@ var RIAPP;
                     }
                     if (this._key === null)
                         return false;
-                    if (oldCT === CHANGE_TYPE.ADDED) {
+                    if (oldCT === 1 /* ADDED */) {
                         eset.removeItem(this);
                         return true;
                     }
-                    this._changeType = CHANGE_TYPE.DELETED;
+                    this._changeType = 3 /* DELETED */;
                     return true;
                 };
                 Entity.prototype.acceptChanges = function (rowInfo) {
                     var oldCT = this._changeType, eset = this._dbSet;
                     if (this._key === null)
                         return;
-                    if (oldCT !== CHANGE_TYPE.NONE) {
+                    if (oldCT !== 0 /* NONE */) {
                         eset._onCommitChanges(this, true, false, oldCT);
-                        if (oldCT === CHANGE_TYPE.DELETED) {
+                        if (oldCT === 3 /* DELETED */) {
                             eset.removeItem(this);
                             return;
                         }
                         this._origVals = null;
                         if (!!this._saveVals)
                             this._saveVals = utils.shallowCopy(this._vals);
-                        this._changeType = CHANGE_TYPE.NONE;
+                        this._changeType = 0 /* NONE */;
                         eset._removeAllErrors(this);
                         if (!!rowInfo)
-                            this._refreshValues(rowInfo, REFRESH_MODE.CommitChanges);
+                            this._refreshValues(rowInfo, 3 /* CommitChanges */);
                         eset._onCommitChanges(this, false, false, oldCT);
                     }
                 };
@@ -9374,9 +9434,9 @@ var RIAPP;
                     if (this._key === null)
                         return;
 
-                    if (oldCT !== CHANGE_TYPE.NONE) {
+                    if (oldCT !== 0 /* NONE */) {
                         eset._onCommitChanges(this, true, true, oldCT);
-                        if (oldCT === CHANGE_TYPE.ADDED) {
+                        if (oldCT === 1 /* ADDED */) {
                             eset.removeItem(this);
                             return;
                         }
@@ -9389,7 +9449,7 @@ var RIAPP;
                                 this._saveVals = utils.shallowCopy(this._vals);
                             }
                         }
-                        this._changeType = CHANGE_TYPE.NONE;
+                        this._changeType = 0 /* NONE */;
                         eset._removeAllErrors(this);
                         changes.forEach(function (v) {
                             self._onFieldChanged(eset.getFieldInfo(v.fieldName));
@@ -9475,7 +9535,7 @@ var RIAPP;
                         if (this.__changeType !== v) {
                             var oldChangeType = this.__changeType;
                             this.__changeType = v;
-                            if (v !== CHANGE_TYPE.NONE)
+                            if (v !== 0 /* NONE */)
                                 this._dbSet._addToChanged(this);
                             else
                                 this._dbSet._removeFromChanged(this._key);
@@ -9487,14 +9547,14 @@ var RIAPP;
                 });
                 Object.defineProperty(Entity.prototype, "_isNew", {
                     get: function () {
-                        return this.__changeType === CHANGE_TYPE.ADDED;
+                        return this.__changeType === 1 /* ADDED */;
                     },
                     enumerable: true,
                     configurable: true
                 });
                 Object.defineProperty(Entity.prototype, "_isDeleted", {
                     get: function () {
-                        return this.__changeType === CHANGE_TYPE.DELETED;
+                        return this.__changeType === 3 /* DELETED */;
                     },
                     enumerable: true,
                     configurable: true
@@ -9566,7 +9626,7 @@ var RIAPP;
                 });
                 Object.defineProperty(Entity.prototype, "isHasChanges", {
                     get: function () {
-                        return this.__changeType !== CHANGE_TYPE.NONE;
+                        return this.__changeType !== 0 /* NONE */;
                     },
                     enumerable: true,
                     configurable: true
@@ -9757,7 +9817,7 @@ var RIAPP;
                         fn_beforeFillEnd: null
                     }, data);
 
-                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length, entityType = this._entityType, newItems = [], positions = [], created_items = [], fetchedItems = [], isPagingEnabled = this.isPagingEnabled, RM = REFRESH_MODE.RefreshCurrent, query = this.query, clearAll = true, dataCache;
+                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length, entityType = this._entityType, newItems = [], positions = [], created_items = [], fetchedItems = [], isPagingEnabled = this.isPagingEnabled, RM = 1 /* RefreshCurrent */, query = this.query, clearAll = true, dataCache;
 
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
                     try  {
@@ -9828,7 +9888,7 @@ var RIAPP;
                         });
 
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
+                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
 
@@ -9871,7 +9931,7 @@ var RIAPP;
                         }
 
                         if (fetchedItems.length > 0) {
-                            this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: fetchedItems, pos: positions });
+                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: fetchedItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
                     } finally {
@@ -9893,13 +9953,13 @@ var RIAPP;
                         }
                         var itemCT = item._changeType;
                         item.acceptChanges(rowInfo);
-                        if (itemCT === CHANGE_TYPE.ADDED) {
+                        if (itemCT === 1 /* ADDED */) {
                             //on insert
                             delete self._itemsByKey[key];
                             item._updateKeys(rowInfo.serverKey);
                             self._itemsByKey[item._key] = item;
                             self._onItemsChanged({
-                                change_type: COLL_CHANGE_TYPE.REMAP_KEY,
+                                change_type: 3 /* REMAP_KEY */,
                                 items: [item],
                                 old_key: key,
                                 new_key: item._key
@@ -10413,7 +10473,7 @@ var RIAPP;
                     for (i = 0; i < len; i += 1) {
                         pinfo = parameterInfos[i];
                         val = args[pinfo.name];
-                        if (!pinfo.isNullable && !pinfo.isArray && !(pinfo.dataType == consts.DATA_TYPE.String || pinfo.dataType == consts.DATA_TYPE.Binary) && utils.check.isNt(val)) {
+                        if (!pinfo.isNullable && !pinfo.isArray && !(pinfo.dataType == 1 /* String */ || pinfo.dataType == 10 /* Binary */) && utils.check.isNt(val)) {
                             throw new Error(utils.format(RIAPP.ERRS.ERR_SVC_METH_PARAM_INVALID, pinfo.name, val, methodInfo.methodName));
                         }
                         if (utils.check.isFunction(val)) {
@@ -10425,7 +10485,7 @@ var RIAPP;
                         value = null;
 
                         //byte arrays are optimized for serialization
-                        if (pinfo.dataType == consts.DATA_TYPE.Binary && utils.check.isArray(val)) {
+                        if (pinfo.dataType == 10 /* Binary */ && utils.check.isArray(val)) {
                             value = JSON.stringify(val);
                         } else if (utils.check.isArray(val)) {
                             var arr = new Array(val.length);
@@ -10595,7 +10655,7 @@ var RIAPP;
                             item.destroy();
                             throw new Error(RIAPP.ERRS.ERR_ITEM_DELETED_BY_ANOTHER_USER);
                         } else
-                            item._refreshValues(res.rowInfo, REFRESH_MODE.MergeIntoCurrent);
+                            item._refreshValues(res.rowInfo, 2 /* MergeIntoCurrent */);
                     } catch (ex) {
                         if (RIAPP.global._checkIsDummy(ex)) {
                             RIAPP.global._throwDummy(ex);
@@ -11141,7 +11201,7 @@ var RIAPP;
                         parentToChildrenName: null,
                         childToParentName: null,
                         name: this._objId,
-                        onDeleteAction: DELETE_ACTION.NoAction
+                        onDeleteAction: 0 /* NoAction */
                     }, options);
 
                     this._name = opts.name;
@@ -11252,17 +11312,17 @@ var RIAPP;
                     }, self._objId, true);
                 };
                 Association.prototype._onParentCollChanged = function (args) {
-                    var self = this, CH_T = COLL_CHANGE_TYPE, item, items = args.items, changed = [], changedKeys = {};
+                    var self = this, CH_T = RIAPP.MOD.collection.COLL_CHANGE_TYPE, item, items = args.items, changed = [], changedKeys = {};
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case 2 /* RESET */:
                             if (!self._isParentFilling)
                                 changed = self.refreshParentMap();
                             break;
-                        case CH_T.ADDED:
+                        case 1 /* ADDED */:
                             if (!this._isParentFilling)
                                 changed = self._mapParentItems(items);
                             break;
-                        case CH_T.REMOVE:
+                        case 0 /* REMOVE */:
                             items.forEach(function (item) {
                                 var key = self._unMapParentItem(item);
                                 if (!!key) {
@@ -11271,7 +11331,7 @@ var RIAPP;
                             });
                             changed = Object.keys(changedKeys);
                             break;
-                        case CH_T.REMAP_KEY:
+                        case 3 /* REMAP_KEY */:
                              {
                                 if (!!args.old_key) {
                                     item = this._parentMap[args.old_key];
@@ -11314,12 +11374,12 @@ var RIAPP;
                 Association.prototype._onParentCommitChanges = function (item, isBegin, isRejected, changeType) {
                     var self = this, fkey;
                     if (isBegin) {
-                        if (isRejected && changeType === CHANGE_TYPE.ADDED) {
+                        if (isRejected && changeType === 1 /* ADDED */) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
                             return;
-                        } else if (!isRejected && changeType === CHANGE_TYPE.DELETED) {
+                        } else if (!isRejected && changeType === 3 /* DELETED */) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
@@ -11356,20 +11416,20 @@ var RIAPP;
                     }
                 };
                 Association.prototype._onParentStatusChanged = function (item, oldChangeType) {
-                    var self = this, DEL_STATUS = CHANGE_TYPE.DELETED, newChangeType = item._changeType, fkey;
-                    var children, DA = DELETE_ACTION;
+                    var self = this, DEL_STATUS = 3 /* DELETED */, newChangeType = item._changeType, fkey;
+                    var children, DELETE_ACTION;
                     if (newChangeType === DEL_STATUS) {
                         children = self.getChildItems(item);
                         fkey = this._unMapParentItem(item);
                         switch (self.onDeleteAction) {
-                            case DA.NoAction:
+                            case DELETE_ACTION.NoAction:
                                 break;
-                            case DA.Cascade:
+                            case DELETE_ACTION.Cascade:
                                 children.forEach(function (child) {
                                     child.deleteItem();
                                 });
                                 break;
-                            case DA.SetNulls:
+                            case DELETE_ACTION.SetNulls:
                                 children.forEach(function (child) {
                                     var isEdit = child.isEditing;
                                     if (!isEdit)
@@ -11393,17 +11453,17 @@ var RIAPP;
                     }
                 };
                 Association.prototype._onChildCollChanged = function (args) {
-                    var self = this, CH_T = COLL_CHANGE_TYPE, item, items = args.items, changed = [], changedKeys = {};
+                    var self = this, CH_T = RIAPP.MOD.collection.COLL_CHANGE_TYPE, item, items = args.items, changed = [], changedKeys = {};
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case 2 /* RESET */:
                             if (!self._isChildFilling)
                                 changed = self.refreshChildMap();
                             break;
-                        case CH_T.ADDED:
+                        case 1 /* ADDED */:
                             if (!this._isChildFilling)
                                 changed = self._mapChildren(items);
                             break;
-                        case CH_T.REMOVE:
+                        case 0 /* REMOVE */:
                             items.forEach(function (item) {
                                 var key = self._unMapChildItem(item);
                                 if (!!key) {
@@ -11412,7 +11472,7 @@ var RIAPP;
                             });
                             changed = Object.keys(changedKeys);
                             break;
-                        case CH_T.REMAP_KEY:
+                        case 3 /* REMAP_KEY */:
                              {
                                 if (!!args.old_key) {
                                     item = items[0];
@@ -11507,12 +11567,12 @@ var RIAPP;
                 Association.prototype._onChildCommitChanges = function (item, isBegin, isRejected, changeType) {
                     var self = this, fkey;
                     if (isBegin) {
-                        if (isRejected && changeType === CHANGE_TYPE.ADDED) {
+                        if (isRejected && changeType === 1 /* ADDED */) {
                             fkey = this._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
                             return;
-                        } else if (!isRejected && changeType === CHANGE_TYPE.DELETED) {
+                        } else if (!isRejected && changeType === 3 /* DELETED */) {
                             fkey = self._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
@@ -11555,7 +11615,7 @@ var RIAPP;
                     }
                 };
                 Association.prototype._onChildStatusChanged = function (item, oldChangeType) {
-                    var self = this, DEL_STATUS = CHANGE_TYPE.DELETED, newChangeType = item._changeType;
+                    var self = this, DEL_STATUS = 3 /* DELETED */, newChangeType = item._changeType;
                     var fkey = self.getChildFKey(item);
                     if (!fkey)
                         return;
@@ -11612,7 +11672,7 @@ var RIAPP;
                     return changedKey;
                 };
                 Association.prototype._mapParentItems = function (items) {
-                    var item, fkey, DEL_STATUS = CHANGE_TYPE.DELETED, chngType, old, chngedKeys = {};
+                    var item, fkey, DEL_STATUS = 3 /* DELETED */, chngType, old, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
                         chngType = item._changeType;
@@ -11650,7 +11710,7 @@ var RIAPP;
                     }
                 };
                 Association.prototype._mapChildren = function (items) {
-                    var item, fkey, arr, DEL_STATUS = CHANGE_TYPE.DELETED, chngType, chngedKeys = {};
+                    var item, fkey, arr, DEL_STATUS = 3 /* DELETED */, chngType, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
                         chngType = item._changeType;
@@ -11691,8 +11751,8 @@ var RIAPP;
                 };
                 Association.prototype.getChildFKey = function (item) {
                     if (!!item && !!this._childToParentName) {
-                        //_getFieldVal for childToParentName can store temporary parent's key (which is generated on client)
-                        //we first check if it has it
+                        //_getFieldVal for childToParentName can store temporary parent's key (which is generated on the client)
+                        // we first check if it returns it
                         var parentKey = item._getFieldVal(this._childToParentName);
                         if (!!parentKey) {
                             return parentKey;
@@ -11916,7 +11976,7 @@ var RIAPP;
                         });
 
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
+                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
                     } finally {
@@ -11933,13 +11993,13 @@ var RIAPP;
                     return newItems;
                 };
                 DataView.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, item, CH_T = COLL_CHANGE_TYPE, items = args.items;
+                    var self = this, item, CH_T = RIAPP.MOD.collection.COLL_CHANGE_TYPE, items = args.items;
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case 2 /* RESET */:
                             if (!this._isDSFilling)
                                 this._refresh(false);
                             break;
-                        case CH_T.ADDED:
+                        case 1 /* ADDED */:
                             if (!this._isAddingNew && !this._isDSFilling) {
                                 if (!!self._fn_filter) {
                                     items = items.filter(self._fn_filter);
@@ -11947,7 +12007,7 @@ var RIAPP;
                                 self.appendItems(items);
                             }
                             break;
-                        case CH_T.REMOVE:
+                        case 0 /* REMOVE */:
                             items.forEach(function (item) {
                                 var key = item._key;
                                 item = self._itemsByKey[key];
@@ -11956,7 +12016,7 @@ var RIAPP;
                                 }
                             });
                             break;
-                        case CH_T.REMAP_KEY:
+                        case 3 /* REMAP_KEY */:
                              {
                                 item = self._itemsByKey[args.old_key];
                                 if (!!item) {
@@ -12196,7 +12256,7 @@ var RIAPP;
                     this._items = [];
                     this._itemsByKey = {};
                     this._errors = {};
-                    this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.RESET, items: [] });
+                    this._onItemsChanged({ change_type: 2 /* RESET */, items: [] });
                     this.pageIndex = 0;
                     this.raisePropertyChanged('count');
                 };
@@ -12488,25 +12548,25 @@ var RIAPP;
                         return '' + this._getValue(item);
                 };
                 ListBox.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, CH_T = RIAPP.MOD.collection.consts.COLL_CHANGE_TYPE, data;
+                    var self = this, data;
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case 2 /* RESET */:
                             if (!this._isDSFilling)
                                 this._refresh();
                             break;
-                        case CH_T.ADDED:
+                        case 1 /* ADDED */:
                             if (!this._isDSFilling) {
                                 args.items.forEach(function (item) {
                                     self._addOption(item, item._isNew);
                                 });
                             }
                             break;
-                        case CH_T.REMOVE:
+                        case 0 /* REMOVE */:
                             args.items.forEach(function (item) {
                                 self._removeOption(item);
                             });
                             break;
-                        case CH_T.REMAP_KEY: {
+                        case 3 /* REMAP_KEY */: {
                             data = self._keyMap[args.old_key];
                             if (!!data) {
                                 delete self._keyMap[args.old_key];
@@ -12555,17 +12615,17 @@ var RIAPP;
                     }
                 };
                 ListBox.prototype._onStatusChanged = function (item, oldChangeType) {
-                    var DEL_STATUS = consts.CHANGE_TYPE.DELETED, newChangeType = item._changeType;
+                    var DEL_STATUS = 3 /* DELETED */, newChangeType = item._changeType;
                     if (newChangeType === DEL_STATUS) {
                         this._removeOption(item);
                     }
                 };
                 ListBox.prototype._onCommitChanges = function (item, isBegin, isRejected, changeType) {
-                    var self = this, ct = consts.CHANGE_TYPE, oldVal, val, data;
+                    var self = this, ct = RIAPP.MOD.collection.STATUS, oldVal, val, data;
                     if (isBegin) {
-                        if (isRejected && changeType === ct.ADDED) {
+                        if (isRejected && changeType === 1 /* ADDED */) {
                             return;
-                        } else if (!isRejected && changeType === ct.DELETED) {
+                        } else if (!isRejected && changeType === 3 /* DELETED */) {
                             return;
                         }
 
@@ -12574,7 +12634,7 @@ var RIAPP;
                         oldVal = this._saveVal;
                         this._saveVal = undefined;
 
-                        if (isRejected && changeType === ct.DELETED) {
+                        if (isRejected && changeType === 3 /* DELETED */) {
                             this._addOption(item, true);
                             return;
                         }
@@ -15098,17 +15158,17 @@ var RIAPP;
                     }
                 };
                 DataGrid.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, row, CH_T = RIAPP.MOD.collection.consts.COLL_CHANGE_TYPE, items = args.items;
+                    var self = this, row, items = args.items;
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case 2 /* RESET */:
                             if (!this._isDSFilling)
                                 this._refreshGrid();
                             break;
-                        case CH_T.ADDED:
+                        case 1 /* ADDED */:
                             if (!this._isDSFilling)
                                 self._appendItems(args.items);
                             break;
-                        case CH_T.REMOVE:
+                        case 0 /* REMOVE */:
                             items.forEach(function (item) {
                                 var row = self._rowMap[item._key];
                                 if (!!row) {
@@ -15116,7 +15176,7 @@ var RIAPP;
                                 }
                             });
                             break;
-                        case CH_T.REMAP_KEY:
+                        case 3 /* REMAP_KEY */:
                              {
                                 row = self._rowMap[args.old_key];
                                 if (!!row) {
@@ -15190,7 +15250,7 @@ var RIAPP;
                     }
                 };
                 DataGrid.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    var DEL_STATUS = consts.CHANGE_TYPE.DELETED, newChangeType = item._changeType, ds = this._dataSource;
+                    var DEL_STATUS = 3 /* DELETED */, newChangeType = item._changeType, ds = this._dataSource;
                     var row = this._rowMap[item._key];
                     if (!row)
                         return;
@@ -16627,22 +16687,22 @@ var RIAPP;
                     }
                 };
                 StackPanel.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, CH_T = RIAPP.MOD.collection.consts.COLL_CHANGE_TYPE, items = args.items;
+                    var self = this, items = args.items;
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case 2 /* RESET */:
                             if (!this._isDSFilling)
                                 this._refresh();
                             break;
-                        case CH_T.ADDED:
+                        case 1 /* ADDED */:
                             if (!this._isDSFilling)
                                 self._appendItems(items);
                             break;
-                        case CH_T.REMOVE:
+                        case 0 /* REMOVE */:
                             items.forEach(function (item) {
                                 self._removeItem(item);
                             });
                             break;
-                        case CH_T.REMAP_KEY:
+                        case 3 /* REMAP_KEY */:
                              {
                                 var obj = self._itemMap[args.old_key];
                                 if (!!obj) {
@@ -16669,7 +16729,7 @@ var RIAPP;
                     }
                 };
                 StackPanel.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    var DEL_STATUS = consts.CHANGE_TYPE.DELETED, newChangeType = item._changeType;
+                    var DEL_STATUS = 3 /* DELETED */, newChangeType = item._changeType;
                     var obj = this._itemMap[item._key];
                     if (!obj)
                         return;

@@ -56,7 +56,7 @@ module RIAPP {
             };
 
             export interface ISubmittable {
-                submitChanges(): IPromise<any>;
+                submitChanges(): IVoidPromise;
                 _isCanSubmit: boolean;
             }
 

@@ -7,7 +7,6 @@ module RIAPP {
                 EL_VIEW_KEY: 'data-elvwkey',
                 DATA_BIND: 'data-bind',
                 DATA_VIEW: 'data-view',
-                DATA_APP: 'data-app',
                 DATA_EVENT_SCOPE: 'data-scope',
                 DATA_ITEM_KEY: 'data-key',
                 DATA_CONTENT: 'data-content',
@@ -15,13 +14,11 @@ module RIAPP {
                 DATA_NAME: 'data-name',
                 DATA_FORM: 'data-form'
             };
-            export var DATA_TYPE =
-            {
-                None: 0, String: 1, Bool: 2, Integer: 3, Decimal: 4, Float: 5, DateTime: 6, Date: 7, Time: 8,
-                Guid: 9, Binary: 10
-            };
-            export var DATE_CONVERSION = { None: 0, ServerLocalToClientLocal: 1, UtcToClientLocal: 2 };
-            export var CHANGE_TYPE = { NONE: 0, ADDED: 1, UPDATED: 2, DELETED: 3 };
+            export enum DATE_CONVERSION { None= 0, ServerLocalToClientLocal= 1, UtcToClientLocal= 2 };
+            export enum DATA_TYPE {
+                None= 0, String= 1, Bool= 2, Integer= 3, Decimal= 4, Float= 5, DateTime= 6, Date= 7, Time= 8,
+                Guid= 9, Binary= 10
+            }
             export var KEYS = {
                 backspace: 8,
                 tab: 9,

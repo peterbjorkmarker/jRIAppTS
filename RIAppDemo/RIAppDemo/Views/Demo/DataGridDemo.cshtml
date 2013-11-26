@@ -154,7 +154,7 @@
 
 <div id="demoContent" data-bind="{this.isBusy,to=dbContext.isBusy}" data-view="name=busy_indicator">
     <div style="height:85%; vertical-align:top;">
-    <table data-app='default' data-name="gridProducts" data-bind="{this.dataSource,to=dbSet,source=productVM}{this.propChangedCommand,to=propChangeCommand,source=productVM}" 
+    <table data-name="gridProducts" data-bind="{this.dataSource,to=dbSet,source=productVM}{this.propChangedCommand,to=propChangeCommand,source=productVM}" 
     data-view="options={wrapCss:productTableWrap,containerCss:productTableContainer,headerCss:productTableHeader,rowStateField:IsActive,isHandleAddNew:true,isCanEdit:true,editor:{templateID:productEditTemplate,width:550,height:650,submitOnOK:true,title:'Product editing'},details:{templateID:productDetailsTemplate}}">
         <thead>
         <tr>

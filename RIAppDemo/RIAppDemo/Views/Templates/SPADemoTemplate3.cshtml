@@ -21,7 +21,7 @@
         <!--
             <span data-bind="{this.someProp,to=customerAddressVM}" data-view="name=debugger"></span>
          -->
-        <table data-app='default' data-name="gridCustAddr" data-bind="{this.dataSource,to=custAdressView}" data-view="options={wrapCss:addressTableWrap,headerCss:addressTableHeader}">
+        <table data-name="gridCustAddr" data-bind="{this.dataSource,to=custAdressView}" data-view="options={wrapCss:addressTableWrap,headerCss:addressTableHeader}">
             <thead>
                 <tr>
                     <th data-column="width:10%,title=Type,sortable:true,sortMemberName=AddressType;AddressLine" data-content="fieldName:AddressType,readOnly:true" ></th>
@@ -100,7 +100,7 @@
                 <!--left section - already linked to customer addresses -->
                 <td style="vertical-align: top;">
                     <div style="vertical-align: top; width: 350px; height: 310px;">
-                        <table data-app='default' data-name="gridCustAddr" data-bind="{this.dataSource,to=custAdressView,source=customerVM.customerAddressVM}"
+                        <table data-name="gridCustAddr" data-bind="{this.dataSource,to=custAdressView,source=customerVM.customerAddressVM}"
                             data-view="options={wrapCss:findAddrTableWrap,isCanDelete=false,isCanEdit=true,isUseScrollInto=false}">
                             <thead>
                                 <tr>

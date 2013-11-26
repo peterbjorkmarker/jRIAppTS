@@ -736,36 +736,36 @@ module RIAPP {
                     if (!options.bindingInfo)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'options', 'bindingInfo'));
 
-                    var DATA_TYPE = consts.DATA_TYPE, fieldInfo = options.fieldInfo, res;
+                    var fieldInfo = options.fieldInfo, res;
                     switch (fieldInfo.dataType) {
-                        case DATA_TYPE.None:
+                        case consts.DATA_TYPE.None:
                             res = BindingContent;
                             break;
-                        case DATA_TYPE.String:
+                        case consts.DATA_TYPE.String:
                             if (options.name == 'multyline')
                                 res = MultyLineContent;
                             else
                                 res = StringContent;
                             break;
-                        case DATA_TYPE.Bool:
+                        case consts.DATA_TYPE.Bool:
                             res = BoolContent;
                             break;
-                        case DATA_TYPE.Integer:
+                        case consts.DATA_TYPE.Integer:
                             res = NumberContent;
                             break;
-                        case DATA_TYPE.Decimal:
-                        case DATA_TYPE.Float:
+                        case consts.DATA_TYPE.Decimal:
+                        case consts.DATA_TYPE.Float:
                             res = NumberContent;
                             break;
-                        case DATA_TYPE.DateTime:
-                        case DATA_TYPE.Time:
+                        case consts.DATA_TYPE.DateTime:
+                        case consts.DATA_TYPE.Time:
                             res = DateTimeContent;
                             break;
-                        case DATA_TYPE.Date:
+                        case consts.DATA_TYPE.Date:
                             res = DateContent;
                             break;
-                        case DATA_TYPE.Guid:
-                        case DATA_TYPE.Binary:
+                        case consts.DATA_TYPE.Guid:
+                        case consts.DATA_TYPE.Binary:
                             res = BindingContent;
                             break;
                         default:

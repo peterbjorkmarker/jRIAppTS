@@ -1249,17 +1249,17 @@ module RIAPP {
                     }
                 }
                 _onDSCollectionChanged(args: collection.ICollChangedArgs<collection.CollectionItem>) {
-                    var self = this, row: Row, CH_T = collection.consts.COLL_CHANGE_TYPE, items = args.items;
+                    var self = this, row: Row, items = args.items;
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case collection.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refreshGrid();
                             break;
-                        case CH_T.ADDED:
-                            if (!this._isDSFilling) //if items are filling then it will be appended when fill ends
+                        case collection.COLL_CHANGE_TYPE.ADDED:
+                            if (!this._isDSFilling) //if items are filling then it will be appended when it ends
                                 self._appendItems(args.items);
                             break;
-                        case CH_T.REMOVE:
+                        case collection.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 var row = self._rowMap[item._key];
                                 if (!!row) {
@@ -1267,7 +1267,7 @@ module RIAPP {
                                 }
                             });
                             break;
-                        case CH_T.REMAP_KEY:
+                        case collection.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 row = self._rowMap[args.old_key];
                                 if (!!row) {
@@ -1341,8 +1341,8 @@ module RIAPP {
                         args.isAddNewHandled = this.showEditDialog();
                     }
                 }
-                _onItemStatusChanged(item: collection.CollectionItem, oldChangeType) {
-                    var DEL_STATUS = consts.CHANGE_TYPE.DELETED, newChangeType = item._changeType, ds = this._dataSource;
+                _onItemStatusChanged(item: collection.CollectionItem, oldChangeType: collection.STATUS) {
+                    var DEL_STATUS = collection.STATUS.DELETED, newChangeType = item._changeType, ds = this._dataSource;
                     var row = this._rowMap[item._key];
                     if (!row)
                         return;

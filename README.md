@@ -64,6 +64,7 @@ The DataService now exposes two other methods to get XAML version of the metadat
 It is accessible now through dataservice's CurrentQueryInfo property. See demo detaservice for example.</p>
 <p>2013-11-14  Improvements in the dataservice's code. Now query methods and service methods can accept complex type arguments. Fixed bug in dataservice's authorizer class. Improved code generation.</p>
 <p>2013-11-23  Updated jriappTS code to be compilable using <b>the typescript v0.95 beta compiler</b></p>
+<p>2013-11-26  Code modernization</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 

@@ -127,22 +127,22 @@ module RIAPP {
                     }
                 }
                 _onDSCollectionChanged(args) {
-                    var self = this, CH_T = collection.consts.COLL_CHANGE_TYPE, items = args.items;
+                    var self = this, items = args.items;
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case collection.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh();
                             break;
-                        case CH_T.ADDED:
+                        case collection.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isDSFilling) //if items are filling then it will be appended when fill ends
                                 self._appendItems(items);
                             break;
-                        case CH_T.REMOVE:
+                        case collection.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 self._removeItem(item);
                             });
                             break;
-                        case CH_T.REMAP_KEY:
+                        case collection.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 var obj = self._itemMap[args.old_key];
                                 if (!!obj) {
@@ -170,7 +170,7 @@ module RIAPP {
                     }
                 }
                 _onItemStatusChanged(item:collection.CollectionItem, oldChangeType:number) {
-                    var DEL_STATUS = consts.CHANGE_TYPE.DELETED, newChangeType =item._changeType;
+                    var DEL_STATUS = collection.STATUS.DELETED, newChangeType =item._changeType;
                     var obj = this._itemMap[item._key];
                     if (!obj)
                         return;

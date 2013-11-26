@@ -42,7 +42,7 @@ module RIAPP {
                 _result: string;
                 private _options: any;
                 private _dialogCreated: boolean;
-                private _fn_submitOnOK: () => IPromise<any>;
+                private _fn_submitOnOK: () => IVoidPromise;
                 private _app: Application;
                 //save global's currentSelectable  before showing and restore it on dialog's closing
                 private _currentSelectable: ISelectable;
