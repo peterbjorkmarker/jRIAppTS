@@ -631,17 +631,20 @@ var RIAPP;
             }
             throw origErr;
         };
+        Global.prototype.getExports = function () {
+            return this._exports;
+        };
         Global.prototype._checkIsDummy = function (error) {
             return !!error.isDummy;
         };
         Global.prototype._registerObject = function (root, name, obj) {
-            return this._registerObjectCore(root._exports, name, obj, true);
+            return this._registerObjectCore(root.getExports(), name, obj, true);
         };
         Global.prototype._getObject = function (root, name) {
-            return this._getObjectCore(root['_exports'], name);
+            return this._getObjectCore(root.getExports(), name);
         };
         Global.prototype._removeObject = function (root, name) {
-            return this._removeObjectCore(root['_exports'], name);
+            return this._removeObjectCore(root.getExports(), name);
         };
         Global.prototype._processTemplateSections = function (root) {
             var self = this;
@@ -17115,6 +17118,9 @@ var RIAPP;
             user_modules.forEach(function (mod) {
                 self._modules[mod.name] = mod.initFn(self);
             });
+        };
+        Application.prototype.getExports = function () {
+            return this._exports;
         };
         Application.prototype._onError = function (error, source) {
             if (RIAPP.global._checkIsDummy(error)) {

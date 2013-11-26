@@ -46,7 +46,7 @@ module RIAPP {
         private _modules: { [name: string]: any; };
         private _objId: string;
         private _objMaps: any[];
-        _exports: { [name: string]: any; }; 
+        private _exports: { [name: string]: any; }; 
         _options: IAppOptions;
         
         constructor(options?: IAppOptions) {
@@ -119,6 +119,9 @@ module RIAPP {
             user_modules.forEach((mod) => {
                 self._modules[mod.name] = mod.initFn(self);
             });
+        }
+        getExports() {
+            return this._exports;
         }
         _onError(error, source):boolean {
             if (global._checkIsDummy(error)) {

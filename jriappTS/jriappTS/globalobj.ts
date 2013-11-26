@@ -8,7 +8,7 @@ module RIAPP {
         _onKeyUp(key: number, event: Event);
     }
     export interface IExports {
-        _exports: { [name: string]: any; };
+        getExports();
     }
     
     export interface IPromise<T>{
@@ -57,7 +57,7 @@ module RIAPP {
         private _parser: MOD.parser.Parser;
         //all loaded modules
         private _moduleNames: string[];
-        _exports: { [name: string]: any; };
+        private _exports: { [name: string]: any; };
 
         constructor(window: Window, jQuery: JQueryStatic) {
             super();
@@ -229,17 +229,20 @@ module RIAPP {
             }
             throw origErr;
         }
+        getExports() {
+            return this._exports;
+        }
         _checkIsDummy(error) {
             return !!error.isDummy;
         }
         _registerObject(root: IExports, name: string, obj: any) {
-            return this._registerObjectCore(root._exports, name, obj, true);
+            return this._registerObjectCore(root.getExports(), name, obj, true);
         }
         _getObject(root: IExports, name: string) {
-            return this._getObjectCore(root['_exports'], name);
+            return this._getObjectCore(root.getExports(), name);
         }
         _removeObject(root: IExports, name: string) {
-            return this._removeObjectCore(root['_exports'], name);
+            return this._removeObjectCore(root.getExports(), name);
         }
         _processTemplateSections(root: { querySelectorAll: (selectors: string) => NodeList; }) {
             var self = this;
