@@ -1,7 +1,4 @@
-/// <reference path="..\jriapp.ts"/>
-/// <reference path="..\modules\db.ts"/>
-/// <reference path="..\modules\template.ts"/>
-/// <reference path="..\modules\datagrid.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 
 module RIAPP
 {

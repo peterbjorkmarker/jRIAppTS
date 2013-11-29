@@ -16,34 +16,20 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="jriapp_en.ts" />
-    <TypeScriptCompile Include="modules\converter.ts" />
-    <TypeScriptCompile Include="modules\binding.ts" />
-    <TypeScriptCompile Include="modules\parser.ts" />
-    <TypeScriptCompile Include="modules\baseElView.ts" />
-    <TypeScriptCompile Include="modules\template.ts" />
-    <TypeScriptCompile Include="modules\mvvm.ts" />
-    <TypeScriptCompile Include="modules\baseContent.ts" />
-    <TypeScriptCompile Include="modules\collection.ts" />
-    <TypeScriptCompile Include="modules\db.ts" />
-    <TypeScriptCompile Include="modules\datadialog.ts" />
-    <TypeScriptCompile Include="modules\datagrid.ts" />
-    <TypeScriptCompile Include="modules\pager.ts" />
-    <TypeScriptCompile Include="modules\stackpanel.ts" />
-    <TypeScriptCompile Include="modules\listbox.ts" />
-    <TypeScriptCompile Include="modules\dataform.ts" />
-    <TypeScriptCompile Include="baseobj.ts" />
-    <TypeScriptCompile Include="globalobj.ts" />
-  </ItemGroup>
-  <ItemGroup>
-    <TypeScriptCompile Include="jriapp.ts" />
-  </ItemGroup>
-  <ItemGroup>
-    <TypeScriptCompile Include="modules\utils.ts" />
-    <TypeScriptCompile Include="modules\consts.ts" />
-    <TypeScriptCompile Include="modules\defaults.ts" />
-    <TypeScriptCompile Include="modules\errors.ts" />
     <Content Include="jquery\jquery.d.ts" />
+    <Content Include="jriapp.d.ts" />
+    <TypeScriptCompile Include="user_modules\gridDemo.ts" />
+    <TypeScriptCompile Include="user_modules\common.ts" />
+    <TypeScriptCompile Include="user_modules\header.ts" />
+    <TypeScriptCompile Include="user_modules\autocomplete.ts" />
+    <TypeScriptCompile Include="user_modules\demoDB.ts" />
+    <TypeScriptCompile Include="user_modules\masterDetDemo.ts" />
+    <TypeScriptCompile Include="user_modules\manToManDemo.ts" />
+    <TypeScriptCompile Include="user_modules\spaDemo.ts" />
+    <TypeScriptCompile Include="user_modules\bindingsDemo.ts" />
+    <TypeScriptCompile Include="user_modules\filesDemo.ts" />
+    <TypeScriptCompile Include="user_modules\folderBrowserSvc.ts" />
+    <TypeScriptCompile Include="user_modules\collectionDemo.ts" />
   </ItemGroup>
   <ItemGroup />
   <PropertyGroup>

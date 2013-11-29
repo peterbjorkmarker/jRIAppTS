@@ -1,4 +1,4 @@
-/// <reference path="..\jriapp.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 /// <reference path="common.ts"/>
 /// <reference path="demoDB.ts"/>
 module RIAPP

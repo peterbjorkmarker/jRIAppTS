@@ -1,4 +1,5 @@
-/// <reference path="..\jriapp.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
+
 module RIAPP
 {
     export module HEADER {
