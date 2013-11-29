@@ -66,6 +66,7 @@ It is accessible now through dataservice's CurrentQueryInfo property. See demo d
 <p>2013-11-23  Updated jriappTS code to be compilable using <b>the typescript v0.95 beta compiler</b></p>
 <p>2013-11-26  Code modernization</p>
 <p>2013-11-29  jriappTS typescript solution was split into two parts. <br/>1) jriappTS - the framework's code<br/>2) demoTS - the code (user modules) for the DEMO ASP.NET MVC project.</p>
+<p>2013-11-29  Added <b>User's Guide</b> (meap). It requires some editing, but it is better than nothing.</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 
