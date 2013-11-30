@@ -2031,7 +2031,7 @@ declare module RIAPP {
                 public acceptChanges(rowInfo?: IRowInfo): void;
                 public rejectChanges(): void;
                 public submitChanges(): RIAPP.IVoidPromise;
-                public refresh(): RIAPP.IPromise<any>;
+                public refresh(): RIAPP.IPromise<Entity>;
                 public cancelEdit(): boolean;
                 public getDbContext(): DbContext;
                 public getDbSet(): DbSet<Entity>;
@@ -2100,7 +2100,7 @@ declare module RIAPP {
                 public _fillFromCache(data: {
                     isPageChanged: boolean;
                     fn_beforeFillEnd: () => void;
-                }): ILoadResult<Entity>;
+                }): ILoadResult<TEntity>;
                 public _commitChanges(rows: IRowInfo[]): void;
                 public _setItemInvalid(row: IRowInfo): TEntity;
                 public _setCurrentItem(v: TEntity): void;
@@ -2208,7 +2208,7 @@ declare module RIAPP {
                 public _getChanges(): IChangeSet;
                 public _getUrl(action: any): string;
                 public _onItemRefreshed(res: IRefreshRowInfo, item: Entity): void;
-                public _refreshItem(item: Entity): RIAPP.IPromise<any>;
+                public _refreshItem(item: Entity): RIAPP.IPromise<Entity>;
                 public _onError(error: any, source: any): boolean;
                 public _onDataOperError(ex: any, oper: any): boolean;
                 public _onSubmitError(error: any): void;
@@ -2526,10 +2526,10 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module datadialog {
-            var DIALOG_ACTION: {
-                Default: number;
-                StayOpen: number;
-            };
+            enum DIALOG_ACTION {
+                Default = 0,
+                StayOpen = 1,
+            }
             interface IDialogConstructorOptions {
                 dataContext?: any;
                 templateID: string;

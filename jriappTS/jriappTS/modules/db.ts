@@ -993,8 +993,8 @@ module RIAPP {
                     });
                     return promise;
                 }
-                refresh() {
-                    var eset = this._dbSet, db = eset.dbContext;
+                refresh(): IPromise<Entity> {
+                    var db = this.getDbContext();
                     return db._refreshItem(this);
                 }
                 cancelEdit() {
@@ -1262,7 +1262,7 @@ module RIAPP {
 
                     var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length,
                         entityType = this._entityType, newItems: TEntity[] = [], positions: number[] = [], created_items: TEntity[] = [], fetchedItems: TEntity[] = [],
-                        isPagingEnabled = this.isPagingEnabled, RM = REFRESH_MODE.RefreshCurrent, query = this.query, clearAll = true, dataCache;
+                        isPagingEnabled = this.isPagingEnabled, RM = REFRESH_MODE.RefreshCurrent, query = this.query, clearAll = true, dataCache: DataCache;
 
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
                     try {
@@ -1279,7 +1279,7 @@ module RIAPP {
                             }
                         }
                         created_items = rows.map(function (row) {
-                            //row.key already string value generated on server (no need to convert to string)
+                            //row.key already a string value generated on server (no need to convert to string)
                             var key = row.key;
                             if (!key)
                                 throw new Error(RIAPP.ERRS.ERR_KEY_IS_EMPTY);
@@ -1287,10 +1287,10 @@ module RIAPP {
                             var item = self._itemsByKey[key];
                             if (!item) {
                                 if (!!dataCache) {
-                                    item = dataCache.getItemByKey(key);
+                                    item = <TEntity>dataCache.getItemByKey(key);
                                 }
                                 if (!item)
-                                    item = <TEntity><any>new entityType(self, row, fieldNames);
+                                    item = <TEntity>new entityType(self, row, fieldNames);
                                 else {
                                     row.values.forEach(function (val, index) {
                                         item._refreshValue(val, fieldNames[index], RM);
@@ -1314,7 +1314,7 @@ module RIAPP {
                                 dataCache.fillCache(res.pageIndex, created_items);
                                 var pg = dataCache.getCachedPage(query.pageIndex);
                                 if (!!pg)
-                                    created_items = pg.items;
+                                    created_items = <TEntity[]>pg.items;
                                 else
                                     created_items = [];
                             }
@@ -1351,7 +1351,7 @@ module RIAPP {
                     this.moveFirst();
                     return <ILoadResult<TEntity>>{ fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
                 }
-                _fillFromCache(data: { isPageChanged: boolean; fn_beforeFillEnd: () => void; }): ILoadResult<Entity> {
+                _fillFromCache(data: { isPageChanged: boolean; fn_beforeFillEnd: () => void; }): ILoadResult<TEntity> {
                     data = utils.extend(false, {
                         isPageChanged: false,
                         fn_beforeFillEnd: null
@@ -1359,9 +1359,8 @@ module RIAPP {
                     var self = this, positions:number[] = [], fetchedItems:TEntity[] = [], query = this.query;
                     if (!query)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'query is not null'));
-                    var dataCache = query._getCache();
-                    var cachedPage = dataCache.getCachedPage(query.pageIndex),
-                        items: TEntity[] = <TEntity[]><any>(!cachedPage ? [] : cachedPage.items);
+                    var dataCache = query._getCache(), cachedPage = dataCache.getCachedPage(query.pageIndex),
+                        items = !cachedPage ? <TEntity[]>[] : <TEntity[]>cachedPage.items;
 
                     this._onFillStart({ isBegin: true, rowCount: items.length, time: new Date(), isPageChanged: data.isPageChanged });
                     try {
@@ -1390,7 +1389,7 @@ module RIAPP {
                         });
                     }
                     this.moveFirst();
-                    return <ILoadResult<TEntity>>{ fetchedItems: fetchedItems, newItems: fetchedItems, isPageChanged: data.isPageChanged, outOfBandData: null };
+                    return { fetchedItems: fetchedItems, newItems: fetchedItems, isPageChanged: data.isPageChanged, outOfBandData: null };
                 }
                 _commitChanges(rows: IRowInfo[]) {
                     var self = this;
@@ -2095,7 +2094,7 @@ module RIAPP {
                         global._throwDummy(ex);
                     }
                 }
-                _refreshItem(item: Entity): IPromise<any> {
+                _refreshItem(item: Entity): IPromise<Entity> {
                     var deferred: IDeferred<any> = utils.createDeferred(), callback = function (isOk) {
                         if (isOk) {
                             deferred.resolve(item);

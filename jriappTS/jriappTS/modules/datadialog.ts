@@ -3,7 +3,7 @@ module RIAPP {
         export module datadialog {
            //local variables for optimization
             var utils = global.utils, consts = global.consts;
-            export var DIALOG_ACTION = { Default: 0, StayOpen: 1 };
+            export enum DIALOG_ACTION { Default = 0, StayOpen = 1 };
            
             
             export interface IDialogConstructorOptions {
