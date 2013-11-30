@@ -1,3 +1,4 @@
+'use strict';
 module RIAPP {
     export var ERRS = {
         ERR_APP_NEED_JQUERY: 'The project is dependent on JQuery',

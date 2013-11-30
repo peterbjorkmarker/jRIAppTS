@@ -22,7 +22,6 @@
 /// <reference path="..\modules\datagrid.ts"/>
 /// <reference path="..\modules\pager.ts"/>
 /// <reference path="..\modules\stackpanel.ts"/>
-
 module RIAPP {
     export interface IAppOptions {
         application_name?: string;
