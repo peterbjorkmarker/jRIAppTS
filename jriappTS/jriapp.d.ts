@@ -1712,10 +1712,17 @@ declare module RIAPP {
                 Cascade = 1,
                 SetNulls = 2,
             }
+            enum DATA_OPER {
+                SUBMIT = 0,
+                LOAD = 1,
+                INVOKE = 2,
+                REFRESH = 3,
+                INIT = 4,
+            }
             class DataOperationError extends MOD.errors.BaseError {
-                public _operationName: string;
-                constructor(ex: any, operationName: string);
-                public operationName : string;
+                public _operationName: DATA_OPER;
+                constructor(ex: any, operationName: DATA_OPER);
+                public operationName : DATA_OPER;
             }
             class AccessDeniedError extends DataOperationError {
             }

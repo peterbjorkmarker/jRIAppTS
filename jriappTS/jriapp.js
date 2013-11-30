@@ -8481,8 +8481,15 @@ var RIAPP;
                 DELETE_ACTION[DELETE_ACTION["SetNulls"] = 2] = "SetNulls";
             })(db.DELETE_ACTION || (db.DELETE_ACTION = {}));
             var DELETE_ACTION = db.DELETE_ACTION;
+            (function (DATA_OPER) {
+                DATA_OPER[DATA_OPER["SUBMIT"] = 0] = "SUBMIT";
+                DATA_OPER[DATA_OPER["LOAD"] = 1] = "LOAD";
+                DATA_OPER[DATA_OPER["INVOKE"] = 2] = "INVOKE";
+                DATA_OPER[DATA_OPER["REFRESH"] = 3] = "REFRESH";
+                DATA_OPER[DATA_OPER["INIT"] = 4] = "INIT";
+            })(db.DATA_OPER || (db.DATA_OPER = {}));
+            var DATA_OPER = db.DATA_OPER;
 
-            var DATA_OPER = { SUBMIT: 'submit', LOAD: 'load', INVOKE: 'invoke', REFRESH: 'refresh', INIT: 'initDbContext' };
             var DATA_SVC_METH = {
                 Invoke: 'InvokeMethod', LoadData: 'GetItems', GetMetadata: 'GetMetadata', GetPermissions: 'GetPermissions',
                 Submit: 'SaveChanges', Refresh: 'RefreshItem'
@@ -8538,7 +8545,7 @@ var RIAPP;
                 __extends(SubmitError, _super);
                 function SubmitError(origError, allSubmitted, notValidated) {
                     var message = origError.message || ('' + origError);
-                    _super.call(this, message, DATA_OPER.SUBMIT);
+                    _super.call(this, message, 0 /* SUBMIT */);
                     this._origError = origError;
                     this._allSubmitted = allSubmitted || [];
                     this._notValidated = notValidated || [];
@@ -10505,7 +10512,7 @@ var RIAPP;
                     return data;
                 };
                 DbContext.prototype._invokeMethod = function (methodInfo, data, callback) {
-                    var self = this, operType = DATA_OPER.INVOKE, postData, invokeUrl;
+                    var self = this, operType = 2 /* INVOKE */, postData, invokeUrl;
                     this.isBusy = true;
                     var fn_onComplete = function (res) {
                         try  {
@@ -10543,7 +10550,7 @@ var RIAPP;
                     }
                 };
                 DbContext.prototype._loadFromCache = function (query, isPageChanged) {
-                    var operType = DATA_OPER.LOAD, dbSet = query._dbSet, methRes;
+                    var operType = 1 /* LOAD */, dbSet = query._dbSet, methRes;
                     try  {
                         methRes = dbSet._fillFromCache({ isPageChanged: isPageChanged, fn_beforeFillEnd: null });
                     } catch (ex) {
@@ -10565,7 +10572,7 @@ var RIAPP;
                     });
                 };
                 DbContext.prototype._onLoaded = function (res, isPageChanged) {
-                    var self = this, operType = DATA_OPER.LOAD, dbSetName, dbSet, loadRes;
+                    var self = this, operType = 1 /* LOAD */, dbSetName, dbSet, loadRes;
                     try  {
                         if (!res)
                             throw new Error(utils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'null result'));
@@ -10594,7 +10601,7 @@ var RIAPP;
                     var self = this, submitted = [], notvalid = [];
                     try  {
                         try  {
-                            __checkError(res.error, DATA_OPER.SUBMIT);
+                            __checkError(res.error, 0 /* SUBMIT */);
                         } catch (ex) {
                             res.dbSets.forEach(function (jsDB) {
                                 var eSet = self._dbSets.getDbSet(jsDB.dbSetName);
@@ -10649,7 +10656,7 @@ var RIAPP;
                     return loadUrl;
                 };
                 DbContext.prototype._onItemRefreshed = function (res, item) {
-                    var operType = DATA_OPER.REFRESH;
+                    var operType = 3 /* REFRESH */;
                     try  {
                         __checkError(res.error, operType);
                         if (!res.rowInfo) {
@@ -10678,7 +10685,7 @@ var RIAPP;
                     var self = this;
                     this.waitForNotSubmiting(function () {
                         dbSet.waitForNotLoading(function () {
-                            var args, postData, operType = DATA_OPER.REFRESH;
+                            var args, postData, operType = 3 /* REFRESH */;
                             var fn_onEnd = function () {
                                 self.isBusy = false;
                                 dbSet.isLoading = false;
@@ -10741,7 +10748,7 @@ var RIAPP;
                     this.raiseEvent('submit_error', args);
                     if (!args.isHandled) {
                         this.rejectChanges();
-                        this._onDataOperError(error, DATA_OPER.SUBMIT);
+                        this._onDataOperError(error, 0 /* SUBMIT */);
                     }
                 };
                 DbContext.prototype._beforeLoad = function (query, oldQuery, dbSet) {
@@ -10795,7 +10802,7 @@ var RIAPP;
                     this.waitForNotSubmiting(function () {
                         dbSet.waitForNotLoading(function () {
                             var oldQuery = dbSet.query;
-                            var loadUrl = self._getUrl(DATA_SVC_METH.LoadData), requestInfo, postData, operType = DATA_OPER.LOAD, fn_onEnd = function () {
+                            var loadUrl = self._getUrl(DATA_SVC_METH.LoadData), requestInfo, postData, operType = 1 /* LOAD */, fn_onEnd = function () {
                                 dbSet.isLoading = false;
                                 self.isBusy = false;
                             }, fn_onOK = function (res) {
@@ -10937,7 +10944,7 @@ var RIAPP;
 
                     //this wait is asynchronous
                     this.waitForNotBusy(function () {
-                        var url, postData, operType = DATA_OPER.SUBMIT, changeSet;
+                        var url, postData, operType = 0 /* SUBMIT */, changeSet;
                         var fn_onEnd = function () {
                             self.isBusy = false;
                             self.isSubmiting = false;
@@ -11023,7 +11030,7 @@ var RIAPP;
                         }
 
                         //initialize by obtaining metadata from the data service by ajax call
-                        loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = DATA_OPER.INIT;
+                        loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = 4 /* INIT */;
                     } catch (ex) {
                         this._onError(ex, this);
                         RIAPP.global._throwDummy(ex);

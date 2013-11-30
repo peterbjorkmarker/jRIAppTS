@@ -8,16 +8,16 @@ module RIAPP {
             export enum FILTER_TYPE { Equals= 0, Between= 1, StartsWith= 2, EndsWith= 3, Contains= 4, Gt= 5, Lt= 6, GtEq= 7, LtEq= 8, NotEq= 9 }
             export enum REFRESH_MODE { NONE= 0, RefreshCurrent = 1, MergeIntoCurrent= 2, CommitChanges= 3 }
             export enum DELETE_ACTION { NoAction = 0, Cascade = 1, SetNulls= 2 }
+            export enum DATA_OPER { SUBMIT, LOAD, INVOKE, REFRESH, INIT }
 
-            var DATA_OPER = { SUBMIT: 'submit', LOAD: 'load', INVOKE: 'invoke', REFRESH: 'refresh', INIT: 'initDbContext' };
             var DATA_SVC_METH = {
                 Invoke: 'InvokeMethod', LoadData: 'GetItems', GetMetadata: 'GetMetadata', GetPermissions: 'GetPermissions',
                 Submit: 'SaveChanges', Refresh: 'RefreshItem'
             };
 
             export class DataOperationError extends MOD.errors.BaseError {
-                _operationName: string;
-                constructor(ex, operationName: string) {
+                _operationName: DATA_OPER;
+                constructor(ex, operationName: DATA_OPER) {
                     var message;
                     if (!!ex)
                         message = ex.message;
@@ -54,7 +54,7 @@ module RIAPP {
                 get notValidated() { return this._notValidated; }
             }
 
-            function __checkError(svcError: { name: string; message?: string; }, oper: string) {
+            function __checkError(svcError: { name: string; message?: string; }, oper: DATA_OPER) {
                 if (!svcError)
                     return;
                 switch (svcError.name) {
