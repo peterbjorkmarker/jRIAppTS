@@ -162,11 +162,11 @@ var RIAPP;
                     self.gridDataSource.clear();
             };
             AutoCompleteElView.prototype._onKeyPress = function (keyCode) {
-                if (keyCode === global.consts.KEYS.esc) {
+                if (keyCode === 27 /* esc */) {
                     this._hide();
                     return;
                 }
-                if (keyCode === global.consts.KEYS.enter) {
+                if (keyCode === 13 /* enter */) {
                     this._updateSelection();
                     this._hide();
                     return;

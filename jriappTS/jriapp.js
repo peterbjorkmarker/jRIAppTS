@@ -1051,7 +1051,6 @@ var RIAPP;
                 DATE_CONVERSION[DATE_CONVERSION["UtcToClientLocal"] = 2] = "UtcToClientLocal";
             })(consts.DATE_CONVERSION || (consts.DATE_CONVERSION = {}));
             var DATE_CONVERSION = consts.DATE_CONVERSION;
-            ;
             (function (DATA_TYPE) {
                 DATA_TYPE[DATA_TYPE["None"] = 0] = "None";
                 DATA_TYPE[DATA_TYPE["String"] = 1] = "String";
@@ -1066,22 +1065,23 @@ var RIAPP;
                 DATA_TYPE[DATA_TYPE["Binary"] = 10] = "Binary";
             })(consts.DATA_TYPE || (consts.DATA_TYPE = {}));
             var DATA_TYPE = consts.DATA_TYPE;
-            consts.KEYS = {
-                backspace: 8,
-                tab: 9,
-                enter: 13,
-                esc: 27,
-                space: 32,
-                pageUp: 33,
-                pageDown: 34,
-                end: 35,
-                home: 36,
-                left: 37,
-                up: 38,
-                right: 39,
-                down: 40,
-                del: 127
-            };
+            (function (KEYS) {
+                KEYS[KEYS["backspace"] = 8] = "backspace";
+                KEYS[KEYS["tab"] = 9] = "tab";
+                KEYS[KEYS["enter"] = 13] = "enter";
+                KEYS[KEYS["esc"] = 27] = "esc";
+                KEYS[KEYS["space"] = 32] = "space";
+                KEYS[KEYS["pageUp"] = 33] = "pageUp";
+                KEYS[KEYS["pageDown"] = 34] = "pageDown";
+                KEYS[KEYS["end"] = 35] = "end";
+                KEYS[KEYS["home"] = 36] = "home";
+                KEYS[KEYS["left"] = 37] = "left";
+                KEYS[KEYS["up"] = 38] = "up";
+                KEYS[KEYS["right"] = 39] = "right";
+                KEYS[KEYS["down"] = 40] = "down";
+                KEYS[KEYS["del"] = 127] = "del";
+            })(consts.KEYS || (consts.KEYS = {}));
+            var KEYS = consts.KEYS;
             consts.ELVIEW_NM = { DATAFORM: 'dataform', DYNACONT: 'dynacontent' };
             consts.LOADER_GIF = { SMALL: 'loader2.gif', NORMAL: 'loader.gif' };
 
@@ -7768,7 +7768,7 @@ var RIAPP;
                     get: function () {
                         if (!NumberContent.__allowedKeys) {
                             var KEYS = RIAPP.global.consts.KEYS;
-                            NumberContent.__allowedKeys = [0, KEYS.backspace, KEYS.del, KEYS.left, KEYS.right, KEYS.end, KEYS.home, KEYS.tab, KEYS.esc, KEYS.enter];
+                            NumberContent.__allowedKeys = [0, 8 /* backspace */, 127 /* del */, 37 /* left */, 39 /* right */, 35 /* end */, 36 /* home */, 9 /* tab */, 27 /* esc */, 13 /* enter */];
                         }
                         return NumberContent.__allowedKeys;
                     },
@@ -7836,7 +7836,7 @@ var RIAPP;
                     get: function () {
                         if (!StringContent.__allowedKeys) {
                             var KEYS = RIAPP.global.consts.KEYS;
-                            StringContent.__allowedKeys = [0, KEYS.backspace, KEYS.del, KEYS.left, KEYS.right, KEYS.end, KEYS.home, KEYS.tab, KEYS.esc, KEYS.enter];
+                            StringContent.__allowedKeys = [0, 8 /* backspace */, 127 /* del */, 37 /* left */, 39 /* right */, 35 /* end */, 36 /* home */, 9 /* tab */, 27 /* esc */, 13 /* enter */];
                         }
                         return StringContent.__allowedKeys;
                     },
@@ -7875,7 +7875,7 @@ var RIAPP;
                     get: function () {
                         if (!MultyLineContent.__allowedKeys) {
                             var KEYS = RIAPP.global.consts.KEYS;
-                            MultyLineContent.__allowedKeys = [0, KEYS.backspace, KEYS.del, KEYS.left, KEYS.right, KEYS.end, KEYS.home, KEYS.tab, KEYS.esc, KEYS.enter];
+                            MultyLineContent.__allowedKeys = [0, 8 /* backspace */, 127 /* del */, 37 /* left */, 39 /* right */, 35 /* end */, 36 /* home */, 9 /* tab */, 27 /* esc */, 13 /* enter */];
                         }
                         return MultyLineContent.__allowedKeys;
                     },
@@ -15506,7 +15506,7 @@ var RIAPP;
                     if (!ds)
                         return;
                     switch (key) {
-                        case Keys.up:
+                        case 38 /* up */:
                             event.preventDefault();
                             if (ds.movePrev(true)) {
                                 if (self.isUseScrollInto) {
@@ -15514,7 +15514,7 @@ var RIAPP;
                                 }
                             }
                             break;
-                        case Keys.down:
+                        case 40 /* down */:
                             event.preventDefault();
                             if (ds.moveNext(true)) {
                                 if (self.isUseScrollInto) {
@@ -15522,7 +15522,7 @@ var RIAPP;
                                 }
                             }
                             break;
-                        case Keys.pageDown:
+                        case 34 /* pageDown */:
                             /*
                             if (!!this._currentRow && !!this._currentRow.expanderCell && !this._currentRow.isExpanded) {
                             this._currentRow.expanderCell._onCellClicked();
@@ -15532,7 +15532,7 @@ var RIAPP;
                             if (ds.pageIndex > 0)
                                 ds.pageIndex = ds.pageIndex - 1;
                             break;
-                        case Keys.pageUp:
+                        case 33 /* pageUp */:
                             /*
                             if (!!this._currentRow && !!this._currentRow.expanderCell && !!this._currentRow.isExpanded) {
                             this._currentRow.expanderCell._onCellClicked();
@@ -15541,7 +15541,7 @@ var RIAPP;
                             */
                             ds.pageIndex = ds.pageIndex + 1;
                             break;
-                        case Keys.enter:
+                        case 13 /* enter */:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
                                     event.preventDefault();
@@ -15550,14 +15550,14 @@ var RIAPP;
                                 }
                             }
                             break;
-                        case Keys.esc:
+                        case 27 /* esc */:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
                                     event.preventDefault();
                                 }
                             }
                             break;
-                        case Keys.space:
+                        case 32 /* space */:
                             if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
                                 event.preventDefault();
                             }
@@ -15569,7 +15569,7 @@ var RIAPP;
                     if (!ds)
                         return;
                     switch (key) {
-                        case Keys.enter:
+                        case 13 /* enter */:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
                                     this._actionsCol._onOk(this._currentRow.actionsCell);
@@ -15580,7 +15580,7 @@ var RIAPP;
                                 }
                             }
                             break;
-                        case Keys.esc:
+                        case 27 /* esc */:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
                                     this._actionsCol._onCancel(this._currentRow.actionsCell);
@@ -15588,7 +15588,7 @@ var RIAPP;
                                 }
                             }
                             break;
-                        case Keys.space:
+                        case 32 /* space */:
                             if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
                                 event.preventDefault();
                                 this._currentRow.isSelected = !this._currentRow.isSelected;
@@ -16632,13 +16632,13 @@ var RIAPP;
                         return;
                     if (this._orientation == 'horizontal') {
                         switch (key) {
-                            case Keys.left:
+                            case 37 /* left */:
                                 event.preventDefault();
                                 if (ds.movePrev(true)) {
                                     self.scrollIntoView(ds.currentItem);
                                 }
                                 break;
-                            case Keys.right:
+                            case 39 /* right */:
                                 event.preventDefault();
                                 if (ds.moveNext(true)) {
                                     self.scrollIntoView(ds.currentItem);
@@ -16647,13 +16647,13 @@ var RIAPP;
                         }
                     } else {
                         switch (key) {
-                            case Keys.up:
+                            case 38 /* up */:
                                 event.preventDefault();
                                 if (ds.movePrev(true)) {
                                     self.scrollIntoView(ds.currentItem);
                                 }
                                 break;
-                            case Keys.down:
+                            case 40 /* down */:
                                 event.preventDefault();
                                 if (ds.moveNext(true)) {
                                     self.scrollIntoView(ds.currentItem);

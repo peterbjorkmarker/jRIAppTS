@@ -347,22 +347,22 @@ declare module RIAPP {
                 Guid = 9,
                 Binary = 10,
             }
-            var KEYS: {
-                backspace: number;
-                tab: number;
-                enter: number;
-                esc: number;
-                space: number;
-                pageUp: number;
-                pageDown: number;
-                end: number;
-                home: number;
-                left: number;
-                up: number;
-                right: number;
-                down: number;
-                del: number;
-            };
+            enum KEYS {
+                backspace = 8,
+                tab = 9,
+                enter = 13,
+                esc = 27,
+                space = 32,
+                pageUp = 33,
+                pageDown = 34,
+                end = 35,
+                home = 36,
+                left = 37,
+                up = 38,
+                right = 39,
+                down = 40,
+                del = 127,
+            }
             var ELVIEW_NM: {
                 DATAFORM: string;
                 DYNACONT: string;

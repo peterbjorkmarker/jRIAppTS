@@ -14,27 +14,27 @@ module RIAPP {
                 DATA_NAME: 'data-name',
                 DATA_FORM: 'data-form'
             };
-            export enum DATE_CONVERSION { None= 0, ServerLocalToClientLocal= 1, UtcToClientLocal= 2 };
+            export enum DATE_CONVERSION { None= 0, ServerLocalToClientLocal= 1, UtcToClientLocal= 2 }
             export enum DATA_TYPE {
                 None= 0, String= 1, Bool= 2, Integer= 3, Decimal= 4, Float= 5, DateTime= 6, Date= 7, Time= 8,
                 Guid= 9, Binary= 10
             }
-            export var KEYS = {
-                backspace: 8,
-                tab: 9,
-                enter: 13,
-                esc: 27,
-                space: 32,
-                pageUp: 33,
-                pageDown: 34,
-                end: 35,
-                home: 36,
-                left: 37,
-                up: 38,
-                right: 39,
-                down: 40,
-                del: 127
-            };
+            export enum KEYS {
+                backspace=8,
+                tab=9,
+                enter=13,
+                esc=27,
+                space=32,
+                pageUp=33,
+                pageDown=34,
+                end=35,
+                home=36,
+                left=37,
+                up=38,
+                right=39,
+                down=40,
+                del=127
+            }
             export var ELVIEW_NM = { DATAFORM: 'dataform', DYNACONT: 'dynacontent' };
             export var LOADER_GIF = { SMALL: 'loader2.gif', NORMAL: 'loader.gif' };
            
