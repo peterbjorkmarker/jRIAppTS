@@ -4,7 +4,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-/// <reference path="..\jriapp.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 /// <reference path="common.ts"/>
 /// <reference path="autocomplete.ts"/>
 /// <reference path="demoDB.ts"/>
@@ -525,27 +525,27 @@ var RIAPP;
                         var DIALOG_ACTION = RIAPP.MOD.datadialog.DIALOG_ACTION;
                         if (!self._isAddingNew) {
                             //allow to close the dialog
-                            return DIALOG_ACTION.Default;
+                            return 0 /* Default */;
                         }
                         if (!self._newAddress.endEdit())
-                            return DIALOG_ACTION.StayOpen;
+                            return 1 /* StayOpen */;
                         var custAdress = self._customerAddressVM._addNewCustAddress(self._newAddress);
                         custAdress.endEdit();
                         self._newAddress = null;
                         self._isAddingNew = false;
                         self.raisePropertyChanged('newAddress');
                         self.raisePropertyChanged('isAddingNew');
-                        return DIALOG_ACTION.StayOpen;
+                        return 1 /* StayOpen */;
                     },
                     fn_OnCancel: function (dialog) {
                         var DIALOG_ACTION = RIAPP.MOD.datadialog.DIALOG_ACTION;
                         if (!self._isAddingNew) {
-                            return DIALOG_ACTION.Default;
+                            return 0 /* Default */;
                         }
                         if (!!self._newAddress) {
                             self._cancelAddNewAddress();
                         }
-                        return DIALOG_ACTION.StayOpen;
+                        return 1 /* StayOpen */;
                     }
                 };
                 this._dialogVM.createDialog('addressDialog', dialogOptions);

@@ -1,4 +1,4 @@
-/// <reference path="..\jriapp.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 /// <reference path="common.ts"/>
 /// <reference path="autocomplete.ts"/>
 /// <reference path="demoDB.ts"/>
@@ -1462,26 +1462,26 @@ var RIAPP;
                         var DIALOG_ACTION = RIAPP.MOD.datadialog.DIALOG_ACTION;
                         if (self.uiViewVM.viewName != self.uiViewVM.newAdrTemplate) {
                             //allow to close the dialog
-                            return DIALOG_ACTION.Default;
+                            return 0 /* Default */;
                         }
                         if (!self._newAddress.endEdit())
-                            return DIALOG_ACTION.StayOpen;
+                            return 1 /* StayOpen */;
                         var custAdress = self._customerAddressVM._addNewCustAddress(self._newAddress);
                         custAdress.endEdit();
                         self._newAddress = null;
                         self.uiViewVM.goToLinkAdr();
                         self.raisePropertyChanged('newAddress');
-                        return DIALOG_ACTION.StayOpen;
+                        return 1 /* StayOpen */;
                     },
                     fn_OnCancel: function (dialog) {
                         var DIALOG_ACTION = RIAPP.MOD.datadialog.DIALOG_ACTION;
                         if (self.uiViewVM.viewName != self.uiViewVM.newAdrTemplate) {
-                            return DIALOG_ACTION.Default;
+                            return 0 /* Default */;
                         }
                         if (!!self._newAddress) {
                             self._cancelAddNewAddress();
                         }
-                        return DIALOG_ACTION.StayOpen;
+                        return 1 /* StayOpen */;
                     }
                 };
                 this._dialogVM.createDialog('addressDialog', dialogOptions);

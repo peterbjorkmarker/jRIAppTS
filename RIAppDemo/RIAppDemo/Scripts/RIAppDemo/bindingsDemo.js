@@ -4,7 +4,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-/// <reference path="..\jriapp.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 /// <reference path="common.ts"/>
 var RIAPP;
 (function (RIAPP) {

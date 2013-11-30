@@ -9479,7 +9479,7 @@ var RIAPP;
                     return promise;
                 };
                 Entity.prototype.refresh = function () {
-                    var eset = this._dbSet, db = eset.dbContext;
+                    var db = this.getDbContext();
                     return db._refreshItem(this);
                 };
                 Entity.prototype.cancelEdit = function () {
@@ -9838,7 +9838,7 @@ var RIAPP;
                             }
                         }
                         created_items = rows.map(function (row) {
-                            //row.key already string value generated on server (no need to convert to string)
+                            //row.key already a string value generated on server (no need to convert to string)
                             var key = row.key;
                             if (!key)
                                 throw new Error(RIAPP.ERRS.ERR_KEY_IS_EMPTY);
@@ -9915,8 +9915,7 @@ var RIAPP;
                     var self = this, positions = [], fetchedItems = [], query = this.query;
                     if (!query)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'query is not null'));
-                    var dataCache = query._getCache();
-                    var cachedPage = dataCache.getCachedPage(query.pageIndex), items = (!cachedPage ? [] : cachedPage.items);
+                    var dataCache = query._getCache(), cachedPage = dataCache.getCachedPage(query.pageIndex), items = !cachedPage ? [] : cachedPage.items;
 
                     this._onFillStart({ isBegin: true, rowCount: items.length, time: new Date(), isPageChanged: data.isPageChanged });
                     try  {
@@ -13287,7 +13286,12 @@ var RIAPP;
         (function (datadialog) {
             //local variables for optimization
             var utils = RIAPP.global.utils, consts = RIAPP.global.consts;
-            datadialog.DIALOG_ACTION = { Default: 0, StayOpen: 1 };
+            (function (DIALOG_ACTION) {
+                DIALOG_ACTION[DIALOG_ACTION["Default"] = 0] = "Default";
+                DIALOG_ACTION[DIALOG_ACTION["StayOpen"] = 1] = "StayOpen";
+            })(datadialog.DIALOG_ACTION || (datadialog.DIALOG_ACTION = {}));
+            var DIALOG_ACTION = datadialog.DIALOG_ACTION;
+            ;
 
             var DataEditDialog = (function (_super) {
                 __extends(DataEditDialog, _super);
@@ -13455,11 +13459,11 @@ var RIAPP;
                     });
                 };
                 DataEditDialog.prototype._onOk = function () {
-                    var self = this, canCommit, action = datadialog.DIALOG_ACTION.Default;
+                    var self = this, canCommit, action = 0 /* Default */;
                     if (!!this._fn_OnOK) {
                         action = this._fn_OnOK(this);
                     }
-                    if (action == datadialog.DIALOG_ACTION.StayOpen)
+                    if (action == 1 /* StayOpen */)
                         return;
 
                     if (!this._dataContext) {
@@ -13498,11 +13502,11 @@ var RIAPP;
                     }
                 };
                 DataEditDialog.prototype._onCancel = function () {
-                    var action = datadialog.DIALOG_ACTION.Default;
+                    var action = 0 /* Default */;
                     if (!!this._fn_OnCancel) {
                         action = this._fn_OnCancel(this);
                     }
-                    if (action == datadialog.DIALOG_ACTION.StayOpen)
+                    if (action == 1 /* StayOpen */)
                         return;
 
                     this._result = 'cancel';
