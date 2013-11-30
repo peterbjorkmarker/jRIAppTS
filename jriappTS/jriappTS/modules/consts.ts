@@ -1,4 +1,3 @@
-/// <reference path="..\jriapp.ts"/>
 module RIAPP {
     export module MOD {
         export module consts {

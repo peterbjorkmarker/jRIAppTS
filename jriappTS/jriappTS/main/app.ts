@@ -1,27 +1,27 @@
-/// <reference path="jquery\jquery.d.ts" />
-/// <reference path="jriapp_en.ts"/>
+/// <reference path="..\jquery\jquery.d.ts" />
+/// <reference path="app_en.ts"/>
 /// <reference path="baseobj.ts"/>
 /// <reference path="globalobj.ts"/>
-/// <reference path="modules\consts.ts"/>
-/// <reference path="modules\utils.ts"/>
-/// <reference path="modules\errors.ts"/>
-/// <reference path="modules\converter.ts"/>
-/// <reference path="modules\defaults.ts"/>
-/// <reference path="modules\parser.ts"/>
-/// <reference path="modules\mvvm.ts"/>
-/// <reference path="modules\baseElView.ts"/>
-/// <reference path="modules\binding.ts"/>
-/// <reference path="modules\collection.ts"/>
-/// <reference path="modules\template.ts"/>
-/// <reference path="modules\baseContent.ts"/>
-/// <reference path="modules\dataform.ts"/>
+/// <reference path="..\modules\consts.ts"/>
+/// <reference path="..\modules\utils.ts"/>
+/// <reference path="..\modules\errors.ts"/>
+/// <reference path="..\modules\converter.ts"/>
+/// <reference path="..\modules\defaults.ts"/>
+/// <reference path="..\modules\parser.ts"/>
+/// <reference path="..\modules\mvvm.ts"/>
+/// <reference path="..\modules\baseElView.ts"/>
+/// <reference path="..\modules\binding.ts"/>
+/// <reference path="..\modules\collection.ts"/>
+/// <reference path="..\modules\template.ts"/>
+/// <reference path="..\modules\baseContent.ts"/>
+/// <reference path="..\modules\dataform.ts"/>
 //*** the rest are optional modules, which can be removed if not needed ***
-/// <reference path="modules\db.ts"/>
-/// <reference path="modules\listbox.ts"/>
-/// <reference path="modules\datadialog.ts"/>
-/// <reference path="modules\datagrid.ts"/>
-/// <reference path="modules\pager.ts"/>
-/// <reference path="modules\stackpanel.ts"/>
+/// <reference path="..\modules\db.ts"/>
+/// <reference path="..\modules\listbox.ts"/>
+/// <reference path="..\modules\datadialog.ts"/>
+/// <reference path="..\modules\datagrid.ts"/>
+/// <reference path="..\modules\pager.ts"/>
+/// <reference path="..\modules\stackpanel.ts"/>
 
 module RIAPP {
     export interface IAppOptions {
