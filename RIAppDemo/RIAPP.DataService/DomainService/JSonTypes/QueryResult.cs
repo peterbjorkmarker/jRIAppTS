@@ -9,7 +9,6 @@ namespace RIAPP.DataService
     public class QueryResult
     {
         public QueryResult() {
-            this.ChunksLeft = -1;
         }
         
         public int? TotalCount
@@ -19,18 +18,6 @@ namespace RIAPP.DataService
         }
 
         public IEnumerable Result
-        {
-            get;
-            set;
-        }
-
-        public int ChunksLeft
-        {
-            get;
-            set;
-        }
-
-        public string ChunksID
         {
             get;
             set;
