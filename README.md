@@ -70,11 +70,12 @@ It is accessible now through dataservice's CurrentQueryInfo property. See demo d
 <p>2013-12-03  1) <b>Code refactoring with breaking changes</b><br/>
 2) Added a new module datepicker.ts. It implements IDatePicker interface, so the datepicker can be easily swapped with another implementation.<br/>
 3) Added a new element view, registered with the name: <b>datepicker</b>. It allows to add a datepicker declaratively. See the DataGrid demo- in its filter parameter section it is used to enter the sales dates.<br/>
-4) Replaced dependency of the framework from date.js to moment.js. It is more widely used js library that date.js, and better coexists with other libs.<b>It requires different date format.For example, DD.MM.YYYY instead of dd.MM.yyyy</b><br/>
-5) The defaults for datepicker's datetime format are factored out into separate property on global.defaults. See the Defaults class.<br/>
-6) Composing filtering and sorting in queries now use enums FILTER_TYPE and SORT_ORDER instead of string literals.<br/>
-7) updated the DEMO project to work properly after those changes.<br/>
-P.S. after these changes i will soon commit new docs version. So many changes was made because Typescript 0.95 much better than 0.91 and it is easy to do when you have a proper tool. With javascript the refactoring on such scale was impossible.
+4) Date values now displayed by default without a datepicker. You need to add name=datepicker in the data-content attribute's value. See the DataGrid demo - in the edit dialog.<br/>
+5) Replaced dependency of the framework from date.js to moment.js. It is more widely used js library that date.js, and better coexists with other libs.<b>It requires different date format.For example, DD.MM.YYYY instead of dd.MM.yyyy</b><br/>
+6) The defaults for datepicker's datetime format are factored out into separate property on global.defaults. See the Defaults class.<br/>
+7) Composing filtering and sorting in queries now use enums FILTER_TYPE and SORT_ORDER instead of string literals.<br/>
+8) updated the DEMO project to work properly after those changes.<br/>
+P.S. after these changes i will soon commit new docs version.<br/>So many changes was made because Typescript 0.95 much better than 0.91 and it is easy to do when you have a proper tool. With javascript the refactoring on such scale was impossible.
 </p>
 --
 Maxim V. Tsapov<br/>
