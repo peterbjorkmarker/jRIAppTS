@@ -1,7 +1,6 @@
 module RIAPP {
     export module MOD {
         export module converter {
-            var utils = global.utils, consts = global.consts;
             export var NUM_CONV = { None: 0, Integer: 1, Decimal: 2, Float: 3, SmallInt: 4 };
 
             export interface IConverter {
@@ -14,7 +13,7 @@ module RIAPP {
                     return val;
                 }
                 convertToTarget(val, param, dataContext) {
-                    if (utils.check.isNt(val))
+                    if (RIAPP.global.utils.check.isNt(val))
                         return null;
                     return val;
                 }
@@ -25,14 +24,14 @@ module RIAPP {
                 convertToSource(val, param, dataContext) {
                     if (!val)
                         return null;
-                    var $: any = global.$;
-                    return $.datepicker.parseDate(param, val);
+                    var datepicker = global.defaults.datepicker;
+                    return datepicker.parseDate(val);
                 }
                 convertToTarget(val, param, dataContext) {
-                    if (utils.check.isNt(val))
+                    if (RIAPP.global.utils.check.isNt(val))
                         return '';
-                    var $: any = global.$;
-                    return $.datepicker.formatDate(param, val);
+                    var datepicker = global.defaults.datepicker;
+                    return datepicker.formatDate(val);
                 }
                 toString() {
                     return 'DateConverter';
@@ -44,17 +43,18 @@ module RIAPP {
                 convertToSource(val, param, dataContext) {
                     if (!val)
                         return null;
-                    var DT:any = Date, res = DT.parseExact(val, param);
-                    if (!res) {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_CONV_INVALID_DATE, val));
+                    var m = moment(val,param);
+                    if (!m.isValid()) {
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_CONV_INVALID_DATE, val));
                     }
-                    return res;
+                    return m.toDate();
                 }
                 convertToTarget(val, param, dataContext) {
-                    if (utils.check.isNt(val)) {
+                    if (RIAPP.global.utils.check.isNt(val)) {
                         return '';
                     }
-                    return val.toString(param);
+                    var m = moment(val);
+                    return m.format(param);
                 }
                 toString() {
                     return 'DateTimeConverter';
@@ -64,12 +64,13 @@ module RIAPP {
 
             export class NumberConverter implements IConverter{
                 convertToSource(val, param, dataContext) {
-                    if (utils.check.isNt(val))
+                    var utils = RIAPP.global.utils;
+                    if (RIAPP.global.utils.check.isNt(val))
                         return null;
                     var defaults = global.defaults, dp = defaults.decimalPoint, thousand_sep = defaults.thousandSep, prec = 4;
                     var value = val.replace(thousand_sep, '');
                     value = value.replace(dp, '.');
-                    value = utils.str.stripNonNumeric(value);
+                    value = RIAPP.global.utils.str.stripNonNumeric(value);
                     if (value === '') {
                         return null;
                     }
@@ -98,6 +99,7 @@ module RIAPP {
                     return num;
                 }
                 convertToTarget(val, param, dataContext) {
+                    var utils = RIAPP.global.utils;
                     if (utils.check.isNt(val)) {
                         return '';
                     }

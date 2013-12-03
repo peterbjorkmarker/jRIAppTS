@@ -20,16 +20,16 @@ var RIAPP;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'contains', [tmp]);
+                    query.where(fldName, 4 /* Contains */, [tmp]);
                 } else if (utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'endswith', [tmp]);
+                    query.where(fldName, 3 /* EndsWith */, [tmp]);
                 } else if (utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'startswith', [tmp]);
+                    query.where(fldName, 2 /* StartsWith */, [tmp]);
                 } else {
                     tmp = utils.str.trim(val);
-                    query.where(fldName, '=', [tmp]);
+                    query.where(fldName, 0 /* Equals */, [tmp]);
                 }
             }
             return query;
@@ -354,7 +354,7 @@ var RIAPP;
                 query.loadPageCount = 10;
 
                 //load without filtering
-                query.orderBy('LastName', 'ASC').thenBy('MiddleName', 'ASC').thenBy('FirstName', 'ASC');
+                query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
                 return this.dbContext.load(query);
             };
             CustomerVM.prototype.destroy = function () {
@@ -659,8 +659,8 @@ var RIAPP;
                     return deferred.promise();
                 }
                 var query = this.dbSet.createReadSalesOrderHeaderQuery();
-                query.where('CustomerID', '=', [this.currentCustomer.CustomerID]);
-                query.orderBy('OrderDate', 'ASC').thenBy('SalesOrderID', 'ASC');
+                query.where('CustomerID', 0 /* Equals */, [this.currentCustomer.CustomerID]);
+                query.orderBy('OrderDate').thenBy('SalesOrderID');
                 return query.load();
             };
             OrderVM.prototype.destroy = function () {
@@ -816,8 +816,8 @@ var RIAPP;
                     return deferred.promise();
                 }
                 var query = this.dbSet.createQuery('ReadSalesOrderDetail');
-                query.where('SalesOrderID', '=', [this.currentOrder.SalesOrderID]);
-                query.orderBy('SalesOrderDetailID', 'ASC');
+                query.where('SalesOrderID', 0 /* Equals */, [this.currentOrder.SalesOrderID]);
+                query.orderBy('SalesOrderDetailID');
                 return query.load();
             };
             OrderDetailVM.prototype.clear = function () {
@@ -1578,7 +1578,7 @@ var RIAPP;
                 var query = this._addressInfosDb.createReadAddressInfoQuery();
                 query.isClearPrevData = true;
                 addTextQuery(query, 'AddressLine1', '%' + this.searchString + '%');
-                query.orderBy('AddressLine1', 'ASC');
+                query.orderBy('AddressLine1');
                 return query.load();
             };
             AddAddressVM.prototype._addNewAddress = function () {
@@ -1641,7 +1641,7 @@ var RIAPP;
 
                 //dont clear, append to the existing
                 query.isClearPrevData = false;
-                query.where('AddressID', '=', [addressID]);
+                query.where('AddressID', 0 /* Equals */, [addressID]);
                 var promise = query.load();
                 promise.done(function () {
                     self._checkAddressInRP(addressID);

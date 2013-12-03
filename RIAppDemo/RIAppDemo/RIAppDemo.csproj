@@ -157,7 +157,6 @@
     <Content Include="Scripts\bootstrap\img\glyphicons-halflings.png" />
     <Content Include="Scripts\bootstrap\js\bootstrap.js" />
     <Content Include="Scripts\bootstrap\js\bootstrap.min.js" />
-    <Content Include="Scripts\datejs\date.js" />
     <Content Include="Scripts\dynatree\src\GPL-LICENSE.txt" />
     <Content Include="Scripts\dynatree\src\jquery.dynatree.js" />
     <Content Include="Scripts\dynatree\src\MIT-License.txt" />
@@ -193,6 +192,7 @@
     <Content Include="Scripts\jriapp\img\warning.png" />
     <Content Include="Scripts\jriapp\jriapp.css" />
     <Content Include="Scripts\jriapp\jriapp.js" />
+    <Content Include="Scripts\moment\moment.min.js" />
     <Content Include="Scripts\qtip\jquery.qtip.css" />
     <Content Include="Scripts\qtip\jquery.qtip.js" />
     <Content Include="Scripts\qtip\jquery.qtip.min.css" />
@@ -249,11 +249,6 @@
       <Project>{5fa08d23-6bae-47ad-930b-a11eafff11dc}</Project>
       <Name>RIAPP.DataService</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Scripts\datejs\APIDocumentation - datejs.mht" />
-    <Content Include="Scripts\datejs\Datejs-all-Alpha1.zip" />
-    <Content Include="Scripts\datejs\datejs.mht" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Demo\BindingsDemo.cshtml" />

@@ -15,16 +15,16 @@ var RIAPP;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'contains', [tmp]);
+                    query.where(fldName, 4 /* Contains */, [tmp]);
                 } else if (utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'endswith', [tmp]);
+                    query.where(fldName, 3 /* EndsWith */, [tmp]);
                 } else if (utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'startswith', [tmp]);
+                    query.where(fldName, 2 /* StartsWith */, [tmp]);
                 } else {
                     tmp = utils.str.trim(val);
-                    query.where(fldName, '=', [tmp]);
+                    query.where(fldName, 0 /* Equals */, [tmp]);
                 }
             }
             return query;
@@ -246,7 +246,7 @@ var RIAPP;
                 query.pageSize = 50;
                 query.isClearPrevData = true;
                 addTextQuery(query, this._fieldName, str + '%');
-                query.orderBy(this._fieldName, 'ASC');
+                query.orderBy(this._fieldName, 0 /* ASC */);
                 this._isLoading = true;
                 this.raisePropertyChanged('isLoading');
                 query.load().always(function (res) {

@@ -149,7 +149,7 @@ module RIAPP
                 //load ten pages at once -- 500 rows
                 query.loadPageCount = 10; 
                 //load without filtering
-                query.orderBy('LastName', 'ASC').thenBy('MiddleName', 'ASC').thenBy('FirstName', 'ASC');
+                query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
                 return query.load();
             }
             destroy() {
@@ -326,8 +326,8 @@ module RIAPP
                     return deferred.promise();
                 }
                 var query = this.dbSet.createReadSalesOrderHeaderQuery();
-                query.where('CustomerID', '=', [this.currentCustomer.CustomerID]);
-                query.orderBy('OrderDate', 'ASC').thenBy('SalesOrderID', 'ASC');
+                query.where('CustomerID', MOD.collection.FILTER_TYPE.Equals, [this.currentCustomer.CustomerID]);
+                query.orderBy('OrderDate').thenBy('SalesOrderID');
                 return query.load();
             }
             destroy() {
@@ -406,8 +406,8 @@ module RIAPP
                     return deferred.promise();
                 }
                 var query = this.dbSet.createReadSalesOrderDetailQuery();
-                query.where('SalesOrderID', '=', [this.currentOrder.SalesOrderID]);
-                query.orderBy('SalesOrderDetailID', 'ASC');
+                query.where('SalesOrderID', MOD.collection.FILTER_TYPE.Equals, [this.currentOrder.SalesOrderID]);
+                query.orderBy('SalesOrderDetailID');
                 return query.load();
             }
             clear() {

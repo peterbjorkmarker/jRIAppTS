@@ -60,6 +60,15 @@ module RIAPP {
                 _isCanSubmit: boolean;
             }
 
+            export interface IDatepicker {
+                datepickerRegion: string;
+                dateFormat: string;
+                attachTo($el:any, options?:any);
+                detachFrom($el: any);
+                parseDate(str: string): Date;
+                formatDate(date: Date): string;
+            } 
+
             export class Checks {
                 static isNull(a) {
                     return a === null;
@@ -119,9 +128,6 @@ module RIAPP {
                 static isBoolString(a) {
                     if (Checks.isNt(a)) return false;
                     return (a == 'true' || a == 'false');
-                }
-                static isProtoOf(objConstructor, obj) {
-                    return !!obj && obj instanceof objConstructor;
                 }
                 static isBaseObj(obj) {
                     return !!obj && obj instanceof BaseObject;

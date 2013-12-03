@@ -1,9 +1,6 @@
 module RIAPP {
     export module MOD {
         export module listbox{
-           //local variables for optimization
-            var utils = global.utils, consts = global.consts;
-          
             export interface IListBoxOptions{
                 valuePath: string;
                 textPath: string;
@@ -32,7 +29,7 @@ module RIAPP {
 
                 constructor(el: HTMLSelectElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options: IListBoxOptions) {
                     super();
-                    var self = this;
+                    var self = this, utils = RIAPP.global.utils;
                     this._el = el;
                     this._$el = global.$(this._el);
                     this._objId = 'lst' + utils.getNewID();
@@ -84,7 +81,7 @@ module RIAPP {
                     }
                 }
                 _getValue(item: collection.CollectionItem) {
-                    var v = this._getRealValue(item);
+                    var v = this._getRealValue(item), utils = RIAPP.global.utils;
                     if (utils.check.isNt(v))
                         return '';
                     return v;
@@ -103,7 +100,7 @@ module RIAPP {
                         return '';
                     if (!!this._textPath) {
                         var t = global.parser.resolvePath(item, this._textPath);
-                        if (utils.check.isNt(t))
+                        if (global.utils.check.isNt(t))
                             return '';
                         return '' + t;
                     }
@@ -538,6 +535,7 @@ module RIAPP {
                 _value: any;
 
                 constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean) {
+                    var utils = RIAPP.global.utils;
                     if (options.name != 'lookup') {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'lookup'"));
                     }
@@ -629,25 +627,27 @@ module RIAPP {
                 }
                 update() {
                     this._cleanUp();
-                    this._el = this._createTargetElement();
+                    this._createTargetElement();
                     this._parentEl.appendChild(this._el);
                 }
-                _createTargetElement() {
-                    var el: HTMLElement, selectView: SelectElView, spanView: baseElView.SpanElView;
+                _createTargetElement(): MOD.baseElView.BaseElView {
+                    var tgt: MOD.baseElView.BaseElView, el: HTMLElement, selectView: SelectElView, spanView: baseElView.SpanElView;
                     if (this._isEditing && this._canBeEdited()) {
                         selectView = this._getSelectView();
                         this._listBinding = this._bindToList(selectView);
-                        el = selectView.el;
+                        tgt = selectView;
                     }
                     else {
                         spanView = this._getSpanView();
                         this._valBinding = this._bindToValue();
-                        el = spanView.el;
+                        tgt = spanView;
                     }
+                    this._el = tgt.el;
                     this._updateCss();
-                    return el;
+                    return tgt;
                 }
                 _cleanUp() {
+                    var utils = RIAPP.global.utils;
                     if (!!this._el) {
                         utils.removeNode(this._el);
                         this._el = null;

@@ -149,7 +149,7 @@ var RIAPP;
                 query.loadPageCount = 10;
 
                 //load without filtering
-                query.orderBy('LastName', 'ASC').thenBy('MiddleName', 'ASC').thenBy('FirstName', 'ASC');
+                query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
                 return query.load();
             };
             CustomerVM.prototype.destroy = function () {
@@ -395,8 +395,8 @@ var RIAPP;
                     return deferred.promise();
                 }
                 var query = this.dbSet.createReadSalesOrderHeaderQuery();
-                query.where('CustomerID', '=', [this.currentCustomer.CustomerID]);
-                query.orderBy('OrderDate', 'ASC').thenBy('SalesOrderID', 'ASC');
+                query.where('CustomerID', 0 /* Equals */, [this.currentCustomer.CustomerID]);
+                query.orderBy('OrderDate').thenBy('SalesOrderID');
                 return query.load();
             };
             OrderVM.prototype.destroy = function () {
@@ -552,8 +552,8 @@ var RIAPP;
                     return deferred.promise();
                 }
                 var query = this.dbSet.createReadSalesOrderDetailQuery();
-                query.where('SalesOrderID', '=', [this.currentOrder.SalesOrderID]);
-                query.orderBy('SalesOrderDetailID', 'ASC');
+                query.where('SalesOrderID', 0 /* Equals */, [this.currentOrder.SalesOrderID]);
+                query.orderBy('SalesOrderDetailID');
                 return query.load();
             };
             OrderDetailVM.prototype.clear = function () {

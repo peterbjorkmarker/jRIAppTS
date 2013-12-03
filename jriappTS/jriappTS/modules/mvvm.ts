@@ -1,9 +1,7 @@
 module RIAPP {
     export module MOD {
         export module mvvm {
-           //local variables for optimization
-            var utils = global.utils, consts = global.consts;
-            export interface ICommand {
+           export interface ICommand {
                 canExecute: (sender, param) => boolean;
                 execute: (sender, param) => void;
                 raiseCanExecuteChanged: () => void;
@@ -17,6 +15,7 @@ module RIAPP {
 
                 constructor(fn_action: (sender, param) => void , thisObj, fn_canExecute: (sender, param) => boolean) {
                     super();
+                    var utils = RIAPP.global.utils;
                     this._action = fn_action;
                     this._thisObj = thisObj;
                     this._canExecute = fn_canExecute;
@@ -66,7 +65,7 @@ module RIAPP {
                 constructor(app: Application) {
                     super();
                     this._app = app;
-                    this._objId = 'vm' + utils.getNewID();
+                    this._objId = 'vm' + global.utils.getNewID();
                 }
                 _onError(error, source):boolean {
                     var isHandled = super._onError(error, source);

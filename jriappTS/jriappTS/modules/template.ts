@@ -1,9 +1,6 @@
 module RIAPP {
     export module MOD {
         export module template {
-           //local variables for optimization
-            var utils = global.utils, consts = global.consts;
-           
             export var css = {
                 templateContainer: 'ria-template-container'
             };
@@ -33,7 +30,8 @@ module RIAPP {
                     if (!!this._templateID)
                         this._loadTemplate();
                 }
-                _getBindings(): MOD.binding.Binding[] {
+                _getBindings(): MOD.binding.Binding[]{
+                    var utils = RIAPP.global.utils;
                     if (!this._lfTime)
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
@@ -43,7 +41,8 @@ module RIAPP {
                     }
                     return res;
                 }
-                _getElViews():MOD.baseElView.BaseElView[] {
+                _getElViews(): MOD.baseElView.BaseElView[]{
+                    var utils = RIAPP.global.utils;
                     if (!this._lfTime)
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
@@ -54,6 +53,7 @@ module RIAPP {
                     return res;
                 }
                 _getTemplateElView(): MOD.baseElView.TemplateElView {
+                    var utils = RIAPP.global.utils;
                     if (!this._lfTime || this._templElView === null)
                         return null;
                     if (!!this._templElView)
@@ -70,7 +70,7 @@ module RIAPP {
                 }
                 //returns promise which resolves with loaded template DOM element
                 _loadTemplateElAsync(name) {
-                    var self = this, fn_loader = this.app.getTemplateLoader(name), deferred;
+                    var self = this, utils = RIAPP.global.utils, fn_loader = this.app.getTemplateLoader(name), deferred;
                     if (!!fn_loader) {
                         return fn_loader().then(function (html:string) {
                             var tmpDiv = global.document.createElement('div');
@@ -106,7 +106,7 @@ module RIAPP {
                     }
                 }
                 _loadTemplate() {
-                    var self = this, tid = self._templateID, promise, deffered, tmpDiv, asyncLoad = false;
+                    var self = this, utils = RIAPP.global.utils, tid = self._templateID, promise, deffered, tmpDiv, asyncLoad = false;
                     if (!!self._promise) {
                         self._promise.reject('cancel'); //cancel previous load
                         self._promise = null;

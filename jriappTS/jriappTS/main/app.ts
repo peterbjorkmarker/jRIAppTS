@@ -1,4 +1,5 @@
-/// <reference path="..\jquery\jquery.d.ts" />
+/// <reference path="..\thirdparty\jquery.d.ts" />
+/// <reference path="..\thirdparty\moment.d.ts" />
 /// <reference path="app_en.ts"/>
 /// <reference path="baseobj.ts"/>
 /// <reference path="globalobj.ts"/>
@@ -8,6 +9,7 @@
 /// <reference path="..\modules\converter.ts"/>
 /// <reference path="..\modules\defaults.ts"/>
 /// <reference path="..\modules\parser.ts"/>
+/// <reference path="..\modules\datepicker.ts"/>
 /// <reference path="..\modules\mvvm.ts"/>
 /// <reference path="..\modules\baseElView.ts"/>
 /// <reference path="..\modules\binding.ts"/>
@@ -269,32 +271,29 @@ module RIAPP {
             else
                 throw new Error(global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         }
-        //checks if the element already has created and attached ElView, if no then it creates and attaches ElView for the element
-        getElementView(el: HTMLElement) {
-            var viewType: MOD.baseElView.IViewType, attr: string, data_view_op_arr: any[], data_view_op, options, elView: MOD.baseElView.BaseElView;
-
-            elView = this._getElView(el);
-            //check if element view is already created for this element
-            if (!!elView)
-                return elView;
-
-            //if not, then proceed to create new element view...
+        _getElementViewInfo(el: HTMLElement) {
+            var view_name: string = null, vw_options: any = null, attr: string, data_view_op_arr: any[], data_view_op;
             if (el.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
                 attr = el.getAttribute(global.consts.DATA_ATTR.DATA_VIEW);
                 data_view_op_arr = global.parser.parseOptions(attr);
                 if (!!data_view_op_arr && data_view_op_arr.length > 0) {
                     data_view_op = data_view_op_arr[0];
                     if (!!data_view_op.name && data_view_op.name != 'default') {
-                        //try to get a view by explicit view name
-                        viewType = this._getElViewType(data_view_op.name);
-                        if (!viewType)
-                            throw new Error(global.utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_REGISTERED, data_view_op.name));
+                        view_name = data_view_op.name;
                     }
-                    if (!!data_view_op.options)
-                        options = data_view_op.options;
+                    vw_options = data_view_op.options;
                 }
             }
+            return {name:view_name, options: vw_options};
+        }
+        _createElementView(el: HTMLElement, view_info: { name: string; options: any; }) {
+            var viewType: MOD.baseElView.IViewType, elView: MOD.baseElView.BaseElView;
 
+            if (!!view_info.name) {
+                viewType = this._getElViewType(view_info.name);
+                if (!viewType)
+                    throw new Error(global.utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_REGISTERED, view_info.name));
+            }
             if (!viewType) {
                 var nodeNm = el.nodeName.toLowerCase(), type;
                 switch (nodeNm) {
@@ -313,11 +312,20 @@ module RIAPP {
                     throw new Error(global.utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_CREATED, nodeNm));
             }
 
-            elView = new viewType(this, el, options || {});
+            elView = new viewType(this, el, view_info.options || {});
             return elView;
         }
+        //checks if the element already has created and attached ElView, if no then it creates and attaches ElView for the element
+        getElementView(el: HTMLElement) {
+            var elView = this._getElView(el);
+            //check if element view is already created for this element
+            if (!!elView)
+                return elView;
+            var info = this._getElementViewInfo(el); 
+            return this._createElementView(el, info);
+        }
         bind(opts: MOD.binding.IBindingOptions) {
-            return new MOD.binding.Binding(opts);
+            return new MOD.binding.Binding(opts, this.appName);
         }
         registerContentFactory(fn: (nextFactory?: MOD.baseContent.IContentFactory) => MOD.baseContent.IContentFactory) {
             this._contentFactories.push(fn);
@@ -489,7 +497,8 @@ module RIAPP {
         //Namespace for attaching application view models
         get VM() { return this._viewModels; }
         get app() { return this; }
-    };
+    }
 
-    global.registerType('Application', Application);
+    //MUST INITIALIZE THE GLOBAL
+    RIAPP.global._initialize();
 }

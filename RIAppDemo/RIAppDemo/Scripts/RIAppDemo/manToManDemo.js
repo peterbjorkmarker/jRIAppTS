@@ -20,16 +20,16 @@ var RIAPP;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'contains', [tmp]);
+                    query.where(fldName, 4 /* Contains */, [tmp]);
                 } else if (utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'endswith', [tmp]);
+                    query.where(fldName, 3 /* EndsWith */, [tmp]);
                 } else if (utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'startswith', [tmp]);
+                    query.where(fldName, 2 /* StartsWith */, [tmp]);
                 } else {
                     tmp = utils.str.trim(val);
-                    query.where(fldName, '=', [tmp]);
+                    query.where(fldName, 0 /* Equals */, [tmp]);
                 }
             }
             return query;
@@ -129,7 +129,7 @@ var RIAPP;
 
                 //we clear previous cache date for every loading data from the server
                 query.isClearCacheOnEveryLoad = true;
-                query.orderBy('LastName', 'ASC').thenBy('MiddleName', 'ASC').thenBy('FirstName', 'ASC');
+                query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
                 return query.load();
             };
             CustomerVM.prototype.destroy = function () {
@@ -653,7 +653,7 @@ var RIAPP;
                 var query = this._addressInfosDb.createReadAddressInfoQuery();
                 query.isClearPrevData = true;
                 addTextQuery(query, 'AddressLine1', '%' + this.searchString + '%');
-                query.orderBy('AddressLine1', 'ASC');
+                query.orderBy('AddressLine1');
                 return query.load();
             };
             AddAddressVM.prototype._addNewAddress = function () {
@@ -717,7 +717,7 @@ var RIAPP;
 
                 //dont clear, append to the existing
                 query.isClearPrevData = false;
-                query.where('AddressID', '=', [addressID]);
+                query.where('AddressID', 0 /* Equals */, [addressID]);
                 var promise = query.load();
                 promise.done(function () {
                     self._checkAddressInRP(addressID);

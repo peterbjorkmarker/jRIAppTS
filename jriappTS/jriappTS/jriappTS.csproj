@@ -39,11 +39,13 @@
     <TypeScriptCompile Include="main\app.ts" />
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="modules\datepicker.ts" />
+    <Content Include="thirdparty\moment.d.ts" />
     <TypeScriptCompile Include="modules\utils.ts" />
     <TypeScriptCompile Include="modules\consts.ts" />
     <TypeScriptCompile Include="modules\defaults.ts" />
     <TypeScriptCompile Include="modules\errors.ts" />
-    <Content Include="jquery\jquery.d.ts" />
+    <Content Include="thirdparty\jquery.d.ts" />
   </ItemGroup>
   <ItemGroup />
   <PropertyGroup>

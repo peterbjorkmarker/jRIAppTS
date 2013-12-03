@@ -1,9 +1,6 @@
 module RIAPP {
     export module MOD {
         export module parser {
-           //local variables for optimization
-            var utils = global.utils, consts = global.consts;
-            
             export class Parser{
                 static __trimOuterBracesRX = /^([{]){0,1}|([}]){0,1}$/g;
                 static __trimQuotsRX = /^(['"])+|(['"])+$/g;
@@ -15,7 +12,7 @@ module RIAPP {
                 constructor() {
                 }
                 _getPathParts(path:string) {
-                    var self = this, parts = (!path) ? [] : path.split('.'), parts2 = [];
+                    var self = this, parts:string[] = (!path) ? [] : path.split('.'), parts2:string[] = [];
                     parts.forEach(function (part) {
                         var matches, obj, index;
                         matches = part.match(Parser.__indexedPropRX);
@@ -31,11 +28,11 @@ module RIAPP {
 
                     return parts2;
                 }
-                _resolveProp(obj, prop:string) {
-                    var collMod;
+                _resolveProp(obj: any, prop: string) {
+                    var utils = RIAPP.global.utils;
                     if (!prop)
                         return obj;
-                    if (utils.str.startsWith(prop, '[')) { //it is indexed property, obj must be of collection type
+                    if (utils.str.startsWith(prop, '[')) { //it is an indexed property, obj must be of collection type
                         prop = this.trimQuotes(this.trimBrackets(prop));
                         if (obj instanceof collection.BaseDictionary) {
                             return obj.getItemByKey(prop);
@@ -52,7 +49,7 @@ module RIAPP {
                     else
                         return obj[prop];
                 }
-                _resolvePath(root, parts:string[]) {
+                _resolvePath(root:any, parts:string[]) {
                     if (!root)
                         return undefined;
 
@@ -67,9 +64,10 @@ module RIAPP {
                         return this._resolvePath(this._resolveProp(root, parts[0]), parts.slice(1));
                     }
                 }
-                _setPropertyValue(obj, prop:string, val) {
-                    if (utils.str.startsWith(prop, '[')) { //it is indexed property, obj must be of collection type
-                        prop = this.trimQuotes(this.trimBrackets(prop));  //remove brakets from string like: [index]
+                _setPropertyValue(obj: any, prop: string, val: any) {
+                    var utils = RIAPP.global.utils;
+                    if (utils.str.startsWith(prop, '[')) { //it is an indexed property, obj must be of collection type
+                        prop = this.trimQuotes(this.trimBrackets(prop));  //remove brakets from a string like: [index]
                         if (utils.check.isArray(obj)) {
                             obj[parseInt(prop, 10)] = val;
                         }
@@ -80,11 +78,12 @@ module RIAPP {
                         obj[prop] = val;
                 }
                 //extract key - value pairs
-                _getKeyVals(val) {
-                    var i, ch, literal, parts = [], kv = { key: '', val: '' }, isKey = true, bracePart,
+                _getKeyVals(val:string) {
+                    var utils = RIAPP.global.utils, i: number, ch: string, literal: string, parts: { key: string; val: any; }[] = [],
+                        kv: { key: string; val: any; } = { key: '', val: '' }, isKey = true, bracePart: string,
                         vd1 = Parser.__valueDelimeter1, vd2 = Parser.__valueDelimeter2, kvd = Parser.__keyValDelimeter;
 
-                    var addNewKeyValPair = function (kv) {
+                    var addNewKeyValPair = function (kv:{ key: string; val: any; }) {
                         if (kv.val) {
                             if (utils.check.isNumeric(kv.val)) {
                                 kv.val = Number(kv.val);
@@ -96,7 +95,7 @@ module RIAPP {
                         parts.push(kv);
                     };
 
-                    var checkTokens = function (kv) {
+                    var checkTokens = function (kv: { key: string; val: any; }) {
                         //key starts with this like used in binding expressions this.property
                         if (kv.val === '' && utils.str.startsWith(kv.key, 'this.')) {
                             kv.val = kv.key.substr(5); //extract property
@@ -107,10 +106,10 @@ module RIAPP {
                     for (i = 0; i < val.length; i += 1) {
                         ch = val.charAt(i);
                         //is this content inside '' or "" ?
-                        if (ch === "'" || ch === '"') {
+                        if (ch == "'" || ch == '"') {
                             if (!literal)
                                 literal = ch;
-                            else if (literal === ch)
+                            else if (literal == ch)
                                 literal = null;
                         }
 
@@ -157,7 +156,7 @@ module RIAPP {
                     });
                     return parts;
                 }
-                resolveBindingSource(root, srcParts) {
+                resolveBindingSource(root:any, srcParts:string[]) {
                     if (!root)
                         return undefined;
 
@@ -171,7 +170,7 @@ module RIAPP {
 
                     throw new Error('Invalid operation');
                 }
-                resolvePath(obj, path:string) {
+                resolvePath(obj:any, path:string):any {
                     if (!path)
                         return obj;
                     var parts = this._getPathParts(path);
@@ -179,7 +178,8 @@ module RIAPP {
                 }
                 //extract top level braces
                 getBraceParts(val:string, firstOnly:boolean) {
-                    var i, s = '', ch, literal, cnt = 0, parts = [];
+                    var i: number, s = '', ch: string, literal: string, cnt = 0, parts: string[] = [];
+
                     for (i = 0; i < val.length; i += 1) {
                         ch = val.charAt(i);
                         //is this content inside '' or "" ?
@@ -214,19 +214,20 @@ module RIAPP {
                     return parts;
                 }
                 trimOuterBraces(val:string) {
-                    return utils.str.trim(val.replace(Parser.__trimOuterBracesRX, ''));
+                    return global.utils.str.trim(val.replace(Parser.__trimOuterBracesRX, ''));
                 }
                 trimQuotes(val:string) {
-                    return utils.str.trim(val.replace(Parser.__trimQuotsRX, ''));
+                    return global.utils.str.trim(val.replace(Parser.__trimQuotsRX, ''));
                 }
                 trimBrackets(val:string) {
-                    return utils.str.trim(val.replace(Parser.__trimBracketsRX, ''));
+                    return global.utils.str.trim(val.replace(Parser.__trimBracketsRX, ''));
                 }
-                isWithOuterBraces(str:string) {
+                isWithOuterBraces(str: string) {
+                    var utils = RIAPP.global.utils;
                     return (utils.str.startsWith(str, '{') && utils.str.endsWith(str, '}'));
                 }
                 parseOption(part:string) {
-                    var res = {}, self = this;
+                    var res: any = {}, self = this, utils = RIAPP.global.utils;
                     part = utils.str.trim(part);
                     if (self.isWithOuterBraces(part))
                         part = self.trimOuterBraces(part);
@@ -242,10 +243,12 @@ module RIAPP {
                                 res[kv.key] = kv.val;
                         }
                     });
+
                     return res;
                 }
                 parseOptions(str:string) {
-                    var res = [], self = this;
+                    var res: any[] = [], self = this, utils = RIAPP.global.utils;
+
                     str = utils.str.trim(str);
                     var parts = [str];
                     if (self.isWithOuterBraces(str)) {
@@ -260,7 +263,7 @@ module RIAPP {
                 toString(){
                     return 'Parser';
                 }
-            };
+            }
 
             global.onModuleLoaded('parser', parser);
         }

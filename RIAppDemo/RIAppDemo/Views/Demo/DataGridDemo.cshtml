@@ -6,7 +6,7 @@
     Layout = "~/Views/Shared/_LayoutDemo.cshtml";
 }
 @{
-    ViewBag.Title = "Data grid Demo ";
+    ViewBag.Title = "DataGrid Demo ";
 }
 
 @section CssImport
@@ -86,11 +86,21 @@
     table.ria-data-table tr:nth-child(even) {
         background-color: #ECF2F6;
     }
+
+    .ui-datepicker select.ui-datepicker-month,
+    .ui-datepicker select.ui-datepicker-year {
+        min-height: 28px;
+    }
+
+    .ui-datepicker select.ui-datepicker-month {
+        width: 80px;
+        margin-right:3px;
+    }
 </style>
 
 <script type="text/javascript">
     /*
-      //this is declared in GRIDDEMO module
+      //this varable is declared in the GRIDDEMO module
        export var mainOptions: IMainOptions = {  service_url: null,
             permissionInfo: null,
             images_path: null,
@@ -131,7 +141,7 @@
             </td>
             <td>
                <label for="prodName">Name:</label>
-               <input type="text" id="prodName" placeholder="Name" data-bind="{this.value,to=filter.name,mode=TwoWay}{this.toolTip,to=filter.searchTextToolTip}" />
+               <input type="text" id="prodName" placeholder="Name" data-bind="{this.value,to=filter.name,mode=TwoWay}{this.toolTip,to=filter.searchTextToolTip}"  />
             </td>
             <td>
                <label for="prodMCat">Main Category:</label>
@@ -141,9 +151,21 @@
                 <label for="prodSCat">Sub Category:</label>
                 <select id="prodSCat" size="1" class="span2" data-bind="{this.dataSource,to=filter.ChildCategories}{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}{this.toolTip,to=filter.selectedCategory.Name}" data-view="options:{valuePath=ProductCategoryID,textPath=Name}"></select>
             </td>
-             <td>
+            <td>
                 <label for="prodMod">Model:</label>
                 <select id="prodMod" size="1" class="span2" data-bind="{this.dataSource,to=filter.ProductModels}{this.selectedValue,to=filter.modelID,mode=TwoWay}{this.selectedItem,to=filter.selectedModel,mode=TwoWay}{this.toolTip,to=filter.selectedModel.Name}" data-view="options:{valuePath=ProductModelID,textPath=Name}"></select>
+            </td>
+        </tr>
+         <tr>
+            <td colspan="5">
+              <div style="display:inline-block;">
+              <label for="saleStart1">Sales Start Date Begin:</label>
+              <input type="text" id="saleStart1" placeholder="Enter Date" data-bind="{this.value,to=filter.saleStart1,mode=TwoWay,converter=dateConverter}" data-view="name:datepicker,options={datepicker:{ showOn:button,yearRange:'-15:c',changeMonth: true,changeYear: true }}"/>
+              </div>
+              <div style="display:inline-block; margin-left:5px;">
+              <label for="saleStart2">Sales Start Date End:</label>
+              <input type="text" id="saleStart2" placeholder="Enter Date" data-bind="{this.value,to=filter.saleStart2,mode=TwoWay,converter=dateConverter}" data-view="name:datepicker,options={datepicker:{ showOn:button,yearRange:'-15:c',changeMonth: true,changeYear: true }}" />
+              </div>
             </td>
         </tr>
     </table>

@@ -1,8 +1,6 @@
 module RIAPP {
     export module MOD {
         export module stackpanel {
-           //local variables for optimization
-            var utils = global.utils, consts = global.consts;
             export var css = {
                 stackpanel: 'ria-stackpanel',
                 item: 'stackpanel-item',
@@ -31,7 +29,7 @@ module RIAPP {
                     this._app = app;
                     this._el = el;
                     this._$el = global.$(this._el);
-                    this._objId = 'pnl' + utils.getNewID();
+                    this._objId = 'pnl' + global.utils.getNewID();
                     if (!!dataSource && !(dataSource instanceof collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_STACKPNL_DATASRC_INVALID);
                     this._dataSource = dataSource;
@@ -153,7 +151,7 @@ module RIAPP {
                             }
                             break;
                         default:
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
                 _onDSFill(args) {
@@ -268,7 +266,7 @@ module RIAPP {
                 _clearContent() {
                     var self = this;
                     self._$el.empty();
-                    utils.forEachProp(self._itemMap, function (key) {
+                    global.utils.forEachProp(self._itemMap, function (key) {
                         self._removeItemByKey(key);
                     });
                 }

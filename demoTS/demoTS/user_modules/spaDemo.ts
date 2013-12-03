@@ -8,25 +8,25 @@ module RIAPP
     'use strict';
     export module SPADEMO {
         var global = RIAPP.global, utils = global.utils;
-         //private helper function (used inside this module only)
+        //private helper function (used inside this module only)
         function addTextQuery(query: MOD.db.DataQuery, fldName: string, val) {
             var tmp;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'contains', [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.Contains, [tmp])
                 }
                 else if (utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'endswith', [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.EndsWith, [tmp])
                 }
                 else if (utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'startswith', [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.StartsWith, [tmp])
                 }
                 else {
                     tmp = utils.str.trim(val);
-                    query.where(fldName, '=', [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.Equals, [tmp])
                 }
             }
             return query;
@@ -320,7 +320,7 @@ module RIAPP
                 //load ten pages at once -- 500 rows
                 query.loadPageCount = 10;
                 //load without filtering
-                query.orderBy('LastName', 'ASC').thenBy('MiddleName', 'ASC').thenBy('FirstName', 'ASC');
+                query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
                 return this.dbContext.load(query);
             }
             destroy() {
@@ -508,8 +508,8 @@ module RIAPP
                     return deferred.promise();
                 }
                 var query = this.dbSet.createReadSalesOrderHeaderQuery();
-                query.where('CustomerID', '=', [this.currentCustomer.CustomerID]);
-                query.orderBy('OrderDate', 'ASC').thenBy('SalesOrderID', 'ASC');
+                query.where('CustomerID', MOD.collection.FILTER_TYPE.Equals, [this.currentCustomer.CustomerID]);
+                query.orderBy('OrderDate').thenBy('SalesOrderID');
                 return query.load();
             }
             destroy() {
@@ -588,8 +588,8 @@ module RIAPP
                     return deferred.promise();
                 }
                 var query = this.dbSet.createQuery('ReadSalesOrderDetail');
-                query.where('SalesOrderID', '=', [this.currentOrder.SalesOrderID]);
-                query.orderBy('SalesOrderDetailID', 'ASC');
+                query.where('SalesOrderID', MOD.collection.FILTER_TYPE.Equals, [this.currentOrder.SalesOrderID]);
+                query.orderBy('SalesOrderDetailID');
                 return query.load();
             }
             clear() {
@@ -1162,7 +1162,7 @@ module RIAPP
                 var query = this._addressInfosDb.createReadAddressInfoQuery();
                 query.isClearPrevData = true;
                 addTextQuery(query, 'AddressLine1', '%' + this.searchString + '%');
-                query.orderBy('AddressLine1', 'ASC');
+                query.orderBy('AddressLine1');
                 return query.load();
             }
             _addNewAddress() {
@@ -1220,7 +1220,7 @@ module RIAPP
                 var self = this, query = this._addressInfosDb.createReadAddressInfoQuery();
                 //dont clear, append to the existing
                 query.isClearPrevData = false;
-                query.where('AddressID', '=', [addressID]);
+                query.where('AddressID', MOD.collection.FILTER_TYPE.Equals, [addressID]);
                 var promise = query.load();
                 promise.done(function () {
                     self._checkAddressInRP(addressID);

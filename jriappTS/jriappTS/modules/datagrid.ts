@@ -1,8 +1,6 @@
 module RIAPP {
     export module MOD {
         export module datagrid {
-           //local variables for optimization
-            var utils = global.utils, consts = global.consts;
             var COLUMN_TYPE = { DATA: 'data', ROW_EXPANDER: 'row_expander', ROW_ACTIONS: 'row_actions', ROW_SELECTOR: 'row_selector' };
             export var css = {
                 container: 'ria-table-container',
@@ -123,7 +121,7 @@ module RIAPP {
                     super(row, options);
                 }
                 _init() {
-                    var options = this.column.options.content;
+                    var options = this.column.options.content, utils = RIAPP.global.utils;
                     if (!options.fieldInfo && !!options.fieldName) {
                         options.fieldInfo = this.item.getFieldInfo(options.fieldName);
                         if (!options.fieldInfo) {
@@ -261,7 +259,7 @@ module RIAPP {
                         img_delete: 'txtDelete'
                     };
                     $div.empty();
-                    var opts = self._column.options,
+                    var opts = self._column.options, utils = RIAPP.global.utils,
                         fn_setUpImages = function ($images) {
                         $images.each(function (index, img) {
                             var $img = global.$(img);
@@ -611,6 +609,7 @@ module RIAPP {
 
                 constructor(grid: DataGrid, options: { tr: HTMLTableRowElement; details_id: string; }) {
                     super();
+                    var utils = RIAPP.global.utils;
                     this._grid = grid;
                     this._el = options.tr;
                     this._item = null;
@@ -641,7 +640,7 @@ module RIAPP {
                     super.destroy();
                 }
                 _setParentRow(row:Row) {
-                    var self = this;
+                    var self = this, utils = RIAPP.global.utils;
                     this._item = null;
                     this._cell.item = null;
                     //don't use global.$(this._el).remove() here - or it will remove all jQuery plugins!
@@ -722,7 +721,7 @@ module RIAPP {
 
                 constructor(grid:DataGrid, options: { th: HTMLTableHeaderCellElement; colinfo: IColumnInfo; }) {
                     super();
-                    var self = this;
+                    var self = this, utils = RIAPP.global.utils;
                     this._grid = grid;
                     this._el = options.th;
                     this._options = options.colinfo;
@@ -872,7 +871,7 @@ module RIAPP {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    var self = this;
+                    var self = this, utils = RIAPP.global.utils;
                     utils.forEachProp(self._objCache, function (key) {
                         self._objCache[key].destroy();
                     });
@@ -1064,6 +1063,7 @@ module RIAPP {
                     super();
                     if (!!dataSource && !(dataSource instanceof collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
+                    var utils = RIAPP.global.utils;
                     this._options = utils.extend(false,
                         {
                             isUseScrollInto: true,
@@ -1162,7 +1162,7 @@ module RIAPP {
                         sortable: false,
                         sortMemberName: null,
                         content: null
-                    }, options: IColumnInfo;
+                    }, options: IColumnInfo, utils = RIAPP.global.utils;
 
                     var temp_opts = global.parser.parseOptions(column_attr);
                     if (temp_opts.length > 0)
@@ -1249,7 +1249,7 @@ module RIAPP {
                     }
                 }
                 _onDSCollectionChanged(args: collection.ICollChangedArgs<collection.CollectionItem>) {
-                    var self = this, row: Row, items = args.items;
+                    var self = this, row: Row, items = args.items, utils = RIAPP.global.utils;
                     switch (args.change_type) {
                         case collection.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
@@ -1424,7 +1424,8 @@ module RIAPP {
                     else
                         return row;
                 }
-                _removeRow(row:Row) {
+                _removeRow(row: Row) {
+                    var utils = RIAPP.global.utils;
                     if (this._expandedRow === row) {
                         this.collapseDetails();
                     }
@@ -1545,7 +1546,7 @@ module RIAPP {
                     });
                 }
                 _createColumn(options: {th: HTMLTableHeaderCellElement; colinfo: IColumnInfo;}) {
-                    var col: BaseColumn;
+                    var col: BaseColumn, utils = RIAPP.global.utils;
                     switch (options.colinfo.type) {
                         case COLUMN_TYPE.ROW_EXPANDER:
                             if (!this._expanderCol) {
@@ -1741,7 +1742,7 @@ module RIAPP {
                     var self=this, ds = this._dataSource;
                     var sorts = column.sortMemberName.split(';');
                     self._isSorting = true;
-                    var promise = ds.sort(sorts, column.sortOrder);
+                    var promise = ds.sort(sorts, collection.SORT_ORDER[column.sortOrder]);
                     promise.always(function () {
                         self._isSorting = false;
                     });
@@ -1783,7 +1784,7 @@ module RIAPP {
                 showEditDialog() {
                     if (!this._options.editor || !this._options.editor.templateID || !this._editingRow)
                         return false;
-                    var editorOptions: datadialog.IDialogConstructorOptions, item = this._editingRow.item;
+                    var editorOptions: datadialog.IDialogConstructorOptions, item = this._editingRow.item, utils = RIAPP.global.utils;
                     if (!item.isEditing)
                         item.beginEdit();
                     if (!this._dialog) {

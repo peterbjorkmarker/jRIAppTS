@@ -2,7 +2,6 @@ module RIAPP {
     export module MOD {
         export module baseElView {
            //local variables for optimization
-            var utils = global.utils, consts = global.consts;
             var ERRTEXT = RIAPP.localizable.VALIDATE;
 
             export class PropChangedCommand extends MOD.mvvm.Command {
@@ -44,7 +43,7 @@ module RIAPP {
                     this._$el = null;
                     //save previous css display style
                     this._oldDisplay = null;
-                    this._objId = 'elv' + utils.getNewID();
+                    this._objId = 'elv' + RIAPP.global.utils.getNewID();
                     this._propChangedCommand = null;
                     app._setElView(this._el, this);
                     this._errors = null;
@@ -116,7 +115,7 @@ module RIAPP {
                     }
                     var $el = this.$el;
                     if (!!errors && errors.length > 0) {
-                        utils.addToolTip($el, this._getErrorTipInfo(errors), css.errorTip);
+                        RIAPP.global.utils.addToolTip($el, this._getErrorTipInfo(errors), css.errorTip);
                         this._setFieldError(true);
                     }
                     else {
@@ -132,7 +131,7 @@ module RIAPP {
                     return isHandled;
                 }
                 _setToolTip($el:JQuery, tip:string, className?:string) {
-                    utils.addToolTip($el, tip, className);
+                    RIAPP.global.utils.addToolTip($el, tip, className);
                 }
                 toString() {
                     return 'BaseElView';
@@ -383,7 +382,7 @@ module RIAPP {
                         img = consts.LOADER_GIF.NORMAL;
                     this._delay = 400;
                     this._timeOut = null;
-                    if (!utils.check.isNt(options.delay))
+                    if (!RIAPP.global.utils.check.isNt(options.delay))
                         this._delay = parseInt(options.delay);
                     this._loaderPath = global.getImagePath(img);
                     this._$loader = global.$(new Image());
@@ -1221,7 +1220,6 @@ module RIAPP {
                     }
                 }
             }
-                
 
             export class SpanElView extends BaseElView {
                 toString() {
@@ -1382,12 +1380,12 @@ module RIAPP {
                             self.invokeTabsEvent("load", tab);
                         }
                     };
-                    tabOpts = utils.extend(false, tabOpts, self._tabOpts);
+                    tabOpts = RIAPP.global.utils.extend(false, tabOpts, self._tabOpts);
                     (<any>$el).tabs(tabOpts);
                 }
                 _destroyTabs() {
                     var $el = this.$el;
-                    utils.destroyJQueryPlugin($el, 'tabs');
+                    RIAPP.global.utils.destroyJQueryPlugin($el, 'tabs');
                 }
                 invokeTabsEvent(eventName:string, args) {
                     var self = this, data = { eventName: eventName, args: args };
@@ -1420,46 +1418,53 @@ module RIAPP {
                 }
             }
 
-            global.registerType('BaseElView', BaseElView);
-            global.registerType('InputElView', InputElView);
-            global.registerType('CommandElView', CommandElView);
-            global.registerType('TemplateElView', TemplateElView);
+            export interface IDatePickerOptions extends ITextBoxOptions {
+                datepicker?:any;
+            }
+
+            export class DatePickerElView extends TextBoxElView {
+                _init(options: IDatePickerOptions) {
+                    super._init(options);
+                    var $el = this.$el;
+                    global.defaults.datepicker.attachTo($el, options.datepicker);
+                }
+                destroy() {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    var $el = this.$el;
+                    global.defaults.datepicker.detachFrom($el);
+                    super.destroy();
+                }
+                toString() {
+                    return 'DatePickerElView';
+                }
+            }
+
             global.registerElView('template', TemplateElView);
-            global.registerType('BusyElView', BusyElView);
             global.registerElView('busy_indicator', BusyElView);
-            global.registerType('DynaContentElView', DynaContentElView);
             global.registerElView(global.consts.ELVIEW_NM.DYNACONT, DynaContentElView);
-            global.registerType('CheckBoxElView', CheckBoxElView);
             global.registerElView('input:checkbox', CheckBoxElView);
             global.registerElView('threeState', CheckBoxThreeStateElView);
-            global.registerType('TextBoxElView', TextBoxElView);
             global.registerElView('input:text', TextBoxElView);
-            global.registerType('HiddenElView', HiddenElView);
             global.registerElView('input:hidden', HiddenElView);
-            global.registerType('TextAreaElView', TextAreaElView);
             global.registerElView('textarea', TextAreaElView);
-            global.registerType('RadioElView', RadioElView);
             global.registerElView('input:radio', RadioElView);
-            global.registerType('ButtonElView', ButtonElView);
             global.registerElView('input:button', ButtonElView);
             global.registerElView('input:submit', ButtonElView);
             global.registerElView('button', ButtonElView);
-            global.registerType('AnchorElView', AnchorElView);
             global.registerElView('a', AnchorElView);
             global.registerElView('abutton', AnchorElView);
-            global.registerType('ExpanderElView', ExpanderElView);
             global.registerElView('expander', ExpanderElView);
-            global.registerType('SpanElView', SpanElView);
             global.registerElView('span', SpanElView);
-            global.registerType('BlockElView', BlockElView);
             global.registerElView('div', BlockElView);
             global.registerElView('section', BlockElView);
             global.registerElView('block', BlockElView);
-            global.registerType('ImgElView', ImgElView);
             global.registerElView('img', ImgElView);
-            global.registerType('TabsElView', TabsElView);
             global.registerElView('tabs', TabsElView);
-            //signals to the global object that the module is loaded
+            global.registerElView('datepicker', DatePickerElView);
+
+            //signal to the global object that the module is loaded
             global.onModuleLoaded('baseElView', baseElView);
         }
     }

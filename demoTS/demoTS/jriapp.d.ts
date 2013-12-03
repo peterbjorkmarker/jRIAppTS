@@ -1,4 +1,5 @@
-/// <reference path="jquery/jquery.d.ts" />
+/// <reference path="thirdparty/jquery.d.ts" />
+/// <reference path="thirdparty/moment.d.ts" />
 declare module RIAPP {
     var ERRS: {
         ERR_APP_NEED_JQUERY: string;
@@ -15,7 +16,7 @@ declare module RIAPP {
         ERR_FIELD_RANGE: string;
         ERR_EVENT_INVALID: string;
         ERR_EVENT_INVALID_FUNC: string;
-        ERR_MODULE_UNDEFINED: string;
+        ERR_MODULE_NOT_REGISTERED: string;
         ERR_MODULE_ALREDY_REGISTERED: string;
         ERR_PROP_NAME_EMPTY: string;
         ERR_GLOBAL_SINGLTON: string;
@@ -240,7 +241,6 @@ declare module RIAPP {
         private _moduleNames;
         private _exports;
         constructor(window: Window, jQuery: JQueryStatic);
-        static create(window: Window, jQuery: JQueryStatic): Global;
         private _init();
         private _registerObjectCore(root, name, obj, checkOverwrite);
         private _getObjectCore(root, name);
@@ -290,6 +290,7 @@ declare module RIAPP {
         public _waitForNotLoading(callback: any, callbackArgs: any): void;
         public reThrow(ex: any, isHandled: any): void;
         public onModuleLoaded(name: string, module_obj: any): void;
+        public _initialize(): void;
         public isModuleLoaded(name: string): boolean;
         public findApp(name: string): RIAPP.Application;
         public destroy(): void;
@@ -389,6 +390,14 @@ declare module RIAPP {
                 submitChanges(): RIAPP.IVoidPromise;
                 _isCanSubmit: boolean;
             }
+            interface IDatepicker {
+                datepickerRegion: string;
+                dateFormat: string;
+                attachTo($el: any, options?: any): any;
+                detachFrom($el: any): any;
+                parseDate(str: string): Date;
+                formatDate(date: Date): string;
+            }
             class Checks {
                 static isNull(a: any): boolean;
                 static isUndefined(a: any): boolean;
@@ -405,7 +414,6 @@ declare module RIAPP {
                 static isRegExp(a: any): boolean;
                 static isNumeric(obj: any): boolean;
                 static isBoolString(a: any): boolean;
-                static isProtoOf(objConstructor: any, obj: any): boolean;
                 static isBaseObj(obj: any): boolean;
                 static isBinding(obj: any): boolean;
                 static isElView(obj: any): boolean;
@@ -548,13 +556,13 @@ declare module RIAPP {
                 public convertToTarget(val: any, param: any, dataContext: any): any;
             }
             class DateConverter implements IConverter {
-                public convertToSource(val: any, param: any, dataContext: any): any;
-                public convertToTarget(val: any, param: any, dataContext: any): any;
+                public convertToSource(val: any, param: any, dataContext: any): Date;
+                public convertToTarget(val: any, param: any, dataContext: any): string;
                 public toString(): string;
             }
             class DateTimeConverter implements IConverter {
-                public convertToSource(val: any, param: any, dataContext: any): any;
-                public convertToTarget(val: any, param: any, dataContext: any): any;
+                public convertToSource(val: any, param: any, dataContext: any): Date;
+                public convertToTarget(val: any, param: any, dataContext: any): string;
                 public toString(): string;
             }
             class NumberConverter implements IConverter {
@@ -590,8 +598,8 @@ declare module RIAPP {
         module defaults {
             class Defaults extends RIAPP.BaseObject {
                 public _imagesPath: string;
-                public _datepickerRegional: string;
-                public _datepickerDefaults: any;
+                public _datepicker: MOD.utils.IDatepicker;
+                public _dateFormat: string;
                 public _dateTimeFormat: string;
                 public _timeFormat: string;
                 public _decimalPoint: string;
@@ -599,15 +607,12 @@ declare module RIAPP {
                 public _decPrecision: number;
                 public _ajaxTimeOut: number;
                 constructor();
-                static create(): Defaults;
-                public _setDatePickerRegion(v: any): void;
                 public toString(): string;
                 public ajaxTimeOut : number;
-                public dateFormat : any;
+                public dateFormat : string;
                 public timeFormat : string;
                 public dateTimeFormat : string;
-                public datepickerDefaults : any;
-                public datepickerRegional : string;
+                public datepicker : MOD.utils.IDatepicker;
                 public imagesPath : string;
                 public decimalPoint : string;
                 public thousandSep : string;
@@ -628,21 +633,45 @@ declare module RIAPP {
                 static __valueDelimeter2: string;
                 static __keyValDelimeter: string;
                 constructor();
-                public _getPathParts(path: string): any[];
+                public _getPathParts(path: string): string[];
                 public _resolveProp(obj: any, prop: string): any;
                 public _resolvePath(root: any, parts: string[]): any;
                 public _setPropertyValue(obj: any, prop: string, val: any): void;
-                public _getKeyVals(val: any): any[];
-                public resolveBindingSource(root: any, srcParts: any): any;
+                public _getKeyVals(val: string): {
+                    key: string;
+                    val: any;
+                }[];
+                public resolveBindingSource(root: any, srcParts: string[]): any;
                 public resolvePath(obj: any, path: string): any;
-                public getBraceParts(val: string, firstOnly: boolean): any[];
+                public getBraceParts(val: string, firstOnly: boolean): string[];
                 public trimOuterBraces(val: string): string;
                 public trimQuotes(val: string): string;
                 public trimBrackets(val: string): string;
                 public isWithOuterBraces(str: string): boolean;
-                public parseOption(part: string): {};
+                public parseOption(part: string): any;
                 public parseOptions(str: string): any[];
                 public toString(): string;
+            }
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module datepicker {
+            class Datepicker extends RIAPP.BaseObject implements MOD.utils.IDatepicker {
+                private _datepickerRegion;
+                private _dateFormat;
+                constructor();
+                public toString(): string;
+                public attachTo($el: any, options?: {
+                    dateFormat?: string;
+                }): void;
+                public detachFrom($el: any): void;
+                public parseDate(str: string): Date;
+                public formatDate(date: Date): string;
+                public dateFormat : string;
+                public datepickerRegion : string;
+                public datePickerFn : any;
             }
         }
     }
@@ -950,6 +979,14 @@ declare module RIAPP {
                 public toString(): string;
                 public tabsEventCommand : MOD.mvvm.ICommand;
             }
+            interface IDatePickerOptions extends ITextBoxOptions {
+                datepicker?: any;
+            }
+            class DatePickerElView extends TextBoxElView {
+                public _init(options: IDatePickerOptions): void;
+                public destroy(): void;
+                public toString(): string;
+            }
         }
     }
 }
@@ -988,25 +1025,23 @@ declare module RIAPP {
                 public errors : IValidationInfo[];
             }
             class Binding extends RIAPP.BaseObject {
-                public _state: any;
-                public _mode: string;
-                public _converter: MOD.converter.IConverter;
-                public _converterParam: any;
-                public _srcPath: string[];
-                public _tgtPath: string[];
-                public _isSourceFixed: boolean;
-                public _bounds: {
-                    [key: string]: RIAPP.BaseObject;
-                };
-                public _objId: string;
-                public _ignoreSrcChange: boolean;
-                public _ignoreTgtChange: boolean;
-                public _sourceObj: any;
-                public _targetObj: any;
-                public _source: any;
-                public _target: RIAPP.BaseObject;
-                constructor(options: IBindingOptions);
-                static create(options: IBindingOptions): Binding;
+                private _state;
+                private _mode;
+                private _converter;
+                private _converterParam;
+                private _srcPath;
+                private _tgtPath;
+                private _isSourceFixed;
+                private _bounds;
+                private _objId;
+                private _ignoreSrcChange;
+                private _ignoreTgtChange;
+                private _sourceObj;
+                private _targetObj;
+                private _source;
+                private _target;
+                private _appName;
+                constructor(options: IBindingOptions, appName?: string);
                 public _getOnTgtDestroyedProxy(): (s: any, a: any) => void;
                 public _getOnSrcDestroyedProxy(): (s: any, a: any) => void;
                 public _getUpdTgtProxy(): () => void;
@@ -1041,6 +1076,7 @@ declare module RIAPP {
                 public converterParam : any;
                 public isSourceFixed : boolean;
                 public isDisabled : boolean;
+                public appName : string;
             }
         }
     }
@@ -1063,6 +1099,18 @@ declare module RIAPP {
             enum SORT_ORDER {
                 ASC = 0,
                 DESC = 1,
+            }
+            enum FILTER_TYPE {
+                Equals = 0,
+                Between = 1,
+                StartsWith = 2,
+                EndsWith = 3,
+                Contains = 4,
+                Gt = 5,
+                Lt = 6,
+                GtEq = 7,
+                LtEq = 8,
+                NotEq = 9,
             }
             interface IPermissions {
                 canAddRow: boolean;
@@ -1331,7 +1379,7 @@ declare module RIAPP {
                 public forEach(callback: (item: TItem) => void, thisObj?: any): void;
                 public removeItem(item: TItem): void;
                 public getIsHasErrors(): boolean;
-                public sort(fieldNames: string[], sortOrder: string): RIAPP.IPromise<any>;
+                public sort(fieldNames: string[], sortOrder: SORT_ORDER): RIAPP.IPromise<any>;
                 public sortLocal(fieldNames: string[], sortOrder: string): void;
                 public sortLocalByFunc(fn: (a: any, b: any) => number): void;
                 public clear(): void;
@@ -1526,7 +1574,7 @@ declare module RIAPP {
                 public _init(): void;
                 public _updateCss(): void;
                 public _canBeEdited(): boolean;
-                public _createTargetElement(): HTMLElement;
+                public _createTargetElement(): MOD.baseElView.BaseElView;
                 public _getBindingOption(bindingInfo: IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
                 public _getBindings(): MOD.binding.Binding[];
                 public _updateBindingSource(): void;
@@ -1537,7 +1585,10 @@ declare module RIAPP {
                     displayCss?: string;
                     editCss?: string;
                 };
-                public _getElementView(el: any): MOD.baseElView.BaseElView;
+                public _getElementView(el: HTMLElement, view_info: {
+                    name: string;
+                    options: any;
+                }): MOD.baseElView.BaseElView;
                 public update(): void;
                 public destroy(): void;
                 public toString(): string;
@@ -1569,7 +1620,7 @@ declare module RIAPP {
             class BoolContent extends BindingContent {
                 public _init(): void;
                 public _createCheckBoxView(): MOD.baseElView.CheckBoxElView;
-                public _createTargetElement(): HTMLElement;
+                public _createTargetElement(): MOD.baseElView.BaseElView;
                 public _updateCss(): void;
                 public destroy(): void;
                 public _cleanUp(): void;
@@ -1580,8 +1631,7 @@ declare module RIAPP {
                 public _fn_cleanup: () => void;
                 constructor(app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx: any, isEditing: boolean);
                 public _getBindingOption(bindingInfo: IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
-                public _createTargetElement(): HTMLElement;
-                public _cleanUp(): void;
+                public _createTargetElement(): MOD.baseElView.BaseElView;
                 public toString(): string;
             }
             class DateTimeContent extends BindingContent {
@@ -1607,7 +1657,7 @@ declare module RIAPP {
                 static __allowedKeys: number[];
                 private _allowedKeys;
                 constructor(app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx: any, isEditing: boolean);
-                public _createTargetElement(): HTMLElement;
+                public _createTargetElement(): MOD.baseElView.BaseElView;
                 public update(): void;
                 public _previewKeyPress(fieldInfo: MOD.collection.IFieldInfo, keyCode: number, value: string): boolean;
                 public toString(): string;
@@ -1689,18 +1739,6 @@ declare module RIAPP {
                 Setted = 2,
                 Refreshed = 4,
             }
-            enum FILTER_TYPE {
-                Equals = 0,
-                Between = 1,
-                StartsWith = 2,
-                EndsWith = 3,
-                Contains = 4,
-                Gt = 5,
-                Lt = 6,
-                GtEq = 7,
-                LtEq = 8,
-                NotEq = 9,
-            }
             enum REFRESH_MODE {
                 NONE = 0,
                 RefreshCurrent = 1,
@@ -1758,7 +1796,7 @@ declare module RIAPP {
             interface IFilterInfo {
                 filterItems: {
                     fieldName: string;
-                    kind: FILTER_TYPE;
+                    kind: MOD.collection.FILTER_TYPE;
                     values: any[];
                 }[];
             }
@@ -1969,12 +2007,12 @@ declare module RIAPP {
                 constructor(dbSet: DbSet<TEntity>, queryInfo: IQueryInfo);
                 public getFieldInfo(fieldName: string): MOD.collection.IFieldInfo;
                 public getFieldNames(): string[];
-                public _addSort(fieldName: string, sortOrder: string): void;
-                public _addFilterItem(fieldName: string, operand: string, value: any): void;
-                public where(fieldName: string, operand: string, value: any): TDataQuery<TEntity>;
-                public and(fieldName: string, operand: string, value: any): TDataQuery<TEntity>;
-                public orderBy(fieldName: string, sortOrder: string): TDataQuery<TEntity>;
-                public thenBy(fieldName: string, sortOrder: string): TDataQuery<TEntity>;
+                private _addSort(fieldName, sortOrder);
+                private _addFilterItem(fieldName, operand, value);
+                public where(fieldName: string, operand: MOD.collection.FILTER_TYPE, value: any): TDataQuery<TEntity>;
+                public and(fieldName: string, operand: MOD.collection.FILTER_TYPE, value: any): TDataQuery<TEntity>;
+                public orderBy(fieldName: string, sortOrder?: MOD.collection.SORT_ORDER): TDataQuery<TEntity>;
+                public thenBy(fieldName: string, sortOrder?: MOD.collection.SORT_ORDER): TDataQuery<TEntity>;
                 public clearSort(): TDataQuery<TEntity>;
                 public clearFilter(): TDataQuery<TEntity>;
                 public clearParams(): TDataQuery<TEntity>;
@@ -2124,7 +2162,7 @@ declare module RIAPP {
                 public _onPageChanged(): void;
                 public _onPageSizeChanged(): void;
                 public _destroyItems(): void;
-                public sort(fieldNames: string[], sortOrder: string): RIAPP.IPromise<ILoadResult<Entity>>;
+                public sort(fieldNames: string[], sortOrder: MOD.collection.SORT_ORDER): RIAPP.IPromise<ILoadResult<Entity>>;
                 public fillItems(data: {
                     names: string[];
                     rows: {
@@ -2508,7 +2546,7 @@ declare module RIAPP {
                 public _getLookupText(): string;
                 public _getSpanView(): MOD.baseElView.SpanElView;
                 public update(): void;
-                public _createTargetElement(): HTMLElement;
+                public _createTargetElement(): MOD.baseElView.BaseElView;
                 public _cleanUp(): void;
                 public _updateBindingSource(): void;
                 public _bindToValue(): MOD.binding.Binding;
@@ -3255,6 +3293,14 @@ declare module RIAPP {
         public _destroyBindings(): void;
         public _setUpBindings(): void;
         public registerElView(name: string, type: RIAPP.MOD.baseElView.IViewType): void;
+        public _getElementViewInfo(el: HTMLElement): {
+            name: string;
+            options: any;
+        };
+        public _createElementView(el: HTMLElement, view_info: {
+            name: string;
+            options: any;
+        }): RIAPP.MOD.baseElView.BaseElView;
         public getElementView(el: HTMLElement): RIAPP.MOD.baseElView.BaseElView;
         public bind(opts: RIAPP.MOD.binding.IBindingOptions): RIAPP.MOD.binding.Binding;
         public registerContentFactory(fn: (nextFactory?: RIAPP.MOD.baseContent.IContentFactory) => RIAPP.MOD.baseContent.IContentFactory): void;

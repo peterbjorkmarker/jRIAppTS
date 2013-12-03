@@ -8,24 +8,24 @@ module RIAPP
     export module MTMDEMO {
         var global = RIAPP.global, utils = global.utils;
          //private helper function (used inside this module only)
-        function addTextQuery(query:MOD.db.DataQuery, fldName:string, val) {
+        function addTextQuery(query: MOD.db.DataQuery, fldName: string, val) {
             var tmp;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'contains', [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.Contains, [tmp])
                 }
                 else if (utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'endswith', [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.EndsWith, [tmp])
                 }
                 else if (utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'startswith', [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.StartsWith, [tmp])
                 }
                 else {
                     tmp = utils.str.trim(val);
-                    query.where(fldName, '=', [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.Equals, [tmp])
                 }
             }
             return query;
@@ -134,7 +134,7 @@ module RIAPP
                 query.loadPageCount = this.includeDetailsOnLoad ? 1 : 5;
                 //we clear previous cache date for every loading data from the server
                 query.isClearCacheOnEveryLoad = true;
-                query.orderBy('LastName', 'ASC').thenBy('MiddleName', 'ASC').thenBy('FirstName', 'ASC');
+                query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
                 return query.load();
             }
             destroy() {
@@ -537,7 +537,7 @@ module RIAPP
                 var query = this._addressInfosDb.createReadAddressInfoQuery();
                 query.isClearPrevData = true;
                 addTextQuery(query, 'AddressLine1', '%' + this.searchString + '%');
-                query.orderBy('AddressLine1', 'ASC');
+                query.orderBy('AddressLine1');
                 return query.load();
             }
             _addNewAddress() {
@@ -596,7 +596,7 @@ module RIAPP
                 var self = this, query = this._addressInfosDb.createReadAddressInfoQuery();
                 //dont clear, append to the existing
                 query.isClearPrevData = false;
-                query.where('AddressID', '=', [addressID]);
+                query.where('AddressID', MOD.collection.FILTER_TYPE.Equals, [addressID]);
                 var promise = query.load();
                 promise.done(function () {
                     self._checkAddressInRP(addressID);

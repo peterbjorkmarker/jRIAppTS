@@ -2,12 +2,14 @@ module RIAPP {
     export module MOD {
         export module collection {
             //local variables for optimization
-            var utils = global.utils, ValidationError = binding.ValidationError,
-                DATA_TYPE = consts.DATA_TYPE, valueUtils = MOD.utils.valueUtils;
+            var ValidationError = MOD.binding.ValidationError,
+                DATA_TYPE = MOD.consts.DATA_TYPE, valueUtils = MOD.utils.valueUtils;
 
             export enum STATUS { NONE= 0, ADDED= 1, UPDATED= 2, DELETED= 3 }
             export enum COLL_CHANGE_TYPE { REMOVE= 0, ADDED=1, RESET=2, REMAP_KEY=3 }
             export enum SORT_ORDER { ASC= 0, DESC= 1 }
+            export enum FILTER_TYPE { Equals= 0, Between= 1, StartsWith= 2, EndsWith= 3, Contains= 4, Gt= 5, Lt= 6, GtEq= 7, LtEq= 8, NotEq= 9 }
+          
             
             export interface IPermissions { canAddRow: boolean; canEditRow: boolean; canDeleteRow: boolean; canRefreshRow: boolean; }
 
@@ -86,7 +88,7 @@ module RIAPP {
                         }
                     }
                     this._isEditing = true;
-                    this._saveVals = utils.shallowCopy(this._vals);
+                    this._saveVals = RIAPP.global.utils.shallowCopy(this._vals);
                     this._collection.currentItem = this;
                     return true;
                 }
@@ -155,7 +157,7 @@ module RIAPP {
                     return errs;
                 }
                 _checkVal(fieldInfo, val) {
-                    var res = val, ERRS = RIAPP.ERRS;
+                    var res = val, ERRS = RIAPP.ERRS, utils = RIAPP.global.utils;
                     if (this._skipValidate(fieldInfo, val))
                         return res;
                     if (fieldInfo.isReadOnly && !(fieldInfo.allowClientDefault && this._isNew))
@@ -256,7 +258,7 @@ module RIAPP {
                     if (!itemErrors)
                         return [];
                     var res: MOD.binding.IValidationInfo[] = [];
-                    utils.forEachProp(itemErrors, function (name) {
+                    RIAPP.global.utils.forEachProp(itemErrors, function (name) {
                         var fieldName = null;
                         if (name !== '*') {
                             fieldName = name;
@@ -270,13 +272,13 @@ module RIAPP {
                     if (!itemErrors)
                         return '';
                     var res = [];
-                    utils.forEachProp(itemErrors, function (name) {
-                        res.push(utils.format('{0}: {1}', name, itemErrors[name]));
+                    RIAPP.global.utils.forEachProp(itemErrors, function (name) {
+                        res.push(RIAPP.global.utils.format('{0}: {1}', name, itemErrors[name]));
                     });
                     return res.join('|');
                 }
                 submitChanges(): IVoidPromise {
-                    var deffered = utils.createDeferred();
+                    var deffered = RIAPP.global.utils.createDeferred();
                     deffered.reject();
                     return deffered.promise();
                 }
@@ -560,14 +562,14 @@ module RIAPP {
                     this.removeHandler('status_changed', namespace);
                 }
                 _getStrValue(val, fieldInfo: IFieldInfo) {
-                    var dcnv = fieldInfo.dateConversion, stz = utils.get_timeZoneOffset();
+                    var dcnv = fieldInfo.dateConversion, stz = RIAPP.global.utils.get_timeZoneOffset();
                     return valueUtils.stringifyValue(val, dcnv, stz);
                 }
                 _getPKFieldInfos(): IFieldInfo[] {
                     if (!!this._pkInfo)
                         return this._pkInfo;
                     var fldMap = this._fieldMap, pk = [];
-                    utils.forEachProp(fldMap, function (fldName) {
+                    RIAPP.global.utils.forEachProp(fldMap, function (fldName) {
                         if (fldMap[fldName].isPrimaryKey > 0) {
                             pk.push(fldMap[fldName]);
                         }
@@ -647,7 +649,7 @@ module RIAPP {
                 _addError(item: TItem, fieldName: string, errors: string[]) {
                     if (!fieldName)
                         fieldName = '*';
-                    if (!(utils.check.isArray(errors) && errors.length > 0)) {
+                    if (!(RIAPP.global.utils.check.isArray(errors) && errors.length > 0)) {
                         this._removeError(item, fieldName);
                         return;
                     }
@@ -667,7 +669,7 @@ module RIAPP {
                     if (!itemErrors[fieldName])
                         return;
                     delete itemErrors[fieldName];
-                    if (utils.getProps(itemErrors).length === 0) {
+                    if (RIAPP.global.utils.getProps(itemErrors).length === 0) {
                         delete this._errors[item._key];
                     }
                     this._onErrorsChanged(item);
@@ -727,13 +729,13 @@ module RIAPP {
                     }
                     var pos;
                     item._onAttaching();
-                    if (utils.check.isNt(itemPos)) {
+                    if (RIAPP.global.utils.check.isNt(itemPos)) {
                         pos = this._items.length;
                         this._items.push(item);
                     }
                     else {
                         pos = itemPos;
-                        utils.insertIntoArray(this._items, item, pos);
+                        RIAPP.global.utils.insertIntoArray(this._items, item, pos);
                     }
                     this._itemsByKey[item._key] = item;
                     this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: [item], pos: [pos] });
@@ -804,7 +806,7 @@ module RIAPP {
                 }
                 getFieldNames(): string[] {
                     var fldMap = this._fieldMap;
-                    return utils.getProps(fldMap);
+                    return RIAPP.global.utils.getProps(fldMap);
                 }
                 cancelEdit() {
                     if (this.isEditing)
@@ -822,7 +824,7 @@ module RIAPP {
                 }
                 getItemsWithErrors(): TItem[] {
                     var self = this, res: TItem[] = [];
-                    utils.forEachProp(this._errors, function (key) {
+                    RIAPP.global.utils.forEachProp(this._errors, function (key) {
                         var item = self.getItemByKey(key);
                         res.push(item);
                     });
@@ -860,7 +862,7 @@ module RIAPP {
                     if (arguments.length === 0)
                         return null;
                     var self = this, pkInfo = self._getPKFieldInfos(), arr = [], key, values = [];
-                    if (vals.length === 1 && utils.check.isArray(vals[0])) {
+                    if (vals.length === 1 && RIAPP.global.utils.check.isArray(vals[0])) {
                         values = vals[0];
                     }
                     else
@@ -972,7 +974,7 @@ module RIAPP {
                     }
                     if (!this._itemsByKey[item._key])
                         return;
-                    var oldPos = utils.removeFromArray(this._items, item);
+                    var oldPos = RIAPP.global.utils.removeFromArray(this._items, item);
                     if (oldPos < 0) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
                     }
@@ -999,13 +1001,13 @@ module RIAPP {
                 getIsHasErrors(): boolean {
                     if (!this._errors)
                         return false;
-                    return (utils.getProps(this._errors).length > 0);
+                    return (RIAPP.global.utils.getProps(this._errors).length > 0);
                 }
-                sort(fieldNames: string[], sortOrder: string): IPromise<any> {
-                    var self = this, deffered = utils.createDeferred();
+                sort(fieldNames: string[], sortOrder: SORT_ORDER): IPromise<any> {
+                    var self = this, deffered = RIAPP.global.utils.createDeferred();
                     setTimeout(function () {
                         try {
-                            self.sortLocal(fieldNames, sortOrder);
+                            self.sortLocal(fieldNames, SORT_ORDER[sortOrder]);
                         }
                         finally {
                             deffered.resolve();
@@ -1201,7 +1203,7 @@ module RIAPP {
                                 throw new ValidationError([validation_error], this);
                             }
                         } catch (ex) {
-                            if (utils.check.isProtoOf(ValidationError, ex)) {
+                            if (ex instanceof ValidationError) {
                                 error = ex;
                             }
                             else {
@@ -1244,8 +1246,8 @@ module RIAPP {
                 }
                 private _updateFieldMap(props: IPropInfo[]) {
                     var self = this;
-                    if (!utils.check.isArray(props) || props.length == 0)
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'props', props));
+                    if (!RIAPP.global.utils.check.isArray(props) || props.length == 0)
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'props', props));
 
                     self._fieldMap = {};
                     props.forEach(function (prop) {
@@ -1328,12 +1330,12 @@ module RIAPP {
                 _keyName: string;
                 constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]) {
                     if (!keyName)
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
                     this._keyName = keyName;
                     super(itemType, props);
                     var keyFld = this.getFieldInfo(keyName);
                     if (!keyFld)
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_NOTFOUND, keyName));
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_NOTFOUND, keyName));
                     keyFld.isPrimaryKey = 1;
                 }
                 _getNewKey(item: TItem) {
@@ -1341,8 +1343,8 @@ module RIAPP {
                         return super._getNewKey(null);
                     }
                     var key = item[this._keyName];
-                    if (utils.check.isNt(key))
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
+                    if (RIAPP.global.utils.check.isNt(key))
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
                     return '' + key;
                 }
             }
@@ -1366,7 +1368,7 @@ module RIAPP {
             };
             function getPropInfos(properties: any): IPropInfo[]{
                 var props: IPropInfo[] = null;
-                if (utils.check.isArray(properties)) {
+                if (RIAPP.global.utils.check.isArray(properties)) {
                     props = (<string[]>properties).map(function (p) {
                         return { name: p, dtype: 0 };
                     });
@@ -1383,7 +1385,7 @@ module RIAPP {
                     });
                 }
                 else
-                    throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
+                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
                 return props;
             };
 
@@ -1410,14 +1412,12 @@ module RIAPP {
                         return super._getNewKey(null);
                     }
                     var key = item[this._keyName];
-                    if (utils.check.isNt(key))
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
+                    if (RIAPP.global.utils.check.isNt(key))
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
                     return '' + key;
                 }
             }
 
-            global.registerType('List', List);
-            global.registerType('Dictionary', Dictionary);
             global.onModuleLoaded('collection', collection);
         }
     }

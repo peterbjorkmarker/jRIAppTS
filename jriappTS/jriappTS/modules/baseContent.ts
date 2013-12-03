@@ -1,8 +1,6 @@
 module RIAPP {
     export module MOD {
         export module baseContent {
-            //local variables for optimization
-            var utils = global.utils, consts = global.consts;
             export var css = {
                 content: 'ria-content-field',
                 required: 'ria-required-field'
@@ -93,7 +91,7 @@ module RIAPP {
                     if (!!attr.options)
                         res.options = attr.options;
                     if (!(attr.readOnly === undefined))
-                        res.readOnly = utils.parseBool(attr.readOnly);
+                        res.readOnly = RIAPP.global.utils.parseBool(attr.readOnly);
                 }
                 else if (!!attr.template) {
                     res.templateInfo = attr.template;
@@ -129,7 +127,7 @@ module RIAPP {
                     opts.mode = options.mode;
 
                 if (!!options.converter) {
-                    if (utils.check.isString(options.converter))
+                    if (RIAPP.global.utils.check.isString(options.converter))
                         opts.converter = app.getConverter(options.converter);
                     else
                         opts.converter = options.converter;
@@ -139,7 +137,7 @@ module RIAPP {
                 if (!fixedTarget)
                     opts.target = defaultTarget;
                 else {
-                    if (utils.check.isString(fixedTarget)) {
+                    if (RIAPP.global.utils.check.isString(fixedTarget)) {
                         if (fixedTarget == 'this')
                             opts.target = defaultTarget;
                         else {
@@ -157,7 +155,7 @@ module RIAPP {
                 }
                 else {
                     opts.isSourceFixed = true;
-                    if (utils.check.isString(fixedSource)) {
+                    if (RIAPP.global.utils.check.isString(fixedSource)) {
                         if (fixedSource == 'this') {
                             opts.source = defaultTarget;
                         }
@@ -246,17 +244,19 @@ module RIAPP {
                     var editable = !!this._dctx && !!this._dctx.beginEdit;
                     return editable && !finf.isReadOnly && !finf.isCalculated;
                 }
-                _createTargetElement() {
-                    var el: HTMLElement, doc = global.document;
+                _createTargetElement(): MOD.baseElView.BaseElView {
+                    var el: HTMLElement, doc = global.document, info: { name: string; options: any; } = { name: null, options: null };
                     if (this._isEditing && this._canBeEdited()) {
                         el = doc.createElement('input');
                         el.setAttribute('type', 'text');
+                        info.options = this._options.options;
                     }
                     else {
                         el = doc.createElement('span');
                     }
                     this._updateCss();
-                    return el;
+                    this._el = el;
+                    return this._getElementView(this._el, info);
                 }
                 _getBindingOption(bindingInfo:IBindingInfo, tgt:BaseObject, dctx, targetPath:string) {
                     var options = getBindingOptions(this.app,bindingInfo, tgt, dctx);
@@ -273,7 +273,7 @@ module RIAPP {
                         return [];
                     var arr = this._lfScope.getObjs(), res = [];
                     for (var i = 0, len = arr.length; i < len; i += 1) {
-                        if (utils.check.isBinding(arr[i]))
+                        if (RIAPP.global.utils.check.isBinding(arr[i]))
                             res.push(arr[i]);
                     }
                     return res;
@@ -292,7 +292,7 @@ module RIAPP {
                         this._lfScope = null;
                     }
                     if (!!this._el) {
-                        utils.removeNode(this._el);
+                        RIAPP.global.utils.removeNode(this._el);
                         this._el = null;
                     }
                     this._tgt = null;
@@ -306,17 +306,20 @@ module RIAPP {
                 _getDisplayInfo() {
                     return this._options.displayInfo;
                 }
-                _getElementView(el): baseElView.BaseElView {
-                    return this.app.getElementView(el);
+                _getElementView(el: HTMLElement, view_info: { name: string; options: any; }): baseElView.BaseElView {
+                    var elView = this.app._getElView(el);
+                    if (!!elView)
+                        return elView;
+                    return this.app._createElementView(el, view_info);
                 }
                 update() {
                     this._cleanUp();
                     var bindingInfo = this._getBindingInfo();
                     if (!!bindingInfo) {
-                        this._el = this._createTargetElement();
-                        this._tgt = this._getElementView(this._el);
+                        this._tgt =  this._createTargetElement();
                         this._lfScope = new MOD.utils.LifeTimeScope();
-                        this._lfScope.addObj(this._tgt);
+                        if (!!this._tgt)
+                            this._lfScope.addObj(this._tgt);
                         var options = this._getBindingOption(bindingInfo, this._tgt, this._dctx, 'value');
                         this._parentEl.appendChild(this._el);
                         this._lfScope.addObj(this.app.bind(options));
@@ -335,7 +338,6 @@ module RIAPP {
                     if (!!displayInfo && !!displayInfo.editCss) {
                         $p.removeClass(displayInfo.editCss);
                     }
-
                     this._cleanUp();
                     this._parentEl = null;
                     this._dctx = null;
@@ -458,7 +460,7 @@ module RIAPP {
 
             export class BoolContent extends BindingContent{
                 _init() {
-                    this._createTargetElement();
+                    this._tgt = this._createTargetElement();
                     var bindingInfo = this._getBindingInfo();
                     if (!!bindingInfo) {
                         this._updateCss();
@@ -474,13 +476,14 @@ module RIAPP {
                     var chbxView = new baseElView.CheckBoxElView(this.app, el, {});
                     return chbxView;
                 }
-                _createTargetElement() {
-                    if (!this._tgt) {
-                        this._tgt = this._createCheckBoxView();
-                        this._el = this._tgt.el;
+                _createTargetElement(): MOD.baseElView.BaseElView {
+                    var tgt = this._tgt;
+                    if (!tgt) {
+                        tgt = this._createCheckBoxView();
+                        this._el = tgt.el;
                     }
                     this._parentEl.appendChild(this._el);
-                    return this._el;
+                    return tgt;
                 }
                 _updateCss() {
                     super._updateCss();
@@ -522,32 +525,31 @@ module RIAPP {
             export class DateContent extends BindingContent {
                 _fn_cleanup: () => void;
                 constructor(app: Application, parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean) {
+                    if (options.name != 'datepicker') {
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'datepicker'"));
+                    }
                     super(app, parentEl, options, dctx, isEditing);
                     this._fn_cleanup = null;
                 }
                 _getBindingOption(bindingInfo: IBindingInfo, tgt: BaseObject, dctx, targetPath:string) {
                     var options =super._getBindingOption(bindingInfo, tgt, dctx, targetPath);
                     options.converter = this.app.getConverter('dateConverter');
-                    options.converterParam = global.defaults.dateFormat;
                     return options;
                 }
-                _createTargetElement() {
-                    var el = super._createTargetElement();
-                    if (this.isEditing) {
-                        var $el:any = global.$(el);
-                        $el.datepicker();
-                        this._fn_cleanup = function () {
-                            utils.destroyJQueryPlugin($el, 'datepicker');
-                        };
+                _createTargetElement(): MOD.baseElView.BaseElView {
+                    var el: HTMLElement, doc = global.document, info: { name: string; options: any; } = { name: null, options: null };
+                    if (this._isEditing && this._canBeEdited()) {
+                        el = doc.createElement('input');
+                        el.setAttribute('type', 'text');
+                        info.options = this._options.options;
+                        info.name = 'datepicker';
                     }
-                    return el;
-                }
-                _cleanUp() {
-                    if (!!this._fn_cleanup) {
-                        this._fn_cleanup();
-                        this._fn_cleanup = null;
+                    else {
+                        el = doc.createElement('span');
                     }
-                    super._cleanUp();
+                    this._updateCss();
+                    this._el = el;
+                    return this._getElementView(this._el, info);
                 }
                 toString() {
                     return 'DateContent';
@@ -563,11 +565,14 @@ module RIAPP {
                         case consts.DATA_TYPE.DateTime:
                             options.converterParam = defaults.dateTimeFormat;
                             break;
+                        case consts.DATA_TYPE.Date:
+                            options.converterParam = defaults.dateFormat;
+                            break;
                         case consts.DATA_TYPE.Time:
                             options.converterParam = defaults.timeFormat;
                             break;
                         default:
-                            options.converterParam = defaults.dateTimeFormat;
+                            options.converterParam = null;
                             break;
                     }
                     return options;
@@ -673,20 +678,23 @@ module RIAPP {
                 }
                 constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean) {
                     if (options.name != 'multyline') {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'multyline'"));
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'multyline'"));
                     }
                     super(app, parentEl, options, dctx, isEditing);
                 }
-                _createTargetElement() {
-                    var tgt: HTMLElement;
+                _createTargetElement(): MOD.baseElView.BaseElView {
+                    var el: HTMLElement, info: { name: string; options: any; } = { name: null, options: null };
                     if (this._isEditing && this._canBeEdited()) {
-                        tgt = global.document.createElement('textarea');
+                        el = global.document.createElement('textarea');
+                        info.options = this._options.options;
+                        info.name = null;
                     }
                     else {
-                        tgt = global.document.createElement('div');
+                        el = global.document.createElement('div');
                     }
                     this._updateCss();
-                    return tgt;
+                    this._el = el;
+                    return this._getElementView(this._el, info);
                 }
                 update() {
                     super.update();
@@ -696,19 +704,6 @@ module RIAPP {
                         (<baseElView.TextAreaElView>self._tgt).addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(fieldInfo, args.keyCode, args.value);
                         });
-                        var multylnOpt: baseElView.ITextAreaOptions = this._options.options;
-                        var tgt = <baseElView.TextAreaElView>self._tgt;
-                        if (!!multylnOpt) {
-                            if (!!multylnOpt.rows) {
-                                tgt.rows = multylnOpt.rows;
-                            }
-                            if (!!multylnOpt.cols) {
-                                tgt.cols = multylnOpt.cols;
-                            }
-                            if (!!multylnOpt.wrap) {
-                                tgt.wrap = multylnOpt.wrap;
-                            }
-                        }
                     }
                 }
                 _previewKeyPress(fieldInfo: collection.IFieldInfo, keyCode: number, value: string) {
@@ -734,7 +729,7 @@ module RIAPP {
                        return TemplateContent;
                     }
                     if (!options.bindingInfo)
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'options', 'bindingInfo'));
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'options', 'bindingInfo'));
 
                     var fieldInfo = options.fieldInfo, res;
                     switch (fieldInfo.dataType) {
@@ -762,14 +757,17 @@ module RIAPP {
                             res = DateTimeContent;
                             break;
                         case consts.DATA_TYPE.Date:
-                            res = DateContent;
+                            if (options.name == 'datepicker')
+                                res = DateContent;
+                            else
+                                res = DateTimeContent;
                             break;
                         case consts.DATA_TYPE.Guid:
                         case consts.DATA_TYPE.Binary:
                             res = BindingContent;
                             break;
                         default:
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_FIELD_DATATYPE, fieldInfo.dataType));
+                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_FIELD_DATATYPE, fieldInfo.dataType));
                     }
                     if (!res && this._nextFactory) {
                         res = this._nextFactory.getContentType(options);

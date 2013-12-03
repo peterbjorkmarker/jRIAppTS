@@ -1,11 +1,6 @@
 module RIAPP {
     export module MOD {
         export module binding {
-            'use strict';
-
-            //local variables for optimization
-            var utils = global.utils, consts = global.consts;
-
             export var BINDING_MODE = ['OneTime', 'OneWay', 'TwoWay'];
       
             export interface IBindingOptions {
@@ -36,10 +31,10 @@ module RIAPP {
             export function _checkIsErrorNotification(obj) {
                 if (!obj)
                     return false;
-                if (!utils.check.isFunction(obj.getIErrorNotification))
+                if (!RIAPP.global.utils.check.isFunction(obj.getIErrorNotification))
                     return false;
                 var tmp = obj.getIErrorNotification();
-                return !!tmp && utils.check.isFunction(tmp.getIErrorNotification);
+                return !!tmp && RIAPP.global.utils.check.isFunction(tmp.getIErrorNotification);
             }
 
             export class ValidationError extends MOD.errors.BaseError{
@@ -69,25 +64,26 @@ module RIAPP {
             };
 
             export class Binding extends RIAPP.BaseObject{
-                _state:any;
-                _mode:string;
-                _converter: MOD.converter.IConverter;
-                _converterParam: any;
-                _srcPath:string[];
-                _tgtPath:string[];
-                _isSourceFixed: boolean;
-                _bounds: { [key: string]: BaseObject; };
-                _objId: string;
-                _ignoreSrcChange: boolean;
-                _ignoreTgtChange: boolean;
-                _sourceObj: any;
-                _targetObj: any;
-                _source: any;
-                _target: BaseObject;
+                private _state:any;
+                private _mode:string;
+                private _converter: MOD.converter.IConverter;
+                private _converterParam: any;
+                private _srcPath:string[];
+                private _tgtPath:string[];
+                private _isSourceFixed: boolean;
+                private _bounds: { [key: string]: BaseObject; };
+                private _objId: string;
+                private _ignoreSrcChange: boolean;
+                private _ignoreTgtChange: boolean;
+                private _sourceObj: any;
+                private _targetObj: any;
+                private _source: any;
+                private _target: BaseObject;
+                private _appName: string;
 
-                 constructor (options: IBindingOptions) {
+                 constructor (options: IBindingOptions, appName?: string) {
                     super();
-                    var opts = utils.extend(false, {
+                     var opts = RIAPP.global.utils.extend(false, {
                         target: null, source: null,
                         targetPath: null, sourcePath: null, mode: BINDING_MODE[1],
                         converter: null, converterParam: null, isSourceFixed: false
@@ -97,18 +93,18 @@ module RIAPP {
                         throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_EMPTY);
                     }
 
-                    if (!utils.check.isString(opts.targetPath)) {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
+                     if (!RIAPP.global.utils.check.isString(opts.targetPath)) {
+                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     }
 
                     if (BINDING_MODE.indexOf(opts.mode) < 0) {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_MODE_INVALID, opts.mode));
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_BIND_MODE_INVALID, opts.mode));
                     }
 
-                    if (!utils.check.isBaseObj(opts.target)) {
+                     if (!RIAPP.global.utils.check.isBaseObj(opts.target)) {
                         throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
                     }
-
+                    this._appName = appName;
                     this._state = null; //save state - source and target when binding is disabled
                     this._mode = opts.mode;
                     this._converter = opts.converter || global._getConverter('BaseConverter');
@@ -116,10 +112,10 @@ module RIAPP {
                     this._srcPath = global.parser._getPathParts(opts.sourcePath);
                     this._tgtPath = global.parser._getPathParts(opts.targetPath);
                     if (this._tgtPath.length < 1)
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     this._isSourceFixed = (!!opts.isSourceFixed);
                     this._bounds = {};
-                    this._objId = 'bnd' + utils.getNewID();
+                    this._objId = 'bnd' + RIAPP.global.utils.getNewID();
                     this._ignoreSrcChange = false;
                     this._ignoreTgtChange = false;
                     this._sourceObj = null;
@@ -128,12 +124,11 @@ module RIAPP {
                     this._target = null;
                     this.target = opts.target;
                     this.source = opts.source;
-                    if (!!this._sourceObj && utils.check.isFunction(this._sourceObj.getIErrorNotification)) {
+                     if (!!this._sourceObj && RIAPP.global.utils.check.isFunction(this._sourceObj.getIErrorNotification)) {
                         if ((<IErrorNotification>this._sourceObj).getIsHasErrors())
                             this._onSrcErrorsChanged();
                     }
                  }
-                 static create(options: IBindingOptions) { return new Binding(options); }
                 _getOnTgtDestroyedProxy() {
                     var self = this;
                     return function (s, a) {
@@ -166,7 +161,7 @@ module RIAPP {
                 }
                 _onSrcErrorsChanged() {
                     var errors:IValidationInfo[] = [], tgt = this._targetObj, src = this._sourceObj, srcPath = this._srcPath;
-                    if (!!tgt && utils.check.isElView(tgt)) {
+                    if (!!tgt && RIAPP.global.utils.check.isElView(tgt)) {
                         if (!!src && srcPath.length > 0) {
                             var prop = srcPath[srcPath.length - 1];
                             errors = (<IErrorNotification>src).getFieldErrors(prop);
@@ -177,7 +172,11 @@ module RIAPP {
                 _onError(error: any, source: any):boolean {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
-                        return global._onError(error, source);
+                        if (!!this._appName) {
+                            return global.findApp(this._appName)._onError(error, source);
+                        }
+                        else
+                            return global._onError(error, source);
                     }
                     return isHandled;
                 }
@@ -214,7 +213,7 @@ module RIAPP {
                 }
                 _parseSrcPath2(obj, path:string[], lvl:number) {
                     var self = this, nextObj;
-                    var isBaseObj = (!!obj && utils.check.isBaseObj(obj));
+                    var isBaseObj = (!!obj && RIAPP.global.utils.check.isBaseObj(obj));
 
 
                     if (isBaseObj) {
@@ -240,7 +239,7 @@ module RIAPP {
                         if (updateOnChange && isBaseObj) {
                             obj.addOnPropertyChange(path[0], self._getUpdTgtProxy(), this._objId);
                         }
-                        if (!!obj &&  utils.check.isFunction(obj.getIErrorNotification)) {
+                        if (!!obj && RIAPP.global.utils.check.isFunction(obj.getIErrorNotification)) {
                            (<IErrorNotification>obj).addOnErrorsChanged(self._getSrcErrChangedProxy(), self._objId);
                         }
                         this._sourceObj = obj;
@@ -259,7 +258,7 @@ module RIAPP {
                 }
                 _parseTgtPath2(obj, path:string[], lvl:number) {
                     var self = this, nextObj;
-                    var isBaseObj = (!!obj && utils.check.isBaseObj(obj));
+                    var isBaseObj = (!!obj && RIAPP.global.utils.check.isBaseObj(obj));
 
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnTgtDestroyedProxy(), self._objId);
@@ -295,7 +294,7 @@ module RIAPP {
                         key = 't' + lvl;
                     }
                     else
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'to', to));
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'to', to));
 
                     old = this._bounds[key];
                     if (!!old) {
@@ -364,12 +363,12 @@ module RIAPP {
                             this.sourceValue = res;
                     }
                     catch (ex) {
-                        if (!(ex instanceof ValidationError) || !utils.check.isElView(this._targetObj)) {
+                        if (!(ex instanceof ValidationError) || !RIAPP.global.utils.check.isElView(this._targetObj)) {
                             //BaseElView is notified about errors in _onSrcErrorsChanged event handler
                             //we only need to invoke _onError in other cases
                             //1) when target is not BaseElView
                             //2) when error is not ValidationError
-
+                            this._ignoreSrcChange = false;
                             this._updateTarget(); //resync target with source
                             if (!this._onError(ex, this))
                                 throw ex;
@@ -384,7 +383,7 @@ module RIAPP {
                         return;
                     this._isDestroyCalled = true;
                     var self = this;
-                    utils.forEachProp(this._bounds, function (key) {
+                    RIAPP.global.utils.forEachProp(this._bounds, function (key) {
                         var old = self._bounds[key];
                         old.removeNSHandlers(self._objId);
                     });
@@ -426,12 +425,12 @@ module RIAPP {
                             }
                         }
                         this._checkBounded(null, 'target', 0, this._tgtPath);
-                        if (!!v && !utils.check.isBaseObj(v))
+                        if (!!v && !RIAPP.global.utils.check.isBaseObj(v))
                             throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
                         this._target = v;
                         this._bindToTarget();
                         if (!!this._target && !this._targetObj)
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, this._tgtPath.join('.')));
+                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, this._tgtPath.join('.')));
                     }
                 }
                 get source() { return this._source; }
@@ -505,6 +504,7 @@ module RIAPP {
                         }
                     }
                 }
+                get appName() { return this._appName; }
            };
 
 

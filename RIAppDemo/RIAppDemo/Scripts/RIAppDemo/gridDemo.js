@@ -21,21 +21,20 @@ var RIAPP;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'contains', [tmp]);
+                    query.where(fldName, 4 /* Contains */, [tmp]);
                 } else if (utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'endswith', [tmp]);
+                    query.where(fldName, 3 /* EndsWith */, [tmp]);
                 } else if (utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, 'startswith', [tmp]);
+                    query.where(fldName, 2 /* StartsWith */, [tmp]);
                 } else {
                     tmp = utils.str.trim(val);
-                    query.where(fldName, '=', [tmp]);
+                    query.where(fldName, 0 /* Equals */, [tmp]);
                 }
             }
             return query;
         }
-        GRIDDEMO.addTextQuery = addTextQuery;
         ;
 
         var ProductsFilter = (function (_super) {
@@ -51,6 +50,8 @@ var RIAPP;
                 this._selectedCategory = null;
                 this._selectedModel = null;
                 this._modelID = null;
+                this._saleStart1 = null;
+                this._saleStart2 = null;
 
                 //filters top level product categories
                 this._parentCategories = new RIAPP.MOD.db.DataView({
@@ -80,7 +81,7 @@ var RIAPP;
             }
             ProductsFilter.prototype._loadCategories = function () {
                 var query = this.ProductCategories.createReadProductCategoryQuery();
-                query.orderBy('Name', 'ASC');
+                query.orderBy('Name');
 
                 //returns promise
                 return query.load();
@@ -89,7 +90,7 @@ var RIAPP;
             //returns promise
             ProductsFilter.prototype._loadProductModels = function () {
                 var query = this.ProductModels.createReadProductModelQuery();
-                query.orderBy('Name', 'ASC');
+                query.orderBy('Name');
 
                 //returns promise
                 return query.load();
@@ -109,6 +110,9 @@ var RIAPP;
                 this.modelID = null;
                 this.selectedModel = null;
                 this.selectedCategory = null;
+
+                this.saleStart1 = null;
+                this.saleStart2 = null;
             };
             Object.defineProperty(ProductsFilter.prototype, "prodNumber", {
                 get: function () {
@@ -171,6 +175,32 @@ var RIAPP;
                     if (this._modelID != v) {
                         this._modelID = v;
                         this.raisePropertyChanged('modelID');
+                    }
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ProductsFilter.prototype, "saleStart1", {
+                get: function () {
+                    return this._saleStart1;
+                },
+                set: function (v) {
+                    if (this._saleStart1 != v) {
+                        this._saleStart1 = v;
+                        this.raisePropertyChanged('saleStart1');
+                    }
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ProductsFilter.prototype, "saleStart2", {
+                get: function () {
+                    return this._saleStart2;
+                },
+                set: function (v) {
+                    if (this._saleStart2 != v) {
+                        this._saleStart2 = v;
+                        this.raisePropertyChanged('saleStart2');
                     }
                 },
                 enumerable: true,
@@ -456,7 +486,7 @@ var RIAPP;
                 this.selectedCount = 0;
             };
 
-            //when product is selected (unselected) by user in the grid (clicking checkboxes)
+            //when product is selected (unselected) by the user in the grid (clicking checkboxes)
             //we store the entities keys in the map (it survives going to another page and return back)
             ProductViewModel.prototype._productSelected = function (item, isSelected) {
                 if (!item)
@@ -479,18 +509,25 @@ var RIAPP;
                 //the query'service method can accept additional parameters which you can supply with query
                 var query = this.dbSet.createReadProductQuery({ param1: [10, 11, 12, 13, 14], param2: 'Test' });
                 query.pageSize = 50;
-                query.loadPageCount = 20; //load 20 pages at once (only one will be visible, others will be in local cache)
-                query.isClearCacheOnEveryLoad = true; //clear local cache when a new batch of data is loaded from the server
+                query.loadPageCount = 20; //load 20 pages at once (but only one will be visible, the others will be in the local cache)
+                query.isClearCacheOnEveryLoad = true; //clear the local cache when a new batch of data is loaded from the server
                 addTextQuery(query, 'ProductNumber', this._filter.prodNumber);
                 addTextQuery(query, 'Name', this._filter.name);
                 if (!utils.check.isNt(this._filter.childCategoryID)) {
-                    query.where('ProductCategoryID', '=', [this._filter.childCategoryID]);
+                    query.where('ProductCategoryID', 0 /* Equals */, [this._filter.childCategoryID]);
                 }
                 if (!utils.check.isNt(this._filter.modelID)) {
-                    query.where('ProductModelID', '=', [this._filter.modelID]);
+                    query.where('ProductModelID', 0 /* Equals */, [this._filter.modelID]);
                 }
 
-                query.orderBy('Name', 'ASC').thenBy('SellStartDate', 'DESC');
+                if (!utils.check.isNt(this._filter.saleStart1) && !utils.check.isNt(this._filter.saleStart2)) {
+                    query.where('SellStartDate', 1 /* Between */, [this._filter.saleStart1, this._filter.saleStart2]);
+                } else if (!utils.check.isNt(this._filter.saleStart1))
+                    query.where('SellStartDate', 7 /* GtEq */, [this._filter.saleStart1]);
+                else if (!utils.check.isNt(this._filter.saleStart2))
+                    query.where('SellStartDate', 8 /* LtEq */, [this._filter.saleStart2]);
+
+                query.orderBy('Name').thenBy('SellStartDate', 1 /* DESC */);
                 return query.load();
             };
             ProductViewModel.prototype.destroy = function () {
@@ -1052,6 +1089,7 @@ var RIAPP;
         RIAPP.global.addOnError(function (sender, args) {
             debugger;
             alert(args.error.message);
+            args.isHandled = true;
         });
 
         //create and start application here

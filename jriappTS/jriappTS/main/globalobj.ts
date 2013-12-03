@@ -80,9 +80,6 @@ module RIAPP {
             this._isReady = false;
             this._init();
         }
-        static create(window: Window, jQuery: JQueryStatic) {
-            return new Global(window, jQuery);
-        }
         private _init() {
             var self = this;
             self.$(self.document).ready(function ($) {
@@ -113,11 +110,11 @@ module RIAPP {
                 self.raiseEvent('unload', {});
             });
             //this way to attach for correct work in firefox
-            self.window.onerror = function (msg, url, linenumber) {
-                if (!!msg && (<any>msg).indexOf("DUMMY_ERROR") > -1) {
+            self.window.onerror = function (msg, url:string, linenumber:number) {
+                if (!!msg && msg.toString().indexOf("DUMMY_ERROR") > -1) {
                     return true;
                 }
-                alert('Error message: ' + msg + '\nURL: ' + url + '\nLine Number: ' + linenumber);
+                alert('Error: ' + msg + '\nURL: ' + url + '\nLine Number: ' + linenumber);
                 return false;
             }
         }
@@ -463,25 +460,32 @@ module RIAPP {
             else
                 throw ex;
         }
+        //each module on its loading invokes this  function
         onModuleLoaded(name: string, module_obj: any) {
             var self = this;
             if (this.isModuleLoaded(name))
-                throw new Error(baseUtils.format('Module: {0} is already loaded!', name));
+                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_MODULE_ALREDY_REGISTERED, name));
 
             this._moduleNames.push(name);
-            switch (name) {
-                case 'utils':
-                    self._utils = new MOD.utils.Utils();
-                    break;
-                case 'defaults':
-                    self._defaults = new MOD.defaults.Defaults();
-                    self._defaults.dateFormat = 'dd.mm.yy';
-                    self._defaults.imagesPath = '/Scripts/jriapp/img/';
-                    break;
-                case 'parser':
-                    self._parser = new MOD.parser.Parser();
-                    break;
+        }
+        _initialize() {
+            var self = this, isOK: boolean, name: string;
+            name = 'utils'; isOK = this.isModuleLoaded(name);
+            if (isOK)
+                self._utils = new MOD.utils.Utils();
+            name = 'parser'; isOK = this.isModuleLoaded(name);
+            if (isOK)
+                self._parser = new MOD.parser.Parser();
+            name = 'defaults'; isOK = this.isModuleLoaded(name);
+            if (isOK) {
+                self._defaults = new MOD.defaults.Defaults();
             }
+            name = 'datepicker'; isOK = this.isModuleLoaded(name);
+            if (isOK && !!self._defaults) {
+                self._defaults.datepicker = new MOD.datepicker.Datepicker();
+            }
+            if (!isOK)
+                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
         }
         isModuleLoaded(name: string): boolean {
             return this._moduleNames.indexOf(name) > -1;
@@ -589,7 +593,7 @@ module RIAPP {
             return this._userCode;
         }
         get moduleNames() { return ArrayHelper.clone(this._moduleNames); }
-    };
+    }
 
-    RIAPP.global = Global.create(window, jQuery);
+    RIAPP.global = new Global(window, jQuery);
 }
