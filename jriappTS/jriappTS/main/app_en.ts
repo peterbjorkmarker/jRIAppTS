@@ -8,7 +8,7 @@ module RIAPP {
         ERR_DBSET_INVALID_FIELDNAME: 'TDbSet: {0} has no field with the name: {1}',
         ERR_FIELD_READONLY: 'Field is readOnly and can not be edited',
         ERR_FIELD_ISNOT_NULLABLE: 'Field is not nullable and can not be set to null',
-        ERR_FIELD_WRONG_TYPE: 'Value: {0} can not be assigned to {1} type field',
+        ERR_FIELD_WRONG_TYPE: 'Value {0} has wrong datatype. It should have {1} datatype.',
         ERR_FIELD_MAXLEN: 'Value exceeds field maxlength: {0}',
         ERR_FIELD_DATATYPE: 'Unknown field data type: {0}',
         ERR_FIELD_REGEX: 'Value {0} can not be accepted as the right value for this field',

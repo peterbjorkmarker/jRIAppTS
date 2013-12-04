@@ -267,14 +267,14 @@ module RIAPP {
 
             export interface IValueUtils {
                 valueToDate(val:string, dtcnv:number, stz:number): Date;
-                dateToValue(dt: Date, dtcnv:number, stz:number): string;
-                compareVals(v1, v2, dataType:number): boolean;
-                stringifyValue(v, dcnv:number, stz:number): string;
-                parseValue(v: string, dataType, dcnv, stz): any;
+                dateToValue(dt: Date, dtcnv: consts.DATE_CONVERSION, stz:number): string;
+                compareVals(v1: any, v2: any, dataType: consts.DATA_TYPE): boolean;
+                stringifyValue(v: any, dcnv: consts.DATE_CONVERSION, dataType: consts.DATA_TYPE, stz:number): string;
+                parseValue(v: string, dataType: consts.DATA_TYPE, dcnv: consts.DATE_CONVERSION, stz:number): any;
             }
             
             export var valueUtils: IValueUtils = {
-                valueToDate: function (val: string, dtcnv: number, stz: number): Date {
+                valueToDate: function (val: string, dtcnv: consts.DATE_CONVERSION, stz: number): Date {
                     if (!val)
                         return null;
                     val = '' + val;
@@ -324,7 +324,7 @@ module RIAPP {
                     }
                     return ("" + dt.getFullYear() + "&" + (dt.getMonth() + 1) + "&" + dt.getDate() + "&" + dt.getHours() + "&" + dt.getMinutes() + "&" + dt.getSeconds() + "&" + dt.getMilliseconds());
                 },
-                compareVals: function (v1, v2, dataType: number): boolean {
+                compareVals: function (v1, v2, dataType: consts.DATA_TYPE): boolean {
                     if ((v1 === null && v2 !== null) || (v1 !== null && v2 === null))
                         return false;
                     var DATA_TYPE = consts.DATA_TYPE;
@@ -340,53 +340,106 @@ module RIAPP {
                             return v1 === v2;
                     }
                 },
-                stringifyValue: function (v, dcnv: number, stz: number): string {
+                stringifyValue: function (v: any, dcnv: consts.DATE_CONVERSION, dataType: consts.DATA_TYPE, stz: number): string {
+                    var res: string = null;
+
                     if (Checks.isNt(v))
-                        return null;
-                    if (Checks.isDate(v))
-                        return valueUtils.dateToValue(v, dcnv, stz);
-                    else if (Checks.isArray(v))
-                        return JSON.stringify(v);
-                    else if (Checks.isString(v))
-                        return v;
-                    else
-                        return JSON.stringify(v);
+                        return res;
+
+                    function conv(v: any):string {
+                        if (Checks.isDate(v))
+                            return valueUtils.dateToValue(v, dcnv, stz);
+                        else if (Checks.isArray(v))
+                            return JSON.stringify(v);
+                        else if (Checks.isString(v))
+                            return v;
+                        else
+                            return JSON.stringify(v);
+                    };
+                    var isOK = false;
+                    switch (dataType) {
+                        case consts.DATA_TYPE.None:
+                            res = conv(v);
+                            isOK = true;
+                            break;
+                        case consts.DATA_TYPE.String:
+                        case consts.DATA_TYPE.Guid:
+                            if (Checks.isString(v)) {
+                                res = v;
+                                isOK = true;
+                            }
+                            break;
+                        case consts.DATA_TYPE.Bool:
+                            if (Checks.isBoolean(v)) {
+                                res = JSON.stringify(v);
+                                isOK = true;
+                            }
+                            break;
+                        case consts.DATA_TYPE.Integer:
+                        case consts.DATA_TYPE.Decimal:
+                        case consts.DATA_TYPE.Float:
+                            if (Checks.isNumber(v)) {
+                                res = JSON.stringify(v);
+                                isOK = true;
+                            }
+                            break;
+                        case consts.DATA_TYPE.DateTime:
+                        case consts.DATA_TYPE.Date:
+                        case consts.DATA_TYPE.Time:
+                            if (Checks.isDate(v)) {
+                                res = valueUtils.dateToValue(v, dcnv, stz);
+                                isOK = true;
+                            }
+                            break;
+                        case consts.DATA_TYPE.Binary:
+                            if (Checks.isArray(v)) {
+                                res = JSON.stringify(v);
+                                isOK = true;
+                            }
+                            break;
+                        default:
+                            throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dataType', dataType));
+                    }
+
+                    if (!isOK)
+                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_WRONG_TYPE, v, consts.DATA_TYPE[dataType]));
+                    return res;
                 },
-                parseValue: function (v, dataType, dcnv, stz) {
+                parseValue: function (v:string, dataType: consts.DATA_TYPE, dcnv: consts.DATE_CONVERSION, stz:number) {
                     var res = null;
 
                     if (v === undefined || v === null)
                         return res;
-                    var DATA_TYPE = consts.DATA_TYPE;
                     switch (dataType) {
-                        case DATA_TYPE.None:
+                        case consts.DATA_TYPE.None:
                             res = v;
                             break;
-                        case DATA_TYPE.String:
-                        case DATA_TYPE.Guid:
+                        case consts.DATA_TYPE.String:
+                        case consts.DATA_TYPE.Guid:
                             res = v;
                             break;
-                        case DATA_TYPE.Bool:
+                        case consts.DATA_TYPE.Bool:
                             res = global.utils.parseBool(v);
                             break;
-                        case DATA_TYPE.Integer:
+                        case consts.DATA_TYPE.Integer:
                             res = parseInt(v, 10);
                             break;
-                        case DATA_TYPE.Decimal:
-                        case DATA_TYPE.Float:
+                        case consts.DATA_TYPE.Decimal:
+                        case consts.DATA_TYPE.Float:
                             res = parseFloat(v);
                             break;
-                        case DATA_TYPE.DateTime:
-                        case DATA_TYPE.Date:
-                        case DATA_TYPE.Time:
+                        case consts.DATA_TYPE.DateTime:
+                        case consts.DATA_TYPE.Date:
+                        case consts.DATA_TYPE.Time:
                             res = valueUtils.valueToDate(v, dcnv, stz);
                             break;
-                        case DATA_TYPE.Binary:
+                        case consts.DATA_TYPE.Binary:
                             res = JSON.parse(v);
                             break;
                         default:
                             throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dataType', dataType));
                     }
+                   
                     return res;
                 }
             };
@@ -395,8 +448,7 @@ module RIAPP {
             LifeTimeScope used to hold references to objects and destroys 
             them all when LifeTimeScope is destroyed itself
             */
-            export class LifeTimeScope extends RIAPP.BaseObject
-            {
+            export class LifeTimeScope extends RIAPP.BaseObject{
                 private _objs: BaseObject[];
 
                 constructor() {

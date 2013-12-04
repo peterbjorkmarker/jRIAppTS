@@ -67,7 +67,7 @@ It is accessible now through dataservice's CurrentQueryInfo property. See demo d
 <p>2013-11-26  Code modernization</p>
 <p>2013-11-29  jriappTS typescript solution was split into two parts. <br/>1) jriappTS - the framework's code<br/>2) demoTS - the code (user modules) for the DEMO ASP.NET MVC project.</p>
 <p>2013-11-29  Added <b>User's Guide</b> (meap). It requires some editing, but it is better than nothing.</p>
-<p>2013-12-03  1) <b>Code refactoring with breaking changes</b><br/>
+<p>2013-12-03  <br/>1) <b>Code refactoring with breaking changes</b><br/>
 2) Added a new module datepicker.ts. It implements IDatePicker interface, so the datepicker can be easily swapped with another implementation.<br/>
 3) Added a new element view, registered with the name: <b>datepicker</b>. It allows to add a datepicker declaratively. See the DataGrid demo- in its filter parameter section it is used to enter the sales dates.<br/>
 4) Date values now displayed by default without a datepicker. You need to add name=datepicker in the data-content attribute's value. See the DataGrid demo - in the edit dialog.<br/>
@@ -77,6 +77,7 @@ It is accessible now through dataservice's CurrentQueryInfo property. See demo d
 8) updated the DEMO project to work properly after those changes.<br/>
 P.S. after these changes i will soon commit new docs version.<br/>So many changes was made because Typescript 0.95 much better than 0.91 and it is easy to do when you have a proper tool. With javascript the refactoring on such scale was impossible.
 </p>
+<p>2013-12-04 Code refactoring and docs update.</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 

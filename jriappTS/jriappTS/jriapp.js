@@ -9,7 +9,7 @@ var RIAPP;
         ERR_DBSET_INVALID_FIELDNAME: 'TDbSet: {0} has no field with the name: {1}',
         ERR_FIELD_READONLY: 'Field is readOnly and can not be edited',
         ERR_FIELD_ISNOT_NULLABLE: 'Field is not nullable and can not be set to null',
-        ERR_FIELD_WRONG_TYPE: 'Value: {0} can not be assigned to {1} type field',
+        ERR_FIELD_WRONG_TYPE: 'Value {0} has wrong datatype. It should have {1} datatype.',
         ERR_FIELD_MAXLEN: 'Value exceeds field maxlength: {0}',
         ERR_FIELD_DATATYPE: 'Unknown field data type: {0}',
         ERR_FIELD_REGEX: 'Value {0} can not be accepted as the right value for this field',
@@ -1442,24 +1442,77 @@ var RIAPP;
                             return v1 === v2;
                     }
                 },
-                stringifyValue: function (v, dcnv, stz) {
+                stringifyValue: function (v, dcnv, dataType, stz) {
+                    var res = null;
+
                     if (Checks.isNt(v))
-                        return null;
-                    if (Checks.isDate(v))
-                        return utils.valueUtils.dateToValue(v, dcnv, stz);
-                    else if (Checks.isArray(v))
-                        return JSON.stringify(v);
-                    else if (Checks.isString(v))
-                        return v;
-                    else
-                        return JSON.stringify(v);
+                        return res;
+
+                    function conv(v) {
+                        if (Checks.isDate(v))
+                            return utils.valueUtils.dateToValue(v, dcnv, stz);
+                        else if (Checks.isArray(v))
+                            return JSON.stringify(v);
+                        else if (Checks.isString(v))
+                            return v;
+                        else
+                            return JSON.stringify(v);
+                    }
+                    ;
+                    var isOK = false;
+                    switch (dataType) {
+                        case 0 /* None */:
+                            res = conv(v);
+                            isOK = true;
+                            break;
+                        case 1 /* String */:
+                        case 9 /* Guid */:
+                            if (Checks.isString(v)) {
+                                res = v;
+                                isOK = true;
+                            }
+                            break;
+                        case 2 /* Bool */:
+                            if (Checks.isBoolean(v)) {
+                                res = JSON.stringify(v);
+                                isOK = true;
+                            }
+                            break;
+                        case 3 /* Integer */:
+                        case 4 /* Decimal */:
+                        case 5 /* Float */:
+                            if (Checks.isNumber(v)) {
+                                res = JSON.stringify(v);
+                                isOK = true;
+                            }
+                            break;
+                        case 6 /* DateTime */:
+                        case 7 /* Date */:
+                        case 8 /* Time */:
+                            if (Checks.isDate(v)) {
+                                res = utils.valueUtils.dateToValue(v, dcnv, stz);
+                                isOK = true;
+                            }
+                            break;
+                        case 10 /* Binary */:
+                            if (Checks.isArray(v)) {
+                                res = JSON.stringify(v);
+                                isOK = true;
+                            }
+                            break;
+                        default:
+                            throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dataType', dataType));
+                    }
+
+                    if (!isOK)
+                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_WRONG_TYPE, v, RIAPP.MOD.consts.DATA_TYPE[dataType]));
+                    return res;
                 },
                 parseValue: function (v, dataType, dcnv, stz) {
                     var res = null;
 
                     if (v === undefined || v === null)
                         return res;
-                    var DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE;
                     switch (dataType) {
                         case 0 /* None */:
                             res = v;
@@ -1489,6 +1542,7 @@ var RIAPP;
                         default:
                             throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dataType', dataType));
                     }
+
                     return res;
                 }
             };
@@ -5965,7 +6019,7 @@ var RIAPP;
                 };
                 BaseCollection.prototype._getStrValue = function (val, fieldInfo) {
                     var dcnv = fieldInfo.dateConversion, stz = RIAPP.global.utils.get_timeZoneOffset();
-                    return valueUtils.stringifyValue(val, dcnv, stz);
+                    return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
                 };
                 BaseCollection.prototype._getPKFieldInfos = function () {
                     if (!!this._pkInfo)
@@ -8523,6 +8577,7 @@ var RIAPP;
         (function (db) {
             //local variables for optimization
             var ValidationError = RIAPP.MOD.binding.ValidationError, valueUtils = RIAPP.MOD.utils.valueUtils;
+            var collMod = RIAPP.MOD.collection;
 
             (function (FLAGS) {
                 FLAGS[FLAGS["None"] = 0] = "None";
@@ -8927,12 +8982,14 @@ var RIAPP;
                     if (!fld)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
 
-                    var stz = this._serverTimezone, dcnv = fld.dateConversion, val = value;
-                    if (!utils.check.isArray(val))
-                        val = [value];
-                    var tmp = RIAPP.ArrayHelper.clone(val);
-                    val = tmp.map(function (el) {
-                        return valueUtils.stringifyValue(el, dcnv, stz);
+                    var stz = this._serverTimezone, dcnv = fld.dateConversion, vals = [];
+                    if (!utils.check.isArray(vals))
+                        vals = [value];
+                    else
+                        vals = value;
+                    var tmpVals = RIAPP.ArrayHelper.clone(vals);
+                    vals = tmpVals.map(function (v) {
+                        return valueUtils.stringifyValue(v, dcnv, fld.dataType, stz);
                     });
 
                     switch (operand) {
@@ -8955,7 +9012,7 @@ var RIAPP;
                         default:
                             throw new Error(utils.format(RIAPP.ERRS.ERR_QUERY_OPERATOR_INVALID, operand));
                     }
-                    var filterItem = { fieldName: fieldName, kind: fkind, values: val };
+                    var filterItem = { fieldName: fieldName, kind: fkind, values: vals };
                     this._filterInfo.filterItems.push(filterItem);
                     this._cacheInvalidated = true;
                 };
@@ -9684,7 +9741,7 @@ var RIAPP;
                     configurable: true
                 });
                 return Entity;
-            })(RIAPP.MOD.collection.CollectionItem);
+            })(collMod.CollectionItem);
             db.Entity = Entity;
 
             var DbSet = (function (_super) {
@@ -9760,7 +9817,7 @@ var RIAPP;
                 };
                 DbSet.prototype._getStrValue = function (val, fieldInfo) {
                     var dcnv = fieldInfo.dateConversion, stz = this.dbContext.serverTimezone;
-                    return valueUtils.stringifyValue(val, dcnv, stz);
+                    return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
                 };
                 DbSet.prototype._doNavigationField = function (opts, fInfo) {
                     var self = this, isChild = true, result = { getFunc: function () {
@@ -10317,7 +10374,7 @@ var RIAPP;
                     configurable: true
                 });
                 return DbSet;
-            })(RIAPP.MOD.collection.BaseCollection);
+            })(collMod.BaseCollection);
             db.DbSet = DbSet;
 
             //implements lazy initialization pattern for creating DbSet's instances
@@ -10544,11 +10601,11 @@ var RIAPP;
                             var arr = new Array(val.length);
                             for (var k = 0; k < val.length; k += 1) {
                                 //first convert all values to string
-                                arr[k] = valueUtils.stringifyValue(val[k], pinfo.dateConversion, self._serverTimezone);
+                                arr[k] = valueUtils.stringifyValue(val[k], pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
                             }
                             value = JSON.stringify(arr);
                         } else
-                            value = valueUtils.stringifyValue(val, pinfo.dateConversion, self._serverTimezone);
+                            value = valueUtils.stringifyValue(val, pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
 
                         data.paramInfo.parameters.push({ name: pinfo.name, value: value });
                     }
@@ -11368,7 +11425,7 @@ var RIAPP;
                     }, self._objId, true);
                 };
                 Association.prototype._onParentCollChanged = function (args) {
-                    var self = this, CH_T = RIAPP.MOD.collection.COLL_CHANGE_TYPE, item, items = args.items, changed = [], changedKeys = {};
+                    var self = this, item, items = args.items, changed = [], changedKeys = {};
                     switch (args.change_type) {
                         case 2 /* RESET */:
                             if (!self._isParentFilling)
@@ -11472,20 +11529,20 @@ var RIAPP;
                     }
                 };
                 Association.prototype._onParentStatusChanged = function (item, oldChangeType) {
-                    var self = this, DEL_STATUS = 3 /* DELETED */, newChangeType = item._changeType, fkey;
-                    var children, DELETE_ACTION;
-                    if (newChangeType === DEL_STATUS) {
+                    var self = this, newChangeType = item._changeType, fkey;
+                    var children;
+                    if (newChangeType === 3 /* DELETED */) {
                         children = self.getChildItems(item);
                         fkey = this._unMapParentItem(item);
                         switch (self.onDeleteAction) {
-                            case DELETE_ACTION.NoAction:
+                            case 0 /* NoAction */:
                                 break;
-                            case DELETE_ACTION.Cascade:
+                            case 1 /* Cascade */:
                                 children.forEach(function (child) {
                                     child.deleteItem();
                                 });
                                 break;
-                            case DELETE_ACTION.SetNulls:
+                            case 2 /* SetNulls */:
                                 children.forEach(function (child) {
                                     var isEdit = child.isEditing;
                                     if (!isEdit)
@@ -11509,7 +11566,7 @@ var RIAPP;
                     }
                 };
                 Association.prototype._onChildCollChanged = function (args) {
-                    var self = this, CH_T = RIAPP.MOD.collection.COLL_CHANGE_TYPE, item, items = args.items, changed = [], changedKeys = {};
+                    var self = this, item, items = args.items, changed = [], changedKeys = {};
                     switch (args.change_type) {
                         case 2 /* RESET */:
                             if (!self._isChildFilling)
@@ -11671,11 +11728,11 @@ var RIAPP;
                     }
                 };
                 Association.prototype._onChildStatusChanged = function (item, oldChangeType) {
-                    var self = this, DEL_STATUS = 3 /* DELETED */, newChangeType = item._changeType;
+                    var self = this, newChangeType = item._changeType;
                     var fkey = self.getChildFKey(item);
                     if (!fkey)
                         return;
-                    if (newChangeType === DEL_STATUS) {
+                    if (newChangeType === 3 /* DELETED */) {
                         fkey = self._unMapChildItem(item);
                         if (!!fkey)
                             self._notifyChildrenChanged([fkey]);
@@ -11728,11 +11785,11 @@ var RIAPP;
                     return changedKey;
                 };
                 Association.prototype._mapParentItems = function (items) {
-                    var item, fkey, DEL_STATUS = 3 /* DELETED */, chngType, old, chngedKeys = {};
+                    var item, fkey, chngType, old, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
                         chngType = item._changeType;
-                        if (chngType === DEL_STATUS)
+                        if (chngType === 3 /* DELETED */)
                             continue;
                         fkey = this.getParentFKey(item);
                         if (!!fkey) {
@@ -11766,11 +11823,11 @@ var RIAPP;
                     }
                 };
                 Association.prototype._mapChildren = function (items) {
-                    var item, fkey, arr, DEL_STATUS = 3 /* DELETED */, chngType, chngedKeys = {};
+                    var item, fkey, arr, chngType, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
                         chngType = item._changeType;
-                        if (chngType === DEL_STATUS)
+                        if (chngType === 3 /* DELETED */)
                             continue;
                         fkey = this.getChildFKey(item);
                         if (!!fkey) {
@@ -11937,7 +11994,7 @@ var RIAPP;
                         fn_itemsProvider: null
                     }, options);
 
-                    if (!opts.dataSource || !(opts.dataSource instanceof RIAPP.MOD.collection.BaseCollection))
+                    if (!opts.dataSource || !(opts.dataSource instanceof collMod.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_DATASRC_INVALID);
                     if (!opts.fn_filter || !utils.check.isFunction(opts.fn_filter))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_FILTER_INVALID);
@@ -12050,7 +12107,7 @@ var RIAPP;
                     return newItems;
                 };
                 DataView.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, item, CH_T = RIAPP.MOD.collection.COLL_CHANGE_TYPE, items = args.items;
+                    var self = this, item, items = args.items;
                     switch (args.change_type) {
                         case 2 /* RESET */:
                             if (!this._isDSFilling)
@@ -12392,7 +12449,7 @@ var RIAPP;
                     configurable: true
                 });
                 return DataView;
-            })(RIAPP.MOD.collection.BaseCollection);
+            })(collMod.BaseCollection);
             db.DataView = DataView;
 
             var ChildDataView = (function (_super) {

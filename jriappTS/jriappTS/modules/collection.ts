@@ -563,7 +563,7 @@ module RIAPP {
                 }
                 _getStrValue(val, fieldInfo: IFieldInfo) {
                     var dcnv = fieldInfo.dateConversion, stz = RIAPP.global.utils.get_timeZoneOffset();
-                    return valueUtils.stringifyValue(val, dcnv, stz);
+                    return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
                 }
                 _getPKFieldInfos(): IFieldInfo[] {
                     if (!!this._pkInfo)

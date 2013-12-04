@@ -440,10 +440,10 @@ declare module RIAPP {
             }
             interface IValueUtils {
                 valueToDate(val: string, dtcnv: number, stz: number): Date;
-                dateToValue(dt: Date, dtcnv: number, stz: number): string;
-                compareVals(v1: any, v2: any, dataType: number): boolean;
-                stringifyValue(v: any, dcnv: number, stz: number): string;
-                parseValue(v: string, dataType: any, dcnv: any, stz: any): any;
+                dateToValue(dt: Date, dtcnv: MOD.consts.DATE_CONVERSION, stz: number): string;
+                compareVals(v1: any, v2: any, dataType: MOD.consts.DATA_TYPE): boolean;
+                stringifyValue(v: any, dcnv: MOD.consts.DATE_CONVERSION, dataType: MOD.consts.DATA_TYPE, stz: number): string;
+                parseValue(v: string, dataType: MOD.consts.DATA_TYPE, dcnv: MOD.consts.DATE_CONVERSION, stz: number): any;
             }
             var valueUtils: IValueUtils;
             class LifeTimeScope extends RIAPP.BaseObject {

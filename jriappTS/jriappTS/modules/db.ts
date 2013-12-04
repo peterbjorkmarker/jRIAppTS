@@ -3,6 +3,7 @@ module RIAPP {
         export module db {
             //local variables for optimization
             var ValidationError = binding.ValidationError, valueUtils = MOD.utils.valueUtils;
+            import collMod = MOD.collection;
 
             export enum FLAGS { None = 0, Changed= 1, Setted= 2, Refreshed= 4 }
             export enum REFRESH_MODE { NONE= 0, RefreshCurrent = 1, MergeIntoCurrent= 2, CommitChanges= 3 }
@@ -92,8 +93,8 @@ module RIAPP {
                 methodResult: boolean;
                 parameters: IQueryParamInfo[];
             }
-            export interface IFilterInfo { filterItems: { fieldName: string; kind: collection.FILTER_TYPE; values: any[]; }[]; }
-            export interface ISortInfo { sortItems: { fieldName: string; sortOrder: collection.SORT_ORDER; }[]; }
+            export interface IFilterInfo { filterItems: { fieldName: string; kind: collMod.FILTER_TYPE; values: any[]; }[]; }
+            export interface ISortInfo { sortItems: { fieldName: string; sortOrder: collMod.SORT_ORDER; }[]; }
             export interface IEntityConstructor {
                 new (dbSet: DbSet<Entity>, row: IRowData, names: string[]): Entity;
             }
@@ -115,7 +116,7 @@ module RIAPP {
                 error: string;
                 invalid?: IValidationErrorInfo[];
             }
-            export interface IPermissions extends collection.IPermissions { dbSetName: string; }
+            export interface IPermissions extends collMod.IPermissions { dbSetName: string; }
             export interface IPermissionsInfo {
                 serverTimezone: number;
                 permissions: IPermissions[];
@@ -127,7 +128,7 @@ module RIAPP {
                 dbSetName: string;
                 enablePaging: boolean;
                 pageSize: number;
-                fieldInfos: MOD.collection.IFieldInfo[];
+                fieldInfos: collMod.IFieldInfo[];
             }
             export interface IRefreshRowInfo {
                 dbSetName: string;
@@ -160,7 +161,7 @@ module RIAPP {
                 parentToChildrenName: string;
                 fieldRels: { childField: string; parentField: string; }[];
             }
-            export interface IDbSetOptions extends collection.ICollectionOptions {
+            export interface IDbSetOptions extends collMod.ICollectionOptions {
                 dbSetName: string;
             }
           
@@ -456,8 +457,8 @@ module RIAPP {
                     var fldMap = this._dbSet._fieldMap;
                     return RIAPP.global.utils.getProps(fldMap);
                 }
-                private _addSort(fieldName: string, sortOrder: collection.SORT_ORDER) {
-                    var ord = collection.SORT_ORDER.ASC;
+                private _addSort(fieldName: string, sortOrder: collMod.SORT_ORDER) {
+                    var ord = collMod.SORT_ORDER.ASC;
                     if (!global.utils.check.isNt(sortOrder))
                         ord = sortOrder;
 
@@ -465,33 +466,35 @@ module RIAPP {
                     this._sortInfo.sortItems.push(sortItem);
                     this._cacheInvalidated = true;
                 }
-                private _addFilterItem(fieldName: string, operand: collection.FILTER_TYPE, value: any) {
-                    var fkind = collection.FILTER_TYPE.Equals, utils = RIAPP.global.utils;
+                private _addFilterItem(fieldName: string, operand: collMod.FILTER_TYPE, value: any[]) {
+                    var fkind = collMod.FILTER_TYPE.Equals, utils = RIAPP.global.utils;
                     var fld = this.getFieldInfo(fieldName);
                     if (!fld)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
 
-                    var stz = this._serverTimezone, dcnv = fld.dateConversion, val = value;
-                    if (!utils.check.isArray(val))
-                        val = [value];
-                    var tmp = RIAPP.ArrayHelper.clone(val);
-                    val = tmp.map(function (el) {
-                        return valueUtils.stringifyValue(el, dcnv, stz);
+                    var stz = this._serverTimezone, dcnv = fld.dateConversion, vals:any[]=[];
+                    if (!utils.check.isArray(vals))
+                        vals = [value];
+                    else
+                        vals = value;
+                    var tmpVals = RIAPP.ArrayHelper.clone(vals);
+                    vals = tmpVals.map(function (v) {
+                        return valueUtils.stringifyValue(v, dcnv, fld.dataType, stz);
                     });
 
                     switch (operand) {
-                        case collection.FILTER_TYPE.Equals:
-                        case collection.FILTER_TYPE.NotEq:
-                        case collection.FILTER_TYPE.StartsWith:
-                        case collection.FILTER_TYPE.EndsWith:
-                        case collection.FILTER_TYPE.Contains:
-                        case collection.FILTER_TYPE.Gt:
-                        case collection.FILTER_TYPE.GtEq:
-                        case collection.FILTER_TYPE.Lt:
-                        case collection.FILTER_TYPE.LtEq:
+                        case collMod.FILTER_TYPE.Equals:
+                        case collMod.FILTER_TYPE.NotEq:
+                        case collMod.FILTER_TYPE.StartsWith:
+                        case collMod.FILTER_TYPE.EndsWith:
+                        case collMod.FILTER_TYPE.Contains:
+                        case collMod.FILTER_TYPE.Gt:
+                        case collMod.FILTER_TYPE.GtEq:
+                        case collMod.FILTER_TYPE.Lt:
+                        case collMod.FILTER_TYPE.LtEq:
                             fkind = operand;
                             break;
-                        case collection.FILTER_TYPE.Between:
+                        case collMod.FILTER_TYPE.Between:
                             fkind = operand;
                             if (value.length != 2)
                                 throw new Error(RIAPP.ERRS.ERR_QUERY_BETWEEN);
@@ -499,23 +502,23 @@ module RIAPP {
                         default:
                             throw new Error(utils.format(RIAPP.ERRS.ERR_QUERY_OPERATOR_INVALID, operand));
                     }
-                    var filterItem = { fieldName: fieldName, kind: fkind, values: val };
+                    var filterItem = { fieldName: fieldName, kind: fkind, values: vals };
                     this._filterInfo.filterItems.push(filterItem);
                     this._cacheInvalidated = true;
                 }
-                where(fieldName: string, operand: collection.FILTER_TYPE, value:any) {
+                where(fieldName: string, operand: collMod.FILTER_TYPE, value:any) {
                     this._addFilterItem(fieldName, operand, value);
                     return this;
                 }
-                and(fieldName: string, operand: collection.FILTER_TYPE, value:any) {
+                and(fieldName: string, operand: collMod.FILTER_TYPE, value:any) {
                     this._addFilterItem(fieldName, operand, value);
                     return this;
                 }
-                orderBy(fieldName: string, sortOrder?: collection.SORT_ORDER) {
+                orderBy(fieldName: string, sortOrder?: collMod.SORT_ORDER) {
                     this._addSort(fieldName, sortOrder);
                     return this;
                 }
-                thenBy(fieldName: string, sortOrder?: collection.SORT_ORDER) {
+                thenBy(fieldName: string, sortOrder?: collMod.SORT_ORDER) {
                     this._addSort(fieldName, sortOrder);
                     return this;
                 }
@@ -633,19 +636,19 @@ module RIAPP {
             export class DataQuery extends TDataQuery<Entity>{
             }
 
-            export class Entity extends collection.CollectionItem {
-                private __changeType: collection.STATUS;
+            export class Entity extends collMod.CollectionItem {
+                private __changeType: collMod.STATUS;
                 private __isRefreshing: boolean;
                 private __isCached: boolean;
                 private __dbSet: DbSet<Entity>;
                 private _srvRowKey: string;
                 private _origVals: { [name: string]: any; };
-                private _saveChangeType: collection.STATUS;
+                private _saveChangeType: collMod.STATUS;
 
                 constructor(dbSet: DbSet<Entity>, row: IRowData, names: string[]) {
                     this.__dbSet = dbSet;
                     super();
-                    this.__changeType = collection.STATUS.NONE;
+                    this.__changeType = collMod.STATUS.NONE;
                     this.__isRefreshing = false;
                     this.__isCached = false;
 
@@ -679,7 +682,7 @@ module RIAPP {
                     });
                 }
                 _checkCanRefresh() {
-                    if (this._key === null || this._changeType === collection.STATUS.ADDED) {
+                    if (this._key === null || this._changeType === collMod.STATUS.ADDED) {
                         throw new Error(RIAPP.ERRS.ERR_OPER_REFRESH_INVALID);
                     }
                 }
@@ -745,16 +748,16 @@ module RIAPP {
                             self._refreshValue(val.val, val.fieldName, refreshMode);
                         });
 
-                        if (oldCT === collection.STATUS.UPDATED) {
+                        if (oldCT === collMod.STATUS.UPDATED) {
                             var changes = this._getStrValues(true);
                             if (changes.length === 0) {
                                 this._origVals = null;
-                                this._changeType = collection.STATUS.NONE;
+                                this._changeType = collMod.STATUS.NONE;
                             }
                         }
                     }
                 }
-                _onFieldChanged(fieldInfo: collection.IFieldInfo) {
+                _onFieldChanged(fieldInfo: collMod.IFieldInfo) {
                     var self = this;
                     this.raisePropertyChanged(fieldInfo.fieldName);
                     if (!!fieldInfo.dependents && fieldInfo.dependents.length > 0)
@@ -798,17 +801,17 @@ module RIAPP {
                     };
                     return res;
                 }
-                _fldChanging(fieldInfo: collection.IFieldInfo, oldV, newV) {
+                _fldChanging(fieldInfo: collMod.IFieldInfo, oldV, newV) {
                     if (!this._origVals) {
                         this._origVals = RIAPP.global.utils.shallowCopy(this._vals);
                     }
                     return true;
                 }
-                _fldChanged(fieldInfo: collection.IFieldInfo, oldV, newV) {
+                _fldChanged(fieldInfo: collMod.IFieldInfo, oldV, newV) {
                     if (!fieldInfo.isClientOnly) {
                         switch (this._changeType) {
-                            case collection.STATUS.NONE:
-                                this._changeType = collection.STATUS.UPDATED;
+                            case collMod.STATUS.NONE:
+                                this._changeType = collMod.STATUS.UPDATED;
                                 break;
                         }
                     }
@@ -818,7 +821,7 @@ module RIAPP {
                 _clearFieldVal(fieldName: string) {
                     this._vals[fieldName] = null;
                 }
-                _skipValidate(fieldInfo: collection.IFieldInfo, val) {
+                _skipValidate(fieldInfo: collMod.IFieldInfo, val) {
                     var childToParentNames = this._dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
                     if (!!childToParentNames && val === null) {
                         for (var i = 0, len = childToParentNames.length; i < len; i += 1) {
@@ -868,7 +871,7 @@ module RIAPP {
                 }
                 _onAttaching() {
                     super._onAttaching();
-                    this.__changeType = collection.STATUS.ADDED;
+                    this.__changeType = collMod.STATUS.ADDED;
                 }
                 _onAttach() {
                     super._onAttach();
@@ -898,27 +901,27 @@ module RIAPP {
                     }
                     if (this._key === null)
                         return false;
-                    if (oldCT === collection.STATUS.ADDED) {
+                    if (oldCT === collMod.STATUS.ADDED) {
                         eset.removeItem(this);
                         return true;
                     }
-                    this._changeType = collection.STATUS.DELETED;
+                    this._changeType = collMod.STATUS.DELETED;
                     return true;
                 }
                 acceptChanges(rowInfo?: IRowInfo) {
                     var oldCT = this._changeType, eset = this._dbSet, utils = RIAPP.global.utils;
                     if (this._key === null)
                         return;
-                    if (oldCT !== collection.STATUS.NONE) {
+                    if (oldCT !== collMod.STATUS.NONE) {
                         eset._onCommitChanges(this, true, false, oldCT);
-                        if (oldCT === collection.STATUS.DELETED) {
+                        if (oldCT === collMod.STATUS.DELETED) {
                             eset.removeItem(this);
                             return;
                         }
                         this._origVals = null;
                         if (!!this._saveVals)
                             this._saveVals = utils.shallowCopy(this._vals);
-                        this._changeType = collection.STATUS.NONE;
+                        this._changeType = collMod.STATUS.NONE;
                         eset._removeAllErrors(this);
                         if (!!rowInfo)
                             this._refreshValues(rowInfo, REFRESH_MODE.CommitChanges);
@@ -930,9 +933,9 @@ module RIAPP {
                     if (this._key === null)
                         return;
 
-                    if (oldCT !== collection.STATUS.NONE) {
+                    if (oldCT !== collMod.STATUS.NONE) {
                         eset._onCommitChanges(this, true, true, oldCT);
-                        if (oldCT === collection.STATUS.ADDED) {
+                        if (oldCT === collMod.STATUS.ADDED) {
                             eset.removeItem(this);
                             return;
                         }
@@ -945,7 +948,7 @@ module RIAPP {
                                 this._saveVals = utils.shallowCopy(this._vals);
                             }
                         }
-                        this._changeType = collection.STATUS.NONE;
+                        this._changeType = collMod.STATUS.NONE;
                         eset._removeAllErrors(this);
                         changes.forEach(function (v) {
                             self._onFieldChanged(eset.getFieldInfo(v.fieldName));
@@ -1022,20 +1025,20 @@ module RIAPP {
                     if (this.__changeType !== v) {
                         var oldChangeType = this.__changeType;
                         this.__changeType = v;
-                        if (v !== collection.STATUS.NONE)
+                        if (v !== collMod.STATUS.NONE)
                             this._dbSet._addToChanged(this);
                         else
                             this._dbSet._removeFromChanged(this._key);
                         this._dbSet._onItemStatusChanged(this, oldChangeType);
                     }
                 }
-                get _isNew() { return this.__changeType === collection.STATUS.ADDED; }
-                get _isDeleted() { return this.__changeType === collection.STATUS.DELETED; }
+                get _isNew() { return this.__changeType === collMod.STATUS.ADDED; }
+                get _isDeleted() { return this.__changeType === collMod.STATUS.DELETED; }
                 get _entityType() { return this.__dbSet.entityType; }
                 get _srvKey() { return this._srvRowKey; }
                 get _dbSetName() { return this.__dbSet.dbSetName; }
                 get _serverTimezone() { return this.getDbContext().serverTimezone; }
-                get _collection() { return <collection.BaseCollection<Entity>>this.__dbSet; }
+                get _collection() { return <collMod.BaseCollection<Entity>>this.__dbSet; }
                 get _dbSet() { return this.__dbSet; }
                 get _isRefreshing() { return this.__isRefreshing; }
                 set _isRefreshing(v) {
@@ -1046,10 +1049,10 @@ module RIAPP {
                 }
                 get _isCached() { return this.__isCached; }
                 set _isCached(v) { this.__isCached = v; }
-                get isHasChanges() { return this.__changeType !== collection.STATUS.NONE; }
+                get isHasChanges() { return this.__changeType !== collMod.STATUS.NONE; }
             }
 
-            export class DbSet<TEntity extends Entity> extends collection.BaseCollection<TEntity> {
+            export class DbSet<TEntity extends Entity> extends collMod.BaseCollection<TEntity> {
                 private _dbContext: DbContext;
                 private _isSubmitOnDelete: boolean;
                 private _trackAssoc: { [name: string]: IAssociationInfo; };
@@ -1094,7 +1097,7 @@ module RIAPP {
                     this._ignorePageChanged = false;
                     Object.freeze(this._perms);
                 }
-                getFieldInfo(fieldName: string): collection.IFieldInfo {
+                getFieldInfo(fieldName: string): collMod.IFieldInfo {
                     //for example Customer.Name
                     var assoc: IAssociationInfo, parentDB: DbSet<Entity>, names = fieldName.split('.');
                     if (names.length == 1)
@@ -1133,11 +1136,11 @@ module RIAPP {
                     this._perms = perms;
                 }
                 _getChildToParentNames(childFieldName: string) { return this._trackAssocMap[childFieldName]; }
-                _getStrValue(val: any, fieldInfo: collection.IFieldInfo) {
+                _getStrValue(val: any, fieldInfo: collMod.IFieldInfo) {
                     var dcnv = fieldInfo.dateConversion, stz = this.dbContext.serverTimezone;
-                    return valueUtils.stringifyValue(val, dcnv, stz);
+                    return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
                 }
-                _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: MOD.collection.IFieldInfo) {
+                _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo) {
                     var self = this, isChild = true, result: { getFunc: () => any; setFunc: (v: any) => void; } = { getFunc: () => { throw new Error('Function is not implemented'); }, setFunc: function (v: any) { throw new Error('Function is not implemented'); } };
                     var assocs = opts.childAssoc.filter(function (a) {
                         return a.childToParentName == fInfo.fieldName;
@@ -1209,9 +1212,9 @@ module RIAPP {
                     }
                     return result;
                 }
-                _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: MOD.collection.IFieldInfo) {
+                _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo) {
                     var self = this, utils = RIAPP.global.utils, result: { getFunc: () => any; } = { getFunc: () => { throw new Error(utils.format("Calculated field:'{0}' is not initialized", fInfo.fieldName)); } };
-                    function doDependants(f: collection.IFieldInfo) {
+                    function doDependants(f: collMod.IFieldInfo) {
                         var deps: string[] = f.dependentOn.split(',');
                         deps.forEach(function (depOn) {
                             var depOnFld = self._fieldMap[depOn];
@@ -1313,7 +1316,7 @@ module RIAPP {
                         });
 
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: collection.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
+                            this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
 
@@ -1358,7 +1361,7 @@ module RIAPP {
                         }
 
                         if (fetchedItems.length > 0) {
-                            this._onItemsChanged({ change_type: collection.COLL_CHANGE_TYPE.ADDED, items: fetchedItems, pos: positions });
+                            this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.ADDED, items: fetchedItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
                     }
@@ -1381,13 +1384,13 @@ module RIAPP {
                         }
                         var itemCT = item._changeType;
                         item.acceptChanges(rowInfo);
-                        if (itemCT === collection.STATUS.ADDED) {
+                        if (itemCT === collMod.STATUS.ADDED) {
                             //on insert
                             delete self._itemsByKey[key];
                             item._updateKeys(rowInfo.serverKey);
                             self._itemsByKey[item._key] = item;
                             self._onItemsChanged({
-                                change_type: collection.COLL_CHANGE_TYPE.REMAP_KEY,
+                                change_type: collMod.COLL_CHANGE_TYPE.REMAP_KEY,
                                 items: [item],
                                 old_key: key,
                                 new_key: item._key
@@ -1525,7 +1528,7 @@ module RIAPP {
                             item.destroy();
                     });
                 }
-                sort(fieldNames: string[], sortOrder: collection.SORT_ORDER) {
+                sort(fieldNames: string[], sortOrder: collMod.SORT_ORDER) {
                     var ds = this, query = ds.query;
                     if (!!query) {
                         query.clearSort();
@@ -1890,12 +1893,12 @@ module RIAPP {
                             var arr = new Array(val.length);
                             for (var k = 0; k < val.length; k += 1) {
                                 //first convert all values to string
-                                arr[k] = valueUtils.stringifyValue(val[k], pinfo.dateConversion, self._serverTimezone);
+                                arr[k] = valueUtils.stringifyValue(val[k], pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
                             }
                             value = JSON.stringify(arr);
                         }
                         else
-                            value = valueUtils.stringifyValue(val, pinfo.dateConversion, self._serverTimezone);
+                            value = valueUtils.stringifyValue(val, pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
 
                         data.paramInfo.parameters.push({ name: pinfo.name, value: value });
                     }
@@ -2605,8 +2608,8 @@ module RIAPP {
                 _onDeleteAction: DELETE_ACTION;
                 _parentDS: DbSet<Entity>;
                 _childDS: DbSet<Entity>;
-                _parentFldInfos: collection.IFieldInfo[];
-                _childFldInfos: collection.IFieldInfo[];
+                _parentFldInfos: collMod.IFieldInfo[];
+                _childFldInfos: collMod.IFieldInfo[];
                 _parentToChildrenName: string;
                 _childToParentName: string;
                 _parentMap: { [key: string]: Entity; };
@@ -2727,18 +2730,18 @@ module RIAPP {
                         self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId, true);
                 }
-                _onParentCollChanged(args: collection.ICollChangedArgs<Entity>) {
-                    var self = this, CH_T = collection.COLL_CHANGE_TYPE, item: Entity, items = <Entity[]>args.items, changed: string[] = [], changedKeys = {};
+                _onParentCollChanged(args: collMod.ICollChangedArgs<Entity>) {
+                    var self = this, item: Entity, items = <Entity[]>args.items, changed: string[] = [], changedKeys = {};
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case collMod.COLL_CHANGE_TYPE.RESET:
                             if (!self._isParentFilling)
                                 changed = self.refreshParentMap();
                             break;
-                        case CH_T.ADDED:
+                        case collMod.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isParentFilling) //if items are filling then it will be appended when fill ends
                                 changed = self._mapParentItems(items);
                             break;
-                        case CH_T.REMOVE:
+                        case collMod.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 var key = self._unMapParentItem(item);
                                 if (!!key) {
@@ -2747,7 +2750,7 @@ module RIAPP {
                             });
                             changed = Object.keys(changedKeys);
                             break;
-                        case CH_T.REMAP_KEY:
+                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 if (!!args.old_key) {
                                     item = this._parentMap[args.old_key];
@@ -2763,7 +2766,7 @@ module RIAPP {
                     }
                     self._notifyParentChanged(changed);
                 }
-                _onParentFill(args: collection.ICollFillArgs<Entity>) {
+                _onParentFill(args: collMod.ICollFillArgs<Entity>) {
                     var isEnd = !args.isBegin, self = this, changed;
                     if (isEnd) {
                         self._isParentFilling = false;
@@ -2790,16 +2793,16 @@ module RIAPP {
                             self._saveParentFKey = null;
                     }
                 }
-                _onParentCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collection.STATUS) {
+                _onParentCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
                     var self = this, fkey;
                     if (isBegin) {
-                        if (isRejected && changeType === collection.STATUS.ADDED) {
+                        if (isRejected && changeType === collMod.STATUS.ADDED) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
                             return;
                         }
-                        else if (!isRejected && changeType === collection.STATUS.DELETED) {
+                        else if (!isRejected && changeType === collMod.STATUS.DELETED) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
@@ -2836,10 +2839,10 @@ module RIAPP {
                         }
                     }
                 }
-                _onParentStatusChanged(item: Entity, oldChangeType: collection.STATUS) {
-                    var self = this, DEL_STATUS = collection.STATUS.DELETED, newChangeType = item._changeType, fkey:string;
-                    var children, DELETE_ACTION;
-                    if (newChangeType === DEL_STATUS) {
+                _onParentStatusChanged(item: Entity, oldChangeType: collMod.STATUS) {
+                    var self = this, newChangeType = item._changeType, fkey:string;
+                    var children:Entity[];
+                    if (newChangeType === collMod.STATUS.DELETED) {
                         children = self.getChildItems(item);
                         fkey = this._unMapParentItem(item);
                         switch (self.onDeleteAction) {
@@ -2875,18 +2878,18 @@ module RIAPP {
                         }
                     }
                 }
-                _onChildCollChanged(args: MOD.collection.ICollChangedArgs<Entity>) {
-                    var self = this, CH_T = collection.COLL_CHANGE_TYPE, item: Entity, items = args.items, changed: string[] = [], changedKeys = {};
+                _onChildCollChanged(args: collMod.ICollChangedArgs<Entity>) {
+                    var self = this, item: Entity, items = args.items, changed: string[] = [], changedKeys = {};
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case collMod.COLL_CHANGE_TYPE.RESET:
                             if (!self._isChildFilling)
                                 changed = self.refreshChildMap();
                             break;
-                        case CH_T.ADDED:
+                        case collMod.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isChildFilling) //if items are filling then it will be appended when fill ends
                                 changed = self._mapChildren(items);
                             break;
-                        case CH_T.REMOVE:
+                        case collMod.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 var key = self._unMapChildItem(item);
                                 if (!!key) {
@@ -2895,7 +2898,7 @@ module RIAPP {
                             });
                             changed = Object.keys(changedKeys);
                             break;
-                        case CH_T.REMAP_KEY:
+                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 if (!!args.old_key) {
                                     item = items[0];
@@ -2962,7 +2965,7 @@ module RIAPP {
                         }
                     }
                 }
-                _onChildFill(args: MOD.collection.ICollFillArgs<Entity>) {
+                _onChildFill(args: collMod.ICollFillArgs<Entity>) {
                     var isEnd = !args.isBegin, self = this, changed;
                     if (isEnd) {
                         self._isChildFilling = false;
@@ -2990,16 +2993,16 @@ module RIAPP {
                         }
                     }
                 }
-                _onChildCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collection.STATUS) {
+                _onChildCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
                     var self = this, fkey: string;
                     if (isBegin) {
-                        if (isRejected && changeType === collection.STATUS.ADDED) {
+                        if (isRejected && changeType === collMod.STATUS.ADDED) {
                             fkey = this._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
                             return;
                         }
-                        else if (!isRejected && changeType === collection.STATUS.DELETED) {
+                        else if (!isRejected && changeType === collMod.STATUS.DELETED) {
                             fkey = self._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
@@ -3042,18 +3045,18 @@ module RIAPP {
                         }
                     }
                 }
-                _onChildStatusChanged(item: Entity, oldChangeType: collection.STATUS) {
-                    var self = this, DEL_STATUS = collection.STATUS.DELETED, newChangeType = item._changeType;
+                _onChildStatusChanged(item: Entity, oldChangeType: collMod.STATUS) {
+                    var self = this, newChangeType = item._changeType;
                     var fkey = self.getChildFKey(item);
                     if (!fkey)
                         return;
-                    if (newChangeType === DEL_STATUS) {
+                    if (newChangeType === collMod.STATUS.DELETED) {
                         fkey = self._unMapChildItem(item);
                         if (!!fkey)
                             self._notifyChildrenChanged([fkey]);
                     }
                 }
-                _getItemKey(finf: collection.IFieldInfo[], ds: DbSet<Entity>, item: Entity) {
+                _getItemKey(finf: collMod.IFieldInfo[], ds: DbSet<Entity>, item: Entity) {
                     var arr = [], val, strval: string;
                     for (var i = 0, len = finf.length; i < len; i += 1) {
                         val = item[finf[i].fieldName];
@@ -3100,11 +3103,11 @@ module RIAPP {
                     return changedKey;
                 }
                 _mapParentItems(items: Entity[]) {
-                    var item: Entity, fkey: string, DEL_STATUS = collection.STATUS.DELETED, chngType: number, old: Entity, chngedKeys = {};
+                    var item: Entity, fkey: string, chngType: number, old: Entity, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
                         chngType = item._changeType;
-                        if (chngType === DEL_STATUS)
+                        if (chngType === collMod.STATUS.DELETED)
                             continue;
                         fkey = this.getParentFKey(item);
                         if (!!fkey) {
@@ -3138,11 +3141,11 @@ module RIAPP {
                     }
                 }
                 _mapChildren(items: Entity[]) {
-                    var item: Entity, fkey: string, arr: Entity[], DEL_STATUS = collection.STATUS.DELETED, chngType, chngedKeys = {};
+                    var item: Entity, fkey: string, arr: Entity[], chngType, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
                         chngType = item._changeType;
-                        if (chngType === DEL_STATUS)
+                        if (chngType === collMod.STATUS.DELETED)
                             continue;
                         fkey = this.getChildFKey(item);
                         if (!!fkey) {
@@ -3243,20 +3246,20 @@ module RIAPP {
                 get onDeleteAction() { return this._onDeleteAction; }
             }
 
-            export class DataView<TItem extends collection.CollectionItem> extends collection.BaseCollection<TItem> {
-                _dataSource: collection.BaseCollection<TItem>;
+            export class DataView<TItem extends collMod.CollectionItem> extends collMod.BaseCollection<TItem> {
+                _dataSource: collMod.BaseCollection<TItem>;
                 _fn_filter: (item: TItem) => boolean;
                 _fn_sort: (item1: TItem, item2: TItem) => number;
-                _fn_itemsProvider: (ds: collection.BaseCollection<TItem>) => TItem[];
+                _fn_itemsProvider: (ds: collMod.BaseCollection<TItem>) => TItem[];
                 _isDSFilling: boolean;
                 _isAddingNew: boolean;
                 _objId: string;
 
                 constructor(options: {
-                    dataSource: collection.BaseCollection<TItem>;
+                    dataSource: collMod.BaseCollection<TItem>;
                     fn_filter?: (item: TItem) => boolean;
                     fn_sort?: (item1: TItem, item2: TItem) => number;
-                    fn_itemsProvider?: (ds: collection.BaseCollection<TItem>) => TItem[];
+                    fn_itemsProvider?: (ds: collMod.BaseCollection<TItem>) => TItem[];
                 }) {
                     super();
                     var utils = RIAPP.global.utils, opts: typeof options = utils.extend(false, {
@@ -3266,7 +3269,7 @@ module RIAPP {
                             fn_itemsProvider: null
                         }, options);
 
-                    if (!opts.dataSource || !(opts.dataSource instanceof collection.BaseCollection))
+                    if (!opts.dataSource || !(opts.dataSource instanceof collMod.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_DATASRC_INVALID);
                     if (!opts.fn_filter || !utils.check.isFunction(opts.fn_filter))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_FILTER_INVALID);
@@ -3370,7 +3373,7 @@ module RIAPP {
                         });
 
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: collection.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
+                            this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
                     } finally {
@@ -3386,14 +3389,14 @@ module RIAPP {
                     this.moveFirst();
                     return newItems;
                 }
-                _onDSCollectionChanged(args: collection.ICollChangedArgs<TItem>) {
-                    var self = this, item: collection.CollectionItem, CH_T = collection.COLL_CHANGE_TYPE, items = args.items;
+                _onDSCollectionChanged(args: collMod.ICollChangedArgs<TItem>) {
+                    var self = this, item: collMod.CollectionItem, items = args.items;
                     switch (args.change_type) {
-                        case CH_T.RESET:
+                        case collMod.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh(false);
                             break;
-                        case CH_T.ADDED:
+                        case collMod.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isAddingNew && !this._isDSFilling) {
                                 if (!!self._fn_filter) {
                                     items = items.filter(self._fn_filter);
@@ -3401,7 +3404,7 @@ module RIAPP {
                                 self.appendItems(items);
                             }
                             break;
-                        case CH_T.REMOVE:
+                        case collMod.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 var key = item._key;
                                 item = <any>self._itemsByKey[key];
@@ -3410,7 +3413,7 @@ module RIAPP {
                                 }
                             });
                             break;
-                        case CH_T.REMAP_KEY:
+                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 item = self._itemsByKey[args.old_key];
                                 if (!!item) {
@@ -3424,7 +3427,7 @@ module RIAPP {
                             throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
-                _onDSFill(args: collection.ICollFillArgs<TItem>) {
+                _onDSFill(args: collMod.ICollFillArgs<TItem>) {
                     var self = this, items = args.fetchedItems, isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -3441,7 +3444,7 @@ module RIAPP {
                         this._isDSFilling = true;
                     }
                 }
-                _onDSStatusChanged(args: collection.ICollItemStatusArgs<TItem>) {
+                _onDSStatusChanged(args: collMod.ICollItemStatusArgs<TItem>) {
                     var self = this, item = args.item, key = args.key, oldChangeType = args.oldChangeType, isOk, canFilter = !!self._fn_filter;
                     if (!!self._itemsByKey[key]) {
                         self._onItemStatusChanged(item, oldChangeType);
@@ -3643,7 +3646,7 @@ module RIAPP {
                     this._items = [];
                     this._itemsByKey = {};
                     this._errors = {};
-                    this._onItemsChanged({ change_type: collection.COLL_CHANGE_TYPE.RESET, items: [] });
+                    this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.RESET, items: [] });
                     this.pageIndex = 0;
                     this.raisePropertyChanged('count');
                 }
@@ -3684,7 +3687,7 @@ module RIAPP {
                     }
                 }
                 get fn_itemsProvider() { return this._fn_itemsProvider; }
-                set fn_itemsProvider(v: (ds: collection.BaseCollection<TItem>) => TItem[]) {
+                set fn_itemsProvider(v: (ds: collMod.BaseCollection<TItem>) => TItem[]) {
                     if (this._fn_itemsProvider !== v) {
                         this._fn_itemsProvider = v;
                         this._refresh(false);
@@ -3706,10 +3709,10 @@ module RIAPP {
                     this._refreshTimeout = null;
                     this._association = options.association;
                     var utils = RIAPP.global.utils, opts: {
-                        dataSource: collection.BaseCollection<TEntity>;
+                        dataSource: collMod.BaseCollection<TEntity>;
                         fn_filter?: (item: TEntity) => boolean;
                         fn_sort?: (item1: TEntity, item2: TEntity) => number;
-                        fn_itemsProvider?: (ds: collection.BaseCollection<TEntity>) => TEntity[];
+                        fn_itemsProvider?: (ds: collMod.BaseCollection<TEntity>) => TEntity[];
                     } = utils.extend(false, {
                             dataSource: this._association.childDS,
                             fn_filter: null,

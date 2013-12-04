@@ -8,25 +8,26 @@ module RIAPP
     //data grid demo module
     export module GRIDDEMO {
         var global = RIAPP.global, utils = global.utils;
+        import collMod = MOD.collection;
 
         function addTextQuery(query: MOD.db.DataQuery, fldName: string, val) {
             var tmp;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, MOD.collection.FILTER_TYPE.Contains, [tmp])
+                    query.where(fldName, collMod.FILTER_TYPE.Contains, [tmp])
                 }
                 else if (utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, MOD.collection.FILTER_TYPE.EndsWith, [tmp])
+                    query.where(fldName, collMod.FILTER_TYPE.EndsWith, [tmp])
                 }
                 else if (utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, MOD.collection.FILTER_TYPE.StartsWith, [tmp])
+                    query.where(fldName, collMod.FILTER_TYPE.StartsWith, [tmp])
                 }
                 else {
                     tmp = utils.str.trim(val);
-                    query.where(fldName, MOD.collection.FILTER_TYPE.Equals, [tmp])
+                    query.where(fldName, collMod.FILTER_TYPE.Equals, [tmp])
                 }
             }
             return query;
