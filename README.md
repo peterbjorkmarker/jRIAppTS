@@ -77,7 +77,8 @@ It is accessible now through dataservice's CurrentQueryInfo property. See demo d
 8) updated the DEMO project to work properly after those changes.<br/>
 P.S. after these changes i will soon commit new docs version.<br/>So many changes was made because Typescript 0.95 much better than 0.91 and it is easy to do when you have a proper tool. With javascript the refactoring on such scale was impossible.
 </p>
-<p>2013-12-04 Code refactoring and docs update.</p>
+<p>2013-12-04 Code refactoring and documentation update.</p>
+<p>2013-12-05 documentation update.</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 
