@@ -22,7 +22,7 @@
                     data-view="options={tip='Invokes method on the server and displays result'}">Click Me to invoke service method</a>
             </div>
             <div id="b">
-                <img style="float:left" data-bind="{this.id,to=ProductID}{this.fileName,to=ThumbnailPhotoFileName}" alt="Product Image" src="" data-view="name=fileImage,options={baseUri:'@Url.RouteUrl("Default", new { controller = "Download", action = "ThumbnailDownload" })'}"/><br />
+                <img style="float:left;max-height:200px;max-width:350px;" data-bind="{this.id,to=ProductID}{this.fileName,to=ThumbnailPhotoFileName}" alt="Product Image" src="" data-view="name=fileImage,options={baseUri:'@Url.RouteUrl("Default", new { controller = "Download", action = "ThumbnailDownload" })'}"/><br />
                 <div style="float: left; margin-left: 8px;">
                     click to download the image: <a class="btn btn-info btn-small" data-bind="{this.text,to=ThumbnailPhotoFileName}{this.id,to=ProductID}" data-view="name=fileLink,options={baseUri:'@Url.RouteUrl("Default", new { controller = "Download", action = "ThumbnailDownload" })'}">
                     </a>

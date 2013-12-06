@@ -123,13 +123,11 @@ namespace RIAPP.DataService.LinqSql
             }
         }
 
-        /*
-        public override string ServiceGetCSharp()
+        protected override string GetCSharp()
         {
             var metadata = this.ServiceGetMetadata();
             return RIAPP.DataService.LinqSql.Utils.DataServiceMethodsHelper.CreateMethods(metadata, this.DB);
         }
-        */
         #endregion
 
         protected TDB DB

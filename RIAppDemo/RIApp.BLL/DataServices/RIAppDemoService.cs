@@ -26,7 +26,11 @@ namespace RIAppDemo.BLL.DataServices
 
         public RIAppDemoService(IServiceArgs args)
             : base(args)
-        { 
+        {
+            //it allows getting information via GetCSharp, GetXAML, GetTypeScript
+            //it should be set to false in release version 
+            //allow it only at development time
+            this.IsGetXXXMethodsEnabled = true;
         }
 
         protected override RIAppDemoDataContext CreateDataContext()
@@ -43,7 +47,7 @@ namespace RIAppDemo.BLL.DataServices
         /// this xaml can be later pasted as metadata in the user control
         /// and of course it needs to be corrected, but it is faster than to type all this from the start in code editor
         /// </summary>
-        public override string ServiceGetXAML()
+        protected override string GetXAML()
         {
             var metadata = base.GetMetadata();
             var xaml = System.Windows.Markup.XamlWriter.Save(metadata);
@@ -70,21 +74,9 @@ namespace RIAppDemo.BLL.DataServices
             return xtree.ToString();
         }
 
-        /// <summary>
-        /// this METHOD should be commented, in release version!
-        /// this is a helper method which can be used to create c# data service methods from metadata
-        /// this C# code can be later pasted in the data service implemetation
-        /// and of course it needs to be corrected, but it is faster than to type all this from the start in code editor
-        /// </summary>
-        public override string ServiceGetCSharp()
-        {
-            var metadata =  this.ServiceGetMetadata();
-            return RIAPP.DataService.LinqSql.Utils.DataServiceMethodsHelper.CreateMethods(metadata, this.DB);
-        }
-
         protected override Metadata GetMetadata()
         {
-           //returns draft (uncorrected) metadata
+           //returns raw (uncorrected) metadata generated from linq for sql DbContext
            //return base.GetMetadata();
 
            //returns corrected metadata

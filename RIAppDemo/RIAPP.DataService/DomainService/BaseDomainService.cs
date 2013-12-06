@@ -33,6 +33,7 @@ namespace RIAPP.DataService
         private IQueryHelper _queryHelper;
         private ISerializer _serializer;
         private IValueConverter _converter;
+        private bool _IsGetXXXMethodsEnabled = false;
 
         protected IAuthorizer Authorizer
         {
@@ -127,6 +128,18 @@ namespace RIAPP.DataService
         protected GetDataInfo CurrentQueryInfo
         {
             get { return this._currentQueryInfo; }
+        }
+
+        protected bool IsGetXXXMethodsEnabled
+        {
+            get
+            {
+                return this._IsGetXXXMethodsEnabled;
+            }
+            set
+            {
+                this._IsGetXXXMethodsEnabled = value;
+            }
         }
 
         #region Helper Methods
@@ -777,6 +790,28 @@ namespace RIAPP.DataService
         {
             return this.QueryHelper.GetRefreshedEntity<T>(entities, info);
         }
+
+        protected virtual string GetTypeScript(string comment = null)
+        {
+            MetadataInfo metadata = this.ServiceGetMetadata();
+            TypeScriptHelper helper = new TypeScriptHelper(this.ValueConverter, metadata, this.GetClientTypes());
+            return helper.CreateTypeScript(comment);
+        }
+
+        protected virtual string GetXAML()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual string GetCSharp()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual IEnumerable<Type> GetClientTypes()
+        {
+            return Enumerable.Empty<Type>();
+        }
         #endregion
 
         protected GetDataResult GetData(GetDataInfo queryInfo)
@@ -1043,26 +1078,25 @@ namespace RIAPP.DataService
         
 
         #region IDomainService Public Methods
-        public virtual string ServiceGetTypeScript(string comment = null)
+        public string ServiceGetTypeScript(string comment = null)
         {
-            MetadataInfo metadata = this.ServiceGetMetadata();
-            TypeScriptHelper helper = new TypeScriptHelper(this.ValueConverter, metadata, this.GetClientTypes());
-            return helper.CreateTypeScript(comment);
+            if (!this.IsGetXXXMethodsEnabled)
+                throw new InvalidOperationException(string.Format(ErrorStrings.ERR_XXXMETHOD_DISABLED,MethodInfo.GetCurrentMethod().Name, this.GetType().Name));
+            return this.GetTypeScript();
         }
 
-        public virtual string ServiceGetXAML()
+        public string ServiceGetXAML()
         {
-            throw new NotImplementedException();
+            if (!this.IsGetXXXMethodsEnabled)
+                throw new InvalidOperationException(string.Format(ErrorStrings.ERR_XXXMETHOD_DISABLED, MethodInfo.GetCurrentMethod().Name, this.GetType().Name));
+            return this.GetXAML();
         }
 
-        public virtual string ServiceGetCSharp()
+        public string ServiceGetCSharp()
         {
-            throw new NotImplementedException();
-        }
-
-        protected virtual IEnumerable<Type> GetClientTypes()
-        {
-            return Enumerable.Empty<Type>();
+            if (!this.IsGetXXXMethodsEnabled)
+                throw new InvalidOperationException(string.Format(ErrorStrings.ERR_XXXMETHOD_DISABLED, MethodInfo.GetCurrentMethod().Name, this.GetType().Name));
+            return this.GetCSharp();
         }
 
         public PermissionsInfo ServiceGetPermissions()

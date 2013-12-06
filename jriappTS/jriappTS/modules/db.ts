@@ -5,6 +5,8 @@ module RIAPP {
             var ValidationError = binding.ValidationError, valueUtils = MOD.utils.valueUtils;
             import collMod = MOD.collection;
 
+            var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
+
             export enum FLAGS { None = 0, Changed= 1, Setted= 2, Refreshed= 4 }
             export enum REFRESH_MODE { NONE= 0, RefreshCurrent = 1, MergeIntoCurrent= 2, CommitChanges= 3 }
             export enum DELETE_ACTION { NoAction = 0, Cascade = 1, SetNulls= 2 }
@@ -471,9 +473,8 @@ module RIAPP {
                     var fld = this.getFieldInfo(fieldName);
                     if (!fld)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
-
                     var stz = this._serverTimezone, dcnv = fld.dateConversion, vals:any[]=[];
-                    if (!utils.check.isArray(vals))
+                    if (!utils.check.isArray(value))
                         vals = [value];
                     else
                         vals = value;
@@ -2280,22 +2281,25 @@ module RIAPP {
                                     postData,
                                     true,
                                     function (res: string) { //success
-                                        var data = [], idx;
+                                        var parts:string[]=[], matches:string[], header_size: number;
                                         try {
-                                            idx = res.indexOf(MOD.consts.CHUNK_SEP);
-                                            if (idx > -1) { //rows were serialized separately
+                                            matches = res.match(HEAD_MARK_RX);
+                                            if (!!matches) { //rows were serialized after the header
+                                                header_size = parseInt(matches[1]);
                                                 //the first item is getDataResult
-                                                data.push(res.substr(0, idx));
+                                                parts.push(res.substr(matches[0].length, header_size));
                                                 //the rest is rows
-                                                data.push(res.substr(idx + MOD.consts.CHUNK_SEP.length));
+                                                parts.push(res.substr(matches[0].length + header_size));
                                             }
                                             else {
-                                                //all response is serialized as getDataResult
-                                                data.push(res);
+                                                //all the response is serialized as a getDataResult
+                                                parts.push(res);
                                             }
-                                            data = data.map(function (txt) {
+
+                                            var data:any[] = parts.map(function (txt) {
                                                 return JSON.parse(txt);
                                             });
+                                            parts = null;
 
                                             //let the UI some time, then do the rest of the work
                                             setTimeout(function () {

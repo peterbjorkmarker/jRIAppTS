@@ -6,20 +6,29 @@ using System.Text;
 using System.Web.Mvc;
 using RIAPP.DataService;
 using System.Web;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService.Mvc
 {
 
     public class IncrementalResult : ActionResult
     {
-        private const string SEPARATOR = "$&@";
+        private const string HEADER_MARK = "<head:{0}>";
         private StringBuilder _rowStringBuilder;
+        private ISerializer _serializer;
 
-        public IncrementalResult(GetDataResult res) {
+        public IncrementalResult(GetDataResult res, ISerializer serializer)
+        {
             this.Data = res;
+            this._serializer = serializer;
         }
 
         public GetDataResult Data { get; set; }
+
+        private static string Encode(string str)
+        {
+            return System.Web.HttpUtility.JavaScriptStringEncode(str);
+        }
 
         private string RowToJSON(Row row) {
             if (this._rowStringBuilder == null)
@@ -29,7 +38,7 @@ namespace RIAPP.DataService.Mvc
             StringBuilder sb = this._rowStringBuilder;
             sb.Length = 0;
             sb.Append("{");
-            sb.AppendFormat(@"""key"":""{0}"",""values"":[", System.Web.HttpUtility.JavaScriptStringEncode(row.key));
+            sb.AppendFormat(@"""key"":""{0}"",""values"":[", Encode(row.key));
             int i = 0;
             Array.ForEach<string>(row.values,(s)=>{
                 if (i > 0)
@@ -40,9 +49,8 @@ namespace RIAPP.DataService.Mvc
                 }
                 else
                 {
-                    string v = System.Web.HttpUtility.JavaScriptStringEncode(s);
                     sb.Append(@"""");
-                    sb.Append(v);
+                    sb.Append(Encode(s));
                     sb.Append(@"""");
                 }
                 i += 1;
@@ -61,10 +69,10 @@ namespace RIAPP.DataService.Mvc
             response.Cache.SetCacheability(HttpCacheability.NoCache);
             //context.HttpContext.Response.IsClientConnected
             var writer = context.HttpContext.Response.Output;
-            System.Web.Script.Serialization.JavaScriptSerializer serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
             if (this.Data.error != null)
             {
-                writer.Write(serializer.Serialize(this.Data));
+                //this result returns error. It does not contain rows.
+                writer.Write(this._serializer.Serialize(this.Data));
                 writer.Flush();
                 response.End();
                 return;
@@ -93,9 +101,11 @@ namespace RIAPP.DataService.Mvc
                 this.Data.rows = null;
             }
 
-            writer.Write(serializer.Serialize(this.Data));
-            writer.Write(SEPARATOR);
-            writer.Write("["); //start array
+            string header = this._serializer.Serialize(this.Data);
+            writer.Write(string.Format(HEADER_MARK, header.Length));
+            writer.Write(header);
+
+            writer.Write("["); //start rows array
 
             //default is to flush only when all rows is written to the stream
             int fetchSize = this.Data.fetchSize<=0 ? int.MaxValue: this.Data.fetchSize;
@@ -116,7 +126,7 @@ namespace RIAPP.DataService.Mvc
                 }
             }
            
-            writer.Write("]"); //end array
+            writer.Write("]"); //end rows array
             writer.Flush();
             response.End();
         }

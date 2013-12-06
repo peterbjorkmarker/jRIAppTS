@@ -318,7 +318,6 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module consts {
-            var CHUNK_SEP: string;
             var DATA_ATTR: {
                 EL_VIEW_KEY: string;
                 DATA_BIND: string;

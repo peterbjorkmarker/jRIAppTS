@@ -291,13 +291,11 @@ namespace RIAPP.DataService.EF
             return metadata;
         }
 
-        /*
-        public override string ServiceGetCSharp()
+        protected override string GetCSharp()
         {
             var metadata = this.ServiceGetMetadata();
             return RIAPP.DataService.EF.Utils.DataServiceMethodsHelper.CreateMethods(metadata, this.DB);
         }
-        */
         #endregion
 
         protected TDB DB

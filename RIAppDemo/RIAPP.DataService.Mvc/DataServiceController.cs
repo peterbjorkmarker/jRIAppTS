@@ -93,7 +93,7 @@ namespace RIAPP.DataService.Mvc
         [HttpPost]
         public ActionResult GetItems(GetDataInfo getInfo)
         {
-            return new IncrementalResult(this.DomainService.ServiceGetData(getInfo));
+            return new IncrementalResult(this.DomainService.ServiceGetData(getInfo), this._serializer);
         }
 
         [HttpPost]

@@ -1041,7 +1041,6 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (consts) {
-            consts.CHUNK_SEP = '$&@';
             consts.DATA_ATTR = {
                 EL_VIEW_KEY: 'data-elvwkey',
                 DATA_BIND: 'data-bind',
@@ -8579,6 +8578,8 @@ var RIAPP;
             var ValidationError = RIAPP.MOD.binding.ValidationError, valueUtils = RIAPP.MOD.utils.valueUtils;
             var collMod = RIAPP.MOD.collection;
 
+            var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
+
             (function (FLAGS) {
                 FLAGS[FLAGS["None"] = 0] = "None";
                 FLAGS[FLAGS["Changed"] = 1] = "Changed";
@@ -8981,9 +8982,8 @@ var RIAPP;
                     var fld = this.getFieldInfo(fieldName);
                     if (!fld)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
-
                     var stz = this._serverTimezone, dcnv = fld.dateConversion, vals = [];
-                    if (!utils.check.isArray(vals))
+                    if (!utils.check.isArray(value))
                         vals = [value];
                     else
                         vals = value;
@@ -10953,22 +10953,26 @@ var RIAPP;
 
                                 postData = JSON.stringify(requestInfo);
                                 utils.performAjaxCall(loadUrl, postData, true, function (res) {
-                                    var data = [], idx;
+                                    var parts = [], matches, header_size;
                                     try  {
-                                        idx = res.indexOf(RIAPP.MOD.consts.CHUNK_SEP);
-                                        if (idx > -1) {
+                                        matches = res.match(HEAD_MARK_RX);
+                                        if (!!matches) {
+                                            header_size = parseInt(matches[1]);
+
                                             //the first item is getDataResult
-                                            data.push(res.substr(0, idx));
+                                            parts.push(res.substr(matches[0].length, header_size));
 
                                             //the rest is rows
-                                            data.push(res.substr(idx + RIAPP.MOD.consts.CHUNK_SEP.length));
+                                            parts.push(res.substr(matches[0].length + header_size));
                                         } else {
-                                            //all response is serialized as getDataResult
-                                            data.push(res);
+                                            //all the response is serialized as a getDataResult
+                                            parts.push(res);
                                         }
-                                        data = data.map(function (txt) {
+
+                                        var data = parts.map(function (txt) {
                                             return JSON.parse(txt);
                                         });
+                                        parts = null;
 
                                         //let the UI some time, then do the rest of the work
                                         setTimeout(function () {

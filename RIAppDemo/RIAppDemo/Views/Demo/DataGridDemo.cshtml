@@ -118,7 +118,8 @@
         ops.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
         ops.service_url = '@Url.RouteUrl("Default",new {controller="RIAppDemoService", action=""})';
         ops.permissionInfo =  @Html.Action("PermissionsInfo", "RIAppDemoService");
-        ops.templates_url= '@Url.Action("Download", "Templates", new {name="DataGridDemo"})';
+        ops.templates_url = '@Url.Action("Download", "Templates", new {name="DataGridDemo"})';
+        ops.upload_thumb_url = '@Url.Action("ThumbnailUpload", "Upload", null)';
         ops.productEditTemplate_url = '@Url.Action("DownloadTemplate", "Download", new {name="productEditTemplate"})';
         ops.sizeDisplayTemplate_url = '@Url.Action("DownloadTemplate", "Download", new { name = "sizeDisplayTemplate" })';
         ops.modelData = @Html.Action("ProductModelData", "RIAppDemoService");

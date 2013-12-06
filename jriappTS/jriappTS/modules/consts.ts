@@ -1,7 +1,6 @@
 module RIAPP {
     export module MOD {
         export module consts {
-            export var CHUNK_SEP = '$&@';
             export var DATA_ATTR = {
                 EL_VIEW_KEY: 'data-elvwkey',
                 DATA_BIND: 'data-bind',
