@@ -917,13 +917,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-            Object.defineProperty(UploadThumbnailVM.prototype, "templateCommand", {
-                get: function () {
-                    return this._templateCommand;
-                },
-                enumerable: true,
-                configurable: true
-            });
             UploadThumbnailVM.prototype.destroy = function () {
                 if (this._isDestroyed)
                     return;

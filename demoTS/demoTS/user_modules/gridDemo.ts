@@ -635,9 +635,8 @@ module RIAPP
             _product: any;
             _dialogVM: COMMON.DialogVM;
             _dialogCommand: MOD.mvvm.ICommand;
-            _templateCommand: MOD.mvvm.ICommand;
 
-            constructor(app:Application, url: string) {
+            constructor(app: Application, url: string) {
                 super(url);
                 var self = this;
                 this._product = null;
@@ -718,7 +717,6 @@ module RIAPP
                 return this._fileUploaded;
             }
             get dialogCommand() { return this._dialogCommand; }
-            get templateCommand() { return this._templateCommand; }
             destroy() {
                 if (this._isDestroyed)
                     return;
