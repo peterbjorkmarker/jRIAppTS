@@ -168,14 +168,14 @@ module RIAPP {
                     }
                 }
                 _onItemStatusChanged(item:collection.CollectionItem, oldChangeType:number) {
-                    var DEL_STATUS = collection.STATUS.DELETED, newChangeType =item._changeType;
+                    var newChangeType =item._changeType;
                     var obj = this._itemMap[item._key];
                     if (!obj)
                         return;
-                    if (newChangeType === DEL_STATUS) {
+                    if (newChangeType === collection.STATUS.DELETED) {
                         global.$(obj.div).hide();
                     }
-                    else if (oldChangeType === DEL_STATUS && newChangeType !== DEL_STATUS) {
+                    else if (oldChangeType === collection.STATUS.DELETED && newChangeType !== collection.STATUS.DELETED) {
                         global.$(obj.div).show();
                     }
                 }
