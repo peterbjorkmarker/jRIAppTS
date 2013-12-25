@@ -11,9 +11,11 @@ namespace RIAPP.DataService.Mvc
     /// </summary>
     public class Serializer : ISerializer
     {
-        private System.Web.Script.Serialization.JavaScriptSerializer _serializer;
+        private Lazy<System.Web.Script.Serialization.JavaScriptSerializer> _serializer;
+
         public Serializer()
         {
+            this._serializer = new Lazy<System.Web.Script.Serialization.JavaScriptSerializer>(() => new System.Web.Script.Serialization.JavaScriptSerializer(), true);
         }
 
         string ISerializer.Serialize(object obj)
@@ -35,10 +37,7 @@ namespace RIAPP.DataService.Mvc
         {
             get
             {
-                if (this._serializer == null)
-                    this._serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
-                return this._serializer;
-
+                return this._serializer.Value;
             }
         }
     }

@@ -133,6 +133,15 @@ namespace RIAPP.DataService.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Method {0} is disabled on the {1}.
+        /// </summary>
+        internal static string ERR_CODEGEN_DISABLED {
+            get {
+                return ResourceManager.GetString("ERR_CODEGEN_DISABLED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Entity: {0} delete data method is not implemented by {1}.
         /// </summary>
         internal static string ERR_DB_DELETE_NOT_IMPLEMENTED {
@@ -363,15 +372,6 @@ namespace RIAPP.DataService.Resources {
         internal static string ERR_VAL_RANGE_NOT_VALID {
             get {
                 return ResourceManager.GetString("ERR_VAL_RANGE_NOT_VALID", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Method {0} is disabled on the {1}.
-        /// </summary>
-        internal static string ERR_XXXMETHOD_DISABLED {
-            get {
-                return ResourceManager.GetString("ERR_XXXMETHOD_DISABLED", resourceCulture);
             }
         }
     }

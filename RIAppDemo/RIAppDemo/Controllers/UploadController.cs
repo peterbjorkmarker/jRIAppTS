@@ -8,6 +8,7 @@ using System.Web.SessionState;
 using RIAppDemo.BLL.DataServices;
 using RIAppDemo.Models;
 using RIAPP.DataService.Mvc;
+using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAppDemo.Controllers
 {
@@ -70,7 +71,7 @@ namespace RIAppDemo.Controllers
                     string filename = Path.GetFileName(file.FileName);
                     if (filename != null)
                     {
-                          var args = new RIAPP.DataService.ServiceArgs() { principal = this.User, serializer = new Serializer() };
+                          var args = new RIAPP.DataService.ServiceArgs(new Lazy<ISerializer>(() => new Serializer(), false), this.User);
                           RIAppDemoService svc = new RIAppDemoService(args);
                           using (svc)
                           {

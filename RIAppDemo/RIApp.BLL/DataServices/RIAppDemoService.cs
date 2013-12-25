@@ -30,7 +30,7 @@ namespace RIAppDemo.BLL.DataServices
             //it allows getting information via GetCSharp, GetXAML, GetTypeScript
             //it should be set to false in release version 
             //allow it only at development time
-            this.IsGetXXXMethodsEnabled = true;
+            this.IsCodeGenEnabled = true;
         }
 
         protected override RIAppDemoDataContext CreateDataContext()

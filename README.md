@@ -1,7 +1,7 @@
 jRIAppTS With Generics
 ======
 
-<b>RIA framework for building LOB applications in HTML5 environment</b>
+<b>a RIA framework for building Line of Buisiness (LOB) applications working in HTML5</b>
 <br/>
 This is a typescript version of the previous <a href="https://github.com/BBGONE/jRIApp" target="_blank">jRIApp framework</a>
 You can watch video of the demo on <a href="http://youtu.be/m2lxFWhJghA" target="_blank">YouTube SPA</a>
@@ -19,12 +19,12 @@ Unlike many other existing frameworks, which use MVC design pattern, the framewo
 
 The framework was designed for gaining  maximum convenience and performance, and for this sake it works in browsers which support ECMA Script 5.1 level of javascript.
 
-Supported browsers include Internet Explorer 9 and above, Mozilla Firefox 4+, Google Chrome 13+, and Opera 11.6+. Because the framework is primarily designed for developing LOB applications, the exclusion of antique browsers does not harm the purpose, and improves framework’s performance and ease of use.
+Those browsers include Internet Explorer 9 and above, Mozilla Firefox 4+, Google Chrome 13+, and Opera 11.6+. Because the framework is primarily designed for developing LOB applications, the exclusion of antique browsers does not harm the purpose, and improves framework’s performance and ease of use.
 
-The framework is distinguished from other frameworks available on the market by its 
+The framework is distinguished from other frameworks available on the market by the
 full stack implementation of the features required for building real world  LOB applications in HTML5. It allows the development in strongly typed environment either on the client or on the server.
 
-Data centric applications are created by using framework's wide range of UI controls.
+The Data centric applications are created by using framework's wide range of UI controls.
 It allows to work with the server originated data in a transparent and a safe way.
 
 The framework contains a set of controls such as: 
@@ -80,6 +80,13 @@ P.S. after these changes i will soon commit new docs version.<br/>So many change
 A security switch to enable disable invocation of GetTypeScript, GetCSharp, GetXAML methods.<br/>
 Fixed product image uploading in the DEMO.
 </p>
+<p>2013-12-25   The DataService enhancements for performance reason. Also changed getting typescript code generation to a new syntax, like http://YOURSERVER/RIAppDemoService/CodeGen?type=ts<br/>
+ And also for XAML and for C# code generation use it like -<br/>
+ http://YOURSERVER/RIAppDemoService//CodeGen?type=xaml<br/>
+ http://YOURSERVER/RIAppDemoService/CodeGen?type=csharp
+</p>
+
+
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 

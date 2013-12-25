@@ -141,6 +141,9 @@
   <data name="ERR_CHUNK_NOT_FOUND" xml:space="preserve">
     <value>Query result's chunk is not found in cache</value>
   </data>
+  <data name="ERR_CODEGEN_DISABLED" xml:space="preserve">
+    <value>Method {0} is disabled on the {1}</value>
+  </data>
   <data name="ERR_DB_DELETE_NOT_IMPLEMENTED" xml:space="preserve">
     <value>Entity: {0} delete data method is not implemented by {1}</value>
   </data>
@@ -218,8 +221,5 @@
   </data>
   <data name="ERR_VAL_RANGE_NOT_VALID" xml:space="preserve">
     <value>Field {0} value does not falls inside the allowed range of values {1}</value>
-  </data>
-  <data name="ERR_XXXMETHOD_DISABLED" xml:space="preserve">
-    <value>Method {0} is disabled on the {1}</value>
   </data>
 </root>

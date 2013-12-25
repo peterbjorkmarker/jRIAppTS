@@ -33,7 +33,7 @@ namespace RIAPP.DataService
         private IQueryHelper _queryHelper;
         private ISerializer _serializer;
         private IValueConverter _converter;
-        private bool _IsGetXXXMethodsEnabled = false;
+        private bool _IsCodeGenEnabled = false;
 
         protected IAuthorizer Authorizer
         {
@@ -130,15 +130,15 @@ namespace RIAPP.DataService
             get { return this._currentQueryInfo; }
         }
 
-        protected bool IsGetXXXMethodsEnabled
+        protected bool IsCodeGenEnabled
         {
             get
             {
-                return this._IsGetXXXMethodsEnabled;
+                return this._IsCodeGenEnabled;
             }
             set
             {
-                this._IsGetXXXMethodsEnabled = value;
+                this._IsCodeGenEnabled = value;
             }
         }
 
@@ -1080,22 +1080,22 @@ namespace RIAPP.DataService
         #region IDomainService Public Methods
         public string ServiceGetTypeScript(string comment = null)
         {
-            if (!this.IsGetXXXMethodsEnabled)
-                throw new InvalidOperationException(string.Format(ErrorStrings.ERR_XXXMETHOD_DISABLED,MethodInfo.GetCurrentMethod().Name, this.GetType().Name));
-            return this.GetTypeScript();
+            if (!this.IsCodeGenEnabled)
+                throw new InvalidOperationException(string.Format(ErrorStrings.ERR_CODEGEN_DISABLED,MethodInfo.GetCurrentMethod().Name, this.GetType().Name));
+            return this.GetTypeScript(comment);
         }
 
         public string ServiceGetXAML()
         {
-            if (!this.IsGetXXXMethodsEnabled)
-                throw new InvalidOperationException(string.Format(ErrorStrings.ERR_XXXMETHOD_DISABLED, MethodInfo.GetCurrentMethod().Name, this.GetType().Name));
+            if (!this.IsCodeGenEnabled)
+                throw new InvalidOperationException(string.Format(ErrorStrings.ERR_CODEGEN_DISABLED, MethodInfo.GetCurrentMethod().Name, this.GetType().Name));
             return this.GetXAML();
         }
 
         public string ServiceGetCSharp()
         {
-            if (!this.IsGetXXXMethodsEnabled)
-                throw new InvalidOperationException(string.Format(ErrorStrings.ERR_XXXMETHOD_DISABLED, MethodInfo.GetCurrentMethod().Name, this.GetType().Name));
+            if (!this.IsCodeGenEnabled)
+                throw new InvalidOperationException(string.Format(ErrorStrings.ERR_CODEGEN_DISABLED, MethodInfo.GetCurrentMethod().Name, this.GetType().Name));
             return this.GetCSharp();
         }
 
