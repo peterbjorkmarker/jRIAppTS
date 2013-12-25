@@ -9,10 +9,10 @@ namespace RIAPP.DataService
 {
     public class ServiceArgs: IServiceArgs
     {
-        private Lazy<ISerializer> _serializer;
+        private ISerializer _serializer;
         private IPrincipal _principal;
 
-        public ServiceArgs(Lazy<ISerializer> serializer, IPrincipal principal)
+        public ServiceArgs(ISerializer serializer, IPrincipal principal)
         {
             this._serializer = serializer;
             this._principal = principal;
@@ -30,7 +30,7 @@ namespace RIAPP.DataService
         {
             get
             {
-                return this._serializer.Value;
+                return this._serializer;
             }
         }
     }

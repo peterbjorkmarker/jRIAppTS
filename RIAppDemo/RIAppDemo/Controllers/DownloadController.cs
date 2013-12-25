@@ -23,7 +23,7 @@ namespace RIAppDemo.Controllers
         {
             try
             {
-                var args = new RIAPP.DataService.ServiceArgs(new Lazy<ISerializer>(() => new Serializer(), false), this.User);
+                var args = new RIAPP.DataService.ServiceArgs(new Serializer(), this.User);
                 RIAppDemoService svc = new RIAppDemoService(args);
                 using (svc)
                 {

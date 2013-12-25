@@ -13,7 +13,7 @@ namespace RIAPP.DataService.Mvc
     public abstract class DataServiceController<T> : Controller
          where T : BaseDomainService
     {
-        private readonly Lazy<ISerializer> _serializer;
+        private ISerializer _serializer;
 
         #region PRIVATE METHODS
         private ActionResult _GetTypeScript()
@@ -50,7 +50,7 @@ namespace RIAPP.DataService.Mvc
 
         public DataServiceController()
         {
-            this._serializer = new Lazy<ISerializer>(()=>new Serializer(), true);
+            this._serializer = new Serializer();
             this._DomainService = new Lazy<IDomainService>(() => this.CreateDomainService(),true);
         }
 
@@ -155,7 +155,7 @@ namespace RIAPP.DataService.Mvc
 
         public ISerializer Serializer
         {
-            get { return this._serializer.Value; }
+            get { return this._serializer; }
         }
 
         protected override void Dispose(bool disposing)
@@ -163,8 +163,9 @@ namespace RIAPP.DataService.Mvc
             if (disposing && this._DomainService.IsValueCreated)
             {
                 this._DomainService.Value.Dispose();
-                this._DomainService = null;
             }
+            this._DomainService = null;
+            this._serializer = null;
             base.Dispose(disposing);
         }
     }
