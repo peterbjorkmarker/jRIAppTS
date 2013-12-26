@@ -27,24 +27,23 @@ namespace RIAPP.DataService
         private GetDataInfo _currentQueryInfo;
         private ServiceOperationType _currentOperation;
         private IPrincipal _principal;
-        private IAuthorizer _authorizer;
-        private IDataHelper _dataHelper;
-        private IValidationHelper _validationHelper;
-        private IQueryHelper _queryHelper;
         private ISerializer _serializer;
-        private IValueConverter _converter;
         private bool _IsCodeGenEnabled = false;
+
+        private Lazy<IAuthorizer> _authorizer;
+        private Lazy<IDataHelper> _dataHelper;
+        private Lazy<IValidationHelper> _validationHelper;
+        private Lazy<IQueryHelper> _queryHelper;
+        private Lazy<IValueConverter> _converter;
+        #endregion
 
         protected IAuthorizer Authorizer
         {
             get
             {
-                if (this._authorizer == null)
-                    this._authorizer = this.CreateAuthorizer();
-                return this._authorizer;
+                return this._authorizer.Value;
             }
         }
-        #endregion
 
         public ISerializer Serializer
         {
@@ -53,14 +52,14 @@ namespace RIAPP.DataService
 
         public IValueConverter ValueConverter
         {
-            get { return this._converter; }
+            get { return this._converter.Value; }
         }
 
         public IDataHelper DataHelper
         {
             get
             {
-                return this._dataHelper;
+                return this._dataHelper.Value;
             }
         }
 
@@ -68,7 +67,7 @@ namespace RIAPP.DataService
         {
             get
             {
-                return this._queryHelper;
+                return this._queryHelper.Value;
             }
         }
 
@@ -76,20 +75,21 @@ namespace RIAPP.DataService
         {
             get
             {
-                return this._validationHelper;
+                return this._validationHelper.Value;
             }
         }
 
         public BaseDomainService(IServiceArgs args)
         {
             if (args.serializer == null)
-                throw new ArgumentException("Domain service class expects Serializer!");
+                throw new ArgumentException("Domain service class expects a Serializer!");
             this._principal = args.principal;
             this._serializer = args.serializer;
-            this._converter = this.CreateValueConverter();
-            this._dataHelper = this.CreateDataHelper();
-            this._validationHelper = this.CreateValidationHelper();
-            this._queryHelper = this.CreateQueryHelper();
+            this._authorizer = new Lazy<IAuthorizer>(() => this.CreateAuthorizer());
+            this._converter = new Lazy<IValueConverter>(()=> this.CreateValueConverter());
+            this._dataHelper = new Lazy<IDataHelper>(()=> this.CreateDataHelper());
+            this._validationHelper = new Lazy<IValidationHelper>(()=> this.CreateValidationHelper());
+            this._queryHelper = new Lazy<IQueryHelper>(()=>this.CreateQueryHelper());
         }
 
         /// <summary>

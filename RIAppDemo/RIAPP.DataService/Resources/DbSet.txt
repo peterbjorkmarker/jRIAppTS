@@ -26,6 +26,9 @@
 
 		self._mapAssocFields();
 	}
+	findEntity({{PK_VALS}}): {{ENTITY_INTERFACE}} {
+		return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));	
+	}
 {{QUERIES}}
 {{CALC_FIELDS}}
 	get items2()  { return <{{ENTITY_INTERFACE}}[]>this.items; }

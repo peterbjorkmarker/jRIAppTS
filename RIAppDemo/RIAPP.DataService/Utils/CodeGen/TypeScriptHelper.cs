@@ -490,6 +490,14 @@ namespace RIAPP.DataService.Utils
             var childAssoc = this._metadata.associations.Where(assoc => assoc.childDbSetName == dbSetInfo.dbSetName).ToList();
             var parentAssoc = this._metadata.associations.Where(assoc => assoc.parentDbSetName == dbSetInfo.dbSetName).ToList();
             var fieldInfos = dbSetInfo.fieldInfos;
+            var pkFields = dbSetInfo.GetPKFieldInfos();
+            string pkVals = "";
+            foreach (var pkField in pkFields)
+            {
+                if (!string.IsNullOrEmpty(pkVals))
+                    pkVals += ", ";
+                pkVals += pkField.fieldName + ": " + this.GetFieldDataType(pkField);
+            }
 
             (new TemplateParser("DbSet.txt")).ProcessParts((part) =>
             {
@@ -530,6 +538,9 @@ namespace RIAPP.DataService.Utils
                             break;
                         case "CALC_FIELDS":
                             sb.Append(this.createCalcFields(dbSetInfo));
+                            break;
+                        case "PK_VALS":
+                            sb.Append(pkVals);
                             break;
                     }
                 }

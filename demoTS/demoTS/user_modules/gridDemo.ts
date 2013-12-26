@@ -189,16 +189,6 @@ module RIAPP
             set categoryData(data) { this.ProductCategories.fillItems(data); }
             get dbContext() { return this._app.dbContext; }
         }
-
-        //helper function to get html DOM element  inside template's instance
-        //by custom data-name attribute value
-        var fn_getTemplateElement = function (template: MOD.template.Template, name: string) {
-            var t = template;
-            var els = t.findElByDataName(name);
-            if (els.length < 1)
-                return null;
-            return els[0];
-        };
         
         export class ProductViewModel extends MOD.mvvm.BaseViewModel {
             _filter: ProductsFilter;
@@ -631,12 +621,23 @@ module RIAPP
             }
         }
 
+        //helper function to get html DOM element  inside template's instance
+        //by custom data-name attribute value
+        var fn_getTemplateElement = function (template:MOD.template.Template, name:string) {
+            var t = template;
+            var els = t.findElByDataName(name);
+            if (els.length < 1)
+                return null;
+            return els[0];
+        };
+
         export class UploadThumbnailVM extends BaseUploadVM {
             _product: any;
             _dialogVM: COMMON.DialogVM;
             _dialogCommand: MOD.mvvm.ICommand;
+            _templateCommand: MOD.mvvm.ICommand;
 
-            constructor(app: Application, url: string) {
+            constructor(app:Application, url: string) {
                 super(url);
                 var self = this;
                 this._product = null;
@@ -656,8 +657,7 @@ module RIAPP
                         self._percentageCalc = global.$(fn_getTemplateElement(template, 'percentageCalc'));
                         self._progressDiv = global.$(fn_getTemplateElement(template, 'progressDiv'));
                         self._progressDiv.hide();
-                        var templEl = template.el, $fileEl = global.$(self._fileEl);
-                        global.$(self._fileEl).on('change', function (e) {
+                        global.$(self._fileEl).on('change', function (e: JQueryEventObject) {
                             var fileEl: HTMLInputElement = this;
                             e.stopPropagation();
                             var fileList = fileEl.files, txt = '';
@@ -666,9 +666,12 @@ module RIAPP
                                 txt += utils.format('<p>{0} ({1} KB)</p>', fileList[i].name, utils.str.formatNumber(fileList[i].size / 1024, 2, '.', ','));
                             }
                             self.fileInfo = txt;
-                            global.$('input[data-name="files-input"]', templEl).val(global.$(this).val());
                         });
 
+                        var templEl = template.el, $fileEl = global.$(self._fileEl);
+                        $fileEl.change(function (e) {
+                            global.$('input[data-name="files-input"]', templEl).val(global.$(this).val());
+                        });
                         global.$('*[data-name="btn-input"]', templEl).click(function (e) {
                             e.preventDefault();
                             e.stopPropagation();
@@ -677,8 +680,8 @@ module RIAPP
                     },
                     fn_OnShow: function (dialog) {
                         self._formEl.reset();
-                        self._fileUploaded = false;
                         self.fileInfo = null;
+                        self._fileUploaded = false;
                     },
                     fn_OnClose: function (dialog) {
                         if (dialog.result == 'ok' && self._onDialogClose()) {
@@ -702,6 +705,34 @@ module RIAPP
                 }, self, function (sender, param) {
                     return true;
                 });
+                //executed when template is loaded or unloading
+                this._templateCommand = new MOD.baseElView.TemplateCommand(function (sender, param) {
+                    try {
+                        var template = param.template, $ = global.$, fileEl = $('input[data-name="files-to-upload"]', template.el);
+                        if (fileEl.length == 0)
+                            return;
+
+                        if (param.isLoaded) {
+                            fileEl.change(function (e) {
+                                $('input[data-name="files-input"]', template.el).val($(this).val());
+                            });
+                            $('*[data-name="btn-input"]', template.el).click(function (e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                fileEl.click();
+                            });
+                        }
+                        else {
+                            fileEl.off('change');
+                            $('*[data-name="btn-input"]', template.el).off('click');
+                        }
+                    } catch (ex) {
+                        self._onError(ex, this);
+                    }
+                }, self, function (sender, param) {
+                    return true;
+                });
+
             }
             _getEventNames() {
                 var base_events = super._getEventNames();
@@ -717,6 +748,7 @@ module RIAPP
                 return this._fileUploaded;
             }
             get dialogCommand() { return this._dialogCommand; }
+            get templateCommand() { return this._templateCommand; }
             destroy() {
                 if (this._isDestroyed)
                     return;
