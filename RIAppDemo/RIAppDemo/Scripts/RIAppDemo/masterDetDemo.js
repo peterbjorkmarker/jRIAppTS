@@ -780,7 +780,7 @@ var RIAPP;
                 var productID = this.dataContext.ProductID;
 
                 //casting will be solved with generics soon
-                var product = this._lookupSource.findByPK(productID);
+                var product = this._lookupSource.findEntity(productID);
                 if (!!product) {
                     this.value = product.Name;
                 } else {

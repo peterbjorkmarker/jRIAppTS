@@ -254,6 +254,7 @@ namespace RIAPP.DataService.Utils
                 sbProps.Append("[");
                 bool isFirst = true;
                 bool isArray = false;
+
                 propList.ForEach((propInfo) =>
                 {
                     if (!isFirst)
@@ -278,6 +279,17 @@ namespace RIAPP.DataService.Utils
 
                 if (dictAttr != null)
                 {
+                    var pkProp = propList.Where((propInfo) => dictAttr.KeyName == propInfo.Name).SingleOrDefault();
+                    if (pkProp == null)
+                        throw new Exception(string.Format("Dictionary item does not have a property with name {0}",dictAttr.KeyName));
+
+                    Func<string, string> fn_CamelCase = (str) =>
+                    {
+                        return str.Length > 1 ? str.Substring(0, 1).ToLower() + str.Substring(1, str.Length - 1) : str.ToLower();
+                    };
+                    string pkVals = fn_CamelCase(pkProp.Name) + ": " + this._csharp2TS.GetTSTypeName(pkProp.PropertyType);
+
+
                     (new TemplateParser("Dictionary.txt")).ProcessParts((part) =>
                     {
                         if (!part.isPlaceHolder)
@@ -304,6 +316,9 @@ namespace RIAPP.DataService.Utils
                                     {
                                         sbDict.Append(sbProps.ToString());
                                     }
+                                    break;
+                                case "PK_VALS":
+                                    sbDict.Append(pkVals);
                                     break;
                             }
                         }
@@ -490,13 +505,19 @@ namespace RIAPP.DataService.Utils
             var childAssoc = this._metadata.associations.Where(assoc => assoc.childDbSetName == dbSetInfo.dbSetName).ToList();
             var parentAssoc = this._metadata.associations.Where(assoc => assoc.parentDbSetName == dbSetInfo.dbSetName).ToList();
             var fieldInfos = dbSetInfo.fieldInfos;
+            
             var pkFields = dbSetInfo.GetPKFieldInfos();
             string pkVals = "";
+            Func<string, string> fn_CamelCase = (str) =>
+            {
+                return str.Length > 1 ? str.Substring(0, 1).ToLower() + str.Substring(1, str.Length - 1) : str.ToLower();
+            };
+
             foreach (var pkField in pkFields)
             {
                 if (!string.IsNullOrEmpty(pkVals))
                     pkVals += ", ";
-                pkVals += pkField.fieldName + ": " + this.GetFieldDataType(pkField);
+                pkVals += fn_CamelCase(pkField.fieldName) + ": " + this.GetFieldDataType(pkField);
             }
 
             (new TemplateParser("DbSet.txt")).ProcessParts((part) =>

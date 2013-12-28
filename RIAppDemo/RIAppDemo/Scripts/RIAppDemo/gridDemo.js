@@ -307,16 +307,6 @@ var RIAPP;
         })(RIAPP.BaseObject);
         GRIDDEMO.ProductsFilter = ProductsFilter;
 
-        //helper function to get html DOM element  inside template's instance
-        //by custom data-name attribute value
-        var fn_getTemplateElement = function (template, name) {
-            var t = template;
-            var els = t.findElByDataName(name);
-            if (els.length < 1)
-                return null;
-            return els[0];
-        };
-
         var ProductViewModel = (function (_super) {
             __extends(ProductViewModel, _super);
             function ProductViewModel(app) {
@@ -825,6 +815,16 @@ var RIAPP;
         })(RIAPP.BaseObject);
         GRIDDEMO.BaseUploadVM = BaseUploadVM;
 
+        //helper function to get html DOM element  inside template's instance
+        //by custom data-name attribute value
+        var fn_getTemplateElement = function (template, name) {
+            var t = template;
+            var els = t.findElByDataName(name);
+            if (els.length < 1)
+                return null;
+            return els[0];
+        };
+
         var UploadThumbnailVM = (function (_super) {
             __extends(UploadThumbnailVM, _super);
             function UploadThumbnailVM(app, url) {
@@ -848,7 +848,6 @@ var RIAPP;
                         self._percentageCalc = global.$(fn_getTemplateElement(template, 'percentageCalc'));
                         self._progressDiv = global.$(fn_getTemplateElement(template, 'progressDiv'));
                         self._progressDiv.hide();
-                        var templEl = template.el, $fileEl = global.$(self._fileEl);
                         global.$(self._fileEl).on('change', function (e) {
                             var fileEl = this;
                             e.stopPropagation();
@@ -858,9 +857,12 @@ var RIAPP;
                                 txt += utils.format('<p>{0} ({1} KB)</p>', fileList[i].name, utils.str.formatNumber(fileList[i].size / 1024, 2, '.', ','));
                             }
                             self.fileInfo = txt;
-                            global.$('input[data-name="files-input"]', templEl).val(global.$(this).val());
                         });
 
+                        var templEl = template.el, $fileEl = global.$(self._fileEl);
+                        $fileEl.change(function (e) {
+                            global.$('input[data-name="files-input"]', templEl).val(global.$(this).val());
+                        });
                         global.$('*[data-name="btn-input"]', templEl).click(function (e) {
                             e.preventDefault();
                             e.stopPropagation();
@@ -869,8 +871,8 @@ var RIAPP;
                     },
                     fn_OnShow: function (dialog) {
                         self._formEl.reset();
-                        self._fileUploaded = false;
                         self.fileInfo = null;
+                        self._fileUploaded = false;
                     },
                     fn_OnClose: function (dialog) {
                         if (dialog.result == 'ok' && self._onDialogClose()) {
@@ -896,6 +898,33 @@ var RIAPP;
                 }, self, function (sender, param) {
                     return true;
                 });
+
+                //executed when template is loaded or unloading
+                this._templateCommand = new RIAPP.MOD.baseElView.TemplateCommand(function (sender, param) {
+                    try  {
+                        var template = param.template, $ = global.$, fileEl = $('input[data-name="files-to-upload"]', template.el);
+                        if (fileEl.length == 0)
+                            return;
+
+                        if (param.isLoaded) {
+                            fileEl.change(function (e) {
+                                $('input[data-name="files-input"]', template.el).val($(this).val());
+                            });
+                            $('*[data-name="btn-input"]', template.el).click(function (e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                fileEl.click();
+                            });
+                        } else {
+                            fileEl.off('change');
+                            $('*[data-name="btn-input"]', template.el).off('click');
+                        }
+                    } catch (ex) {
+                        self._onError(ex, this);
+                    }
+                }, self, function (sender, param) {
+                    return true;
+                });
             }
             UploadThumbnailVM.prototype._getEventNames = function () {
                 var base_events = _super.prototype._getEventNames.call(this);
@@ -913,6 +942,13 @@ var RIAPP;
             Object.defineProperty(UploadThumbnailVM.prototype, "dialogCommand", {
                 get: function () {
                     return this._dialogCommand;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(UploadThumbnailVM.prototype, "templateCommand", {
+                get: function () {
+                    return this._templateCommand;
                 },
                 enumerable: true,
                 configurable: true

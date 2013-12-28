@@ -541,7 +541,7 @@ module RIAPP
                 }
                 var productID = this.dataContext.ProductID;
                 //casting will be solved with generics soon
-                var product: DEMODB.Product = <DEMODB.Product>this._lookupSource.findByPK(productID);
+                var product: DEMODB.Product = this._lookupSource.findEntity(productID);
                 if (!!product) {
                     this.value = product.Name;
                 }

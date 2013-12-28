@@ -9,6 +9,7 @@ var RIAPP;
 (function (RIAPP) {
     (function (AUTOCOMPLETE) {
         var global = RIAPP.global, utils = global.utils;
+        var collMod = RIAPP.MOD.collection;
 
         function addTextQuery(query, fldName, val) {
             var tmp;

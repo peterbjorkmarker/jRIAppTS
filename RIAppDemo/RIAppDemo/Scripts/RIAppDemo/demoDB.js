@@ -114,6 +114,9 @@ var RIAPP;
                 _super.call(this, TestModelListItem, 'Key', [{ name: 'Key', dtype: 1 }, { name: 'SomeProperty1', dtype: 1 }, { name: 'SomeProperty2', dtype: 10 }, { name: 'SomeProperty3', dtype: 0 }, { name: 'MoreComplexProperty', dtype: 0 }, { name: 'EnumProperty', dtype: 0 }]);
                 this._type_name = 'TestDictionary';
             }
+            TestDictionary.prototype.findItem = function (key) {
+                return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
+            };
             Object.defineProperty(TestDictionary.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -180,6 +183,9 @@ var RIAPP;
                 _super.call(this, KeyValListItem, 'key', [{ name: 'key', dtype: 3 }, { name: 'val', dtype: 1 }]);
                 this._type_name = 'KeyValDictionary';
             }
+            KeyValDictionary.prototype.findItem = function (key) {
+                return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
+            };
             Object.defineProperty(KeyValDictionary.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -448,7 +454,7 @@ var RIAPP;
 
                 self._mapAssocFields();
             }
-            CustomerDb.prototype.findEntity = function (CustomerID) {
+            CustomerDb.prototype.findEntity = function (customerID) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             };
             CustomerDb.prototype.createReadCustomerQuery = function (args) {
@@ -605,7 +611,7 @@ var RIAPP;
 
                 self._mapAssocFields();
             }
-            CustomerAddressDb.prototype.findEntity = function (CustomerID, AddressID) {
+            CustomerAddressDb.prototype.findEntity = function (customerID, addressID) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             };
             CustomerAddressDb.prototype.createReadCustomerAddressQuery = function () {
@@ -775,7 +781,7 @@ var RIAPP;
 
                 self._mapAssocFields();
             }
-            AddressDb.prototype.findEntity = function (AddressID) {
+            AddressDb.prototype.findEntity = function (addressID) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             };
             AddressDb.prototype.createReadAddressQuery = function () {
@@ -1022,7 +1028,7 @@ var RIAPP;
 
                 self._mapAssocFields();
             }
-            ProductDb.prototype.findEntity = function (ProductID) {
+            ProductDb.prototype.findEntity = function (productID) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             };
             ProductDb.prototype.createReadProductQuery = function (args) {
@@ -1127,7 +1133,7 @@ var RIAPP;
 
                 self._mapAssocFields();
             }
-            ProductModelDb.prototype.findEntity = function (ProductModelID) {
+            ProductModelDb.prototype.findEntity = function (productModelID) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             };
             ProductModelDb.prototype.createReadProductModelQuery = function () {
@@ -1428,7 +1434,7 @@ var RIAPP;
 
                 self._mapAssocFields();
             }
-            SalesOrderHeaderDb.prototype.findEntity = function (SalesOrderID) {
+            SalesOrderHeaderDb.prototype.findEntity = function (salesOrderID) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             };
             SalesOrderHeaderDb.prototype.createReadSalesOrderHeaderQuery = function () {
@@ -1597,7 +1603,7 @@ var RIAPP;
 
                 self._mapAssocFields();
             }
-            SalesOrderDetailDb.prototype.findEntity = function (SalesOrderID, SalesOrderDetailID) {
+            SalesOrderDetailDb.prototype.findEntity = function (salesOrderID, salesOrderDetailID) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             };
             SalesOrderDetailDb.prototype.createReadSalesOrderDetailQuery = function () {
@@ -1721,7 +1727,7 @@ var RIAPP;
 
                 self._mapAssocFields();
             }
-            ProductCategoryDb.prototype.findEntity = function (ProductCategoryID) {
+            ProductCategoryDb.prototype.findEntity = function (productCategoryID) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             };
             ProductCategoryDb.prototype.createReadProductCategoryQuery = function () {
@@ -1808,7 +1814,7 @@ var RIAPP;
 
                 self._mapAssocFields();
             }
-            SalesInfoDb.prototype.findEntity = function (SalesPerson) {
+            SalesInfoDb.prototype.findEntity = function (salesPerson) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             };
             SalesInfoDb.prototype.createReadSalesInfoQuery = function () {
@@ -1905,7 +1911,7 @@ var RIAPP;
 
                 self._mapAssocFields();
             }
-            LookUpProductDb.prototype.findEntity = function (ProductID) {
+            LookUpProductDb.prototype.findEntity = function (productID) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             };
             LookUpProductDb.prototype.createReadProductLookUpQuery = function () {
@@ -2024,7 +2030,7 @@ var RIAPP;
 
                 self._mapAssocFields();
             }
-            AddressInfoDb.prototype.findEntity = function (AddressID) {
+            AddressInfoDb.prototype.findEntity = function (addressID) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             };
             AddressInfoDb.prototype.createReadAddressInfoQuery = function () {

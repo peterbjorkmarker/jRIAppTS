@@ -681,7 +681,7 @@ var RIAPP;
                 //dont clear, append to the existing
                 var promise = this._customerAddressVM._loadAddresses([adrID], false);
                 promise.done(function (res) {
-                    var address = self._customerAddressVM.addressesDb.findByPK(adrID);
+                    var address = self._customerAddressVM.addressesDb.findEntity(adrID);
                     if (!!address) {
                         self._customerAddressVM._addNewCustAddress(address);
 
@@ -728,7 +728,7 @@ var RIAPP;
             //make sure if the addressInfo already on the client, adds it to the view
             AddAddressVM.prototype._checkAddressInRP = function (addressID) {
                 //try to find it in the TDbSet
-                var item = this._addressInfosDb.findByPK(addressID);
+                var item = this._addressInfosDb.findEntity(addressID);
                 if (!!item) {
                     //if found, try append to the view
                     var appended = this._addressInfosView.appendItems([item]);

@@ -12271,11 +12271,6 @@ var RIAPP;
                         return;
                     ds.removeNSHandlers(self._objId);
                 };
-                DataView.prototype.appendItems = function (items) {
-                    if (this._isDestroyCalled)
-                        return [];
-                    return this._fillItems({ items: items, isPageChanged: false, clear: false, isAppend: true });
-                };
                 DataView.prototype._getStrValue = function (val, fieldInfo) {
                     return this._dataSource._getStrValue(val, fieldInfo);
                 };
@@ -12300,11 +12295,16 @@ var RIAPP;
                     var ds = this._dataSource;
                     return ds.getItemsWithErrors();
                 };
+                DataView.prototype.appendItems = function (items) {
+                    if (this._isDestroyCalled)
+                        return [];
+                    return this._fillItems({ items: items, isPageChanged: false, clear: false, isAppend: true });
+                };
                 DataView.prototype.addNew = function () {
-                    var ds = this._dataSource, item;
+                    var item;
                     this._isAddingNew = true;
                     try  {
-                        item = ds.addNew();
+                        item = this._dataSource.addNew();
                     } finally {
                         this._isAddingNew = false;
                     }
@@ -12392,6 +12392,13 @@ var RIAPP;
                     this._fn_sort = null;
                     _super.prototype.destroy.call(this);
                 };
+                Object.defineProperty(DataView.prototype, "dataSource", {
+                    get: function () {
+                        return this._dataSource;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
                 Object.defineProperty(DataView.prototype, "isPagingEnabled", {
                     get: function () {
                         return this._options.enablePaging;
@@ -16850,13 +16857,13 @@ var RIAPP;
                     }
                 };
                 StackPanel.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    var DEL_STATUS = 3 /* DELETED */, newChangeType = item._changeType;
+                    var newChangeType = item._changeType;
                     var obj = this._itemMap[item._key];
                     if (!obj)
                         return;
-                    if (newChangeType === DEL_STATUS) {
+                    if (newChangeType === 3 /* DELETED */) {
                         RIAPP.global.$(obj.div).hide();
-                    } else if (oldChangeType === DEL_STATUS && newChangeType !== DEL_STATUS) {
+                    } else if (oldChangeType === 3 /* DELETED */ && newChangeType !== 3 /* DELETED */) {
                         RIAPP.global.$(obj.div).show();
                     }
                 };

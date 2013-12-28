@@ -5,9 +5,9 @@ module RIAPP
     'use strict';
     export module DEMODB {
         /*
-          Generated from: /RIAppDemoService/CodeGen?type=ts on 2013-12-26 16:01 at 16:01
-          Don't make manual changes here, because they will be lost when this db interface will be regenerated!
-      */
+            Generated from: /RiappDemoService/CodeGen on 2013-12-28 11:25 at 11:25
+            Don't make manual changes here, because they will be lost when this db interface will be regenerated!
+        */
 
         export interface IAddressInfo2 {
             AddressID: number;
@@ -102,6 +102,9 @@ module RIAPP
                 super(TestModelListItem, 'Key', [{ name: 'Key', dtype: 1 }, { name: 'SomeProperty1', dtype: 1 }, { name: 'SomeProperty2', dtype: 10 }, { name: 'SomeProperty3', dtype: 0 }, { name: 'MoreComplexProperty', dtype: 0 }, { name: 'EnumProperty', dtype: 0 }]);
                 this._type_name = 'TestDictionary';
             }
+            findItem(key: string): TestModelListItem {
+                return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
+            }
             get items2() { return <IClientTestModel[]>this.items; }
         }
 
@@ -128,6 +131,9 @@ module RIAPP
             constructor() {
                 super(KeyValListItem, 'key', [{ name: 'key', dtype: 3 }, { name: 'val', dtype: 1 }]);
                 this._type_name = 'KeyValDictionary';
+            }
+            findItem(key: number): KeyValListItem {
+                return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             get items2() { return <IKeyVal[]>this.items; }
         }
@@ -248,7 +254,7 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            findEntity(CustomerID: number): ICustomerEntity {
+            findEntity(customerID: number): Customer {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             createReadCustomerQuery(args?: {
@@ -338,7 +344,7 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            findEntity(CustomerID: number, AddressID: number): ICustomerAddressEntity {
+            findEntity(customerID: number, addressID: number): CustomerAddress {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             createReadCustomerAddressQuery() {
@@ -434,7 +440,7 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            findEntity(AddressID: number): IAddressEntity {
+            findEntity(addressID: number): Address {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             createReadAddressQuery() {
@@ -553,7 +559,7 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            findEntity(ProductID: number): IProductEntity {
+            findEntity(productID: number): Product {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             createReadProductQuery(args?: {
@@ -634,7 +640,7 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            findEntity(ProductModelID: number): IProductModelEntity {
+            findEntity(productModelID: number): ProductModel {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             createReadProductModelQuery() {
@@ -763,7 +769,7 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            findEntity(SalesOrderID: number): ISalesOrderHeaderEntity {
+            findEntity(salesOrderID: number): SalesOrderHeader {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             createReadSalesOrderHeaderQuery() {
@@ -853,7 +859,7 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            findEntity(SalesOrderID: number, SalesOrderDetailID: number): ISalesOrderDetailEntity {
+            findEntity(salesOrderID: number, salesOrderDetailID: number): SalesOrderDetail {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             createReadSalesOrderDetailQuery() {
@@ -930,7 +936,7 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            findEntity(ProductCategoryID: number): IProductCategoryEntity {
+            findEntity(productCategoryID: number): ProductCategory {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             createReadProductCategoryQuery() {
@@ -996,7 +1002,7 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            findEntity(SalesPerson: string): ISalesInfoEntity {
+            findEntity(salesPerson: string): SalesInfo {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             createReadSalesInfoQuery() {
@@ -1065,7 +1071,7 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            findEntity(ProductID: number): ILookUpProductEntity {
+            findEntity(productID: number): LookUpProduct {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             createReadProductLookUpQuery() {
@@ -1140,7 +1146,7 @@ module RIAPP
 
                 self._mapAssocFields();
             }
-            findEntity(AddressID: number): IAddressInfoEntity {
+            findEntity(addressID: number): AddressInfo {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
             }
             createReadAddressInfoQuery() {

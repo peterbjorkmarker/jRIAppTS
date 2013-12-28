@@ -3546,11 +3546,6 @@ module RIAPP {
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
-                appendItems(items: TItem[]) {
-                    if (this._isDestroyCalled)
-                        return [];
-                    return this._fillItems({ items: items, isPageChanged: false, clear: false, isAppend: true });
-                }
                 _getStrValue(val, fieldInfo) {
                     return this._dataSource._getStrValue(val, fieldInfo);
                 }
@@ -3576,11 +3571,16 @@ module RIAPP {
                     var ds = this._dataSource;
                     return ds.getItemsWithErrors();
                 }
+                appendItems(items: TItem[]) {
+                    if (this._isDestroyCalled)
+                        return [];
+                    return this._fillItems({ items: items, isPageChanged: false, clear: false, isAppend: true });
+                }
                 addNew() {
-                    var ds = this._dataSource, item: TItem;
+                    var item: TItem;
                     this._isAddingNew = true;
                     try {
-                        item = ds.addNew();
+                        item = this._dataSource.addNew();
                     } finally {
                         this._isAddingNew = false;
                     }
@@ -3667,6 +3667,7 @@ module RIAPP {
                     this._fn_sort = null;
                     super.destroy();
                 }
+                get dataSource() { return this._dataSource; }
                 get isPagingEnabled() { return this._options.enablePaging; }
                 set isPagingEnabled(v) {
                     if (this._options.enablePaging !== v) {
@@ -3741,7 +3742,7 @@ module RIAPP {
                         else
                             return save_fn_filter(item);
                     };
-                    super(<any>opts);
+                    super(opts);
                 }
                 _refresh() {
                     var self = this, ds = this._dataSource;

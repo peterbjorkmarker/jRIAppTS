@@ -2386,7 +2386,6 @@ declare module RIAPP {
                 public _onDSStatusChanged(args: MOD.collection.ICollItemStatusArgs<TItem>): void;
                 public _bindDS(): void;
                 public _unbindDS(): void;
-                public appendItems(items: TItem[]): TItem[];
                 public _getStrValue(val: any, fieldInfo: any): string;
                 public _onCurrentChanging(newCurrent: TItem): void;
                 public _getErrors(item: TItem): {
@@ -2394,6 +2393,7 @@ declare module RIAPP {
                 };
                 public _onPageChanged(): void;
                 public getItemsWithErrors(): TItem[];
+                public appendItems(items: TItem[]): TItem[];
                 public addNew(): TItem;
                 public removeItem(item: TItem): void;
                 public sortLocal(fieldNames: string[], sortOrder: string): void;
@@ -2401,6 +2401,7 @@ declare module RIAPP {
                 public clear(): void;
                 public refresh(): void;
                 public destroy(): void;
+                public dataSource : MOD.collection.BaseCollection<TItem>;
                 public isPagingEnabled : boolean;
                 public permissions : MOD.collection.IPermissions;
                 public fn_filter : (item: TItem) => boolean;
