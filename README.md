@@ -87,6 +87,7 @@ Fixed product image uploading in the DEMO.
 </p>
 <p>2013-12-28 Code generation enhancement. Now strongly typed DbSets have findEntity method, and strongly typed dictionaries have findItem method. Which have strongly typed arguments.</p>
 <p>2013-12-29 <b>Changed wire dateformat!</b></p>
+<p>2013-12-29 Internal DataService's code refactoring.</p>
 
 --
 Maxim V. Tsapov<br/>

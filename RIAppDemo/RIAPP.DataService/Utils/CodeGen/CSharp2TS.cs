@@ -17,20 +17,12 @@ namespace RIAPP.DataService.Utils
 
     public class CSharp2TS
     {
-        IValueConverter _valConverter;
+        private IServiceContainer _serviceContainer;
         Dictionary<string, string> _tsTypes = new Dictionary<string, string>();
 
-        protected IValueConverter valConverter
+        public CSharp2TS(IServiceContainer serviceContainer)
         {
-            get
-            {
-                return this._valConverter;
-            }
-        }
-
-        public CSharp2TS(IValueConverter converter)
-        {
-            this._valConverter = converter;
+            this._serviceContainer = serviceContainer;
         }
 
         public event EventHandler<NewTypeArgs> newComplexTypeAdded;
@@ -70,7 +62,7 @@ namespace RIAPP.DataService.Utils
                     isEnum = true;
                 }
 
-                DataType dtype = this.valConverter.DataTypeFromType(t, out isArray);
+                DataType dtype = this._serviceContainer.ValueConverter.DataTypeFromType(t, out isArray);
                 res = CSharp2TS.GetTSType(dtype);
                 if (isArray || isEnumerable)
                     res = string.Format("{0}[]", res);
@@ -264,7 +256,7 @@ namespace RIAPP.DataService.Utils
 
         public RIAPP.DataService.DataType DataTypeFromType(Type type, out bool isArray)
         {
-            return this.valConverter.DataTypeFromType(type, out isArray);
+            return this._serviceContainer.ValueConverter.DataTypeFromType(type, out isArray);
         }
     }
 }

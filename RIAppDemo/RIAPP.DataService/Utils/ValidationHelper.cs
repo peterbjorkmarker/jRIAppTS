@@ -6,13 +6,13 @@ namespace RIAPP.DataService.Utils
 {
     public class ValidationHelper : IValidationHelper
     {
-        private IDataHelper _dataHelper;
+        private IServiceContainer _serviceContainer;
 
-        public ValidationHelper(IDataHelper dataHelper)
+        public ValidationHelper(IServiceContainer serviceContainer)
         {
-            this._dataHelper = dataHelper;
+            this._serviceContainer = serviceContainer;
         }
-     
+
         public void CheckString(FieldInfo fieldInfo, string val)
         {
             if (val == null)
@@ -69,7 +69,7 @@ namespace RIAPP.DataService.Utils
                     case DataType.Date:
                     case DataType.DateTime:
                         {
-                            DateTime dtval = (DateTime)this._dataHelper.ConvertToTyped(typeof(DateTime), DataType.DateTime, fieldInfo.dateConversion, val);
+                            DateTime dtval = (DateTime)this._serviceContainer.ValueConverter.DeserializeValue(typeof(DateTime), DataType.DateTime, fieldInfo.dateConversion, val);
                             if (!string.IsNullOrEmpty(rangeParts[0]))
                             {
                                 DateTime minDt = DateTime.ParseExact(rangeParts[0], "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);

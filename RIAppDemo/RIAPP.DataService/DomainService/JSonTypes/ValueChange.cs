@@ -49,13 +49,8 @@ namespace RIAPP.DataService
 
         public object GetTypedValue(Type entityType, DbSetInfo dbSetInfo, IDataHelper dataHelper)
         {
-            FieldInfo fi = dbSetInfo.GetFieldByNames()[this.fieldName];
-            PropertyInfo pinfo = entityType.GetProperty(fi.fieldName);
-            if (pinfo == null)
-                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, entityType.Name, fi.fieldName));
-
-            Type propType = pinfo.PropertyType;
-            return dataHelper.ConvertToTyped(propType, fi.dataType, fi.dateConversion, this.val);
+            FieldInfo fieldInfo = dbSetInfo.GetFieldByNames()[this.fieldName];
+            return dataHelper.DeserializeField(entityType, fieldInfo, this.val);
         }
     }
 }

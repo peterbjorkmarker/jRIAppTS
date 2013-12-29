@@ -8,11 +8,11 @@ namespace RIAPP.DataService.Utils
 {
     public class ValueConverter : IValueConverter
     {
-        private ISerializer _serializer;
+        private IServiceContainer _serviceContainer;
 
-        public ValueConverter(ISerializer serializer)
+        public ValueConverter(IServiceContainer serviceContainer)
         {
-            this._serializer = serializer;
+            this._serviceContainer = serviceContainer;
         }
 
         protected object CreateGenericInstance(Type propType, Type propMainType, object[] constructorArgs)
@@ -160,7 +160,7 @@ namespace RIAPP.DataService.Utils
 
             if (!propMainType.IsValueType)
             {
-                typedVal = this.Serializer.DeSerialize(value, propMainType);
+                typedVal = this._serviceContainer.Serializer.DeSerialize(value, propMainType);
             }
             else
             {
@@ -170,7 +170,7 @@ namespace RIAPP.DataService.Utils
                 }
                 catch (System.InvalidCastException)
                 {
-                    typedVal = this.Serializer.DeSerialize(value, propMainType);
+                    typedVal = this._serviceContainer.Serializer.DeSerialize(value, propMainType);
                 }
             }
 
@@ -223,17 +223,17 @@ namespace RIAPP.DataService.Utils
             return sb.ToString();
         }
 
-        public ISerializer Serializer
-        {
-            get { return this._serializer; }
-        }
-
         public bool IsNullableType(Type propType)
         {
             return propType.IsGenericType && propType.GetGenericTypeDefinition() == typeof(Nullable<int>).GetGenericTypeDefinition();
         }
 
-        public virtual object ConvertToTyped(Type propType, DataType dataType, DateConversion dateConversion, string value)
+        public virtual object DeserializeField(Type propType, FieldInfo fieldInfo, string value)
+        {
+            return this.DeserializeValue(propType, fieldInfo.dataType, fieldInfo.dateConversion, value);
+        }
+
+        public virtual object DeserializeValue(Type propType, DataType dataType, DateConversion dateConversion, string value)
         {
             object result = null;
             bool IsNullableType = this.IsNullableType(propType);
@@ -284,7 +284,7 @@ namespace RIAPP.DataService.Utils
             return result;
         }
 
-        public virtual string ConvertToWireFormat(object value, Type propType)
+        public virtual string SerializeField(Type propType, FieldInfo fieldInfo, object value)
         {
             if (value == null)
                 return null;

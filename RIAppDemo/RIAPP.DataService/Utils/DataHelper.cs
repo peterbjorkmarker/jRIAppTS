@@ -9,11 +9,11 @@ namespace RIAPP.DataService.Utils
 {
     public class DataHelper : IDataHelper
     {
-        protected readonly IValueConverter _converter;
+        private IServiceContainer _serviceContainer;
 
-        public DataHelper(IValueConverter converter)
+        public DataHelper(IServiceContainer serviceContainer)
         {
-            this._converter = converter;
+            this._serviceContainer = serviceContainer;
         }
 
         private static IList CreateList<T>()
@@ -26,11 +26,6 @@ namespace RIAPP.DataService.Utils
             return list.ToArray();
         }
 
-        public bool IsNullableType(Type propType)
-        {
-            return this._converter.IsNullableType(propType);
-        }
-      
         public static int GetLocalDateTimezoneOffset(DateTime dt)
         {
             DateTime uval = dt.ToUniversalTime();
@@ -62,19 +57,19 @@ namespace RIAPP.DataService.Utils
             return pinfo.GetValue(entity, null);
         }
 
-        public object SetValue(object entity, FieldInfo finfo, string value)
+        public object SetValue(object entity, FieldInfo fieldInfo, string value)
         {
             Type enityType = entity.GetType();
-            PropertyInfo pinfo = enityType.GetProperty(finfo.fieldName);
+            PropertyInfo pinfo = enityType.GetProperty(fieldInfo.fieldName);
             if (pinfo == null)
-                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, finfo.fieldName));
+                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, fieldInfo.fieldName));
             if (!pinfo.CanWrite) {
-                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, finfo.fieldName));
+                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, fieldInfo.fieldName));
             }
 
             Type propType = pinfo.PropertyType;
-            bool IsNullableType = this._converter.IsNullableType(propType);
-            object val = this._converter.ConvertToTyped(propType, finfo.dataType, finfo.dateConversion, value);
+            bool IsNullableType = this._serviceContainer.ValueConverter.IsNullableType(propType);
+            object val = this._serviceContainer.ValueConverter.DeserializeField(propType, fieldInfo, value);
 
             if (val != null)
                 pinfo.SetValue(entity, val, null);
@@ -83,32 +78,27 @@ namespace RIAPP.DataService.Utils
             else if (!propType.IsValueType && val == null)
                 pinfo.SetValue(entity, val, null);
             else
-                throw new Exception(string.Format(ErrorStrings.ERR_FIELD_IS_NOT_NULLABLE, finfo.fieldName));
+                throw new Exception(string.Format(ErrorStrings.ERR_FIELD_IS_NOT_NULLABLE, fieldInfo.fieldName));
             return val;
         }
 
-        public DataType DataTypeFromType(Type type, out bool isArray)
-        {
-            return this._converter.DataTypeFromType(type, out isArray);
-        }
-
-        public string GetFieldValueAsString(object entity, string fieldName)
+        public string SerializeField(object entity, FieldInfo fieldInfo)
         {
             string val;
-            bool isOK = this.GetFieldValueAsString(entity, fieldName, false, out val);
+            bool isOK = this.SerializeField(entity, fieldInfo, false, out val);
             return val;
         }
 
         /// <summary>
         /// extracts field value from entity, and converts value to string form
         /// </summary>
-        public bool GetFieldValueAsString(object entity, string fieldName, bool optional, out string val)
+        public bool SerializeField(object entity, FieldInfo fieldInfo, bool optional, out string val)
         {
             val = null;
             Type enityType = entity.GetType();
-            PropertyInfo pinfo = enityType.GetProperty(fieldName);
+            PropertyInfo pinfo = enityType.GetProperty(fieldInfo.fieldName);
             if (pinfo == null && !optional)
-                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, fieldName));
+                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, fieldInfo.fieldName));
 
             if (pinfo == null)
             {
@@ -116,7 +106,7 @@ namespace RIAPP.DataService.Utils
             }
             Type propType = pinfo.PropertyType;
             object fieldValue = pinfo.GetValue(entity, null);
-            val = this._converter.ConvertToWireFormat(fieldValue, propType);
+            val = this._serviceContainer.ValueConverter.SerializeField(propType, fieldInfo, fieldValue);
             return true;
         }
 
@@ -132,35 +122,25 @@ namespace RIAPP.DataService.Utils
             return fieldValue;
         }
 
-        public object ConvertToTyped(Type propType, DataType dataType, DateConversion dateConversion, string value) 
-        {
-            return this._converter.ConvertToTyped(propType, dataType, dateConversion, value);
-        }
-
-        public object ConvertToTyped(Type entityType, FieldInfo finfo, string value)
+        public object DeserializeField(Type entityType, FieldInfo finfo, string value)
         {
             PropertyInfo propInfo = entityType.GetProperty(finfo.fieldName);
 
             if (propInfo == null)
-                throw new Exception(ErrorStrings.ERR_PROPERTY_IS_MISSING);
+                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING,entityType.Name, finfo.fieldName));
 
             Type propType = propInfo.PropertyType;
 
-            return this._converter.ConvertToTyped(propType, finfo.dataType, finfo.dateConversion, value);
+            return this._serviceContainer.ValueConverter.DeserializeField(propType, finfo, value);
         }
-
-        public string ConvertToString(object value, Type propType) 
-        {
-            return this._converter.ConvertToWireFormat(value, propType);
-        }
-
+    
         public object ParseParameter(Type paramType, ParamMetadataInfo pinfo, bool isArray, string val)
         {
             DataType dataType = pinfo.dataType;
 
             if (isArray && val != null)
             {
-                string[] arr = (string[])this._converter.Serializer.DeSerialize(val, typeof(string[]));
+                string[] arr = (string[])this._serviceContainer.Serializer.DeSerialize(val, typeof(string[]));
                 if (arr == null)
                     return null;
                 IList list = (IList)typeof(DataHelper).GetMethod("CreateList", BindingFlags.NonPublic | BindingFlags.Static)
@@ -176,7 +156,7 @@ namespace RIAPP.DataService.Utils
                     .Invoke(null, new object[] { list });
             }
             else
-                return this.ConvertToTyped(paramType, dataType, pinfo.dateConversion, val);
+                return this._serviceContainer.ValueConverter.DeserializeValue(paramType, dataType, pinfo.dateConversion, val);
         }
     }
 }

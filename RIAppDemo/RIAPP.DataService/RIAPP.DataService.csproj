@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DomainService\Interfaces\IServiceContainer.cs" />
+    <Compile Include="DomainService\JSonTypes\ParamMetadataInfo.cs" />
     <Compile Include="DomainService\ServiceArgs.cs" />
     <Compile Include="DomainService\Interfaces\IServiceArgs.cs" />
     <Compile Include="DomainService\Security\AuthorizeAttribute.cs" />
@@ -63,6 +65,7 @@
     <Compile Include="DomainService\Interfaces\IAuthorizer.cs" />
     <Compile Include="DomainService\JSonTypes\TrackAssoc.cs" />
     <Compile Include="DomainService\Security\SecurityHelper.cs" />
+    <Compile Include="DomainService\ServiceContainer.cs" />
     <Compile Include="DomainService\TypedLists.cs" />
     <Compile Include="Utils\CodeGen\CSharp2TS.cs" />
     <Compile Include="Utils\Interfaces\IDataHelper.cs" />

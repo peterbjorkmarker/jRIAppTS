@@ -14,13 +14,13 @@ namespace RIAPP.DataService.Utils
         List<Type> _clientTypes;
         StringBuilder _sb = new StringBuilder(4096);
         CSharp2TS _csharp2TS;
-        IValueConverter _converter;
+        private IServiceContainer _serviceContainer;
 
-        public TypeScriptHelper(IValueConverter converter, MetadataInfo metadata, IEnumerable<Type> clientTypes)
+        public TypeScriptHelper(IServiceContainer serviceContainer, MetadataInfo metadata, IEnumerable<Type> clientTypes)
         {
-            if (converter == null)
-                throw new ArgumentException("converter parameter must not be null", "converter");
-            this._converter = converter;
+            if (serviceContainer == null)
+                throw new ArgumentException("converter parameter must not be null", "serviceContainer");
+            this._serviceContainer = serviceContainer;
             if (metadata == null)
                 throw new ArgumentException("metadata parameter must not be null", "metadata");
             this._metadata = metadata;
@@ -64,7 +64,7 @@ namespace RIAPP.DataService.Utils
             {
                 this._csharp2TS.newComplexTypeAdded -= _csharp2TS_newComplexTypeAdded;
             }
-            this._csharp2TS = new CSharp2TS(this._converter);
+            this._csharp2TS = new CSharp2TS(this._serviceContainer);
             this._csharp2TS.newComplexTypeAdded += _csharp2TS_newComplexTypeAdded;
             _sb.Length = 0;
             if (!string.IsNullOrWhiteSpace(comment))
@@ -472,7 +472,7 @@ namespace RIAPP.DataService.Utils
                     switch (part.value)
                     {
                         case "DBSETS_NAMES":
-                            sb.Append(this._converter.Serializer.Serialize(dbSetNames));
+                            sb.Append(this._serviceContainer.Serializer.Serialize(dbSetNames));
                             break;
                         case "DBSETS_PROPS":
                             sb.Append(this.createDbSetProps());
@@ -484,10 +484,10 @@ namespace RIAPP.DataService.Utils
                             sb.Append(this._metadata.serverTimezone.ToString());
                             break;
                         case "ASSOCIATIONS":
-                            sb.Append(this._converter.Serializer.Serialize(this._metadata.associations));
+                            sb.Append(this._serviceContainer.Serializer.Serialize(this._metadata.associations));
                             break;
                         case "METHODS":
-                            sb.Append(this._converter.Serializer.Serialize(this._metadata.methods));
+                            sb.Append(this._serviceContainer.Serializer.Serialize(this._metadata.methods));
                             break;
                     }
                 }
@@ -546,13 +546,13 @@ namespace RIAPP.DataService.Utils
                             sb.Append(entityInterfaceName);
                             break;
                         case "DBSET_INFO":
-                            sb.Append(this._converter.Serializer.Serialize(dbSetInfo));
+                            sb.Append(this._serviceContainer.Serializer.Serialize(dbSetInfo));
                             break;
                         case "CHILD_ASSOC":
-                            sb.Append(this._converter.Serializer.Serialize(childAssoc));
+                            sb.Append(this._serviceContainer.Serializer.Serialize(childAssoc));
                             break;
                         case "PARENT_ASSOC":
-                            sb.Append(this._converter.Serializer.Serialize(parentAssoc));
+                            sb.Append(this._serviceContainer.Serializer.Serialize(parentAssoc));
                             break;
                         case "QUERIES":
                             sb.Append(this.createDbSetQueries(dbSetInfo));

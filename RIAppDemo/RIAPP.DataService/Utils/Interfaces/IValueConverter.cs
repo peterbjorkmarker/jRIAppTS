@@ -1,15 +1,14 @@
 ﻿using System;
+using RIAPP.DataService;
+
 namespace RIAPP.DataService.Utils.Interfaces
 {
     public interface IValueConverter
     {
+        string SerializeField(Type propType, FieldInfo fieldInfo, object value);
+        object DeserializeField(Type propType, FieldInfo fieldInfo, string value);
+        object DeserializeValue(Type propType, DataType dataType, DateConversion dateConversion, string value);
         bool IsNullableType(Type propType);
-        object ConvertToTyped(Type propType, RIAPP.DataService.DataType dataType, RIAPP.DataService.DateConversion dateConversion, string value);
-        string ConvertToWireFormat(object value, Type propType);
-        RIAPP.DataService.DataType DataTypeFromType(Type type, out bool isArray);
-        ISerializer Serializer
-        {
-            get;
-        }
+        DataType DataTypeFromType(Type type, out bool isArray);
     }
 }

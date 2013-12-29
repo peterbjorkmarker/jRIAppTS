@@ -49,6 +49,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>ErrorStrings.resx</DependentUpon>
     </Compile>
+    <Compile Include="LinqServiceContainer.cs" />
     <Compile Include="Utils\DataServiceMethodsHelper.cs" />
     <Compile Include="Utils\LinqValueConverter.cs" />
   </ItemGroup>

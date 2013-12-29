@@ -6,7 +6,8 @@ namespace RIAPP.DataService.Utils
 {
     public class LinqValueConverter: ValueConverter
     {
-        public LinqValueConverter(ISerializer serializer):base(serializer)
+        public LinqValueConverter(IServiceContainer serviceContainer)
+            : base(serviceContainer)
         {
         }
 
@@ -41,12 +42,12 @@ namespace RIAPP.DataService.Utils
             return this.BytesToString(res);
         }
 
-        public override string ConvertToWireFormat(object value, Type propType)
+        public override string SerializeField(Type propType, FieldInfo fieldInfo, object value)
         {
             if (propType == typeof(System.Data.Linq.Binary))
                 return LinqBinaryToString(value);
             else
-                return base.ConvertToWireFormat(value, propType);
+                return base.SerializeField(propType, fieldInfo, value);
         }
    
         public override DataType DataTypeFromType(Type type, out bool isArray)

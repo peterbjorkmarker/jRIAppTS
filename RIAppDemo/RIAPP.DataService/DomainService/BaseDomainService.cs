@@ -10,86 +10,127 @@ using RIAPP.DataService.Resources;
 using RIAPP.DataService.Utils;
 using RIAPP.DataService.Security;
 using RIAPP.DataService.Utils.Interfaces;
+using System.Threading;
 
 namespace RIAPP.DataService
 {
     public abstract class BaseDomainService: IDomainService
     {
+        public class PerRequestState
+        {
+            private ChangeSet _currentChangeSet;
+
+            private DbSet _currentDbSet;
+
+            private RowInfo _currentRowInfo;
+
+            private GetDataInfo _currentQueryInfo;
+
+            private ServiceOperationType _currentOperation;
+
+            public DbSet CurrentDbSet
+            {
+                get { return _currentDbSet; }
+                set { _currentDbSet = value; }
+            }
+
+            public ChangeSet CurrentChangeSet
+            {
+                get { return _currentChangeSet; }
+                set { _currentChangeSet = value; }
+            }
+
+            public RowInfo CurrentRowInfo
+            {
+                get { return _currentRowInfo; }
+                set { _currentRowInfo = value; }
+            }
+
+            public GetDataInfo CurrentQueryInfo
+            {
+                get { return _currentQueryInfo; }
+                set { _currentQueryInfo = value; }
+            }
+
+            public ServiceOperationType CurrentOperation
+            {
+                get { return _currentOperation; }
+                set { _currentOperation = value; }
+            }
+        }
+
         #region private members
         private static StaSynchronizationContext _synchronizer = new StaSynchronizationContext();
         private static MetadataCache _metadataCache = new MetadataCache();
-        private static ConcurrentDictionary<Type, MethodsList> _tInvokesInfo = new ConcurrentDictionary<Type, MethodsList>();
-        
+        private static ConcurrentDictionary<Type, MethodsList> _methodsInfo = new ConcurrentDictionary<Type, MethodsList>();
+        private PerRequestState _requestState = new PerRequestState();
         private ServiceMetadata _serviceMetadata;
-        private ChangeSet _currentChangeSet;
-        protected DbSet _currentDbSet;
-        protected RowInfo _currentRowInfo;
-        private GetDataInfo _currentQueryInfo;
-        private ServiceOperationType _currentOperation;
         private IPrincipal _principal;
         private ISerializer _serializer;
         private bool _IsCodeGenEnabled = false;
-
-        private Lazy<IAuthorizer> _authorizer;
-        private Lazy<IDataHelper> _dataHelper;
-        private Lazy<IValidationHelper> _validationHelper;
-        private Lazy<IQueryHelper> _queryHelper;
-        private Lazy<IValueConverter> _converter;
+        private IServiceContainer _serviceContainer;
         #endregion
 
         protected IAuthorizer Authorizer
         {
             get
             {
-                return this._authorizer.Value;
+                return this._serviceContainer.Authorizer;
             }
         }
 
-        public ISerializer Serializer
-        {
-            get { return this._serializer; }
-        }
-
-        public IValueConverter ValueConverter
-        {
-            get { return this._converter.Value; }
-        }
-
-        public IDataHelper DataHelper
+        protected ISerializer Serializer
         {
             get
             {
-                return this._dataHelper.Value;
+                return this._serializer;
             }
         }
 
-        public IQueryHelper QueryHelper
+        protected IQueryHelper QueryHelper
         {
             get
             {
-                return this._queryHelper.Value;
+                return this._serviceContainer.QueryHelper;
             }
         }
 
-        public IValidationHelper ValidationHelper
+        protected IValidationHelper ValidationHelper
         {
             get
             {
-                return this._validationHelper.Value;
+                return this._serviceContainer.ValidationHelper;
+            }
+        }
+
+        protected IServiceContainer ServiceContainer
+        {
+            get
+            {
+                return this._serviceContainer;
+            }
+        }
+
+        protected PerRequestState RequestState
+        {
+            get
+            {
+                return this._requestState;
             }
         }
 
         public BaseDomainService(IServiceArgs args)
         {
             if (args.serializer == null)
-                throw new ArgumentException("Domain service class expects a Serializer!");
+                throw new ArgumentException("DataService class expects a Serializer instance!");
             this._principal = args.principal;
             this._serializer = args.serializer;
-            this._authorizer = new Lazy<IAuthorizer>(() => this.CreateAuthorizer());
-            this._converter = new Lazy<IValueConverter>(()=> this.CreateValueConverter());
-            this._dataHelper = new Lazy<IDataHelper>(()=> this.CreateDataHelper());
-            this._validationHelper = new Lazy<IValidationHelper>(()=> this.CreateValidationHelper());
-            this._queryHelper = new Lazy<IQueryHelper>(()=>this.CreateQueryHelper());
+            this._serviceContainer = this.CreateServiceContainer();
+        }
+
+        protected virtual IServiceContainer CreateServiceContainer()
+        {
+            return new ServiceContainer(this._serializer, this.GetType(), this._principal); 
         }
 
         /// <summary>
@@ -112,22 +153,22 @@ namespace RIAPP.DataService
 
         protected ServiceOperationType CurrentOperation
         {
-            get { return _currentOperation; }
+            get { return this.RequestState.CurrentOperation; }
         }
 
         protected ChangeSet CurrentChangeSet
         {
-            get { return _currentChangeSet; }
+            get { return this.RequestState.CurrentChangeSet; }
         }
 
         protected EntityChangeState CurrentChangeState
         {
-            get { return this._currentRowInfo.changeState; }
+            get { return this.RequestState.CurrentRowInfo.changeState; }
         }
 
         protected GetDataInfo CurrentQueryInfo
         {
-            get { return this._currentQueryInfo; }
+            get { return this.RequestState.CurrentQueryInfo; }
         }
 
         protected bool IsCodeGenEnabled
@@ -160,11 +201,11 @@ namespace RIAPP.DataService
                 for (int i = 0; i < fieldsCnt; ++i)
                 {
                     string fv = null;
-                    FieldInfo fld = fields[i];
+                    FieldInfo fieldInfo = fields[i];
 
-                    fv = this.DataHelper.GetFieldValueAsString(entity, fld.fieldName);
+                    fv = this.ServiceContainer.DataHelper.SerializeField(entity, fieldInfo);
                   
-                    int keyIndex = Array.IndexOf(pkInfos, fld);
+                    int keyIndex = Array.IndexOf(pkInfos, fieldInfo);
                     if (keyIndex > -1)
                     {
                         pk[keyIndex] = fv;
@@ -223,7 +264,7 @@ namespace RIAPP.DataService
             LinkedList<object> resultEntities = new LinkedList<object>();
             foreach(object entity in inputEntities)
             {
-                propValue = this.DataHelper.GetProperty(entity, propertyName);
+                propValue = this.ServiceContainer.DataHelper.GetProperty(entity, propertyName);
                 if (isChildProperty && propValue is IEnumerable)
                 {
                     foreach (object childEntity in (IEnumerable)propValue)
@@ -261,11 +302,11 @@ namespace RIAPP.DataService
                 for (int i = 0; i < fieldCnt; ++i)
                 {
                     string fv = null;
-                    FieldInfo fld = fields[i];
+                    FieldInfo fieldInfo = fields[i];
 
-                    fv = this.DataHelper.GetFieldValueAsString(entity, fld.fieldName);
+                    fv = this.ServiceContainer.DataHelper.SerializeField(entity, fieldInfo);
 
-                    int keyIndex = Array.IndexOf(pkInfos, fld);
+                    int keyIndex = Array.IndexOf(pkInfos, fieldInfo);
                     if (keyIndex > -1)
                     {
                         pk[keyIndex] = fv;
@@ -403,14 +444,14 @@ namespace RIAPP.DataService
         private MethodsList GetMethodDescriptions(Type thisType)
         {
              MethodsList res = null;
-             if (BaseDomainService._tInvokesInfo.TryGetValue(thisType, out res))
+             if (BaseDomainService._methodsInfo.TryGetValue(thisType, out res))
                 return res;
              res = new MethodsList();
              var methList = thisType.GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public).Select(m => new { method = m, isQuery = m.IsDefined(typeof(QueryAttribute), false), isInvoke = m.IsDefined(typeof(InvokeAttribute), false) }).Where(m=>(m.isInvoke || m.isQuery)).ToArray();
              Array.ForEach(methList,(info) => {
-                 res.Add(MethodDescription.FromMethodInfo(info.method, info.isQuery, this.DataHelper));
+                 res.Add(MethodDescription.FromMethodInfo(info.method, info.isQuery, this.ServiceContainer));
             });
-            BaseDomainService._tInvokesInfo.TryAdd(thisType, res);
+            BaseDomainService._methodsInfo.TryAdd(thisType, res);
             return res;
         }
 
@@ -428,7 +469,7 @@ namespace RIAPP.DataService
                     continue;
                 if (isOriginal){
                     if ((fv.flags & ValueFlags.Setted) == ValueFlags.Setted)
-                        this.DataHelper.SetValue(entity, finfo, fv.orig);
+                        this.ServiceContainer.DataHelper.SetValue(entity, finfo, fv.orig);
                 }
                 else
                 {
@@ -438,7 +479,7 @@ namespace RIAPP.DataService
                             {
                                 //For delete fill only original values
                                 if ((fv.flags & ValueFlags.Setted) == ValueFlags.Setted)
-                                    this.DataHelper.SetValue(entity, finfo, fv.orig);
+                                    this.ServiceContainer.DataHelper.SetValue(entity, finfo, fv.orig);
                             }
                             break;
                         case ChangeType.Added:
@@ -455,7 +496,7 @@ namespace RIAPP.DataService
                                     {
                                         throw new DomainServiceException(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, finfo.fieldName));
                                     }
-                                    this.DataHelper.SetValue(entity, finfo, fv.val);
+                                    this.ServiceContainer.DataHelper.SetValue(entity, finfo, fv.val);
                                 }
                             }
                             break;
@@ -469,7 +510,7 @@ namespace RIAPP.DataService
                                     {
                                         throw new DomainServiceException(string.Format(ErrorStrings.ERR_FIELD_IS_NOT_NULLABLE, finfo.fieldName));
                                     }
-                                    this.DataHelper.SetValue(entity, finfo, fv.val);
+                                    this.ServiceContainer.DataHelper.SetValue(entity, finfo, fv.val);
                                 }
                                 else if ((fv.flags & ValueFlags.Setted) == ValueFlags.Setted)
                                 {
@@ -477,7 +518,7 @@ namespace RIAPP.DataService
                                     {
                                         throw new DomainServiceException(string.Format(ErrorStrings.ERR_VAL_ORIGINAL_INVALID, finfo.fieldName));
                                     }
-                                    this.DataHelper.SetValue(entity, finfo, fv.val);
+                                    this.ServiceContainer.DataHelper.SetValue(entity, finfo, fv.val);
                                 }
                             }
                             break;
@@ -489,7 +530,7 @@ namespace RIAPP.DataService
             {
                 foreach (var pn in rowInfo.changeState.ParentRows)
                 {
-                    if (!this.DataHelper.SetProperty(entity, pn.association.childToParentName, pn.ParentRow.changeState.Entity))
+                    if (!this.ServiceContainer.DataHelper.SetProperty(entity, pn.association.childToParentName, pn.ParentRow.changeState.Entity))
                     {
                         throw new DomainServiceException(string.Format(ErrorStrings.ERR_CAN_NOT_SET_PARENT_FIELD, pn.association.childToParentName, rowInfo.dbSetInfo.EntityType.Name));
                     }
@@ -505,10 +546,10 @@ namespace RIAPP.DataService
 
             values.ForEach((fv) =>
             {
-                FieldInfo finfo = fields[fv.fieldName];
-                if (!finfo.isIncludeInResult())
+                FieldInfo fieldInfo = fields[fv.fieldName];
+                if (!fieldInfo.isIncludeInResult())
                     return;
-                fv.val = this.DataHelper.GetFieldValueAsString(entity, finfo.fieldName);
+                fv.val = this.ServiceContainer.DataHelper.SerializeField(entity, fieldInfo);
                 fv.flags = fv.flags | ValueFlags.Refreshed;
             });
 
@@ -519,13 +560,13 @@ namespace RIAPP.DataService
 
         }
 
-        protected bool isEntityValueChanged(RowInfo rowInfo, string fieldName, out string newVal) 
+        protected bool isEntityValueChanged(RowInfo rowInfo, FieldInfo fieldInfo, out string newVal) 
         {
             EntityChangeState changeState = rowInfo.changeState;
             string oldVal = null;
-            newVal = this.DataHelper.GetFieldValueAsString(changeState.Entity, fieldName);
+            newVal = this.ServiceContainer.DataHelper.SerializeField(changeState.Entity, fieldInfo);
             if (changeState.OriginalEntity != null)
-                oldVal = this.DataHelper.GetFieldValueAsString(changeState.OriginalEntity, fieldName);
+                oldVal = this.ServiceContainer.DataHelper.SerializeField(changeState.OriginalEntity, fieldInfo);
             return (newVal != oldVal);
         }
 
@@ -536,11 +577,11 @@ namespace RIAPP.DataService
 
             rowInfo.values.ForEach((fv) =>
             {
-                FieldInfo finfo = fields[fv.fieldName];
-                if (!finfo.isIncludeInResult())
+                FieldInfo fieldInfo = fields[fv.fieldName];
+                if (!fieldInfo.isIncludeInResult())
                     return;
                 string newVal;
-                if (this.isEntityValueChanged(rowInfo, finfo.fieldName, out newVal))
+                if (this.isEntityValueChanged(rowInfo, fieldInfo, out newVal))
                 {
                     fv.val = newVal;
                     fv.flags = fv.flags | ValueFlags.Refreshed;
@@ -557,27 +598,27 @@ namespace RIAPP.DataService
         protected T GetOriginal<T>()
             where T : class
         {
-            if (this._currentRowInfo == null) {
+            if (this.RequestState.CurrentRowInfo == null) {
                 throw new DomainServiceException(ErrorStrings.ERR_METH_APPLY_INVALID);
             }
-            return (T)this._currentRowInfo.changeState.OriginalEntity;
+            return (T)this.RequestState.CurrentRowInfo.changeState.OriginalEntity;
         }
 
         private object GetOriginal(object entity)
         {
             object dbEntity = Activator.CreateInstance(entity.GetType());
-            UpdateEntityFromRowInfo(dbEntity, this._currentRowInfo, true);
+            UpdateEntityFromRowInfo(dbEntity, this.RequestState.CurrentRowInfo, true);
             return dbEntity;
         }
 
         protected T GetParent<T>()
             where T : class
         {
-            if (this._currentRowInfo == null)
+            if (this.RequestState.CurrentRowInfo == null)
             {
                 throw new DomainServiceException(ErrorStrings.ERR_METH_APPLY_INVALID);
             }
-            var parents = this._currentRowInfo.changeState.ParentRows;
+            var parents = this.RequestState.CurrentRowInfo.changeState.ParentRows;
             if (parents.Length == 0)
                 return (T)null;
 
@@ -607,7 +648,7 @@ namespace RIAPP.DataService
             if (methInfo == null)
                 throw new DomainServiceException(string.Format(ErrorStrings.ERR_DB_UPDATE_NOT_IMPLEMENTED, dbSetInfo.EntityType.Name, this.GetType().Name));
             object dbEntity = Activator.CreateInstance(dbSetInfo.EntityType);
-            UpdateEntityFromRowInfo(dbEntity, this._currentRowInfo, false);
+            UpdateEntityFromRowInfo(dbEntity, rowInfo, false);
             var original = this.GetOriginal(dbEntity);
             rowInfo.changeState.Entity = dbEntity;
             rowInfo.changeState.OriginalEntity = original;
@@ -626,7 +667,7 @@ namespace RIAPP.DataService
                 throw new DomainServiceException(string.Format(ErrorStrings.ERR_DB_DELETE_NOT_IMPLEMENTED, dbSetInfo.EntityType.Name, this.GetType().Name));
 
             object dbEntity = Activator.CreateInstance(dbSetInfo.EntityType);
-            UpdateEntityFromRowInfo(dbEntity, this._currentRowInfo, true);
+            UpdateEntityFromRowInfo(dbEntity, rowInfo, true);
             rowInfo.changeState.Entity = dbEntity;
             rowInfo.changeState.OriginalEntity = dbEntity;
             methInfo.Invoke(this, new object[] { dbEntity });
@@ -654,7 +695,7 @@ namespace RIAPP.DataService
             {
                 if (!fieldInfo.isIncludeInResult())
                     continue;
-                string value = this.DataHelper.GetFieldValueAsString(rowInfo.changeState.Entity, fieldInfo.fieldName);
+                string value = this.ServiceContainer.DataHelper.SerializeField(rowInfo.changeState.Entity, fieldInfo);
                 if (rowInfo.changeType == ChangeType.Added)
                 {
                     bool isSkip = fieldInfo.isAutoGenerated || (skipCheckList != null && skipCheckList.Any(n => n == fieldInfo.fieldName));
@@ -666,7 +707,7 @@ namespace RIAPP.DataService
                 }
                 else if (rowInfo.changeType == ChangeType.Updated) {
                     string newVal;
-                    bool isChanged = isEntityValueChanged(rowInfo, fieldInfo.fieldName, out newVal);
+                    bool isChanged = isEntityValueChanged(rowInfo, fieldInfo, out newVal);
                     if (isChanged) {
                        this.ValidationHelper.CheckValue(fieldInfo, newVal);
                     }
@@ -696,31 +737,6 @@ namespace RIAPP.DataService
 
         #region Overridable Methods
         protected abstract Metadata GetMetadata();
-
-        protected virtual IAuthorizer CreateAuthorizer()
-        {
-            return new AuthorizerClass(this.GetType(), this.CurrentPrincipal);
-        }
-
-        protected virtual IValueConverter CreateValueConverter()
-        {
-            return new ValueConverter(this.Serializer);
-        }
-
-        protected virtual IDataHelper CreateDataHelper()
-        {
-            return new DataHelper(this.ValueConverter);
-        }
-
-        protected virtual IValidationHelper CreateValidationHelper()
-        {
-            return new ValidationHelper(this.DataHelper);
-        }
-
-        protected virtual IQueryHelper CreateQueryHelper()
-        {
-            return new QueryHelper(this.DataHelper);
-        }
 
         /// <summary>
         /// Can be used for tracking what is changed by CRUD methods
@@ -794,7 +810,7 @@ namespace RIAPP.DataService
         protected virtual string GetTypeScript(string comment = null)
         {
             MetadataInfo metadata = this.ServiceGetMetadata();
-            TypeScriptHelper helper = new TypeScriptHelper(this.ValueConverter, metadata, this.GetClientTypes());
+            TypeScriptHelper helper = new TypeScriptHelper(this._serviceContainer, metadata, this.GetClientTypes());
             return helper.CreateTypeScript(comment);
         }
 
@@ -834,16 +850,16 @@ namespace RIAPP.DataService
           
             for (var i = 0; i < method.parameters.Count; ++i)
             {
-                 methParams.AddLast(queryInfo.paramInfo.GetValue(method.parameters[i].name, method, this.DataHelper));
+                 methParams.AddLast(queryInfo.paramInfo.GetValue(method.parameters[i].name, method, this.ServiceContainer));
             }
-            this._currentQueryInfo = queryInfo;
+            this.RequestState.CurrentQueryInfo = queryInfo;
             try
             {
                 queryResult = (QueryResult)method.methodInfo.Invoke(this, methParams.ToArray());
             }
             finally
             {
-                this._currentQueryInfo = null;
+                this.RequestState.CurrentQueryInfo = null;
             }
     
             IEnumerable entities = (IEnumerable)queryResult.Result;
@@ -885,11 +901,11 @@ namespace RIAPP.DataService
                     //methods on domain service which are attempted to be executed by client (SaveChanges triggers their execution)
                     Dictionary<string, MethodInfo> domainServiceMethods = new Dictionary<string, MethodInfo>();
                     DbSetInfo dbInfo = metadata.dbSets[dbSet.dbSetName];
-                    this._currentDbSet = dbSet;
+                    this.RequestState.CurrentDbSet = dbSet;
 
                     foreach (RowInfo rowInfo in dbSet.rows)
                     {
-                        this._currentRowInfo = rowInfo;
+                        this.RequestState.CurrentRowInfo = rowInfo;
                         MethodInfo methInfo = null;
                         try
                         {
@@ -897,7 +913,7 @@ namespace RIAPP.DataService
                         }
                         finally
                         {
-                            this._currentRowInfo = null;
+                            this.RequestState.CurrentRowInfo = null;
                         }
                         
                         if (methInfo == null)
@@ -914,7 +930,7 @@ namespace RIAPP.DataService
             }
             finally
             {
-                this._currentDbSet = null;
+                this.RequestState.CurrentDbSet = null;
             }
         }
 
@@ -926,8 +942,8 @@ namespace RIAPP.DataService
            
             foreach (var rowInfo in graph.insertList)
             {
-                this._currentDbSet = changeSet.dbSets.Where(d => d.dbSetName == rowInfo.dbSetInfo.dbSetName).Single();
-                this._currentRowInfo = rowInfo;
+                this.RequestState.CurrentDbSet = changeSet.dbSets.Where(d => d.dbSetName == rowInfo.dbSetInfo.dbSetName).Single();
+                this.RequestState.CurrentRowInfo = rowInfo;
                 try
                 {
                     rowInfo.changeState = new EntityChangeState { ParentRows= graph.GetParents(rowInfo) };
@@ -935,15 +951,15 @@ namespace RIAPP.DataService
                 }
                 finally
                 {
-                    this._currentRowInfo = null;
-                    this._currentDbSet = null;
+                    this.RequestState.CurrentRowInfo = null;
+                    this.RequestState.CurrentDbSet = null;
                 }
             }
 
             foreach (var rowInfo in graph.updateList)
             {
-                this._currentDbSet = changeSet.dbSets.Where(d => d.dbSetName == rowInfo.dbSetInfo.dbSetName).Single();
-                this._currentRowInfo = rowInfo;
+                this.RequestState.CurrentDbSet = changeSet.dbSets.Where(d => d.dbSetName == rowInfo.dbSetInfo.dbSetName).Single();
+                this.RequestState.CurrentRowInfo = rowInfo;
                 try
                 {
                     rowInfo.changeState = new EntityChangeState();
@@ -951,15 +967,15 @@ namespace RIAPP.DataService
                 }
                 finally
                 {
-                    this._currentRowInfo = null;
-                    this._currentDbSet = null;
+                    this.RequestState.CurrentRowInfo = null;
+                    this.RequestState.CurrentDbSet = null;
                 }
             }
 
             foreach (var rowInfo in graph.deleteList)
             {
-                this._currentDbSet = changeSet.dbSets.Where(d => d.dbSetName == rowInfo.dbSetInfo.dbSetName).Single();
-                this._currentRowInfo = rowInfo;
+                this.RequestState.CurrentDbSet = changeSet.dbSets.Where(d => d.dbSetName == rowInfo.dbSetInfo.dbSetName).Single();
+                this.RequestState.CurrentRowInfo = rowInfo;
                 try
                 {
                     rowInfo.changeState = new EntityChangeState();
@@ -967,8 +983,8 @@ namespace RIAPP.DataService
                 }
                 finally
                 {
-                    this._currentRowInfo = null;
-                    this._currentDbSet = null;
+                    this.RequestState.CurrentRowInfo = null;
+                    this.RequestState.CurrentDbSet = null;
                 }
             }
             
@@ -977,8 +993,8 @@ namespace RIAPP.DataService
             //Validation step
             foreach (var rowInfo in graph.insertList)
             {
-                this._currentDbSet = changeSet.dbSets.Where(d => d.dbSetName == rowInfo.dbSetInfo.dbSetName).Single();
-                this._currentRowInfo = rowInfo;
+                this.RequestState.CurrentDbSet = changeSet.dbSets.Where(d => d.dbSetName == rowInfo.dbSetInfo.dbSetName).Single();
+                this.RequestState.CurrentRowInfo = rowInfo; 
                 try
                 {
                     if (!this.ValidateEntity(rowInfo))
@@ -989,16 +1005,16 @@ namespace RIAPP.DataService
                 }
                 finally
                 {
-                    this._currentRowInfo = null;
-                    this._currentDbSet = null;
+                    this.RequestState.CurrentRowInfo = null;
+                    this.RequestState.CurrentDbSet = null;
                 }
             }
 
             //Validation step
             foreach (var rowInfo in graph.updateList)
             {
-                this._currentDbSet = changeSet.dbSets.Where(d => d.dbSetName == rowInfo.dbSetInfo.dbSetName).Single();
-                this._currentRowInfo = rowInfo;
+                this.RequestState.CurrentDbSet = changeSet.dbSets.Where(d => d.dbSetName == rowInfo.dbSetInfo.dbSetName).Single();
+                this.RequestState.CurrentRowInfo = rowInfo; 
                 try
                 {
                     if (!this.ValidateEntity(rowInfo))
@@ -1009,8 +1025,8 @@ namespace RIAPP.DataService
                 }
                 finally
                 {
-                    this._currentRowInfo = null;
-                    this._currentDbSet = null;
+                    this.RequestState.CurrentRowInfo = null;
+                    this.RequestState.CurrentDbSet = null;
                 }
             }
 
@@ -1047,7 +1063,7 @@ namespace RIAPP.DataService
             this.Authorizer.CheckUserRightsToExecute(method.methodInfo);
             List<object> methParams = new List<object>();
             for (var i = 0; i < method.parameters.Count; ++i) {
-               methParams.Add(invokeInfo.paramInfo.GetValue(method.parameters[i].name, method, this.DataHelper));
+               methParams.Add(invokeInfo.paramInfo.GetValue(method.parameters[i].name, method, this.ServiceContainer));
             }
             object meth_result = method.methodInfo.Invoke(this, methParams.ToArray());
             InvokeResult res = new InvokeResult();
@@ -1142,7 +1158,7 @@ namespace RIAPP.DataService
         public GetDataResult ServiceGetData(GetDataInfo getInfo)
         {
             GetDataResult res = null;
-            this._currentOperation = ServiceOperationType.GetData;
+            this.RequestState.CurrentOperation = ServiceOperationType.GetData;
             try
             {
                 res = this.GetData(getInfo);
@@ -1158,7 +1174,7 @@ namespace RIAPP.DataService
             }
             finally
             {
-                this._currentOperation = ServiceOperationType.None;
+                this.RequestState.CurrentOperation = ServiceOperationType.None;
             }
             return res;
         }
@@ -1166,8 +1182,8 @@ namespace RIAPP.DataService
         public ChangeSet ServiceApplyChangeSet(ChangeSet changeSet)
         {
             bool res = true;
-            this._currentOperation = ServiceOperationType.SaveChanges;
-            this._currentChangeSet = changeSet;
+            this.RequestState.CurrentOperation = ServiceOperationType.SaveChanges;
+            this.RequestState.CurrentChangeSet = changeSet;
             try
             {
                 this.AuthorizeChangeSet(changeSet);
@@ -1185,8 +1201,8 @@ namespace RIAPP.DataService
             }
             finally
             {
-                this._currentOperation = ServiceOperationType.None;
-                this._currentChangeSet = null;
+                this.RequestState.CurrentOperation = ServiceOperationType.None;
+                this.RequestState.CurrentChangeSet = null;
             }
             return changeSet;
         }
@@ -1194,7 +1210,7 @@ namespace RIAPP.DataService
         public RefreshRowInfo ServiceRefreshRow(RefreshRowInfo getInfo)
         {
             RefreshRowInfo res = null;
-            this._currentOperation = ServiceOperationType.RefreshRowData;
+            this.RequestState.CurrentOperation = ServiceOperationType.RefreshRowData;
             try
             {
                 res = this.RefreshRowInfo(getInfo);
@@ -1208,14 +1224,14 @@ namespace RIAPP.DataService
             }
             finally
             {
-                this._currentOperation = ServiceOperationType.None;
+                this.RequestState.CurrentOperation = ServiceOperationType.None;
             }
             return res;
         }
 
         public InvokeResult ServiceInvokeMethod(InvokeInfo parameters) {
             InvokeResult res = null;
-            this._currentOperation = ServiceOperationType.InvokeMethod;
+            this.RequestState.CurrentOperation = ServiceOperationType.InvokeMethod;
             try
             {
                 res = this.InvokeMethod(parameters);
@@ -1229,7 +1245,7 @@ namespace RIAPP.DataService
             }
             finally
             {
-                this._currentOperation = ServiceOperationType.None;
+                this.RequestState.CurrentOperation = ServiceOperationType.None;
             }
             return res;
         }
@@ -1240,15 +1256,9 @@ namespace RIAPP.DataService
         protected virtual void Dispose(bool isDisposing)
         {
            this._serviceMetadata=null;
-           this._currentChangeSet = null;
-           this._currentDbSet = null;
-           this._currentRowInfo = null;
-           this._currentQueryInfo = null;
+           this._requestState = null;
            this._principal = null;
-           this._authorizer = null;
-           this._dataHelper = null;
-           this._validationHelper = null;
-           this._queryHelper = null;
+           this._serviceContainer = null;
            this._serializer = null;
         }
 

@@ -9,11 +9,11 @@ namespace RIAPP.DataService.Utils
 {
     public class QueryHelper : IQueryHelper
     {
-        private IDataHelper _dataHelper;
+        private IServiceContainer _serviceContainer;
 
-        public QueryHelper(IDataHelper dataHelper)
+        public QueryHelper(IServiceContainer serviceContainer)
         {
-            this._dataHelper = dataHelper;
+            this._serviceContainer = serviceContainer;
         }
 
         public IQueryable<T> PerformSort<T>(IQueryable<T> entities, SortInfo sort)
@@ -66,13 +66,13 @@ namespace RIAPP.DataService.Utils
                         if (filterItem.values.Count == 1)
                         {
                             sb.AppendFormat("{0}==@{1}", filterItem.fieldName, cnt);
-                            filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                            filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         }
                         else
                         {
                             List<object> vals = new List<object>();
                             foreach (string v in filterItem.values)
-                                vals.Add(this._dataHelper.ConvertToTyped(typeof(T), finfo, v));
+                                vals.Add(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, v));
 
                             sb.AppendFormat("@{0}.Contains(outerIt.{1})", cnt, filterItem.fieldName);
                             filterParams.AddLast(vals);
@@ -80,40 +80,40 @@ namespace RIAPP.DataService.Utils
                         break;
                     case FilterType.StartsWith:
                         sb.AppendFormat("{0}.StartsWith(@{1})", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.EndsWith:
                         sb.AppendFormat("{0}.EndsWith(@{1})", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Contains:
                         sb.AppendFormat("{0}.Contains(@{1})", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Gt:
                         sb.AppendFormat("{0}>@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Lt:
                         sb.AppendFormat("{0}<@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.GtEq:
                         sb.AppendFormat("{0}>=@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.LtEq:
                         sb.AppendFormat("{0}<=@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.NotEq:
                         sb.AppendFormat("{0}!=@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Between:
                         sb.AppendFormat("{0}>=@{1} and {0}<=@{2}", filterItem.fieldName, cnt, ++cnt);
-                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.FirstOrDefault()));
-                        filterParams.AddLast(this._dataHelper.ConvertToTyped(typeof(T), finfo, filterItem.values.LastOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.LastOrDefault()));
                         break;
                 }
 
@@ -152,7 +152,7 @@ namespace RIAPP.DataService.Utils
         public T GetRefreshedEntity<T>(IQueryable<T> entities, RefreshRowInfo info)
              where T : class
         {
-            object[] keyValue = info.rowInfo.GetPKValues(this._dataHelper);
+            object[] keyValue = info.rowInfo.GetPKValues(this._serviceContainer.DataHelper);
             object dbEntity = this.FindEntity(entities, info.rowInfo, keyValue);
             return (T)dbEntity;
         }

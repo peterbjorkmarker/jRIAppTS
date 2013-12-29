@@ -26,12 +26,12 @@ namespace RIAPP.DataService.LinqSql
            
         }
 
-        protected override IValueConverter CreateValueConverter()
+        protected override IServiceContainer CreateServiceContainer()
         {
-            return new LinqValueConverter(this.Serializer);
+            return new LinqServiceContainer(this.Serializer, this.GetType(), this.CurrentPrincipal);
         }
 
-
+   
         #region Overridable Methods
         protected virtual TDB CreateDataContext() {
             return Activator.CreateInstance<TDB>();
@@ -59,8 +59,8 @@ namespace RIAPP.DataService.LinqSql
                         fieldInfo.isPrimaryKey = ++pkNum;
                     }
                     bool isArray = false;
-                    fieldInfo.dataType = this.DataHelper.DataTypeFromType(propInfo2.PropertyType, out isArray);
-                    fieldInfo.isNullable = this.DataHelper.IsNullableType(propInfo2.PropertyType) || colAttr.CanBeNull;
+                    fieldInfo.dataType = this.ServiceContainer.ValueConverter.DataTypeFromType(propInfo2.PropertyType, out isArray);
+                    fieldInfo.isNullable = this.ServiceContainer.ValueConverter.IsNullableType(propInfo2.PropertyType) || colAttr.CanBeNull;
                     fieldInfo.isRowTimeStamp = colAttr.IsVersion;
                     fieldInfo.isReadOnly = !propInfo2.CanWrite;
                     dbSetInfo.fieldInfos.Add(fieldInfo);
