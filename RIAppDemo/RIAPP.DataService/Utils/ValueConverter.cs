@@ -26,7 +26,7 @@ namespace RIAPP.DataService.Utils
 
         protected DateTime ParseDateTimeValue(string val, DateConversion dateConversion)
         {
-            string[] parts = val.Split("&".ToCharArray());
+            string[] parts = val.Split('-');
             if (parts.Length != 7)
             {
                 throw new ArgumentException(string.Format(ErrorStrings.ERR_VAL_DATEFORMAT_INVALID, val));
@@ -37,7 +37,7 @@ namespace RIAPP.DataService.Utils
 
         protected string DateToValue(DateTime dt)
         {
-            string v = string.Format("{0}&{1}&{2}&{3}&{4}&{5}&{6}", dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second, dt.Millisecond);
+            string v = string.Format("{0}-{1}-{2}-{3}-{4}-{5}-{6}", dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second, dt.Millisecond);
             return v;
         }
 

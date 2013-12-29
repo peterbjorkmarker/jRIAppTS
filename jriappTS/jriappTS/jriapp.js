@@ -1380,7 +1380,7 @@ var RIAPP;
                     if (!val)
                         return null;
                     val = '' + val;
-                    var parts = val.split("&");
+                    var parts = val.split("-");
                     if (parts.length != 7) {
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'val', val));
                     }
@@ -1423,7 +1423,7 @@ var RIAPP;
                         default:
                             throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dtcnv', dtcnv));
                     }
-                    return ("" + dt.getFullYear() + "&" + (dt.getMonth() + 1) + "&" + dt.getDate() + "&" + dt.getHours() + "&" + dt.getMinutes() + "&" + dt.getSeconds() + "&" + dt.getMilliseconds());
+                    return ("" + dt.getFullYear() + "-" + (dt.getMonth() + 1) + "-" + dt.getDate() + "-" + dt.getHours() + "-" + dt.getMinutes() + "-" + dt.getSeconds() + "-" + dt.getMilliseconds());
                 },
                 compareVals: function (v1, v2, dataType) {
                     if ((v1 === null && v2 !== null) || (v1 !== null && v2 === null))

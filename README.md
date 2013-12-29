@@ -86,6 +86,7 @@ Fixed product image uploading in the DEMO.
  http://YOURSERVER/RIAppDemoService/CodeGen?type=csharp
 </p>
 <p>2013-12-28 Code generation enhancement. Now strongly typed DbSets have findEntity method, and strongly typed dictionaries have findItem method. Which have strongly typed arguments.</p>
+<p>2013-12-29 <b>Changed wire dateformat!</b></p>
 
 --
 Maxim V. Tsapov<br/>
