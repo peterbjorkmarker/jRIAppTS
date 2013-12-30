@@ -208,6 +208,91 @@ namespace RIAPP.DataService.Utils
             return sb.ToString();
         }
 
+        protected static string toCamelCase(string str)
+        {
+            return str.Length > 1 ? str.Substring(0, 1).ToLower() + str.Substring(1, str.Length - 1) : str.ToLower();
+        }
+
+        private string createDictionary(string name, string keyName, string itemName, string interfaceName, string properties, List<System.Reflection.PropertyInfo> propList)
+        {
+            var sbDict = new StringBuilder(512);
+            var pkProp = propList.Where((propInfo) => keyName == propInfo.Name).SingleOrDefault();
+            if (pkProp == null)
+                throw new Exception(string.Format("Dictionary item does not have a property with a name {0}", keyName));
+            string pkVals = toCamelCase(pkProp.Name) + ": " + this._csharp2TS.GetTSTypeName(pkProp.PropertyType);
+
+
+            (new TemplateParser("Dictionary.txt")).ProcessParts((part) =>
+            {
+                if (!part.isPlaceHolder)
+                {
+                    sbDict.Append(part.value);
+                }
+                else
+                {
+                    switch (part.value)
+                    {
+                        case "DICT_NAME":
+                            sbDict.Append(name);
+                            break;
+                        case "ITEM_TYPE_NAME":
+                            sbDict.Append(itemName);
+                            break;
+                        case "INTERF_TYPE_NAME":
+                            sbDict.Append(interfaceName);
+                            break;
+                        case "KEY_NAME":
+                            sbDict.Append(keyName);
+                            break;
+                        case "PROPS":
+                            {
+                                sbDict.Append(properties);
+                            }
+                            break;
+                        case "PK_VALS":
+                            sbDict.Append(pkVals);
+                            break;
+                    }
+                }
+            });
+            return sbDict.ToString();
+        }
+
+        private string createList(string name, string itemName, string interfaceName, string properties)
+        {
+            var sbList = new StringBuilder(512);
+
+            (new TemplateParser("List.txt")).ProcessParts((part) =>
+            {
+                if (!part.isPlaceHolder)
+                {
+                    sbList.Append(part.value);
+                }
+                else
+                {
+                    switch (part.value)
+                    {
+                        case "LIST_NAME":
+                            sbList.Append(name);
+                            break;
+                        case "ITEM_TYPE_NAME":
+                            sbList.Append(itemName);
+                            break;
+                        case "INTERF_TYPE_NAME":
+                            sbList.Append(interfaceName);
+                            break;
+                        case "PROPS":
+                            {
+                                sbList.Append(properties);
+                            }
+                            break;
+                    }
+                }
+            });
+            
+            return sbList.ToString();
+        }
+
         private string createClientType(Type type)
         {
             var dictAttr = type.GetCustomAttributes(typeof(DictionaryAttribute), false).OfType<DictionaryAttribute>().FirstOrDefault();
@@ -223,39 +308,43 @@ namespace RIAPP.DataService.Utils
                 listName = listAttr.ListName == null ? string.Format("{0}List", type.Name) : listAttr.ListName;
             bool isListItem = dictAttr != null || listAttr != null;
             string interfaceName = this._csharp2TS.GetTSTypeName(type);
-            if (!type.IsClass || !isListItem)
-                return  sb.ToString();
-
             
-                string listItemName = string.Format("{0}ListItem", type.Name);
-                var propList = type.GetProperties().ToList();
-
-                sb.AppendLine(string.Format("export class {0} extends RIAPP.MOD.collection.ListItem implements {1}", listItemName, interfaceName));
-                sb.AppendLine("{");
-                sb.AppendLine(string.Format("\tconstructor(coll: RIAPP.MOD.collection.BaseList<{0}, {1}>, obj?: {1})", listItemName, interfaceName));
-                sb.AppendLine("\t{");
-                sb.AppendLine("\t\tsuper(coll,obj);");
-                sb.AppendLine("\t}");
-                propList.ForEach((propInfo) =>
-                {
-                    sb.AppendLine(string.Format("\tget {0}():{1} {{ return <{1}>this._getProp('{0}'); }}", propInfo.Name, this._csharp2TS.GetTSTypeName(propInfo.PropertyType)));
-                    sb.AppendLine(string.Format("\tset {0}(v:{1}) {{ this._setProp('{0}', v); }}", propInfo.Name, this._csharp2TS.GetTSTypeName(propInfo.PropertyType)));
-                });
-                sb.AppendFormat("\tasInterface() {{ return <{0}>this; }}", interfaceName);
-                sb.AppendLine();
-                sb.AppendLine("}");
-                sb.AppendLine();
+            //can return here if no need to create Dictionary or List
+            if (!type.IsClass || !isListItem)
+                return sb.ToString();
 
 
-                var sbDict = new StringBuilder(512);
-                var sbList = new StringBuilder(512);
+            string listItemName = string.Format("{0}ListItem", type.Name);
+            var propInfos = type.GetProperties().ToList();
+
+            #region Create ListItem
+            sb.AppendLine(string.Format("export class {0} extends RIAPP.MOD.collection.ListItem implements {1}", listItemName, interfaceName));
+            sb.AppendLine("{");
+            sb.AppendLine(string.Format("\tconstructor(coll: RIAPP.MOD.collection.BaseList<{0}, {1}>, obj?: {1})", listItemName, interfaceName));
+            sb.AppendLine("\t{");
+            sb.AppendLine("\t\tsuper(coll,obj);");
+            sb.AppendLine("\t}");
+            propInfos.ForEach((propInfo) =>
+            {
+                sb.AppendLine(string.Format("\tget {0}():{1} {{ return <{1}>this._getProp('{0}'); }}", propInfo.Name, this._csharp2TS.GetTSTypeName(propInfo.PropertyType)));
+                sb.AppendLine(string.Format("\tset {0}(v:{1}) {{ this._setProp('{0}', v); }}", propInfo.Name, this._csharp2TS.GetTSTypeName(propInfo.PropertyType)));
+            });
+            sb.AppendFormat("\tasInterface() {{ return <{0}>this; }}", interfaceName);
+            sb.AppendLine();
+            sb.AppendLine("}");
+            sb.AppendLine();
+            #endregion
+
+            #region Define fn_Properties
+            Func<List<System.Reflection.PropertyInfo>, string> fn_Properties = (props) =>
+            {
                 var sbProps = new StringBuilder(256);
 
                 sbProps.Append("[");
                 bool isFirst = true;
                 bool isArray = false;
 
-                propList.ForEach((propInfo) =>
+                props.ForEach((propInfo) =>
                 {
                     if (!isFirst)
                         sbProps.Append(",");
@@ -276,90 +365,24 @@ namespace RIAPP.DataService.Utils
                     isFirst = false;
                 });
                 sbProps.Append("]");
+                return sbProps.ToString();
+            };
+            #endregion
 
-                if (dictAttr != null)
-                {
-                    var pkProp = propList.Where((propInfo) => dictAttr.KeyName == propInfo.Name).SingleOrDefault();
-                    if (pkProp == null)
-                        throw new Exception(string.Format("Dictionary item does not have a property with name {0}",dictAttr.KeyName));
+            string properties = fn_Properties(propInfos);
 
-                    Func<string, string> fn_CamelCase = (str) =>
-                    {
-                        return str.Length > 1 ? str.Substring(0, 1).ToLower() + str.Substring(1, str.Length - 1) : str.ToLower();
-                    };
-                    string pkVals = fn_CamelCase(pkProp.Name) + ": " + this._csharp2TS.GetTSTypeName(pkProp.PropertyType);
+            if (dictAttr != null)
+            {
+                sb.AppendLine(this.createDictionary(dictName, dictAttr.KeyName, listItemName, interfaceName, properties, propInfos));
+                sb.AppendLine();
+            }
 
+            if (listAttr != null)
+            {
+                sb.AppendLine(this.createList(listName, listItemName, interfaceName, properties));
+                sb.AppendLine();
+            }
 
-                    (new TemplateParser("Dictionary.txt")).ProcessParts((part) =>
-                    {
-                        if (!part.isPlaceHolder)
-                        {
-                            sbDict.Append(part.value);
-                        }
-                        else
-                        {
-                            switch (part.value)
-                            {
-                                case "DICT_NAME":
-                                    sbDict.Append(dictName);
-                                    break;
-                                case "ITEM_TYPE_NAME":
-                                    sbDict.Append(listItemName);
-                                    break;
-                                case "INTERF_TYPE_NAME":
-                                    sbDict.Append(interfaceName);
-                                    break;
-                                case "KEY_NAME":
-                                    sbDict.Append(dictAttr.KeyName);
-                                    break;
-                                case "PROPS":
-                                    {
-                                        sbDict.Append(sbProps.ToString());
-                                    }
-                                    break;
-                                case "PK_VALS":
-                                    sbDict.Append(pkVals);
-                                    break;
-                            }
-                        }
-                    });
-                    sb.AppendLine(sbDict.ToString());
-                    sb.AppendLine();
-                }
-
-                if (listAttr != null)
-                {
-                    (new TemplateParser("List.txt")).ProcessParts((part) =>
-                    {
-                        if (!part.isPlaceHolder)
-                        {
-                            sbList.Append(part.value);
-                        }
-                        else
-                        {
-                            switch (part.value)
-                            {
-                                case "LIST_NAME":
-                                    sbList.Append(listName);
-                                    break;
-                                case "ITEM_TYPE_NAME":
-                                    sbList.Append(listItemName);
-                                    break;
-                                case "INTERF_TYPE_NAME":
-                                    sbList.Append(interfaceName);
-                                    break;
-                                case "PROPS":
-                                    {
-                                        sbList.Append(sbProps.ToString());
-                                    }
-                                    break;
-                            }
-                        }
-                    });
-                    sb.AppendLine(sbList.ToString());
-                    sb.AppendLine();
-                }
-            
 
             return sb.ToString();
         }
@@ -508,16 +531,11 @@ namespace RIAPP.DataService.Utils
             
             var pkFields = dbSetInfo.GetPKFieldInfos();
             string pkVals = "";
-            Func<string, string> fn_CamelCase = (str) =>
-            {
-                return str.Length > 1 ? str.Substring(0, 1).ToLower() + str.Substring(1, str.Length - 1) : str.ToLower();
-            };
-
             foreach (var pkField in pkFields)
             {
                 if (!string.IsNullOrEmpty(pkVals))
                     pkVals += ", ";
-                pkVals += fn_CamelCase(pkField.fieldName) + ": " + this.GetFieldDataType(pkField);
+                pkVals += toCamelCase(pkField.fieldName) + ": " + this.GetFieldDataType(pkField);
             }
 
             (new TemplateParser("DbSet.txt")).ProcessParts((part) =>
