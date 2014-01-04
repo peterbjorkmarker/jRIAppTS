@@ -8,11 +8,32 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using System.Reflection;
+using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService.Utils
 {
     public static class DiffGram
     {
+        private static object GetValue(object obj, string propertyName)
+        {
+            string[] parts = propertyName.Split('.');
+            Type objType = obj.GetType();
+            PropertyInfo pinfo = objType.GetProperty(parts[0]);
+            if (pinfo == null)
+                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, objType.Name, propertyName));
+            if (parts.Length == 1)
+            {
+                return pinfo.GetValue(obj, null);
+            }
+            else
+            {
+                var pval = pinfo.GetValue(obj, null);
+                if (pval == null)
+                    throw new Exception(string.Format(ErrorStrings.ERR_PPROPERTY_ISNULL, objType.Name, pinfo.Name));
+                return GetValue(pval, string.Join(".", parts.Skip(1).ToArray()));
+            }
+        }
+
         private static Dictionary<string, object> GetValues(Type t, object obj, string[] propNames)
         {
             Dictionary<string, object> res = new Dictionary<string, object>();
@@ -20,8 +41,7 @@ namespace RIAPP.DataService.Utils
                 return res;
             foreach (string name in propNames)
             {
-                PropertyInfo pi = t.GetProperty(name);
-                res.Add(pi.Name, pi.GetValue(obj, null));
+                res.Add(name, GetValue(obj, name));
             }
             return res;
         }
@@ -104,7 +124,7 @@ namespace RIAPP.DataService.Utils
                 }
             }
 
-            XElement x = new XElement("changes",
+            XElement x = new XElement("diffgram",
                  from v in lst
                  select new XElement(v.Name,
                       new XAttribute("old", v.Val1),

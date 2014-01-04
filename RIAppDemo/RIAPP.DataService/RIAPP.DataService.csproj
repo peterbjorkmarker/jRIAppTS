@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DomainService\Interfaces\IServiceContainer.cs" />
+    <Compile Include="DomainService\JSonTypes\FieldName.cs" />
     <Compile Include="DomainService\JSonTypes\ParamMetadataInfo.cs" />
     <Compile Include="DomainService\ServiceArgs.cs" />
     <Compile Include="DomainService\Interfaces\IServiceArgs.cs" />
@@ -67,7 +68,8 @@
     <Compile Include="DomainService\Security\SecurityHelper.cs" />
     <Compile Include="DomainService\ServiceContainer.cs" />
     <Compile Include="DomainService\TypedLists.cs" />
-    <Compile Include="Utils\CodeGen\CSharp2TS.cs" />
+    <Compile Include="Utils\CodeGen\ComplexTypeBuilder.cs" />
+    <Compile Include="Utils\CodeGen\DotNet2TS.cs" />
     <Compile Include="Utils\Interfaces\IDataHelper.cs" />
     <Compile Include="Utils\Interfaces\IQueryHelper.cs" />
     <Compile Include="Utils\Interfaces\ISerializer.cs" />
@@ -149,6 +151,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\List.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\RootComplexProperty.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\ChildComplexProperty.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

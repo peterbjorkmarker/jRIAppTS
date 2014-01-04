@@ -5,6 +5,11 @@ using System.Text;
 
 namespace RIAPP.DataService
 {
+    public enum FieldType : int
+    {
+        None = 0, ClientOnly = 1, Calculated = 2, Navigation = 3, RowTimeStamp = 4, Object = 5
+    }
+
     public enum ChangeType : int
     {
         None = 0, Added = 1, Updated = 2, Deleted = 3

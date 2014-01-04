@@ -2,7 +2,7 @@ module RIAPP {
     export module MOD {
         export module db {
             //local variables for optimization
-            var ValidationError = binding.ValidationError, valueUtils = MOD.utils.valueUtils;
+            var ValidationError = binding.ValidationError, valueUtils = MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils;
             import collMod = MOD.collection;
 
             var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
@@ -40,17 +40,17 @@ module RIAPP {
 
                 constructor(origError, allSubmitted: Entity[], notValidated: Entity[]) {
                     var message = origError.message || ('' + origError);
-                    super(message, DATA_OPER.SUBMIT);
                     this._origError = origError;
                     this._allSubmitted = allSubmitted || [];
                     this._notValidated = notValidated || [];
                     if (this._notValidated.length > 0) {
                         var res = [message + ':'];
                         this._notValidated.forEach(function (item) {
-                            res.push(RIAPP.global.utils.format('item key:{0} errors:{1}', item._key, item.getErrorString()));
+                            res.push(baseUtils.format('item key:{0} errors:{1}', item._key, item.getErrorString()));
                         });
-                        this._message = res.join('\r\n');
+                        message = res.join('\r\n');
                     }
+                    super(message, DATA_OPER.SUBMIT);
                 }
                 get allSubmitted() { return this._allSubmitted; }
                 get notValidated() { return this._notValidated; }
@@ -80,6 +80,10 @@ module RIAPP {
                             svcError.message), oper);
                 }
             };
+            export interface IFieldName {
+                n: string; //field's name
+                p: IFieldName[]; //for object field contains its properties, for others is null
+            }
             export interface ICachedPage { items: Entity[]; pageIndex: number; }
             export interface IQueryParamInfo {
                 dataType: consts.DATA_TYPE;
@@ -98,13 +102,14 @@ module RIAPP {
             export interface IFilterInfo { filterItems: { fieldName: string; kind: collMod.FILTER_TYPE; values: any[]; }[]; }
             export interface ISortInfo { sortItems: { fieldName: string; sortOrder: collMod.SORT_ORDER; }[]; }
             export interface IEntityConstructor {
-                new (dbSet: DbSet<Entity>, row: IRowData, names: string[]): Entity;
+                new (dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]): Entity;
             }
             export interface IValueChange {
                 val: any;
                 orig: any;
                 fieldName: string;
                 flags: number;
+                nested: IValueChange[];
             }
             export interface IValidationErrorInfo {
                 fieldName: string;
@@ -194,19 +199,18 @@ module RIAPP {
                 paramInfo: IParamInfo;
                 queryName: string;
             }
-
+            export interface IRowData {
+                k: string; v: any[]; //key and values
+            }
             export interface ILoadResult<TEntity extends Entity> { fetchedItems: TEntity[]; newItems: TEntity[]; isPageChanged: boolean; outOfBandData: any; }
             export interface IIncludedResult {
-                names: string[];
-                rows: { key: string; values: string[]; }[];
+                names: IFieldName[];
+                rows: IRowData[];
                 rowCount: number;
                 dbSetName: string;
             }
-            export interface IRowData {
-                key: string; values: string[];
-            }
             export interface IGetDataResult {
-                names: string[];
+                names: IFieldName[];
                 rows: IRowData[];
                 rowCount: number;
                 dbSetName: string;
@@ -219,6 +223,31 @@ module RIAPP {
             }
             export interface IDbSetConstructor {
                 new (dbContext: DbContext): DbSet<Entity>;
+            }
+
+            function fn_isNotSubmittable(fld: collMod.IFieldInfo) {
+                return (fld.fieldType == collMod.FIELD_TYPE.ClientOnly || fld.fieldType == collMod.FIELD_TYPE.Navigation || fld.fieldType == collMod.FIELD_TYPE.Calculated);
+            }
+
+            function fn_traverseChanges(val: IValueChange, fn: (name: string, val: IValueChange) => void): void {
+              function _fn_traverseChanges(name: string, val: IValueChange, fn: (name: string, val: IValueChange) => void ) {
+                if (!!val.nested && val.nested.length > 0) {
+                    var prop: IValueChange, i: number, len = val.nested.length;
+                    for (i = 0; i < len; i += 1) {
+                        prop = val.nested[i];
+                        if (!!prop.nested && prop.nested.length > 0) {
+                            _fn_traverseChanges(name + '.' + prop.fieldName, prop, fn);
+                        }
+                        else {
+                            fn(name + '.' + prop.fieldName, prop);
+                        }
+                    }
+                }
+                else {
+                    fn(name, val);
+                }
+            }
+            _fn_traverseChanges(val.fieldName, val, fn);
             }
 
             export class DataCache extends RIAPP.BaseObject {
@@ -241,7 +270,7 @@ module RIAPP {
                     if (res.length == 0)
                         return null;
                     if (res.length != 1)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "res.length == 1"));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "res.length == 1"));
                     return res[0];
                 }
                 //reset items key index
@@ -646,9 +675,10 @@ module RIAPP {
                 private _origVals: { [name: string]: any; };
                 private _saveChangeType: collMod.STATUS;
 
-                constructor(dbSet: DbSet<Entity>, row: IRowData, names: string[]) {
+                constructor(dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]) {
                     this.__dbSet = dbSet;
                     super();
+                    var self = this;
                     this.__changeType = collMod.STATUS.NONE;
                     this.__isRefreshing = false;
                     this.__isCached = false;
@@ -656,30 +686,59 @@ module RIAPP {
                     this._srvRowKey = null;
                     this._origVals = null;
                     this._saveChangeType = null;
-                    var fields = this.getFieldNames();
-                    fields.forEach(function (fieldName) {
-                        this._vals[fieldName] = null;
-                    }, this);
+                    var fieldInfos = this._dbSet.getFieldInfos(), fld: collMod.IFieldInfo;
+                    for (var i = 0, len = fieldInfos.length; i < len; i += 1)
+                    {
+                        fld = fieldInfos[i];
+                        if (fld.fieldType != collMod.FIELD_TYPE.Object) {
+                            self._vals[fld.fieldName] = null;
+                        }
+                        else {
+                            //object field
+                            collMod.fn_traverseField(fld, (name, f) => {
+                                if (f.fieldType == collMod.FIELD_TYPE.Object)
+                                    baseUtils.setValue(self._vals, name, {}, false);
+                                else
+                                    baseUtils.setValue(self._vals, name, null, false);
+                            });
+                        }
+
+                    }
                     this._initRowInfo(row, names);
                 }
                 _updateKeys(srvKey: string) {
                     this._srvRowKey = srvKey;
                     this._key = srvKey;
                 }
-                _initRowInfo(row: IRowData, names: string[]) {
+                _initRowInfo(row: IRowData, names: IFieldName[]) {
                     if (!row)
                         return;
+                    this._srvRowKey = row.k;
+                    this._key = row.k;
+                    this._processValues('', row.v, names);
+                }
+                _processValues(path: string, values:any[], names:IFieldName[]) {
                     var self = this, stz = self._serverTimezone;
-                    this._srvRowKey = row.key;
-                    this._key = row.key;
-                    row.values.forEach(function (val, index) {
-                        var fieldName = names[index], fld = self.getFieldInfo(fieldName);
+                    values.forEach(function (value, index) {
+                        var name: IFieldName = names[index], fieldName = path + name.n, fld = self._dbSet.getFieldInfo(fieldName), val;
                         if (!fld)
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fieldName));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fieldName));
 
-                        var newVal = val, dataType = fld.dataType, dcnv = fld.dateConversion,
-                            res = valueUtils.parseValue(newVal, dataType, dcnv, stz);
-                        self._vals[fld.fieldName] = res;
+                        if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                            //for object fields the value should be an array of values - recursive processing
+                            self._processValues(fieldName + '.', <any[]>value, name.p);
+                        }
+                        else {
+                            //for other fields the value is a string, which is parsed to a typed value
+                            val = valueUtils.parseValue(value, fld.dataType, fld.dateConversion, stz);
+                            if (!path) {
+                                //not nested field
+                                self._vals[fieldName] = val;
+                            }
+                            else {
+                                baseUtils.setValue(self._vals, fieldName, val, false);
+                            }
+                        }
                     });
                 }
                 _checkCanRefresh() {
@@ -687,54 +746,53 @@ module RIAPP {
                         throw new Error(RIAPP.ERRS.ERR_OPER_REFRESH_INVALID);
                     }
                 }
-                _refreshValue(val:any, fieldName: string, refreshMode: REFRESH_MODE) {
-                    var self = this, fld = self.getFieldInfo(fieldName);
+                _refreshValue(val:any, fullName: string, refreshMode: REFRESH_MODE) {
+                    var self = this, fld = self._dbSet.getFieldInfo(fullName);
                     if (!fld)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this._dbSetName, fieldName));
-                    var stz = self._serverTimezone, newVal, oldVal, oldValOrig,
-                        dataType = fld.dataType, dcnv = fld.dateConversion;
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fullName));
+                    var stz = self._serverTimezone, newVal, oldVal, oldValOrig, dataType = fld.dataType, dcnv = fld.dateConversion;
                     newVal = valueUtils.parseValue(val, dataType, dcnv, stz);
-                    oldVal = self._vals[fieldName];
+                    oldVal = baseUtils.getValue(self._vals,fullName);
                     switch (refreshMode) {
                         case REFRESH_MODE.CommitChanges:
                             {
                                 if (!valueUtils.compareVals(newVal, oldVal, dataType)) {
-                                    self._vals[fieldName] = newVal;
-                                    self._onFieldChanged(fld);
+                                    baseUtils.setValue(self._vals, fullName, newVal, false);
+                                    self._onFieldChanged(fullName, fld);
                                 }
                             }
                             break;
                         case REFRESH_MODE.RefreshCurrent:
                             {
                                 if (!!self._origVals) {
-                                    self._origVals[fieldName] = newVal;
+                                    baseUtils.setValue(self._origVals,fullName, newVal, false);
                                 }
                                 if (!!self._saveVals) {
-                                    self._saveVals[fieldName] = newVal;
+                                    baseUtils.setValue(self._saveVals, fullName, newVal, false);
                                 }
                                 if (!valueUtils.compareVals(newVal, oldVal, dataType)) {
-                                    self._vals[fieldName] = newVal;
-                                    self._onFieldChanged(fld);
+                                    baseUtils.setValue(self._vals, fullName, newVal, false);
+                                    self._onFieldChanged(fullName, fld);
                                 }
                             }
                             break;
                         case REFRESH_MODE.MergeIntoCurrent:
                             {
                                 if (!!self._origVals) {
-                                    oldValOrig = self._origVals[fieldName];
-                                    self._origVals[fieldName] = newVal;
+                                    oldValOrig = baseUtils.getValue(self._origVals, fullName);
+                                    baseUtils.setValue(self._origVals, fullName, newVal, false);
                                 }
                                 if (oldValOrig === undefined || valueUtils.compareVals(oldValOrig, oldVal, dataType)) {
                                     //unmodified
                                     if (!valueUtils.compareVals(newVal, oldVal, dataType)) {
-                                        self._vals[fieldName] = newVal;
-                                        self._onFieldChanged(fld);
+                                        baseUtils.setValue(self._vals, fullName, newVal, false);
+                                        self._onFieldChanged(fullName, fld);
                                     }
                                 }
                             }
                             break;
                         default:
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'refreshMode', refreshMode));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'refreshMode', refreshMode));
                     }
                 }
                 _refreshValues(rowInfo: IRowInfo, refreshMode: REFRESH_MODE) {
@@ -744,13 +802,15 @@ module RIAPP {
                             refreshMode = REFRESH_MODE.RefreshCurrent;
                         }
                         rowInfo.values.forEach(function (val) {
-                            if (!((val.flags & FLAGS.Refreshed) === FLAGS.Refreshed))
-                                return;
-                            self._refreshValue(val.val, val.fieldName, refreshMode);
+                            fn_traverseChanges(val, (fullName, vc) => {
+                                if (!((vc.flags & FLAGS.Refreshed) === FLAGS.Refreshed))
+                                    return;
+                                self._refreshValue(vc.val, fullName, refreshMode);
+                            });
                         });
 
                         if (oldCT === collMod.STATUS.UPDATED) {
-                            var changes = this._getStrValues(true);
+                            var changes = this._getValueChanges(true);
                             if (changes.length === 0) {
                                 this._origVals = null;
                                 this._changeType = collMod.STATUS.NONE;
@@ -758,43 +818,73 @@ module RIAPP {
                         }
                     }
                 }
-                _onFieldChanged(fieldInfo: collMod.IFieldInfo) {
+                _onFieldChanged(fieldName:string, fieldInfo: collMod.IFieldInfo) {
                     var self = this;
-                    this.raisePropertyChanged(fieldInfo.fieldName);
-                    if (!!fieldInfo.dependents && fieldInfo.dependents.length > 0)
+                    self.raisePropertyChanged(fieldName);
+                    if (!!fieldInfo.dependents && fieldInfo.dependents.length > 0) {
                         fieldInfo.dependents.forEach(function (d) {
                             self.raisePropertyChanged(d);
                         });
+                    }
                 }
-                _getStrValues(changedOnly: boolean) {
-                    var self = this, names = this.getFieldNames(), dbSet = this._dbSet,
-                        res: IValueChange[], res2: IValueChange[];
-                    res = names.map(function (name) {
-                        var fld = self.getFieldInfo(name);
-                        if (fld.isClientOnly)
-                            return <IValueChange>null;
+                _getValueChange(fullName: string, fld: collMod.IFieldInfo, changedOnly: boolean): IValueChange {
+                    var self = this, dbSet = self._dbSet, res: IValueChange, i: number, len: number, tmp: IValueChange;
+                    if (fn_isNotSubmittable(fld))
+                        return <IValueChange>null;
 
-                        var newVal = dbSet._getStrValue(self._vals[name], fld),
-                            oldV = self._origVals === null ? newVal : dbSet._getStrValue(self._origVals[name], fld),
+                    if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                        res = { fieldName: fld.fieldName, val: null, orig: null, flags: FLAGS.None, nested: [] };
+                        len = fld.nested.length;
+                        for (i = 0; i < len; i += 1) {
+                            tmp = self._getValueChange(fullName + '.' + fld.nested[i].fieldName, fld.nested[i], changedOnly);
+                            if (!!tmp) {
+                                res.nested.push(tmp);
+                            }
+                        }
+                    }
+                    else {
+                        var newVal = dbSet._getStrValue(baseUtils.getValue(self._vals, fullName), fld),
+                            oldV = self._origVals === null ? newVal : dbSet._getStrValue(baseUtils.getValue(self._origVals, fullName), fld),
                             isChanged = (oldV !== newVal);
                         if (isChanged)
-                            return { val: newVal, orig: oldV, fieldName: name, flags: (FLAGS.Changed | FLAGS.Setted) };
-                        else if (fld.isPrimaryKey > 0 || fld.isRowTimeStamp || fld.isNeedOriginal)
-                            return { val: newVal, orig: oldV, fieldName: name, flags: FLAGS.Setted };
+                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: (FLAGS.Changed | FLAGS.Setted), nested: null };
+                        else if (fld.isPrimaryKey > 0 || fld.fieldType == collMod.FIELD_TYPE.RowTimeStamp || fld.isNeedOriginal)
+                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: FLAGS.Setted, nested: null };
                         else
-                            return { val: null, orig: null, fieldName: name, flags: FLAGS.None };
+                            res = { fieldName: fld.fieldName, val: null, orig: null, flags: FLAGS.None, nested: null };
+                    }
+
+                    if (changedOnly) {
+                        if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                            if (res.nested.length > 0)
+                                return res;
+                            else
+                                return null;
+                        }
+                        else if ((res.flags & FLAGS.Changed) === FLAGS.Changed)
+                            return res;
+                        else
+                            return null;
+                    }
+                    else {
+                        return res;
+                    }
+                }
+                _getValueChanges(changedOnly: boolean): IValueChange[] {
+                    var self = this, flds = this._dbSet.getFieldInfos();
+                    var res = flds.map((fld) => {
+                        return self._getValueChange(fld.fieldName, fld, changedOnly);
                     });
 
-                    res2 = res.filter(function (v) {
-                        if (!v)
-                            return false;
-                        return changedOnly ? ((v.flags & FLAGS.Changed) === FLAGS.Changed) : true;
+                    //remove nulls
+                    var res2 = res.filter((vc) => {
+                        return !!vc;
                     });
                     return res2;
                 }
                 _getRowInfo() {
                     var res: IRowInfo = {
-                        values: this._getStrValues(false),
+                        values: this._getValueChanges(false),
                         changeType: this._changeType,
                         serverKey: this._srvKey,
                         clientKey: this._key,
@@ -802,25 +892,25 @@ module RIAPP {
                     };
                     return res;
                 }
-                _fldChanging(fieldInfo: collMod.IFieldInfo, oldV, newV) {
+                _fldChanging(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV, newV) {
                     if (!this._origVals) {
-                        this._origVals = RIAPP.global.utils.shallowCopy(this._vals);
+                        this._origVals = RIAPP.global.utils.cloneObj(this._vals);
                     }
                     return true;
                 }
-                _fldChanged(fieldInfo: collMod.IFieldInfo, oldV, newV) {
-                    if (!fieldInfo.isClientOnly) {
+                _fldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV, newV) {
+                    if (fieldInfo.fieldType != collMod.FIELD_TYPE.ClientOnly) {
                         switch (this._changeType) {
                             case collMod.STATUS.NONE:
                                 this._changeType = collMod.STATUS.UPDATED;
                                 break;
                         }
                     }
-                    this._onFieldChanged(fieldInfo);
+                    this._onFieldChanged(fieldName, fieldInfo);
                     return true;
                 }
                 _clearFieldVal(fieldName: string) {
-                    this._vals[fieldName] = null;
+                    baseUtils.setValue(this._vals, fieldName, null, false);
                 }
                 _skipValidate(fieldInfo: collMod.IFieldInfo, val) {
                     var childToParentNames = this._dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
@@ -834,21 +924,22 @@ module RIAPP {
                     return res;
                 }
                 _getFieldVal(fieldName: string) {
-                    return this._vals[fieldName];
+                    return baseUtils.getValue(this._vals,fieldName);
                 }
-                _setFieldVal(fieldName: string, val) {
+                _setFieldVal(fieldName: string, val):boolean {
                     var validation_error, error, dbSetName = this._dbSetName, coll = this._collection,
-                        ERRS = RIAPP.ERRS, oldV = this._vals[fieldName], newV = val, fld = this.getFieldInfo(fieldName);
+                        ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val, fld = this.getFieldInfo(fieldName), res = false;
                     if (!fld)
-                        throw new Error(RIAPP.global.utils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
+                        throw new Error(baseUtils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
                     if (!this._isEditing && !this._isUpdating)
                         this.beginEdit();
                     try {
                         newV = this._checkVal(fld, newV);
                         if (oldV != newV) {
-                            if (this._fldChanging(fld, oldV, newV)) {
-                                this._vals[fieldName] = newV;
-                                this._fldChanged(fld, oldV, newV);
+                            if (this._fldChanging(fieldName, fld, oldV, newV)) {
+                                baseUtils.setValue(this._vals,fieldName,newV,false);
+                                this._fldChanged(fieldName, fld, oldV, newV);
+                                res = true;
                             }
                         }
                         coll._removeError(this, fieldName);
@@ -868,7 +959,7 @@ module RIAPP {
                         coll._addError(this, fieldName, error.errors[0].errors);
                         throw error;
                     }
-                    return true;
+                    return res;
                 }
                 _onAttaching() {
                     super._onAttaching();
@@ -921,7 +1012,7 @@ module RIAPP {
                         }
                         this._origVals = null;
                         if (!!this._saveVals)
-                            this._saveVals = utils.shallowCopy(this._vals);
+                            this._saveVals = utils.cloneObj(this._vals);
                         this._changeType = collMod.STATUS.NONE;
                         eset._removeAllErrors(this);
                         if (!!rowInfo)
@@ -930,29 +1021,30 @@ module RIAPP {
                     }
                 }
                 rejectChanges() {
-                    var self = this, oldCT = this._changeType, eset = this._dbSet, utils = RIAPP.global.utils;
-                    if (this._key === null)
+                    var self = this, oldCT = self._changeType, eset = self._dbSet, utils = RIAPP.global.utils;
+                    if (!self._key)
                         return;
-
                     if (oldCT !== collMod.STATUS.NONE) {
-                        eset._onCommitChanges(this, true, true, oldCT);
+                        eset._onCommitChanges(self, true, true, oldCT);
                         if (oldCT === collMod.STATUS.ADDED) {
                             eset.removeItem(this);
                             return;
                         }
 
-                        var changes = this._getStrValues(true);
-                        if (!!this._origVals) {
-                            this._vals = utils.shallowCopy(this._origVals);
-                            this._origVals = null;
-                            if (!!this._saveVals) {
-                                this._saveVals = utils.shallowCopy(this._vals);
+                        var changes = self._getValueChanges(true);
+                        if (!!self._origVals) {
+                            self._vals = utils.cloneObj(self._origVals);
+                            self._origVals = null;
+                            if (!!self._saveVals) {
+                                self._saveVals = utils.cloneObj(self._vals);
                             }
                         }
-                        this._changeType = collMod.STATUS.NONE;
+                        self._changeType = collMod.STATUS.NONE;
                         eset._removeAllErrors(this);
                         changes.forEach(function (v) {
-                            self._onFieldChanged(eset.getFieldInfo(v.fieldName));
+                            fn_traverseChanges(v, (fullName, vc) => {
+                                self._onFieldChanged(fullName, eset.getFieldInfo(fullName));
+                            });
                         });
                         eset._onCommitChanges(this, false, true, oldCT);
                     }
@@ -982,7 +1074,7 @@ module RIAPP {
                 cancelEdit() {
                     if (!this._isEditing)
                         return false;
-                    var self = this, changes = this._getStrValues(true), isNew = this._isNew, coll = this._dbSet;
+                    var self = this, changes = this._getValueChanges(true), isNew = this._isNew, coll = this._dbSet;
                     this._isEditing = false;
                     this._vals = this._saveVals;
                     this._saveVals = null;
@@ -1070,18 +1162,19 @@ module RIAPP {
                 _ignorePageChanged: boolean;
                 _query: TDataQuery<TEntity>;
 
-                constructor(opts: IDbSetConstuctorOptions) {
+                constructor(opts: IDbSetConstuctorOptions, entityType: IEntityConstructor) {
                     super();
-                    var dbContext = opts.dbContext, dbSetInfo = opts.dbSetInfo;
+                    var self = this, dbContext = opts.dbContext, dbSetInfo = opts.dbSetInfo, fieldInfos = dbSetInfo.fieldInfos;
                     this._dbContext = dbContext;
                     this._options.dbSetName = dbSetInfo.dbSetName;
                     this._options.enablePaging = dbSetInfo.enablePaging;
                     this._options.pageSize = dbSetInfo.pageSize;
                     this._query = null;
-                    this._entityType = null;
+                    this._entityType = entityType;
                     this._isSubmitOnDelete = false;
                     this._navfldMap = {};
                     this._calcfldMap = {};
+                    this._fieldInfos = fieldInfos;
 
                     //association infos maped by name
                     //we should track changes in navigation properties for this associations
@@ -1096,22 +1189,46 @@ module RIAPP {
                     this._changeCount = 0;
                     this._changeCache = {};
                     this._ignorePageChanged = false;
+                    fieldInfos.forEach(function (f) {
+                        f.dependents = [];
+                        self._fieldMap[f.fieldName] = f;
+                    });
+
+                    fieldInfos.forEach(function (f) {
+                        if (f.fieldType == collMod.FIELD_TYPE.Navigation) {
+                            self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
+                        }
+                        else if (f.fieldType == collMod.FIELD_TYPE.Calculated) {
+                            self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
+                        }
+                    });
+
+                    self._mapAssocFields();
                     Object.freeze(this._perms);
                 }
                 getFieldInfo(fieldName: string): collMod.IFieldInfo {
-                    //for example Customer.Name
-                    var assoc: IAssociationInfo, parentDB: DbSet<Entity>, names = fieldName.split('.');
-                    if (names.length == 1)
-                        return this._fieldMap[fieldName];
-                    else if (names.length > 1) {
-                        assoc = this._childAssocMap[names[0]];
+                    var assoc: IAssociationInfo, parentDB: DbSet<Entity>, parts = fieldName.split('.');
+                    var fld = this._fieldMap[parts[0]];
+                    if (parts.length == 1) {
+                        return fld;
+                    }
+                    
+                    if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                        for (var i = 1; i < parts.length; i += 1) {
+                            fld = collMod.fn_getPropertyByName(parts[i], fld.nested);
+                        }
+                        return fld;
+                    }
+                    else if (fld.fieldType == collMod.FIELD_TYPE.Navigation) {
+                        //for example Customer.Name
+                        assoc = this._childAssocMap[fld.fieldName];
                         if (!!assoc) {
                             parentDB = this.dbContext.getDbSet(assoc.parentDbSetName);
-                            fieldName = names.slice(1).join('.');
-                            return parentDB.getFieldInfo(fieldName);
+                            return parentDB.getFieldInfo(parts.slice(1).join('.'));
                         }
                     }
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
+                    
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
                 }
                 _onError(error, source): boolean {
                     return this.dbContext._onError(error, source);
@@ -1155,9 +1272,8 @@ module RIAPP {
                     }
 
                     if (assocs.length != 1)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'assocs', 'Array'));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'assocs', 'Array'));
                     var assocName = assocs[0].name;
-                    fInfo.isClientOnly = true;
                     fInfo.isReadOnly = true;
                     if (isChild) {
                         fInfo.isReadOnly = false;
@@ -1181,7 +1297,7 @@ module RIAPP {
                             result.setFunc = function (v) {
                                 var entity: any = this, i, len, assoc = self.dbContext.getAssociation(assocName);
                                 if (!!v && !(v instanceof assoc.parentDS.entityType)) {
-                                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'value', assoc.parentDS.dbSetName));
+                                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'value', assoc.parentDS.dbSetName));
                                 }
 
                                 if (!!v && v._isNew) {
@@ -1228,12 +1344,28 @@ module RIAPP {
                             }
                         });
                     };
-                    fInfo.isClientOnly = true;
                     fInfo.isReadOnly = true;
                     if (!!fInfo.dependentOn) {
                         doDependants(fInfo);
                     }
                     return result;
+                }
+                _refreshValues(path: string, item: Entity, values: any[], names: IFieldName[], rm:REFRESH_MODE) {
+                    var self = this;
+                    values.forEach(function (value, index) {
+                        var name: IFieldName = names[index], fieldName = path + name.n, fld = self.getFieldInfo(fieldName);
+                        if (!fld)
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self.dbSetName, fieldName));
+
+                        if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                            //for object fields the value should be an array of values - recursive processing
+                            self._refreshValues(fieldName + '.', item, <any[]>value, name.p, rm);
+                        }
+                        else {
+                            //for other fields the value is a string
+                            item._refreshValue(value, fieldName, rm);
+                        }
+                    });
                 }
                 _fillFromService(data: { res: IGetDataResult; isPageChanged: boolean; fn_beforeFillEnd: () => void; }): ILoadResult<TEntity> {
                     var utils = RIAPP.global.utils;
@@ -1245,7 +1377,7 @@ module RIAPP {
 
                     var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length,
                         entityType = this._entityType, newItems: TEntity[] = [], positions: number[] = [], created_items: TEntity[] = [], fetchedItems: TEntity[] = [],
-                        isPagingEnabled = this.isPagingEnabled, RM = REFRESH_MODE.RefreshCurrent, query = this.query, clearAll = true, dataCache: DataCache;
+                        isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache: DataCache;
 
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
                     try {
@@ -1261,9 +1393,12 @@ module RIAPP {
                                     dataCache.totalCount = res.totalCount;
                             }
                         }
+
+                    
+
                         created_items = rows.map(function (row) {
                             //row.key already a string value generated on server (no need to convert to string)
-                            var key = row.key;
+                            var key = row.k;
                             if (!key)
                                 throw new Error(RIAPP.ERRS.ERR_KEY_IS_EMPTY);
 
@@ -1274,16 +1409,13 @@ module RIAPP {
                                 }
                                 if (!item)
                                     item = <TEntity>new entityType(self, row, fieldNames);
-                                else {
-                                    row.values.forEach(function (val, index) {
-                                        item._refreshValue(val, fieldNames[index], RM);
-                                    });
+                                else
+                                {
+                                    self._refreshValues('', item, row.v, fieldNames, REFRESH_MODE.RefreshCurrent);
                                 }
                             }
                             else {
-                                row.values.forEach(function (val, index) {
-                                    item._refreshValue(val, fieldNames[index], RM);
-                                });
+                                self._refreshValues('', item, row.v, fieldNames, REFRESH_MODE.RefreshCurrent);
                             }
                             return item;
                         });
@@ -1381,7 +1513,7 @@ module RIAPP {
                     rows.forEach(function (rowInfo) {
                         var key = rowInfo.clientKey, item: TEntity = self._itemsByKey[key];
                         if (!item) {
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, key));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, key));
                         }
                         var itemCT = item._changeType;
                         item.acceptChanges(rowInfo);
@@ -1420,7 +1552,7 @@ module RIAPP {
                 }
                 _setCurrentItem(v: TEntity) {
                     if (!!v && !(v instanceof this._entityType)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', this._options.dbSetName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', this._options.dbSetName));
                     }
                     super._setCurrentItem(v);
                 }
@@ -1552,8 +1684,8 @@ module RIAPP {
                 //from data stored inside page (without ajax request)
                 //convenient for loading classifiers (for lookup data)
                 fillItems(data: {
-                    names: string[];
-                    rows: { key: string; values: string[]; }[];
+                    names: IFieldName[];
+                    rows: IRowData[];
                 }) {
                     var utils = RIAPP.global.utils, res: IGetDataResult = utils.extend(false, {
                         names: [],
@@ -1578,7 +1710,7 @@ module RIAPP {
                 defineCalculatedField(fieldName: string, getFunc: () => any) {
                     var calcDef = this._calcfldMap[fieldName];
                     if (!calcDef) {
-                        throw new Error(RIAPP.global.utils.format(ERRS.ERR_PARAM_INVALID, 'fieldName', fieldName));
+                        throw new Error(baseUtils.format(ERRS.ERR_PARAM_INVALID, 'fieldName', fieldName));
                     }
                     calcDef.getFunc = getFunc;
                 }
@@ -1607,7 +1739,7 @@ module RIAPP {
                 createQuery(name: string): TDataQuery<TEntity> {
                     var queryInfo = this.dbContext._getQueryInfo(name);
                     if (!queryInfo) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_QUERY_NAME_NOTFOUND, name));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_QUERY_NAME_NOTFOUND, name));
                     }
                     return new TDataQuery<TEntity>(this, queryInfo);
                 }
@@ -1700,7 +1832,7 @@ module RIAPP {
                 getDbSet(name: string) {
                     var f = this._dbSets[name];
                     if (!f)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, name));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, name));
                     return f();
                 }
                 destroy() {
@@ -1976,11 +2108,11 @@ module RIAPP {
                     var self = this, operType = DATA_OPER.LOAD, dbSetName, dbSet: DbSet<Entity>, loadRes: ILoadResult<Entity>;
                     try {
                         if (!res)
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'null result'));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'null result'));
                         dbSetName = res.dbSetName;
                         dbSet = self.getDbSet(dbSetName);
                         if (!dbSet)
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, dbSetName));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, dbSetName));
                         __checkError(res.error, operType);
                         loadRes = dbSet._fillFromService(
                             {
@@ -2011,7 +2143,7 @@ module RIAPP {
                                 jsDB.rows.forEach(function (row) {
                                     var item = eSet.getItemByKey(row.clientKey);
                                     if (!item) {
-                                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, row.clientKey));
+                                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, row.clientKey));
                                     }
                                     submitted.push(item);
                                     if (!!row.invalid) {
@@ -2304,7 +2436,7 @@ module RIAPP {
                                             //let the UI some time, then do the rest of the work
                                             setTimeout(function () {
                                                 //first item is GetDataResult
-                                                var allRows: { key: string; values: string[]; }[], getDataResult: IGetDataResult = data[0];
+                                                var allRows: IRowData[], getDataResult: IGetDataResult = data[0];
                                                 var hasIncluded = !!getDataResult.included && getDataResult.included.length > 0;
                                                 try {
                                                     //rows was loaded separately from GetDataResult
@@ -2357,7 +2489,7 @@ module RIAPP {
                     var name2 = "get" + name;
                     var f = this._assoc[name2];
                     if (!f)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSOC_NAME_INVALID, name));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_ASSOC_NAME_INVALID, name));
                     return f();
                 }
                 //returns promise
@@ -2766,7 +2898,7 @@ module RIAPP {
                             }
                             break;
                         default:
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                     self._notifyParentChanged(changed);
                 }
@@ -2918,7 +3050,7 @@ module RIAPP {
                             }
                             break;
                         default:
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                     self._notifyChildrenChanged(changed);
                 }
@@ -3428,7 +3560,7 @@ module RIAPP {
                             }
                             break;
                         default:
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
                 _onDSFill(args: collMod.ICollFillArgs<TItem>) {
@@ -3798,6 +3930,147 @@ module RIAPP {
             export class TChildDataView extends ChildDataView<Entity>{
             }
             
+            export class BaseComplexProperty extends RIAPP.BaseObject implements MOD.binding.IErrorNotification {
+                _name: string;
+
+                constructor(name: string) {
+                    super();
+                    this._name = name;
+                }
+                _getFullPath(path): string {
+                    throw new Error('Not Implemented');
+                }
+                getName() {
+                    return this._name;
+                }
+                setValue(name: string, value: any) {
+                    throw new Error('Not Implemented');
+                }
+                getValue(name: string): any {
+                    throw new Error('Not Implemented');
+                }
+                getFieldInfo(): MOD.collection.IFieldInfo {
+                    throw new Error('Not Implemented');
+                }
+                getProperties(): MOD.collection.IFieldInfo[] {
+                    throw new Error('Not Implemented');
+                }
+                getFullPath(name: string): string {
+                    throw new Error('Not Implemented');
+                }
+                getEntity(): RIAPP.MOD.db.Entity {
+                    throw new Error('Not Implemented');
+                }
+                getPropertyByName(name: string): MOD.collection.IFieldInfo {
+                    var arrProps = this.getProperties().filter((f) => { return f.fieldName == name; });
+                    if (!arrProps || arrProps.length != 1)
+                        throw new Error(global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "arrProps.length == 1"));
+                    return arrProps[0];
+                }
+                getIsHasErrors(): boolean {
+                    return this.getEntity().getIsHasErrors();
+                }
+                addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void {
+                    this.getEntity().addOnErrorsChanged(fn, namespace);
+                }
+                removeOnErrorsChanged(namespace?: string): void {
+                    this.getEntity().removeOnErrorsChanged(namespace)
+                }
+                getFieldErrors(fieldName): MOD.binding.IValidationInfo[] {
+                    var fullName = this.getFullPath(fieldName);
+                    return this.getEntity().getFieldErrors(fullName);
+                }
+                getAllErrors(): MOD.binding.IValidationInfo[] {
+                    return this.getEntity().getAllErrors();
+                }
+                getIErrorNotification(): MOD.binding.IErrorNotification {
+                    return this;
+                }
+            }
+
+            export class RootComplexProperty extends BaseComplexProperty {
+                private _entity: RIAPP.MOD.db.Entity;
+
+                constructor(name: string, owner: RIAPP.MOD.db.Entity) {
+                    super(name);
+                    this._entity = owner;
+                }
+                _getFullPath(path): string {
+                    return this.getName() + '.' + path;
+                }
+                _setValueCore(property: BaseComplexProperty, name: string, value: any) {
+                    var fullName = property.getFullPath(name);
+                    this._entity._setFieldVal(fullName, value);
+                }
+                _getValueCore(property: BaseComplexProperty, name: string) {
+                    var fullName = property.getFullPath(name);
+                    return this._entity._getFieldVal(fullName);
+                }
+                setValue(name: string, value: any) {
+                    this._setValueCore(this, name, value);
+                }
+                getValue(name: string): any {
+                    return this._getValueCore(this, name);
+                }
+                getFieldInfo(): MOD.collection.IFieldInfo {
+                    return this._entity.getFieldInfo(this.getName());
+                }
+                getProperties(): MOD.collection.IFieldInfo[] {
+                    return this.getFieldInfo().nested;
+                }
+                getEntity() {
+                    return this._entity;
+                }
+                getFullPath(name: string): string {
+                    return this.getName() + '.' + name;
+                }
+            }
+
+            export class ChildComplexProperty extends BaseComplexProperty {
+                private _parent: BaseComplexProperty;
+
+                constructor(name: string, parent: BaseComplexProperty) {
+                    super(name);
+                    this._parent = parent;
+                }
+                _getFullPath(path: string): string {
+                    return this._parent._getFullPath(this.getName() + '.' + path);
+                }
+                setValue(name: string, value: any) {
+                    var root = this.getRootProperty();
+                    root._setValueCore(this, name, value);
+                }
+                getValue(name: string) {
+                    var root = this.getRootProperty();
+                    return root._getValueCore(this, name);
+                }
+                getFieldInfo(): MOD.collection.IFieldInfo {
+                    var name = this.getName();
+                    return this._parent.getPropertyByName(name);
+                }
+                getProperties(): MOD.collection.IFieldInfo[] {
+                    return this.getFieldInfo().nested;
+                }
+                getParent(): BaseComplexProperty {
+                    return this._parent;
+                }
+                getRootProperty(): RootComplexProperty {
+                    var parent = this._parent;
+                    while (!!parent && (parent instanceof ChildComplexProperty)) {
+                        parent = (<ChildComplexProperty>parent).getParent();
+                    }
+                    if (!parent || !(parent instanceof RootComplexProperty))
+                        throw new Error(global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "parent instanceof RootComplexProperty"));
+                    return <RootComplexProperty>parent;
+                }
+                getFullPath(name: string): string {
+                    return this._parent._getFullPath(this.getName() + '.' + name);
+                }
+                getEntity() {
+                    return this.getRootProperty().getEntity();
+                }
+            }
+
             //MUST NOTIFY THE GLOBAL 
             global.onModuleLoaded('db', db);
         }

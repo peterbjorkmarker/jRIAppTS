@@ -5,10 +5,11 @@ module RIAPP
     'use strict';
     export module DEMODB {
         /*
-            Generated from: /RiappDemoService/CodeGen on 2013-12-28 11:25 at 11:25
+            Generated from: /RiappDemoService/CodeGen on 2014-01-04 19:25 at 19:25
             Don't make manual changes here, because they will be lost when this db interface will be regenerated!
         */
 
+        //******BEGIN INTERFACE REGION******
         export interface IAddressInfo2 {
             AddressID: number;
             AddressLine1: string;
@@ -66,6 +67,7 @@ module RIAPP
             Two= 2,
             Three= 3
         }
+        //******END INTERFACE REGION******
 
         export interface ISvcMethods {
             TestInvoke: (args: {
@@ -78,6 +80,7 @@ module RIAPP
             }) => IVoidPromise;
         }
 
+        //******BEGIN LISTS REGION******
         export class TestModelListItem extends RIAPP.MOD.collection.ListItem implements IClientTestModel {
             constructor(coll: RIAPP.MOD.collection.BaseList<TestModelListItem, IClientTestModel>, obj?: IClientTestModel) {
                 super(coll, obj);
@@ -156,7 +159,46 @@ module RIAPP
             }
             get items2() { return <IHistoryItem[]>this.items; }
         }
+        //******END LISTS REGION******
 
+        //******BEGIN COMPLEX TYPES REGION*****
+        export class Customer_ComplexProp1 extends RIAPP.MOD.db.ChildComplexProperty {
+
+            constructor(name: string, parent: RIAPP.MOD.db.BaseComplexProperty) {
+                super(name, parent);
+
+            }
+            get EmailAddress(): string { return this.getValue('EmailAddress'); }
+            set EmailAddress(v: string) { this.setValue('EmailAddress', v); }
+            get Phone(): string { return this.getValue('Phone'); }
+            set Phone(v: string) { this.setValue('Phone', v); }
+
+            toString() {
+                return 'Customer_ComplexProp1';
+            }
+        }
+
+        export class Customer_ComplexProp extends RIAPP.MOD.db.RootComplexProperty {
+            private _ComplexProp: Customer_ComplexProp1;
+
+            constructor(name: string, owner: RIAPP.MOD.db.Entity) {
+                super(name, owner);
+                this._ComplexProp = null;
+
+            }
+            get FirstName(): string { return this.getValue('FirstName'); }
+            set FirstName(v: string) { this.setValue('FirstName', v); }
+            get MiddleName(): string { return this.getValue('MiddleName'); }
+            set MiddleName(v: string) { this.setValue('MiddleName', v); }
+            get LastName(): string { return this.getValue('LastName'); }
+            set LastName(v: string) { this.setValue('LastName', v); }
+            get ComplexProp(): Customer_ComplexProp1 { if (!this._ComplexProp) { this._ComplexProp = new Customer_ComplexProp1('ComplexProp', this); } return this._ComplexProp; }
+
+            toString() {
+                return 'Customer_ComplexProp';
+            }
+        }
+        //******END COMPLEX TYPES REGION******
 
         export interface ICustomerEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
             CustomerID: number;
@@ -175,6 +217,7 @@ module RIAPP
             rowguid: string;
             ModifiedDate: Date;
             Name: string;
+            ComplexProp: Customer_ComplexProp;
             CustomerAddresses: CustomerAddress[];
 
             getDbContext(): DbContext;
@@ -184,6 +227,13 @@ module RIAPP
         }
 
         export class Customer extends RIAPP.MOD.db.Entity implements ICustomerEntity {
+            private _ComplexProp: Customer_ComplexProp;
+
+            constructor(dbSet: CustomerDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+                super(dbSet, row, names);
+                this._ComplexProp = null;
+
+            }
             get CustomerID(): number { return this._getFieldVal('CustomerID'); }
             get NameStyle(): boolean { return this._getFieldVal('NameStyle'); }
             set NameStyle(v: boolean) { this._setFieldVal('NameStyle', v); }
@@ -210,6 +260,7 @@ module RIAPP
             get rowguid(): string { return this._getFieldVal('rowguid'); }
             get ModifiedDate(): Date { return this._getFieldVal('ModifiedDate'); }
             get Name(): string { return this._dbSet._calcfldMap['Name'].getFunc.call(this); }
+            get ComplexProp(): Customer_ComplexProp { if (!this._ComplexProp) { this._ComplexProp = new Customer_ComplexProp('ComplexProp', this); } return this._ComplexProp; }
             get CustomerAddresses(): CustomerAddress[] { return this._dbSet._navfldMap['CustomerAddresses'].getFunc.call(this); }
 
             getDbContext() {
@@ -231,28 +282,11 @@ module RIAPP
             constructor(dbContext: DbContext) {
                 var self = this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
-                    dbSetInfo: { "fieldInfos": [{ "isPrimaryKey": 1, "isRowTimeStamp": false, "maxLength": 4, "range": "", "regex": "", "dataType": 3, "isNullable": false, "isReadOnly": true, "isAutoGenerated": true, "dateConversion": 0, "allowClientDefault": false, "fieldName": "CustomerID", "isNeedOriginal": true, "isClientOnly": false, "isCalculated": false, "isNavigation": false, "dependentOn": "" }, { "fieldName": "NameStyle", "dataType": 2, "maxLength": 1, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Title", "dataType": 1, "maxLength": 8, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "FirstName", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "MiddleName", "dataType": 1, "maxLength": 50, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "LastName", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Suffix", "dataType": 1, "maxLength": 10, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "CompanyName", "dataType": 1, "maxLength": 128, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "SalesPerson", "dataType": 1, "maxLength": 256, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "EmailAddress", "dataType": 1, "maxLength": 50, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]+(\\.[a-z0-9-]+)*(\\.[a-z]{2,4})$", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Phone", "dataType": 1, "maxLength": 25, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "PasswordHash", "dataType": 1, "maxLength": 128, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "PasswordSalt", "dataType": 1, "maxLength": 10, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": true, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Name", "dataType": 1, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": true, "dependentOn": "FirstName,MiddleName,LastName", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "CustomerAddresses", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }], "enablePaging": true, "pageSize": 25, "dbSetName": "Customer" },
+                    dbSetInfo: { "fieldInfos": [{ "fieldName": "CustomerID", "isPrimaryKey": 1, "dataType": 3, "isNullable": false, "isReadOnly": true, "isAutoGenerated": true, "isNeedOriginal": true, "maxLength": 4, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "NameStyle", "dataType": 2, "maxLength": 1, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Title", "dataType": 1, "maxLength": 8, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "FirstName", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "MiddleName", "dataType": 1, "maxLength": 50, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "LastName", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Suffix", "dataType": 1, "maxLength": 10, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "CompanyName", "dataType": 1, "maxLength": 128, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "SalesPerson", "dataType": 1, "maxLength": 256, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "EmailAddress", "dataType": 1, "maxLength": 50, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]+(\\.[a-z0-9-]+)*(\\.[a-z]{2,4})$", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Phone", "dataType": 1, "maxLength": 25, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "PasswordHash", "dataType": 1, "maxLength": 128, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "PasswordSalt", "dataType": 1, "maxLength": 10, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 4, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Name", "dataType": 1, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 2, "dependentOn": "FirstName,MiddleName,LastName", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ComplexProp", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 5, "dependentOn": "", "nested": [{ "fieldName": "FirstName", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "MiddleName", "dataType": 1, "maxLength": 50, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "LastName", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ComplexProp", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 5, "dependentOn": "", "nested": [{ "fieldName": "EmailAddress", "dataType": 1, "maxLength": 50, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]+(\\.[a-z0-9-]+)*(\\.[a-z]{2,4})$", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Phone", "dataType": 1, "maxLength": 25, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }], "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }], "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "CustomerAddresses", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }], "enablePaging": true, "pageSize": 25, "dbSetName": "Customer" },
                     childAssoc: [],
                     parentAssoc: [{ "name": "CustAddrToCustomer", "parentDbSetName": "Customer", "childDbSetName": "CustomerAddress", "childToParentName": "Customer", "parentToChildrenName": "CustomerAddresses", "onDeleteAction": 0, "fieldRels": [{ "parentField": "CustomerID", "childField": "CustomerID" }] }, { "name": "OrdersToCustomer", "parentDbSetName": "Customer", "childDbSetName": "SalesOrderHeader", "childToParentName": "Customer", "parentToChildrenName": null, "fieldRels": [{ "parentField": "CustomerID", "childField": "CustomerID" }], "onDeleteAction": 0 }]
                 }, utils = RIAPP.global.utils;
-                super(opts);
-                self._entityType = Customer;
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    f.dependents = [];
-                    self._fieldMap[f.fieldName] = f;
-                });
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
-                        self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    }
-                    else if (!!f.isCalculated) {
-                        self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                    }
-                });
-
-                self._mapAssocFields();
+                super(opts, Customer);
             }
             findEntity(customerID: number): Customer {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
@@ -287,6 +321,11 @@ module RIAPP
         }
 
         export class CustomerAddress extends RIAPP.MOD.db.Entity implements ICustomerAddressEntity {
+
+            constructor(dbSet: CustomerAddressDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+                super(dbSet, row, names);
+
+            }
             get CustomerID(): number { return this._getFieldVal('CustomerID'); }
             set CustomerID(v: number) { this._setFieldVal('CustomerID', v); }
             get AddressID(): number { return this._getFieldVal('AddressID'); }
@@ -321,28 +360,11 @@ module RIAPP
             constructor(dbContext: DbContext) {
                 var self = this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
-                    dbSetInfo: { "dbSetName": "CustomerAddress", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "CustomerID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 1, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "AddressID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 2, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "AddressType", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": true, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Customer", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "CustomerID", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }, { "fieldName": "Address", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "AddressID", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }, { "fieldName": "AddressInfo", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "AddressID", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }] },
+                    dbSetInfo: { "dbSetName": "CustomerAddress", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "CustomerID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 1, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "AddressID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 2, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "AddressType", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 4, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Customer", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "CustomerID", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Address", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "AddressID", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "AddressInfo", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "AddressID", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }] },
                     childAssoc: [{ "name": "CustAddrToCustomer", "parentDbSetName": "Customer", "childDbSetName": "CustomerAddress", "childToParentName": "Customer", "parentToChildrenName": "CustomerAddresses", "fieldRels": [{ "parentField": "CustomerID", "childField": "CustomerID" }], "onDeleteAction": 0 }, { "name": "CustAddrToAddress", "parentDbSetName": "Address", "childDbSetName": "CustomerAddress", "childToParentName": "Address", "parentToChildrenName": "CustomerAddresses", "fieldRels": [{ "parentField": "AddressID", "childField": "AddressID" }], "onDeleteAction": 0 }, { "name": "CustAddrToAddress2", "parentDbSetName": "AddressInfo", "childDbSetName": "CustomerAddress", "childToParentName": "AddressInfo", "parentToChildrenName": "CustomerAddresses", "fieldRels": [{ "parentField": "AddressID", "childField": "AddressID" }], "onDeleteAction": 0 }],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                super(opts);
-                self._entityType = CustomerAddress;
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    f.dependents = [];
-                    self._fieldMap[f.fieldName] = f;
-                });
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
-                        self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    }
-                    else if (!!f.isCalculated) {
-                        self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                    }
-                });
-
-                self._mapAssocFields();
+                super(opts, CustomerAddress);
             }
             findEntity(customerID: number, addressID: number): CustomerAddress {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
@@ -381,6 +403,11 @@ module RIAPP
         }
 
         export class Address extends RIAPP.MOD.db.Entity implements IAddressEntity {
+
+            constructor(dbSet: AddressDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+                super(dbSet, row, names);
+
+            }
             get AddressID(): number { return this._getFieldVal('AddressID'); }
             get AddressLine1(): string { return this._getFieldVal('AddressLine1'); }
             set AddressLine1(v: string) { this._setFieldVal('AddressLine1', v); }
@@ -417,28 +444,11 @@ module RIAPP
             constructor(dbContext: DbContext) {
                 var self = this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
-                    dbSetInfo: { "dbSetName": "Address", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "AddressID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 1, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "AddressLine1", "dataType": 1, "maxLength": 60, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "AddressLine2", "dataType": 1, "maxLength": 60, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "City", "dataType": 1, "maxLength": 30, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "StateProvince", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "CountryRegion", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "PostalCode", "dataType": 1, "maxLength": 15, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": -1, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": true, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": -1, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "CustomerAddresses", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }] },
+                    dbSetInfo: { "dbSetName": "Address", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "AddressID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 1, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "AddressLine1", "dataType": 1, "maxLength": 60, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "AddressLine2", "dataType": 1, "maxLength": 60, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "City", "dataType": 1, "maxLength": 30, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "StateProvince", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "CountryRegion", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "PostalCode", "dataType": 1, "maxLength": 15, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": -1, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 4, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": -1, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "CustomerAddresses", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }] },
                     childAssoc: [],
                     parentAssoc: [{ "name": "CustAddrToAddress", "parentDbSetName": "Address", "childDbSetName": "CustomerAddress", "childToParentName": "Address", "parentToChildrenName": "CustomerAddresses", "fieldRels": [{ "parentField": "AddressID", "childField": "AddressID" }], "onDeleteAction": 0 }, { "name": "OrdersToShipAddr", "parentDbSetName": "Address", "childDbSetName": "SalesOrderHeader", "childToParentName": "Address", "parentToChildrenName": null, "fieldRels": [{ "parentField": "AddressID", "childField": "ShipToAddressID" }], "onDeleteAction": 0 }, { "name": "OrdersToBillAddr", "parentDbSetName": "Address", "childDbSetName": "SalesOrderHeader", "childToParentName": "Address1", "parentToChildrenName": null, "fieldRels": [{ "parentField": "AddressID", "childField": "BillToAddressID" }], "onDeleteAction": 0 }]
                 }, utils = RIAPP.global.utils;
-                super(opts);
-                self._entityType = Address;
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    f.dependents = [];
-                    self._fieldMap[f.fieldName] = f;
-                });
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
-                        self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    }
-                    else if (!!f.isCalculated) {
-                        self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                    }
-                });
-
-                self._mapAssocFields();
+                super(opts, Address);
             }
             findEntity(addressID: number): Address {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
@@ -485,6 +495,11 @@ module RIAPP
         }
 
         export class Product extends RIAPP.MOD.db.Entity implements IProductEntity {
+
+            constructor(dbSet: ProductDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+                super(dbSet, row, names);
+
+            }
             get ProductID(): number { return this._getFieldVal('ProductID'); }
             get Name(): string { return this._getFieldVal('Name'); }
             set Name(v: string) { this._setFieldVal('Name', v); }
@@ -536,28 +551,11 @@ module RIAPP
             constructor(dbContext: DbContext) {
                 var self = this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
-                    dbSetInfo: { "dbSetName": "Product", "enablePaging": true, "pageSize": 25, "fieldInfos": [{ "fieldName": "ProductID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 1, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Name", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ProductNumber", "dataType": 1, "maxLength": 25, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Color", "dataType": 1, "maxLength": 15, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "StandardCost", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ListPrice", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "100,5000", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Size", "dataType": 1, "maxLength": 5, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Weight", "dataType": 4, "maxLength": 5, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ProductCategoryID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ProductModelID", "dataType": 3, "maxLength": 4, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "SellStartDate", "dataType": 7, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "2000-01-01,2015-01-01", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "SellEndDate", "dataType": 7, "maxLength": 8, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "DiscontinuedDate", "dataType": 7, "maxLength": 8, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": false, "isReadOnly": true, "isRowTimeStamp": true, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "IsActive", "dataType": 2, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": true, "dependentOn": "SellEndDate", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ThumbnailPhotoFileName", "dataType": 1, "maxLength": 256, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": false, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "SalesOrderDetails", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }] },
+                    dbSetInfo: { "dbSetName": "Product", "enablePaging": true, "pageSize": 25, "fieldInfos": [{ "fieldName": "ProductID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 1, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Name", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ProductNumber", "dataType": 1, "maxLength": 25, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Color", "dataType": 1, "maxLength": 15, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "StandardCost", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ListPrice", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "100,5000", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Size", "dataType": 1, "maxLength": 5, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Weight", "dataType": 4, "maxLength": 5, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ProductCategoryID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ProductModelID", "dataType": 3, "maxLength": 4, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "SellStartDate", "dataType": 7, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "2000-01-01,2015-01-01", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "SellEndDate", "dataType": 7, "maxLength": 8, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "DiscontinuedDate", "dataType": 7, "maxLength": 8, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": false, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 4, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "IsActive", "dataType": 2, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 2, "dependentOn": "SellEndDate", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ThumbnailPhotoFileName", "dataType": 1, "maxLength": 256, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": false, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "SalesOrderDetails", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }] },
                     childAssoc: [],
                     parentAssoc: [{ "name": "OrdDetailsToProduct", "parentDbSetName": "Product", "childDbSetName": "SalesOrderDetail", "childToParentName": "Product", "parentToChildrenName": "SalesOrderDetails", "fieldRels": [{ "parentField": "ProductID", "childField": "ProductID" }], "onDeleteAction": 0 }]
                 }, utils = RIAPP.global.utils;
-                super(opts);
-                self._entityType = Product;
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    f.dependents = [];
-                    self._fieldMap[f.fieldName] = f;
-                });
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
-                        self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    }
-                    else if (!!f.isCalculated) {
-                        self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                    }
-                });
-
-                self._mapAssocFields();
+                super(opts, Product);
             }
             findEntity(productID: number): Product {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
@@ -594,6 +592,11 @@ module RIAPP
         }
 
         export class ProductModel extends RIAPP.MOD.db.Entity implements IProductModelEntity {
+
+            constructor(dbSet: ProductModelDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+                super(dbSet, row, names);
+
+            }
             get ProductModelID(): number { return this._getFieldVal('ProductModelID'); }
             get Name(): string { return this._getFieldVal('Name'); }
             set Name(v: string) { this._setFieldVal('Name', v); }
@@ -617,28 +620,11 @@ module RIAPP
             constructor(dbContext: DbContext) {
                 var self = this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
-                    dbSetInfo: { "dbSetName": "ProductModel", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "ProductModelID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 1, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Name", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }] },
+                    dbSetInfo: { "dbSetName": "ProductModel", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "ProductModelID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 1, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Name", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }] },
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                super(opts);
-                self._entityType = ProductModel;
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    f.dependents = [];
-                    self._fieldMap[f.fieldName] = f;
-                });
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
-                        self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    }
-                    else if (!!f.isCalculated) {
-                        self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                    }
-                });
-
-                self._mapAssocFields();
+                super(opts, ProductModel);
             }
             findEntity(productModelID: number): ProductModel {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
@@ -686,6 +672,11 @@ module RIAPP
         }
 
         export class SalesOrderHeader extends RIAPP.MOD.db.Entity implements ISalesOrderHeaderEntity {
+
+            constructor(dbSet: SalesOrderHeaderDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+                super(dbSet, row, names);
+
+            }
             get SalesOrderID(): number { return this._getFieldVal('SalesOrderID'); }
             get RevisionNumber(): number { return this._getFieldVal('RevisionNumber'); }
             get OrderDate(): Date { return this._getFieldVal('OrderDate'); }
@@ -746,28 +737,11 @@ module RIAPP
             constructor(dbContext: DbContext) {
                 var self = this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
-                    dbSetInfo: { "dbSetName": "SalesOrderHeader", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "SalesOrderID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 1, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "RevisionNumber", "dataType": 3, "maxLength": 1, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "OrderDate", "dataType": 7, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "DueDate", "dataType": 7, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ShipDate", "dataType": 7, "maxLength": 8, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Status", "dataType": 3, "maxLength": 1, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "OnlineOrderFlag", "dataType": 2, "maxLength": 1, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "SalesOrderNumber", "dataType": 1, "maxLength": 25, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "PurchaseOrderNumber", "dataType": 1, "maxLength": 25, "isNullable": true, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "AccountNumber", "dataType": 1, "maxLength": 15, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "CustomerID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ShipToAddressID", "dataType": 3, "maxLength": 4, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "BillToAddressID", "dataType": 3, "maxLength": 4, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ShipMethod", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "CreditCardApprovalCode", "dataType": 1, "maxLength": 15, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "SubTotal", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "TaxAmt", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Freight", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "TotalDue", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Comment", "dataType": 1, "maxLength": 0, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "SalesOrderDetails", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }, { "fieldName": "Customer", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "CustomerID", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }, { "fieldName": "Address", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "ShipToAddressID", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }, { "fieldName": "Address1", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "BillToAddressID", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }] },
+                    dbSetInfo: { "dbSetName": "SalesOrderHeader", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "SalesOrderID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 1, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "RevisionNumber", "dataType": 3, "maxLength": 1, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "OrderDate", "dataType": 7, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "DueDate", "dataType": 7, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ShipDate", "dataType": 7, "maxLength": 8, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Status", "dataType": 3, "maxLength": 1, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "OnlineOrderFlag", "dataType": 2, "maxLength": 1, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "SalesOrderNumber", "dataType": 1, "maxLength": 25, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "PurchaseOrderNumber", "dataType": 1, "maxLength": 25, "isNullable": true, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "AccountNumber", "dataType": 1, "maxLength": 15, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "CustomerID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ShipToAddressID", "dataType": 3, "maxLength": 4, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "BillToAddressID", "dataType": 3, "maxLength": 4, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ShipMethod", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "CreditCardApprovalCode", "dataType": 1, "maxLength": 15, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "SubTotal", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "TaxAmt", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Freight", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "TotalDue", "dataType": 4, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Comment", "dataType": 1, "maxLength": 0, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "SalesOrderDetails", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Customer", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "CustomerID", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Address", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "ShipToAddressID", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Address1", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "BillToAddressID", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }] },
                     childAssoc: [{ "name": "OrdersToCustomer", "parentDbSetName": "Customer", "childDbSetName": "SalesOrderHeader", "childToParentName": "Customer", "parentToChildrenName": null, "fieldRels": [{ "parentField": "CustomerID", "childField": "CustomerID" }], "onDeleteAction": 0 }, { "name": "OrdersToShipAddr", "parentDbSetName": "Address", "childDbSetName": "SalesOrderHeader", "childToParentName": "Address", "parentToChildrenName": null, "fieldRels": [{ "parentField": "AddressID", "childField": "ShipToAddressID" }], "onDeleteAction": 0 }, { "name": "OrdersToBillAddr", "parentDbSetName": "Address", "childDbSetName": "SalesOrderHeader", "childToParentName": "Address1", "parentToChildrenName": null, "fieldRels": [{ "parentField": "AddressID", "childField": "BillToAddressID" }], "onDeleteAction": 0 }],
                     parentAssoc: [{ "name": "OrdDetailsToOrder", "parentDbSetName": "SalesOrderHeader", "childDbSetName": "SalesOrderDetail", "childToParentName": "SalesOrderHeader", "parentToChildrenName": "SalesOrderDetails", "fieldRels": [{ "parentField": "SalesOrderID", "childField": "SalesOrderID" }], "onDeleteAction": 1 }]
                 }, utils = RIAPP.global.utils;
-                super(opts);
-                self._entityType = SalesOrderHeader;
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    f.dependents = [];
-                    self._fieldMap[f.fieldName] = f;
-                });
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
-                        self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    }
-                    else if (!!f.isCalculated) {
-                        self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                    }
-                });
-
-                self._mapAssocFields();
+                super(opts, SalesOrderHeader);
             }
             findEntity(salesOrderID: number): SalesOrderHeader {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
@@ -800,6 +774,11 @@ module RIAPP
         }
 
         export class SalesOrderDetail extends RIAPP.MOD.db.Entity implements ISalesOrderDetailEntity {
+
+            constructor(dbSet: SalesOrderDetailDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+                super(dbSet, row, names);
+
+            }
             get SalesOrderID(): number { return this._getFieldVal('SalesOrderID'); }
             set SalesOrderID(v: number) { this._setFieldVal('SalesOrderID', v); }
             get SalesOrderDetailID(): number { return this._getFieldVal('SalesOrderDetailID'); }
@@ -836,28 +815,11 @@ module RIAPP
             constructor(dbContext: DbContext) {
                 var self = this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
-                    dbSetInfo: { "dbSetName": "SalesOrderDetail", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "SalesOrderID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 1, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "SalesOrderDetailID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 2, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "OrderQty", "dataType": 3, "maxLength": 2, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ProductID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "UnitPrice", "dataType": 4, "maxLength": 8, "isNullable": true, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "UnitPriceDiscount", "dataType": 4, "maxLength": 8, "isNullable": true, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "LineTotal", "dataType": 4, "maxLength": 17, "isNullable": false, "isAutoGenerated": false, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "SalesOrderHeader", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "SalesOrderID", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }, { "fieldName": "Product", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "ProductID", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }] },
+                    dbSetInfo: { "dbSetName": "SalesOrderDetail", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "SalesOrderID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 1, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "SalesOrderDetailID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 2, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "OrderQty", "dataType": 3, "maxLength": 2, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ProductID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "UnitPrice", "dataType": 4, "maxLength": 8, "isNullable": true, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "UnitPriceDiscount", "dataType": 4, "maxLength": 8, "isNullable": true, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "LineTotal", "dataType": 4, "maxLength": 17, "isNullable": false, "isAutoGenerated": false, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "SalesOrderHeader", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "SalesOrderID", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Product", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "ProductID", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }] },
                     childAssoc: [{ "name": "OrdDetailsToOrder", "parentDbSetName": "SalesOrderHeader", "childDbSetName": "SalesOrderDetail", "childToParentName": "SalesOrderHeader", "parentToChildrenName": "SalesOrderDetails", "fieldRels": [{ "parentField": "SalesOrderID", "childField": "SalesOrderID" }], "onDeleteAction": 1 }, { "name": "OrdDetailsToProduct", "parentDbSetName": "Product", "childDbSetName": "SalesOrderDetail", "childToParentName": "Product", "parentToChildrenName": "SalesOrderDetails", "fieldRels": [{ "parentField": "ProductID", "childField": "ProductID" }], "onDeleteAction": 0 }],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                super(opts);
-                self._entityType = SalesOrderDetail;
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    f.dependents = [];
-                    self._fieldMap[f.fieldName] = f;
-                });
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
-                        self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    }
-                    else if (!!f.isCalculated) {
-                        self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                    }
-                });
-
-                self._mapAssocFields();
+                super(opts, SalesOrderDetail);
             }
             findEntity(salesOrderID: number, salesOrderDetailID: number): SalesOrderDetail {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
@@ -884,6 +846,11 @@ module RIAPP
         }
 
         export class ProductCategory extends RIAPP.MOD.db.Entity implements IProductCategoryEntity {
+
+            constructor(dbSet: ProductCategoryDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+                super(dbSet, row, names);
+
+            }
             get ProductCategoryID(): number { return this._getFieldVal('ProductCategoryID'); }
             get ParentProductCategoryID(): number { return this._getFieldVal('ParentProductCategoryID'); }
             set ParentProductCategoryID(v: number) { this._setFieldVal('ParentProductCategoryID', v); }
@@ -913,28 +880,11 @@ module RIAPP
             constructor(dbContext: DbContext) {
                 var self = this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
-                    dbSetInfo: { "dbSetName": "ProductCategory", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "ProductCategoryID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 1, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ParentProductCategoryID", "dataType": 3, "maxLength": 4, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Name", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": true, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }] },
+                    dbSetInfo: { "dbSetName": "ProductCategory", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "ProductCategoryID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 1, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ParentProductCategoryID", "dataType": 3, "maxLength": 4, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Name", "dataType": 1, "maxLength": 50, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "rowguid", "dataType": 9, "maxLength": 16, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 4, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "ModifiedDate", "dataType": 6, "maxLength": 8, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }] },
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                super(opts);
-                self._entityType = ProductCategory;
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    f.dependents = [];
-                    self._fieldMap[f.fieldName] = f;
-                });
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
-                        self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    }
-                    else if (!!f.isCalculated) {
-                        self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                    }
-                });
-
-                self._mapAssocFields();
+                super(opts, ProductCategory);
             }
             findEntity(productCategoryID: number): ProductCategory {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
@@ -957,6 +907,11 @@ module RIAPP
         }
 
         export class SalesInfo extends RIAPP.MOD.db.Entity implements ISalesInfoEntity {
+
+            constructor(dbSet: SalesInfoDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+                super(dbSet, row, names);
+
+            }
             get SalesPerson(): string { return this._getFieldVal('SalesPerson'); }
             set SalesPerson(v: string) { this._setFieldVal('SalesPerson', v); }
 
@@ -979,28 +934,11 @@ module RIAPP
             constructor(dbContext: DbContext) {
                 var self = this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
-                    dbSetInfo: { "dbSetName": "SalesInfo", "enablePaging": true, "pageSize": 25, "fieldInfos": [{ "fieldName": "SalesPerson", "dataType": 1, "maxLength": -1, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 1, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }] },
+                    dbSetInfo: { "dbSetName": "SalesInfo", "enablePaging": true, "pageSize": 25, "fieldInfos": [{ "fieldName": "SalesPerson", "dataType": 1, "maxLength": -1, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 1, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }] },
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                super(opts);
-                self._entityType = SalesInfo;
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    f.dependents = [];
-                    self._fieldMap[f.fieldName] = f;
-                });
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
-                        self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    }
-                    else if (!!f.isCalculated) {
-                        self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                    }
-                });
-
-                self._mapAssocFields();
+                super(opts, SalesInfo);
             }
             findEntity(salesPerson: string): SalesInfo {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
@@ -1024,6 +962,11 @@ module RIAPP
         }
 
         export class LookUpProduct extends RIAPP.MOD.db.Entity implements ILookUpProductEntity {
+
+            constructor(dbSet: LookUpProductDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+                super(dbSet, row, names);
+
+            }
             get ProductID(): number { return this._getFieldVal('ProductID'); }
             set ProductID(v: number) { this._setFieldVal('ProductID', v); }
             get Name(): string { return this._getFieldVal('Name'); }
@@ -1048,28 +991,11 @@ module RIAPP
             constructor(dbContext: DbContext) {
                 var self = this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
-                    dbSetInfo: { "dbSetName": "LookUpProduct", "enablePaging": true, "pageSize": 25, "fieldInfos": [{ "fieldName": "ProductID", "dataType": 3, "maxLength": -1, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 1, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "Name", "dataType": 1, "maxLength": -1, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }] },
+                    dbSetInfo: { "dbSetName": "LookUpProduct", "enablePaging": true, "pageSize": 25, "fieldInfos": [{ "fieldName": "ProductID", "dataType": 3, "maxLength": -1, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 1, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "Name", "dataType": 1, "maxLength": -1, "isNullable": false, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }] },
                     childAssoc: [],
                     parentAssoc: []
                 }, utils = RIAPP.global.utils;
-                super(opts);
-                self._entityType = LookUpProduct;
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    f.dependents = [];
-                    self._fieldMap[f.fieldName] = f;
-                });
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
-                        self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    }
-                    else if (!!f.isCalculated) {
-                        self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                    }
-                });
-
-                self._mapAssocFields();
+                super(opts, LookUpProduct);
             }
             findEntity(productID: number): LookUpProduct {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
@@ -1097,6 +1023,11 @@ module RIAPP
         }
 
         export class AddressInfo extends RIAPP.MOD.db.Entity implements IAddressInfoEntity {
+
+            constructor(dbSet: AddressInfoDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+                super(dbSet, row, names);
+
+            }
             get AddressID(): number { return this._getFieldVal('AddressID'); }
             get AddressLine1(): string { return this._getFieldVal('AddressLine1'); }
             get City(): string { return this._getFieldVal('City'); }
@@ -1123,28 +1054,11 @@ module RIAPP
             constructor(dbContext: DbContext) {
                 var self = this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
                     dbContext: dbContext,
-                    dbSetInfo: { "dbSetName": "AddressInfo", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "AddressID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 1, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "AddressLine1", "dataType": 1, "maxLength": 200, "isNullable": true, "isAutoGenerated": false, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "City", "dataType": 1, "maxLength": 30, "isNullable": true, "isAutoGenerated": false, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "StateProvince", "dataType": 1, "maxLength": 50, "isNullable": true, "isAutoGenerated": false, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "CountryRegion", "dataType": 1, "maxLength": 50, "isNullable": true, "isAutoGenerated": false, "isReadOnly": true, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": false, "isNavigation": false }, { "fieldName": "CustomerAddresses", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isRowTimeStamp": false, "isNeedOriginal": true, "isPrimaryKey": 0, "regex": "", "isCalculated": false, "dependentOn": "", "range": "", "dateConversion": 0, "allowClientDefault": false, "isClientOnly": true, "isNavigation": true }] },
+                    dbSetInfo: { "dbSetName": "AddressInfo", "enablePaging": false, "pageSize": 25, "fieldInfos": [{ "fieldName": "AddressID", "dataType": 3, "maxLength": 4, "isNullable": false, "isAutoGenerated": true, "isReadOnly": true, "isPrimaryKey": 1, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "AddressLine1", "dataType": 1, "maxLength": 200, "isNullable": true, "isAutoGenerated": false, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "City", "dataType": 1, "maxLength": 30, "isNullable": true, "isAutoGenerated": false, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "StateProvince", "dataType": 1, "maxLength": 50, "isNullable": true, "isAutoGenerated": false, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "CountryRegion", "dataType": 1, "maxLength": 50, "isNullable": true, "isAutoGenerated": false, "isReadOnly": true, "isPrimaryKey": 0, "regex": "", "fieldType": 0, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }, { "fieldName": "CustomerAddresses", "dataType": 0, "maxLength": -1, "isNullable": true, "isAutoGenerated": false, "isReadOnly": false, "isPrimaryKey": 0, "regex": "", "fieldType": 3, "dependentOn": "", "nested": null, "isNeedOriginal": true, "range": "", "dateConversion": 0, "allowClientDefault": false }] },
                     childAssoc: [],
                     parentAssoc: [{ "name": "CustAddrToAddress2", "parentDbSetName": "AddressInfo", "childDbSetName": "CustomerAddress", "childToParentName": "AddressInfo", "parentToChildrenName": "CustomerAddresses", "fieldRels": [{ "parentField": "AddressID", "childField": "AddressID" }], "onDeleteAction": 0 }]
                 }, utils = RIAPP.global.utils;
-                super(opts);
-                self._entityType = AddressInfo;
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    f.dependents = [];
-                    self._fieldMap[f.fieldName] = f;
-                });
-
-                opts.dbSetInfo.fieldInfos.forEach(function (f) {
-                    if (!!f.isNavigation) {
-                        self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                    }
-                    else if (!!f.isCalculated) {
-                        self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                    }
-                });
-
-                self._mapAssocFields();
+                super(opts, AddressInfo);
             }
             findEntity(addressID: number): AddressInfo {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));

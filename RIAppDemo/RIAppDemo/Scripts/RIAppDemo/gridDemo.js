@@ -352,7 +352,7 @@ var RIAPP;
                     }
                 }, self.uniqueID);
 
-                //example of using custom validation on client (in addition to builtin validation)
+                //example of using custom validation on client (in addition to a built-in validation)
                 this._dbSet.addOnValidate(function (sender, args) {
                     var item = args.item;
                     if (!args.fieldName) {

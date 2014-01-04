@@ -26,7 +26,7 @@ namespace RIAPP.DataService
     public class IncludedResult
     {
         [DataMember]
-        public IEnumerable<string> names
+        public IEnumerable<FieldName> names
         {
             get;
             set;
@@ -65,7 +65,7 @@ namespace RIAPP.DataService
         /// field names returned in the rows
         /// </summary>
         [DataMember]
-        public IEnumerable<string> names
+        public IEnumerable<FieldName> names
         {
             get;
             set;

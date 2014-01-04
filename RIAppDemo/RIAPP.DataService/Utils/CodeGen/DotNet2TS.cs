@@ -15,17 +15,27 @@ namespace RIAPP.DataService.Utils
         }
     }
 
-    public class CSharp2TS
+    public class DotNet2TS
     {
+        //a container for available services (something like dependency injection container)
         private IServiceContainer _serviceContainer;
-        Dictionary<string, string> _tsTypes = new Dictionary<string, string>();
+        //maps type name to its definition
+        private Dictionary<string, string> _tsTypes = new Dictionary<string, string>();
 
-        public CSharp2TS(IServiceContainer serviceContainer)
+        public DotNet2TS(IServiceContainer serviceContainer)
         {
             this._serviceContainer = serviceContainer;
         }
 
-        public event EventHandler<NewTypeArgs> newComplexTypeAdded;
+        protected internal IServiceContainer ServiceContainer
+        {
+            get
+            {
+                return this._serviceContainer;
+            }
+        }
+
+        public event EventHandler<NewTypeArgs> newClientTypeAdded;
 
         public string GetTSTypeName(Type t)
         {
@@ -63,7 +73,7 @@ namespace RIAPP.DataService.Utils
                 }
 
                 DataType dtype = this._serviceContainer.ValueConverter.DataTypeFromType(t, out isArray);
-                res = CSharp2TS.GetTSType(dtype);
+                res = DotNet2TS.GetTSTypeNameFromDataType(dtype);
                 if (isArray || isEnumerable)
                     res = string.Format("{0}[]", res);
                 return res;
@@ -75,7 +85,7 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        private string GetTsComplexTypeName(Type t, bool isArray, bool isEnumerable, bool isEnum)
+        protected internal string GetTsComplexTypeName(Type t, bool isArray, bool isEnumerable, bool isEnum)
         {
             string res = "any";
             ExtendsAttribute extendsAttr = null;
@@ -113,7 +123,7 @@ namespace RIAPP.DataService.Utils
                 return typeName;
         }
 
-        private static void addComment(StringBuilder sb, string comment)
+        protected internal static void addComment(StringBuilder sb, string comment)
         {
             sb.AppendLine("/*");
             sb.Append("\t");
@@ -131,7 +141,7 @@ namespace RIAPP.DataService.Utils
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private string GetTSInterface(Type t, string typeName, string extends)
+        protected internal string GetTSInterface(Type t, string typeName, string extends)
         {
             if (t == typeof(Type))
                 throw new ArgumentException("Can not generate interface for a System.Type");
@@ -147,7 +157,7 @@ namespace RIAPP.DataService.Utils
             StringBuilder sb = new StringBuilder();
             if (commentAttr != null && !string.IsNullOrWhiteSpace(commentAttr.Text))
             {
-                CSharp2TS.addComment(sb, commentAttr.Text);
+                DotNet2TS.addComment(sb, commentAttr.Text);
             }
             sb.AppendFormat("export interface {0}", name);
             if (!string.IsNullOrWhiteSpace(extends))
@@ -166,9 +176,9 @@ namespace RIAPP.DataService.Utils
             );
             sb.AppendLine("}");
             this._tsTypes.Add(name, sb.ToString());
-            if (this.newComplexTypeAdded != null)
+            if (this.newClientTypeAdded != null)
             {
-                this.newComplexTypeAdded(this, new NewTypeArgs(t)); 
+                this.newClientTypeAdded(this, new NewTypeArgs(t)); 
             }
             return this._tsTypes[name];
         }
@@ -178,7 +188,7 @@ namespace RIAPP.DataService.Utils
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private string GetTSEnum(Type t, string typeName)
+        protected internal string GetTSEnum(Type t, string typeName)
         {
             string name = typeName;
             if (string.IsNullOrEmpty(typeName))
@@ -191,7 +201,7 @@ namespace RIAPP.DataService.Utils
             StringBuilder sb = new StringBuilder();
             if (commentAttr != null && !string.IsNullOrWhiteSpace(commentAttr.Text))
             {
-                CSharp2TS.addComment(sb, commentAttr.Text);
+                DotNet2TS.addComment(sb, commentAttr.Text);
             }
             sb.AppendFormat("export enum {0}", name);
             sb.AppendLine();
@@ -213,7 +223,7 @@ namespace RIAPP.DataService.Utils
             return this._tsTypes[name];
         }
 
-        public StringBuilder GetInterfaceDeclarations()
+        public string GetInterfaceDeclarations()
         {
             var vals = this._tsTypes.Values;
             StringBuilder sb = new StringBuilder(4096);
@@ -222,10 +232,10 @@ namespace RIAPP.DataService.Utils
                 sb.Append(str);
                 sb.AppendLine();
             }
-            return sb;
+            return sb.ToString().TrimEnd('\r','\n');
         }
 
-        public static string GetTSType(DataType dataType)
+        public static string GetTSTypeNameFromDataType(DataType dataType)
         {
             string fieldType = "any";
             switch (dataType)
@@ -254,7 +264,7 @@ namespace RIAPP.DataService.Utils
             return fieldType;
         }
 
-        public RIAPP.DataService.DataType DataTypeFromType(Type type, out bool isArray)
+        public DataType DataTypeFromDotNetType(Type type, out bool isArray)
         {
             return this._serviceContainer.ValueConverter.DataTypeFromType(type, out isArray);
         }

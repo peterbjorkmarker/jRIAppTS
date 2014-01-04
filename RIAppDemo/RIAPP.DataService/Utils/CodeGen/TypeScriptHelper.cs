@@ -13,8 +13,12 @@ namespace RIAPP.DataService.Utils
         MetadataInfo _metadata;
         List<Type> _clientTypes;
         StringBuilder _sb = new StringBuilder(4096);
-        CSharp2TS _csharp2TS;
+        private DotNet2TS _dotNet2TS;
         private IServiceContainer _serviceContainer;
+        public static string toCamelCase(string str)
+        {
+            return str.Length > 1 ? str.Substring(0, 1).ToLower() + str.Substring(1, str.Length - 1) : str.ToLower();
+        }
 
         public TypeScriptHelper(IServiceContainer serviceContainer, MetadataInfo metadata, IEnumerable<Type> clientTypes)
         {
@@ -27,7 +31,7 @@ namespace RIAPP.DataService.Utils
             this._clientTypes = new List<Type>(clientTypes==null?Enumerable.Empty<Type>():clientTypes);
         }
 
-        void _csharp2TS_newComplexTypeAdded(object sender, NewTypeArgs e)
+        void _dotnet2TS_newClientTypeAdded(object sender, NewTypeArgs e)
         {
             if (!this._clientTypes.Contains(e.t))
             {
@@ -60,20 +64,68 @@ namespace RIAPP.DataService.Utils
 
         public string CreateTypeScript(string comment=null)
         {
-            if (this._csharp2TS != null)
+            if (this._dotNet2TS != null)
             {
-                this._csharp2TS.newComplexTypeAdded -= _csharp2TS_newComplexTypeAdded;
+                this._dotNet2TS.newClientTypeAdded -= _dotnet2TS_newClientTypeAdded;
             }
-            this._csharp2TS = new CSharp2TS(this._serviceContainer);
-            this._csharp2TS.newComplexTypeAdded += _csharp2TS_newComplexTypeAdded;
+            this._dotNet2TS = new DotNet2TS(this._serviceContainer);
+            this._dotNet2TS.newClientTypeAdded += _dotnet2TS_newClientTypeAdded;
             _sb.Length = 0;
             if (!string.IsNullOrWhiteSpace(comment))
             {
                 TypeScriptHelper.addComment(_sb, comment);
             }
             this.processMethodArgs();
-            this.WriteStringLine(this.createISvcMethods());
+            string isvcMethods = this.createISvcMethods();
+
+            //create typed Lists and Dictionaries
+            string listTypes = this.createListTypes();
+            //get interface declarations for all client types
+            string sbInterfaceDefs = this._dotNet2TS.GetInterfaceDeclarations();
+
+            if (!string.IsNullOrWhiteSpace(sbInterfaceDefs))
+            {
+                this.WriteStringLine(@"//******BEGIN INTERFACE REGION******");
+                this.WriteStringLine(sbInterfaceDefs);
+                this.WriteStringLine(@"//******END INTERFACE REGION******");
+                this.WriteLine();
+            }
+            if (!string.IsNullOrWhiteSpace(isvcMethods))
+            {
+                this.WriteStringLine(isvcMethods);
+                this.WriteLine();
+            }
+            if (!string.IsNullOrWhiteSpace(listTypes))
+            {
+                this.WriteStringLine(@"//******BEGIN LISTS REGION******");
+                this.WriteStringLine(listTypes);
+                this.WriteStringLine(@"//******END LISTS REGION******");
+                this.WriteLine();
+            }
+
           //this.WriteStringLine(this.createQueryNames());
+
+            ComplexTypeBuilder ctbuilder = new ComplexTypeBuilder(this._dotNet2TS);
+            this._metadata.dbSets.ForEach((dbSetInfo) =>
+            {
+                dbSetInfo.fieldInfos.ForEach((fieldInfo) =>
+                {
+                    if (fieldInfo._isObjectField)
+                    {
+                        ctbuilder.CreateComplexType(dbSetInfo, fieldInfo, 0);
+                    }
+                });
+            });
+
+            string complexTypes = ctbuilder.GetComplexTypes();
+            if (!string.IsNullOrWhiteSpace(complexTypes))
+            {
+                this.WriteStringLine(@"//******BEGIN COMPLEX TYPES REGION*****");
+                this.WriteStringLine(complexTypes);
+                this.WriteStringLine(@"//******END COMPLEX TYPES REGION******");
+                this.WriteLine();
+            }
+
             this._metadata.dbSets.ForEach((dbSetInfo) =>
             {
                 this.WriteStringLine(this.createEntityType(dbSetInfo));
@@ -81,6 +133,7 @@ namespace RIAPP.DataService.Utils
                 this.WriteStringLine(this.createDbSetType(dbSetInfo));
                 this.WriteLine();
             });
+
             this.WriteStringLine(this.createIAssocs());
             this.WriteLine();
             this.WriteStringLine(this.createDbContextType());
@@ -116,7 +169,7 @@ namespace RIAPP.DataService.Utils
 
         private string _CreateParamSignature(ParamMetadataInfo paramInfo)
         {
-            return string.Format("{0}{1}: {2}{3};", paramInfo.name, paramInfo.isNullable ? "?" : "", (paramInfo.dataType == DataType.None ? this._csharp2TS.GetTSTypeName(paramInfo.ParameterType) : CSharp2TS.GetTSType(paramInfo.dataType)), (paramInfo.dataType != DataType.None && paramInfo.isArray) ? "[]" : "");
+            return string.Format("{0}{1}: {2}{3};", paramInfo.name, paramInfo.isNullable ? "?" : "", (paramInfo.dataType == DataType.None ? this._dotNet2TS.GetTSTypeName(paramInfo.ParameterType) : DotNet2TS.GetTSTypeNameFromDataType(paramInfo.dataType)), (paramInfo.dataType != DataType.None && paramInfo.isArray) ? "[]" : "");
         }
 
         private void processMethodArgs()
@@ -129,7 +182,7 @@ namespace RIAPP.DataService.Utils
                     {
                         //if this is complex type parse parameter to create its typescript interface
                         if (paramInfo.dataType == DataType.None) 
-                            this._csharp2TS.GetTSTypeName(paramInfo.ParameterType);
+                            this._dotNet2TS.GetTSTypeName(paramInfo.ParameterType);
                     });
                 }
             });
@@ -137,9 +190,9 @@ namespace RIAPP.DataService.Utils
 
         private string createISvcMethods()
         {
-            var sb = new StringBuilder(512);
-            sb.AppendLine("export interface ISvcMethods");
-            sb.AppendLine("{");
+            var sbISvcMeth = new StringBuilder(512);
+            sbISvcMeth.AppendLine("export interface ISvcMethods");
+            sbISvcMeth.AppendLine("{");
             StringBuilder sbArgs = new StringBuilder(255);
             this._metadata.methods.ForEach((methodInfo) =>
             {
@@ -158,7 +211,7 @@ namespace RIAPP.DataService.Utils
                         if (methodInfo.methodResult)
                         {
                             sbArgs.Append("\t}) => IPromise<");
-                            sbArgs.Append(this._csharp2TS.GetTSTypeName(methodInfo.methodInfo.ReturnType));
+                            sbArgs.Append(this._dotNet2TS.GetTSTypeName(methodInfo.methodInfo.ReturnType));
                             sbArgs.Append(">");
                         }
                         else
@@ -171,7 +224,7 @@ namespace RIAPP.DataService.Utils
                         if (methodInfo.methodResult)
                         {
                             sbArgs.Append("() => IPromise<");
-                            sbArgs.Append(this._csharp2TS.GetTSTypeName(methodInfo.methodInfo.ReturnType));
+                            sbArgs.Append(this._dotNet2TS.GetTSTypeName(methodInfo.methodInfo.ReturnType));
                             sbArgs.Append(">");
                         }
                         else
@@ -180,37 +233,24 @@ namespace RIAPP.DataService.Utils
                         }
                     }
 
-                    sb.AppendFormat("\t{0}: {1};", methodInfo.methodName, sbArgs.ToString());
-                    sb.AppendLine();
+                    sbISvcMeth.AppendFormat("\t{0}: {1};", methodInfo.methodName, sbArgs.ToString());
+                    sbISvcMeth.AppendLine();
                 }
             });
-            sb.AppendLine("}");
-            
-            sb.AppendLine("");
-            
-            //create typed Lists and Dictionaries
-            sb.Append(this.createClientTypes());
-
-            StringBuilder sbResult = this._csharp2TS.GetInterfaceDeclarations();
-            sbResult.Append(sb.ToString());
-            return sbResult.ToString();
+            sbISvcMeth.AppendLine("}");
+            return sbISvcMeth.ToString().TrimEnd('\r','\n');
         }
 
-        private string createClientTypes()
+        private string createListTypes()
         {
             var sb = new StringBuilder(1024);
             for (int i = 0; i< this._clientTypes.Count();++i)
             {
                 Type type = this._clientTypes[i];
-                sb.Append(this.createClientType(type));
+                sb.Append(this.createListType(type));
             }
 
-            return sb.ToString();
-        }
-
-        protected static string toCamelCase(string str)
-        {
-            return str.Length > 1 ? str.Substring(0, 1).ToLower() + str.Substring(1, str.Length - 1) : str.ToLower();
+            return sb.ToString().TrimEnd('\r','\n');
         }
 
         private string createDictionary(string name, string keyName, string itemName, string interfaceName, string properties, List<System.Reflection.PropertyInfo> propList)
@@ -219,7 +259,7 @@ namespace RIAPP.DataService.Utils
             var pkProp = propList.Where((propInfo) => keyName == propInfo.Name).SingleOrDefault();
             if (pkProp == null)
                 throw new Exception(string.Format("Dictionary item does not have a property with a name {0}", keyName));
-            string pkVals = toCamelCase(pkProp.Name) + ": " + this._csharp2TS.GetTSTypeName(pkProp.PropertyType);
+            string pkVals = toCamelCase(pkProp.Name) + ": " + this._dotNet2TS.GetTSTypeName(pkProp.PropertyType);
 
 
             (new TemplateParser("Dictionary.txt")).ProcessParts((part) =>
@@ -293,7 +333,7 @@ namespace RIAPP.DataService.Utils
             return sbList.ToString();
         }
 
-        private string createClientType(Type type)
+        private string createListType(Type type)
         {
             var dictAttr = type.GetCustomAttributes(typeof(DictionaryAttribute), false).OfType<DictionaryAttribute>().FirstOrDefault();
             var listAttr = type.GetCustomAttributes(typeof(ListAttribute), false).OfType<ListAttribute>().FirstOrDefault();
@@ -307,7 +347,7 @@ namespace RIAPP.DataService.Utils
             if (listAttr != null)
                 listName = listAttr.ListName == null ? string.Format("{0}List", type.Name) : listAttr.ListName;
             bool isListItem = dictAttr != null || listAttr != null;
-            string interfaceName = this._csharp2TS.GetTSTypeName(type);
+            string interfaceName = this._dotNet2TS.GetTSTypeName(type);
             
             //can return here if no need to create Dictionary or List
             if (!type.IsClass || !isListItem)
@@ -326,8 +366,8 @@ namespace RIAPP.DataService.Utils
             sb.AppendLine("\t}");
             propInfos.ForEach((propInfo) =>
             {
-                sb.AppendLine(string.Format("\tget {0}():{1} {{ return <{1}>this._getProp('{0}'); }}", propInfo.Name, this._csharp2TS.GetTSTypeName(propInfo.PropertyType)));
-                sb.AppendLine(string.Format("\tset {0}(v:{1}) {{ this._setProp('{0}', v); }}", propInfo.Name, this._csharp2TS.GetTSTypeName(propInfo.PropertyType)));
+                sb.AppendLine(string.Format("\tget {0}():{1} {{ return <{1}>this._getProp('{0}'); }}", propInfo.Name, this._dotNet2TS.GetTSTypeName(propInfo.PropertyType)));
+                sb.AppendLine(string.Format("\tset {0}(v:{1}) {{ this._setProp('{0}', v); }}", propInfo.Name, this._dotNet2TS.GetTSTypeName(propInfo.PropertyType)));
             });
             sb.AppendFormat("\tasInterface() {{ return <{0}>this; }}", interfaceName);
             sb.AppendLine();
@@ -351,7 +391,7 @@ namespace RIAPP.DataService.Utils
                     RIAPP.DataService.DataType dataType = DataType.None;
                     try
                     {
-                        dataType = this._csharp2TS.DataTypeFromType(propInfo.PropertyType, out isArray);
+                        dataType = this._dotNet2TS.DataTypeFromDotNetType(propInfo.PropertyType, out isArray);
                         if (isArray)
                             dataType = DataType.None;
                     }
@@ -460,7 +500,7 @@ namespace RIAPP.DataService.Utils
         private string createCalcFields(DbSetInfo dbSetInfo)
         {
             var sb = new StringBuilder(256);
-            var selected = dbSetInfo.fieldInfos.Where((f) => f.isCalculated==true).ToList();
+            var selected = dbSetInfo.fieldInfos.Where((f) => f.fieldType == FieldType.Calculated).ToList();
             selected.ForEach((fieldInfo) =>
             {
                 sb.AppendFormat("\tdefine{0}Field(getFunc: () => {1})", fieldInfo.fieldName, this.GetFieldDataType(fieldInfo));
@@ -597,7 +637,10 @@ namespace RIAPP.DataService.Utils
             var fieldInfos = dbSetInfo.fieldInfos;
             var sbFields = new StringBuilder(512);
             var sbFields2 = new StringBuilder(512);
-            if (this._csharp2TS.IsTypeNameRegistered(entityInterfaceName))
+            var sbFieldsDef = new StringBuilder();
+            var sbFieldsInit = new StringBuilder();
+
+            if (this._dotNet2TS.IsTypeNameRegistered(entityInterfaceName))
                 throw new ApplicationException(string.Format("Names collision. Name '{0}' can not be used for an entity type's name because this name is used for a client's type.", entityInterfaceName));
 
             Action<FieldInfo> AddCalculatedField = (FieldInfo f) =>
@@ -626,6 +669,20 @@ namespace RIAPP.DataService.Utils
                 sbFields2.AppendLine();
             };
 
+
+            Action<FieldInfo> AddComplexTypeField = (FieldInfo f) =>
+            {
+                string dataType = this.GetFieldDataType(f);
+                sbFields.AppendFormat("\tget {0}(): {1} {{ if (!this._{0}) {{this._{0} = new {1}('{0}', this);}} return this._{0}; }}", f.fieldName, dataType);
+                sbFields.AppendLine();
+                sbFieldsDef.AppendFormat("\tprivate _{0}: {1};", f.fieldName, dataType);
+                sbFieldsDef.AppendLine();
+                sbFieldsInit.AppendFormat("\t\tthis._{0} = null;", f.fieldName);
+                sbFieldsInit.AppendLine();
+                sbFields2.AppendFormat("\t{0}: {1};", f.fieldName, dataType);
+                sbFields2.AppendLine();
+            };
+
             Action<FieldInfo> AddSimpleField = (FieldInfo f) =>
             {
                 string dataType = this.GetFieldDataType(f);
@@ -643,13 +700,17 @@ namespace RIAPP.DataService.Utils
 
             fieldInfos.ForEach((fieldInfo) =>
             {
-                if (fieldInfo.isCalculated)
+                if (fieldInfo.fieldType == FieldType.Calculated)
                 {
                     AddCalculatedField(fieldInfo);
                 }
-                else if (fieldInfo.isNavigation)
+                else if (fieldInfo.fieldType == FieldType.Navigation)
                 {
                     AddNavigationField(fieldInfo);
+                }
+                else if (fieldInfo.fieldType == FieldType.Object)
+                {
+                    AddComplexTypeField(fieldInfo);
                 }
                 else
                 {
@@ -688,7 +749,12 @@ namespace RIAPP.DataService.Utils
                         case "INTERFACE_FIELDS":
                             sb.Append(sbFields2.ToString());
                             break;
-
+                        case "FIELDS_DEF":
+                            sb.Append(sbFieldsDef.ToString());
+                            break;
+                        case "FIELDS_INIT":
+                            sb.Append(sbFieldsInit.ToString());
+                            break;
                     }
                 }
             });
@@ -701,13 +767,17 @@ namespace RIAPP.DataService.Utils
             string fieldType = "any";
             DataType dataType = fieldInfo.dataType;
 
-            if (fieldInfo.isNavigation)
+            if (fieldInfo.fieldType == FieldType.Navigation)
+            {
+                fieldType = fieldInfo._TypeScriptDataType;
+            }
+            else if (fieldInfo.fieldType == FieldType.Object)
             {
                 fieldType = fieldInfo._TypeScriptDataType;
             }
             else
             {
-                fieldType = CSharp2TS.GetTSType(dataType);
+                fieldType = DotNet2TS.GetTSTypeNameFromDataType(dataType);
             }
             return fieldType;
         }

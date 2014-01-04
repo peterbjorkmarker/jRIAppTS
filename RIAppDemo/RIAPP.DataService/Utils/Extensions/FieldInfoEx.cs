@@ -9,7 +9,7 @@ namespace RIAPP.DataService.Utils
     {
         public static bool isIncludeInResult(this FieldInfo fieldInfo)
         {
-            return !fieldInfo.isClientOnly && !fieldInfo.isCalculated;
+            return !(fieldInfo.fieldType == FieldType.Calculated || fieldInfo.fieldType == FieldType.ClientOnly || fieldInfo.fieldType == FieldType.Navigation);
         }
     }
 }

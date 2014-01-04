@@ -122,7 +122,7 @@ namespace RIAPP.DataService
         public BaseDomainService(IServiceArgs args)
         {
             if (args.serializer == null)
-                throw new ArgumentException("DataService class expects a Serializer instance!");
+                throw new ArgumentException(ErrorStrings.ERR_NO_SERIALIZER);
             this._principal = args.principal;
             this._serializer = args.serializer;
             this._serviceContainer = this.CreateServiceContainer();
@@ -197,29 +197,62 @@ namespace RIAPP.DataService
             {
                 Row row = new Row();
                 string[] pk = new string[pkInfos.Length];
-                row.values = new string[fieldsCnt];
+                row.v = new object[fieldsCnt];
                 for (int i = 0; i < fieldsCnt; ++i)
                 {
-                    string fv = null;
                     FieldInfo fieldInfo = fields[i];
-
-                    fv = this.ServiceContainer.DataHelper.SerializeField(entity, fieldInfo);
-                  
+                    object fv = this.ServiceContainer.DataHelper.SerializeField(entity, fieldInfo);
                     int keyIndex = Array.IndexOf(pkInfos, fieldInfo);
                     if (keyIndex > -1)
                     {
-                        pk[keyIndex] = fv;
+                        pk[keyIndex] = fv.ToString();
                     }
-                    row.values[i] = fv;
+                    row.v[i] = fv;
                 }
-                row.key = string.Join(";", pk);
+                row.k = string.Join(";", pk);
                 rows[counter] = row;
                 ++counter;
             }
             return rows;
         }
 
-      
+        protected IEnumerable<Row> CreateDistinctRows(DbSetInfo dbSetInfo, IEnumerable<object> dataSource, ref int rowCount)
+        {
+            //map rows by PK
+            Dictionary<string, Row> rows = new Dictionary<string, Row>(rowCount);
+            var fieldInfos = dbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).ToArray();
+            int fieldCnt = fieldInfos.Length;
+            FieldInfo[] pkInfos = dbSetInfo.GetPKFieldInfos();
+            int counter = 0;
+            foreach (object entity in dataSource)
+            {
+                Row row = new Row();
+                string[] pk = new string[pkInfos.Length];
+                row.v = new object[fieldCnt];
+                for (int i = 0; i < fieldCnt; ++i)
+                {
+                    FieldInfo fieldInfo = fieldInfos[i];
+                    object fv = this.ServiceContainer.DataHelper.SerializeField(entity, fieldInfo);
+
+                    int keyIndex = Array.IndexOf(pkInfos, fieldInfo);
+                    if (keyIndex > -1)
+                    {
+                        pk[keyIndex] = fv.ToString();
+                    }
+                    row.v[i] = fv;
+                }
+                row.k = string.Join(";", pk);
+                //here we filter out repeated rows
+                if (!rows.ContainsKey(row.k))
+                {
+                    rows.Add(row.k, row);
+                    ++counter;
+                }
+            }
+            rowCount = counter;
+            return rows.Values;
+        }
+
         protected IEnumerable<IncludedResult> CreateIncludedResults(DbSetInfo dbSetInfo, IEnumerable<object> entities, string[] includePaths)
         {
             if (includePaths.Length == 0)
@@ -264,7 +297,7 @@ namespace RIAPP.DataService
             LinkedList<object> resultEntities = new LinkedList<object>();
             foreach(object entity in inputEntities)
             {
-                propValue = this.ServiceContainer.DataHelper.GetProperty(entity, propertyName);
+                propValue = this.ServiceContainer.DataHelper.GetValue(entity, propertyName, true);
                 if (isChildProperty && propValue is IEnumerable)
                 {
                     foreach (object childEntity in (IEnumerable)propValue)
@@ -282,48 +315,14 @@ namespace RIAPP.DataService
 
             //create temporary result without rows
             //fills rows at the end of the method
-            IncludedResult current = new IncludedResult { dbSetName = nextDbSetInfo.dbSetName, rows = new Row[0], names = nextDbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).Select(fi => fi.fieldName) };
+            IncludedResult current = new IncludedResult { dbSetName = nextDbSetInfo.dbSetName, rows = new Row[0], names = this.GetNames(nextDbSetInfo.fieldInfos) };
             visited.Add(nextDbSetInfo.dbSetName + "." + propertyName, current);
 
             if (nextParts.Length>0)
                 this.CreateIncludedResult(nextDbSetInfo, resultEntities, nextParts[0], nextParts.Skip(1).ToArray(), visited);
 
-            //map rows by PK
-            Dictionary<string, Row> rows = new Dictionary<string, Row>(rowCount);
-            var fields = nextDbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).ToArray();
-            int fieldCnt = fields.Length;
-            FieldInfo[] pkInfos = nextDbSetInfo.GetPKFieldInfos();
-            int counter = 0;
-            foreach (object entity in resultEntities)
-            {
-                Row row = new Row();
-                string[] pk = new string[pkInfos.Length];
-                row.values= new string[fieldCnt];
-                for (int i = 0; i < fieldCnt; ++i)
-                {
-                    string fv = null;
-                    FieldInfo fieldInfo = fields[i];
-
-                    fv = this.ServiceContainer.DataHelper.SerializeField(entity, fieldInfo);
-
-                    int keyIndex = Array.IndexOf(pkInfos, fieldInfo);
-                    if (keyIndex > -1)
-                    {
-                        pk[keyIndex] = fv;
-                    }
-                    row.values[i] = fv;
-                }
-                row.key = string.Join(";", pk);
-                //here we filter out repeated rows
-                if (!rows.ContainsKey(row.key))
-                {
-                    rows.Add(row.key, row);
-                    ++counter;
-                }
-            }
-
-            current.rows = rows.Values;
-            current.rowCount = counter;
+            current.rows = this.CreateDistinctRows(nextDbSetInfo, resultEntities, ref rowCount);
+            current.rowCount = rowCount;
         }
         
         protected ServiceMetadata EnsureMetadataInitialized()
@@ -408,11 +407,13 @@ namespace RIAPP.DataService
                     var sb = new System.Text.StringBuilder(120);
                     var dependentOn = assoc.fieldRels.Aggregate(sb, (a, b) => a.Append((a.Length == 0 ? "" : ",") + b.childField), a => a).ToString();
                     //add navigation field to dbSet's field collection
-                    childDb.fieldInfos.Add(new FieldInfo() { fieldName= assoc.childToParentName, 
-                        isNavigation= true, 
-                        isClientOnly= true, dataType = DataType.None, 
+                    childDb.fieldInfos.Add(new FieldInfo()
+                    {
+                        fieldName = assoc.childToParentName,
+                        fieldType = FieldType.Navigation,
+                        dataType = DataType.None,
                         dependentOn = dependentOn,
-                       _TypeScriptDataType = TypeScriptHelper.GetEntityTypeName(parentDb.dbSetName)
+                        _TypeScriptDataType = TypeScriptHelper.GetEntityTypeName(parentDb.dbSetName)
                     });
                 }
 
@@ -420,9 +421,12 @@ namespace RIAPP.DataService
                 {
                     var sb = new System.Text.StringBuilder(120);
                     //add navigation field to dbSet's field collection
-                    parentDb.fieldInfos.Add(new FieldInfo() { fieldName = assoc.parentToChildrenName, isNavigation = true, 
-                        isClientOnly = true, dataType = DataType.None,
-                       _TypeScriptDataType = string.Format("{0}[]", TypeScriptHelper.GetEntityTypeName(childDb.dbSetName)) 
+                    parentDb.fieldInfos.Add(new FieldInfo()
+                    {
+                        fieldName = assoc.parentToChildrenName,
+                        fieldType = FieldType.Navigation,
+                        dataType = DataType.None,
+                        _TypeScriptDataType = string.Format("{0}[]", TypeScriptHelper.GetEntityTypeName(childDb.dbSetName))
                     });
                 }
             }
@@ -455,82 +459,101 @@ namespace RIAPP.DataService
             return res;
         }
 
+        private void ApplyValues(object entity, RowInfo rowInfo, string path, ValueChange[] values, bool isOriginal)
+        {
+            DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
+            Array.ForEach(values, (val) =>
+            {
+                string fullName = path + val.fieldName;
+                FieldInfo fieldInfo = this.ServiceContainer.DataHelper.getFieldInfo(dbSetInfo, fullName);
+                if (!fieldInfo.isIncludeInResult())
+                    return;
+
+                if (fieldInfo.fieldType == FieldType.Object && val.nested != null)
+                {
+                    this.ApplyValues(entity, rowInfo, fullName + '.', val.nested.ToArray(), isOriginal);
+                }
+                else
+                {
+                    this.ApplyValue(entity, rowInfo, fullName, fieldInfo, val, isOriginal);
+                }
+            });
+        }
+
+        private void ApplyValue(object entity, RowInfo rowInfo, string fullName, FieldInfo fieldInfo, ValueChange val, bool isOriginal)
+        {
+            if (isOriginal)
+            {
+                if ((val.flags & ValueFlags.Setted) == ValueFlags.Setted)
+                    this.ServiceContainer.DataHelper.SetFieldValue(entity, fullName, fieldInfo, val.orig);
+            }
+            else
+            {
+                switch (rowInfo.changeType)
+                {
+                    case ChangeType.Deleted:
+                        {
+                            //For delete fill only original values
+                            if ((val.flags & ValueFlags.Setted) == ValueFlags.Setted)
+                                this.ServiceContainer.DataHelper.SetFieldValue(entity, fullName, fieldInfo, val.orig);
+                        }
+                        break;
+                    case ChangeType.Added:
+                        {
+                            if (fieldInfo.isAutoGenerated)
+                                return;
+                            if ((val.flags & ValueFlags.Changed) == ValueFlags.Changed)
+                            {
+                                if (fieldInfo.isReadOnly && val.val != null && !fieldInfo.allowClientDefault)
+                                {
+                                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, entity.GetType().Name, fieldInfo.fieldName));
+                                }
+                                if (fieldInfo.isAutoGenerated && val.val != null)
+                                {
+                                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, entity.GetType().Name, fieldInfo.fieldName));
+                                }
+                                this.ServiceContainer.DataHelper.SetFieldValue(entity, fullName, fieldInfo, val.val);
+                            }
+                        }
+                        break;
+                    case ChangeType.Updated:
+                        {
+                            if ((val.flags & ValueFlags.Changed) == ValueFlags.Changed)
+                            {
+                                if (fieldInfo.isReadOnly || (fieldInfo.isPrimaryKey > 0 || fieldInfo.fieldType == FieldType.RowTimeStamp || fieldInfo.isAutoGenerated))
+                                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, entity.GetType().Name, fieldInfo.fieldName));
+                                if (!fieldInfo.isNullable && val.val == null)
+                                {
+                                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_FIELD_IS_NOT_NULLABLE, fieldInfo.fieldName));
+                                }
+                                this.ServiceContainer.DataHelper.SetFieldValue(entity, fullName, fieldInfo, val.val);
+                            }
+                            else if ((val.flags & ValueFlags.Setted) == ValueFlags.Setted)
+                            {
+                                if ((fieldInfo.isPrimaryKey > 0 || fieldInfo.fieldType == FieldType.RowTimeStamp || fieldInfo.isNeedOriginal) && val.val != val.orig)
+                                {
+                                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_VAL_ORIGINAL_INVALID, fieldInfo.fieldName));
+                                }
+                                this.ServiceContainer.DataHelper.SetFieldValue(entity, fullName, fieldInfo, val.val);
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
         protected void UpdateEntityFromRowInfo(object entity, RowInfo rowInfo, bool isOriginal)
         {
             DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
             var values = rowInfo.values;
             var flds = dbSetInfo.GetFieldByNames();
-          
-            foreach (ValueChange fv in values)
-            {
-                FieldInfo finfo = flds[fv.fieldName];
-           
-                if (!finfo.isIncludeInResult())
-                    continue;
-                if (isOriginal){
-                    if ((fv.flags & ValueFlags.Setted) == ValueFlags.Setted)
-                        this.ServiceContainer.DataHelper.SetValue(entity, finfo, fv.orig);
-                }
-                else
-                {
-                    switch (rowInfo.changeType)
-                    {
-                        case ChangeType.Deleted:
-                            {
-                                //For delete fill only original values
-                                if ((fv.flags & ValueFlags.Setted) == ValueFlags.Setted)
-                                    this.ServiceContainer.DataHelper.SetValue(entity, finfo, fv.orig);
-                            }
-                            break;
-                        case ChangeType.Added:
-                            {
-                                if (finfo.isAutoGenerated)
-                                    continue;
-                                if ((fv.flags & ValueFlags.Changed) == ValueFlags.Changed)
-                                {
-                                    if (finfo.isReadOnly && fv.val != null && !finfo.allowClientDefault)
-                                    {
-                                        throw new DomainServiceException(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, finfo.fieldName));
-                                    }
-                                    if (finfo.isAutoGenerated && fv.val != null)
-                                    {
-                                        throw new DomainServiceException(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, finfo.fieldName));
-                                    }
-                                    this.ServiceContainer.DataHelper.SetValue(entity, finfo, fv.val);
-                                }
-                            }
-                            break;
-                        case ChangeType.Updated:
-                            {
-                                if ((fv.flags & ValueFlags.Changed) == ValueFlags.Changed)
-                                {
-                                    if (finfo.isReadOnly || (finfo.isPrimaryKey > 0 || finfo.isRowTimeStamp || finfo.isAutoGenerated))
-                                        throw new DomainServiceException(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, finfo.fieldName));
-                                    if (!finfo.isNullable && fv.val == null)
-                                    {
-                                        throw new DomainServiceException(string.Format(ErrorStrings.ERR_FIELD_IS_NOT_NULLABLE, finfo.fieldName));
-                                    }
-                                    this.ServiceContainer.DataHelper.SetValue(entity, finfo, fv.val);
-                                }
-                                else if ((fv.flags & ValueFlags.Setted) == ValueFlags.Setted)
-                                {
-                                    if ((finfo.isPrimaryKey > 0 || finfo.isRowTimeStamp || finfo.isNeedOriginal) && fv.val != fv.orig)
-                                    {
-                                        throw new DomainServiceException(string.Format(ErrorStrings.ERR_VAL_ORIGINAL_INVALID, finfo.fieldName));
-                                    }
-                                    this.ServiceContainer.DataHelper.SetValue(entity, finfo, fv.val);
-                                }
-                            }
-                            break;
-                    }
-                }
-            }
+            this.ApplyValues(entity,rowInfo, "", rowInfo.values.ToArray(), isOriginal);
 
             if (!isOriginal && rowInfo.changeType == ChangeType.Added)
             {
                 foreach (var pn in rowInfo.changeState.ParentRows)
                 {
-                    if (!this.ServiceContainer.DataHelper.SetProperty(entity, pn.association.childToParentName, pn.ParentRow.changeState.Entity))
+                    if (!this.ServiceContainer.DataHelper.SetValue(entity, pn.association.childToParentName, pn.ParentRow.changeState.Entity, false))
                     {
                         throw new DomainServiceException(string.Format(ErrorStrings.ERR_CAN_NOT_SET_PARENT_FIELD, pn.association.childToParentName, rowInfo.dbSetInfo.EntityType.Name));
                     }
@@ -538,61 +561,80 @@ namespace RIAPP.DataService
             }
         }
 
+        protected void RefreshEntityFromValues(object entity, string path, DbSetInfo dbSetInfo, ValueChange[] values)
+        {
+            Array.ForEach(values, (val) =>
+            {
+                string fullName = path + val.fieldName;
+                FieldInfo fieldInfo = this.ServiceContainer.DataHelper.getFieldInfo(dbSetInfo, fullName);
+                if (!fieldInfo.isIncludeInResult())
+                    return;
+                if (fieldInfo.fieldType == FieldType.Object && val.nested != null)
+                {
+                    this.RefreshEntityFromValues(entity, fullName + '.', dbSetInfo, val.nested.ToArray());
+                }
+                else
+                {
+                    val.val = this.ServiceContainer.DataHelper.SerializeField(entity, fullName, fieldInfo);
+                    val.flags = val.flags | ValueFlags.Refreshed;
+                }
+            });
+        }
+
+        protected void CheckValuesChanges(RowInfo rowInfo, string path, ValueChange[] values)
+        {
+            DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
+            Array.ForEach(values, (val) =>
+            {
+                string fullName = path + val.fieldName;
+                FieldInfo fieldInfo = this.ServiceContainer.DataHelper.getFieldInfo(dbSetInfo, fullName);
+                if (!fieldInfo.isIncludeInResult())
+                    return;
+                if (fieldInfo.fieldType == FieldType.Object && val.nested != null)
+                {
+                    this.CheckValuesChanges(rowInfo, fullName + '.', val.nested.ToArray());
+                }
+                else
+                {
+                    string newVal;
+                    if (this.isEntityValueChanged(rowInfo, fullName, fieldInfo, out newVal))
+                    {
+                        val.val = newVal;
+                        val.flags = val.flags | ValueFlags.Refreshed;
+                    }
+                }
+            });
+        }
+
         protected void UpdateRowInfoFromEntity(object entity, RowInfo rowInfo)
         {
             DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
-            var values = rowInfo.values;
             var fields = dbSetInfo.GetFieldByNames();
-
-            values.ForEach((fv) =>
-            {
-                FieldInfo fieldInfo = fields[fv.fieldName];
-                if (!fieldInfo.isIncludeInResult())
-                    return;
-                fv.val = this.ServiceContainer.DataHelper.SerializeField(entity, fieldInfo);
-                fv.flags = fv.flags | ValueFlags.Refreshed;
-            });
-
+            this.RefreshEntityFromValues(entity, "", dbSetInfo, rowInfo.values.ToArray());
             if (rowInfo.changeType == ChangeType.Added)
             {
                 rowInfo.serverKey = rowInfo.GetRowKeyAsString();
             }
-
         }
 
-        protected bool isEntityValueChanged(RowInfo rowInfo, FieldInfo fieldInfo, out string newVal) 
+        protected bool isEntityValueChanged(RowInfo rowInfo, string fullName, FieldInfo fieldInfo, out string newVal) 
         {
             EntityChangeState changeState = rowInfo.changeState;
             string oldVal = null;
-            newVal = this.ServiceContainer.DataHelper.SerializeField(changeState.Entity, fieldInfo);
+            newVal = this.ServiceContainer.DataHelper.SerializeField(changeState.Entity, fullName, fieldInfo);
             if (changeState.OriginalEntity != null)
-                oldVal = this.ServiceContainer.DataHelper.SerializeField(changeState.OriginalEntity, fieldInfo);
+                oldVal = this.ServiceContainer.DataHelper.SerializeField(changeState.OriginalEntity, fullName, fieldInfo);
             return (newVal != oldVal);
         }
 
         protected void UpdateRowInfoAfterUpdates(RowInfo rowInfo)
         {
-            DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
-            var fields = dbSetInfo.GetFieldByNames();
-
-            rowInfo.values.ForEach((fv) =>
-            {
-                FieldInfo fieldInfo = fields[fv.fieldName];
-                if (!fieldInfo.isIncludeInResult())
-                    return;
-                string newVal;
-                if (this.isEntityValueChanged(rowInfo, fieldInfo, out newVal))
-                {
-                    fv.val = newVal;
-                    fv.flags = fv.flags | ValueFlags.Refreshed;
-                }
-            });
+            this.CheckValuesChanges(rowInfo, "", rowInfo.values.ToArray());
 
             if (rowInfo.changeType == ChangeType.Added)
             {
                 rowInfo.serverKey = rowInfo.GetRowKeyAsString();
             }
-
         }
     
         protected T GetOriginal<T>()
@@ -672,7 +714,7 @@ namespace RIAPP.DataService
             rowInfo.changeState.OriginalEntity = dbEntity;
             methInfo.Invoke(this, new object[] { dbEntity });
         }
-
+        
         protected bool ValidateEntity(RowInfo rowInfo)
         {
             DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
@@ -693,29 +735,33 @@ namespace RIAPP.DataService
 
             foreach (var fieldInfo in dbSetInfo.fieldInfos)
             {
-                if (!fieldInfo.isIncludeInResult())
-                    continue;
-                string value = this.ServiceContainer.DataHelper.SerializeField(rowInfo.changeState.Entity, fieldInfo);
-                if (rowInfo.changeType == ChangeType.Added)
+                this.ServiceContainer.DataHelper.ForEachFieldInfo("", fieldInfo, (string fullName, FieldInfo fld) =>
                 {
-                    bool isSkip = fieldInfo.isAutoGenerated || (skipCheckList != null && skipCheckList.Any(n => n == fieldInfo.fieldName));
-                    if (!isSkip) 
-                    {
-                        this.ValidationHelper.CheckValue(fieldInfo, value);
-                        mustBeChecked.AddLast(fieldInfo.fieldName);
-                    }
-                }
-                else if (rowInfo.changeType == ChangeType.Updated) {
-                    string newVal;
-                    bool isChanged = isEntityValueChanged(rowInfo, fieldInfo, out newVal);
-                    if (isChanged) {
-                       this.ValidationHelper.CheckValue(fieldInfo, newVal);
-                    }
-                    if (isChanged)
-                        mustBeChecked.AddLast(fieldInfo.fieldName);
-                }
+                    if (!fld.isIncludeInResult())
+                        return;
 
-                
+                    string value = this.ServiceContainer.DataHelper.SerializeField(rowInfo.changeState.Entity, fullName, fld);
+                    if (rowInfo.changeType == ChangeType.Added)
+                    {
+                        bool isSkip = fld.isAutoGenerated || (skipCheckList != null && skipCheckList.Any(n => n == fullName));
+                        if (!isSkip)
+                        {
+                            this.ValidationHelper.CheckValue(fld, value);
+                            mustBeChecked.AddLast(fullName);
+                        }
+                    }
+                    else if (rowInfo.changeType == ChangeType.Updated)
+                    {
+                        string newVal;
+                        bool isChanged = isEntityValueChanged(rowInfo, fullName, fld, out newVal);
+                        if (isChanged)
+                        {
+                            this.ValidationHelper.CheckValue(fld, newVal);
+                        }
+                        if (isChanged)
+                            mustBeChecked.AddLast(fullName);
+                    }
+                });
             }
 
             rowInfo.changeState.NamesOfChangedFields = mustBeChecked.ToArray();
@@ -830,6 +876,11 @@ namespace RIAPP.DataService
         }
         #endregion
 
+        protected IEnumerable<FieldName> GetNames(IEnumerable<FieldInfo> fieldInfos)
+        {
+            return fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).Select(fi => new FieldName { n = fi.fieldName, p =(fi.fieldType == FieldType.Object)?this.GetNames(fi.nested).ToArray(): null });
+        }
+
         protected GetDataResult GetData(GetDataInfo queryInfo)
         {
             var metadata = this.EnsureMetadataInitialized();
@@ -879,12 +930,12 @@ namespace RIAPP.DataService
                 pageIndex = queryInfo.pageIndex,
                 pageCount = queryInfo.pageCount,
                 dbSetName = queryInfo.dbSetName,
-                names = queryInfo.dbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).Select(fi => fi.fieldName),
+                names = this.GetNames(queryInfo.dbSetInfo.fieldInfos),
                 totalCount = totalCount,
                 extraInfo = queryResult.extraInfo,
                 rows = rows,
                 rowCount = rowCnt,
-                fetchSize= queryInfo.dbSetInfo.FetchSize,
+                fetchSize = queryInfo.dbSetInfo.FetchSize,
                 included = subResults,
                 error = null
             };

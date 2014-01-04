@@ -112,6 +112,74 @@ module RIAPP {
             }
             return result;
         }
+
+        static setValue(root: any, namePath: string, val: any, checkOverwrite: boolean): void {
+            var parts = namePath.split('.'),
+                parent = root,
+                i: number;
+
+            for (i = 0; i < parts.length - 1; i += 1) {
+                // create a property if it doesn't exist
+                if (!parent[parts[i]]) {
+                    parent[parts[i]] = {};
+                }
+                parent = parent[parts[i]];
+            }
+            //the last part is the name itself
+            var n = parts[parts.length - 1];
+            if (!!checkOverwrite && (parent[n] !== undefined)) {
+                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, namePath));
+            }
+            parent[n] = val;
+        }
+        static getValue(root: any, namePath: string): any {
+            var parts = namePath.split('.'),
+                parent = root,
+                i: number, res;
+
+            for (i = 0; i < parts.length; i += 1) {
+                res = parent[parts[i]];
+                if (res === undefined) {
+                    return null;
+                }
+                parent = res;
+            }
+            return res;
+        }
+        static removeValue(root: any, namePath: string): any {
+            var parts = namePath.split('.'),
+                parent = root,
+                i: number, val = null;
+
+            for (i = 0; i < parts.length - 1; i += 1) {
+                if (!parent[parts[i]]) {
+                    return null;
+                }
+                parent = parent[parts[i]];
+            }
+            //the last part is the object name itself
+            var n = parts[parts.length - 1];
+            val = parent[n];
+            if (val !== undefined) {
+                delete parent[n];
+            }
+
+            //returns deleted value
+            return val;
+        }
+        //the object that directly has this property (last object in chain)
+        static resolveOwner(obj: any, path: string): any {
+            var parts = path.split('.');
+            if (parts.length == 1)
+                return obj;
+            var res: any = obj;
+            for (var i = 0; i < parts.length - 1; i += 1) {
+                if (!res[parts[i]])
+                    return null;
+                res = res[parts[i]];
+            }
+            return res;
+        }
     }
 
     export class BaseObject {
@@ -255,7 +323,15 @@ module RIAPP {
         }
         raisePropertyChanged(name: string) {
             var data = { property: name };
-            this._raiseEvent('0' + name, data);
+            var parts = name.split('.'), propName = parts[parts.length - 1];
+            if (parts.length > 1) {
+                var obj = baseUtils.resolveOwner(this, name);
+                if (obj instanceof BaseObject) {
+                    obj._raiseEvent('0' + propName, data);
+                }
+            }
+            else
+                this._raiseEvent('0' + propName, data);
         }
         addHandler(name: string, fn: (sender,args)=>void, namespace?: string) {
             this._checkEventName(name);

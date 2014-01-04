@@ -88,7 +88,15 @@ Fixed product image uploading in the DEMO.
 <p>2013-12-28 Code generation enhancement. Now strongly typed DbSets have findEntity method, and strongly typed dictionaries have findItem method. Which have strongly typed arguments.</p>
 <p>2013-12-29 <b>Changed wire dateformat!</b></p>
 <p>2013-12-29 Internal DataService's code refactoring.</p>
-
+<p>2014-01-04 <br/>1) <b>Entities- Complex type property support. Code refactoring.</b><br/>
+2) Breaking changes. Wire format is changed. Instead of isNavigation, isCalculated, isClientOnly props on FieldInfo i added one enum property fieldType. It is needed to update dataservice's metadata to reflect this changes. (I used text replace in the demo)<br/>
+3) In the demo project i added complex type property to Customer entity, in order to test the complex types on the entities feature.<br/>
+4) In master detail demo page i databound ComplexProp.ComplexProp.Phone to a Phone textbox.<br/>
+5) Tested- updates, inserts, deletes of entities with complex types<br/>
+6) Also tested - change tracking, validation, validation error display for complex type properties.<br/>
+P.S. The docs to be updated soon. This version will be probably a RC version.<br/>
+<b>Once again thanks to typescript. Without it so much refactoring was impossible.</b><br/>
+</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 

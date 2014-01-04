@@ -242,7 +242,7 @@ module RIAPP {
                     if (!finf)
                         return false;
                     var editable = !!this._dctx && !!this._dctx.beginEdit;
-                    return editable && !finf.isReadOnly && !finf.isCalculated;
+                    return editable && !finf.isReadOnly && finf.fieldType != collection.FIELD_TYPE.Calculated;
                 }
                 _createTargetElement(): MOD.baseElView.BaseElView {
                     var el: HTMLElement, doc = global.document, info: { name: string; options: any; } = { name: null, options: null };
@@ -279,7 +279,7 @@ module RIAPP {
                     return res;
                 }
                 _updateBindingSource() {
-                    var i, len, obj: binding.Binding, bindings = this._getBindings();
+                    var i:number, len: number, obj: binding.Binding, bindings = this._getBindings();
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         obj = bindings[i];
                         if (!obj.isSourceFixed)

@@ -14,7 +14,7 @@ module RIAPP {
                 _getPathParts(path:string) {
                     var self = this, parts:string[] = (!path) ? [] : path.split('.'), parts2:string[] = [];
                     parts.forEach(function (part) {
-                        var matches, obj, index;
+                        var matches:string[], obj:string, index:string;
                         matches = part.match(Parser.__indexedPropRX);
                         if (!!matches) {
                             obj = matches[1];
@@ -32,7 +32,8 @@ module RIAPP {
                     var utils = RIAPP.global.utils;
                     if (!prop)
                         return obj;
-                    if (utils.str.startsWith(prop, '[')) { //it is an indexed property, obj must be of collection type
+                    if (utils.str.startsWith(prop, '[')) { 
+                        //it is an indexed property, obj must be of collection type
                         prop = this.trimQuotes(this.trimBrackets(prop));
                         if (obj instanceof collection.BaseDictionary) {
                             return obj.getItemByKey(prop);
@@ -48,21 +49,6 @@ module RIAPP {
                     }
                     else
                         return obj[prop];
-                }
-                _resolvePath(root:any, parts:string[]) {
-                    if (!root)
-                        return undefined;
-
-                    if (parts.length === 0) {
-                        return root;
-                    }
-
-                    if (parts.length === 1) {
-                        return this._resolveProp(root, parts[0]);
-                    }
-                    else {
-                        return this._resolvePath(this._resolveProp(root, parts[0]), parts.slice(1));
-                    }
                 }
                 _setPropertyValue(obj: any, prop: string, val: any) {
                     var utils = RIAPP.global.utils;
@@ -173,8 +159,13 @@ module RIAPP {
                 resolvePath(obj:any, path:string):any {
                     if (!path)
                         return obj;
-                    var parts = this._getPathParts(path);
-                    return this._resolvePath(obj, parts);
+                    var parts = this._getPathParts(path), res = obj, len = parts.length - 1;
+                    for (var i = 0; i < len; i += 1) {
+                        res = this._resolveProp(res, parts[i]);
+                        if (!res)
+                            return undefined;
+                    }
+                    return this._resolveProp(res, parts[len]);
                 }
                 //extract top level braces
                 getBraceParts(val:string, firstOnly:boolean) {

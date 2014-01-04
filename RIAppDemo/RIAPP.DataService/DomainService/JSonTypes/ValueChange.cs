@@ -12,10 +12,10 @@ namespace RIAPP.DataService
     {
         public ValueChange()
         {
-             val = null;
-             orig = null;
-             flags = ValueFlags.None;
-             fieldName = string.Empty;
+             this.val = null;
+             this.orig = null;
+             this.flags = ValueFlags.None;
+             this.fieldName = string.Empty;
         }
 
         [DataMember]
@@ -42,6 +42,16 @@ namespace RIAPP.DataService
 
         [DataMember]
         public ValueFlags flags
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Nested values used for object field
+        /// </summary>
+        [DataMember]
+        public ValuesList nested
         {
             get;
             set;

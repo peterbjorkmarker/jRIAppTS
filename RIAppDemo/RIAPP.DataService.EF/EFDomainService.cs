@@ -204,7 +204,7 @@ namespace RIAPP.DataService.EF
                         }
                     }
                     //gess that the property is rowversion
-                    fieldInfo.isRowTimeStamp = isComputed && fieldInfo.dataType == DataType.Binary;
+                    fieldInfo.fieldType = (isComputed && fieldInfo.dataType == DataType.Binary) ? FieldType.RowTimeStamp : FieldType.None;
                     dbSetInfo.fieldInfos.Add(fieldInfo);
                 });
             });

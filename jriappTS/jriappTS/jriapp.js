@@ -245,6 +245,71 @@ var RIAPP;
             }
             return result;
         };
+
+        baseUtils.setValue = function (root, namePath, val, checkOverwrite) {
+            var parts = namePath.split('.'), parent = root, i;
+
+            for (i = 0; i < parts.length - 1; i += 1) {
+                // create a property if it doesn't exist
+                if (!parent[parts[i]]) {
+                    parent[parts[i]] = {};
+                }
+                parent = parent[parts[i]];
+            }
+
+            //the last part is the name itself
+            var n = parts[parts.length - 1];
+            if (!!checkOverwrite && (parent[n] !== undefined)) {
+                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, namePath));
+            }
+            parent[n] = val;
+        };
+        baseUtils.getValue = function (root, namePath) {
+            var parts = namePath.split('.'), parent = root, i, res;
+
+            for (i = 0; i < parts.length; i += 1) {
+                res = parent[parts[i]];
+                if (res === undefined) {
+                    return null;
+                }
+                parent = res;
+            }
+            return res;
+        };
+        baseUtils.removeValue = function (root, namePath) {
+            var parts = namePath.split('.'), parent = root, i, val = null;
+
+            for (i = 0; i < parts.length - 1; i += 1) {
+                if (!parent[parts[i]]) {
+                    return null;
+                }
+                parent = parent[parts[i]];
+            }
+
+            //the last part is the object name itself
+            var n = parts[parts.length - 1];
+            val = parent[n];
+            if (val !== undefined) {
+                delete parent[n];
+            }
+
+            //returns deleted value
+            return val;
+        };
+
+        //the object that directly has this property (last object in chain)
+        baseUtils.resolveOwner = function (obj, path) {
+            var parts = path.split('.');
+            if (parts.length == 1)
+                return obj;
+            var res = obj;
+            for (var i = 0; i < parts.length - 1; i += 1) {
+                if (!res[parts[i]])
+                    return null;
+                res = res[parts[i]];
+            }
+            return res;
+        };
         return baseUtils;
     })();
     RIAPP.baseUtils = baseUtils;
@@ -384,7 +449,14 @@ var RIAPP;
         };
         BaseObject.prototype.raisePropertyChanged = function (name) {
             var data = { property: name };
-            this._raiseEvent('0' + name, data);
+            var parts = name.split('.'), propName = parts[parts.length - 1];
+            if (parts.length > 1) {
+                var obj = baseUtils.resolveOwner(this, name);
+                if (obj instanceof BaseObject) {
+                    obj._raiseEvent('0' + propName, data);
+                }
+            } else
+                this._raiseEvent('0' + propName, data);
         };
         BaseObject.prototype.addHandler = function (name, fn, namespace) {
             this._checkEventName(name);
@@ -522,54 +594,6 @@ var RIAPP;
                 return false;
             };
         };
-        Global.prototype._registerObjectCore = function (root, name, obj, checkOverwrite) {
-            var parts = name.split('.'), parent = root, i;
-            for (i = 0; i < parts.length - 1; i += 1) {
-                // create a property if it doesn't exist
-                if (!parent[parts[i]]) {
-                    parent[parts[i]] = {};
-                }
-                parent = parent[parts[i]];
-            }
-
-            //the last part is the object's name itself
-            var n = parts[parts.length - 1];
-            if (!!checkOverwrite && !!parent[n]) {
-                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
-            }
-            parent[n] = obj;
-            return parent;
-        };
-        Global.prototype._getObjectCore = function (root, name) {
-            var parts = name.split('.'), parent = root, i, res;
-            for (i = 0; i < parts.length; i += 1) {
-                res = parent[parts[i]];
-                if (!res) {
-                    return null;
-                }
-                parent = res;
-            }
-            return res;
-        };
-        Global.prototype._removeObjectCore = function (root, name) {
-            var parts = name.split('.'), parent = root, i, obj = null;
-            for (i = 0; i < parts.length - 1; i += 1) {
-                if (!parent[parts[i]]) {
-                    return null;
-                }
-                parent = parent[parts[i]];
-            }
-
-            //the last part is the object's name itself
-            var n = parts[parts.length - 1];
-            obj = parent[n];
-            if (!!obj) {
-                delete parent[n];
-            }
-
-            //returns deleted object
-            return obj;
-        };
         Global.prototype._getEventNames = function () {
             var base_events = _super.prototype._getEventNames.call(this);
             return ['load', 'unload'].concat(base_events);
@@ -636,13 +660,13 @@ var RIAPP;
             return !!error.isDummy;
         };
         Global.prototype._registerObject = function (root, name, obj) {
-            return this._registerObjectCore(root.getExports(), name, obj, true);
+            return RIAPP.baseUtils.setValue(root.getExports(), name, obj, true);
         };
         Global.prototype._getObject = function (root, name) {
-            return this._getObjectCore(root.getExports(), name);
+            return RIAPP.baseUtils.getValue(root.getExports(), name);
         };
         Global.prototype._removeObject = function (root, name) {
-            return this._removeObjectCore(root.getExports(), name);
+            return RIAPP.baseUtils.removeValue(root.getExports(), name);
         };
         Global.prototype._processTemplateSections = function (root) {
             var self = this;
@@ -673,10 +697,10 @@ var RIAPP;
             });
         };
         Global.prototype._registerTemplateLoaderCore = function (name, loader) {
-            return this._registerObjectCore(this._templateLoaders, name, loader, false);
+            return RIAPP.baseUtils.setValue(this._templateLoaders, name, loader, false);
         };
         Global.prototype._getTemplateLoaderCore = function (name) {
-            return this._getObjectCore(this._templateLoaders, name);
+            return RIAPP.baseUtils.getValue(this._templateLoaders, name);
         };
         Global.prototype._loadTemplatesAsync = function (fn_loader, app) {
             var self = this, promise = fn_loader(), old = self.isLoading;
@@ -810,7 +834,7 @@ var RIAPP;
                 };
             }
 
-            this._registerObjectCore(self._templateGroups, groupName, group2, true);
+            RIAPP.baseUtils.setValue(self._templateGroups, groupName, group2, true);
             group2.names.forEach(function (name) {
                 if (!!group2.app) {
                     name = group2.app.appName + '.' + name;
@@ -825,7 +849,7 @@ var RIAPP;
             });
         };
         Global.prototype._getTemplateGroup = function (name) {
-            return this._getObjectCore(this._templateGroups, name);
+            return RIAPP.baseUtils.getValue(this._templateGroups, name);
         };
         Global.prototype._waitForNotLoading = function (callback, callbackArgs) {
             this._waitQueue.enQueue({
@@ -2653,6 +2677,7 @@ var RIAPP;
                     if (!prop)
                         return obj;
                     if (utils.str.startsWith(prop, '[')) {
+                        //it is an indexed property, obj must be of collection type
                         prop = this.trimQuotes(this.trimBrackets(prop));
                         if (obj instanceof RIAPP.MOD.collection.BaseDictionary) {
                             return obj.getItemByKey(prop);
@@ -2664,20 +2689,6 @@ var RIAPP;
                             return obj[prop];
                     } else
                         return obj[prop];
-                };
-                Parser.prototype._resolvePath = function (root, parts) {
-                    if (!root)
-                        return undefined;
-
-                    if (parts.length === 0) {
-                        return root;
-                    }
-
-                    if (parts.length === 1) {
-                        return this._resolveProp(root, parts[0]);
-                    } else {
-                        return this._resolvePath(this._resolveProp(root, parts[0]), parts.slice(1));
-                    }
                 };
                 Parser.prototype._setPropertyValue = function (obj, prop, val) {
                     var utils = RIAPP.global.utils;
@@ -2783,8 +2794,13 @@ var RIAPP;
                 Parser.prototype.resolvePath = function (obj, path) {
                     if (!path)
                         return obj;
-                    var parts = this._getPathParts(path);
-                    return this._resolvePath(obj, parts);
+                    var parts = this._getPathParts(path), res = obj, len = parts.length - 1;
+                    for (var i = 0; i < len; i += 1) {
+                        res = this._resolveProp(res, parts[i]);
+                        if (!res)
+                            return undefined;
+                    }
+                    return this._resolveProp(res, parts[len]);
                 };
 
                 //extract top level braces
@@ -4930,7 +4946,6 @@ var RIAPP;
                 return ValidationError;
             })(RIAPP.MOD.errors.BaseError);
             binding.ValidationError = ValidationError;
-            ;
 
             var Binding = (function (_super) {
                 __extends(Binding, _super);
@@ -5425,10 +5440,7 @@ var RIAPP;
                 return Binding;
             })(RIAPP.BaseObject);
             binding.Binding = Binding;
-            ;
 
-            RIAPP.global.registerType('ValidationError', ValidationError);
-            RIAPP.global.registerType('Binding', Binding);
             RIAPP.global.onModuleLoaded('binding', binding);
         })(MOD.binding || (MOD.binding = {}));
         var binding = MOD.binding;
@@ -5440,8 +5452,17 @@ var RIAPP;
     (function (MOD) {
         (function (collection) {
             //local variables for optimization
-            var ValidationError = RIAPP.MOD.binding.ValidationError, DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE, valueUtils = RIAPP.MOD.utils.valueUtils;
+            var ValidationError = RIAPP.MOD.binding.ValidationError, DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE, valueUtils = RIAPP.MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils;
 
+            (function (FIELD_TYPE) {
+                FIELD_TYPE[FIELD_TYPE["None"] = 0] = "None";
+                FIELD_TYPE[FIELD_TYPE["ClientOnly"] = 1] = "ClientOnly";
+                FIELD_TYPE[FIELD_TYPE["Calculated"] = 2] = "Calculated";
+                FIELD_TYPE[FIELD_TYPE["Navigation"] = 3] = "Navigation";
+                FIELD_TYPE[FIELD_TYPE["RowTimeStamp"] = 4] = "RowTimeStamp";
+                FIELD_TYPE[FIELD_TYPE["Object"] = 5] = "Object";
+            })(collection.FIELD_TYPE || (collection.FIELD_TYPE = {}));
+            var FIELD_TYPE = collection.FIELD_TYPE;
             (function (STATUS) {
                 STATUS[STATUS["NONE"] = 0] = "NONE";
                 STATUS[STATUS["ADDED"] = 1] = "ADDED";
@@ -5474,6 +5495,41 @@ var RIAPP;
                 FILTER_TYPE[FILTER_TYPE["NotEq"] = 9] = "NotEq";
             })(collection.FILTER_TYPE || (collection.FILTER_TYPE = {}));
             var FILTER_TYPE = collection.FILTER_TYPE;
+
+            function fn_getPropertyByName(name, props) {
+                var arrProps = props.filter(function (f) {
+                    return f.fieldName == name;
+                });
+                if (!arrProps || arrProps.length != 1)
+                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "arrProps.length == 1"));
+                return arrProps[0];
+            }
+            collection.fn_getPropertyByName = fn_getPropertyByName;
+
+            function fn_traverseField(fld, fn) {
+                function _fn_traverseField(name, fld, fn) {
+                    if (fld.fieldType == 5 /* Object */) {
+                        fn(name, fld);
+
+                        //for object fields traverse their nested properties
+                        if (!!fld.nested && fld.nested.length > 0) {
+                            var prop, i, len = fld.nested.length;
+                            for (i = 0; i < len; i += 1) {
+                                prop = fld.nested[i];
+                                if (prop.fieldType == 5 /* Object */) {
+                                    _fn_traverseField(name + '.' + prop.fieldName, prop, fn);
+                                } else {
+                                    fn(name + '.' + prop.fieldName, prop);
+                                }
+                            }
+                        }
+                    } else {
+                        fn(name, fld);
+                    }
+                }
+                _fn_traverseField(fld.fieldName, fld, fn);
+            }
+            collection.fn_traverseField = fn_traverseField;
 
             var CollectionItem = (function (_super) {
                 __extends(CollectionItem, _super);
@@ -5524,7 +5580,7 @@ var RIAPP;
                         }
                     }
                     this._isEditing = true;
-                    this._saveVals = RIAPP.global.utils.shallowCopy(this._vals);
+                    this._saveVals = RIAPP.global.utils.cloneObj(this._vals);
                     this._collection.currentItem = this;
                     return true;
                 };
@@ -5556,7 +5612,7 @@ var RIAPP;
                 CollectionItem.prototype._validateField = function (fieldName) {
                     var val, fieldInfo = this.getFieldInfo(fieldName), res = null;
                     try  {
-                        val = this._vals[fieldName];
+                        val = baseUtils.getValue(this._vals, fieldName);
                         if (this._skipValidate(fieldInfo, val))
                             return res;
                         if (this._isNew) {
@@ -5577,13 +5633,18 @@ var RIAPP;
                     return res;
                 };
                 CollectionItem.prototype._validateAll = function () {
-                    var self = this, fields = this.getFieldNames(), errs = [];
-                    fields.forEach(function (fieldName) {
-                        var res = self._validateField(fieldName);
-                        if (!!res) {
-                            errs.push(res);
-                        }
+                    var self = this, fieldInfos = this._collection.getFieldInfos(), errs = [];
+                    fieldInfos.forEach(function (fld) {
+                        fn_traverseField(fld, function (name, fld) {
+                            if (fld.fieldType != 5 /* Object */) {
+                                var res = self._validateField(name);
+                                if (!!res) {
+                                    errs.push(res);
+                                }
+                            }
+                        });
                     });
+
                     var res = self._validate();
                     if (!!res) {
                         errs.push(res);
@@ -5707,7 +5768,7 @@ var RIAPP;
                         return '';
                     var res = [];
                     RIAPP.global.utils.forEachProp(itemErrors, function (name) {
-                        res.push(RIAPP.global.utils.format('{0}: {1}', name, itemErrors[name]));
+                        res.push(baseUtils.format('{0}: {1}', name, itemErrors[name]));
                     });
                     return res.join('|');
                 };
@@ -5892,6 +5953,7 @@ var RIAPP;
                     this._currentPos = -1;
                     this._newKey = 0;
                     this._fieldMap = {};
+                    this._fieldInfos = [];
                     this._errors = {};
                     this._ignoreChangeErrors = false;
                     this._pkInfo = null;
@@ -5899,8 +5961,8 @@ var RIAPP;
                 }
                 BaseCollection.getEmptyFieldInfo = function (fieldName) {
                     var fieldInfo = {
+                        fieldName: fieldName,
                         isPrimaryKey: 0,
-                        isRowTimeStamp: false,
                         dataType: 0 /* None */,
                         isNullable: true,
                         maxLength: -1,
@@ -5908,14 +5970,12 @@ var RIAPP;
                         isAutoGenerated: false,
                         allowClientDefault: false,
                         dateConversion: 0 /* None */,
-                        isClientOnly: true,
-                        isCalculated: false,
+                        fieldType: 1 /* ClientOnly */,
                         isNeedOriginal: false,
-                        dependentOn: null,
                         range: null,
                         regex: null,
-                        isNavigation: false,
-                        fieldName: fieldName
+                        nested: null,
+                        dependentOn: null
                     };
                     return fieldInfo;
                 };
@@ -6258,11 +6318,25 @@ var RIAPP;
                     });
                 };
                 BaseCollection.prototype.getFieldInfo = function (fieldName) {
-                    return this._fieldMap[fieldName];
+                    var parts = fieldName.split('.'), fld = this._fieldMap[parts[0]];
+                    if (parts.length == 1) {
+                        return fld;
+                    }
+                    if (fld.fieldType == 5 /* Object */) {
+                        for (var i = 1; i < parts.length; i += 1) {
+                            fld = fn_getPropertyByName(parts[i], fld.nested);
+                        }
+                        return fld;
+                    }
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'fieldName', fieldName));
                 };
                 BaseCollection.prototype.getFieldNames = function () {
-                    var fldMap = this._fieldMap;
-                    return RIAPP.global.utils.getProps(fldMap);
+                    return this.getFieldInfos().map(function (f) {
+                        return f.fieldName;
+                    });
+                };
+                BaseCollection.prototype.getFieldInfos = function () {
+                    return this._fieldInfos;
                 };
                 BaseCollection.prototype.cancelEdit = function () {
                     if (this.isEditing)
@@ -6538,6 +6612,7 @@ var RIAPP;
                     this._waitQueue = null;
                     this.clear();
                     this._fieldMap = {};
+                    this._fieldInfos = [];
                     _super.prototype.destroy.call(this);
                 };
                 BaseCollection.prototype.waitForNotLoading = function (callback, callbackArgs, syncCheck, groupName) {
@@ -6721,21 +6796,33 @@ var RIAPP;
                     this.__coll = coll;
                     this.__isNew = !obj;
 
-                    //if object provided then all properties are exposed from the object
+                    //if an object provided then all properties are exposed from the object
                     if (!!obj)
                         this._vals = obj;
 
                     if (!obj) {
-                        this._collection.getFieldNames().forEach(function (name) {
-                            self._vals[name] = null;
+                        //if no object then set all values to nulls
+                        var fieldInfos = this.__coll.getFieldInfos();
+                        fieldInfos.forEach(function (fld) {
+                            if (fld.fieldType != 5 /* Object */) {
+                                self._vals[fld.fieldName] = null;
+                            } else {
+                                //object field
+                                fn_traverseField(fld, function (name, fld) {
+                                    if (fld.fieldType == 5 /* Object */)
+                                        baseUtils.setValue(self._vals, name, {}, false);
+                                    else
+                                        baseUtils.setValue(self._vals, name, null, false);
+                                });
+                            }
                         });
                     }
                 }
                 ListItem.prototype._setProp = function (name, val) {
                     var validation_error, error, coll = this._collection;
-                    if (this._vals[name] !== val) {
+                    if (this._getProp(name) !== val) {
                         try  {
-                            this._vals[name] = val;
+                            baseUtils.setValue(this._vals, name, val, false);
                             this.raisePropertyChanged(name);
                             coll._removeError(this, name);
                             validation_error = this._validateField(name);
@@ -6756,7 +6843,7 @@ var RIAPP;
                     }
                 };
                 ListItem.prototype._getProp = function (name) {
-                    return this._vals[name];
+                    return baseUtils.getValue(this._vals, name);
                 };
                 ListItem.prototype._resetIsNew = function () {
                     this.__isNew = false;
@@ -6794,13 +6881,15 @@ var RIAPP;
                 BaseList.prototype._updateFieldMap = function (props) {
                     var self = this;
                     if (!RIAPP.global.utils.check.isArray(props) || props.length == 0)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'props', props));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'props', props));
 
                     self._fieldMap = {};
+                    self._fieldInfos = [];
                     props.forEach(function (prop) {
                         var fldInfo = BaseCollection.getEmptyFieldInfo(prop.name);
                         fldInfo.dataType = prop.dtype;
                         self._fieldMap[prop.name] = fldInfo;
+                        self._fieldInfos.push(fldInfo);
                     });
                 };
                 BaseList.prototype._attach = function (item) {
@@ -6879,12 +6968,12 @@ var RIAPP;
                 __extends(BaseDictionary, _super);
                 function BaseDictionary(itemType, keyName, props) {
                     if (!keyName)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
                     this._keyName = keyName;
                     _super.call(this, itemType, props);
                     var keyFld = this.getFieldInfo(keyName);
                     if (!keyFld)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_NOTFOUND, keyName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_NOTFOUND, keyName));
                     keyFld.isPrimaryKey = 1;
                 }
                 BaseDictionary.prototype._getNewKey = function (item) {
@@ -6893,7 +6982,7 @@ var RIAPP;
                     }
                     var key = item[this._keyName];
                     if (RIAPP.global.utils.check.isNt(key))
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
                     return '' + key;
                 };
                 return BaseDictionary;
@@ -6935,7 +7024,7 @@ var RIAPP;
                         return { name: p, dtype: 0 };
                     });
                 } else
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
                 return props;
             }
             ;
@@ -6972,7 +7061,7 @@ var RIAPP;
                     }
                     var key = item[this._keyName];
                     if (RIAPP.global.utils.check.isNt(key))
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
                     return '' + key;
                 };
                 return Dictionary;
@@ -7488,7 +7577,7 @@ var RIAPP;
                     if (!finf)
                         return false;
                     var editable = !!this._dctx && !!this._dctx.beginEdit;
-                    return editable && !finf.isReadOnly && !finf.isCalculated;
+                    return editable && !finf.isReadOnly && finf.fieldType != 2 /* Calculated */;
                 };
                 BindingContent.prototype._createTargetElement = function () {
                     var el, doc = RIAPP.global.document, info = { name: null, options: null };
@@ -8575,7 +8664,7 @@ var RIAPP;
     (function (MOD) {
         (function (db) {
             //local variables for optimization
-            var ValidationError = RIAPP.MOD.binding.ValidationError, valueUtils = RIAPP.MOD.utils.valueUtils;
+            var ValidationError = RIAPP.MOD.binding.ValidationError, valueUtils = RIAPP.MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils;
             var collMod = RIAPP.MOD.collection;
 
             var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
@@ -8664,17 +8753,17 @@ var RIAPP;
                 __extends(SubmitError, _super);
                 function SubmitError(origError, allSubmitted, notValidated) {
                     var message = origError.message || ('' + origError);
-                    _super.call(this, message, 0 /* SUBMIT */);
                     this._origError = origError;
                     this._allSubmitted = allSubmitted || [];
                     this._notValidated = notValidated || [];
                     if (this._notValidated.length > 0) {
                         var res = [message + ':'];
                         this._notValidated.forEach(function (item) {
-                            res.push(RIAPP.global.utils.format('item key:{0} errors:{1}', item._key, item.getErrorString()));
+                            res.push(baseUtils.format('item key:{0} errors:{1}', item._key, item.getErrorString()));
                         });
-                        this._message = res.join('\r\n');
+                        message = res.join('\r\n');
                     }
+                    _super.call(this, message, 0 /* SUBMIT */);
                 }
                 Object.defineProperty(SubmitError.prototype, "allSubmitted", {
                     get: function () {
@@ -8717,6 +8806,29 @@ var RIAPP;
             }
             ;
 
+            function fn_isNotSubmittable(fld) {
+                return (fld.fieldType == 1 /* ClientOnly */ || fld.fieldType == 3 /* Navigation */ || fld.fieldType == 2 /* Calculated */);
+            }
+
+            function fn_traverseChanges(val, fn) {
+                function _fn_traverseChanges(name, val, fn) {
+                    if (!!val.nested && val.nested.length > 0) {
+                        var prop, i, len = val.nested.length;
+                        for (i = 0; i < len; i += 1) {
+                            prop = val.nested[i];
+                            if (!!prop.nested && prop.nested.length > 0) {
+                                _fn_traverseChanges(name + '.' + prop.fieldName, prop, fn);
+                            } else {
+                                fn(name + '.' + prop.fieldName, prop);
+                            }
+                        }
+                    } else {
+                        fn(name, val);
+                    }
+                }
+                _fn_traverseChanges(val.fieldName, val, fn);
+            }
+
             var DataCache = (function (_super) {
                 __extends(DataCache, _super);
                 function DataCache(query) {
@@ -8733,7 +8845,7 @@ var RIAPP;
                     if (res.length == 0)
                         return null;
                     if (res.length != 1)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "res.length == 1"));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "res.length == 1"));
                     return res[0];
                 };
 
@@ -9265,6 +9377,7 @@ var RIAPP;
                 function Entity(dbSet, row, names) {
                     this.__dbSet = dbSet;
                     _super.call(this);
+                    var self = this;
                     this.__changeType = 0 /* NONE */;
                     this.__isRefreshing = false;
                     this.__isCached = false;
@@ -9272,10 +9385,21 @@ var RIAPP;
                     this._srvRowKey = null;
                     this._origVals = null;
                     this._saveChangeType = null;
-                    var fields = this.getFieldNames();
-                    fields.forEach(function (fieldName) {
-                        this._vals[fieldName] = null;
-                    }, this);
+                    var fieldInfos = this._dbSet.getFieldInfos(), fld;
+                    for (var i = 0, len = fieldInfos.length; i < len; i += 1) {
+                        fld = fieldInfos[i];
+                        if (fld.fieldType != 5 /* Object */) {
+                            self._vals[fld.fieldName] = null;
+                        } else {
+                            //object field
+                            collMod.fn_traverseField(fld, function (name, f) {
+                                if (f.fieldType == 5 /* Object */)
+                                    baseUtils.setValue(self._vals, name, {}, false);
+                                else
+                                    baseUtils.setValue(self._vals, name, null, false);
+                            });
+                        }
+                    }
                     this._initRowInfo(row, names);
                 }
                 Entity.prototype._updateKeys = function (srvKey) {
@@ -9285,16 +9409,30 @@ var RIAPP;
                 Entity.prototype._initRowInfo = function (row, names) {
                     if (!row)
                         return;
+                    this._srvRowKey = row.k;
+                    this._key = row.k;
+                    this._processValues('', row.v, names);
+                };
+                Entity.prototype._processValues = function (path, values, names) {
                     var self = this, stz = self._serverTimezone;
-                    this._srvRowKey = row.key;
-                    this._key = row.key;
-                    row.values.forEach(function (val, index) {
-                        var fieldName = names[index], fld = self.getFieldInfo(fieldName);
+                    values.forEach(function (value, index) {
+                        var name = names[index], fieldName = path + name.n, fld = self._dbSet.getFieldInfo(fieldName), val;
                         if (!fld)
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fieldName));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fieldName));
 
-                        var newVal = val, dataType = fld.dataType, dcnv = fld.dateConversion, res = valueUtils.parseValue(newVal, dataType, dcnv, stz);
-                        self._vals[fld.fieldName] = res;
+                        if (fld.fieldType == 5 /* Object */) {
+                            //for object fields the value should be an array of values - recursive processing
+                            self._processValues(fieldName + '.', value, name.p);
+                        } else {
+                            //for other fields the value is a string, which is parsed to a typed value
+                            val = valueUtils.parseValue(value, fld.dataType, fld.dateConversion, stz);
+                            if (!path) {
+                                //not nested field
+                                self._vals[fieldName] = val;
+                            } else {
+                                baseUtils.setValue(self._vals, fieldName, val, false);
+                            }
+                        }
                     });
                 };
                 Entity.prototype._checkCanRefresh = function () {
@@ -9302,53 +9440,53 @@ var RIAPP;
                         throw new Error(RIAPP.ERRS.ERR_OPER_REFRESH_INVALID);
                     }
                 };
-                Entity.prototype._refreshValue = function (val, fieldName, refreshMode) {
-                    var self = this, fld = self.getFieldInfo(fieldName);
+                Entity.prototype._refreshValue = function (val, fullName, refreshMode) {
+                    var self = this, fld = self._dbSet.getFieldInfo(fullName);
                     if (!fld)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this._dbSetName, fieldName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fullName));
                     var stz = self._serverTimezone, newVal, oldVal, oldValOrig, dataType = fld.dataType, dcnv = fld.dateConversion;
                     newVal = valueUtils.parseValue(val, dataType, dcnv, stz);
-                    oldVal = self._vals[fieldName];
+                    oldVal = baseUtils.getValue(self._vals, fullName);
                     switch (refreshMode) {
                         case 3 /* CommitChanges */:
                              {
                                 if (!valueUtils.compareVals(newVal, oldVal, dataType)) {
-                                    self._vals[fieldName] = newVal;
-                                    self._onFieldChanged(fld);
+                                    baseUtils.setValue(self._vals, fullName, newVal, false);
+                                    self._onFieldChanged(fullName, fld);
                                 }
                             }
                             break;
                         case 1 /* RefreshCurrent */:
                              {
                                 if (!!self._origVals) {
-                                    self._origVals[fieldName] = newVal;
+                                    baseUtils.setValue(self._origVals, fullName, newVal, false);
                                 }
                                 if (!!self._saveVals) {
-                                    self._saveVals[fieldName] = newVal;
+                                    baseUtils.setValue(self._saveVals, fullName, newVal, false);
                                 }
                                 if (!valueUtils.compareVals(newVal, oldVal, dataType)) {
-                                    self._vals[fieldName] = newVal;
-                                    self._onFieldChanged(fld);
+                                    baseUtils.setValue(self._vals, fullName, newVal, false);
+                                    self._onFieldChanged(fullName, fld);
                                 }
                             }
                             break;
                         case 2 /* MergeIntoCurrent */:
                              {
                                 if (!!self._origVals) {
-                                    oldValOrig = self._origVals[fieldName];
-                                    self._origVals[fieldName] = newVal;
+                                    oldValOrig = baseUtils.getValue(self._origVals, fullName);
+                                    baseUtils.setValue(self._origVals, fullName, newVal, false);
                                 }
                                 if (oldValOrig === undefined || valueUtils.compareVals(oldValOrig, oldVal, dataType)) {
                                     //unmodified
                                     if (!valueUtils.compareVals(newVal, oldVal, dataType)) {
-                                        self._vals[fieldName] = newVal;
-                                        self._onFieldChanged(fld);
+                                        baseUtils.setValue(self._vals, fullName, newVal, false);
+                                        self._onFieldChanged(fullName, fld);
                                     }
                                 }
                             }
                             break;
                         default:
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'refreshMode', refreshMode));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'refreshMode', refreshMode));
                     }
                 };
                 Entity.prototype._refreshValues = function (rowInfo, refreshMode) {
@@ -9358,13 +9496,15 @@ var RIAPP;
                             refreshMode = 1 /* RefreshCurrent */;
                         }
                         rowInfo.values.forEach(function (val) {
-                            if (!((val.flags & 4 /* Refreshed */) === 4 /* Refreshed */))
-                                return;
-                            self._refreshValue(val.val, val.fieldName, refreshMode);
+                            fn_traverseChanges(val, function (fullName, vc) {
+                                if (!((vc.flags & 4 /* Refreshed */) === 4 /* Refreshed */))
+                                    return;
+                                self._refreshValue(vc.val, fullName, refreshMode);
+                            });
                         });
 
                         if (oldCT === 2 /* UPDATED */) {
-                            var changes = this._getStrValues(true);
+                            var changes = this._getValueChanges(true);
                             if (changes.length === 0) {
                                 this._origVals = null;
                                 this._changeType = 0 /* NONE */;
@@ -9372,40 +9512,68 @@ var RIAPP;
                         }
                     }
                 };
-                Entity.prototype._onFieldChanged = function (fieldInfo) {
+                Entity.prototype._onFieldChanged = function (fieldName, fieldInfo) {
                     var self = this;
-                    this.raisePropertyChanged(fieldInfo.fieldName);
-                    if (!!fieldInfo.dependents && fieldInfo.dependents.length > 0)
+                    self.raisePropertyChanged(fieldName);
+                    if (!!fieldInfo.dependents && fieldInfo.dependents.length > 0) {
                         fieldInfo.dependents.forEach(function (d) {
                             self.raisePropertyChanged(d);
                         });
+                    }
                 };
-                Entity.prototype._getStrValues = function (changedOnly) {
-                    var self = this, names = this.getFieldNames(), dbSet = this._dbSet, res, res2;
-                    res = names.map(function (name) {
-                        var fld = self.getFieldInfo(name);
-                        if (fld.isClientOnly)
-                            return null;
+                Entity.prototype._getValueChange = function (fullName, fld, changedOnly) {
+                    var self = this, dbSet = self._dbSet, res, i, len, tmp;
+                    if (fn_isNotSubmittable(fld))
+                        return null;
 
-                        var newVal = dbSet._getStrValue(self._vals[name], fld), oldV = self._origVals === null ? newVal : dbSet._getStrValue(self._origVals[name], fld), isChanged = (oldV !== newVal);
+                    if (fld.fieldType == 5 /* Object */) {
+                        res = { fieldName: fld.fieldName, val: null, orig: null, flags: 0 /* None */, nested: [] };
+                        len = fld.nested.length;
+                        for (i = 0; i < len; i += 1) {
+                            tmp = self._getValueChange(fullName + '.' + fld.nested[i].fieldName, fld.nested[i], changedOnly);
+                            if (!!tmp) {
+                                res.nested.push(tmp);
+                            }
+                        }
+                    } else {
+                        var newVal = dbSet._getStrValue(baseUtils.getValue(self._vals, fullName), fld), oldV = self._origVals === null ? newVal : dbSet._getStrValue(baseUtils.getValue(self._origVals, fullName), fld), isChanged = (oldV !== newVal);
                         if (isChanged)
-                            return { val: newVal, orig: oldV, fieldName: name, flags: (1 /* Changed */ | 2 /* Setted */) };
-                        else if (fld.isPrimaryKey > 0 || fld.isRowTimeStamp || fld.isNeedOriginal)
-                            return { val: newVal, orig: oldV, fieldName: name, flags: 2 /* Setted */ };
+                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: (1 /* Changed */ | 2 /* Setted */), nested: null };
+                        else if (fld.isPrimaryKey > 0 || fld.fieldType == 4 /* RowTimeStamp */ || fld.isNeedOriginal)
+                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: 2 /* Setted */, nested: null };
                         else
-                            return { val: null, orig: null, fieldName: name, flags: 0 /* None */ };
+                            res = { fieldName: fld.fieldName, val: null, orig: null, flags: 0 /* None */, nested: null };
+                    }
+
+                    if (changedOnly) {
+                        if (fld.fieldType == 5 /* Object */) {
+                            if (res.nested.length > 0)
+                                return res;
+                            else
+                                return null;
+                        } else if ((res.flags & 1 /* Changed */) === 1 /* Changed */)
+                            return res;
+                        else
+                            return null;
+                    } else {
+                        return res;
+                    }
+                };
+                Entity.prototype._getValueChanges = function (changedOnly) {
+                    var self = this, flds = this._dbSet.getFieldInfos();
+                    var res = flds.map(function (fld) {
+                        return self._getValueChange(fld.fieldName, fld, changedOnly);
                     });
 
-                    res2 = res.filter(function (v) {
-                        if (!v)
-                            return false;
-                        return changedOnly ? ((v.flags & 1 /* Changed */) === 1 /* Changed */) : true;
+                    //remove nulls
+                    var res2 = res.filter(function (vc) {
+                        return !!vc;
                     });
                     return res2;
                 };
                 Entity.prototype._getRowInfo = function () {
                     var res = {
-                        values: this._getStrValues(false),
+                        values: this._getValueChanges(false),
                         changeType: this._changeType,
                         serverKey: this._srvKey,
                         clientKey: this._key,
@@ -9413,25 +9581,25 @@ var RIAPP;
                     };
                     return res;
                 };
-                Entity.prototype._fldChanging = function (fieldInfo, oldV, newV) {
+                Entity.prototype._fldChanging = function (fieldName, fieldInfo, oldV, newV) {
                     if (!this._origVals) {
-                        this._origVals = RIAPP.global.utils.shallowCopy(this._vals);
+                        this._origVals = RIAPP.global.utils.cloneObj(this._vals);
                     }
                     return true;
                 };
-                Entity.prototype._fldChanged = function (fieldInfo, oldV, newV) {
-                    if (!fieldInfo.isClientOnly) {
+                Entity.prototype._fldChanged = function (fieldName, fieldInfo, oldV, newV) {
+                    if (fieldInfo.fieldType != 1 /* ClientOnly */) {
                         switch (this._changeType) {
                             case 0 /* NONE */:
                                 this._changeType = 2 /* UPDATED */;
                                 break;
                         }
                     }
-                    this._onFieldChanged(fieldInfo);
+                    this._onFieldChanged(fieldName, fieldInfo);
                     return true;
                 };
                 Entity.prototype._clearFieldVal = function (fieldName) {
-                    this._vals[fieldName] = null;
+                    baseUtils.setValue(this._vals, fieldName, null, false);
                 };
                 Entity.prototype._skipValidate = function (fieldInfo, val) {
                     var childToParentNames = this._dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
@@ -9445,20 +9613,21 @@ var RIAPP;
                     return res;
                 };
                 Entity.prototype._getFieldVal = function (fieldName) {
-                    return this._vals[fieldName];
+                    return baseUtils.getValue(this._vals, fieldName);
                 };
                 Entity.prototype._setFieldVal = function (fieldName, val) {
-                    var validation_error, error, dbSetName = this._dbSetName, coll = this._collection, ERRS = RIAPP.ERRS, oldV = this._vals[fieldName], newV = val, fld = this.getFieldInfo(fieldName);
+                    var validation_error, error, dbSetName = this._dbSetName, coll = this._collection, ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val, fld = this.getFieldInfo(fieldName), res = false;
                     if (!fld)
-                        throw new Error(RIAPP.global.utils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
+                        throw new Error(baseUtils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
                     if (!this._isEditing && !this._isUpdating)
                         this.beginEdit();
                     try  {
                         newV = this._checkVal(fld, newV);
                         if (oldV != newV) {
-                            if (this._fldChanging(fld, oldV, newV)) {
-                                this._vals[fieldName] = newV;
-                                this._fldChanged(fld, oldV, newV);
+                            if (this._fldChanging(fieldName, fld, oldV, newV)) {
+                                baseUtils.setValue(this._vals, fieldName, newV, false);
+                                this._fldChanged(fieldName, fld, oldV, newV);
+                                res = true;
                             }
                         }
                         coll._removeError(this, fieldName);
@@ -9477,7 +9646,7 @@ var RIAPP;
                         coll._addError(this, fieldName, error.errors[0].errors);
                         throw error;
                     }
-                    return true;
+                    return res;
                 };
                 Entity.prototype._onAttaching = function () {
                     _super.prototype._onAttaching.call(this);
@@ -9530,7 +9699,7 @@ var RIAPP;
                         }
                         this._origVals = null;
                         if (!!this._saveVals)
-                            this._saveVals = utils.shallowCopy(this._vals);
+                            this._saveVals = utils.cloneObj(this._vals);
                         this._changeType = 0 /* NONE */;
                         eset._removeAllErrors(this);
                         if (!!rowInfo)
@@ -9539,29 +9708,30 @@ var RIAPP;
                     }
                 };
                 Entity.prototype.rejectChanges = function () {
-                    var self = this, oldCT = this._changeType, eset = this._dbSet, utils = RIAPP.global.utils;
-                    if (this._key === null)
+                    var self = this, oldCT = self._changeType, eset = self._dbSet, utils = RIAPP.global.utils;
+                    if (!self._key)
                         return;
-
                     if (oldCT !== 0 /* NONE */) {
-                        eset._onCommitChanges(this, true, true, oldCT);
+                        eset._onCommitChanges(self, true, true, oldCT);
                         if (oldCT === 1 /* ADDED */) {
                             eset.removeItem(this);
                             return;
                         }
 
-                        var changes = this._getStrValues(true);
-                        if (!!this._origVals) {
-                            this._vals = utils.shallowCopy(this._origVals);
-                            this._origVals = null;
-                            if (!!this._saveVals) {
-                                this._saveVals = utils.shallowCopy(this._vals);
+                        var changes = self._getValueChanges(true);
+                        if (!!self._origVals) {
+                            self._vals = utils.cloneObj(self._origVals);
+                            self._origVals = null;
+                            if (!!self._saveVals) {
+                                self._saveVals = utils.cloneObj(self._vals);
                             }
                         }
-                        this._changeType = 0 /* NONE */;
+                        self._changeType = 0 /* NONE */;
                         eset._removeAllErrors(this);
                         changes.forEach(function (v) {
-                            self._onFieldChanged(eset.getFieldInfo(v.fieldName));
+                            fn_traverseChanges(v, function (fullName, vc) {
+                                self._onFieldChanged(fullName, eset.getFieldInfo(fullName));
+                            });
                         });
                         eset._onCommitChanges(this, false, true, oldCT);
                     }
@@ -9591,7 +9761,7 @@ var RIAPP;
                 Entity.prototype.cancelEdit = function () {
                     if (!this._isEditing)
                         return false;
-                    var self = this, changes = this._getStrValues(true), isNew = this._isNew, coll = this._dbSet;
+                    var self = this, changes = this._getValueChanges(true), isNew = this._isNew, coll = this._dbSet;
                     this._isEditing = false;
                     this._vals = this._saveVals;
                     this._saveVals = null;
@@ -9746,18 +9916,19 @@ var RIAPP;
 
             var DbSet = (function (_super) {
                 __extends(DbSet, _super);
-                function DbSet(opts) {
+                function DbSet(opts, entityType) {
                     _super.call(this);
-                    var dbContext = opts.dbContext, dbSetInfo = opts.dbSetInfo;
+                    var self = this, dbContext = opts.dbContext, dbSetInfo = opts.dbSetInfo, fieldInfos = dbSetInfo.fieldInfos;
                     this._dbContext = dbContext;
                     this._options.dbSetName = dbSetInfo.dbSetName;
                     this._options.enablePaging = dbSetInfo.enablePaging;
                     this._options.pageSize = dbSetInfo.pageSize;
                     this._query = null;
-                    this._entityType = null;
+                    this._entityType = entityType;
                     this._isSubmitOnDelete = false;
                     this._navfldMap = {};
                     this._calcfldMap = {};
+                    this._fieldInfos = fieldInfos;
 
                     //association infos maped by name
                     //we should track changes in navigation properties for this associations
@@ -9775,22 +9946,44 @@ var RIAPP;
                     this._changeCount = 0;
                     this._changeCache = {};
                     this._ignorePageChanged = false;
+                    fieldInfos.forEach(function (f) {
+                        f.dependents = [];
+                        self._fieldMap[f.fieldName] = f;
+                    });
+
+                    fieldInfos.forEach(function (f) {
+                        if (f.fieldType == 3 /* Navigation */) {
+                            self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
+                        } else if (f.fieldType == 2 /* Calculated */) {
+                            self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
+                        }
+                    });
+
+                    self._mapAssocFields();
                     Object.freeze(this._perms);
                 }
                 DbSet.prototype.getFieldInfo = function (fieldName) {
-                    //for example Customer.Name
-                    var assoc, parentDB, names = fieldName.split('.');
-                    if (names.length == 1)
-                        return this._fieldMap[fieldName];
-                    else if (names.length > 1) {
-                        assoc = this._childAssocMap[names[0]];
+                    var assoc, parentDB, parts = fieldName.split('.');
+                    var fld = this._fieldMap[parts[0]];
+                    if (parts.length == 1) {
+                        return fld;
+                    }
+
+                    if (fld.fieldType == 5 /* Object */) {
+                        for (var i = 1; i < parts.length; i += 1) {
+                            fld = collMod.fn_getPropertyByName(parts[i], fld.nested);
+                        }
+                        return fld;
+                    } else if (fld.fieldType == 3 /* Navigation */) {
+                        //for example Customer.Name
+                        assoc = this._childAssocMap[fld.fieldName];
                         if (!!assoc) {
                             parentDB = this.dbContext.getDbSet(assoc.parentDbSetName);
-                            fieldName = names.slice(1).join('.');
-                            return parentDB.getFieldInfo(fieldName);
+                            return parentDB.getFieldInfo(parts.slice(1).join('.'));
                         }
                     }
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
+
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
                 };
                 DbSet.prototype._onError = function (error, source) {
                     return this.dbContext._onError(error, source);
@@ -9837,9 +10030,8 @@ var RIAPP;
                     }
 
                     if (assocs.length != 1)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'assocs', 'Array'));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'assocs', 'Array'));
                     var assocName = assocs[0].name;
-                    fInfo.isClientOnly = true;
                     fInfo.isReadOnly = true;
                     if (isChild) {
                         fInfo.isReadOnly = false;
@@ -9864,7 +10056,7 @@ var RIAPP;
                             result.setFunc = function (v) {
                                 var entity = this, i, len, assoc = self.dbContext.getAssociation(assocName);
                                 if (!!v && !(v instanceof assoc.parentDS.entityType)) {
-                                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'value', assoc.parentDS.dbSetName));
+                                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'value', assoc.parentDS.dbSetName));
                                 }
 
                                 if (!!v && v._isNew) {
@@ -9912,12 +10104,27 @@ var RIAPP;
                         });
                     }
                     ;
-                    fInfo.isClientOnly = true;
                     fInfo.isReadOnly = true;
                     if (!!fInfo.dependentOn) {
                         doDependants(fInfo);
                     }
                     return result;
+                };
+                DbSet.prototype._refreshValues = function (path, item, values, names, rm) {
+                    var self = this;
+                    values.forEach(function (value, index) {
+                        var name = names[index], fieldName = path + name.n, fld = self.getFieldInfo(fieldName);
+                        if (!fld)
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self.dbSetName, fieldName));
+
+                        if (fld.fieldType == 5 /* Object */) {
+                            //for object fields the value should be an array of values - recursive processing
+                            self._refreshValues(fieldName + '.', item, value, name.p, rm);
+                        } else {
+                            //for other fields the value is a string
+                            item._refreshValue(value, fieldName, rm);
+                        }
+                    });
                 };
                 DbSet.prototype._fillFromService = function (data) {
                     var utils = RIAPP.global.utils;
@@ -9927,7 +10134,7 @@ var RIAPP;
                         fn_beforeFillEnd: null
                     }, data);
 
-                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length, entityType = this._entityType, newItems = [], positions = [], created_items = [], fetchedItems = [], isPagingEnabled = this.isPagingEnabled, RM = 1 /* RefreshCurrent */, query = this.query, clearAll = true, dataCache;
+                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length, entityType = this._entityType, newItems = [], positions = [], created_items = [], fetchedItems = [], isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache;
 
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
                     try  {
@@ -9944,9 +10151,10 @@ var RIAPP;
                                     dataCache.totalCount = res.totalCount;
                             }
                         }
+
                         created_items = rows.map(function (row) {
                             //row.key already a string value generated on server (no need to convert to string)
-                            var key = row.key;
+                            var key = row.k;
                             if (!key)
                                 throw new Error(RIAPP.ERRS.ERR_KEY_IS_EMPTY);
 
@@ -9958,14 +10166,10 @@ var RIAPP;
                                 if (!item)
                                     item = new entityType(self, row, fieldNames);
                                 else {
-                                    row.values.forEach(function (val, index) {
-                                        item._refreshValue(val, fieldNames[index], RM);
-                                    });
+                                    self._refreshValues('', item, row.v, fieldNames, 1 /* RefreshCurrent */);
                                 }
                             } else {
-                                row.values.forEach(function (val, index) {
-                                    item._refreshValue(val, fieldNames[index], RM);
-                                });
+                                self._refreshValues('', item, row.v, fieldNames, 1 /* RefreshCurrent */);
                             }
                             return item;
                         });
@@ -10059,7 +10263,7 @@ var RIAPP;
                     rows.forEach(function (rowInfo) {
                         var key = rowInfo.clientKey, item = self._itemsByKey[key];
                         if (!item) {
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, key));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, key));
                         }
                         var itemCT = item._changeType;
                         item.acceptChanges(rowInfo);
@@ -10097,7 +10301,7 @@ var RIAPP;
                 };
                 DbSet.prototype._setCurrentItem = function (v) {
                     if (!!v && !(v instanceof this._entityType)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', this._options.dbSetName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', this._options.dbSetName));
                     }
                     _super.prototype._setCurrentItem.call(this, v);
                 };
@@ -10251,7 +10455,7 @@ var RIAPP;
                 DbSet.prototype.defineCalculatedField = function (fieldName, getFunc) {
                     var calcDef = this._calcfldMap[fieldName];
                     if (!calcDef) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'fieldName', fieldName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'fieldName', fieldName));
                     }
                     calcDef.getFunc = getFunc;
                 };
@@ -10280,7 +10484,7 @@ var RIAPP;
                 DbSet.prototype.createQuery = function (name) {
                     var queryInfo = this.dbContext._getQueryInfo(name);
                     if (!queryInfo) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_QUERY_NAME_NOTFOUND, name));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_QUERY_NAME_NOTFOUND, name));
                     }
                     return new TDataQuery(this, queryInfo);
                 };
@@ -10423,7 +10627,7 @@ var RIAPP;
                 DbSets.prototype.getDbSet = function (name) {
                     var f = this._dbSets[name];
                     if (!f)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, name));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, name));
                     return f();
                 };
                 DbSets.prototype.destroy = function () {
@@ -10676,11 +10880,11 @@ var RIAPP;
                     var self = this, operType = 1 /* LOAD */, dbSetName, dbSet, loadRes;
                     try  {
                         if (!res)
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'null result'));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'null result'));
                         dbSetName = res.dbSetName;
                         dbSet = self.getDbSet(dbSetName);
                         if (!dbSet)
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, dbSetName));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, dbSetName));
                         __checkError(res.error, operType);
                         loadRes = dbSet._fillFromService({
                             res: res,
@@ -10709,7 +10913,7 @@ var RIAPP;
                                 jsDB.rows.forEach(function (row) {
                                     var item = eSet.getItemByKey(row.clientKey);
                                     if (!item) {
-                                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, row.clientKey));
+                                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, row.clientKey));
                                     }
                                     submitted.push(item);
                                     if (!!row.invalid) {
@@ -11025,7 +11229,7 @@ var RIAPP;
                     var name2 = "get" + name;
                     var f = this._assoc[name2];
                     if (!f)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSOC_NAME_INVALID, name));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_ASSOC_NAME_INVALID, name));
                     return f();
                 };
 
@@ -11460,7 +11664,7 @@ var RIAPP;
                             }
                             break;
                         default:
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                     self._notifyParentChanged(changed);
                 };
@@ -11605,7 +11809,7 @@ var RIAPP;
                             }
                             break;
                         default:
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                     self._notifyChildrenChanged(changed);
                 };
@@ -12145,7 +12349,7 @@ var RIAPP;
                             }
                             break;
                         default:
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 };
                 DataView.prototype._onDSFill = function (args) {
@@ -12580,6 +12784,152 @@ var RIAPP;
                 return TChildDataView;
             })(ChildDataView);
             db.TChildDataView = TChildDataView;
+
+            var BaseComplexProperty = (function (_super) {
+                __extends(BaseComplexProperty, _super);
+                function BaseComplexProperty(name) {
+                    _super.call(this);
+                    this._name = name;
+                }
+                BaseComplexProperty.prototype._getFullPath = function (path) {
+                    throw new Error('Not Implemented');
+                };
+                BaseComplexProperty.prototype.getName = function () {
+                    return this._name;
+                };
+                BaseComplexProperty.prototype.setValue = function (name, value) {
+                    throw new Error('Not Implemented');
+                };
+                BaseComplexProperty.prototype.getValue = function (name) {
+                    throw new Error('Not Implemented');
+                };
+                BaseComplexProperty.prototype.getFieldInfo = function () {
+                    throw new Error('Not Implemented');
+                };
+                BaseComplexProperty.prototype.getProperties = function () {
+                    throw new Error('Not Implemented');
+                };
+                BaseComplexProperty.prototype.getFullPath = function (name) {
+                    throw new Error('Not Implemented');
+                };
+                BaseComplexProperty.prototype.getEntity = function () {
+                    throw new Error('Not Implemented');
+                };
+                BaseComplexProperty.prototype.getPropertyByName = function (name) {
+                    var arrProps = this.getProperties().filter(function (f) {
+                        return f.fieldName == name;
+                    });
+                    if (!arrProps || arrProps.length != 1)
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "arrProps.length == 1"));
+                    return arrProps[0];
+                };
+                BaseComplexProperty.prototype.getIsHasErrors = function () {
+                    return this.getEntity().getIsHasErrors();
+                };
+                BaseComplexProperty.prototype.addOnErrorsChanged = function (fn, namespace) {
+                    this.getEntity().addOnErrorsChanged(fn, namespace);
+                };
+                BaseComplexProperty.prototype.removeOnErrorsChanged = function (namespace) {
+                    this.getEntity().removeOnErrorsChanged(namespace);
+                };
+                BaseComplexProperty.prototype.getFieldErrors = function (fieldName) {
+                    var fullName = this.getFullPath(fieldName);
+                    return this.getEntity().getFieldErrors(fullName);
+                };
+                BaseComplexProperty.prototype.getAllErrors = function () {
+                    return this.getEntity().getAllErrors();
+                };
+                BaseComplexProperty.prototype.getIErrorNotification = function () {
+                    return this;
+                };
+                return BaseComplexProperty;
+            })(RIAPP.BaseObject);
+            db.BaseComplexProperty = BaseComplexProperty;
+
+            var RootComplexProperty = (function (_super) {
+                __extends(RootComplexProperty, _super);
+                function RootComplexProperty(name, owner) {
+                    _super.call(this, name);
+                    this._entity = owner;
+                }
+                RootComplexProperty.prototype._getFullPath = function (path) {
+                    return this.getName() + '.' + path;
+                };
+                RootComplexProperty.prototype._setValueCore = function (property, name, value) {
+                    var fullName = property.getFullPath(name);
+                    this._entity._setFieldVal(fullName, value);
+                };
+                RootComplexProperty.prototype._getValueCore = function (property, name) {
+                    var fullName = property.getFullPath(name);
+                    return this._entity._getFieldVal(fullName);
+                };
+                RootComplexProperty.prototype.setValue = function (name, value) {
+                    this._setValueCore(this, name, value);
+                };
+                RootComplexProperty.prototype.getValue = function (name) {
+                    return this._getValueCore(this, name);
+                };
+                RootComplexProperty.prototype.getFieldInfo = function () {
+                    return this._entity.getFieldInfo(this.getName());
+                };
+                RootComplexProperty.prototype.getProperties = function () {
+                    return this.getFieldInfo().nested;
+                };
+                RootComplexProperty.prototype.getEntity = function () {
+                    return this._entity;
+                };
+                RootComplexProperty.prototype.getFullPath = function (name) {
+                    return this.getName() + '.' + name;
+                };
+                return RootComplexProperty;
+            })(BaseComplexProperty);
+            db.RootComplexProperty = RootComplexProperty;
+
+            var ChildComplexProperty = (function (_super) {
+                __extends(ChildComplexProperty, _super);
+                function ChildComplexProperty(name, parent) {
+                    _super.call(this, name);
+                    this._parent = parent;
+                }
+                ChildComplexProperty.prototype._getFullPath = function (path) {
+                    return this._parent._getFullPath(this.getName() + '.' + path);
+                };
+                ChildComplexProperty.prototype.setValue = function (name, value) {
+                    var root = this.getRootProperty();
+                    root._setValueCore(this, name, value);
+                };
+                ChildComplexProperty.prototype.getValue = function (name) {
+                    var root = this.getRootProperty();
+                    return root._getValueCore(this, name);
+                };
+                ChildComplexProperty.prototype.getFieldInfo = function () {
+                    var name = this.getName();
+                    return this._parent.getPropertyByName(name);
+                };
+                ChildComplexProperty.prototype.getProperties = function () {
+                    return this.getFieldInfo().nested;
+                };
+                ChildComplexProperty.prototype.getParent = function () {
+                    return this._parent;
+                };
+                ChildComplexProperty.prototype.getRootProperty = function () {
+                    var parent = this._parent;
+                    while (!!parent && (parent instanceof ChildComplexProperty)) {
+                        parent = parent.getParent();
+                    }
+                    if (!parent || !(parent instanceof RootComplexProperty))
+                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "parent instanceof RootComplexProperty"));
+                    return parent;
+                };
+                ChildComplexProperty.prototype.getFullPath = function (name) {
+                    return this._parent._getFullPath(this.getName() + '.' + name);
+                };
+                ChildComplexProperty.prototype.getEntity = function () {
+                    return this.getRootProperty().getEntity();
+                };
+                return ChildComplexProperty;
+            })(BaseComplexProperty);
+            db.ChildComplexProperty = ChildComplexProperty;
 
             //MUST NOTIFY THE GLOBAL
             RIAPP.global.onModuleLoaded('db', db);

@@ -22,7 +22,8 @@ namespace RIAppDemo.BLL.DataServices
 
         public FolderBrowserService(IServiceArgs args)
             : base(args)
-        { 
+        {
+            this.IsCodeGenEnabled = true;
         }
 
         protected override Metadata GetMetadata()

@@ -38,6 +38,24 @@ var RIAPP;
                     }
                 }, self.uniqueID);
 
+                //example of using custom validation on client (in addition to a built-in validation)
+                this._dbSet.addOnValidate(function (sender, args) {
+                    var item = args.item;
+
+                    //check complex property value
+                    if (args.fieldName == "ComplexProp.ComplexProp.Phone") {
+                        if (utils.str.startsWith(args.item.ComplexProp.ComplexProp.Phone, '888')) {
+                            args.errors.push('Phone must not start with 888!');
+                        }
+                    }
+                }, self.uniqueID);
+
+                this._dbSet.addOnItemAdded(function (s, args) {
+                    args.item.NameStyle = false;
+                    args.item.ComplexProp.LastName = "Dummy1";
+                    args.item.ComplexProp.FirstName = "Dummy2";
+                });
+
                 //adds new customer - uses dialog to enter the data
                 this._addNewCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     //showing of the dialog is handled by the datagrid

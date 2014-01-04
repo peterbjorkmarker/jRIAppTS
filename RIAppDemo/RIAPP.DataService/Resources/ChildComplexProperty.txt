@@ -1,0 +1,12 @@
+﻿export class {{TYPE_NAME}} extends RIAPP.MOD.db.ChildComplexProperty
+{
+{{FIELDS_DEF}}
+	constructor(name: string, parent: RIAPP.MOD.db.BaseComplexProperty) {
+		super(name,parent);
+{{FIELDS_INIT}}
+	}
+{{PROPERTIES}}
+	toString() {
+		return '{{TYPE_NAME}}';
+	}
+}

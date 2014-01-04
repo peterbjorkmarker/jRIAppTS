@@ -25,7 +25,7 @@ namespace RIAPP.DataService.Utils
 
         public static FieldInfo GetRowTimeStampFieldInfo(this DbSetInfo dbSetInfo)
         {
-            return dbSetInfo.fieldInfos.Where(fi => fi.isRowTimeStamp == true).FirstOrDefault();
+            return dbSetInfo.fieldInfos.Where(fi => fi.fieldType == FieldType.RowTimeStamp).FirstOrDefault();
         }
 
         #region Utility Methods
@@ -108,15 +108,24 @@ namespace RIAPP.DataService.Utils
             return dbSetInfo._fieldsByNames;
         }
 
+        private static void SetOrdinal(FieldInfo[] fieldInfos)
+        {
+            int i = 0, cnt = fieldInfos.Length;
+            for (i = 0; i < cnt; ++i)
+            {
+                fieldInfos[i]._ordinal = i;
+                if (fieldInfos[i].fieldType == FieldType.Object)
+                {
+                    SetOrdinal(fieldInfos[i].nested.ToArray());
+                }
+            }
+        }
+
         public static Dictionary<int, FieldInfo> GetFieldByOrdinal(this DbSetInfo dbSetInfo)
         {
             System.Threading.LazyInitializer.EnsureInitialized<Dictionary<int, FieldInfo>>(ref dbSetInfo._fieldsByOrdinal, () =>
             {
-                int i = 0, cnt = dbSetInfo.fieldInfos.Count();
-                for (i = 0; i < cnt; ++i)
-                {
-                    dbSetInfo.fieldInfos[i]._ordinal = i;
-                }
+                SetOrdinal(dbSetInfo.fieldInfos.ToArray());   
                 return dbSetInfo.fieldInfos.ToDictionary(f => f._ordinal);
             });
             return dbSetInfo._fieldsByOrdinal;

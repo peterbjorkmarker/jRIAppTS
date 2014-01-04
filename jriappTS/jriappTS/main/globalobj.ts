@@ -118,57 +118,6 @@ module RIAPP {
                 return false;
             }
         }
-        private _registerObjectCore(root: any, name: string, obj: any, checkOverwrite: boolean) {
-            var parts = name.split('.'),
-                parent = root,
-                i:number;
-            for (i = 0; i < parts.length - 1; i += 1) {
-                // create a property if it doesn't exist
-                if (!parent[parts[i]]) {
-                    parent[parts[i]] = {};
-                }
-                parent = parent[parts[i]];
-            }
-            //the last part is the object's name itself
-            var n = parts[parts.length - 1];
-            if (!!checkOverwrite && !!parent[n]) {
-                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
-            }
-            parent[n] = obj;
-            return parent;
-        }
-        private _getObjectCore(root: any, name: string) {
-            var parts = name.split('.'),
-                parent = root,
-                i:number, res;
-            for (i = 0; i < parts.length; i += 1) {
-                res = parent[parts[i]];
-                if (!res) {
-                    return null;
-                }
-                parent = res;
-            }
-            return res;
-        }
-        private _removeObjectCore(root: any, name: string) {
-            var parts = name.split('.'),
-               parent = root,
-                i: number, obj = null;
-            for (i = 0; i < parts.length - 1; i += 1) {
-                if (!parent[parts[i]]) {
-                    return null;
-                }
-                parent = parent[parts[i]];
-            }
-            //the last part is the object's name itself
-            var n = parts[parts.length - 1];
-            obj = parent[n];
-            if (!!obj) {
-                delete parent[n];
-            }
-            //returns deleted object
-            return obj;
-        }
         _getEventNames() {
             var base_events = super._getEventNames();
             return ['load', 'unload'].concat(base_events);
@@ -233,13 +182,13 @@ module RIAPP {
             return !!error.isDummy;
         }
         _registerObject(root: IExports, name: string, obj: any) {
-            return this._registerObjectCore(root.getExports(), name, obj, true);
+            return RIAPP.baseUtils.setValue(root.getExports(), name, obj, true);
         }
         _getObject(root: IExports, name: string) {
-            return this._getObjectCore(root.getExports(), name);
+            return RIAPP.baseUtils.getValue(root.getExports(), name);
         }
         _removeObject(root: IExports, name: string) {
-            return this._removeObjectCore(root.getExports(), name);
+            return RIAPP.baseUtils.removeValue(root.getExports(), name);
         }
         _processTemplateSections(root: { querySelectorAll: (selectors: string) => NodeList; }) {
             var self = this;
@@ -270,10 +219,10 @@ module RIAPP {
             });
         }
         private _registerTemplateLoaderCore(name: string, loader: { fn_loader: () => IPromise<string>; groupName?: string; }) {
-            return this._registerObjectCore(this._templateLoaders, name, loader, false);
+            return RIAPP.baseUtils.setValue(this._templateLoaders, name, loader, false);
         }
         private _getTemplateLoaderCore(name: string): { fn_loader: () => IPromise<string>; groupName?: string; } {
-            return this._getObjectCore(this._templateLoaders, name);
+            return RIAPP.baseUtils.getValue(this._templateLoaders, name);
         }
         _loadTemplatesAsync(fn_loader: () => IPromise<string>, app: Application) {
             var self = this, promise = fn_loader(), old = self.isLoading;
@@ -421,7 +370,7 @@ module RIAPP {
                 };
             }
 
-            this._registerObjectCore(self._templateGroups, groupName, group2, true);
+            RIAPP.baseUtils.setValue(self._templateGroups, groupName, group2, true);
             group2.names.forEach(function (name) {
                 if (!!group2.app) {
                     name = group2.app.appName + '.' + name;
@@ -441,7 +390,7 @@ module RIAPP {
                 app?: Application;
                 promise?: IPromise<string>;
         } {
-            return this._getObjectCore(this._templateGroups, name);
+            return RIAPP.baseUtils.getValue(this._templateGroups, name);
         }
         _waitForNotLoading(callback, callbackArgs) {
             this._waitQueue.enQueue({

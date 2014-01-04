@@ -207,6 +207,15 @@ namespace RIAppDemo.BLL.DataServices
         {
             return this.QueryHelper.GetRefreshedEntity<Customer>(this.DB.Customers, refreshInfo);
         }
+
+        public IEnumerable<ValidationErrorInfo> ValidateCustomer(Customer customer, string[] modifiedField)
+        {
+            LinkedList<ValidationErrorInfo> errors = new LinkedList<ValidationErrorInfo>();
+            if (Array.IndexOf(modifiedField, "ComplexProp.ComplexProp.Phone") > -1 && customer.ComplexProp.ComplexProp.Phone.StartsWith("000", StringComparison.OrdinalIgnoreCase))
+                errors.AddLast(new ValidationErrorInfo { fieldName = "ComplexProp.ComplexProp.Phone", message = "Phone number must not start with 000!" });
+
+            return errors;
+        }
         #endregion
 
         #region Address
@@ -484,6 +493,9 @@ namespace RIAppDemo.BLL.DataServices
         }
         #endregion
 
+        //store last diffgram here
+        private string _diffGramm;
+
         /// <summary>
         /// here can be tracked changes to the entities
         /// for example: product entity changes is tracked and can be seen here
@@ -493,7 +505,8 @@ namespace RIAppDemo.BLL.DataServices
         /// <param name="diffgram"></param>
         protected override void OnTrackChange(string dbSetName, ChangeType changeType, string diffgram)
         {
-
+            //you can set a breakpoint here and to examine diffgram
+            this._diffGramm = diffgram;
         }
 
         /// <summary>
@@ -511,6 +524,7 @@ namespace RIAppDemo.BLL.DataServices
         /// <param name="ex"></param>
         protected override void OnError(Exception ex)
         {
+
         }
 
         protected override void Dispose(bool isDisposing)

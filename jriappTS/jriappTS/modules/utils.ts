@@ -902,8 +902,8 @@ module RIAPP {
                 createDeferred(): IDeferred<any> {
                     return <any>global.$.Deferred();
                 }
-                cloneObj(o, mergeIntoObj) {
-                    var c, i, len, self = this;
+                cloneObj(o:any, mergeIntoObj?:any) {
+                    var c:any, i:number, len:number, self = this;
                     if (!o) {
                         return o;
                     }

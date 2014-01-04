@@ -61,7 +61,7 @@ namespace RIAPP.DataService.LinqSql
                     bool isArray = false;
                     fieldInfo.dataType = this.ServiceContainer.ValueConverter.DataTypeFromType(propInfo2.PropertyType, out isArray);
                     fieldInfo.isNullable = this.ServiceContainer.ValueConverter.IsNullableType(propInfo2.PropertyType) || colAttr.CanBeNull;
-                    fieldInfo.isRowTimeStamp = colAttr.IsVersion;
+                    fieldInfo.fieldType = colAttr.IsVersion?FieldType.RowTimeStamp: FieldType.None;
                     fieldInfo.isReadOnly = !propInfo2.CanWrite;
                     dbSetInfo.fieldInfos.Add(fieldInfo);
                 });

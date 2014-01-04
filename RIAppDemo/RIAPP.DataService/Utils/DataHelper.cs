@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -33,69 +34,112 @@ namespace RIAPP.DataService.Utils
             return (int)tspn.TotalMinutes;
         }
 
-        public bool SetProperty(object entity, string propertyName, object value)
+        public object GetValue(object obj, string propertyName, bool throwErrors)
         {
-            Type enityType = entity.GetType();
-            PropertyInfo pinfo = enityType.GetProperty(propertyName);
-            if (pinfo == null)
-                return false;
-            if (!pinfo.CanWrite)
-            {
-                return false;
-            }
-
-            pinfo.SetValue(entity, value, null);
-            return true;
-        }
-
-        public object GetProperty(object entity, string propertyName)
-        {
-            Type enityType = entity.GetType();
-            PropertyInfo pinfo = enityType.GetProperty(propertyName);
+            string[] parts = propertyName.Split('.');
+            Type enityType = obj.GetType();
+            PropertyInfo pinfo = enityType.GetProperty(parts[0]);
+            if (pinfo == null && throwErrors)
+                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, propertyName));
             if (pinfo == null)
                 return null;
-            return pinfo.GetValue(entity, null);
+            if (parts.Length == 1)
+            {
+                return pinfo.GetValue(obj, null);
+            }
+            else
+            {
+                var pval = pinfo.GetValue(obj, null);
+                if (pval == null)
+                    throw new Exception(string.Format(ErrorStrings.ERR_PPROPERTY_ISNULL, enityType.Name, pinfo.Name));
+                return this.GetValue(pval, string.Join(".", parts.Skip(1).ToArray()), throwErrors);
+            }
         }
 
-        public object SetValue(object entity, FieldInfo fieldInfo, string value)
+        public bool SetValue(object obj, string propertyName, object value, bool throwErrors)
         {
+            string[] parts = propertyName.Split('.');
+            Type enityType = obj.GetType();
+            PropertyInfo pinfo = enityType.GetProperty(parts[0]);
+            if (pinfo == null && throwErrors)
+                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, propertyName));
+            if (pinfo == null)
+                return false;
+            if (parts.Length == 1)
+            {
+                if (!pinfo.CanWrite)
+                {
+                    if (throwErrors)
+                        throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, enityType.Name, propertyName));
+                    return false;
+                }
+                pinfo.SetValue(obj, value, null);
+                return true;
+            }
+            else
+            {
+                var pval = pinfo.GetValue(obj, null);
+                if (pval == null)
+                    throw new Exception(string.Format(ErrorStrings.ERR_PPROPERTY_ISNULL, enityType.Name, pinfo.Name));
+                return this.SetValue(pval, string.Join(".", parts.Skip(1).ToArray()), value, throwErrors);
+            }
+        }
+
+        public object SetFieldValue(object entity, string fullName, FieldInfo fieldInfo, string value)
+        {
+            string[] parts = fullName.Split('.');
             Type enityType = entity.GetType();
-            PropertyInfo pinfo = enityType.GetProperty(fieldInfo.fieldName);
+            PropertyInfo pinfo = enityType.GetProperty(parts[0]);
             if (pinfo == null)
                 throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, fieldInfo.fieldName));
-            if (!pinfo.CanWrite) {
-                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, fieldInfo.fieldName));
+            if (parts.Length == 1)
+            {
+                if (!pinfo.CanWrite)
+                {
+                    throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_READONLY, enityType.Name, fieldInfo.fieldName));
+                }
+
+                Type propType = pinfo.PropertyType;
+                bool IsNullableType = this._serviceContainer.ValueConverter.IsNullableType(propType);
+                object val = this._serviceContainer.ValueConverter.DeserializeField(propType, fieldInfo, value);
+
+                if (val != null)
+                    pinfo.SetValue(entity, val, null);
+                else if (IsNullableType && val == null)
+                    pinfo.SetValue(entity, val, null);
+                else if (!propType.IsValueType && val == null)
+                    pinfo.SetValue(entity, val, null);
+                else
+                    throw new Exception(string.Format(ErrorStrings.ERR_FIELD_IS_NOT_NULLABLE, fieldInfo.fieldName));
+                return val;
             }
-
-            Type propType = pinfo.PropertyType;
-            bool IsNullableType = this._serviceContainer.ValueConverter.IsNullableType(propType);
-            object val = this._serviceContainer.ValueConverter.DeserializeField(propType, fieldInfo, value);
-
-            if (val != null)
-                pinfo.SetValue(entity, val, null);
-            else if (IsNullableType && val == null)
-                pinfo.SetValue(entity, val, null);
-            else if (!propType.IsValueType && val == null)
-                pinfo.SetValue(entity, val, null);
             else
-                throw new Exception(string.Format(ErrorStrings.ERR_FIELD_IS_NOT_NULLABLE, fieldInfo.fieldName));
-            return val;
+            {
+                var pval = pinfo.GetValue(entity, null);
+                if (pval == null)
+                    throw new Exception(string.Format(ErrorStrings.ERR_PPROPERTY_ISNULL, enityType.Name, pinfo.Name));
+                return this.SetFieldValue(pval, string.Join(".", parts.Skip(1).ToArray()), fieldInfo, value);
+            }
         }
 
-        public string SerializeField(object entity, FieldInfo fieldInfo)
+        private object[] SerializeObjectField(object fieldOwner, FieldInfo[] fieldInfos)
         {
-            string val;
-            bool isOK = this.SerializeField(entity, fieldInfo, false, out val);
-            return val;
+            object[] res =new object[fieldInfos.Length];
+            for (int i = 0; i < fieldInfos.Length; ++i)
+            {
+                FieldInfo fieldInfo = fieldInfos[i];
+                res[i] = this.SerializeField(fieldOwner, fieldInfo);
+            }
+            return res;
         }
 
         /// <summary>
-        /// extracts field value from entity, and converts value to string form
+        /// extracts field value from entity, and converts value to a serialized form
         /// </summary>
-        public bool SerializeField(object entity, FieldInfo fieldInfo, bool optional, out string val)
+        protected virtual bool SerializeField(object fieldOwner, FieldInfo fieldInfo, bool optional, out object val)
         {
             val = null;
-            Type enityType = entity.GetType();
+            Type enityType = fieldOwner.GetType();
             PropertyInfo pinfo = enityType.GetProperty(fieldInfo.fieldName);
             if (pinfo == null && !optional)
                 throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, fieldInfo.fieldName));
@@ -104,34 +148,79 @@ namespace RIAPP.DataService.Utils
             {
                 return false;
             }
-            Type propType = pinfo.PropertyType;
-            object fieldValue = pinfo.GetValue(entity, null);
-            val = this._serviceContainer.ValueConverter.SerializeField(propType, fieldInfo, fieldValue);
+            if (fieldInfo.fieldType == FieldType.Object)
+            {
+                object propValue = pinfo.GetValue(fieldOwner, null);
+                val = this.SerializeObjectField(propValue, fieldInfo.nested.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).ToArray());
+            }
+            else
+            {
+                object fieldValue = pinfo.GetValue(fieldOwner, null);
+                val = this._serviceContainer.ValueConverter.SerializeField(pinfo.PropertyType, fieldInfo, fieldValue);
+            }
             return true;
         }
 
-        public static object GetValue(object entity, string fieldName)
+        public object SerializeField(object fieldOwner, FieldInfo fieldInfo)
         {
-            Type enityType = entity.GetType();
-            PropertyInfo pinfo = enityType.GetProperty(fieldName);
-            if (pinfo == null)
-                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, fieldName));
-
-            Type propType = pinfo.PropertyType;
-            object fieldValue = pinfo.GetValue(entity, null);
-            return fieldValue;
+            object val;
+            bool isOK = this.SerializeField(fieldOwner, fieldInfo, false, out val);
+            return val;
         }
 
-        public object DeserializeField(Type entityType, FieldInfo finfo, string value)
+        public string SerializeField(object fieldOwner, string fullName, FieldInfo fieldInfo)
         {
-            PropertyInfo propInfo = entityType.GetProperty(finfo.fieldName);
+            string[] parts = fullName.Split('.');
+            if (parts.Length == 1)
+            {
+                Type enityType = fieldOwner.GetType();
+                PropertyInfo pinfo = enityType.GetProperty(fieldInfo.fieldName);
+                if (pinfo == null)
+                    throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, fieldInfo.fieldName));
+                object fieldValue = pinfo.GetValue(fieldOwner, null);
+                return this._serviceContainer.ValueConverter.SerializeField(pinfo.PropertyType, fieldInfo, fieldValue);
+            }
+            else
+            {
+                for (int i = 0; i < parts.Length-1; i += 1)
+                {
+                    Type enityType = fieldOwner.GetType();
+                    PropertyInfo pinfo = enityType.GetProperty(parts[i]);
+                    if (pinfo == null)
+                        throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, parts[i]));
+                    fieldOwner = pinfo.GetValue(fieldOwner, null);
+                }
+                return this.SerializeField(fieldOwner, parts[parts.Length - 1], fieldInfo);
+            }
+        }
+
+        private object[] DeSerializeObjectField(Type propType, FieldInfo[] fieldInfos, object[] values)
+        {
+            object[] res = new object[fieldInfos.Length];
+            for (int i = 0; i < fieldInfos.Length; ++i)
+            {
+                object propValue = values[i];
+                FieldInfo fieldInfo = fieldInfos[i];
+                res[i] = this.DeserializeField(propType, fieldInfo, propValue);
+            }
+            return res;
+        }
+
+        public object DeserializeField(Type entityType, FieldInfo fieldInfo, object value)
+        {
+            PropertyInfo propInfo = entityType.GetProperty(fieldInfo.fieldName);
 
             if (propInfo == null)
-                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING,entityType.Name, finfo.fieldName));
+                throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING,entityType.Name, fieldInfo.fieldName));
 
-            Type propType = propInfo.PropertyType;
-
-            return this._serviceContainer.ValueConverter.DeserializeField(propType, finfo, value);
+            if (fieldInfo.fieldType == FieldType.Object)
+            {
+                return this.DeSerializeObjectField(propInfo.PropertyType, fieldInfo.nested.ToArray(), (object[])value);
+            }
+            else
+            {
+                return this._serviceContainer.ValueConverter.DeserializeField(propInfo.PropertyType, fieldInfo, (string)value);
+            }
         }
     
         public object ParseParameter(Type paramType, ParamMetadataInfo pinfo, bool isArray, string val)
@@ -157,6 +246,40 @@ namespace RIAPP.DataService.Utils
             }
             else
                 return this._serviceContainer.ValueConverter.DeserializeValue(paramType, dataType, pinfo.dateConversion, val);
+        }
+
+        public FieldInfo getFieldInfo(DbSetInfo dbSetInfo, string fullName)
+        {
+            Dictionary<string, FieldInfo> fieldsByName = dbSetInfo.GetFieldByNames();
+            string[] parts = fullName.Split('.');
+            if (parts.Length == 1)
+            {
+                return fieldsByName[parts[0]];
+            }
+            else
+            {
+                FieldInfo res = fieldsByName[parts[0]];
+                for (int i = 1; i < parts.Length; i += 1)
+                {
+                    res = res.nested.Where(f => f.fieldName == parts[i]).SingleOrDefault();
+                }
+                return res;
+            }
+        }
+
+        public void ForEachFieldInfo(string path, FieldInfo rootField,  Action<string, FieldInfo> callBack)
+        {
+            if (rootField.fieldType == FieldType.Object)
+            {
+                rootField.nested.ForEach((fieldInfo) =>
+                {
+                    this.ForEachFieldInfo(path + rootField.fieldName + ".", fieldInfo, callBack);
+                });
+            }
+            else
+            {
+                callBack(path + rootField.fieldName, rootField);
+            }
         }
     }
 }

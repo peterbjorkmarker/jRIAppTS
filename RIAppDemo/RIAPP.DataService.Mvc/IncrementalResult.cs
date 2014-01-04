@@ -25,36 +25,53 @@ namespace RIAPP.DataService.Mvc
 
         public GetDataResult Data { get; set; }
 
-        private static string Encode(string str)
+        private static string _Encode(string str)
         {
             return System.Web.HttpUtility.JavaScriptStringEncode(str);
         }
 
-        private string RowToJSON(Row row) {
+        private static void _SerializeArray(object[] arr, StringBuilder sbld)
+        {
+            int i = 0;
+            Array.ForEach<object>(arr, (value) =>
+            {
+                if (i > 0)
+                    sbld.Append(",");
+                if (value == null)
+                {
+                    sbld.Append("null");
+                }
+                else
+                {
+                    if (value is string)
+                    {
+                        sbld.Append(@"""");
+                        sbld.Append(_Encode((string)value));
+                        sbld.Append(@"""");
+                    }
+                    else if (value.GetType().IsArray)
+                    {
+                        sbld.Append(@"[");
+                        _SerializeArray((object[])value, sbld);
+                        sbld.Append(@"]");
+                    }
+                }
+                i += 1;
+            });
+        }
+
+        private string _RowToJSON(Row row) {
             if (this._rowStringBuilder == null)
             {
                 this._rowStringBuilder = new StringBuilder(512);
             }
+         
+
             StringBuilder sb = this._rowStringBuilder;
             sb.Length = 0;
             sb.Append("{");
-            sb.AppendFormat(@"""key"":""{0}"",""values"":[", Encode(row.key));
-            int i = 0;
-            Array.ForEach<string>(row.values,(s)=>{
-                if (i > 0)
-                    sb.Append(",");
-                if (s == null)
-                {
-                    sb.Append("null");
-                }
-                else
-                {
-                    sb.Append(@"""");
-                    sb.Append(Encode(s));
-                    sb.Append(@"""");
-                }
-                i += 1;
-            });
+            sb.AppendFormat(@"""k"":""{0}"",""v"":[", _Encode(row.k));
+            _SerializeArray(row.v, sb);
             sb.Append("]}");
             return sb.ToString();
         }
@@ -116,7 +133,7 @@ namespace RIAPP.DataService.Mvc
                 foreach (var row in rows)
                 {
                     if (i > 0) { writer.Write(","); }
-                    writer.Write(this.RowToJSON(row));
+                    writer.Write(this._RowToJSON(row));
                     i += 1;
                     if ((i % fetchSize) == 0)
                     {

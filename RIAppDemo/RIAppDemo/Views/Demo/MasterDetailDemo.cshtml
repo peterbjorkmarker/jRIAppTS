@@ -128,6 +128,7 @@
                     <th data-column="width:50px,type:row_actions" ></th>
                     <th data-column="width:40px,sortable:true,title:Title" data-content="fieldName:Title,readOnly:true" ></th>
                     <th data-column="width:150px,sortable:true,title:Customer Name,sortMemberName=LastName;MiddleName;FirstName" data-content="fieldName:Name,readOnly:true" ></th>
+                    <th data-column="width:70px,sortable:true,title:Phone,sortMemberName=Phone" data-content="fieldName:ComplexProp.ComplexProp.Phone,readOnly:true" ></th>
                     <th data-column="width:50%,sortable:true,title:CompanyName" data-content="fieldName:CompanyName,readOnly:true" ></th>
                     <th data-column="width:150px,sortable:true,title:SalesPerson" data-content="fieldName:SalesPerson,readOnly:true" ></th>
                 </tr>
@@ -244,7 +245,7 @@
                             Phone:
                         </td>
                         <td>
-                            <span data-content="fieldName:Phone,css:{displayCss:'custInfo',editCss:'custEdit'}">
+                            <span data-content="fieldName:ComplexProp.ComplexProp.Phone,css:{displayCss:'custInfo',editCss:'custEdit'}">
                             </span>
                         </td>
                     </tr>

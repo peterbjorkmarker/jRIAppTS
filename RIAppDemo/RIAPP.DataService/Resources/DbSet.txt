@@ -7,24 +7,7 @@
 			childAssoc: {{CHILD_ASSOC}},
 			parentAssoc: {{PARENT_ASSOC}} 
 		}, utils=RIAPP.global.utils;
-		super(opts);
-		self._entityType = {{ENTITY_TYPE}};
-
-		opts.dbSetInfo.fieldInfos.forEach(function (f) {
-			f.dependents=[];
-			self._fieldMap[f.fieldName] = f;
-		});
-
-		opts.dbSetInfo.fieldInfos.forEach(function (f) {
-		    if (!!f.isNavigation){
-				self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-			}
-			else if (!!f.isCalculated){
-				self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-			}
-		});
-
-		self._mapAssocFields();
+		super(opts, {{ENTITY_TYPE}});
 	}
 	findEntity({{PK_VALS}}): {{ENTITY_TYPE}} {
 		return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));

@@ -61,7 +61,7 @@ module RIAPP {
                 get errors() {
                     return this._errors;
                 }
-            };
+            }
 
             export class Binding extends RIAPP.BaseObject{
                 private _state:any;
@@ -214,8 +214,7 @@ module RIAPP {
                 _parseSrcPath2(obj, path:string[], lvl:number) {
                     var self = this, nextObj;
                     var isBaseObj = (!!obj && RIAPP.global.utils.check.isBaseObj(obj));
-
-
+                    
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnSrcDestroyedProxy(), self._objId);
                         self._checkBounded(obj, 'source', lvl, path);
@@ -505,11 +504,9 @@ module RIAPP {
                     }
                 }
                 get appName() { return this._appName; }
-           };
+           }
 
 
-           global.registerType('ValidationError', ValidationError);
-           global.registerType('Binding', Binding);
            global.onModuleLoaded('binding', binding);
         }
     }

@@ -9,12 +9,17 @@ namespace RIAPP.DataService
     {
         public Row()
         {
-            this.values = new string[0];
-            key = string.Empty;
+            this.v = new object[0];
+            k = string.Empty;
         }
 
+
+        /// <summary>
+        /// array of row values, each value in its string form
+        /// but for object fields the value is an array of values (that's why the property uses object[] type)
+        /// </summary>
         [DataMember]
-        public string[] values
+        public object[] v
         {
             get;
             set;
@@ -22,11 +27,11 @@ namespace RIAPP.DataService
 
        
         /// <summary>
-        /// Unique key in DbSet - primary key values concantenated by ;
-        /// used on client to uniquely identify Entities
+        /// Unique key in a DbSet - primary key values concantenated by ;
+        /// used on the client to uniquely identify Entities
         /// </summary>
         [DataMember]
-        public string key
+        public string k
         {
             get;
             set;

@@ -174,11 +174,17 @@
   <data name="ERR_MULTYPAGE_REQUEST" xml:space="preserve">
     <value>Can not return included child entities for multypage requests</value>
   </data>
+  <data name="ERR_NO_SERIALIZER" xml:space="preserve">
+    <value>The dataservice class expects a serializer instance</value>
+  </data>
+  <data name="ERR_PPROPERTY_ISNULL" xml:space="preserve">
+    <value>Object: {0} property {1} is NULL</value>
+  </data>
   <data name="ERR_PROPERTY_IS_MISSING" xml:space="preserve">
-    <value>Entity {0} does not contain property {1}</value>
+    <value>Object: {0} does not have property {1}</value>
   </data>
   <data name="ERR_PROPERTY_IS_READONLY" xml:space="preserve">
-    <value>Field {0} is readonly</value>
+    <value>Object: {0} property {1} is readonly and can not be written</value>
   </data>
   <data name="ERR_QUERY_NAME_INVALID" xml:space="preserve">
     <value>Query with name {0} is not found among service query methods</value>
@@ -193,7 +199,7 @@
     <value>Record has been changed by another user.</value>
   </data>
   <data name="ERR_REC_REFRESH_INVALID" xml:space="preserve">
-    <value>Refresh method for {0} is not implemented by service {1}</value>
+    <value>Refresh method for {0} is not implemented by the dataService {1}</value>
   </data>
   <data name="ERR_ROWINFO_PKVAL_INVALID" xml:space="preserve">
     <value>RowInfo for the entity: {0} has invalid primary key: {1} value</value>
