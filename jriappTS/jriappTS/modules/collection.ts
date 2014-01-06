@@ -118,6 +118,8 @@ module RIAPP {
                             global.reThrow(ex, isHandled);
                         }
                     }
+                    if (!this._key) //detached item
+                        return false;
                     this._isEditing = true;
                     this._saveVals = RIAPP.global.utils.cloneObj(this._vals);
                     this._collection.currentItem = this;
@@ -816,7 +818,7 @@ module RIAPP {
                         }
                         return;
                     }
-                    if (v._key === null)
+                    if (!v._key)
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     var oldItem, pos, item = self.getItemByKey(v._key);
                     if (!item) {

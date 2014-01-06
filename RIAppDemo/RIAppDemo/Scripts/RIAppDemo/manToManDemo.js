@@ -958,7 +958,6 @@ var RIAPP;
                 this._customerVM.load();
             };
             DemoApplication.prototype._handleError = function (sender, data) {
-                debugger;
                 data.isHandled = true;
                 this.errorVM.error = data.error;
                 this.errorVM.showDialog();

@@ -241,8 +241,12 @@ module RIAPP {
                             });
                             promise.fail(function () {
                                 //resume editing if fn_onEndEdit callback returns false in isOk argument
-                                if (self._isEditable)
-                                    self._dataContext.beginEdit();
+                                if (self._isEditable) {
+                                    if (!self._dataContext.beginEdit()) {
+                                        self._result = 'cancel';
+                                        self.hide();
+                                    }
+                                }
                             });
                         }
                         else {

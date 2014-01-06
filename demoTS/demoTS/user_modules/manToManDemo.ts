@@ -723,7 +723,6 @@ module RIAPP
                 this._customerVM.load();
             }
             private _handleError(sender, data) {
-                debugger;
                 data.isHandled = true;
                 this.errorVM.error = data.error;
                 this.errorVM.showDialog();

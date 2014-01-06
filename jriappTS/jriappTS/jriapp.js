@@ -5586,6 +5586,8 @@ var RIAPP;
                             RIAPP.global.reThrow(ex, isHandled);
                         }
                     }
+                    if (!this._key)
+                        return false;
                     this._isEditing = true;
                     this._saveVals = RIAPP.global.utils.cloneObj(this._vals);
                     this._collection.currentItem = this;
@@ -6303,7 +6305,7 @@ var RIAPP;
                         }
                         return;
                     }
-                    if (v._key === null)
+                    if (!v._key)
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     var oldItem, pos, item = self.getItemByKey(v._key);
                     if (!item) {
@@ -13987,8 +13989,12 @@ var RIAPP;
                             });
                             promise.fail(function () {
                                 //resume editing if fn_onEndEdit callback returns false in isOk argument
-                                if (self._isEditable)
-                                    self._dataContext.beginEdit();
+                                if (self._isEditable) {
+                                    if (!self._dataContext.beginEdit()) {
+                                        self._result = 'cancel';
+                                        self.hide();
+                                    }
+                                }
                             });
                         } else {
                             self._result = 'ok';

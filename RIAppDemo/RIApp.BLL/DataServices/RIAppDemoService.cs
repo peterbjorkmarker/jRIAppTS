@@ -211,7 +211,7 @@ namespace RIAppDemo.BLL.DataServices
         public IEnumerable<ValidationErrorInfo> ValidateCustomer(Customer customer, string[] modifiedField)
         {
             LinkedList<ValidationErrorInfo> errors = new LinkedList<ValidationErrorInfo>();
-            if (Array.IndexOf(modifiedField, "ComplexProp.ComplexProp.Phone") > -1 && customer.ComplexProp.ComplexProp.Phone.StartsWith("000", StringComparison.OrdinalIgnoreCase))
+            if (Array.IndexOf(modifiedField, "ComplexProp.ComplexProp.Phone") > -1 && customer.ComplexProp.ComplexProp.Phone != null && customer.ComplexProp.ComplexProp.Phone.StartsWith("000", StringComparison.OrdinalIgnoreCase))
                 errors.AddLast(new ValidationErrorInfo { fieldName = "ComplexProp.ComplexProp.Phone", message = "Phone number must not start with 000!" });
 
             return errors;
