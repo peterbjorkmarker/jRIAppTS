@@ -56,11 +56,5 @@ namespace RIAPP.DataService
             get;
             set;
         }
-
-        public object GetTypedValue(Type entityType, DbSetInfo dbSetInfo, IDataHelper dataHelper)
-        {
-            FieldInfo fieldInfo = dbSetInfo.GetFieldByNames()[this.fieldName];
-            return dataHelper.DeserializeField(entityType, fieldInfo, this.val);
-        }
     }
 }

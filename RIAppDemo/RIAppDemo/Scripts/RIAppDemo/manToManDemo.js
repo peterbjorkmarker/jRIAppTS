@@ -932,8 +932,8 @@ var RIAPP;
                 }
                 ;
 
-                this._dbContext.dbSets.Customer.defineNameField(function () {
-                    return toText(this.LastName) + '  ' + toText(this.MiddleName) + '  ' + toText(this.FirstName);
+                this._dbContext.dbSets.Customer.defineComplexProp_NameField(function () {
+                    return toText(this.ComplexProp.LastName) + '  ' + toText(this.ComplexProp.MiddleName) + '  ' + toText(this.ComplexProp.FirstName);
                 });
 
                 this.registerObject("dbContext", this._dbContext);

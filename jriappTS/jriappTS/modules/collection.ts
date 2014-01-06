@@ -30,6 +30,7 @@ module RIAPP {
                 dependentOn: string;
                 nested: IFieldInfo[];
                 dependents?: string[];
+                fullName?: string;
             }
 
             export function fn_getPropertyByName(name: string, props: IFieldInfo[]): IFieldInfo {
@@ -1319,6 +1320,10 @@ module RIAPP {
                         fldInfo.dataType = prop.dtype; 
                         self._fieldMap[prop.name] = fldInfo;
                         self._fieldInfos.push(fldInfo);
+                        fn_traverseField(fldInfo, (fullName, fld) => {
+                            fld.dependents = null;
+                            fld.fullName = fullName;
+                        });
                     });
                 }
                 _attach(item: TItem) {

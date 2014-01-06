@@ -390,9 +390,9 @@ namespace RIAppDemo.BLL.DataServices
         [Query]
         public QueryResult<SalesInfo> ReadSalesInfo()
         {
-
-            var res = this.DB.Customers.Where(c => c.SalesPerson.StartsWith(this.CurrentQueryInfo.filterInfo.filterItems[0].values.First().TrimEnd('%'))).Select(s => s.SalesPerson).Distinct().Select(s => new SalesInfo { SalesPerson = s });
-            var res2 = res.Skip(this.CurrentQueryInfo.pageIndex * this.CurrentQueryInfo.pageSize).Take(this.CurrentQueryInfo.pageSize);
+            string startsWithVal =  this.CurrentQueryInfo.filterInfo.filterItems[0].values.First().TrimEnd('%');
+            var res = this.DB.Customers.Where(c => c.SalesPerson.StartsWith(startsWithVal)).Select(s => s.SalesPerson).Distinct().Select(s => new SalesInfo { SalesPerson = s });
+            var res2 = res.Skip(this.CurrentQueryInfo.pageIndex * this.CurrentQueryInfo.pageSize).Take(this.CurrentQueryInfo.pageSize).ToArray();
             return new QueryResult<SalesInfo>(res2, res.Count());
         }
 

@@ -24,7 +24,7 @@ namespace RIAPP.DataService
 
             private RowInfo _currentRowInfo;
 
-            private GetDataInfo _currentQueryInfo;
+            private QueryRequest _currentQueryInfo;
 
             private ServiceOperationType _currentOperation;
 
@@ -46,7 +46,7 @@ namespace RIAPP.DataService
                 set { _currentRowInfo = value; }
             }
 
-            public GetDataInfo CurrentQueryInfo
+            public QueryRequest CurrentQueryInfo
             {
                 get { return _currentQueryInfo; }
                 set { _currentQueryInfo = value; }
@@ -140,9 +140,9 @@ namespace RIAPP.DataService
         /// <param name="dbSetName"></param>
         /// <param name="queryName"></param>
         /// <returns></returns>
-        public GetDataResult GetQueryData(string dbSetName, string queryName)
+        public QueryResponse GetQueryData(string dbSetName, string queryName)
         {
-            GetDataInfo getInfo = new GetDataInfo { dbSetName = dbSetName, queryName = queryName };
+            QueryRequest getInfo = new QueryRequest { dbSetName = dbSetName, queryName = queryName };
             return this.ServiceGetData(getInfo);
         }
 
@@ -166,7 +166,7 @@ namespace RIAPP.DataService
             get { return this.RequestState.CurrentRowInfo.changeState; }
         }
 
-        protected GetDataInfo CurrentQueryInfo
+        protected QueryRequest CurrentQueryInfo
         {
             get { return this.RequestState.CurrentQueryInfo; }
         }
@@ -345,7 +345,7 @@ namespace RIAPP.DataService
             metadata = new ServiceMetadata();
             foreach (var dbSetInfo in metadataInfo.DbSets)
             {
-                dbSetInfo.Initialize(self.GetType());
+                dbSetInfo.Initialize(self.GetType(), this.ServiceContainer);
                 //indexed by dbSetName
                 metadata.dbSets.Add(dbSetInfo.dbSetName, dbSetInfo);
             }
@@ -546,7 +546,6 @@ namespace RIAPP.DataService
         {
             DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
             var values = rowInfo.values;
-            var flds = dbSetInfo.GetFieldByNames();
             this.ApplyValues(entity,rowInfo, "", rowInfo.values.ToArray(), isOriginal);
 
             if (!isOriginal && rowInfo.changeType == ChangeType.Added)
@@ -609,7 +608,6 @@ namespace RIAPP.DataService
         protected void UpdateRowInfoFromEntity(object entity, RowInfo rowInfo)
         {
             DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
-            var fields = dbSetInfo.GetFieldByNames();
             this.RefreshEntityFromValues(entity, "", dbSetInfo, rowInfo.values.ToArray());
             if (rowInfo.changeType == ChangeType.Added)
             {
@@ -739,7 +737,8 @@ namespace RIAPP.DataService
                 {
                     if (!fld.isIncludeInResult())
                         return;
-
+                    if (fld.fieldType == FieldType.Object)
+                        return;
                     string value = this.ServiceContainer.DataHelper.SerializeField(rowInfo.changeState.Entity, fullName, fld);
                     if (rowInfo.changeType == ChangeType.Added)
                     {
@@ -881,7 +880,7 @@ namespace RIAPP.DataService
             return fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).Select(fi => new FieldName { n = fi.fieldName, p =(fi.fieldType == FieldType.Object)?this.GetNames(fi.nested).ToArray(): null });
         }
 
-        protected GetDataResult GetData(GetDataInfo queryInfo)
+        protected QueryResponse PerformQuery(QueryRequest queryInfo)
         {
             var metadata = this.EnsureMetadataInitialized();
             List<MethodDescription> methodList = metadata.methodDescriptions;
@@ -925,7 +924,7 @@ namespace RIAPP.DataService
             var rows = this.CreateRows(queryInfo.dbSetInfo, entityList, rowCnt);
             IEnumerable<IncludedResult> subResults = this.CreateIncludedResults(queryInfo.dbSetInfo, entityList, queryResult.includeNavigations);
 
-            GetDataResult res = new GetDataResult()
+            QueryResponse res = new QueryResponse()
             {
                 pageIndex = queryInfo.pageIndex,
                 pageCount = queryInfo.pageCount,
@@ -939,7 +938,7 @@ namespace RIAPP.DataService
                 included = subResults,
                 error = null
             };
-            return (GetDataResult)res;
+            return (QueryResponse)res;
         }
 
         protected virtual void AuthorizeChangeSet(ChangeSet changeSet)
@@ -1105,7 +1104,7 @@ namespace RIAPP.DataService
             return true;
         }
 
-        protected InvokeResult InvokeMethod(InvokeInfo invokeInfo) {
+        protected InvokeResponse InvokeMethod(InvokeRequest invokeInfo) {
             List<MethodDescription> methodList = this.EnsureMetadataInitialized().methodDescriptions;
             MethodDescription method = methodList.Where((m)=>m.methodName == invokeInfo.methodName && m.isQuery == false).FirstOrDefault();
             if (method == null) {
@@ -1117,7 +1116,7 @@ namespace RIAPP.DataService
                methParams.Add(invokeInfo.paramInfo.GetValue(method.parameters[i].name, method, this.ServiceContainer));
             }
             object meth_result = method.methodInfo.Invoke(this, methParams.ToArray());
-            InvokeResult res = new InvokeResult();
+            InvokeResponse res = new InvokeResponse();
             if (method.methodResult)
                 res.result = meth_result;
             return res;
@@ -1206,19 +1205,19 @@ namespace RIAPP.DataService
             }
         }
 
-        public GetDataResult ServiceGetData(GetDataInfo getInfo)
+        public QueryResponse ServiceGetData(QueryRequest getInfo)
         {
-            GetDataResult res = null;
+            QueryResponse res = null;
             this.RequestState.CurrentOperation = ServiceOperationType.GetData;
             try
             {
-                res = this.GetData(getInfo);
+                res = this.PerformQuery(getInfo);
             }
             catch (Exception ex)
             {
                 while (ex.InnerException != null)
                     ex = ex.InnerException;
-                res = new GetDataResult() { pageIndex = getInfo.pageIndex, pageCount = getInfo.pageCount,
+                res = new QueryResponse() { pageIndex = getInfo.pageIndex, pageCount = getInfo.pageCount,
                     rows = new Row[0], 
                     dbSetName = getInfo.dbSetName, totalCount = null, error = new ErrorInfo(ex.Message, ex.GetType().Name) };
                 this.OnError(ex);
@@ -1280,8 +1279,8 @@ namespace RIAPP.DataService
             return res;
         }
 
-        public InvokeResult ServiceInvokeMethod(InvokeInfo parameters) {
-            InvokeResult res = null;
+        public InvokeResponse ServiceInvokeMethod(InvokeRequest parameters) {
+            InvokeResponse res = null;
             this.RequestState.CurrentOperation = ServiceOperationType.InvokeMethod;
             try
             {
@@ -1291,7 +1290,7 @@ namespace RIAPP.DataService
             {
                 while (ex.InnerException != null)
                     ex = ex.InnerException;
-                res = new InvokeResult() { result= null , error = new ErrorInfo(ex.Message, ex.GetType().Name) };
+                res = new InvokeResponse() { result= null , error = new ErrorInfo(ex.Message, ex.GetType().Name) };
                 this.OnError(ex);
             }
             finally

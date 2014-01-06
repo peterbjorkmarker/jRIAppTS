@@ -175,7 +175,7 @@ namespace RIAPP.DataService
         public FieldInfoList nested
         {
             get {
-                if (this._isObjectField && this._nested == null)
+                if (this.fieldType == FieldType.Object && this._nested == null)
                 {
                     this._nested = new FieldInfoList();
                 }
@@ -187,24 +187,13 @@ namespace RIAPP.DataService
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [IgnoreDataMember]
         [ScriptIgnore]
-        public bool _isObjectField
-        {
-            get
-            {
-                return this.fieldType == FieldType.Object;
-            }
-        }
-
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [IgnoreDataMember]
-        [ScriptIgnore]
         public int _ordinal
         {
             get;
             set;
         }
 
-        //we set it only for navigation fields
+        //It is used only for Navigation and ComplexType fields
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [IgnoreDataMember]
         [ScriptIgnore]
@@ -213,7 +202,15 @@ namespace RIAPP.DataService
             get;
             set;
         }
-        
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [IgnoreDataMember]
+        [ScriptIgnore]
+        public string _FullName
+        {
+            get;
+            set;
+        }
     }
 
 }

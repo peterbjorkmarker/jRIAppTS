@@ -2,6 +2,9 @@ module RIAPP {
     export module MOD {
         export module binding {
             export var BINDING_MODE = ['OneTime', 'OneWay', 'TwoWay'];
+            enum BindTo {
+                Source= 0, Target=1
+            }
       
             export interface IBindingOptions {
                 mode?: string;
@@ -71,7 +74,7 @@ module RIAPP {
                 private _srcPath:string[];
                 private _tgtPath:string[];
                 private _isSourceFixed: boolean;
-                private _bounds: { [key: string]: BaseObject; };
+                private _pathItems: { [key: string]: BaseObject; };
                 private _objId: string;
                 private _ignoreSrcChange: boolean;
                 private _ignoreTgtChange: boolean;
@@ -81,7 +84,7 @@ module RIAPP {
                 private _target: BaseObject;
                 private _appName: string;
 
-                 constructor (options: IBindingOptions, appName?: string) {
+                constructor (options: IBindingOptions, appName?: string) {
                     super();
                      var opts = RIAPP.global.utils.extend(false, {
                         target: null, source: null,
@@ -114,7 +117,7 @@ module RIAPP {
                     if (this._tgtPath.length < 1)
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     this._isSourceFixed = (!!opts.isSourceFixed);
-                    this._bounds = {};
+                    this._pathItems = {};
                     this._objId = 'bnd' + RIAPP.global.utils.getNewID();
                     this._ignoreSrcChange = false;
                     this._ignoreTgtChange = false;
@@ -129,37 +132,37 @@ module RIAPP {
                             this._onSrcErrorsChanged();
                     }
                  }
-                _getOnTgtDestroyedProxy() {
+                private _getOnTgtDestroyedProxy() {
                     var self = this;
                     return function (s, a) {
                         self._onTgtDestroyed(s,a);
                     };
                 }
-                _getOnSrcDestroyedProxy() {
+                private _getOnSrcDestroyedProxy() {
                     var self = this;
                     return function (s, a) {
                         self._onSrcDestroyed(s,a);
                     };
                 }
-                _getUpdTgtProxy() {
+                private _getUpdTgtProxy() {
                     var self = this;
                     return function () {
                         self._updateTarget();
                     };
                 }
-                _getUpdSrcProxy() {
+                private _getUpdSrcProxy() {
                     var self = this;
                     return function () {
                         self._updateSource();
                     };
                 }
-                _getSrcErrChangedProxy() {
+                private _getSrcErrChangedProxy() {
                     var self = this;
                     return function (s, a) {
                         self._onSrcErrorsChanged();
                     };
                 }
-                _onSrcErrorsChanged() {
+                private _onSrcErrorsChanged() {
                     var errors:IValidationInfo[] = [], tgt = this._targetObj, src = this._sourceObj, srcPath = this._srcPath;
                     if (!!tgt && RIAPP.global.utils.check.isElView(tgt)) {
                         if (!!src && srcPath.length > 0) {
@@ -169,38 +172,27 @@ module RIAPP {
                         (<baseElView.BaseElView>tgt).validationErrors = errors;
                     }
                 }
-                _onError(error: any, source: any):boolean {
-                    var isHandled = super._onError(error, source);
-                    if (!isHandled) {
-                        if (!!this._appName) {
-                            return global.findApp(this._appName)._onError(error, source);
-                        }
-                        else
-                            return global._onError(error, source);
-                    }
-                    return isHandled;
-                }
-                _getTgtChangedFn(self, obj, prop:string, restPath:string[], lvl:number) {
+                private _getTgtChangedFn(self: Binding, obj, prop:string, restPath:string[], lvl:number) {
                     var fn = function (sender, data) {
                         var val = global.parser._resolveProp(obj, prop);
                         if (restPath.length > 0) {
-                            self._checkBounded(null, 'target', lvl, restPath);
+                            self._setPathItem(null, BindTo.Target, lvl, restPath);
                         }
                         self._parseTgtPath(val, restPath, lvl); //bind and trigger target update
                     };
                     return fn;
                 }
-                _getSrcChangedFn(self, obj, prop:string, restPath:string[], lvl:number) {
+                private _getSrcChangedFn(self: Binding, obj, prop:string, restPath:string[], lvl:number) {
                     var fn = function (sender, data) {
                         var val = global.parser._resolveProp(obj, prop);
                         if (restPath.length > 0) {
-                            self._checkBounded(null, 'source', lvl, restPath);
+                            self._setPathItem(null, BindTo.Source, lvl, restPath);
                         }
                         self._parseSrcPath(val, restPath, lvl);
                     };
                     return fn;
                 }
-                _parseSrcPath(obj, path: string[], lvl: number) {
+                private _parseSrcPath(obj, path: string[], lvl: number) {
                     var self = this;
                     self._sourceObj = null;
                     if (path.length === 0) {
@@ -211,13 +203,13 @@ module RIAPP {
                     if (!!self._targetObj)
                         self._updateTarget();
                 }
-                _parseSrcPath2(obj, path:string[], lvl:number) {
+                private _parseSrcPath2(obj, path:string[], lvl:number) {
                     var self = this, nextObj;
                     var isBaseObj = (!!obj && RIAPP.global.utils.check.isBaseObj(obj));
                     
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnSrcDestroyedProxy(), self._objId);
-                        self._checkBounded(obj, 'source', lvl, path);
+                        self._setPathItem(obj, BindTo.Source, lvl, path);
                     }
 
                     if (path.length > 1) {
@@ -244,7 +236,7 @@ module RIAPP {
                         this._sourceObj = obj;
                     }
                 }
-                _parseTgtPath(obj, path: string[], lvl: number) {
+                private _parseTgtPath(obj, path: string[], lvl: number) {
                     var self = this;
                     self._targetObj = null;
                     if (path.length === 0) {
@@ -255,13 +247,13 @@ module RIAPP {
                     if (!!self._targetObj) //new target
                         self._updateTarget();  //update target (not source!)
                 }
-                _parseTgtPath2(obj, path:string[], lvl:number) {
+                private _parseTgtPath2(obj, path:string[], lvl:number) {
                     var self = this, nextObj;
                     var isBaseObj = (!!obj && RIAPP.global.utils.check.isBaseObj(obj));
 
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnTgtDestroyedProxy(), self._objId);
-                        self._checkBounded(obj, 'target', lvl, path);
+                        self._setPathItem(obj, BindTo.Target, lvl, path);
                     }
 
                     if (path.length > 1) {
@@ -284,44 +276,44 @@ module RIAPP {
                         self._targetObj = obj;
                     }
                 }
-                _checkBounded(obj:BaseObject, to:string, lvl:number, restPath:string[]) {
-                    var old: BaseObject, key:string;
-                    if (to === 'source') {
-                        key = 's' + lvl;
-                    }
-                    else if (to === 'target') {
-                        key = 't' + lvl;
-                    }
-                    else
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'to', to));
+                private _setPathItem(newObj: BaseObject, bindingTo: BindTo, lvl: number, path: string[]) {
+                    var oldObj: RIAPP.BaseObject, key: string, len: number = lvl + path.length;
+                    for (var i = lvl; i < len; i += 1) {
+                        switch (bindingTo) {
+                            case BindTo.Source:
+                                key = 's' + i;
+                                break;
+                            case BindTo.Target:
+                                key = 't' + i;
+                                break;
+                            default:
+                                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'bindingTo', bindingTo));
+                        }
 
-                    old = this._bounds[key];
-                    if (!!old) {
-                        old.removeNSHandlers(this._objId);
-                        delete this._bounds[key];
-                    }
+                        oldObj = this._pathItems[key];
+                        if (!!oldObj) {
+                            oldObj.removeNSHandlers(this._objId);
+                            delete this._pathItems[key];
+                        }
 
-                    if (restPath.length > 0) {
-                        this._checkBounded(null, to, lvl + 1, restPath.slice(1));
-                    }
-
-                    if (!!obj) {
-                        this._bounds[key] = obj;
+                        if (!!newObj && i == lvl) {
+                            this._pathItems[key] = newObj;
+                        }
                     }
                 }
-                _onTgtDestroyed(sender,args) {
+                private _onTgtDestroyed(sender,args) {
                     if (this._isDestroyCalled)
                         return;
                     this.target = null;
                 }
-                _onSrcDestroyed(sender, args) {
+                private _onSrcDestroyed(sender, args) {
                     var self = this;
                     if (self._isDestroyCalled)
                         return;
                     if (sender === self.source)
                         self.source = null;
                     else {
-                        self._checkBounded(null, 'source', 0, self._srcPath);
+                        self._setPathItem(null, BindTo.Source, 0, self._srcPath);
                         setTimeout(function () {
                             if (self._isDestroyCalled)
                                 return;
@@ -330,13 +322,13 @@ module RIAPP {
                         }, 0);
                     }
                 }
-                _bindToSource() {
+                private _bindToSource() {
                     this._parseSrcPath(this.source, this._srcPath, 0);
                 }
-                _bindToTarget() {
+                private _bindToTarget() {
                     this._parseTgtPath(this.target, this._tgtPath, 0);
                 }
-                _updateTarget() {
+                private _updateTarget() {
                     if (this._ignoreSrcChange)
                         return;
                     this._ignoreTgtChange = true;
@@ -352,7 +344,7 @@ module RIAPP {
                         this._ignoreTgtChange = false;
                     }
                 }
-                _updateSource() {
+                private _updateSource() {
                     if (this._ignoreTgtChange)
                         return;
                     this._ignoreSrcChange = true;
@@ -377,16 +369,27 @@ module RIAPP {
                         this._ignoreSrcChange = false;
                     }
                 }
+                _onError(error: any, source: any): boolean {
+                    var isHandled = super._onError(error, source);
+                    if (!isHandled) {
+                        if (!!this._appName) {
+                            return global.findApp(this._appName)._onError(error, source);
+                        }
+                        else
+                            return global._onError(error, source);
+                    }
+                    return isHandled;
+                }
                 destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
                     var self = this;
-                    RIAPP.global.utils.forEachProp(this._bounds, function (key) {
-                        var old = self._bounds[key];
+                    RIAPP.global.utils.forEachProp(this._pathItems, function (key) {
+                        var old = self._pathItems[key];
                         old.removeNSHandlers(self._objId);
                     });
-                    this._bounds = {};
+                    this._pathItems = {};
                     this.source = null;
                     this.target = null;
                     this._state = null;
@@ -423,7 +426,7 @@ module RIAPP {
                                 this._ignoreTgtChange = false;
                             }
                         }
-                        this._checkBounded(null, 'target', 0, this._tgtPath);
+                        this._setPathItem(null, BindTo.Target, 0, this._tgtPath);
                         if (!!v && !RIAPP.global.utils.check.isBaseObj(v))
                             throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
                         this._target = v;
@@ -439,7 +442,7 @@ module RIAPP {
                         return;
                     }
                     if (this._source !== v) {
-                        this._checkBounded(null, 'source', 0, this._srcPath);
+                        this._setPathItem(null, BindTo.Source, 0, this._srcPath);
                         this._source = v;
                         this._bindToSource();
                     }

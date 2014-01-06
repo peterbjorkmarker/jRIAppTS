@@ -5,61 +5,9 @@ using System.Web.Script.Serialization;
 
 namespace RIAPP.DataService
 {
-    [DataContract]
-    public class KV 
-    {
-        [DataMember]
-        public int ord
-        {
-            get;
-            set;
-        }
-        [DataMember]
-        public string name
-        {
-            get;
-            set;
-        }
-    }
-
-    [DataContract]
-    public class IncludedResult
-    {
-        [DataMember]
-        public IEnumerable<FieldName> names
-        {
-            get;
-            set;
-        }
-
-        [DataMember]
-        public IEnumerable<Row> rows
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// The count of rows in the result
-        /// </summary>
-        [DataMember]
-        public int rowCount
-        {
-            get;
-            set;
-        }
-
-        [DataMember]
-        public string dbSetName
-        {
-            get;
-            set;
-        }
-   
-    }
-
+  
     [DataContract] 
-    public class GetDataResult
+    public class QueryResponse
     {
         /// <summary>
         /// field names returned in the rows

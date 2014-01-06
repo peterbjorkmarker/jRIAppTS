@@ -4,7 +4,7 @@ using System.Web.Script.Serialization;
 namespace RIAPP.DataService
 {
     [DataContract]
-    public class GetDataInfo
+    public class QueryRequest
     {
         private FilterInfo _filterInfo = new FilterInfo();
         private SortInfo _sortInfo = new SortInfo();

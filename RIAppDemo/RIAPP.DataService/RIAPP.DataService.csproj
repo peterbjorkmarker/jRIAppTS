@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="DomainService\Interfaces\IServiceContainer.cs" />
     <Compile Include="DomainService\JSonTypes\FieldName.cs" />
+    <Compile Include="DomainService\JSonTypes\IncludedResult.cs" />
     <Compile Include="DomainService\JSonTypes\ParamMetadataInfo.cs" />
     <Compile Include="DomainService\ServiceArgs.cs" />
     <Compile Include="DomainService\Interfaces\IServiceArgs.cs" />
@@ -93,8 +94,8 @@
     <Compile Include="DomainService\JSonTypes\Value.cs" />
     <Compile Include="DomainService\JSonTypes\Row.cs" />
     <Compile Include="DomainService\JSonTypes\QueryResult.cs" />
-    <Compile Include="DomainService\JSonTypes\InvokeResult.cs" />
-    <Compile Include="DomainService\JSonTypes\InvokeInfo.cs" />
+    <Compile Include="DomainService\JSonTypes\InvokeResponse.cs" />
+    <Compile Include="DomainService\JSonTypes\InvokeRequest.cs" />
     <Compile Include="DomainService\JSonTypes\MethodDescription.cs" />
     <Compile Include="DomainService\JSonTypes\MethodParamInfo.cs" />
     <Compile Include="DomainService\JSonTypes\DbSetPermit.cs" />
@@ -119,8 +120,8 @@
     <Compile Include="DomainService\JSonTypes\FieldInfo.cs" />
     <Compile Include="DomainService\JSonTypes\ValueChange.cs" />
     <Compile Include="DomainService\JSonTypes\FilterInfo.cs" />
-    <Compile Include="DomainService\JSonTypes\GetDataInfo.cs" />
-    <Compile Include="DomainService\JSonTypes\GetDataResult.cs" />
+    <Compile Include="DomainService\JSonTypes\QueryRequest.cs" />
+    <Compile Include="DomainService\JSonTypes\QueryResponse.cs" />
     <Compile Include="DomainService\JSonTypes\RowInfo.cs" />
     <Compile Include="DomainService\JSonTypes\SortInfo.cs" />
     <Compile Include="DomainService\JSonTypes\ChangeSet.cs" />

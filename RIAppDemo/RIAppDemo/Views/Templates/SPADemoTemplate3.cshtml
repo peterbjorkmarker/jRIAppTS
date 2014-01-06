@@ -10,7 +10,7 @@
 
 <div id="customerAddr" data-role="template" style="width: 95%; margin:4px;">
     <fieldset>
-        <legend>Addresses of <span style="font-weight: bold; color: Blue;" data-bind="{this.value,to=currentItem.Name}"></span></legend>
+        <legend>Addresses of <span style="font-weight: bold; color: Blue;" data-bind="{this.value,to=currentItem.ComplexProp.Name}"></span></legend>
         <nav>
             <ul class="nav nav-pills">
                 <li><a data-bind="{this.command,to=switchViewCommand}{this.commandParam,to=uiMainView.custTemplName}"><i class="icon-list"></i>&nbsp;Back to all customers</a></li>

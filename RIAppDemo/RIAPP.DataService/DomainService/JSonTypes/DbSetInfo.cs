@@ -53,7 +53,6 @@ namespace RIAPP.DataService
 
         private FieldInfoList _fieldInfos = new FieldInfoList();
         internal Dictionary<string, FieldInfo> _fieldsByNames;
-        internal Dictionary<int, FieldInfo> _fieldsByOrdinal;
         internal MethodInfo _validateDataMethod;
         internal MethodInfo _deleteDataMethod;
         internal MethodInfo _insertDataMethod;

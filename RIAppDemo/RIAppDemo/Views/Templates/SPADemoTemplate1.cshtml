@@ -18,7 +18,7 @@
                     <th data-column="width:40px,type:row_actions" ></th>
                     <th data-column="width:22px,title:***" data-content="template={displayID=goToInfoColTemplate}" ></th>
                     <th data-column="width:40px,sortable:true,title:Title" data-content="fieldName:Title,readOnly:true" ></th>
-                    <th data-column="width:150px,sortable:true,title:Customer Name,sortMemberName=LastName;MiddleName;FirstName" data-content="fieldName:Name,readOnly:true" ></th>
+                    <th data-column="width:150px,sortable:true,title:Customer Name,sortMemberName=LastName;MiddleName;FirstName" data-content="fieldName:ComplexProp.Name,readOnly:true" ></th>
                     <th data-column="width:50%,sortable:true,title:CompanyName" data-content="fieldName:CompanyName,readOnly:true" ></th>
                     <th data-column="width:150px,sortable:true,title:SalesPerson" data-content="fieldName:SalesPerson,readOnly:true" ></th>
                 </tr>
@@ -77,21 +77,21 @@
                     <td>FirstName:
                     </td>
                     <td>
-                        <span data-content="fieldName:FirstName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
+                        <span data-content="fieldName:ComplexProp.FirstName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
                     </td>
                 </tr>
                 <tr>
                     <td>MiddleName:
                     </td>
                     <td>
-                        <span data-content="fieldName:MiddleName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
+                        <span data-content="fieldName:ComplexProp.MiddleName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
                     </td>
                 </tr>
                 <tr>
                     <td>LastName:
                     </td>
                     <td>
-                        <span data-content="fieldName:LastName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
+                        <span data-content="fieldName:ComplexProp.LastName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
                     </td>
                 </tr>
                 <tr>
@@ -119,14 +119,14 @@
                     <td>Email:
                     </td>
                     <td>
-                        <span data-content="fieldName=EmailAddress,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
+                        <span data-content="fieldName=ComplexProp.ComplexProp.EmailAddress,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
                     </td>
                 </tr>
                 <tr>
                     <td>Phone:
                     </td>
                     <td>
-                        <span data-content="fieldName:Phone,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
+                        <span data-content="fieldName:ComplexProp.ComplexProp.Phone,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
                     </td>
                 </tr>
             </tbody>
@@ -176,14 +176,14 @@
                         <label class="control-label">
                             EmailAddress:</label>
                         <div class="controls">
-                            <input type="text" class="value" data-bind="{this.value,to=EmailAddress}" readonly="readonly" />
+                            <input type="text" class="value" data-bind="{this.value,to=ComplexProp.ComplexProp.EmailAddress}" readonly="readonly" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label">
                             Phone:</label>
                         <div class="controls">
-                            <input type="text" class="value" data-bind="{this.value,to=Phone}" readonly="readonly" />
+                            <input type="text" class="value" data-bind="{this.value,to=ComplexProp.ComplexProp.Phone}" readonly="readonly" />
                         </div>
                     </div>
                 </form>

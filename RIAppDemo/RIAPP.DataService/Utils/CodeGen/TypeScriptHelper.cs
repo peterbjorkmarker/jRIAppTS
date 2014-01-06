@@ -110,7 +110,7 @@ namespace RIAPP.DataService.Utils
             {
                 dbSetInfo.fieldInfos.ForEach((fieldInfo) =>
                 {
-                    if (fieldInfo._isObjectField)
+                    if (fieldInfo.fieldType == FieldType.Object)
                     {
                         ctbuilder.CreateComplexType(dbSetInfo, fieldInfo, 0);
                     }
@@ -500,14 +500,19 @@ namespace RIAPP.DataService.Utils
         private string createCalcFields(DbSetInfo dbSetInfo)
         {
             var sb = new StringBuilder(256);
-            var selected = dbSetInfo.fieldInfos.Where((f) => f.fieldType == FieldType.Calculated).ToList();
-            selected.ForEach((fieldInfo) =>
+            dbSetInfo.fieldInfos.ForEach((fieldInfo) =>
             {
-                sb.AppendFormat("\tdefine{0}Field(getFunc: () => {1})", fieldInfo.fieldName, this.GetFieldDataType(fieldInfo));
-                sb.Append(" { ");
-                sb.AppendFormat("this.defineCalculatedField('{0}', getFunc);", fieldInfo.fieldName);
-                sb.Append(" }");
-                sb.AppendLine();
+                this._serviceContainer.DataHelper.ForEachFieldInfo("", fieldInfo, (fullName, f) =>
+                {
+                    if (f.fieldType == FieldType.Calculated)
+                    {
+                        sb.AppendFormat("\tdefine{0}Field(getFunc: () => {1})", fullName.Replace('.', '_'), this.GetFieldDataType(f));
+                        sb.Append(" { ");
+                        sb.AppendFormat("this._defineCalculatedField('{0}', getFunc);", fullName);
+                        sb.Append(" }");
+                        sb.AppendLine();
+                    }
+                });
             });
             return sb.ToString();
         }
@@ -646,7 +651,7 @@ namespace RIAPP.DataService.Utils
             Action<FieldInfo> AddCalculatedField = (FieldInfo f) =>
             {
                 string dataType = this.GetFieldDataType(f);
-                sbFields.AppendFormat("\tget {0}(): {1} {{ return this._dbSet._calcfldMap['{0}'].getFunc.call(this); }}", f.fieldName, dataType);
+                sbFields.AppendFormat("\tget {0}(): {1} {{ return this._getCalcFieldVal('{0}'); }}", f.fieldName, dataType);
                 sbFields.AppendLine();
 
                 sbFields2.AppendFormat("\t{0}: {1};", f.fieldName, dataType);
@@ -656,12 +661,12 @@ namespace RIAPP.DataService.Utils
             Action<FieldInfo> AddNavigationField = (FieldInfo f) =>
             {
                 string dataType = this.GetFieldDataType(f);
-                sbFields.AppendFormat("\tget {0}(): {1} {{ return this._dbSet._navfldMap['{0}'].getFunc.call(this); }}", f.fieldName, dataType);
+                sbFields.AppendFormat("\tget {0}(): {1} {{ return this._getNavFieldVal('{0}'); }}", f.fieldName, dataType);
                 sbFields.AppendLine();
                 //no writable properties to ParentToChildren navigation fields
                 if (!dataType.EndsWith("[]"))
                 {
-                    sbFields.AppendFormat("\tset {0}(v: {1}) {{ this._dbSet._navfldMap['{0}'].setFunc.call(this,v); }}", f.fieldName, dataType);
+                    sbFields.AppendFormat("\tset {0}(v: {1}) {{ this._setNavFieldVal('{0}',v); }}", f.fieldName, dataType);
                     sbFields.AppendLine();
                 }
 

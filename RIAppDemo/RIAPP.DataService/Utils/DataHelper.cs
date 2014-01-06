@@ -251,26 +251,14 @@ namespace RIAPP.DataService.Utils
         public FieldInfo getFieldInfo(DbSetInfo dbSetInfo, string fullName)
         {
             Dictionary<string, FieldInfo> fieldsByName = dbSetInfo.GetFieldByNames();
-            string[] parts = fullName.Split('.');
-            if (parts.Length == 1)
-            {
-                return fieldsByName[parts[0]];
-            }
-            else
-            {
-                FieldInfo res = fieldsByName[parts[0]];
-                for (int i = 1; i < parts.Length; i += 1)
-                {
-                    res = res.nested.Where(f => f.fieldName == parts[i]).SingleOrDefault();
-                }
-                return res;
-            }
+            return fieldsByName[fullName];
         }
 
         public void ForEachFieldInfo(string path, FieldInfo rootField,  Action<string, FieldInfo> callBack)
         {
             if (rootField.fieldType == FieldType.Object)
             {
+                callBack(path + rootField.fieldName, rootField);
                 rootField.nested.ForEach((fieldInfo) =>
                 {
                     this.ForEachFieldInfo(path + rootField.fieldName + ".", fieldInfo, callBack);

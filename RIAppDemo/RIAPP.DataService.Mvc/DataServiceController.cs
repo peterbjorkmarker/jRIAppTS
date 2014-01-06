@@ -114,7 +114,7 @@ namespace RIAPP.DataService.Mvc
         }
 
         [HttpPost]
-        public ActionResult GetItems(GetDataInfo getInfo)
+        public ActionResult GetItems(QueryRequest getInfo)
         {
             return new IncrementalResult(this.DomainService.ServiceGetData(getInfo), this.Serializer);
         }
@@ -134,7 +134,7 @@ namespace RIAPP.DataService.Mvc
         }
 
         [HttpPost]
-        public ActionResult InvokeMethod(InvokeInfo invokeInfo)
+        public ActionResult InvokeMethod(InvokeRequest invokeInfo)
         {
             var res = this.DomainService.ServiceInvokeMethod(invokeInfo);
             return Json(res);

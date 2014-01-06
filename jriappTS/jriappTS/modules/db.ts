@@ -130,7 +130,12 @@ module RIAPP {
             }
 
             export interface IParamInfo { parameters: { name: string; value: any; }[]; }
-            export interface IMethodInvokeInfo { methodName: string; paramInfo: IParamInfo; }
+            export interface IErrorInfo { name: string; message: string; }
+            export interface IInvokeRequest { methodName: string; paramInfo: IParamInfo; }
+            export interface IInvokeResponse {
+                result: any;
+                error: IErrorInfo;
+            }
             export interface IDbSetInfo {
                 dbSetName: string;
                 enablePaging: boolean;
@@ -188,7 +193,7 @@ module RIAPP {
                 error: { name: string; message: string; };
                 trackAssocs: ITrackAssoc[];
             }
-            export interface IGetDataInfo {
+            export interface IQueryRequest {
                 dbSetName: string;
                 pageIndex: number;
                 pageSize: number;
@@ -202,14 +207,14 @@ module RIAPP {
             export interface IRowData {
                 k: string; v: any[]; //key and values
             }
-            export interface ILoadResult<TEntity extends Entity> { fetchedItems: TEntity[]; newItems: TEntity[]; isPageChanged: boolean; outOfBandData: any; }
+            export interface IQueryResult<TEntity extends Entity> { fetchedItems: TEntity[]; newItems: TEntity[]; isPageChanged: boolean; outOfBandData: any; }
             export interface IIncludedResult {
                 names: IFieldName[];
                 rows: IRowData[];
                 rowCount: number;
                 dbSetName: string;
             }
-            export interface IGetDataResult {
+            export interface IQueryResponse {
                 names: IFieldName[];
                 rows: IRowData[];
                 rowCount: number;
@@ -218,7 +223,7 @@ module RIAPP {
                 pageCount: number;
                 totalCount: number;
                 extraInfo: any;
-                error: { name: string; message: string; };
+                error: IErrorInfo;
                 included: IIncludedResult[];
             }
             export interface IDbSetConstructor {
@@ -595,8 +600,8 @@ module RIAPP {
                 _resetCacheInvalidated() {
                     this._cacheInvalidated = false;
                 }
-                load(): IPromise<ILoadResult<TEntity>> {
-                    return <IPromise<ILoadResult<TEntity>>>this.dbSet.dbContext.load(this);
+                load(): IPromise<IQueryResult<TEntity>> {
+                    return <IPromise<IQueryResult<TEntity>>>this.dbSet.dbContext.load(this);
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -927,7 +932,7 @@ module RIAPP {
                     return baseUtils.getValue(this._vals,fieldName);
                 }
                 _setFieldVal(fieldName: string, val):boolean {
-                    var validation_error, error, dbSetName = this._dbSetName, coll = this._collection,
+                    var validation_error, error, dbSetName = this._dbSetName, dbSet = this._dbSet,
                         ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val, fld = this.getFieldInfo(fieldName), res = false;
                     if (!fld)
                         throw new Error(baseUtils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
@@ -942,7 +947,7 @@ module RIAPP {
                                 res = true;
                             }
                         }
-                        coll._removeError(this, fieldName);
+                        dbSet._removeError(this, fieldName);
                         validation_error = this._validateField(fieldName);
                         if (!!validation_error) {
                             throw new ValidationError([validation_error], this);
@@ -956,10 +961,22 @@ module RIAPP {
                                 { fieldName: fieldName, errors: [ex.message] }
                             ], this);
                         }
-                        coll._addError(this, fieldName, error.errors[0].errors);
+                        dbSet._addError(this, fieldName, error.errors[0].errors);
                         throw error;
                     }
                     return res;
+                }
+                _getCalcFieldVal(fieldName: string) {
+                    var dbSet = this._dbSet
+                    return baseUtils.getValue(dbSet._calcfldMap, fieldName).getFunc.call(this);
+                }
+                _getNavFieldVal(fieldName: string) {
+                    var dbSet = this._dbSet
+                    return baseUtils.getValue(dbSet._navfldMap, fieldName).getFunc.call(this);
+                }
+                _setNavFieldVal(fieldName: string, value:any) {
+                    var dbSet = this._dbSet
+                    baseUtils.getValue(dbSet._navfldMap, fieldName).setFunc.call(this, value);
                 }
                 _onAttaching() {
                     super._onAttaching();
@@ -1190,17 +1207,24 @@ module RIAPP {
                     this._changeCache = {};
                     this._ignorePageChanged = false;
                     fieldInfos.forEach(function (f) {
-                        f.dependents = [];
                         self._fieldMap[f.fieldName] = f;
+                        collMod.fn_traverseField(f, (fullName, fld) => {
+                            fld.dependents = [];
+                            fld.fullName = fullName;
+                        });
                     });
 
                     fieldInfos.forEach(function (f) {
-                        if (f.fieldType == collMod.FIELD_TYPE.Navigation) {
-                            self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                        }
-                        else if (f.fieldType == collMod.FIELD_TYPE.Calculated) {
-                            self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                        }
+                        collMod.fn_traverseField(f, (fullName, fld) => {
+                            if (fld.fieldType == collMod.FIELD_TYPE.Navigation) {
+                                //navigation fields can NOT be on nested fields
+                                self._navfldMap[fld.fieldName] = self._doNavigationField(opts, fld);
+                            }
+                            else if (fld.fieldType == collMod.FIELD_TYPE.Calculated) {
+                                //calculated fields can be on nested fields
+                                baseUtils.setValue(self._calcfldMap, fullName, self._doCalculatedField(opts, fld), true);
+                            }
+                        });
                     });
 
                     self._mapAssocFields();
@@ -1234,18 +1258,18 @@ module RIAPP {
                     return this.dbContext._onError(error, source);
                 }
                 _mapAssocFields() {
-                    var tas = this._trackAssoc, assoc: IAssociationInfo, tasKeys = Object.keys(tas),
+                    var trackAssoc = this._trackAssoc, assoc: IAssociationInfo, tasKeys = Object.keys(trackAssoc),
                         frel: { childField: string; parentField: string; },
-                        map = this._trackAssocMap;
+                        trackAssocMap = this._trackAssocMap;
                     for (var i = 0, len = tasKeys.length; i < len; i += 1) {
-                        assoc = tas[tasKeys[i]];
+                        assoc = trackAssoc[tasKeys[i]];
                         for (var j = 0, len2 = assoc.fieldRels.length; j < len2; j += 1) {
                             frel = assoc.fieldRels[j];
-                            if (!RIAPP.global.utils.check.isArray(map[frel.childField])) {
-                                map[frel.childField] = [assoc.childToParentName];
+                            if (!RIAPP.global.utils.check.isArray(trackAssocMap[frel.childField])) {
+                                trackAssocMap[frel.childField] = [assoc.childToParentName];
                             }
                             else {
-                                map[frel.childField].push(assoc.childToParentName);
+                                trackAssocMap[frel.childField].push(assoc.childToParentName);
                             }
                         }
                     }
@@ -1279,7 +1303,7 @@ module RIAPP {
                         fInfo.isReadOnly = false;
                         self._childAssocMap[assocs[0].childToParentName] = assocs[0];
                         assocs[0].fieldRels.forEach(function (frel) {
-                            var chf = self._fieldMap[frel.childField];
+                            var chf = self.getFieldInfo(frel.childField);
                             if (!fInfo.isReadOnly && chf.isReadOnly) {
                                 fInfo.isReadOnly = true;
                             }
@@ -1287,7 +1311,7 @@ module RIAPP {
                         //this property should return parent
                         result.getFunc = function () {
                             var assoc = self.dbContext.getAssociation(assocName);
-                            return assoc.getParentItem(<any>this);
+                            return assoc.getParentItem(this);
                         };
 
                         if (!fInfo.isReadOnly) {
@@ -1295,7 +1319,7 @@ module RIAPP {
                             self._trackAssoc[assocName] = assocs[0];
 
                             result.setFunc = function (v) {
-                                var entity: any = this, i, len, assoc = self.dbContext.getAssociation(assocName);
+                                var entity: Entity = this, i:number, len:number, assoc = self.dbContext.getAssociation(assocName);
                                 if (!!v && !(v instanceof assoc.parentDS.entityType)) {
                                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'value', assoc.parentDS.dbSetName));
                                 }
@@ -1331,22 +1355,24 @@ module RIAPP {
                 }
                 _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo) {
                     var self = this, utils = RIAPP.global.utils, result: { getFunc: () => any; } = { getFunc: () => { throw new Error(utils.format("Calculated field:'{0}' is not initialized", fInfo.fieldName)); } };
-                    function doDependants(f: collMod.IFieldInfo) {
+                    function doDependences(f: collMod.IFieldInfo) {
+                        if (!f.dependentOn)
+                            return;
                         var deps: string[] = f.dependentOn.split(',');
                         deps.forEach(function (depOn) {
-                            var depOnFld = self._fieldMap[depOn];
+                            var depOnFld = self.getFieldInfo(depOn);
                             if (!depOnFld)
                                 throw new Error(utils.format(RIAPP.ERRS.ERR_CALC_FIELD_DEFINE, depOn));
-                            if (f.fieldName === depOn)
+                            if (f === depOnFld)
                                 throw new Error(utils.format(RIAPP.ERRS.ERR_CALC_FIELD_SELF_DEPEND, depOn));
-                            if (depOnFld.dependents.indexOf(f.fieldName) < 0) {
-                                depOnFld.dependents.push(f.fieldName);
+                            if (depOnFld.dependents.indexOf(f.fullName) < 0) {
+                                depOnFld.dependents.push(f.fullName);
                             }
                         });
                     };
                     fInfo.isReadOnly = true;
                     if (!!fInfo.dependentOn) {
-                        doDependants(fInfo);
+                        doDependences(fInfo);
                     }
                     return result;
                 }
@@ -1367,7 +1393,7 @@ module RIAPP {
                         }
                     });
                 }
-                _fillFromService(data: { res: IGetDataResult; isPageChanged: boolean; fn_beforeFillEnd: () => void; }): ILoadResult<TEntity> {
+                _fillFromService(data: { res: IQueryResponse; isPageChanged: boolean; fn_beforeFillEnd: () => void; }): IQueryResult<TEntity> {
                     var utils = RIAPP.global.utils;
                     data = utils.extend(false, {
                         res: { names: [], rows: [], pageIndex: null, pageCount: null, dbSetName: this.dbSetName, totalCount: null },
@@ -1464,9 +1490,9 @@ module RIAPP {
                         });
                     }
                     this.moveFirst();
-                    return <ILoadResult<TEntity>>{ fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
+                    return <IQueryResult<TEntity>>{ fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
                 }
-                _fillFromCache(data: { isPageChanged: boolean; fn_beforeFillEnd: () => void; }): ILoadResult<TEntity> {
+                _fillFromCache(data: { isPageChanged: boolean; fn_beforeFillEnd: () => void; }): IQueryResult<TEntity> {
                     var utils = RIAPP.global.utils;
                     data = utils.extend(false, {
                         isPageChanged: false,
@@ -1661,6 +1687,13 @@ module RIAPP {
                             item.destroy();
                     });
                 }
+                _defineCalculatedField(fullName: string, getFunc: () => any) {
+                    var calcDef = baseUtils.getValue(this._calcfldMap, fullName);
+                    if (!calcDef) {
+                        throw new Error(baseUtils.format(ERRS.ERR_PARAM_INVALID, 'calculated fieldName', fullName));
+                    }
+                    calcDef.getFunc = getFunc;
+                }
                 sort(fieldNames: string[], sortOrder: collMod.SORT_ORDER) {
                     var ds = this, query = ds.query;
                     if (!!query) {
@@ -1687,7 +1720,7 @@ module RIAPP {
                     names: IFieldName[];
                     rows: IRowData[];
                 }) {
-                    var utils = RIAPP.global.utils, res: IGetDataResult = utils.extend(false, {
+                    var utils = RIAPP.global.utils, res: IQueryResponse = utils.extend(false, {
                         names: [],
                         rows: [],
                         pageIndex: (!!this.query) ? this.query.pageIndex : null,
@@ -1706,13 +1739,6 @@ module RIAPP {
                         fn_beforeFillEnd: null
                     };
                     this._fillFromService(filldata);
-                }
-                defineCalculatedField(fieldName: string, getFunc: () => any) {
-                    var calcDef = this._calcfldMap[fieldName];
-                    if (!calcDef) {
-                        throw new Error(baseUtils.format(ERRS.ERR_PARAM_INVALID, 'fieldName', fieldName));
-                    }
-                    calcDef.getFunc = getFunc;
                 }
                 acceptChanges() {
                     var csh = this._changeCache;
@@ -1999,9 +2025,9 @@ module RIAPP {
                         return deferred.promise();
                     };
                 }
-                _getMethodParams(methodInfo: IQueryInfo, args: { [paramName: string]: any; }): IMethodInvokeInfo {
+                _getMethodParams(methodInfo: IQueryInfo, args: { [paramName: string]: any; }): IInvokeRequest {
                     var self = this, methodName: string = methodInfo.methodName, utils = RIAPP.global.utils,
-                        data: IMethodInvokeInfo = { methodName: methodName, paramInfo: { parameters: [] } };
+                        data: IInvokeRequest = { methodName: methodName, paramInfo: { parameters: [] } };
                     var i, parameterInfos = methodInfo.parameters, len = parameterInfos.length, pinfo: IQueryParamInfo, val, value;
                     if (!args)
                         args = {};
@@ -2038,10 +2064,9 @@ module RIAPP {
 
                     return data;
                 }
-                _invokeMethod(methodInfo: IQueryInfo, data: IMethodInvokeInfo, callback: (res: { result: any; error: any; }) => void) {
+                _invokeMethod(methodInfo: IQueryInfo, data: IInvokeRequest, callback: (res: { result: any; error: any; }) => void) {
                     var self = this, operType = DATA_OPER.INVOKE, postData: string, invokeUrl: string, utils = RIAPP.global.utils;
-                    this.isBusy = true;
-                    var fn_onComplete = function (res: { result: any; error: { name: string; message: string; }; }) {
+                    var fn_onComplete = function (res: IInvokeResponse) {
                         try {
                             if (!res)
                                 throw new Error(utils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'operation result is undefined'));
@@ -2056,6 +2081,7 @@ module RIAPP {
                         }
                     };
 
+                    this.isBusy = true;
                     try {
                         postData = JSON.stringify(data);
                         invokeUrl = this._getUrl(DATA_SVC_METH.Invoke);
@@ -2082,8 +2108,8 @@ module RIAPP {
                         global._throwDummy(ex);
                     }
                 }
-                _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): ILoadResult<Entity> {
-                    var operType = DATA_OPER.LOAD, dbSet = query._dbSet, methRes: ILoadResult<Entity>;
+                _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): IQueryResult<Entity> {
+                    var operType = DATA_OPER.LOAD, dbSet = query._dbSet, methRes: IQueryResult<Entity>;
                     try {
                         methRes = dbSet._fillFromCache({ isPageChanged: isPageChanged, fn_beforeFillEnd: null });
                     } catch (ex) {
@@ -2095,7 +2121,7 @@ module RIAPP {
                     }
                     return methRes;
                 }
-                _loadIncluded(res: IGetDataResult) {
+                _loadIncluded(res: IQueryResponse) {
                     var self = this, hasIncluded = !!res.included && res.included.length > 0;
                     if (!hasIncluded)
                         return;
@@ -2104,8 +2130,8 @@ module RIAPP {
                         dbSet.fillItems(subset);
                     });
                 }
-                _onLoaded(res: IGetDataResult, isPageChanged: boolean): ILoadResult<Entity> {
-                    var self = this, operType = DATA_OPER.LOAD, dbSetName, dbSet: DbSet<Entity>, loadRes: ILoadResult<Entity>;
+                _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<Entity> {
+                    var self = this, operType = DATA_OPER.LOAD, dbSetName, dbSet: DbSet<Entity>, loadRes: IQueryResult<Entity>;
                     try {
                         if (!res)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'null result'));
@@ -2331,13 +2357,13 @@ module RIAPP {
                         query._clearCache();
                     }
                 }
-                _load(query: TDataQuery<Entity>, isPageChanged: boolean): IPromise<ILoadResult<Entity>> {
+                _load(query: TDataQuery<Entity>, isPageChanged: boolean): IPromise<IQueryResult<Entity>> {
                     var utils = RIAPP.global.utils;
                     if (!query) {
                         throw new Error(RIAPP.ERRS.ERR_DB_LOAD_NO_QUERY);
                     }
                     var self = this, deferred = utils.createDeferred();
-                    var fn_onComplete = function (isOk: boolean, res: ILoadResult<Entity>) {
+                    var fn_onComplete = function (isOk: boolean, res: IQueryResult<Entity>) {
                         if (isOk) {
                             deferred.resolve(res);
                         }
@@ -2353,7 +2379,7 @@ module RIAPP {
                     this.waitForNotSubmiting(function () {
                         dbSet.waitForNotLoading(function () {
                             var oldQuery = dbSet.query;
-                            var loadUrl = self._getUrl(DATA_SVC_METH.LoadData), requestInfo: IGetDataInfo, postData: string,
+                            var loadUrl = self._getUrl(DATA_SVC_METH.LoadData), requestInfo: IQueryRequest, postData: string,
                                 operType = DATA_OPER.LOAD,
                                 fn_onEnd = function () {
                                     dbSet.isLoading = false;
@@ -2372,7 +2398,7 @@ module RIAPP {
                                     fn_onEnd();
                                     self._onDataOperError(ex, operType);
                                     fn_onComplete(false, null);
-                                }, loadRes: ILoadResult<Entity>, range: { start: number; end: number; cnt: number; }, pageCount = 1;
+                                }, loadRes: IQueryResult<Entity>, range: { start: number; end: number; cnt: number; }, pageCount = 1;
 
                             dbSet.isLoading = true;
                             self.isBusy = true;
@@ -2436,7 +2462,7 @@ module RIAPP {
                                             //let the UI some time, then do the rest of the work
                                             setTimeout(function () {
                                                 //first item is GetDataResult
-                                                var allRows: IRowData[], getDataResult: IGetDataResult = data[0];
+                                                var allRows: IRowData[], getDataResult: IQueryResponse = data[0];
                                                 var hasIncluded = !!getDataResult.included && getDataResult.included.length > 0;
                                                 try {
                                                     //rows was loaded separately from GetDataResult
@@ -2485,7 +2511,7 @@ module RIAPP {
                 getDbSet(name: string) {
                     return this._dbSets.getDbSet(name);
                 }
-                getAssociation(name: string) {
+                getAssociation(name: string): Association {
                     var name2 = "get" + name;
                     var f = this._assoc[name2];
                     if (!f)
@@ -2574,7 +2600,7 @@ module RIAPP {
                     return submitState.deferred.promise();
                 }
                 //returns promise
-                load(query: TDataQuery<Entity>): IPromise<ILoadResult<Entity>> {
+                load(query: TDataQuery<Entity>): IPromise<IQueryResult<Entity>> {
                     return this._load(query, false);
                 }
                 acceptChanges() {
@@ -3943,10 +3969,10 @@ module RIAPP {
                 getName() {
                     return this._name;
                 }
-                setValue(name: string, value: any) {
+                setValue(fullName: string, value: any) {
                     throw new Error('Not Implemented');
                 }
-                getValue(name: string): any {
+                getValue(fullName: string): any {
                     throw new Error('Not Implemented');
                 }
                 getFieldInfo(): MOD.collection.IFieldInfo {
@@ -3998,19 +4024,11 @@ module RIAPP {
                 _getFullPath(path): string {
                     return this.getName() + '.' + path;
                 }
-                _setValueCore(property: BaseComplexProperty, name: string, value: any) {
-                    var fullName = property.getFullPath(name);
+                setValue(fullName: string, value: any) {
                     this._entity._setFieldVal(fullName, value);
                 }
-                _getValueCore(property: BaseComplexProperty, name: string) {
-                    var fullName = property.getFullPath(name);
+                getValue(fullName: string): any {
                     return this._entity._getFieldVal(fullName);
-                }
-                setValue(name: string, value: any) {
-                    this._setValueCore(this, name, value);
-                }
-                getValue(name: string): any {
-                    return this._getValueCore(this, name);
                 }
                 getFieldInfo(): MOD.collection.IFieldInfo {
                     return this._entity.getFieldInfo(this.getName());
@@ -4036,13 +4054,11 @@ module RIAPP {
                 _getFullPath(path: string): string {
                     return this._parent._getFullPath(this.getName() + '.' + path);
                 }
-                setValue(name: string, value: any) {
-                    var root = this.getRootProperty();
-                    root._setValueCore(this, name, value);
+                setValue(fullName: string, value: any) {
+                    this.getEntity()._setFieldVal(fullName, value);
                 }
-                getValue(name: string) {
-                    var root = this.getRootProperty();
-                    return root._getValueCore(this, name);
+                getValue(fullName: string) {
+                    return this.getEntity()._getFieldVal(fullName);
                 }
                 getFieldInfo(): MOD.collection.IFieldInfo {
                     var name = this.getName();

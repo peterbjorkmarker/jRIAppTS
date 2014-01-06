@@ -3,7 +3,7 @@
 namespace RIAPP.DataService
 {
     [DataContract]
-    public class InvokeResult
+    public class InvokeResponse
     {
         [DataMember]
         public object result

@@ -16,9 +16,9 @@ namespace RIAPP.DataService
         PermissionsInfo ServiceGetPermissions();
         //information about service methods, DbSets and their fields information
         MetadataInfo ServiceGetMetadata();
-        GetDataResult ServiceGetData(GetDataInfo getInfo);
+        QueryResponse ServiceGetData(QueryRequest getInfo);
         ChangeSet ServiceApplyChangeSet(ChangeSet changeSet);
         RefreshRowInfo ServiceRefreshRow(RefreshRowInfo getInfo);
-        InvokeResult ServiceInvokeMethod(InvokeInfo parameters);
+        InvokeResponse ServiceInvokeMethod(InvokeRequest parameters);
     }
 }

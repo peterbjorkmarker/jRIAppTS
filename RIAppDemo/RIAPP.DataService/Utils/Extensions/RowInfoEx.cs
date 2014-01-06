@@ -12,11 +12,6 @@ namespace RIAPP.DataService.Utils
     public static class RowInfoEx
     {
 
-        public static string[] GetChangedFieldNames(this RowInfo rowInfo)
-        {
-            return rowInfo.values.Where(fv => (fv.flags & ValueFlags.Changed) == ValueFlags.Changed).Select(fv => fv.fieldName).ToArray();
-        }
-
         public static object[] GetPKValues(this RowInfo rowInfo, IDataHelper dataHelper)
         {
             Type entityType = rowInfo.dbSetInfo.EntityType;
@@ -24,8 +19,8 @@ namespace RIAPP.DataService.Utils
             object[] result = new object[finfos.Length];
             for (int i = 0; i < finfos.Length; ++i)
             {
-                ValueChange fv = rowInfo.GetValue(finfos[i].fieldName);
-                result[i] = fv.GetTypedValue(entityType, rowInfo.dbSetInfo, dataHelper);
+                ValueChange fv = rowInfo.values.Single(v => v.fieldName == finfos[i].fieldName);
+                result[i] = dataHelper.DeserializeField(entityType, finfos[i], fv.val);
             }
             return result;
         }
@@ -36,26 +31,11 @@ namespace RIAPP.DataService.Utils
             string[] vals = new string[finfos.Length];
             for (int i = 0; i < finfos.Length; ++i)
             {
-                ValueChange fv = rowInfo.GetValue(finfos[i].fieldName);
+                ValueChange fv = rowInfo.values.Single(v => v.fieldName == finfos[i].fieldName);
                 vals[i] = fv.val;
             }
             return string.Join(";", vals);
         }
 
-        /// <summary>
-        /// FieldNames which values has been changed by client
-        /// </summary>
-        /// <returns></returns>
-        public static string[] GetNamesOfChanged(this RowInfo rowInfo)
-        {
-            return rowInfo.values.Where(fv => (fv.flags | ValueFlags.Changed) == ValueFlags.Changed).Select(fv => fv.fieldName).ToArray();
-        }
-
-
-        public static ValueChange GetValue(this RowInfo rowInfo, string fieldName)
-        {
-            ValueChange fv = rowInfo.values.Single(v => v.fieldName == fieldName);
-            return fv;
-        }
     }
 }

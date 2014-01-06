@@ -211,7 +211,7 @@
                 <thead>
                     <tr>
                         <th data-column="width:50px,type:row_actions" />
-                        <th data-column="width:90%,sortable:true,title:Customer Name,sortMemberName=LastName;MiddleName;FirstName" data-content="fieldName:Name,readOnly:true" />
+                        <th data-column="width:90%,sortable:true,title:Customer Name,sortMemberName=LastName;MiddleName;FirstName" data-content="fieldName:ComplexProp.Name,readOnly:true" />
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -239,15 +239,15 @@
                         </tr>
                         <tr>
                             <td>FirstName:</td>
-                            <td><span data-content="fieldName:FirstName,readOnly:true,css:{displayCss:'custInfo'}"></span></td>
+                            <td><span data-content="fieldName:ComplexProp.FirstName,readOnly:true,css:{displayCss:'custInfo'}"></span></td>
                         </tr>
                         <tr>
                             <td>MiddleName:</td>
-                            <td><span data-content="fieldName:MiddleName,readOnly:true,css:{displayCss:'custInfo'}"></span></td>
+                            <td><span data-content="fieldName:ComplexProp.MiddleName,readOnly:true,css:{displayCss:'custInfo'}"></span></td>
                         </tr>
                         <tr>
                             <td>LastName:</td>
-                            <td><span data-content="fieldName:LastName,readOnly:true,css:{displayCss:'custInfo'}"></span></td>
+                            <td><span data-content="fieldName:ComplexProp.LastName,readOnly:true,css:{displayCss:'custInfo'}"></span></td>
                         </tr>
                         <tr>
                             <td>Suffix:</td>
@@ -263,11 +263,11 @@
                         </tr>
                         <tr>
                             <td>Email:</td>
-                            <td><span data-content="fieldName=EmailAddress,readOnly:true,css:{displayCss:'custInfo'}"></span></td>
+                            <td><span data-content="fieldName=ComplexProp.ComplexProp.EmailAddress,readOnly:true,css:{displayCss:'custInfo'}"></span></td>
                         </tr>
                         <tr>
                             <td>Phone:</td>
-                            <td><span data-content="fieldName:Phone,readOnly:true,css:{displayCss:'custInfo'}"></span></td>
+                            <td><span data-content="fieldName:ComplexProp.ComplexProp.Phone,readOnly:true,css:{displayCss:'custInfo'}"></span></td>
                         </tr>
                     </tbody>
                 </table>
@@ -342,21 +342,21 @@
                         <td>FirstName:
                         </td>
                         <td>
-                            <span data-content="fieldName:FirstName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
+                            <span data-content="fieldName:ComplexProp.FirstName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
                         </td>
                     </tr>
                     <tr>
                         <td>MiddleName:
                         </td>
                         <td>
-                            <span data-content="fieldName:MiddleName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
+                            <span data-content="fieldName:ComplexProp.MiddleName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
                         </td>
                     </tr>
                     <tr>
                         <td>LastName:
                         </td>
                         <td>
-                            <span data-content="fieldName:LastName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
+                            <span data-content="fieldName:ComplexProp.LastName,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
                         </td>
                     </tr>
                     <tr>
@@ -384,14 +384,14 @@
                         <td>Email:
                         </td>
                         <td>
-                            <span data-content="fieldName=EmailAddress,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
+                            <span data-content="fieldName=ComplexProp.ComplexProp.EmailAddress,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
                         </td>
                     </tr>
                     <tr>
                         <td>Phone:
                         </td>
                         <td>
-                            <span data-content="fieldName:Phone,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
+                            <span data-content="fieldName:ComplexProp.ComplexProp.Phone,css:{displayCss:'custInfo',editCss:'custEdit'}"></span>
                         </td>
                     </tr>
                 </tbody>

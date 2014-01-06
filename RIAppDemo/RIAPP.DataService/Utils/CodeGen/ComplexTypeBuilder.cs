@@ -47,13 +47,20 @@ namespace RIAPP.DataService.Utils
             Action<FieldInfo> AddProperty = (FieldInfo f) =>
             {
                 string dataType = this.GetFieldDataType(f);
-                sbProperties.AppendFormat("\tget {0}(): {1} {{ return this.getValue('{0}'); }}", f.fieldName, dataType);
+                sbProperties.AppendFormat("\tget {0}(): {2} {{ return this.getValue('{1}'); }}", f.fieldName, f._FullName, dataType);
                 sbProperties.AppendLine();
                 if (!f.isReadOnly)
                 {
-                    sbProperties.AppendFormat("\tset {0}(v: {1}) {{ this.setValue('{0}', v); }}", f.fieldName, dataType);
+                    sbProperties.AppendFormat("\tset {0}(v: {2}) {{ this.setValue('{1}', v); }}", f.fieldName, f._FullName, dataType);
                     sbProperties.AppendLine();
                 }
+            };
+
+            Action<FieldInfo> AddCalculatedProperty = (FieldInfo f) =>
+            {
+                string dataType = this.GetFieldDataType(f);
+                sbProperties.AppendFormat("\tget {0}(): {2} {{ return this.getEntity()._getCalcFieldVal('{1}'); }}", f.fieldName, f._FullName, dataType);
+                sbProperties.AppendLine();
             };
 
             Action<FieldInfo, string> AddComplexProperty = (FieldInfo f, string dataType) =>
@@ -68,13 +75,23 @@ namespace RIAPP.DataService.Utils
 
             fieldInfo.nested.ForEach((f) =>
             {
-                if (f._isObjectField)
+                if (f.fieldType == FieldType.Calculated)
                 {
-                    string dataType = this.CreateComplexType(dbSetInfo, f, level+1);
+                    AddCalculatedProperty(f);
+                }
+                else if (f.fieldType == FieldType.Navigation)
+                {
+                    throw new InvalidOperationException("Navigation fields are not allowed on complex type properties");
+                }
+                else if (f.fieldType == FieldType.Object)
+                {
+                    string dataType = this.CreateComplexType(dbSetInfo, f, level + 1);
                     AddComplexProperty(f, dataType);
                 }
                 else
+                {
                     AddProperty(f);
+                }
             });
 
             string templateName = "RootComplexProperty.txt";

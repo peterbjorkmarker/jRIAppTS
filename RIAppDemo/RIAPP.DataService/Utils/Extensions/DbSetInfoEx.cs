@@ -104,9 +104,9 @@ namespace RIAPP.DataService.Utils
 
         public static Dictionary<string, FieldInfo> GetFieldByNames(this DbSetInfo dbSetInfo)
         {
-            System.Threading.LazyInitializer.EnsureInitialized<Dictionary<string, FieldInfo>>(ref dbSetInfo._fieldsByNames, () => dbSetInfo.fieldInfos.ToDictionary(f => f.fieldName));
             return dbSetInfo._fieldsByNames;
         }
+
 
         private static void SetOrdinal(FieldInfo[] fieldInfos)
         {
@@ -119,16 +119,6 @@ namespace RIAPP.DataService.Utils
                     SetOrdinal(fieldInfos[i].nested.ToArray());
                 }
             }
-        }
-
-        public static Dictionary<int, FieldInfo> GetFieldByOrdinal(this DbSetInfo dbSetInfo)
-        {
-            System.Threading.LazyInitializer.EnsureInitialized<Dictionary<int, FieldInfo>>(ref dbSetInfo._fieldsByOrdinal, () =>
-            {
-                SetOrdinal(dbSetInfo.fieldInfos.ToArray());   
-                return dbSetInfo.fieldInfos.ToDictionary(f => f._ordinal);
-            });
-            return dbSetInfo._fieldsByOrdinal;
         }
 
         public static void InitMethods(this DbSetInfo dbSetInfo, Type serviceType)
@@ -168,9 +158,23 @@ namespace RIAPP.DataService.Utils
             });
         }
 
-        public static void Initialize(this DbSetInfo dbSetInfo, Type serviceType)
+        public static void Initialize(this DbSetInfo dbSetInfo, Type serviceType, IServiceContainer services)
         {
-            var fbo = dbSetInfo.GetFieldByOrdinal();
+            dbSetInfo._fieldsByNames = new Dictionary<string, FieldInfo>();
+            int i = 0; 
+            var fieldInfos = dbSetInfo.fieldInfos.ToArray();
+            int cnt = fieldInfos.Length;
+
+            for (i = 0; i < cnt; ++i)
+            {
+                services.DataHelper.ForEachFieldInfo("", fieldInfos[i], (fullName, fieldInfo) =>
+                {
+                    fieldInfo._FullName = fullName;
+                    dbSetInfo._fieldsByNames.Add(fullName, fieldInfo);
+                });
+            }
+            SetOrdinal(fieldInfos);
+        
             var fbn = dbSetInfo.GetFieldByNames();
             dbSetInfo.InitMethods(serviceType);
         }

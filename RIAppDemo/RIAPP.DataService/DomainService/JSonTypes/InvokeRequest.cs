@@ -3,7 +3,7 @@
 namespace RIAPP.DataService
 {
     [DataContract]
-    public class InvokeInfo
+    public class InvokeRequest
     {
         private MethodParamInfo _paramInfo = new MethodParamInfo();
      

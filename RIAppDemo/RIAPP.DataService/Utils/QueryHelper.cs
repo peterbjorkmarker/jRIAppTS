@@ -136,7 +136,7 @@ namespace RIAPP.DataService.Utils
             return result;
         }
 
-        public IQueryable<T> PerformQuery<T>(IQueryable<T> entities, GetDataInfo queryInfo, ref int? totalCount)
+        public IQueryable<T> PerformQuery<T>(IQueryable<T> entities, QueryRequest queryInfo, ref int? totalCount)
           where T : class
         {
             if (queryInfo.isIncludeTotalCount && !totalCount.HasValue)

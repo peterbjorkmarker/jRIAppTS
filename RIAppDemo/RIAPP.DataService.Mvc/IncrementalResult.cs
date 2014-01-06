@@ -17,13 +17,13 @@ namespace RIAPP.DataService.Mvc
         private StringBuilder _rowStringBuilder;
         private ISerializer _serializer;
 
-        public IncrementalResult(GetDataResult res, ISerializer serializer)
+        public IncrementalResult(QueryResponse res, ISerializer serializer)
         {
             this.Data = res;
             this._serializer = serializer;
         }
 
-        public GetDataResult Data { get; set; }
+        public QueryResponse Data { get; set; }
 
         private static string _Encode(string str)
         {

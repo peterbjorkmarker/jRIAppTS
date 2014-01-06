@@ -9,16 +9,10 @@ namespace RIAppDemo.DAL
     {
         protected internal Customer _owner;
         private CustomerLvl2 _lvl2;
-        private string _FirstName;
-        private string _MiddleName;
-        private string _LastName;
 
         public CustomerLvl1(Customer owner)
         {
             this._owner = owner;
-            this._FirstName = this._owner.FirstName;
-            this._LastName = this._owner.LastName;
-            this._MiddleName = this._owner.MiddleName;
             this._lvl2 = new CustomerLvl2(this);
         }
 
@@ -26,11 +20,11 @@ namespace RIAppDemo.DAL
         {
             get
             {
-                return this._FirstName;
+                return this._owner.FirstName;
             }
             set
             {
-                this._FirstName = value;
+                this._owner.FirstName = value;
             }
         }
 
@@ -38,11 +32,11 @@ namespace RIAppDemo.DAL
         {
             get
             {
-                return this._MiddleName;
+                return this._owner.MiddleName;
             }
             set
             {
-                this._MiddleName = value;
+                this._owner.MiddleName = value;
             }
         }
 
@@ -50,11 +44,11 @@ namespace RIAppDemo.DAL
         {
             get
             {
-                return this._LastName;
+                return this._owner.LastName;
             }
             set
             {
-                this._LastName = value;
+                this._owner.LastName = value;
             }
         }
 
@@ -70,25 +64,21 @@ namespace RIAppDemo.DAL
     public class CustomerLvl2
     {
         private CustomerLvl1 _owner;
-        private string _phone;
-        private string _email;
 
         public CustomerLvl2(CustomerLvl1 owner)
         {
             this._owner = owner;
-            this._phone = this._owner._owner.Phone;
-            this._email = this._owner._owner.EmailAddress;
         }
 
         public string EmailAddress
         {
             get
             {
-                return this._email;
+                return this._owner._owner.EmailAddress;
             }
             set
             {
-                this._email = value;
+                this._owner._owner.EmailAddress = value;
             }
         }
 
@@ -96,15 +86,15 @@ namespace RIAppDemo.DAL
         {
             get
             {
-                return this._phone;
+                return this._owner._owner.Phone;
             }
             set
             {
-                this._phone = value;
+                this._owner._owner.Phone = value;
                 //to test refresh after update, uncomment the lines beneath
                 /*
-                if (this._phone != null && this._phone.StartsWith("888"))
-                    this._phone = this._phone.Replace('8', '#');
+                if (this.Phone != null && this.Phone.StartsWith("111"))
+                    this.Phone = this.Phone.Replace('111', '###');
                 */
             }
         }

@@ -4901,6 +4901,11 @@ var RIAPP;
     (function (MOD) {
         (function (binding) {
             binding.BINDING_MODE = ['OneTime', 'OneWay', 'TwoWay'];
+            var BindTo;
+            (function (BindTo) {
+                BindTo[BindTo["Source"] = 0] = "Source";
+                BindTo[BindTo["Target"] = 1] = "Target";
+            })(BindTo || (BindTo = {}));
 
             function _checkIsErrorNotification(obj) {
                 if (!obj)
@@ -4982,7 +4987,7 @@ var RIAPP;
                     if (this._tgtPath.length < 1)
                         throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     this._isSourceFixed = (!!opts.isSourceFixed);
-                    this._bounds = {};
+                    this._pathItems = {};
                     this._objId = 'bnd' + RIAPP.global.utils.getNewID();
                     this._ignoreSrcChange = false;
                     this._ignoreTgtChange = false;
@@ -5037,21 +5042,11 @@ var RIAPP;
                         tgt.validationErrors = errors;
                     }
                 };
-                Binding.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
-                    if (!isHandled) {
-                        if (!!this._appName) {
-                            return RIAPP.global.findApp(this._appName)._onError(error, source);
-                        } else
-                            return RIAPP.global._onError(error, source);
-                    }
-                    return isHandled;
-                };
                 Binding.prototype._getTgtChangedFn = function (self, obj, prop, restPath, lvl) {
                     var fn = function (sender, data) {
                         var val = RIAPP.global.parser._resolveProp(obj, prop);
                         if (restPath.length > 0) {
-                            self._checkBounded(null, 'target', lvl, restPath);
+                            self._setPathItem(null, 1 /* Target */, lvl, restPath);
                         }
                         self._parseTgtPath(val, restPath, lvl); //bind and trigger target update
                     };
@@ -5061,7 +5056,7 @@ var RIAPP;
                     var fn = function (sender, data) {
                         var val = RIAPP.global.parser._resolveProp(obj, prop);
                         if (restPath.length > 0) {
-                            self._checkBounded(null, 'source', lvl, restPath);
+                            self._setPathItem(null, 0 /* Source */, lvl, restPath);
                         }
                         self._parseSrcPath(val, restPath, lvl);
                     };
@@ -5083,7 +5078,7 @@ var RIAPP;
 
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnSrcDestroyedProxy(), self._objId);
-                        self._checkBounded(obj, 'source', lvl, path);
+                        self._setPathItem(obj, 0 /* Source */, lvl, path);
                     }
 
                     if (path.length > 1) {
@@ -5126,7 +5121,7 @@ var RIAPP;
 
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnTgtDestroyedProxy(), self._objId);
-                        self._checkBounded(obj, 'target', lvl, path);
+                        self._setPathItem(obj, 1 /* Target */, lvl, path);
                     }
 
                     if (path.length > 1) {
@@ -5149,27 +5144,29 @@ var RIAPP;
                         self._targetObj = obj;
                     }
                 };
-                Binding.prototype._checkBounded = function (obj, to, lvl, restPath) {
-                    var old, key;
-                    if (to === 'source') {
-                        key = 's' + lvl;
-                    } else if (to === 'target') {
-                        key = 't' + lvl;
-                    } else
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'to', to));
+                Binding.prototype._setPathItem = function (newObj, bindingTo, lvl, path) {
+                    var oldObj, key, len = lvl + path.length;
+                    for (var i = lvl; i < len; i += 1) {
+                        switch (bindingTo) {
+                            case 0 /* Source */:
+                                key = 's' + i;
+                                break;
+                            case 1 /* Target */:
+                                key = 't' + i;
+                                break;
+                            default:
+                                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'bindingTo', bindingTo));
+                        }
 
-                    old = this._bounds[key];
-                    if (!!old) {
-                        old.removeNSHandlers(this._objId);
-                        delete this._bounds[key];
-                    }
+                        oldObj = this._pathItems[key];
+                        if (!!oldObj) {
+                            oldObj.removeNSHandlers(this._objId);
+                            delete this._pathItems[key];
+                        }
 
-                    if (restPath.length > 0) {
-                        this._checkBounded(null, to, lvl + 1, restPath.slice(1));
-                    }
-
-                    if (!!obj) {
-                        this._bounds[key] = obj;
+                        if (!!newObj && i == lvl) {
+                            this._pathItems[key] = newObj;
+                        }
                     }
                 };
                 Binding.prototype._onTgtDestroyed = function (sender, args) {
@@ -5184,7 +5181,7 @@ var RIAPP;
                     if (sender === self.source)
                         self.source = null;
                     else {
-                        self._checkBounded(null, 'source', 0, self._srcPath);
+                        self._setPathItem(null, 0 /* Source */, 0, self._srcPath);
                         setTimeout(function () {
                             if (self._isDestroyCalled)
                                 return;
@@ -5237,16 +5234,26 @@ var RIAPP;
                         this._ignoreSrcChange = false;
                     }
                 };
+                Binding.prototype._onError = function (error, source) {
+                    var isHandled = _super.prototype._onError.call(this, error, source);
+                    if (!isHandled) {
+                        if (!!this._appName) {
+                            return RIAPP.global.findApp(this._appName)._onError(error, source);
+                        } else
+                            return RIAPP.global._onError(error, source);
+                    }
+                    return isHandled;
+                };
                 Binding.prototype.destroy = function () {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
                     var self = this;
-                    RIAPP.global.utils.forEachProp(this._bounds, function (key) {
-                        var old = self._bounds[key];
+                    RIAPP.global.utils.forEachProp(this._pathItems, function (key) {
+                        var old = self._pathItems[key];
                         old.removeNSHandlers(self._objId);
                     });
-                    this._bounds = {};
+                    this._pathItems = {};
                     this.source = null;
                     this.target = null;
                     this._state = null;
@@ -5289,7 +5296,7 @@ var RIAPP;
                                     this._ignoreTgtChange = false;
                                 }
                             }
-                            this._checkBounded(null, 'target', 0, this._tgtPath);
+                            this._setPathItem(null, 1 /* Target */, 0, this._tgtPath);
                             if (!!v && !RIAPP.global.utils.check.isBaseObj(v))
                                 throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
                             this._target = v;
@@ -5311,7 +5318,7 @@ var RIAPP;
                             return;
                         }
                         if (this._source !== v) {
-                            this._checkBounded(null, 'source', 0, this._srcPath);
+                            this._setPathItem(null, 0 /* Source */, 0, this._srcPath);
                             this._source = v;
                             this._bindToSource();
                         }
@@ -6890,6 +6897,10 @@ var RIAPP;
                         fldInfo.dataType = prop.dtype;
                         self._fieldMap[prop.name] = fldInfo;
                         self._fieldInfos.push(fldInfo);
+                        fn_traverseField(fldInfo, function (fullName, fld) {
+                            fld.dependents = null;
+                            fld.fullName = fullName;
+                        });
                     });
                 };
                 BaseList.prototype._attach = function (item) {
@@ -9616,7 +9627,7 @@ var RIAPP;
                     return baseUtils.getValue(this._vals, fieldName);
                 };
                 Entity.prototype._setFieldVal = function (fieldName, val) {
-                    var validation_error, error, dbSetName = this._dbSetName, coll = this._collection, ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val, fld = this.getFieldInfo(fieldName), res = false;
+                    var validation_error, error, dbSetName = this._dbSetName, dbSet = this._dbSet, ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val, fld = this.getFieldInfo(fieldName), res = false;
                     if (!fld)
                         throw new Error(baseUtils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
                     if (!this._isEditing && !this._isUpdating)
@@ -9630,7 +9641,7 @@ var RIAPP;
                                 res = true;
                             }
                         }
-                        coll._removeError(this, fieldName);
+                        dbSet._removeError(this, fieldName);
                         validation_error = this._validateField(fieldName);
                         if (!!validation_error) {
                             throw new ValidationError([validation_error], this);
@@ -9643,10 +9654,22 @@ var RIAPP;
                                 { fieldName: fieldName, errors: [ex.message] }
                             ], this);
                         }
-                        coll._addError(this, fieldName, error.errors[0].errors);
+                        dbSet._addError(this, fieldName, error.errors[0].errors);
                         throw error;
                     }
                     return res;
+                };
+                Entity.prototype._getCalcFieldVal = function (fieldName) {
+                    var dbSet = this._dbSet;
+                    return baseUtils.getValue(dbSet._calcfldMap, fieldName).getFunc.call(this);
+                };
+                Entity.prototype._getNavFieldVal = function (fieldName) {
+                    var dbSet = this._dbSet;
+                    return baseUtils.getValue(dbSet._navfldMap, fieldName).getFunc.call(this);
+                };
+                Entity.prototype._setNavFieldVal = function (fieldName, value) {
+                    var dbSet = this._dbSet;
+                    baseUtils.getValue(dbSet._navfldMap, fieldName).setFunc.call(this, value);
                 };
                 Entity.prototype._onAttaching = function () {
                     _super.prototype._onAttaching.call(this);
@@ -9947,16 +9970,23 @@ var RIAPP;
                     this._changeCache = {};
                     this._ignorePageChanged = false;
                     fieldInfos.forEach(function (f) {
-                        f.dependents = [];
                         self._fieldMap[f.fieldName] = f;
+                        collMod.fn_traverseField(f, function (fullName, fld) {
+                            fld.dependents = [];
+                            fld.fullName = fullName;
+                        });
                     });
 
                     fieldInfos.forEach(function (f) {
-                        if (f.fieldType == 3 /* Navigation */) {
-                            self._navfldMap[f.fieldName] = self._doNavigationField(opts, f);
-                        } else if (f.fieldType == 2 /* Calculated */) {
-                            self._calcfldMap[f.fieldName] = self._doCalculatedField(opts, f);
-                        }
+                        collMod.fn_traverseField(f, function (fullName, fld) {
+                            if (fld.fieldType == 3 /* Navigation */) {
+                                //navigation fields can NOT be on nested fields
+                                self._navfldMap[fld.fieldName] = self._doNavigationField(opts, fld);
+                            } else if (fld.fieldType == 2 /* Calculated */) {
+                                //calculated fields can be on nested fields
+                                baseUtils.setValue(self._calcfldMap, fullName, self._doCalculatedField(opts, fld), true);
+                            }
+                        });
                     });
 
                     self._mapAssocFields();
@@ -9989,15 +10019,15 @@ var RIAPP;
                     return this.dbContext._onError(error, source);
                 };
                 DbSet.prototype._mapAssocFields = function () {
-                    var tas = this._trackAssoc, assoc, tasKeys = Object.keys(tas), frel, map = this._trackAssocMap;
+                    var trackAssoc = this._trackAssoc, assoc, tasKeys = Object.keys(trackAssoc), frel, trackAssocMap = this._trackAssocMap;
                     for (var i = 0, len = tasKeys.length; i < len; i += 1) {
-                        assoc = tas[tasKeys[i]];
+                        assoc = trackAssoc[tasKeys[i]];
                         for (var j = 0, len2 = assoc.fieldRels.length; j < len2; j += 1) {
                             frel = assoc.fieldRels[j];
-                            if (!RIAPP.global.utils.check.isArray(map[frel.childField])) {
-                                map[frel.childField] = [assoc.childToParentName];
+                            if (!RIAPP.global.utils.check.isArray(trackAssocMap[frel.childField])) {
+                                trackAssocMap[frel.childField] = [assoc.childToParentName];
                             } else {
-                                map[frel.childField].push(assoc.childToParentName);
+                                trackAssocMap[frel.childField].push(assoc.childToParentName);
                             }
                         }
                     }
@@ -10037,7 +10067,7 @@ var RIAPP;
                         fInfo.isReadOnly = false;
                         self._childAssocMap[assocs[0].childToParentName] = assocs[0];
                         assocs[0].fieldRels.forEach(function (frel) {
-                            var chf = self._fieldMap[frel.childField];
+                            var chf = self.getFieldInfo(frel.childField);
                             if (!fInfo.isReadOnly && chf.isReadOnly) {
                                 fInfo.isReadOnly = true;
                             }
@@ -10090,23 +10120,25 @@ var RIAPP;
                     var self = this, utils = RIAPP.global.utils, result = { getFunc: function () {
                             throw new Error(utils.format("Calculated field:'{0}' is not initialized", fInfo.fieldName));
                         } };
-                    function doDependants(f) {
+                    function doDependences(f) {
+                        if (!f.dependentOn)
+                            return;
                         var deps = f.dependentOn.split(',');
                         deps.forEach(function (depOn) {
-                            var depOnFld = self._fieldMap[depOn];
+                            var depOnFld = self.getFieldInfo(depOn);
                             if (!depOnFld)
                                 throw new Error(utils.format(RIAPP.ERRS.ERR_CALC_FIELD_DEFINE, depOn));
-                            if (f.fieldName === depOn)
+                            if (f === depOnFld)
                                 throw new Error(utils.format(RIAPP.ERRS.ERR_CALC_FIELD_SELF_DEPEND, depOn));
-                            if (depOnFld.dependents.indexOf(f.fieldName) < 0) {
-                                depOnFld.dependents.push(f.fieldName);
+                            if (depOnFld.dependents.indexOf(f.fullName) < 0) {
+                                depOnFld.dependents.push(f.fullName);
                             }
                         });
                     }
                     ;
                     fInfo.isReadOnly = true;
                     if (!!fInfo.dependentOn) {
-                        doDependants(fInfo);
+                        doDependences(fInfo);
                     }
                     return result;
                 };
@@ -10409,6 +10441,13 @@ var RIAPP;
                             item.destroy();
                     });
                 };
+                DbSet.prototype._defineCalculatedField = function (fullName, getFunc) {
+                    var calcDef = baseUtils.getValue(this._calcfldMap, fullName);
+                    if (!calcDef) {
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'calculated fieldName', fullName));
+                    }
+                    calcDef.getFunc = getFunc;
+                };
                 DbSet.prototype.sort = function (fieldNames, sortOrder) {
                     var ds = this, query = ds.query;
                     if (!!query) {
@@ -10451,13 +10490,6 @@ var RIAPP;
                         fn_beforeFillEnd: null
                     };
                     this._fillFromService(filldata);
-                };
-                DbSet.prototype.defineCalculatedField = function (fieldName, getFunc) {
-                    var calcDef = this._calcfldMap[fieldName];
-                    if (!calcDef) {
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'fieldName', fieldName));
-                    }
-                    calcDef.getFunc = getFunc;
                 };
                 DbSet.prototype.acceptChanges = function () {
                     var csh = this._changeCache;
@@ -10818,7 +10850,6 @@ var RIAPP;
                 };
                 DbContext.prototype._invokeMethod = function (methodInfo, data, callback) {
                     var self = this, operType = 2 /* INVOKE */, postData, invokeUrl, utils = RIAPP.global.utils;
-                    this.isBusy = true;
                     var fn_onComplete = function (res) {
                         try  {
                             if (!res)
@@ -10834,6 +10865,7 @@ var RIAPP;
                         }
                     };
 
+                    this.isBusy = true;
                     try  {
                         postData = JSON.stringify(data);
                         invokeUrl = this._getUrl(DATA_SVC_METH.Invoke);
@@ -12797,10 +12829,10 @@ var RIAPP;
                 BaseComplexProperty.prototype.getName = function () {
                     return this._name;
                 };
-                BaseComplexProperty.prototype.setValue = function (name, value) {
+                BaseComplexProperty.prototype.setValue = function (fullName, value) {
                     throw new Error('Not Implemented');
                 };
-                BaseComplexProperty.prototype.getValue = function (name) {
+                BaseComplexProperty.prototype.getValue = function (fullName) {
                     throw new Error('Not Implemented');
                 };
                 BaseComplexProperty.prototype.getFieldInfo = function () {
@@ -12855,19 +12887,11 @@ var RIAPP;
                 RootComplexProperty.prototype._getFullPath = function (path) {
                     return this.getName() + '.' + path;
                 };
-                RootComplexProperty.prototype._setValueCore = function (property, name, value) {
-                    var fullName = property.getFullPath(name);
+                RootComplexProperty.prototype.setValue = function (fullName, value) {
                     this._entity._setFieldVal(fullName, value);
                 };
-                RootComplexProperty.prototype._getValueCore = function (property, name) {
-                    var fullName = property.getFullPath(name);
+                RootComplexProperty.prototype.getValue = function (fullName) {
                     return this._entity._getFieldVal(fullName);
-                };
-                RootComplexProperty.prototype.setValue = function (name, value) {
-                    this._setValueCore(this, name, value);
-                };
-                RootComplexProperty.prototype.getValue = function (name) {
-                    return this._getValueCore(this, name);
                 };
                 RootComplexProperty.prototype.getFieldInfo = function () {
                     return this._entity.getFieldInfo(this.getName());
@@ -12894,13 +12918,11 @@ var RIAPP;
                 ChildComplexProperty.prototype._getFullPath = function (path) {
                     return this._parent._getFullPath(this.getName() + '.' + path);
                 };
-                ChildComplexProperty.prototype.setValue = function (name, value) {
-                    var root = this.getRootProperty();
-                    root._setValueCore(this, name, value);
+                ChildComplexProperty.prototype.setValue = function (fullName, value) {
+                    this.getEntity()._setFieldVal(fullName, value);
                 };
-                ChildComplexProperty.prototype.getValue = function (name) {
-                    var root = this.getRootProperty();
-                    return root._getValueCore(this, name);
+                ChildComplexProperty.prototype.getValue = function (fullName) {
+                    return this.getEntity()._getFieldVal(fullName);
                 };
                 ChildComplexProperty.prototype.getFieldInfo = function () {
                     var name = this.getName();

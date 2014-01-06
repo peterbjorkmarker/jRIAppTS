@@ -1031,7 +1031,7 @@ declare module RIAPP {
                 private _srcPath;
                 private _tgtPath;
                 private _isSourceFixed;
-                private _bounds;
+                private _pathItems;
                 private _objId;
                 private _ignoreSrcChange;
                 private _ignoreTgtChange;
@@ -1041,26 +1041,26 @@ declare module RIAPP {
                 private _target;
                 private _appName;
                 constructor(options: IBindingOptions, appName?: string);
-                public _getOnTgtDestroyedProxy(): (s: any, a: any) => void;
-                public _getOnSrcDestroyedProxy(): (s: any, a: any) => void;
-                public _getUpdTgtProxy(): () => void;
-                public _getUpdSrcProxy(): () => void;
-                public _getSrcErrChangedProxy(): (s: any, a: any) => void;
-                public _onSrcErrorsChanged(): void;
+                private _getOnTgtDestroyedProxy();
+                private _getOnSrcDestroyedProxy();
+                private _getUpdTgtProxy();
+                private _getUpdSrcProxy();
+                private _getSrcErrChangedProxy();
+                private _onSrcErrorsChanged();
+                private _getTgtChangedFn(self, obj, prop, restPath, lvl);
+                private _getSrcChangedFn(self, obj, prop, restPath, lvl);
+                private _parseSrcPath(obj, path, lvl);
+                private _parseSrcPath2(obj, path, lvl);
+                private _parseTgtPath(obj, path, lvl);
+                private _parseTgtPath2(obj, path, lvl);
+                private _setPathItem(newObj, bindingTo, lvl, path);
+                private _onTgtDestroyed(sender, args);
+                private _onSrcDestroyed(sender, args);
+                private _bindToSource();
+                private _bindToTarget();
+                private _updateTarget();
+                private _updateSource();
                 public _onError(error: any, source: any): boolean;
-                public _getTgtChangedFn(self: any, obj: any, prop: string, restPath: string[], lvl: number): (sender: any, data: any) => void;
-                public _getSrcChangedFn(self: any, obj: any, prop: string, restPath: string[], lvl: number): (sender: any, data: any) => void;
-                public _parseSrcPath(obj: any, path: string[], lvl: number): void;
-                public _parseSrcPath2(obj: any, path: string[], lvl: number): void;
-                public _parseTgtPath(obj: any, path: string[], lvl: number): void;
-                public _parseTgtPath2(obj: any, path: string[], lvl: number): void;
-                public _checkBounded(obj: RIAPP.BaseObject, to: string, lvl: number, restPath: string[]): void;
-                public _onTgtDestroyed(sender: any, args: any): void;
-                public _onSrcDestroyed(sender: any, args: any): void;
-                public _bindToSource(): void;
-                public _bindToTarget(): void;
-                public _updateTarget(): void;
-                public _updateSource(): void;
                 public destroy(): void;
                 public toString(): string;
                 public bindingID : string;
@@ -1142,6 +1142,7 @@ declare module RIAPP {
                 dependentOn: string;
                 nested: IFieldInfo[];
                 dependents?: string[];
+                fullName?: string;
             }
             function fn_getPropertyByName(name: string, props: IFieldInfo[]): IFieldInfo;
             function fn_traverseField(fld: IFieldInfo, fn: (name: string, fld: IFieldInfo) => void): void;
@@ -1854,9 +1855,17 @@ declare module RIAPP {
                     value: any;
                 }[];
             }
-            interface IMethodInvokeInfo {
+            interface IErrorInfo {
+                name: string;
+                message: string;
+            }
+            interface IInvokeRequest {
                 methodName: string;
                 paramInfo: IParamInfo;
+            }
+            interface IInvokeResponse {
+                result: any;
+                error: IErrorInfo;
             }
             interface IDbSetInfo {
                 dbSetName: string;
@@ -1926,7 +1935,7 @@ declare module RIAPP {
                 };
                 trackAssocs: ITrackAssoc[];
             }
-            interface IGetDataInfo {
+            interface IQueryRequest {
                 dbSetName: string;
                 pageIndex: number;
                 pageSize: number;
@@ -1941,7 +1950,7 @@ declare module RIAPP {
                 k: string;
                 v: any[];
             }
-            interface ILoadResult<TEntity extends Entity> {
+            interface IQueryResult<TEntity extends Entity> {
                 fetchedItems: TEntity[];
                 newItems: TEntity[];
                 isPageChanged: boolean;
@@ -1953,7 +1962,7 @@ declare module RIAPP {
                 rowCount: number;
                 dbSetName: string;
             }
-            interface IGetDataResult {
+            interface IQueryResponse {
                 names: IFieldName[];
                 rows: IRowData[];
                 rowCount: number;
@@ -1962,10 +1971,7 @@ declare module RIAPP {
                 pageCount: number;
                 totalCount: number;
                 extraInfo: any;
-                error: {
-                    name: string;
-                    message: string;
-                };
+                error: IErrorInfo;
                 included: IIncludedResult[];
             }
             interface IDbSetConstructor {
@@ -2032,7 +2038,7 @@ declare module RIAPP {
                 public _reindexCache(): void;
                 public _isPageCached(pageIndex: number): boolean;
                 public _resetCacheInvalidated(): void;
-                public load(): RIAPP.IPromise<ILoadResult<TEntity>>;
+                public load(): RIAPP.IPromise<IQueryResult<TEntity>>;
                 public destroy(): void;
                 public toString(): string;
                 public _queryInfo : IQueryInfo;
@@ -2080,6 +2086,9 @@ declare module RIAPP {
                 public _skipValidate(fieldInfo: MOD.collection.IFieldInfo, val: any): boolean;
                 public _getFieldVal(fieldName: string): any;
                 public _setFieldVal(fieldName: string, val: any): boolean;
+                public _getCalcFieldVal(fieldName: string): any;
+                public _getNavFieldVal(fieldName: string): any;
+                public _setNavFieldVal(fieldName: string, value: any): void;
                 public _onAttaching(): void;
                 public _onAttach(): void;
                 public _beginEdit(): boolean;
@@ -2152,14 +2161,14 @@ declare module RIAPP {
                 };
                 public _refreshValues(path: string, item: Entity, values: any[], names: IFieldName[], rm: REFRESH_MODE): void;
                 public _fillFromService(data: {
-                    res: IGetDataResult;
+                    res: IQueryResponse;
                     isPageChanged: boolean;
                     fn_beforeFillEnd: () => void;
-                }): ILoadResult<TEntity>;
+                }): IQueryResult<TEntity>;
                 public _fillFromCache(data: {
                     isPageChanged: boolean;
                     fn_beforeFillEnd: () => void;
-                }): ILoadResult<TEntity>;
+                }): IQueryResult<TEntity>;
                 public _commitChanges(rows: IRowInfo[]): void;
                 public _setItemInvalid(row: IRowInfo): TEntity;
                 public _setCurrentItem(v: TEntity): void;
@@ -2176,12 +2185,12 @@ declare module RIAPP {
                 public _onPageChanged(): void;
                 public _onPageSizeChanged(): void;
                 public _destroyItems(): void;
-                public sort(fieldNames: string[], sortOrder: MOD.collection.SORT_ORDER): RIAPP.IPromise<ILoadResult<Entity>>;
+                public _defineCalculatedField(fullName: string, getFunc: () => any): void;
+                public sort(fieldNames: string[], sortOrder: MOD.collection.SORT_ORDER): RIAPP.IPromise<IQueryResult<Entity>>;
                 public fillItems(data: {
                     names: IFieldName[];
                     rows: IRowData[];
                 }): void;
-                public defineCalculatedField(fieldName: string, getFunc: () => any): void;
                 public acceptChanges(): void;
                 public rejectChanges(): void;
                 public deleteOnSubmit(item: TEntity): void;
@@ -2252,14 +2261,14 @@ declare module RIAPP {
                 public _initMethod(methodInfo: IQueryInfo): void;
                 public _getMethodParams(methodInfo: IQueryInfo, args: {
                     [paramName: string]: any;
-                }): IMethodInvokeInfo;
-                public _invokeMethod(methodInfo: IQueryInfo, data: IMethodInvokeInfo, callback: (res: {
+                }): IInvokeRequest;
+                public _invokeMethod(methodInfo: IQueryInfo, data: IInvokeRequest, callback: (res: {
                     result: any;
                     error: any;
                 }) => void): void;
-                public _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): ILoadResult<Entity>;
-                public _loadIncluded(res: IGetDataResult): void;
-                public _onLoaded(res: IGetDataResult, isPageChanged: boolean): ILoadResult<Entity>;
+                public _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): IQueryResult<Entity>;
+                public _loadIncluded(res: IQueryResponse): void;
+                public _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<Entity>;
                 public _dataSaved(res: IChangeSet): void;
                 public _getChanges(): IChangeSet;
                 public _getUrl(action: any): string;
@@ -2269,11 +2278,11 @@ declare module RIAPP {
                 public _onDataOperError(ex: any, oper: any): boolean;
                 public _onSubmitError(error: any): void;
                 public _beforeLoad(query: TDataQuery<Entity>, oldQuery: TDataQuery<Entity>, dbSet: DbSet<Entity>): void;
-                public _load(query: TDataQuery<Entity>, isPageChanged: boolean): RIAPP.IPromise<ILoadResult<Entity>>;
+                public _load(query: TDataQuery<Entity>, isPageChanged: boolean): RIAPP.IPromise<IQueryResult<Entity>>;
                 public getDbSet(name: string): DbSet<Entity>;
-                public getAssociation(name: string): any;
+                public getAssociation(name: string): Association;
                 public submitChanges(): RIAPP.IVoidPromise;
-                public load(query: TDataQuery<Entity>): RIAPP.IPromise<ILoadResult<Entity>>;
+                public load(query: TDataQuery<Entity>): RIAPP.IPromise<IQueryResult<Entity>>;
                 public acceptChanges(): void;
                 public rejectChanges(): void;
                 public initialize(options: {
@@ -2446,8 +2455,8 @@ declare module RIAPP {
                 constructor(name: string);
                 public _getFullPath(path: any): string;
                 public getName(): string;
-                public setValue(name: string, value: any): void;
-                public getValue(name: string): any;
+                public setValue(fullName: string, value: any): void;
+                public getValue(fullName: string): any;
                 public getFieldInfo(): MOD.collection.IFieldInfo;
                 public getProperties(): MOD.collection.IFieldInfo[];
                 public getFullPath(name: string): string;
@@ -2464,10 +2473,8 @@ declare module RIAPP {
                 private _entity;
                 constructor(name: string, owner: Entity);
                 public _getFullPath(path: any): string;
-                public _setValueCore(property: BaseComplexProperty, name: string, value: any): void;
-                public _getValueCore(property: BaseComplexProperty, name: string): any;
-                public setValue(name: string, value: any): void;
-                public getValue(name: string): any;
+                public setValue(fullName: string, value: any): void;
+                public getValue(fullName: string): any;
                 public getFieldInfo(): MOD.collection.IFieldInfo;
                 public getProperties(): MOD.collection.IFieldInfo[];
                 public getEntity(): Entity;
@@ -2477,8 +2484,8 @@ declare module RIAPP {
                 private _parent;
                 constructor(name: string, parent: BaseComplexProperty);
                 public _getFullPath(path: string): string;
-                public setValue(name: string, value: any): void;
-                public getValue(name: string): any;
+                public setValue(fullName: string, value: any): void;
+                public getValue(fullName: string): any;
                 public getFieldInfo(): MOD.collection.IFieldInfo;
                 public getProperties(): MOD.collection.IFieldInfo[];
                 public getParent(): BaseComplexProperty;
