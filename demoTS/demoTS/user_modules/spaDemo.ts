@@ -175,6 +175,11 @@ module RIAPP
                     }
                 }, self.uniqueID);
 
+                this._dbSet.addOnItemAdded((s, args) => {
+                    args.item.NameStyle = false;
+                    args.item.ComplexProp.LastName = "Dummy1";
+                    args.item.ComplexProp.FirstName = "Dummy2";
+                });
 
                 this._editCommand = new MOD.mvvm.Command(function (sender, param) {
                     self.currentItem.beginEdit();
@@ -417,9 +422,8 @@ module RIAPP
                 this._dbSet.addOnItemAdded(function (sender, args) {
                     var item: DEMODB.ISalesOrderHeaderEntity = args.item;
                     item.Customer = self.currentCustomer;
-                    //datejs extension
-                    item.OrderDate = (<any>Date).today();
-                    item.DueDate = (<any>Date).today().add(6).days();
+                    item.OrderDate = moment().toDate();
+                    item.DueDate = moment().add('days', 7).toDate();
                     item.OnlineOrderFlag = false;
                 }, self.uniqueID);
 

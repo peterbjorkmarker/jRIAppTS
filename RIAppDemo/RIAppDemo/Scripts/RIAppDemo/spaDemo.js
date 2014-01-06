@@ -211,6 +211,12 @@ var RIAPP;
                     }
                 }, self.uniqueID);
 
+                this._dbSet.addOnItemAdded(function (s, args) {
+                    args.item.NameStyle = false;
+                    args.item.ComplexProp.LastName = "Dummy1";
+                    args.item.ComplexProp.FirstName = "Dummy2";
+                });
+
                 this._editCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     self.currentItem.beginEdit();
                 }, self, function (sender, param) {
@@ -567,10 +573,8 @@ var RIAPP;
                 this._dbSet.addOnItemAdded(function (sender, args) {
                     var item = args.item;
                     item.Customer = self.currentCustomer;
-
-                    //datejs extension
-                    item.OrderDate = Date.today();
-                    item.DueDate = Date.today().add(6).days();
+                    item.OrderDate = moment().toDate();
+                    item.DueDate = moment().add('days', 7).toDate();
                     item.OnlineOrderFlag = false;
                 }, self.uniqueID);
 

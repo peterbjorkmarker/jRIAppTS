@@ -253,8 +253,8 @@ module RIAPP
                     var item = args.item;
                     item.Customer = self.currentCustomer;
                     //datejs extension
-                    item.OrderDate = (<any>Date).today();
-                    item.DueDate = (<any>Date).today().add(6).days();
+                    item.OrderDate = moment().toDate();
+                    item.DueDate = moment().add('days', 7).toDate();
                     item.OnlineOrderFlag = false;
                 }, self.uniqueID);
 

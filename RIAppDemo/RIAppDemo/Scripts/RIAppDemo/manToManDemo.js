@@ -67,6 +67,12 @@ var RIAPP;
                     }
                 }, self.uniqueID);
 
+                this._dbSet.addOnItemAdded(function (s, args) {
+                    args.item.NameStyle = false;
+                    args.item.ComplexProp.LastName = "Dummy1";
+                    args.item.ComplexProp.FirstName = "Dummy2";
+                });
+
                 //initialize new item with default values
                 this._dbSet.addOnItemAdded(function (sender, args) {
                     var item = args.item;
