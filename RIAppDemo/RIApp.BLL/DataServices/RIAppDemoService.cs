@@ -150,7 +150,7 @@ namespace RIAppDemo.BLL.DataServices
             this.DB.Products.DeleteOnSubmit(product);
         }
 
-        public Product RefreshProduct(RefreshRowInfo refreshInfo)
+        public Product RefreshProduct(RefreshInfo refreshInfo)
         {
             return this.QueryHelper.GetRefreshedEntity<Product>(this.DB.Products, refreshInfo);
         }
@@ -204,7 +204,7 @@ namespace RIAppDemo.BLL.DataServices
             this.DB.Customers.DeleteOnSubmit(customer);
         }
 
-        public Customer RefreshCustomer(RefreshRowInfo refreshInfo)
+        public Customer RefreshCustomer(RefreshInfo refreshInfo)
         {
             return this.QueryHelper.GetRefreshedEntity<Customer>(this.DB.Customers, refreshInfo);
         }

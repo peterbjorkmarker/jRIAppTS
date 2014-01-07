@@ -851,7 +851,7 @@ namespace RIAPP.DataService
             }
         }
 
-        protected virtual T GetRefreshedEntity<T>(IQueryable<T> entities, RefreshRowInfo info)
+        protected virtual T GetRefreshedEntity<T>(IQueryable<T> entities, RefreshInfo info)
             where T : class
         {
             return this.QueryHelper.GetRefreshedEntity<T>(entities, info);
@@ -1132,7 +1132,7 @@ namespace RIAPP.DataService
             return res;
         }
 
-        protected RefreshRowInfo RefreshRowInfo(RefreshRowInfo info)
+        protected RefreshInfo RefreshRowInfo(RefreshInfo info)
         {
             var metadata = this.EnsureMetadataInitialized();
             info.dbSetInfo = metadata.dbSets[info.dbSetName];
@@ -1142,7 +1142,7 @@ namespace RIAPP.DataService
             info.rowInfo.dbSetInfo = info.dbSetInfo;
             this.Authorizer.CheckUserRightsToExecute(methInfo);
             object dbEntity = methInfo.Invoke(this, new object[] { info });
-            var rri = new RefreshRowInfo { rowInfo = info.rowInfo, dbSetName = info.dbSetName };
+            var rri = new RefreshInfo { rowInfo = info.rowInfo, dbSetName = info.dbSetName };
             if (dbEntity != null)
             {
                 UpdateRowInfoFromEntity(dbEntity, info.rowInfo);
@@ -1271,19 +1271,19 @@ namespace RIAPP.DataService
             return changeSet;
         }
 
-        public RefreshRowInfo ServiceRefreshRow(RefreshRowInfo rowInfo)
+        public RefreshInfo ServiceRefreshRow(RefreshInfo refreshInfo)
         {
-            RefreshRowInfo res = null;
+            RefreshInfo res = null;
             this.RequestState.CurrentOperation = ServiceOperationType.RowRefresh;
             try
             {
-                res = this.RefreshRowInfo(rowInfo);
+                res = this.RefreshRowInfo(refreshInfo);
             }
             catch (Exception ex)
             {
                 while (ex.InnerException != null)
                     ex = ex.InnerException;
-                res = new RefreshRowInfo { dbSetName = rowInfo.dbSetName, error = new ErrorInfo(ex.Message, ex.GetType().Name), rowInfo = null };
+                res = new RefreshInfo { dbSetName = refreshInfo.dbSetName, error = new ErrorInfo(ex.Message, ex.GetType().Name), rowInfo = null };
                 this.OnError(ex);
             }
             finally

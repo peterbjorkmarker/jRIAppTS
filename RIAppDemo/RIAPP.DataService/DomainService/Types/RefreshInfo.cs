@@ -4,7 +4,7 @@ using System.Web.Script.Serialization;
 namespace RIAPP.DataService.Types
 {
     [DataContract]
-    public class RefreshRowInfo
+    public class RefreshInfo
     {
         [DataMember]
         public string dbSetName

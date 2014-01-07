@@ -150,7 +150,7 @@ namespace RIAPP.DataService.Utils
             return entities;
         }
 
-        public T GetRefreshedEntity<T>(IQueryable<T> entities, RefreshRowInfo info)
+        public T GetRefreshedEntity<T>(IQueryable<T> entities, RefreshInfo info)
              where T : class
         {
             object[] keyValue = info.rowInfo.GetPKValues(this._serviceContainer.DataHelper);

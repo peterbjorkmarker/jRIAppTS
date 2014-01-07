@@ -19,7 +19,7 @@ namespace RIAPP.DataService
         MetadataResult ServiceGetMetadata();
         QueryResponse ServiceGetData(QueryRequest request);
         ChangeSet ServiceApplyChangeSet(ChangeSet changeSet);
-        RefreshRowInfo ServiceRefreshRow(RefreshRowInfo rowInfo);
+        RefreshInfo ServiceRefreshRow(RefreshInfo rowInfo);
         InvokeResponse ServiceInvokeMethod(InvokeRequest invokeInfo);
     }
 }

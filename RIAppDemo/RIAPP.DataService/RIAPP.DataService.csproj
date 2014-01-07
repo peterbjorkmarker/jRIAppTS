@@ -106,7 +106,7 @@
     <Compile Include="DomainService\Types\DbSetInfo.cs" />
     <Compile Include="DomainService\ServiceOperationType.cs" />
     <Compile Include="DomainService\EntityChangeState.cs" />
-    <Compile Include="DomainService\Types\RefreshRowInfo.cs" />
+    <Compile Include="DomainService\Types\RefreshInfo.cs" />
     <Compile Include="Utils\DiffGram.cs" />
     <Compile Include="Utils\DynamicQuery.cs" />
     <Compile Include="Resources\ErrorStrings.Designer.cs">

@@ -15,6 +15,7 @@ namespace RIAPP.DataService.Mvc
          where T : BaseDomainService
     {
         private ISerializer _serializer;
+        private const string JSonContentType = @"application/json";
 
         #region PRIVATE METHODS
         private ActionResult _GetTypeScript()
@@ -104,14 +105,14 @@ namespace RIAPP.DataService.Mvc
         [HttpPost]
         public ActionResult GetPermissions()
         {
-            var info = this.DomainService.ServiceGetPermissions();
-            return Json(info);
+            var res = this.DomainService.ServiceGetPermissions();
+            return Content(this.Serializer.Serialize(res), JSonContentType);
         }
 
         public ActionResult GetMetadata()
         {
-            var info = this.DomainService.ServiceGetMetadata();
-            return Json(info, JsonRequestBehavior.AllowGet);
+            var res = this.DomainService.ServiceGetMetadata();
+            return Content(this.Serializer.Serialize(res), JSonContentType);
         }
 
         [HttpPost]
@@ -124,21 +125,21 @@ namespace RIAPP.DataService.Mvc
         public ActionResult SaveChanges(ChangeSet changeSet)
         {
             var res = this.DomainService.ServiceApplyChangeSet(changeSet);
-            return Json(res);
+            return Content(this.Serializer.Serialize(res), JSonContentType);
         }
 
         [HttpPost]
-        public ActionResult RefreshItem(RefreshRowInfo rowInfo)
+        public ActionResult RefreshItem(RefreshInfo refreshInfo)
         {
-            var res = this.DomainService.ServiceRefreshRow(rowInfo);
-            return Json(res);
+            var res = this.DomainService.ServiceRefreshRow(refreshInfo);
+            return Content(this.Serializer.Serialize(res), JSonContentType);
         }
 
         [HttpPost]
         public ActionResult InvokeMethod(InvokeRequest invokeInfo)
         {
             var res = this.DomainService.ServiceInvokeMethod(invokeInfo);
-            return Json(res);
+            return Content(this.Serializer.Serialize(res), JSonContentType);
         }
 
         protected IDomainService DomainService
