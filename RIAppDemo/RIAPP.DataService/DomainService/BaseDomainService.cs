@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using RIAPP.DataService.Resources;
+using RIAPP.DataService.Security;
+using RIAPP.DataService.Types;
+using RIAPP.DataService.Utils;
+using RIAPP.DataService.Utils.Interfaces;
+using StaThreadSyncronizer;
+using System;
+using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
 using System.Reflection;
-using System.Collections;
-using StaThreadSyncronizer;
-using RIAPP.DataService.Resources;
-using RIAPP.DataService.Utils;
-using RIAPP.DataService.Security;
-using RIAPP.DataService.Utils.Interfaces;
-using System.Threading;
 
 namespace RIAPP.DataService
 {
@@ -64,7 +64,7 @@ namespace RIAPP.DataService
         private static MetadataCache _metadataCache = new MetadataCache();
         private static ConcurrentDictionary<Type, MethodsList> _methodsInfo = new ConcurrentDictionary<Type, MethodsList>();
         private PerRequestState _requestState = new PerRequestState();
-        private ServiceMetadata _serviceMetadata;
+        private CachedMetadata _cachedMetadata;
         private IPrincipal _principal;
         private ISerializer _serializer;
         private bool _IsCodeGenEnabled = false;
@@ -187,9 +187,9 @@ namespace RIAPP.DataService
 
         protected IEnumerable<Row> CreateRows(DbSetInfo dbSetInfo, IEnumerable<object> dataSource, int rowCount)
         {
-            var fields = dbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).ToArray();
+            var fields = dbSetInfo.GetInResultFields();
             int fieldsCnt = fields.Length;
-            FieldInfo[] pkInfos = dbSetInfo.GetPKFieldInfos();
+            Field[] pkInfos = dbSetInfo.GetPKFields();
             Row[] rows = new Row[rowCount];
 
             int counter = 0;
@@ -200,7 +200,7 @@ namespace RIAPP.DataService
                 row.v = new object[fieldsCnt];
                 for (int i = 0; i < fieldsCnt; ++i)
                 {
-                    FieldInfo fieldInfo = fields[i];
+                    Field fieldInfo = fields[i];
                     object fv = this.ServiceContainer.DataHelper.SerializeField(entity, fieldInfo);
                     int keyIndex = Array.IndexOf(pkInfos, fieldInfo);
                     if (keyIndex > -1)
@@ -220,9 +220,9 @@ namespace RIAPP.DataService
         {
             //map rows by PK
             Dictionary<string, Row> rows = new Dictionary<string, Row>(rowCount);
-            var fieldInfos = dbSetInfo.fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).ToArray();
+            var fieldInfos = dbSetInfo.GetInResultFields();
             int fieldCnt = fieldInfos.Length;
-            FieldInfo[] pkInfos = dbSetInfo.GetPKFieldInfos();
+            Field[] pkInfos = dbSetInfo.GetPKFields();
             int counter = 0;
             foreach (object entity in dataSource)
             {
@@ -231,7 +231,7 @@ namespace RIAPP.DataService
                 row.v = new object[fieldCnt];
                 for (int i = 0; i < fieldCnt; ++i)
                 {
-                    FieldInfo fieldInfo = fieldInfos[i];
+                    Field fieldInfo = fieldInfos[i];
                     object fv = this.ServiceContainer.DataHelper.SerializeField(entity, fieldInfo);
 
                     int keyIndex = Array.IndexOf(pkInfos, fieldInfo);
@@ -315,7 +315,7 @@ namespace RIAPP.DataService
 
             //create temporary result without rows
             //fills rows at the end of the method
-            IncludedResult current = new IncludedResult { dbSetName = nextDbSetInfo.dbSetName, rows = new Row[0], names = this.GetNames(nextDbSetInfo.fieldInfos) };
+            IncludedResult current = new IncludedResult { dbSetName = nextDbSetInfo.dbSetName, rows = new Row[0], names = this.GetNames(nextDbSetInfo) };
             visited.Add(nextDbSetInfo.dbSetName + "." + propertyName, current);
 
             if (nextParts.Length>0)
@@ -325,47 +325,52 @@ namespace RIAPP.DataService
             current.rowCount = rowCount;
         }
         
-        protected ServiceMetadata EnsureMetadataInitialized()
+        protected CachedMetadata EnsureMetadataInitialized()
         {
-            Func<ServiceMetadata> factory = () => { _synchronizer.Send(InitMetadata, this); return this._serviceMetadata; };
-            System.Threading.LazyInitializer.EnsureInitialized<ServiceMetadata>(ref this._serviceMetadata, factory);
-            return this._serviceMetadata;
+            Func<CachedMetadata> factory = () => { this.ExecuteOnSTA(this.InitMetadata, this); return this._cachedMetadata; };
+            System.Threading.LazyInitializer.EnsureInitialized<CachedMetadata>(ref this._cachedMetadata, factory);
+            return this._cachedMetadata;
+        }
+
+        protected void ExecuteOnSTA(System.Threading.SendOrPostCallback action, object state)
+        {
+            _synchronizer.Send(action, state);
         }
 
         private void InitMetadata(object state)
         {
             BaseDomainService self = (BaseDomainService)state;
-            ServiceMetadata metadata = null;
-            if (BaseDomainService._metadataCache.TryGetValue(self.GetType(), out metadata))
+            CachedMetadata cachedMetadata = null;
+            if (BaseDomainService._metadataCache.TryGetValue(self.GetType(), out cachedMetadata))
             {
-                self._serviceMetadata = metadata;
+                self._cachedMetadata = cachedMetadata;
                 return;
             }
-            var metadataInfo = self.GetMetadata();
-            metadata = new ServiceMetadata();
-            foreach (var dbSetInfo in metadataInfo.DbSets)
+            var metadata = self.GetMetadata();
+            cachedMetadata = new CachedMetadata();
+            foreach (var dbSetInfo in metadata.DbSets)
             {
                 dbSetInfo.Initialize(self.GetType(), this.ServiceContainer);
                 //indexed by dbSetName
-                metadata.dbSets.Add(dbSetInfo.dbSetName, dbSetInfo);
+                cachedMetadata.dbSets.Add(dbSetInfo.dbSetName, dbSetInfo);
             }
 
-            foreach (var assoc in metadataInfo.Associations)
+            foreach (var assoc in metadata.Associations)
             {
                 if (string.IsNullOrWhiteSpace(assoc.name))
                 {
                     throw new DomainServiceException(ErrorStrings.ERR_ASSOC_EMPTY_NAME);
                 }
-                if (!metadata.dbSets.ContainsKey(assoc.parentDbSetName)) 
+                if (!cachedMetadata.dbSets.ContainsKey(assoc.parentDbSetName)) 
                 {
                     throw new DomainServiceException(string.Format(ErrorStrings.ERR_ASSOC_INVALID_PARENT,assoc.name, assoc.parentDbSetName));
                 }
-                if (!metadata.dbSets.ContainsKey(assoc.childDbSetName))
+                if (!cachedMetadata.dbSets.ContainsKey(assoc.childDbSetName))
                 {
                     throw new DomainServiceException(string.Format(ErrorStrings.ERR_ASSOC_INVALID_CHILD, assoc.name, assoc.childDbSetName));
                 }
-                var childDb = metadata.dbSets[assoc.childDbSetName];
-                var parentDb = metadata.dbSets[assoc.parentDbSetName];
+                var childDb = cachedMetadata.dbSets[assoc.childDbSetName];
+                var parentDb = cachedMetadata.dbSets[assoc.parentDbSetName];
                 var parentDbFields = parentDb.GetFieldByNames();
                 var childDbFields = childDb.GetFieldByNames();
 
@@ -400,14 +405,14 @@ namespace RIAPP.DataService
                     }
                 }
                 //indexed by Name
-                metadata.associations.Add(assoc.name, assoc);
+                cachedMetadata.associations.Add(assoc.name, assoc);
 
                 if (!string.IsNullOrEmpty(assoc.childToParentName))
                 {
                     var sb = new System.Text.StringBuilder(120);
                     var dependentOn = assoc.fieldRels.Aggregate(sb, (a, b) => a.Append((a.Length == 0 ? "" : ",") + b.childField), a => a).ToString();
                     //add navigation field to dbSet's field collection
-                    childDb.fieldInfos.Add(new FieldInfo()
+                    childDb.fieldInfos.Add(new Field()
                     {
                         fieldName = assoc.childToParentName,
                         fieldType = FieldType.Navigation,
@@ -421,7 +426,7 @@ namespace RIAPP.DataService
                 {
                     var sb = new System.Text.StringBuilder(120);
                     //add navigation field to dbSet's field collection
-                    parentDb.fieldInfos.Add(new FieldInfo()
+                    parentDb.fieldInfos.Add(new Field()
                     {
                         fieldName = assoc.parentToChildrenName,
                         fieldType = FieldType.Navigation,
@@ -430,9 +435,9 @@ namespace RIAPP.DataService
                     });
                 }
             }
-            metadata.methodDescriptions = this.GetMethodDescriptions(self.GetType());
-            self._serviceMetadata = metadata;
-            BaseDomainService._metadataCache.TryAdd(self.GetType(), metadata);
+            cachedMetadata.methodDescriptions = this.GetMethodDescriptions(self.GetType());
+            self._cachedMetadata = cachedMetadata;
+            BaseDomainService._metadataCache.TryAdd(self.GetType(), cachedMetadata);
         }
 
         protected MethodInfo GetOperMethodInfo(DbSetInfo dbSetInfo, string oper)
@@ -465,8 +470,8 @@ namespace RIAPP.DataService
             Array.ForEach(values, (val) =>
             {
                 string fullName = path + val.fieldName;
-                FieldInfo fieldInfo = this.ServiceContainer.DataHelper.getFieldInfo(dbSetInfo, fullName);
-                if (!fieldInfo.isIncludeInResult())
+                Field fieldInfo = this.ServiceContainer.DataHelper.getFieldInfo(dbSetInfo, fullName);
+                if (!fieldInfo.GetIsIncludeInResult())
                     return;
 
                 if (fieldInfo.fieldType == FieldType.Object && val.nested != null)
@@ -480,7 +485,7 @@ namespace RIAPP.DataService
             });
         }
 
-        private void ApplyValue(object entity, RowInfo rowInfo, string fullName, FieldInfo fieldInfo, ValueChange val, bool isOriginal)
+        private void ApplyValue(object entity, RowInfo rowInfo, string fullName, Field fieldInfo, ValueChange val, bool isOriginal)
         {
             if (isOriginal)
             {
@@ -565,8 +570,8 @@ namespace RIAPP.DataService
             Array.ForEach(values, (val) =>
             {
                 string fullName = path + val.fieldName;
-                FieldInfo fieldInfo = this.ServiceContainer.DataHelper.getFieldInfo(dbSetInfo, fullName);
-                if (!fieldInfo.isIncludeInResult())
+                Field fieldInfo = this.ServiceContainer.DataHelper.getFieldInfo(dbSetInfo, fullName);
+                if (!fieldInfo.GetIsIncludeInResult())
                     return;
                 if (fieldInfo.fieldType == FieldType.Object && val.nested != null)
                 {
@@ -586,8 +591,8 @@ namespace RIAPP.DataService
             Array.ForEach(values, (val) =>
             {
                 string fullName = path + val.fieldName;
-                FieldInfo fieldInfo = this.ServiceContainer.DataHelper.getFieldInfo(dbSetInfo, fullName);
-                if (!fieldInfo.isIncludeInResult())
+                Field fieldInfo = this.ServiceContainer.DataHelper.getFieldInfo(dbSetInfo, fullName);
+                if (!fieldInfo.GetIsIncludeInResult())
                     return;
                 if (fieldInfo.fieldType == FieldType.Object && val.nested != null)
                 {
@@ -615,7 +620,7 @@ namespace RIAPP.DataService
             }
         }
 
-        protected bool isEntityValueChanged(RowInfo rowInfo, string fullName, FieldInfo fieldInfo, out string newVal) 
+        protected bool isEntityValueChanged(RowInfo rowInfo, string fullName, Field fieldInfo, out string newVal) 
         {
             EntityChangeState changeState = rowInfo.changeState;
             string oldVal = null;
@@ -733,9 +738,9 @@ namespace RIAPP.DataService
 
             foreach (var fieldInfo in dbSetInfo.fieldInfos)
             {
-                this.ServiceContainer.DataHelper.ForEachFieldInfo("", fieldInfo, (string fullName, FieldInfo fld) =>
+                this.ServiceContainer.DataHelper.ForEachFieldInfo("", fieldInfo, (string fullName, Field fld) =>
                 {
-                    if (!fld.isIncludeInResult())
+                    if (!fld.GetIsIncludeInResult())
                         return;
                     if (fld.fieldType == FieldType.Object)
                         return;
@@ -854,7 +859,7 @@ namespace RIAPP.DataService
 
         protected virtual string GetTypeScript(string comment = null)
         {
-            MetadataInfo metadata = this.ServiceGetMetadata();
+            MetadataResult metadata = this.ServiceGetMetadata();
             TypeScriptHelper helper = new TypeScriptHelper(this._serviceContainer, metadata, this.GetClientTypes());
             return helper.CreateTypeScript(comment);
         }
@@ -875,9 +880,14 @@ namespace RIAPP.DataService
         }
         #endregion
 
-        protected IEnumerable<FieldName> GetNames(IEnumerable<FieldInfo> fieldInfos)
+        protected FieldName[] GetNames(Field fieldInfo)
         {
-            return fieldInfos.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).Select(fi => new FieldName { n = fi.fieldName, p =(fi.fieldType == FieldType.Object)?this.GetNames(fi.nested).ToArray(): null });
+            return fieldInfo.GetNestedInResultFields().Select(fi => new FieldName { n = fi.fieldName, p = (fi.fieldType == FieldType.Object) ? this.GetNames(fi) : null }).ToArray();
+        }
+
+        protected FieldName[] GetNames(DbSetInfo dbSetInfo)
+        {
+            return dbSetInfo.GetInResultFields().Select(fi => new FieldName { n = fi.fieldName, p = (fi.fieldType == FieldType.Object) ? this.GetNames(fi) : null }).ToArray();
         }
 
         protected QueryResponse PerformQuery(QueryRequest queryInfo)
@@ -929,7 +939,7 @@ namespace RIAPP.DataService
                 pageIndex = queryInfo.pageIndex,
                 pageCount = queryInfo.pageCount,
                 dbSetName = queryInfo.dbSetName,
-                names = this.GetNames(queryInfo.dbSetInfo.fieldInfos),
+                names = this.GetNames(queryInfo.dbSetInfo),
                 totalCount = totalCount,
                 extraInfo = queryResult.extraInfo,
                 rows = rows,
@@ -986,7 +996,7 @@ namespace RIAPP.DataService
 
         protected bool ApplyChangeSet(ChangeSet changeSet)
         {
-            ServiceMetadata metadata = this.EnsureMetadataInitialized();
+            CachedMetadata metadata = this.EnsureMetadataInitialized();
             ChangeSetGraph graph = new ChangeSetGraph(changeSet, metadata);
             graph.Prepare();
            
@@ -1155,7 +1165,11 @@ namespace RIAPP.DataService
         {
             if (!this.IsCodeGenEnabled)
                 throw new InvalidOperationException(string.Format(ErrorStrings.ERR_CODEGEN_DISABLED, MethodInfo.GetCurrentMethod().Name, this.GetType().Name));
-            return this.GetXAML();
+            string xaml = null;
+            this.ExecuteOnSTA((object state) => {
+                xaml = (state as BaseDomainService).GetXAML();
+            }, this);
+            return xaml;
         }
 
         public string ServiceGetCSharp()
@@ -1165,12 +1179,12 @@ namespace RIAPP.DataService
             return this.GetCSharp();
         }
 
-        public PermissionsInfo ServiceGetPermissions()
+        public Permissions ServiceGetPermissions()
         {
             try
             {
-                ServiceMetadata metadata = this.EnsureMetadataInitialized();
-                PermissionsInfo result = new PermissionsInfo();
+                CachedMetadata metadata = this.EnsureMetadataInitialized();
+                Permissions result = new Permissions();
                 result.serverTimezone = RIAPP.DataService.Utils.DataHelper.GetLocalDateTimezoneOffset(DateTime.Now);
                 foreach (var dbInfo in metadata.dbSets.Values)
                 {
@@ -1187,16 +1201,16 @@ namespace RIAPP.DataService
             }
         }
 
-        public MetadataInfo ServiceGetMetadata()
+        public MetadataResult ServiceGetMetadata()
         {
             try
             {
-                ServiceMetadata metadata = this.EnsureMetadataInitialized();
-                var metadataInfo = new MetadataInfo();
-                metadataInfo.methods = metadata.methodDescriptions;
-                metadataInfo.associations.AddRange(metadata.associations.Values);
-                metadataInfo.dbSets.AddRange(metadata.dbSets.Values);
-                return metadataInfo;
+                CachedMetadata metadata = this.EnsureMetadataInitialized();
+                var result = new MetadataResult();
+                result.methods = metadata.methodDescriptions;
+                result.associations.AddRange(metadata.associations.Values);
+                result.dbSets.AddRange(metadata.dbSets.Values);
+                return result;
             }
             catch (Exception ex)
             {
@@ -1205,21 +1219,21 @@ namespace RIAPP.DataService
             }
         }
 
-        public QueryResponse ServiceGetData(QueryRequest getInfo)
+        public QueryResponse ServiceGetData(QueryRequest request)
         {
             QueryResponse res = null;
             this.RequestState.CurrentOperation = ServiceOperationType.GetData;
             try
             {
-                res = this.PerformQuery(getInfo);
+                res = this.PerformQuery(request);
             }
             catch (Exception ex)
             {
                 while (ex.InnerException != null)
                     ex = ex.InnerException;
-                res = new QueryResponse() { pageIndex = getInfo.pageIndex, pageCount = getInfo.pageCount,
+                res = new QueryResponse() { pageIndex = request.pageIndex, pageCount = request.pageCount,
                     rows = new Row[0], 
-                    dbSetName = getInfo.dbSetName, totalCount = null, error = new ErrorInfo(ex.Message, ex.GetType().Name) };
+                    dbSetName = request.dbSetName, totalCount = null, error = new ErrorInfo(ex.Message, ex.GetType().Name) };
                 this.OnError(ex);
             }
             finally
@@ -1257,19 +1271,19 @@ namespace RIAPP.DataService
             return changeSet;
         }
 
-        public RefreshRowInfo ServiceRefreshRow(RefreshRowInfo getInfo)
+        public RefreshRowInfo ServiceRefreshRow(RefreshRowInfo rowInfo)
         {
             RefreshRowInfo res = null;
             this.RequestState.CurrentOperation = ServiceOperationType.RefreshRowData;
             try
             {
-                res = this.RefreshRowInfo(getInfo);
+                res = this.RefreshRowInfo(rowInfo);
             }
             catch (Exception ex)
             {
                 while (ex.InnerException != null)
                     ex = ex.InnerException;
-                res = new RefreshRowInfo { dbSetName = getInfo.dbSetName, error = new ErrorInfo(ex.Message, ex.GetType().Name), rowInfo = null };
+                res = new RefreshRowInfo { dbSetName = rowInfo.dbSetName, error = new ErrorInfo(ex.Message, ex.GetType().Name), rowInfo = null };
                 this.OnError(ex);
             }
             finally
@@ -1305,7 +1319,7 @@ namespace RIAPP.DataService
 
         protected virtual void Dispose(bool isDisposing)
         {
-           this._serviceMetadata=null;
+           this._cachedMetadata=null;
            this._requestState = null;
            this._principal = null;
            this._serviceContainer = null;

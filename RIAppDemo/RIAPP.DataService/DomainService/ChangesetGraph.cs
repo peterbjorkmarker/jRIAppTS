@@ -1,9 +1,10 @@
-﻿using System;
+﻿using RIAPP.DataService.Resources;
+using RIAPP.DataService.Types;
+using RIAPP.DataService.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RIAPP.DataService.Utils;
-using RIAPP.DataService.Resources;
 
 namespace RIAPP.DataService
 {
@@ -45,7 +46,7 @@ namespace RIAPP.DataService
     internal class ChangeSetGraph
     {
         private ChangeSet _changeSet;
-        private ServiceMetadata _metadata;
+        private CachedMetadata _metadata;
         LinkedList<ParentChildNode> updateNodes = new LinkedList<ParentChildNode>();
         private DbSet[] sortedDbSets = null;
         LinkedList<RowInfo> _insertList = new LinkedList<RowInfo>();
@@ -54,7 +55,7 @@ namespace RIAPP.DataService
         LinkedList<RowInfo> _allList = new LinkedList<RowInfo>();
             
         
-        public ChangeSetGraph(ChangeSet changeSet, ServiceMetadata metadata)
+        public ChangeSetGraph(ChangeSet changeSet, CachedMetadata metadata)
         {
             this._changeSet = changeSet;
             this._metadata = metadata;

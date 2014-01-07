@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService.Utils
 {
@@ -24,7 +25,7 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        public string CreateComplexType(DbSetInfo dbSetInfo, FieldInfo fieldInfo, int level)
+        public string CreateComplexType(DbSetInfo dbSetInfo, Field fieldInfo, int level)
         {
             string typeName;
             if (level == 0)
@@ -44,7 +45,7 @@ namespace RIAPP.DataService.Utils
             var sbFieldsDef = new StringBuilder();
             var sbFieldsInit = new StringBuilder();
 
-            Action<FieldInfo> AddProperty = (FieldInfo f) =>
+            Action<Field> AddProperty = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
                 sbProperties.AppendFormat("\tget {0}(): {2} {{ return this.getValue('{1}'); }}", f.fieldName, f._FullName, dataType);
@@ -56,14 +57,14 @@ namespace RIAPP.DataService.Utils
                 }
             };
 
-            Action<FieldInfo> AddCalculatedProperty = (FieldInfo f) =>
+            Action<Field> AddCalculatedProperty = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
                 sbProperties.AppendFormat("\tget {0}(): {2} {{ return this.getEntity()._getCalcFieldVal('{1}'); }}", f.fieldName, f._FullName, dataType);
                 sbProperties.AppendLine();
             };
 
-            Action<FieldInfo, string> AddComplexProperty = (FieldInfo f, string dataType) =>
+            Action<Field, string> AddComplexProperty = (Field f, string dataType) =>
             {
                 sbProperties.AppendFormat("\tget {0}(): {1} {{ if (!this._{0}) {{this._{0} = new {1}('{0}', this);}} return this._{0}; }}", f.fieldName, dataType);
                 sbProperties.AppendLine();
@@ -139,7 +140,7 @@ namespace RIAPP.DataService.Utils
             return sb.ToString().TrimEnd('\r','\n');
         }
 
-        private string GetFieldDataType(FieldInfo fieldInfo)
+        private string GetFieldDataType(Field fieldInfo)
         {
             string fieldName = fieldInfo.fieldName;
             string fieldType = "any";

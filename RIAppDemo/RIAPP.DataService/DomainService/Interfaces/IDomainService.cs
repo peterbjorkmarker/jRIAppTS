@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService
 {
@@ -13,12 +14,12 @@ namespace RIAPP.DataService
         string ServiceGetCSharp();
 
        //information about permissions to execute service operations for the client
-        PermissionsInfo ServiceGetPermissions();
+        Permissions ServiceGetPermissions();
         //information about service methods, DbSets and their fields information
-        MetadataInfo ServiceGetMetadata();
-        QueryResponse ServiceGetData(QueryRequest getInfo);
+        MetadataResult ServiceGetMetadata();
+        QueryResponse ServiceGetData(QueryRequest request);
         ChangeSet ServiceApplyChangeSet(ChangeSet changeSet);
-        RefreshRowInfo ServiceRefreshRow(RefreshRowInfo getInfo);
-        InvokeResponse ServiceInvokeMethod(InvokeRequest parameters);
+        RefreshRowInfo ServiceRefreshRow(RefreshRowInfo rowInfo);
+        InvokeResponse ServiceInvokeMethod(InvokeRequest invokeInfo);
     }
 }

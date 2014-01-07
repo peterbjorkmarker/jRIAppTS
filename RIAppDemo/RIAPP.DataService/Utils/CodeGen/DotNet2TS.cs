@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RIAPP.DataService.Utils.Interfaces;
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService.Utils
 {

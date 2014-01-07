@@ -5,17 +5,16 @@ using System.Text;
 using RIAPP.DataService.Security;
 using System.Reflection;
 using RIAPP.DataService.Utils.Interfaces;
-
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService.Utils
 {
     public static class RowInfoEx
     {
-
         public static object[] GetPKValues(this RowInfo rowInfo, IDataHelper dataHelper)
         {
             Type entityType = rowInfo.dbSetInfo.EntityType;
-            FieldInfo[] finfos = rowInfo.dbSetInfo.GetPKFieldInfos();
+            Field[] finfos = rowInfo.dbSetInfo.GetPKFields();
             object[] result = new object[finfos.Length];
             for (int i = 0; i < finfos.Length; ++i)
             {
@@ -27,7 +26,7 @@ namespace RIAPP.DataService.Utils
 
         public static string GetRowKeyAsString(this RowInfo rowInfo)
         {
-            FieldInfo[] finfos = rowInfo.dbSetInfo.GetPKFieldInfos();
+            Field[] finfos = rowInfo.dbSetInfo.GetPKFields();
             string[] vals = new string[finfos.Length];
             for (int i = 0; i < finfos.Length; ++i)
             {

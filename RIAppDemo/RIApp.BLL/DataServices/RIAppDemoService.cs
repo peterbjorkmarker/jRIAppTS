@@ -1,17 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Data.Linq;
-using System.Text;
-using System.Security.Principal;
-using RIAPP.DataService;
+﻿using RIAPP.DataService;
 using RIAPP.DataService.LinqSql;
-using RIAppDemo.DAL;
-using System.Data.SqlClient;
-using System.Transactions;
-using System.Data.Common;
-using RIAppDemo.BLL.Utils;
+using RIAPP.DataService.Types;
 using RIAppDemo.BLL.Models;
+using RIAppDemo.BLL.Utils;
+using RIAppDemo.DAL;
+using System;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Data.Linq;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Security.Principal;
+using System.Text;
+using System.Transactions;
 using System.Xml.Linq;
 
 
@@ -51,7 +52,7 @@ namespace RIAppDemo.BLL.DataServices
         {
             var metadata = base.GetMetadata();
             var xaml = System.Windows.Markup.XamlWriter.Save(metadata);
-            XNamespace data = "clr-namespace:RIAPP.DataService;assembly=RIAPP.DataService";
+            XNamespace data = "clr-namespace:RIAPP.DataService.Types;assembly=RIAPP.DataService";
             XNamespace dal = "clr-namespace:RIAppDemo.DAL;assembly=RIAppDemo.DAL";
 
             XElement xtree = XElement.Parse(xaml);
@@ -70,7 +71,7 @@ namespace RIAppDemo.BLL.DataServices
                 }
 
             }
-            xtree.Add(new XAttribute(XNamespace.Xmlns + "data", "clr-namespace:RIAPP.DataService;assembly=RIAPP.DataService"));
+            xtree.Add(new XAttribute(XNamespace.Xmlns + "data", "clr-namespace:RIAPP.DataService.Types;assembly=RIAPP.DataService"));
             return xtree.ToString();
         }
 
@@ -80,7 +81,7 @@ namespace RIAppDemo.BLL.DataServices
            //return base.GetMetadata();
 
            //returns corrected metadata
-           return  (Metadata)(new RIAppDemoMetadata().Resources["MainDemo"]);
+           return (Metadata)(new RIAppDemoMetadata().Resources["MainDemo"]);
         }
 
         #region Product

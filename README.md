@@ -98,6 +98,7 @@ P.S. The docs to be updated soon. This version will be probably a RC version.<br
 <b>Once again thanks to typescript. Without it so much refactoring was impossible.</b><br/>
 </p>
 <p>2014-01-06 Code refactoring. Code generation changes. Demo update.</p>
+<p>2014-01-07 DataService's code refactoring. Types and namespaces renaming. Performance improvements.</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 

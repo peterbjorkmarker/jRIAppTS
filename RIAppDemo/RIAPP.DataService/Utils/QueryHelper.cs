@@ -4,6 +4,7 @@ using System.Text;
 using System.Linq.DynamicQuery;
 using RIAPP.DataService.Resources;
 using RIAPP.DataService.Utils.Interfaces;
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService.Utils
 {
@@ -55,8 +56,8 @@ namespace RIAPP.DataService.Utils
             LinkedList<object> filterParams = new LinkedList<object>();
             foreach (FilterItem filterItem in filter.filterItems)
             {
-                FieldInfo finfo = dbInfo.fieldInfos.Where(finf => finf.fieldName == filterItem.fieldName).FirstOrDefault();
-                if (finfo == null)
+                Field field = dbInfo.fieldInfos.Where(finf => finf.fieldName == filterItem.fieldName).FirstOrDefault();
+                if (field == null)
                     throw new DomainServiceException(string.Format(ErrorStrings.ERR_REC_FIELDNAME_INVALID, dbInfo.dbSetName, filterItem.fieldName));
                 if (cnt > 0)
                     sb.Append(" and ");
@@ -66,13 +67,13 @@ namespace RIAPP.DataService.Utils
                         if (filterItem.values.Count == 1)
                         {
                             sb.AppendFormat("{0}==@{1}", filterItem.fieldName, cnt);
-                            filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                            filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, filterItem.values.FirstOrDefault()));
                         }
                         else
                         {
                             List<object> vals = new List<object>();
                             foreach (string v in filterItem.values)
-                                vals.Add(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, v));
+                                vals.Add(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, v));
 
                             sb.AppendFormat("@{0}.Contains(outerIt.{1})", cnt, filterItem.fieldName);
                             filterParams.AddLast(vals);
@@ -80,40 +81,40 @@ namespace RIAPP.DataService.Utils
                         break;
                     case FilterType.StartsWith:
                         sb.AppendFormat("{0}.StartsWith(@{1})", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.EndsWith:
                         sb.AppendFormat("{0}.EndsWith(@{1})", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Contains:
                         sb.AppendFormat("{0}.Contains(@{1})", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Gt:
                         sb.AppendFormat("{0}>@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Lt:
                         sb.AppendFormat("{0}<@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.GtEq:
                         sb.AppendFormat("{0}>=@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.LtEq:
                         sb.AppendFormat("{0}<=@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.NotEq:
                         sb.AppendFormat("{0}!=@{1}", filterItem.fieldName, cnt);
-                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, filterItem.values.FirstOrDefault()));
                         break;
                     case FilterType.Between:
                         sb.AppendFormat("{0}>=@{1} and {0}<=@{2}", filterItem.fieldName, cnt, ++cnt);
-                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.FirstOrDefault()));
-                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), finfo, filterItem.values.LastOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, filterItem.values.FirstOrDefault()));
+                        filterParams.AddLast(this._serviceContainer.DataHelper.DeserializeField(typeof(T), field, filterItem.values.LastOrDefault()));
                         break;
                 }
 
@@ -167,7 +168,7 @@ namespace RIAPP.DataService.Utils
         public static string GetWherePKPredicate(RowInfo rowInfo)
         {
             DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
-            FieldInfo[] pkFieldsInfo = dbSetInfo.GetPKFieldInfos();
+            Field[] pkFieldsInfo = dbSetInfo.GetPKFields();
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < pkFieldsInfo.Length; ++i)
             {

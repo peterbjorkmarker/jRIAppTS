@@ -7,6 +7,7 @@ using System.Data.Objects;
 using System.Data.Objects.DataClasses;
 using System.Data.Metadata.Edm;
 using System.Text.RegularExpressions;
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService.EF
 {
@@ -177,7 +178,7 @@ namespace RIAPP.DataService.EF
                 short pkNum = 0;
                 Array.ForEach(edmProps, (edmProp) =>
                 {
-                    FieldInfo fieldInfo = new FieldInfo() { fieldName = edmProp.Name };
+                    Field fieldInfo = new Field() { fieldName = edmProp.Name };
                     if (keys.Contains(fieldInfo.fieldName))
                     {
                         ++pkNum;

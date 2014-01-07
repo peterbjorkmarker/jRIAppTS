@@ -11,7 +11,7 @@ using System.Data.Common;
 using RIAppDemo.BLL.Utils;
 using RIAppDemo.BLL.Models;
 using System.IO;
-
+using RIAPP.DataService.Types;
 
 namespace RIAppDemo.BLL.DataServices
 {

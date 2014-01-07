@@ -4,13 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using RIAPP.DataService.Utils.Interfaces;
+using RIAPP.DataService.Types;
 
 
 namespace RIAPP.DataService.Utils
 {
     public class TypeScriptHelper
     {
-        MetadataInfo _metadata;
+        MetadataResult _metadata;
         List<Type> _clientTypes;
         StringBuilder _sb = new StringBuilder(4096);
         private DotNet2TS _dotNet2TS;
@@ -20,7 +21,7 @@ namespace RIAPP.DataService.Utils
             return str.Length > 1 ? str.Substring(0, 1).ToLower() + str.Substring(1, str.Length - 1) : str.ToLower();
         }
 
-        public TypeScriptHelper(IServiceContainer serviceContainer, MetadataInfo metadata, IEnumerable<Type> clientTypes)
+        public TypeScriptHelper(IServiceContainer serviceContainer, MetadataResult metadata, IEnumerable<Type> clientTypes)
         {
             if (serviceContainer == null)
                 throw new ArgumentException("converter parameter must not be null", "serviceContainer");
@@ -167,7 +168,7 @@ namespace RIAPP.DataService.Utils
             return sb.ToString();
         }
 
-        private string _CreateParamSignature(ParamMetadataInfo paramInfo)
+        private string _CreateParamSignature(ParamMetadata paramInfo)
         {
             return string.Format("{0}{1}: {2}{3};", paramInfo.name, paramInfo.isNullable ? "?" : "", (paramInfo.dataType == DataType.None ? this._dotNet2TS.GetTSTypeName(paramInfo.ParameterType) : DotNet2TS.GetTSTypeNameFromDataType(paramInfo.dataType)), (paramInfo.dataType != DataType.None && paramInfo.isArray) ? "[]" : "");
         }
@@ -388,7 +389,7 @@ namespace RIAPP.DataService.Utils
                 {
                     if (!isFirst)
                         sbProps.Append(",");
-                    RIAPP.DataService.DataType dataType = DataType.None;
+                    DataType dataType = DataType.None;
                     try
                     {
                         dataType = this._dotNet2TS.DataTypeFromDotNetType(propInfo.PropertyType, out isArray);
@@ -574,7 +575,7 @@ namespace RIAPP.DataService.Utils
             var parentAssoc = this._metadata.associations.Where(assoc => assoc.parentDbSetName == dbSetInfo.dbSetName).ToList();
             var fieldInfos = dbSetInfo.fieldInfos;
             
-            var pkFields = dbSetInfo.GetPKFieldInfos();
+            var pkFields = dbSetInfo.GetPKFields();
             string pkVals = "";
             foreach (var pkField in pkFields)
             {
@@ -648,7 +649,7 @@ namespace RIAPP.DataService.Utils
             if (this._dotNet2TS.IsTypeNameRegistered(entityInterfaceName))
                 throw new ApplicationException(string.Format("Names collision. Name '{0}' can not be used for an entity type's name because this name is used for a client's type.", entityInterfaceName));
 
-            Action<FieldInfo> AddCalculatedField = (FieldInfo f) =>
+            Action<Field> AddCalculatedField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
                 sbFields.AppendFormat("\tget {0}(): {1} {{ return this._getCalcFieldVal('{0}'); }}", f.fieldName, dataType);
@@ -658,7 +659,7 @@ namespace RIAPP.DataService.Utils
                 sbFields2.AppendLine();
             };
 
-            Action<FieldInfo> AddNavigationField = (FieldInfo f) =>
+            Action<Field> AddNavigationField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
                 sbFields.AppendFormat("\tget {0}(): {1} {{ return this._getNavFieldVal('{0}'); }}", f.fieldName, dataType);
@@ -675,7 +676,7 @@ namespace RIAPP.DataService.Utils
             };
 
 
-            Action<FieldInfo> AddComplexTypeField = (FieldInfo f) =>
+            Action<Field> AddComplexTypeField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
                 sbFields.AppendFormat("\tget {0}(): {1} {{ if (!this._{0}) {{this._{0} = new {1}('{0}', this);}} return this._{0}; }}", f.fieldName, dataType);
@@ -688,7 +689,7 @@ namespace RIAPP.DataService.Utils
                 sbFields2.AppendLine();
             };
 
-            Action<FieldInfo> AddSimpleField = (FieldInfo f) =>
+            Action<Field> AddSimpleField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
                 sbFields.AppendFormat("\tget {0}(): {1} {{ return this._getFieldVal('{0}'); }}", f.fieldName, dataType);
@@ -766,7 +767,7 @@ namespace RIAPP.DataService.Utils
             return sb.ToString();
         }
            
-        private string GetFieldDataType(FieldInfo fieldInfo)
+        private string GetFieldDataType(Field fieldInfo)
         {
             string fieldName = fieldInfo.fieldName;
             string fieldType = "any";

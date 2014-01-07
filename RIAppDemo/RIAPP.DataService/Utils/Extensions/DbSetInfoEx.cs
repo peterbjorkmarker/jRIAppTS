@@ -1,8 +1,8 @@
-﻿using System;
+﻿using RIAPP.DataService.Security;
+using RIAPP.DataService.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using RIAPP.DataService.Security;
 using System.Reflection;
 
 
@@ -10,24 +10,6 @@ namespace RIAPP.DataService.Utils
 {
     public static class DbSetInfoEx
     {
-        public static MethodInfo GetMethodInfo(Type t, string name)
-        {
-            MethodInfo meth = null;
-            if (!string.IsNullOrEmpty(name))
-                meth = t.GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
-            return meth;
-        }
-
-        public static FieldInfo[] GetPKFieldInfos(this DbSetInfo dbSetInfo)
-        {
-            return dbSetInfo.fieldInfos.Where(fi => fi.isPrimaryKey > 0).OrderBy(fi => fi.isPrimaryKey).ToArray();
-        }
-
-        public static FieldInfo GetRowTimeStampFieldInfo(this DbSetInfo dbSetInfo)
-        {
-            return dbSetInfo.fieldInfos.Where(fi => fi.fieldType == FieldType.RowTimeStamp).FirstOrDefault();
-        }
-
         #region Utility Methods
         public static DbSetPermit CalculatePermissions(this DbSetInfo dbSetInfo, IAuthorizer authorizer)
         {
@@ -102,13 +84,13 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        public static Dictionary<string, FieldInfo> GetFieldByNames(this DbSetInfo dbSetInfo)
+        public static Dictionary<string, Field> GetFieldByNames(this DbSetInfo dbSetInfo)
         {
             return dbSetInfo._fieldsByNames;
         }
 
 
-        private static void SetOrdinal(FieldInfo[] fieldInfos)
+        private static void SetOrdinal(Field[] fieldInfos)
         {
             int i = 0, cnt = fieldInfos.Length;
             for (i = 0; i < cnt; ++i)
@@ -130,7 +112,7 @@ namespace RIAPP.DataService.Utils
                 {
                     string operName = fl.GetValue(null).ToString();
                     string methodName = dbSetInfo.getOperationMethodName(operName);
-                    MethodInfo minfo = DbSetInfoEx.GetMethodInfo(serviceType, methodName);
+                    MethodInfo minfo = DataHelper.GetMethodInfo(serviceType, methodName);
                     if (minfo != null)
                     {
                         switch (operName)
@@ -160,7 +142,7 @@ namespace RIAPP.DataService.Utils
 
         public static void Initialize(this DbSetInfo dbSetInfo, Type serviceType, IServiceContainer services)
         {
-            dbSetInfo._fieldsByNames = new Dictionary<string, FieldInfo>();
+            dbSetInfo._fieldsByNames = new Dictionary<string, Field>();
             int i = 0; 
             var fieldInfos = dbSetInfo.fieldInfos.ToArray();
             int cnt = fieldInfos.Length;

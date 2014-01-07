@@ -1,10 +1,12 @@
 ﻿using System;
+using RIAPP.DataService.Types;
+
 namespace RIAPP.DataService.Utils.Interfaces
 {
     public interface IValidationHelper
     {
-        void CheckRange(RIAPP.DataService.FieldInfo fieldInfo, string val);
-        void CheckString(RIAPP.DataService.FieldInfo fieldInfo, string val);
-        void CheckValue(RIAPP.DataService.FieldInfo fieldInfo, string val);
+        void CheckRange(Field fieldInfo, string val);
+        void CheckString(Field fieldInfo, string val);
+        void CheckValue(Field fieldInfo, string val);
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Reflection;
+using RIAPP.DataService.Types;
 
 
 namespace RIAPP.DataService.LinqSql.Utils
@@ -61,7 +62,7 @@ namespace RIAPP.DataService.LinqSql.Utils
              return sb.ToString();
         }
 
-        public static string CreateMethods(MetadataInfo metadata, System.Data.Linq.DataContext DB) 
+        public static string CreateMethods(MetadataResult metadata, System.Data.Linq.DataContext DB) 
         {
             var sb = new StringBuilder(4096);
 

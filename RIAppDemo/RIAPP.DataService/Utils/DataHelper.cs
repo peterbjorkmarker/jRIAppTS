@@ -1,10 +1,11 @@
-﻿using System;
-using System.Linq;
+﻿using RIAPP.DataService.Resources;
+using RIAPP.DataService.Types;
+using RIAPP.DataService.Utils.Interfaces;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
-using RIAPP.DataService.Resources;
-using RIAPP.DataService.Utils.Interfaces;
 
 namespace RIAPP.DataService.Utils
 {
@@ -85,7 +86,7 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        public object SetFieldValue(object entity, string fullName, FieldInfo fieldInfo, string value)
+        public object SetFieldValue(object entity, string fullName, Field fieldInfo, string value)
         {
             string[] parts = fullName.Split('.');
             Type enityType = entity.GetType();
@@ -122,13 +123,13 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        private object[] SerializeObjectField(object fieldOwner, FieldInfo[] fieldInfos)
+        private object[] SerializeObjectField(object fieldOwner, Field objectFieldInfo)
         {
+            var fieldInfos = objectFieldInfo.GetNestedInResultFields();
             object[] res =new object[fieldInfos.Length];
             for (int i = 0; i < fieldInfos.Length; ++i)
             {
-                FieldInfo fieldInfo = fieldInfos[i];
-                res[i] = this.SerializeField(fieldOwner, fieldInfo);
+                res[i] = this.SerializeField(fieldOwner, fieldInfos[i]);
             }
             return res;
         }
@@ -136,7 +137,7 @@ namespace RIAPP.DataService.Utils
         /// <summary>
         /// extracts field value from entity, and converts value to a serialized form
         /// </summary>
-        protected virtual bool SerializeField(object fieldOwner, FieldInfo fieldInfo, bool optional, out object val)
+        protected virtual bool SerializeField(object fieldOwner, Field fieldInfo, bool optional, out object val)
         {
             val = null;
             Type enityType = fieldOwner.GetType();
@@ -151,7 +152,7 @@ namespace RIAPP.DataService.Utils
             if (fieldInfo.fieldType == FieldType.Object)
             {
                 object propValue = pinfo.GetValue(fieldOwner, null);
-                val = this.SerializeObjectField(propValue, fieldInfo.nested.Where(f => f.isIncludeInResult()).OrderBy(f => f._ordinal).ToArray());
+                val = this.SerializeObjectField(propValue, fieldInfo);
             }
             else
             {
@@ -161,14 +162,14 @@ namespace RIAPP.DataService.Utils
             return true;
         }
 
-        public object SerializeField(object fieldOwner, FieldInfo fieldInfo)
+        public object SerializeField(object fieldOwner, Field fieldInfo)
         {
             object val;
             bool isOK = this.SerializeField(fieldOwner, fieldInfo, false, out val);
             return val;
         }
 
-        public string SerializeField(object fieldOwner, string fullName, FieldInfo fieldInfo)
+        public string SerializeField(object fieldOwner, string fullName, Field fieldInfo)
         {
             string[] parts = fullName.Split('.');
             if (parts.Length == 1)
@@ -194,19 +195,18 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        private object[] DeSerializeObjectField(Type propType, FieldInfo[] fieldInfos, object[] values)
+        private object[] DeSerializeObjectField(Type propType, Field objectFieldInfo, object[] values)
         {
+            var fieldInfos = objectFieldInfo.GetNestedInResultFields();
             object[] res = new object[fieldInfos.Length];
             for (int i = 0; i < fieldInfos.Length; ++i)
             {
-                object propValue = values[i];
-                FieldInfo fieldInfo = fieldInfos[i];
-                res[i] = this.DeserializeField(propType, fieldInfo, propValue);
+                res[i] = this.DeserializeField(propType, fieldInfos[i], values[i]);
             }
             return res;
         }
 
-        public object DeserializeField(Type entityType, FieldInfo fieldInfo, object value)
+        public object DeserializeField(Type entityType, Field fieldInfo, object value)
         {
             PropertyInfo propInfo = entityType.GetProperty(fieldInfo.fieldName);
 
@@ -215,7 +215,7 @@ namespace RIAPP.DataService.Utils
 
             if (fieldInfo.fieldType == FieldType.Object)
             {
-                return this.DeSerializeObjectField(propInfo.PropertyType, fieldInfo.nested.ToArray(), (object[])value);
+                return this.DeSerializeObjectField(propInfo.PropertyType, fieldInfo, (object[])value);
             }
             else
             {
@@ -223,7 +223,7 @@ namespace RIAPP.DataService.Utils
             }
         }
     
-        public object ParseParameter(Type paramType, ParamMetadataInfo pinfo, bool isArray, string val)
+        public object ParseParameter(Type paramType, ParamMetadata pinfo, bool isArray, string val)
         {
             DataType dataType = pinfo.dataType;
 
@@ -248,13 +248,13 @@ namespace RIAPP.DataService.Utils
                 return this._serviceContainer.ValueConverter.DeserializeValue(paramType, dataType, pinfo.dateConversion, val);
         }
 
-        public FieldInfo getFieldInfo(DbSetInfo dbSetInfo, string fullName)
+        public Field getFieldInfo(DbSetInfo dbSetInfo, string fullName)
         {
-            Dictionary<string, FieldInfo> fieldsByName = dbSetInfo.GetFieldByNames();
+            Dictionary<string, Field> fieldsByName = dbSetInfo.GetFieldByNames();
             return fieldsByName[fullName];
         }
 
-        public void ForEachFieldInfo(string path, FieldInfo rootField,  Action<string, FieldInfo> callBack)
+        public void ForEachFieldInfo(string path, Field rootField,  Action<string, Field> callBack)
         {
             if (rootField.fieldType == FieldType.Object)
             {
@@ -268,6 +268,14 @@ namespace RIAPP.DataService.Utils
             {
                 callBack(path + rootField.fieldName, rootField);
             }
+        }
+
+        public static System.Reflection.MethodInfo GetMethodInfo(Type t, string name)
+        {
+            MethodInfo meth = null;
+            if (!string.IsNullOrEmpty(name))
+                meth = t.GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+            return meth;
         }
     }
 }

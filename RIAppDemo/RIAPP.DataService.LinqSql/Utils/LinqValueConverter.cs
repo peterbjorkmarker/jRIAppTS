@@ -1,5 +1,6 @@
 ﻿using System;
 using RIAPP.DataService.Utils.Interfaces;
+using RIAPP.DataService.Types;
 
 
 namespace RIAPP.DataService.Utils
@@ -42,7 +43,7 @@ namespace RIAPP.DataService.Utils
             return this.BytesToString(res);
         }
 
-        public override string SerializeField(Type propType, FieldInfo fieldInfo, object value)
+        public override string SerializeField(Type propType, Field fieldInfo, object value)
         {
             if (propType == typeof(System.Data.Linq.Binary))
                 return LinqBinaryToString(value);

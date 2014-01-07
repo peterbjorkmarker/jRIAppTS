@@ -2,7 +2,7 @@
 using System.Text;
 using RIAPP.DataService.Resources;
 using RIAPP.DataService.Utils.Interfaces;
-
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService.Utils
 {
@@ -228,7 +228,7 @@ namespace RIAPP.DataService.Utils
             return propType.IsGenericType && propType.GetGenericTypeDefinition() == typeof(Nullable<int>).GetGenericTypeDefinition();
         }
 
-        public virtual object DeserializeField(Type propType, FieldInfo fieldInfo, string value)
+        public virtual object DeserializeField(Type propType, Field fieldInfo, string value)
         {
             return this.DeserializeValue(propType, fieldInfo.dataType, fieldInfo.dateConversion, value);
         }
@@ -284,7 +284,7 @@ namespace RIAPP.DataService.Utils
             return result;
         }
 
-        public virtual string SerializeField(Type propType, FieldInfo fieldInfo, object value)
+        public virtual string SerializeField(Type propType, Field fieldInfo, object value)
         {
             if (value == null)
                 return null;

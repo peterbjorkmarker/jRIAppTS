@@ -6,7 +6,7 @@ using System.Text;
 using RIAPP.DataService;
 using RIAPP.DataService.Resources;
 using RIAPP.DataService.Utils;
-
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService.Security
 {

@@ -3,30 +3,16 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService.Utils
 {
-    public class AssociationsDictionary : Dictionary<string, Association>
-    {
-        public AssociationsDictionary()
-        {
-        }
-    }
-
-    public class DbSetsDictionary : Dictionary<string, DbSetInfo>
-    {
-        public DbSetsDictionary()
-        {
-        }
-    }
-
-
-    public class ServiceMetadata
+    public class CachedMetadata
     {
         DbSetsDictionary _dbSets = new DbSetsDictionary();
         AssociationsDictionary _associations = new AssociationsDictionary();
 
-        public ServiceMetadata() 
+        public CachedMetadata() 
         {
         }
 
@@ -36,7 +22,7 @@ namespace RIAPP.DataService.Utils
       }
 
 
-    public class MetadataCache : ConcurrentDictionary<Type, ServiceMetadata>
+    public class MetadataCache : ConcurrentDictionary<Type, CachedMetadata>
     {
         public MetadataCache()
         {

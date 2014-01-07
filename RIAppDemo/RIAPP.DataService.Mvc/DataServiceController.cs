@@ -7,6 +7,7 @@ using System.Web.SessionState;
 using RIAPP.DataService;
 using RIAPP.DataService.Utils;
 using RIAPP.DataService.Utils.Interfaces;
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService.Mvc
 {
@@ -114,9 +115,9 @@ namespace RIAPP.DataService.Mvc
         }
 
         [HttpPost]
-        public ActionResult GetItems(QueryRequest getInfo)
+        public ActionResult GetItems(QueryRequest request)
         {
-            return new IncrementalResult(this.DomainService.ServiceGetData(getInfo), this.Serializer);
+            return new IncrementalResult(this.DomainService.ServiceGetData(request), this.Serializer);
         }
 
         [HttpPost]
@@ -127,9 +128,9 @@ namespace RIAPP.DataService.Mvc
         }
 
         [HttpPost]
-        public ActionResult RefreshItem(RefreshRowInfo getInfo)
+        public ActionResult RefreshItem(RefreshRowInfo rowInfo)
         {
-            var res = this.DomainService.ServiceRefreshRow(getInfo);
+            var res = this.DomainService.ServiceRefreshRow(rowInfo);
             return Json(res);
         }
 

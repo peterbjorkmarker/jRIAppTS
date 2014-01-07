@@ -7,6 +7,7 @@ using System.Web.Mvc;
 using RIAPP.DataService;
 using System.Web;
 using RIAPP.DataService.Utils.Interfaces;
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService.Mvc
 {

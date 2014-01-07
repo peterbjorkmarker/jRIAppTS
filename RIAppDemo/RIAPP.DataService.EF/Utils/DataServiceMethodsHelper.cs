@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Reflection;
+using RIAPP.DataService.Types;
 
 
 namespace RIAPP.DataService.EF.Utils
@@ -76,7 +77,7 @@ namespace RIAPP.DataService.EF.Utils
              return sb.ToString();
         }
 
-        public static string CreateMethods(MetadataInfo metadata, System.Data.Objects.ObjectContext DB) 
+        public static string CreateMethods(MetadataResult metadata, System.Data.Objects.ObjectContext DB) 
         {
             var sb = new StringBuilder(4096);
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using RIAPP.DataService.Resources;
 using RIAPP.DataService.Utils.Interfaces;
+using RIAPP.DataService.Types;
 
 namespace RIAPP.DataService.Utils
 {
@@ -13,7 +14,7 @@ namespace RIAPP.DataService.Utils
             this._serviceContainer = serviceContainer;
         }
 
-        public void CheckString(FieldInfo fieldInfo, string val)
+        public void CheckString(Field fieldInfo, string val)
         {
             if (val == null)
                 return;
@@ -39,7 +40,7 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        public void CheckRange(FieldInfo fieldInfo, string val)
+        public void CheckRange(Field fieldInfo, string val)
         {
             if (val == null)
                 return;
@@ -91,7 +92,7 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        public void CheckValue(FieldInfo fieldInfo, string val)
+        public void CheckValue(Field fieldInfo, string val)
         {
             if (val == null && !fieldInfo.isNullable)
             {
