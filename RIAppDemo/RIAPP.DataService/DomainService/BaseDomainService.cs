@@ -1222,7 +1222,7 @@ namespace RIAPP.DataService
         public QueryResponse ServiceGetData(QueryRequest request)
         {
             QueryResponse res = null;
-            this.RequestState.CurrentOperation = ServiceOperationType.GetData;
+            this.RequestState.CurrentOperation = ServiceOperationType.Query;
             try
             {
                 res = this.PerformQuery(request);
@@ -1274,7 +1274,7 @@ namespace RIAPP.DataService
         public RefreshRowInfo ServiceRefreshRow(RefreshRowInfo rowInfo)
         {
             RefreshRowInfo res = null;
-            this.RequestState.CurrentOperation = ServiceOperationType.RefreshRowData;
+            this.RequestState.CurrentOperation = ServiceOperationType.RowRefresh;
             try
             {
                 res = this.RefreshRowInfo(rowInfo);

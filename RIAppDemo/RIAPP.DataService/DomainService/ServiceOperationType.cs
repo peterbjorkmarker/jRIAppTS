@@ -8,9 +8,9 @@ namespace RIAPP.DataService
     public enum ServiceOperationType
     {
         None,
-        GetData,
+        Query,
         SaveChanges,
-        RefreshRowData,
+        RowRefresh,
         InvokeMethod
     }
 }
