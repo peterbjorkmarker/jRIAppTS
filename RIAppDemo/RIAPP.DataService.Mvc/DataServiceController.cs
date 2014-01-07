@@ -15,8 +15,7 @@ namespace RIAPP.DataService.Mvc
          where T : BaseDomainService
     {
         private ISerializer _serializer;
-        private const string JSonContentType = @"application/json";
-
+        
         #region PRIVATE METHODS
         private ActionResult _GetTypeScript()
         {
@@ -102,17 +101,16 @@ namespace RIAPP.DataService.Mvc
                 return this._GetTypeScript();
         }
 
-        [HttpPost]
         public ActionResult GetPermissions()
         {
             var res = this.DomainService.ServiceGetPermissions();
-            return Content(this.Serializer.Serialize(res), JSonContentType);
+            return Json(res, JsonRequestBehavior.AllowGet);
         }
 
         public ActionResult GetMetadata()
         {
             var res = this.DomainService.ServiceGetMetadata();
-            return Content(this.Serializer.Serialize(res), JSonContentType);
+            return Json(res, JsonRequestBehavior.AllowGet);
         }
 
         [HttpPost]
@@ -125,21 +123,21 @@ namespace RIAPP.DataService.Mvc
         public ActionResult SaveChanges(ChangeSet changeSet)
         {
             var res = this.DomainService.ServiceApplyChangeSet(changeSet);
-            return Content(this.Serializer.Serialize(res), JSonContentType);
+            return Json(res);
         }
 
         [HttpPost]
         public ActionResult RefreshItem(RefreshInfo refreshInfo)
         {
             var res = this.DomainService.ServiceRefreshRow(refreshInfo);
-            return Content(this.Serializer.Serialize(res), JSonContentType);
+            return Json(res);
         }
 
         [HttpPost]
         public ActionResult InvokeMethod(InvokeRequest invokeInfo)
         {
             var res = this.DomainService.ServiceInvokeMethod(invokeInfo);
-            return Content(this.Serializer.Serialize(res), JSonContentType);
+            return Json(res);
         }
 
         protected IDomainService DomainService
