@@ -190,7 +190,7 @@
             <th data-column="width:15%,title=CategoryID,sortable:true,sortMemberName=ProductCategoryID" data-content= "fieldName=ProductCategoryID,name:lookup,options:{dataSource=dbContext.dbSets.ProductCategory,valuePath=ProductCategoryID,textPath=Name},readOnly:true"></th>
             <th data-column="width:100px,sortable:true,title='SellStartDate'" data-content="fieldName=SellStartDate,readOnly:true"></th>
             <th data-column="width:100px,sortable:true,title='SellEndDate'" data-content="fieldName=SellEndDate,readOnly:true"></th>
-            <th data-column="width:90px,sortable:true,title='IsActive'" data-content="fieldName=IsActive,readOnly:true"></th>
+            <th data-column="width:90px,sortable:true,title='IsActive',sortMemberName=SellEndDate" data-content="fieldName=IsActive,readOnly:true"></th>
             <th data-column="width:10%,title=Size,sortable:true,sortMemberName=Size" data-content="template={displayID=sizeDisplayTemplate}"></th>
         </tr>
         </thead>
