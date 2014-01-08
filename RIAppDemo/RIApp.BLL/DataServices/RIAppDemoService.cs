@@ -61,8 +61,8 @@ namespace RIAppDemo.BLL.DataServices
                 el.Name = data.GetName(el.Name.LocalName);
                 if (el.Name.LocalName == "Metadata")
                 {
-                    List<XAttribute> atList = el.Attributes().ToList();
-                    el.Attributes().Remove();
+                    List<XAttribute> atList = el.Attributes().Where((e)=> e.IsNamespaceDeclaration && e.Name.LocalName == "xmlns").ToList();
+                    atList.ForEach((attr) => { el.Attributes(attr.Name).Remove(); });
                 }
                 else if (el.Name.LocalName == "DbSetInfo")
                 {
