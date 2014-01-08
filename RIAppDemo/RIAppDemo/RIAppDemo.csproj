@@ -121,9 +121,9 @@
     <Compile Include="Utils\UrlHelperEx.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="App_Start\FilterConfig.cs" />
-    <Compile Include="App_Start\RouteConfig.cs" />
-    <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="obj\App_Start\FilterConfig.cs" />
+    <Compile Include="obj\App_Start\RouteConfig.cs" />
+    <Compile Include="obj\App_Start\WebApiConfig.cs" />
     <Content Include="Content\images\Misc\note.png" />
     <Content Include="Content\images\Misc\phone.png" />
     <Content Include="Content\images\Themes\blue.png" />

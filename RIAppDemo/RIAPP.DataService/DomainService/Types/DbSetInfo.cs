@@ -12,43 +12,6 @@ namespace RIAPP.DataService.Types
     [DataContract]
     public class DbSetInfo
     {
-       
-        #region EqualityComparers
-        private class FieldPKEqualityComparer : IEqualityComparer<Field>
-        {
-            #region IEqualityComparer<FieldInfo> Members
-
-            public bool Equals(Field x, Field y)
-            {
-                return x.isPrimaryKey == y.isPrimaryKey;
-            }
-
-            public int GetHashCode(Field obj)
-            {
-                return obj.fieldName.GetHashCode();
-            }
-
-            #endregion
-        }
-
-        private class FieldNameEqualityComparer : IEqualityComparer<Field>
-        {
-            #region IEqualityComparer<FieldInfo> Members
-
-            public bool Equals(Field x, Field y)
-            {
-                return string.Compare(x.fieldName, y.fieldName, StringComparison.CurrentCultureIgnoreCase) == 0;
-            }
-
-            public int GetHashCode(Field obj)
-            {
-                return obj.fieldName.GetHashCode();
-            }
-
-            #endregion
-        }
-        #endregion
-
         private Lazy<Field[]> _inResultFields;
         private Lazy<Field[]> _pkFields;
         private Lazy<Field> _timestampField;
@@ -97,9 +60,6 @@ namespace RIAPP.DataService.Types
             set;
         }
 
-        /// <summary>
-        /// DbSet name- any unique name to reference this DbSet from code
-        /// </summary>
         [DataMember]
         public string dbSetName
         {

@@ -11,34 +11,23 @@ namespace RIAPP.DataService.Mvc
     /// </summary>
     public class Serializer : ISerializer
     {
-        private Lazy<System.Web.Script.Serialization.JavaScriptSerializer> _serializer;
-
         public Serializer()
         {
-            this._serializer = new Lazy<System.Web.Script.Serialization.JavaScriptSerializer>(() => new System.Web.Script.Serialization.JavaScriptSerializer(), true);
         }
 
-        string ISerializer.Serialize(object obj)
+        public string Serialize(object obj)
         {
-            return this.serializer.Serialize(obj);
+            return Newtonsoft.Json.JsonConvert.SerializeObject(obj);
         }
 
-        object ISerializer.DeSerialize(string input, Type targetType)
+        public object DeSerialize(string input, Type targetType)
         {
-            return this.serializer.Deserialize(input, targetType);
+            return Newtonsoft.Json.JsonConvert.DeserializeObject(input, targetType);
         }
 
-        object ISerializer.DeserializeObject(string input)
+        public object DeserializeObject(string input)
         {
-            return this.serializer.DeserializeObject(input);
-        }
-
-        internal System.Web.Script.Serialization.JavaScriptSerializer serializer
-        {
-            get
-            {
-                return this._serializer.Value;
-            }
+            return Newtonsoft.Json.JsonConvert.DeserializeObject(input);
         }
     }
 

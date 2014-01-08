@@ -114,27 +114,27 @@ namespace RIAPP.DataService.Mvc
         }
 
         [HttpPost]
-        public ActionResult GetItems(QueryRequest request)
+        public ActionResult GetItems([SericeParamsBinder] QueryRequest request)
         {
             return new IncrementalResult(this.DomainService.ServiceGetData(request), this.Serializer);
         }
 
         [HttpPost]
-        public ActionResult SaveChanges(ChangeSet changeSet)
+        public ActionResult SaveChanges([SericeParamsBinder] ChangeSet changeSet)
         {
             var res = this.DomainService.ServiceApplyChangeSet(changeSet);
             return Json(res);
         }
 
         [HttpPost]
-        public ActionResult RefreshItem(RefreshInfo refreshInfo)
+        public ActionResult RefreshItem([SericeParamsBinder] RefreshInfo refreshInfo)
         {
             var res = this.DomainService.ServiceRefreshRow(refreshInfo);
             return Json(res);
         }
 
         [HttpPost]
-        public ActionResult InvokeMethod(InvokeRequest invokeInfo)
+        public ActionResult InvokeMethod([SericeParamsBinder] InvokeRequest invokeInfo)
         {
             var res = this.DomainService.ServiceInvokeMethod(invokeInfo);
             return Json(res);

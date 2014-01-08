@@ -1219,21 +1219,21 @@ namespace RIAPP.DataService
             }
         }
 
-        public QueryResponse ServiceGetData(QueryRequest request)
+        public QueryResponse ServiceGetData(QueryRequest queryRequest)
         {
             QueryResponse res = null;
             this.RequestState.CurrentOperation = ServiceOperationType.Query;
             try
             {
-                res = this.PerformQuery(request);
+                res = this.PerformQuery(queryRequest);
             }
             catch (Exception ex)
             {
                 while (ex.InnerException != null)
                     ex = ex.InnerException;
-                res = new QueryResponse() { pageIndex = request.pageIndex, pageCount = request.pageCount,
+                res = new QueryResponse() { pageIndex = queryRequest.pageIndex, pageCount = queryRequest.pageCount,
                     rows = new Row[0], 
-                    dbSetName = request.dbSetName, totalCount = null, error = new ErrorInfo(ex.Message, ex.GetType().Name) };
+                    dbSetName = queryRequest.dbSetName, totalCount = null, error = new ErrorInfo(ex.Message, ex.GetType().Name) };
                 this.OnError(ex);
             }
             finally
