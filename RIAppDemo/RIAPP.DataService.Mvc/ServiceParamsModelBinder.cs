@@ -23,48 +23,13 @@ namespace RIAPP.DataService.Mvc
                     var bytes = new byte[controllerContext.HttpContext.Request.ContentLength];
                     controllerContext.HttpContext.Request.InputStream.Position = 0;
                     controllerContext.HttpContext.Request.InputStream.Read(bytes, 0, bytes.Length);
-                    var json = System.Text.Encoding.UTF8.GetString(bytes);
+                    string body = controllerContext.HttpContext.Request.ContentEncoding.GetString(bytes);
                     var serializer = new Serializer();
-                    return serializer.DeSerialize(json, bindingContext.ModelType);
-                        
+                    return serializer.DeSerialize(body, bindingContext.ModelType);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    if (bindingContext.ModelType == typeof(QueryRequest))
-                    {
-                        return new QueryResponse()
-                        {
-                            pageIndex = 0,
-                            pageCount = 0,
-                            rows = new Row[0],
-                            dbSetName = null,
-                            totalCount = null,
-                            error = new ErrorInfo(ex.Message, ex.GetType().Name)
-                        };
-                    }
-                    else if (bindingContext.ModelType == typeof(ChangeSet))
-                    {
-                        return new ChangeSet()
-                        {
-                            error = new ErrorInfo(ex.Message, ex.GetType().Name)
-                        };
-                    }
-                    else if (bindingContext.ModelType == typeof(RefreshInfo))
-                    {
-                        return new RefreshInfo()
-                        {
-                            error = new ErrorInfo(ex.Message, ex.GetType().Name)
-                        };
-                    }
-                    else if (bindingContext.ModelType == typeof(InvokeRequest))
-                    {
-                        return new InvokeResponse()
-                        {
-                            error = new ErrorInfo(ex.Message, ex.GetType().Name)
-                        };
-                    }
-                    else
-                        return null;
+                    return null;
                 }
             }
         }

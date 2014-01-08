@@ -43,10 +43,10 @@ namespace RIAppDemo.BLL.DataServices
         }
 
         /// <summary>
-        /// this METHOD should be commented, in release version!
-        /// this is a helper method which can be used to create metadata xaml from data.linq entities
-        /// this xaml can be later pasted as metadata in the user control
-        /// and of course it needs to be corrected, but it is faster than to type all this from the start in code editor
+        /// this is a helper method which can be used to create xaml metadata from the data.linq entities
+        /// this xaml can be later copied and pasted as metadata in the WPF user control
+        /// this XAML is a raw version and it is needed to be corrected,
+        /// but it is faster than to type all this XAML from the start in the code editor
         /// </summary>
         protected override string GetXAML()
         {
