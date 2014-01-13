@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DomainService\Interfaces\IServiceContainer.cs" />
+    <Compile Include="DomainService\Types\SubResult.cs" />
     <Compile Include="DomainService\Types\FieldName.cs" />
     <Compile Include="DomainService\Types\IncludedResult.cs" />
     <Compile Include="DomainService\Types\ParamMetadata.cs" />

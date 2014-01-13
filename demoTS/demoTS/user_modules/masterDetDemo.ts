@@ -163,8 +163,6 @@ module RIAPP
             load() {
                 var query = this._dbSet.createReadCustomerQuery({ includeNav: true });
                 query.pageSize = 50;
-                //load ten pages at once -- 500 rows
-                query.loadPageCount = 10; 
                 //load without filtering
                 query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
                 return query.load();

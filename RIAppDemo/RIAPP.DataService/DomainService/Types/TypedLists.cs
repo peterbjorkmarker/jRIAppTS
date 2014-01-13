@@ -45,6 +45,14 @@ namespace RIAPP.DataService.Types
     {
     }
 
+    public class SubResultList : List<SubResult>
+    {
+    }
+
+    public class IncludedResultList : List<IncludedResult>
+    {
+    }
+
     public class AssociationsDictionary : Dictionary<string, Association>
     {
         public AssociationsDictionary()

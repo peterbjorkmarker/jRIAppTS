@@ -8,7 +8,10 @@ namespace RIAPP.DataService.Types
 {
     public class QueryResult
     {
+        private Lazy<SubResultList> _subResults;
+
         public QueryResult() {
+            this._subResults = new Lazy<SubResultList>(()=>new SubResultList());
         }
         
         public int? TotalCount
@@ -38,6 +41,14 @@ namespace RIAPP.DataService.Types
         {
             get;
             set;
+        }
+
+        public SubResultList subResults
+        {
+            get
+            {
+                return this._subResults.Value;
+            }
         }
     }
 

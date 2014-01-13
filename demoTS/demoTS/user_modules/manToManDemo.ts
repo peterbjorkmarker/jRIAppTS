@@ -319,6 +319,7 @@ module RIAPP
                 });
 
                 var query = this._custAdressDb.createReadAddressForCustomersQuery({ custIDs: custIDs });
+                query.isClearPrevData = true;
                 var promise = query.load();
 
                 //if we did not included details when we had loaded customers

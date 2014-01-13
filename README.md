@@ -100,6 +100,7 @@ P.S. The docs to be updated soon. This version will be probably a RC version.<br
 <p>2014-01-06 Code refactoring. Code generation changes. Demo update.</p>
 <p>2014-01-07 DataService's code refactoring. Types and namespaces renaming. Performance improvements.</p>
 <p>2014-01-08 Added a specific Model Binder for dataservice's method arguments. The serializer was changed to NewtonSoft's serializer. Performance of AJAX requests was improved by an order of magnitude.</p>
+<p>2014-01-13 Added capabilities to add explicit additional dataset results to the main query result.</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 

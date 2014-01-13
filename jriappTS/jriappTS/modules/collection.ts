@@ -499,7 +499,8 @@ module RIAPP {
                         range: null,
                         regex: null,
                         nested: null,
-                        dependentOn: null
+                        dependentOn: null,
+                        fullName: null
                     };
                     return fieldInfo;
                 }

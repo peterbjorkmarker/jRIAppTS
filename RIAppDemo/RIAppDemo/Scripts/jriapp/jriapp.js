@@ -5984,7 +5984,8 @@ var RIAPP;
                         range: null,
                         regex: null,
                         nested: null,
-                        dependentOn: null
+                        dependentOn: null,
+                        fullName: null
                     };
                     return fieldInfo;
                 };
@@ -9626,6 +9627,8 @@ var RIAPP;
                     return res;
                 };
                 Entity.prototype._getFieldVal = function (fieldName) {
+                    if (this._isDestroyCalled)
+                        return null;
                     return baseUtils.getValue(this._vals, fieldName);
                 };
                 Entity.prototype._setFieldVal = function (fieldName, val) {
@@ -9662,10 +9665,15 @@ var RIAPP;
                     return res;
                 };
                 Entity.prototype._getCalcFieldVal = function (fieldName) {
+                    if (this._isDestroyCalled)
+                        return null;
                     var dbSet = this._dbSet;
                     return baseUtils.getValue(dbSet._calcfldMap, fieldName).getFunc.call(this);
                 };
                 Entity.prototype._getNavFieldVal = function (fieldName) {
+                    if (this._isDestroyCalled) {
+                        return null;
+                    }
                     var dbSet = this._dbSet;
                     return baseUtils.getValue(dbSet._navfldMap, fieldName).getFunc.call(this);
                 };

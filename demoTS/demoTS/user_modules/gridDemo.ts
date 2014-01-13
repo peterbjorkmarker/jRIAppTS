@@ -205,6 +205,7 @@ module RIAPP
             _loadCommand: MOD.mvvm.ICommand;
             _propChangeCommand: MOD.mvvm.ICommand;
             _dialogVM: COMMON.DialogVM;
+            _vwSalesOrderDet: RIAPP.MOD.db.ChildDataView<DEMODB.SalesOrderDetail>;
 
             constructor(app: DemoApplication) {
                 super(app);
@@ -218,6 +219,15 @@ module RIAPP
                 this._invokeResult = null;
                 //this._templateID = 'productEditTemplate';
 
+                var sodAssoc = self.dbContext.associations.getOrdDetailsToProduct();
+
+                //the view to filter DEMODB.SalesOrderDetails related to the current product only
+                this._vwSalesOrderDet = new MOD.db.ChildDataView<DEMODB.SalesOrderDetail>(
+                    {
+                        association: sodAssoc,
+                        fn_sort: function (a, b) { return a.SalesOrderDetailID - b.SalesOrderDetailID; }
+                    });
+
                 //when currentItem property changes, invoke our viewmodel's method
                 this._dbSet.addOnPropertyChange('currentItem', function (sender, data) {
                     self._onCurrentChanged();
@@ -227,6 +237,10 @@ module RIAPP
                 this._dbSet.addOnItemDeleting(function (sender, args) {
                     if (!confirm('Are you sure that you want to delete ' + args.item.Name + ' ?'))
                         args.isCancel = true;
+                }, self.uniqueID);
+
+                this._dbSet.addOnCleared((sender, args) => {
+                    this.dbContext.dbSets.SalesOrderDetail.clear();
                 }, self.uniqueID);
 
                 //the end edit event- the entity potentially changed its data. we can recheck conditions based on
@@ -376,8 +390,7 @@ module RIAPP
                 this._productSelected(row.item, row.isSelected);
             }
             _onGridRowExpanded(oldRow: MOD.datagrid.Row, row: MOD.datagrid.Row, isExpanded:boolean) {
-                //just for example
-                //we could retrieve additional data from the server when grid's row is expanded
+                this._vwSalesOrderDet.parentItem = this.currentItem;
             }
             _onCurrentChanged() {
                 this.raisePropertyChanged('currentItem');
@@ -411,7 +424,7 @@ module RIAPP
                 //the query'service method can accept additional parameters which you can supply with query
                 var query = this.dbSet.createReadProductQuery({ param1: [10, 11, 12, 13, 14], param2: 'Test' });
                 query.pageSize = 50;
-                query.loadPageCount = 20; //load 20 pages at once (but only one will be visible, the others will be in the local cache)
+                query.loadPageCount = 1;
                 query.isClearCacheOnEveryLoad = true; //clear the local cache when a new batch of data is loaded from the server
                 addTextQuery(query, 'ProductNumber', this._filter.prodNumber);
                 addTextQuery(query, 'Name', this._filter.name);
@@ -477,6 +490,7 @@ module RIAPP
                     this.raisePropertyChanged('invokeResult');
                 }
             }
+            get vwSalesOrderDet() { return this._vwSalesOrderDet; }
         }
 
         export class BaseUploadVM extends BaseObject {

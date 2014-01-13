@@ -268,6 +268,31 @@ namespace RIAPP.DataService
             return visited.Values;
         }
 
+        protected IncludedResultList CreateIncludedResults(IEnumerable<SubResult> subResults)
+        {
+            IncludedResultList result = new IncludedResultList();
+            if (subResults == null)
+                return result;
+            var metadata = this.EnsureMetadataInitialized();
+            int rowCount = 0;
+            foreach (SubResult subResult in subResults)
+            {
+                var dbSetInfo = metadata.dbSets[subResult.dbSetName];
+                if (result.Any(r => r.dbSetName == subResult.dbSetName))
+                    throw new DomainServiceException(string.Format("The included results already have {0} entities", dbSetInfo.dbSetName));
+                LinkedList<object> entityList = new LinkedList<object>();
+                foreach (object entity in subResult.Result)
+                {
+                    entityList.AddLast(entity);
+                    ++rowCount;
+                }
+                IncludedResult current = new IncludedResult { dbSetName = dbSetInfo.dbSetName, rows = this.CreateDistinctRows(dbSetInfo, entityList, ref rowCount), names = this.GetNames(dbSetInfo) };
+                current.rowCount = rowCount;
+                result.Add(current);
+            }
+            return result;
+        }
+
         private void CreateIncludedResult(DbSetInfo dbSetInfo, IEnumerable<object> inputEntities, string propertyName, string[] nextParts, Dictionary<string, IncludedResult> visited)
         {
             var metadata = this.EnsureMetadataInitialized();
@@ -932,7 +957,16 @@ namespace RIAPP.DataService
                 ++rowCnt;
             }
             var rows = this.CreateRows(queryInfo.dbSetInfo, entityList, rowCnt);
-            IEnumerable<IncludedResult> subResults = this.CreateIncludedResults(queryInfo.dbSetInfo, entityList, queryResult.includeNavigations);
+            IEnumerable<IncludedResult> subResults1 = this.CreateIncludedResults(queryInfo.dbSetInfo, entityList, queryResult.includeNavigations);
+            IncludedResultList subResults2 = this.CreateIncludedResults(queryResult.subResults);
+
+            var subResults = subResults1.Aggregate(subResults2, (lst, subRes) =>
+            {
+                if (lst.Any(r => r.dbSetName == subRes.dbSetName))
+                    throw new DomainServiceException(string.Format("The included results already have {0} entities", subRes.dbSetName));
+                lst.Add(subRes);
+                return lst;
+            });
 
             QueryResponse res = new QueryResponse()
             {

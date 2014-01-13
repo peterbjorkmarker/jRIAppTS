@@ -293,7 +293,7 @@ module RIAPP
                 this._custAdressView = new MOD.db.ChildDataView<DEMODB.CustomerAddress>(
                     {
                         association: custAssoc,
-                        fn_sort: function (a: DEMODB.CustomerAddress, b: DEMODB.CustomerAddress) { return a.AddressID - b.AddressID; }
+                        fn_sort: function (a, b) { return a.AddressID - b.AddressID; }
                     });
 
                 this._ordersVM = new OrderVM(this);
@@ -322,8 +322,6 @@ module RIAPP
             load() {
                 var query = this._dbSet.createReadCustomerQuery({ includeNav: true });
                 query.pageSize = 50;
-                //load ten pages at once -- 500 rows
-                query.loadPageCount = 10;
                 //load without filtering
                 query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
                 return this.dbContext.load(query);

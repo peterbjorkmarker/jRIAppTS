@@ -98,8 +98,13 @@ namespace RIAppDemo.BLL.DataServices
         public QueryResult<Product> ReadProduct(int[] param1, string param2)
         {
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.Products,this.CurrentQueryInfo, ref totalCount).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(this.DB.Products,this.CurrentQueryInfo, ref totalCount).ToArray();
+            var productIDs = res.Select(p => p.ProductID).Distinct().ToArray();
+
             var queryResult = new QueryResult<Product>(res, totalCount);
+            //include related SalesOrderDetails with the products in the same query result
+            queryResult.subResults.Add(new SubResult() { dbSetName = "SalesOrderDetail", Result = this.DB.SalesOrderDetails.Where(sod => productIDs.Contains(sod.ProductID)) });
+
             //example of returning out of band information and use it on the client (of it can be more useful than it)
             queryResult.extraInfo = new { test = "ReadProduct Extra Info: " + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") };
             return queryResult;
@@ -171,13 +176,13 @@ namespace RIAppDemo.BLL.DataServices
                 //we can conditionally include entity hierarchy into results
                 //making the path navigations decisions on the server enhances security
                 //we can not trust clients to define navigation's expansions because it can influence the server performance
-                //and is not good from security's standpoint
+                //and is not good from the security considerations
                 includeHierarchy = new string[] { "CustomerAddresses.Address" };
             }
 
             int? totalCount = null;
             var res = this.QueryHelper.PerformQuery(this.DB.Customers, this.CurrentQueryInfo, ref totalCount).AsEnumerable();
-            return new QueryResult<Customer>(res, totalCount, includeHierarchy);
+            return new QueryResult<Customer>(result: res, totalCount: totalCount, includeNavigations: includeHierarchy);
         }
 
         [Authorize(Roles = new string[] { ADMINS_ROLE })]

@@ -310,6 +310,7 @@ var RIAPP;
         var ProductViewModel = (function (_super) {
             __extends(ProductViewModel, _super);
             function ProductViewModel(app) {
+                var _this = this;
                 _super.call(this, app);
                 var self = this;
                 this._filter = new ProductsFilter(app);
@@ -321,6 +322,16 @@ var RIAPP;
                 this._invokeResult = null;
 
                 //this._templateID = 'productEditTemplate';
+                var sodAssoc = self.dbContext.associations.getOrdDetailsToProduct();
+
+                //the view to filter DEMODB.SalesOrderDetails related to the current product only
+                this._vwSalesOrderDet = new RIAPP.MOD.db.ChildDataView({
+                    association: sodAssoc,
+                    fn_sort: function (a, b) {
+                        return a.SalesOrderDetailID - b.SalesOrderDetailID;
+                    }
+                });
+
                 //when currentItem property changes, invoke our viewmodel's method
                 this._dbSet.addOnPropertyChange('currentItem', function (sender, data) {
                     self._onCurrentChanged();
@@ -330,6 +341,10 @@ var RIAPP;
                 this._dbSet.addOnItemDeleting(function (sender, args) {
                     if (!confirm('Are you sure that you want to delete ' + args.item.Name + ' ?'))
                         args.isCancel = true;
+                }, self.uniqueID);
+
+                this._dbSet.addOnCleared(function (sender, args) {
+                    _this.dbContext.dbSets.SalesOrderDetail.clear();
                 }, self.uniqueID);
 
                 //the end edit event- the entity potentially changed its data. we can recheck conditions based on
@@ -475,8 +490,7 @@ var RIAPP;
                 this._productSelected(row.item, row.isSelected);
             };
             ProductViewModel.prototype._onGridRowExpanded = function (oldRow, row, isExpanded) {
-                //just for example
-                //we could retrieve additional data from the server when grid's row is expanded
+                this._vwSalesOrderDet.parentItem = this.currentItem;
             };
             ProductViewModel.prototype._onCurrentChanged = function () {
                 this.raisePropertyChanged('currentItem');
@@ -510,7 +524,7 @@ var RIAPP;
                 //the query'service method can accept additional parameters which you can supply with query
                 var query = this.dbSet.createReadProductQuery({ param1: [10, 11, 12, 13, 14], param2: 'Test' });
                 query.pageSize = 50;
-                query.loadPageCount = 20; //load 20 pages at once (but only one will be visible, the others will be in the local cache)
+                query.loadPageCount = 1;
                 query.isClearCacheOnEveryLoad = true; //clear the local cache when a new batch of data is loaded from the server
                 addTextQuery(query, 'ProductNumber', this._filter.prodNumber);
                 addTextQuery(query, 'Name', this._filter.name);
@@ -656,6 +670,13 @@ var RIAPP;
                         this._invokeResult = v;
                         this.raisePropertyChanged('invokeResult');
                     }
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ProductViewModel.prototype, "vwSalesOrderDet", {
+                get: function () {
+                    return this._vwSalesOrderDet;
                 },
                 enumerable: true,
                 configurable: true

@@ -929,6 +929,8 @@ module RIAPP {
                     return res;
                 }
                 _getFieldVal(fieldName: string) {
+                    if (this._isDestroyCalled)
+                        return null;
                     return baseUtils.getValue(this._vals,fieldName);
                 }
                 _setFieldVal(fieldName: string, val):boolean {
@@ -967,10 +969,15 @@ module RIAPP {
                     return res;
                 }
                 _getCalcFieldVal(fieldName: string) {
+                    if (this._isDestroyCalled)
+                        return null;
                     var dbSet = this._dbSet
                     return baseUtils.getValue(dbSet._calcfldMap, fieldName).getFunc.call(this);
                 }
                 _getNavFieldVal(fieldName: string) {
+                    if (this._isDestroyCalled) {
+                        return null;
+                    }
                     var dbSet = this._dbSet
                     return baseUtils.getValue(dbSet._navfldMap, fieldName).getFunc.call(this);
                 }
