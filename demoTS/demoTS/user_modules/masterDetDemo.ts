@@ -55,8 +55,8 @@ module RIAPP
 
                 this._dbSet.addOnItemAdded((s, args) => {
                     args.item.NameStyle = false;
-                    args.item.ComplexProp.LastName = "Dummy1";
-                    args.item.ComplexProp.FirstName = "Dummy2";
+                    args.item.ComplexProp.LastName = "DummyLastName";
+                    args.item.ComplexProp.FirstName = "DummyFirstName";
                 });
 
                 //adds new customer - uses dialog to enter the data
@@ -163,7 +163,6 @@ module RIAPP
             load() {
                 var query = this._dbSet.createReadCustomerQuery({ includeNav: true });
                 query.pageSize = 50;
-                //load without filtering
                 query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
                 return query.load();
             }

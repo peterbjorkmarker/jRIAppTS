@@ -41,7 +41,6 @@ var RIAPP;
             function CustomerVM(app) {
                 _super.call(this, app);
                 var self = this;
-                this._includeDetailsOnLoad = false;
                 this._dbSet = this.dbSets.Customer;
                 this._dbSet.isSubmitOnDelete = true;
 
@@ -69,8 +68,8 @@ var RIAPP;
 
                 this._dbSet.addOnItemAdded(function (s, args) {
                     args.item.NameStyle = false;
-                    args.item.ComplexProp.LastName = "Dummy1";
-                    args.item.ComplexProp.FirstName = "Dummy2";
+                    args.item.ComplexProp.LastName = "DummyLastName";
+                    args.item.ComplexProp.FirstName = "DummyFirstName";
                 });
 
                 //initialize new item with default values
@@ -124,16 +123,14 @@ var RIAPP;
                 this.raisePropertyChanged('currentItem');
             };
             CustomerVM.prototype.load = function () {
-                var query = this.dbSet.createReadCustomerQuery({ includeNav: this.includeDetailsOnLoad });
+                var query = this.dbSet.createReadCustomerQuery({ includeNav: false });
                 query.pageSize = 50;
 
-                //when loadPageCount > 1 the we preloading several pages at once
-                //when moving to the next page, the data is retrived from local cache
-                //when we include details in load we can use default 1 value
-                //in other cases we can use value more than 1 (here we load 5 pages at once)
-                query.loadPageCount = this.includeDetailsOnLoad ? 1 : 5;
+                //when loadPageCount > 1 the we are loading several pages at once
+                //when moving to the next page, the data is retrived from the local cache
+                query.loadPageCount = 10;
 
-                //we clear previous cache date for every loading data from the server
+                //we clear the previous cached data for each loading data from the server
                 query.isClearCacheOnEveryLoad = true;
                 query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
                 return query.load();
@@ -230,22 +227,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
-            Object.defineProperty(CustomerVM.prototype, "includeDetailsOnLoad", {
-                //if it's true, then when loading, a customer entity, it also loads related CustomerAddress and Address entities
-                //when it's false then we load those entities separately, using our own load methods
-                get: function () {
-                    return this._includeDetailsOnLoad;
-                },
-                set: function (v) {
-                    if (v !== this._includeDetailsOnLoad) {
-                        this._includeDetailsOnLoad = v;
-                        this.raisePropertyChanged('includeDetailsOnLoad');
-                    }
-                },
-                enumerable: true,
-                configurable: true
-            });
             return CustomerVM;
         })(RIAPP.MOD.mvvm.BaseViewModel);
         MTMDEMO.CustomerVM = CustomerVM;
@@ -296,11 +277,7 @@ var RIAPP;
                 this._customerVM.dbSet.addOnFill(function (sender, args) {
                     if (args.isBegin)
                         return;
-
-                    //if details are not included with customers entities when they are loaded
-                    //then load addresses related to the customers separately
-                    if (!self._customerVM.includeDetailsOnLoad)
-                        self.load(args.fetchedItems);
+                    self.load(args.fetchedItems);
                 }, self.uniqueID);
 
                 var custAssoc = self.dbContext.associations.getCustAddrToCustomer();
@@ -381,8 +358,6 @@ var RIAPP;
             };
             CustomerAddressVM.prototype.load = function (customers) {
                 var self = this, custArr = customers || [];
-
-                //customerIDs for all loaded customers entities (for current page only, not which in cache if query.loadPageCount>1)
                 var custIDs = custArr.map(function (item) {
                     return item.CustomerID;
                 });
@@ -391,19 +366,15 @@ var RIAPP;
                 query.isClearPrevData = true;
                 var promise = query.load();
 
-                //if we did not included details when we had loaded customers
-                //then load them now
-                if (!this._customerVM.includeDetailsOnLoad) {
-                    //load related addresses based on what customerAddress items just loaded
-                    promise.done(function (res) {
-                        var addressIDs = res.fetchedItems.map(function (item) {
-                            return item.AddressID;
-                        });
-
-                        //load new addresses and clear all previous addresses
-                        self._loadAddresses(addressIDs, true);
+                //load related addresses based on what customerAddress items just loaded
+                promise.done(function (res) {
+                    var addressIDs = res.fetchedItems.map(function (item) {
+                        return item.AddressID;
                     });
-                }
+
+                    //load new addresses and clear all previous addresses
+                    self._loadAddresses(addressIDs, true);
+                });
             };
             CustomerAddressVM.prototype.destroy = function () {
                 if (this._isDestroyed)
@@ -959,6 +930,7 @@ var RIAPP;
                 this._customerVM.load();
             };
             DemoApplication.prototype._handleError = function (sender, data) {
+                debugger;
                 data.isHandled = true;
                 this.errorVM.error = data.error;
                 this.errorVM.showDialog();

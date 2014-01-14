@@ -84,11 +84,11 @@ var RIAPP;
                 var query = this.ProductCategories.createReadProductCategoryQuery();
                 query.orderBy('Name');
 
-                //returns promise
+                //returns a promise
                 return query.load();
             };
 
-            //returns promise
+            //returns a promise
             ProductsFilter.prototype._loadProductModels = function () {
                 var query = this.ProductModels.createReadProductModelQuery();
                 query.orderBy('Name');
@@ -97,9 +97,9 @@ var RIAPP;
                 return query.load();
             };
 
-            //returns promise
+            //returns a promise
             ProductsFilter.prototype.load = function () {
-                //load two dbsets simultanously
+                //load two dbsets simultaneously
                 var promise1 = this._loadCategories(), promise2 = this._loadProductModels();
                 return global.$.when(promise1, promise2);
             };
@@ -356,16 +356,18 @@ var RIAPP;
                     }
                 }, self.uniqueID);
 
+                this._dbSet.addOnFill(function (s, args) {
+                    if (!args.isBegin) {
+                        //restore selected items in the datagrid on the currently loaded page
+                        //but first let the datagrid to fill the rows (update after timeout!)
+                        setTimeout(function () {
+                            self._updateSelection();
+                        }, 100);
+                    }
+                });
+
                 //auto submit changes when an entity is deleted
                 this._dbSet.isSubmitOnDelete = true;
-
-                this._dbSet.addOnFill(function (s, a) {
-                    //when fill is ended
-                    if (!a.isBegin) {
-                        if (!a.isPageChanged)
-                            self._clearSelection();
-                    }
-                }, self.uniqueID);
 
                 //example of using custom validation on client (in addition to a built-in validation)
                 this._dbSet.addOnValidate(function (sender, args) {
@@ -475,16 +477,6 @@ var RIAPP;
                 this._dialogVM.createDialog('testDialog', dialogOptions);
             }
             ProductViewModel.prototype._onGridPageChanged = function () {
-                //when moving to any page, select rows which was previously selected on that page (restore selection)
-                var self = this, keys = self.selectedIDs, grid = self._dataGrid;
-                keys.forEach(function (key) {
-                    var item = self.dbSet.getItemByKey(key), row;
-                    if (!!item) {
-                        row = grid.findRowByItem(item);
-                        if (!!row)
-                            row.isSelected = true;
-                    }
-                });
             };
             ProductViewModel.prototype._onGridRowSelected = function (row) {
                 this._productSelected(row.item, row.isSelected);
@@ -494,6 +486,17 @@ var RIAPP;
             };
             ProductViewModel.prototype._onCurrentChanged = function () {
                 this.raisePropertyChanged('currentItem');
+            };
+            ProductViewModel.prototype._updateSelection = function () {
+                var self = this, keys = self.selectedIDs, grid = self._dataGrid;
+                keys.forEach(function (key) {
+                    var item = self.dbSet.getItemByKey(key);
+                    if (!!item) {
+                        var row = grid.findRowByItem(item);
+                        if (!!row)
+                            row.isSelected = true;
+                    }
+                });
             };
             ProductViewModel.prototype._clearSelection = function () {
                 //clear all selection
@@ -519,13 +522,14 @@ var RIAPP;
                 }
             };
             ProductViewModel.prototype.load = function () {
+                //clear selected items
+                this._clearSelection();
+
                 //you can create several methods on the service which return the same entity type
                 //but they must have different names (no overloads)
-                //the query'service method can accept additional parameters which you can supply with query
+                //the query'service method can accept additional parameters which you can supply with the query
                 var query = this.dbSet.createReadProductQuery({ param1: [10, 11, 12, 13, 14], param2: 'Test' });
                 query.pageSize = 50;
-                query.loadPageCount = 1;
-                query.isClearCacheOnEveryLoad = true; //clear the local cache when a new batch of data is loaded from the server
                 addTextQuery(query, 'ProductNumber', this._filter.prodNumber);
                 addTextQuery(query, 'Name', this._filter.name);
                 if (!utils.check.isNt(this._filter.childCategoryID)) {

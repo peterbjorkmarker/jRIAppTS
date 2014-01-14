@@ -32,7 +32,6 @@ module RIAPP
         };
 
         export class CustomerVM extends MOD.mvvm.BaseViewModel {
-            _includeDetailsOnLoad: boolean;
             _dbSet: DEMODB.CustomerDb;
             _addNewCommand: MOD.mvvm.ICommand;
             _saveCommand: MOD.mvvm.ICommand;
@@ -44,7 +43,6 @@ module RIAPP
             constructor(app: DemoApplication) {
                 super(app);
                 var self = this;
-                this._includeDetailsOnLoad = false;
                 this._dbSet = this.dbSets.Customer;
                 this._dbSet.isSubmitOnDelete = true;
 
@@ -73,8 +71,8 @@ module RIAPP
 
                 this._dbSet.addOnItemAdded((s, args) => {
                     args.item.NameStyle = false;
-                    args.item.ComplexProp.LastName = "Dummy1";
-                    args.item.ComplexProp.FirstName = "Dummy2";
+                    args.item.ComplexProp.LastName = "DummyLastName";
+                    args.item.ComplexProp.FirstName = "DummyFirstName";
                 });
 
                 //initialize new item with default values
@@ -130,17 +128,16 @@ module RIAPP
                 this.raisePropertyChanged('currentItem');
             }
             load() {
-                var query = this.dbSet.createReadCustomerQuery({ includeNav: this.includeDetailsOnLoad });
+                var query = this.dbSet.createReadCustomerQuery({ includeNav: false });
                 query.pageSize = 50;
-                //when loadPageCount > 1 the we preloading several pages at once
-                //when moving to the next page, the data is retrived from local cache
-                //when we include details in load we can use default 1 value
-                //in other cases we can use value more than 1 (here we load 5 pages at once)
-                query.loadPageCount = this.includeDetailsOnLoad ? 1 : 5;
-                //we clear previous cache date for every loading data from the server
+                //when loadPageCount > 1 the we are loading several pages at once
+                //when moving to the next page, the data is retrived from the local cache
+                query.loadPageCount = 10;
+                //we clear the previous cached data for each loading data from the server
                 query.isClearCacheOnEveryLoad = true;
                 query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
                 return query.load();
+
             }
             destroy() {
                 if (this._isDestroyed)
@@ -169,15 +166,6 @@ module RIAPP
                 if (!this._customerAddressVM)
                     this._customerAddressVM = new CustomerAddressVM(this);
                 return this._customerAddressVM;
-            }
-            //if it's true, then when loading, a customer entity, it also loads related CustomerAddress and Address entities
-            //when it's false then we load those entities separately, using our own load methods
-            get includeDetailsOnLoad() { return this._includeDetailsOnLoad; }
-            set includeDetailsOnLoad(v) {
-                if (v !== this._includeDetailsOnLoad) {
-                    this._includeDetailsOnLoad = v;
-                    this.raisePropertyChanged('includeDetailsOnLoad');
-                }
             }
         }
 
@@ -234,10 +222,7 @@ module RIAPP
                 this._customerVM.dbSet.addOnFill(function (sender, args) {
                     if (args.isBegin)
                         return;
-                    //if details are not included with customers entities when they are loaded
-                    //then load addresses related to the customers separately
-                    if (!self._customerVM.includeDetailsOnLoad)
-                        self.load(args.fetchedItems);
+                     self.load(args.fetchedItems);
                 }, self.uniqueID);
 
                 var custAssoc = self.dbContext.associations.getCustAddrToCustomer();
@@ -253,8 +238,8 @@ module RIAPP
                 this._addressesView = new MOD.db.DataView<DEMODB.Address>(
                     {
                         dataSource: this._addressesDb,
-                        fn_sort: function (a: DEMODB.Address, b: DEMODB.Address) { return a.AddressID - b.AddressID; },
-                        fn_filter: function (item: DEMODB.Address) {
+                        fn_sort: function (a, b) { return a.AddressID - b.AddressID; },
+                        fn_filter: function (item) {
                             if (!self._currentCustomer)
                                 return false;
                             return item.CustomerAddresses.some(function (ca) {
@@ -312,8 +297,6 @@ module RIAPP
             }
             load(customers: DEMODB.Customer[]) {
                 var self = this, custArr = customers || [];
-
-                //customerIDs for all loaded customers entities (for current page only, not which in cache if query.loadPageCount>1)
                 var custIDs = custArr.map(function (item) {
                     return item.CustomerID;
                 });
@@ -321,19 +304,14 @@ module RIAPP
                 var query = this._custAdressDb.createReadAddressForCustomersQuery({ custIDs: custIDs });
                 query.isClearPrevData = true;
                 var promise = query.load();
-
-                //if we did not included details when we had loaded customers
-                //then load them now
-                if (!this._customerVM.includeDetailsOnLoad) {
-                    //load related addresses based on what customerAddress items just loaded
-                    promise.done(function (res) {
-                        var addressIDs = res.fetchedItems.map(function (item) {
-                            return item.AddressID;
-                        });
-                        //load new addresses and clear all previous addresses
-                        self._loadAddresses(addressIDs, true);
+                //load related addresses based on what customerAddress items just loaded
+                promise.done(function (res) {
+                    var addressIDs = res.fetchedItems.map(function (item) {
+                        return item.AddressID;
                     });
-                }
+                    //load new addresses and clear all previous addresses
+                    self._loadAddresses(addressIDs, true);
+                });
             }
             destroy() {
                 if (this._isDestroyed)
@@ -724,6 +702,7 @@ module RIAPP
                 this._customerVM.load();
             }
             private _handleError(sender, data) {
+                debugger;
                 data.isHandled = true;
                 this.errorVM.error = data.error;
                 this.errorVM.showDialog();

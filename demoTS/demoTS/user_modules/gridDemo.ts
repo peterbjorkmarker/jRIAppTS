@@ -65,8 +65,8 @@ module RIAPP
                 this._parentCategories = new MOD.db.DataView<DEMODB.ProductCategory>(
                     {
                         dataSource: this.ProductCategories,
-                        fn_sort: function (a: DEMODB.ProductCategory, b: DEMODB.ProductCategory) { return a.ProductCategoryID - b.ProductCategoryID; },
-                        fn_filter: function (item: DEMODB.ProductCategory) { return item.ParentProductCategoryID == null; }
+                        fn_sort: function (a, b) { return a.ProductCategoryID - b.ProductCategoryID; },
+                        fn_filter: function (item) { return item.ParentProductCategoryID == null; }
                     });
                 
                 
@@ -74,8 +74,8 @@ module RIAPP
                 this._childCategories = new MOD.db.DataView<DEMODB.ProductCategory>(
                     {
                         dataSource: this.ProductCategories,
-                        fn_sort: function (a: DEMODB.ProductCategory, b: DEMODB.ProductCategory) { return a.ProductCategoryID - b.ProductCategoryID; },
-                        fn_filter: function (item: DEMODB.ProductCategory) { return item.ParentProductCategoryID !== null && item.ParentProductCategoryID == self.parentCategoryID; }
+                        fn_sort: function (a, b) { return a.ProductCategoryID - b.ProductCategoryID; },
+                        fn_filter: function (item) { return item.ParentProductCategoryID !== null && item.ParentProductCategoryID == self.parentCategoryID; }
                     });
 
                 this._resetCommand = new MOD.mvvm.Command(function (sender, data) {
@@ -86,19 +86,19 @@ module RIAPP
             _loadCategories() {
                 var query = this.ProductCategories.createReadProductCategoryQuery();
                 query.orderBy('Name');
-                //returns promise
+                //returns a promise
                 return query.load();
             }
-            //returns promise
+            //returns a promise
             _loadProductModels() {
                 var query = this.ProductModels.createReadProductModelQuery();
                 query.orderBy('Name');
                 //returns promise
                 return query.load();
             }
-            //returns promise
+            //returns a promise
             load() {
-                //load two dbsets simultanously
+                //load two dbsets simultaneously
                 var promise1 = this._loadCategories(), promise2 = this._loadProductModels();
                 return global.$.when(promise1, promise2);
             }
@@ -252,16 +252,18 @@ module RIAPP
                     }
                 }, self.uniqueID);
 
+                this._dbSet.addOnFill((s, args) => {
+                    if (!args.isBegin) {
+                        //restore selected items in the datagrid on the currently loaded page
+                        //but first let the datagrid to fill the rows (update after timeout!)
+                        setTimeout(() => {
+                            self._updateSelection();
+                        }, 100);
+                    }
+                });
+
                 //auto submit changes when an entity is deleted
                 this._dbSet.isSubmitOnDelete = true; 
-
-                this._dbSet.addOnFill(function (s, a) {
-                    //when fill is ended
-                    if (!a.isBegin) {
-                        if (!a.isPageChanged) //clear products selection when the dbSet is refilled (but not when page is changed)
-                            self._clearSelection();
-                    }
-                }, self.uniqueID);
 
                 //example of using custom validation on client (in addition to a built-in validation)
                 this._dbSet.addOnValidate(function (sender, args) {
@@ -375,16 +377,6 @@ module RIAPP
                 this._dialogVM.createDialog('testDialog', dialogOptions);
             }
             _onGridPageChanged() {
-                //when moving to any page, select rows which was previously selected on that page (restore selection)
-                var self = this, keys = self.selectedIDs, grid = self._dataGrid;
-                keys.forEach(function (key) {
-                    var item = self.dbSet.getItemByKey(key), row;
-                    if (!!item) {
-                        row = grid.findRowByItem(item);
-                        if (!!row)
-                            row.isSelected = true;
-                    }
-                });
             }
             _onGridRowSelected(row: MOD.datagrid.Row) {
                 this._productSelected(row.item, row.isSelected);
@@ -394,6 +386,17 @@ module RIAPP
             }
             _onCurrentChanged() {
                 this.raisePropertyChanged('currentItem');
+            }
+            _updateSelection() {
+                var self = this, keys = self.selectedIDs, grid = self._dataGrid;
+                keys.forEach(function (key) {
+                    var item = self.dbSet.getItemByKey(key);
+                    if (!!item) {
+                        var row = grid.findRowByItem(item);
+                        if (!!row)
+                            row.isSelected = true;
+                    }
+                });
             }
             _clearSelection() {
                 //clear all selection
@@ -419,13 +422,13 @@ module RIAPP
                 }
             }
             load() {
+                //clear selected items
+                this._clearSelection();
                 //you can create several methods on the service which return the same entity type
                 //but they must have different names (no overloads)
-                //the query'service method can accept additional parameters which you can supply with query
+                //the query'service method can accept additional parameters which you can supply with the query
                 var query = this.dbSet.createReadProductQuery({ param1: [10, 11, 12, 13, 14], param2: 'Test' });
                 query.pageSize = 50;
-                query.loadPageCount = 1;
-                query.isClearCacheOnEveryLoad = true; //clear the local cache when a new batch of data is loaded from the server
                 addTextQuery(query, 'ProductNumber', this._filter.prodNumber);
                 addTextQuery(query, 'Name', this._filter.name);
                 if (!utils.check.isNt(this._filter.childCategoryID)) {

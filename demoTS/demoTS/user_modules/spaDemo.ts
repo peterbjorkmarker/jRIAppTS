@@ -412,7 +412,7 @@ module RIAPP
                 }, self.uniqueID);
 
                 this._dbSet.addOnItemDeleting(function (sender, args) {
-                    if (!confirm('Are you sure that you want to delete order ?'))
+                    if (!confirm('Are you sure that you want to delete the order?'))
                         args.isCancel = true;
                 }, self.uniqueID);
 
@@ -648,7 +648,7 @@ module RIAPP
             _onCurrentChanged() {
                 this.raisePropertyChanged('currentItem');
             }
-            //returns promise
+            //returns a promise
             loadAddressesForOrders(orders: DEMODB.SalesOrderHeader[]) {
                 var ids1: number[] = orders.map(function (item) {
                     return item.ShipToAddressID;
@@ -661,10 +661,10 @@ module RIAPP
                 });
                 return this.load(ArrayHelper.distinct(ids), false);
             }
-            //returns promise
+            //returns a promise
             load(ids: number[], isClearTable: boolean) {
                 var query = this.dbSet.createReadAddressByIdsQuery({ addressIDs: ids });
-                //if true, previous data will be cleared when the new is loaded
+                //if true, then the previous data will be cleared when the new is loaded
                 query.isClearPrevData = isClearTable;
                 return query.load();
             }
@@ -879,7 +879,7 @@ module RIAPP
                 }, self.uniqueID);
 
                 this._addressesDb.addOnItemDeleting(function (sender, args) {
-                    if (!confirm('Are you sure that you want to delete Customer\'s Address ?'))
+                    if (!confirm('Are you sure that you want to delete the Customer\'s Address?'))
                         args.isCancel = true;
                 }, self.uniqueID);
 
@@ -887,8 +887,8 @@ module RIAPP
                 this._addressesView = new MOD.db.DataView<DEMODB.Address>(
                     {
                         dataSource: this._addressesDb,
-                        fn_sort: function (a: DEMODB.Address, b: DEMODB.Address) { return a.AddressID - b.AddressID; },
-                        fn_filter: function (item: DEMODB.Address) {
+                        fn_sort: function (a, b) { return a.AddressID - b.AddressID; },
+                        fn_filter: function (item) {
                             if (!self._currentCustomer)
                                 return false;
                             return item.CustomerAddresses.some(function (ca) {
@@ -1140,10 +1140,10 @@ module RIAPP
                     return !!self.custAdressView.currentItem;
                 });
 
-                //this is bound to the grid element view on the page
+                //this is databound to the grid element view on the page
                 //by this command we can get hold of the datagrid control
-                //this command executed when element view property changes
-                //we grab grid property from the sender (which is element view, and has property - grid)
+                //this command executed when an element view property changes
+                //we grab grid property from the sender (which is the element view, and has a property - grid)
                 this._propChangeCommand = new MOD.baseElView.PropChangedCommand(function (sender, args) {
                     if (args.property == '*' || args.property == 'grid') {
                         self._adressInfosGrid = sender.grid;
@@ -1158,7 +1158,7 @@ module RIAPP
                 self.uiViewVM.goToLinkAdr();
                 self.raisePropertyChanged('newAddress');
             }
-            //returns promise
+            //returns a promise
             loadAddressInfos() {
                 var query = this._addressInfosDb.createReadAddressInfoQuery();
                 query.isClearPrevData = true;
@@ -1187,7 +1187,7 @@ module RIAPP
                     return;
                 }
 
-                //dont clear, append to the existing
+                //don't clear, append to the existing
                 var promise = this._customerAddressVM._loadAddresses([adrID], false);
                 promise.done(function (res) {
                     var address = self._customerAddressVM.addressesDb.findEntity(adrID);

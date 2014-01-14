@@ -563,7 +563,7 @@ var RIAPP;
                 }, self.uniqueID);
 
                 this._dbSet.addOnItemDeleting(function (sender, args) {
-                    if (!confirm('Are you sure that you want to delete order ?'))
+                    if (!confirm('Are you sure that you want to delete the order?'))
                         args.isCancel = true;
                 }, self.uniqueID);
 
@@ -918,7 +918,7 @@ var RIAPP;
                 this.raisePropertyChanged('currentItem');
             };
 
-            //returns promise
+            //returns a promise
             AddressVM.prototype.loadAddressesForOrders = function (orders) {
                 var ids1 = orders.map(function (item) {
                     return item.ShipToAddressID;
@@ -932,11 +932,11 @@ var RIAPP;
                 return this.load(RIAPP.ArrayHelper.distinct(ids), false);
             };
 
-            //returns promise
+            //returns a promise
             AddressVM.prototype.load = function (ids, isClearTable) {
                 var query = this.dbSet.createReadAddressByIdsQuery({ addressIDs: ids });
 
-                //if true, previous data will be cleared when the new is loaded
+                //if true, then the previous data will be cleared when the new is loaded
                 query.isClearPrevData = isClearTable;
                 return query.load();
             };
@@ -1242,7 +1242,7 @@ var RIAPP;
                 }, self.uniqueID);
 
                 this._addressesDb.addOnItemDeleting(function (sender, args) {
-                    if (!confirm('Are you sure that you want to delete Customer\'s Address ?'))
+                    if (!confirm('Are you sure that you want to delete the Customer\'s Address?'))
                         args.isCancel = true;
                 }, self.uniqueID);
 
@@ -1553,10 +1553,10 @@ var RIAPP;
                     return !!self.custAdressView.currentItem;
                 });
 
-                //this is bound to the grid element view on the page
+                //this is databound to the grid element view on the page
                 //by this command we can get hold of the datagrid control
-                //this command executed when element view property changes
-                //we grab grid property from the sender (which is element view, and has property - grid)
+                //this command executed when an element view property changes
+                //we grab grid property from the sender (which is the element view, and has a property - grid)
                 this._propChangeCommand = new RIAPP.MOD.baseElView.PropChangedCommand(function (sender, args) {
                     if (args.property == '*' || args.property == 'grid') {
                         self._adressInfosGrid = sender.grid;
@@ -1572,7 +1572,7 @@ var RIAPP;
                 self.raisePropertyChanged('newAddress');
             };
 
-            //returns promise
+            //returns a promise
             AddAddressVM.prototype.loadAddressInfos = function () {
                 var query = this._addressInfosDb.createReadAddressInfoQuery();
                 query.isClearPrevData = true;
@@ -1601,7 +1601,7 @@ var RIAPP;
                     return;
                 }
 
-                //dont clear, append to the existing
+                //don't clear, append to the existing
                 var promise = this._customerAddressVM._loadAddresses([adrID], false);
                 promise.done(function (res) {
                     var address = self._customerAddressVM.addressesDb.findEntity(adrID);
