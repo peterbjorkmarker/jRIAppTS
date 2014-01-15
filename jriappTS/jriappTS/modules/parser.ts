@@ -1,6 +1,11 @@
 module RIAPP {
     export module MOD {
         export module parser {
+            var utils: MOD.utils.Utils;
+            RIAPP.global.addOnInitialize((s, args) => {
+                utils = s.utils;
+            });
+
             export class Parser{
                 static __trimOuterBracesRX = /^([{]){0,1}|([}]){0,1}$/g;
                 static __trimQuotsRX = /^(['"])+|(['"])+$/g;
@@ -29,7 +34,6 @@ module RIAPP {
                     return parts2;
                 }
                 _resolveProp(obj: any, prop: string) {
-                    var utils = RIAPP.global.utils;
                     if (!prop)
                         return obj;
                     if (utils.str.startsWith(prop, '[')) { 
@@ -51,7 +55,6 @@ module RIAPP {
                         return obj[prop];
                 }
                 _setPropertyValue(obj: any, prop: string, val: any) {
-                    var utils = RIAPP.global.utils;
                     if (utils.str.startsWith(prop, '[')) { //it is an indexed property, obj must be of collection type
                         prop = this.trimQuotes(this.trimBrackets(prop));  //remove brakets from a string like: [index]
                         if (utils.check.isArray(obj)) {
@@ -65,7 +68,7 @@ module RIAPP {
                 }
                 //extract key - value pairs
                 _getKeyVals(val:string) {
-                    var utils = RIAPP.global.utils, i: number, ch: string, literal: string, parts: { key: string; val: any; }[] = [],
+                    var i: number, ch: string, literal: string, parts: { key: string; val: any; }[] = [],
                         kv: { key: string; val: any; } = { key: '', val: '' }, isKey = true, bracePart: string,
                         vd1 = Parser.__valueDelimeter1, vd2 = Parser.__valueDelimeter2, kvd = Parser.__keyValDelimeter;
 
@@ -205,20 +208,19 @@ module RIAPP {
                     return parts;
                 }
                 trimOuterBraces(val:string) {
-                    return global.utils.str.trim(val.replace(Parser.__trimOuterBracesRX, ''));
+                    return utils.str.trim(val.replace(Parser.__trimOuterBracesRX, ''));
                 }
                 trimQuotes(val:string) {
-                    return global.utils.str.trim(val.replace(Parser.__trimQuotsRX, ''));
+                    return utils.str.trim(val.replace(Parser.__trimQuotsRX, ''));
                 }
                 trimBrackets(val:string) {
-                    return global.utils.str.trim(val.replace(Parser.__trimBracketsRX, ''));
+                    return utils.str.trim(val.replace(Parser.__trimBracketsRX, ''));
                 }
                 isWithOuterBraces(str: string) {
-                    var utils = RIAPP.global.utils;
                     return (utils.str.startsWith(str, '{') && utils.str.endsWith(str, '}'));
                 }
                 parseOption(part:string) {
-                    var res: any = {}, self = this, utils = RIAPP.global.utils;
+                    var res: any = {}, self = this;
                     part = utils.str.trim(part);
                     if (self.isWithOuterBraces(part))
                         part = self.trimOuterBraces(part);
@@ -238,7 +240,7 @@ module RIAPP {
                     return res;
                 }
                 parseOptions(str:string) {
-                    var res: any[] = [], self = this, utils = RIAPP.global.utils;
+                    var res: any[] = [], self = this;
 
                     str = utils.str.trim(str);
                     var parts = [str];

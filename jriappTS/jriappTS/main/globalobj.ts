@@ -53,6 +53,7 @@ module RIAPP {
         private _templateGroups: any;
         private _promises: IPromise<string>[];
         private _isReady: boolean;
+        private _isInitialized: boolean;
         private _waitQueue: MOD.utils.WaitQueue;
         private _parser: MOD.parser.Parser;
         //all loaded modules
@@ -78,9 +79,35 @@ module RIAPP {
             this._moduleNames = [];
             this._parser = null;
             this._isReady = false;
-            this._init();
+            this._isInitialized = false;
+            this._onCreate();
         }
-        private _init() {
+        _initialize() {
+            if (this._isInitialized)
+                return;
+            var self = this, isOK: boolean, name: string;
+            name = 'utils'; isOK = this.isModuleLoaded(name);
+            if (isOK)
+                self._utils = new MOD.utils.Utils();
+            name = 'parser'; isOK = this.isModuleLoaded(name);
+            if (isOK)
+                self._parser = new MOD.parser.Parser();
+            name = 'defaults'; isOK = this.isModuleLoaded(name);
+            if (isOK) {
+                self._defaults = new MOD.defaults.Defaults();
+            }
+            name = 'datepicker'; isOK = this.isModuleLoaded(name);
+            if (isOK && !!self._defaults) {
+                self._defaults.datepicker = new MOD.datepicker.Datepicker();
+            }
+            if (!isOK)
+                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
+
+            this._isInitialized = true;
+            self.raiseEvent('initialize', {});
+            setTimeout(function () { self.removeHandler('initialize', null); }, 0);
+        }
+        private _onCreate() {
             var self = this;
             self.$(self.document).ready(function ($) {
                 self._waitQueue = new MOD.utils.WaitQueue(self);
@@ -89,6 +116,7 @@ module RIAPP {
                 self.raiseEvent('load', {});
                 setTimeout(function () { self.removeHandler('load', null); }, 0);
             });
+
             //when clicked outside any Selectable set _currentSelectable = null
             self.$(self.document).on("click.global", function (e) {
                 e.stopPropagation();
@@ -120,13 +148,20 @@ module RIAPP {
         }
         _getEventNames() {
             var base_events = super._getEventNames();
-            return ['load', 'unload'].concat(base_events);
+            return ['load', 'unload','initialize'].concat(base_events);
         }
         addOnLoad(fn: (sender: Global, args: any) => void , namespace?: string) {
             this._addHandler('load', fn, namespace, false);
         }
         addOnUnLoad(fn: (sender: Global, args: any) => void , namespace?: string) {
             this._addHandler('unload', fn, namespace, false);
+        }
+        addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string) {
+            if (this._isInitialized) {
+                fn.apply(this, [this, {}]);
+            }
+            else
+                this._addHandler('initialize', fn, namespace, false);
         }
         _addHandler(name: string, fn: (sender, args) => void , namespace?: string, prepend?: boolean) {
             var self = this;
@@ -416,25 +451,6 @@ module RIAPP {
                 throw new Error(baseUtils.format(RIAPP.ERRS.ERR_MODULE_ALREDY_REGISTERED, name));
 
             this._moduleNames.push(name);
-        }
-        _initialize() {
-            var self = this, isOK: boolean, name: string;
-            name = 'utils'; isOK = this.isModuleLoaded(name);
-            if (isOK)
-                self._utils = new MOD.utils.Utils();
-            name = 'parser'; isOK = this.isModuleLoaded(name);
-            if (isOK)
-                self._parser = new MOD.parser.Parser();
-            name = 'defaults'; isOK = this.isModuleLoaded(name);
-            if (isOK) {
-                self._defaults = new MOD.defaults.Defaults();
-            }
-            name = 'datepicker'; isOK = this.isModuleLoaded(name);
-            if (isOK && !!self._defaults) {
-                self._defaults.datepicker = new MOD.datepicker.Datepicker();
-            }
-            if (!isOK)
-                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
         }
         isModuleLoaded(name: string): boolean {
             return this._moduleNames.indexOf(name) > -1;

@@ -2,6 +2,10 @@ module RIAPP {
     export module MOD {
         export module datagrid {
             var COLUMN_TYPE = { DATA: 'data', ROW_EXPANDER: 'row_expander', ROW_ACTIONS: 'row_actions', ROW_SELECTOR: 'row_selector' };
+            var utils: MOD.utils.Utils;
+            RIAPP.global.addOnInitialize((s, args) => {
+                utils = s.utils;
+            });
             export var css = {
                 container: 'ria-table-container',
                 dataTable: 'ria-data-table',
@@ -121,7 +125,7 @@ module RIAPP {
                     super(row, options);
                 }
                 _init() {
-                    var options = this.column.options.content, utils = RIAPP.global.utils;
+                    var options = this.column.options.content;
                     if (!options.fieldInfo && !!options.fieldName) {
                         options.fieldInfo = this.item.getFieldInfo(options.fieldName);
                         if (!options.fieldInfo) {
@@ -259,7 +263,7 @@ module RIAPP {
                         img_delete: 'txtDelete'
                     };
                     $div.empty();
-                    var opts = self._column.options, utils = RIAPP.global.utils,
+                    var opts = self._column.options,
                         fn_setUpImages = function ($images) {
                         $images.each(function (index, img) {
                             var $img = global.$(img);
@@ -609,7 +613,6 @@ module RIAPP {
 
                 constructor(grid: DataGrid, options: { tr: HTMLTableRowElement; details_id: string; }) {
                     super();
-                    var utils = RIAPP.global.utils;
                     this._grid = grid;
                     this._el = options.tr;
                     this._item = null;
@@ -640,7 +643,7 @@ module RIAPP {
                     super.destroy();
                 }
                 _setParentRow(row:Row) {
-                    var self = this, utils = RIAPP.global.utils;
+                    var self = this;
                     this._item = null;
                     this._cell.item = null;
                     //don't use global.$(this._el).remove() here - or it will remove all jQuery plugins!
@@ -721,7 +724,7 @@ module RIAPP {
 
                 constructor(grid:DataGrid, options: { th: HTMLTableHeaderCellElement; colinfo: IColumnInfo; }) {
                     super();
-                    var self = this, utils = RIAPP.global.utils;
+                    var self = this;
                     this._grid = grid;
                     this._el = options.th;
                     this._options = options.colinfo;
@@ -871,7 +874,7 @@ module RIAPP {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    var self = this, utils = RIAPP.global.utils;
+                    var self = this;
                     utils.forEachProp(self._objCache, function (key) {
                         self._objCache[key].destroy();
                     });
@@ -1063,7 +1066,6 @@ module RIAPP {
                     super();
                     if (!!dataSource && !(dataSource instanceof collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
-                    var utils = RIAPP.global.utils;
                     this._options = utils.extend(false,
                         {
                             isUseScrollInto: true,
@@ -1162,7 +1164,7 @@ module RIAPP {
                         sortable: false,
                         sortMemberName: null,
                         content: null
-                    }, options: IColumnInfo, utils = RIAPP.global.utils;
+                    }, options: IColumnInfo;
 
                     var temp_opts = global.parser.parseOptions(column_attr);
                     if (temp_opts.length > 0)
@@ -1249,7 +1251,7 @@ module RIAPP {
                     }
                 }
                 _onDSCollectionChanged(args: collection.ICollChangedArgs<collection.CollectionItem>) {
-                    var self = this, row: Row, items = args.items, utils = RIAPP.global.utils;
+                    var self = this, row: Row, items = args.items;
                     switch (args.change_type) {
                         case collection.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
@@ -1425,7 +1427,6 @@ module RIAPP {
                         return row;
                 }
                 _removeRow(row: Row) {
-                    var utils = RIAPP.global.utils;
                     if (this._expandedRow === row) {
                         this.collapseDetails();
                     }
@@ -1546,7 +1547,7 @@ module RIAPP {
                     });
                 }
                 _createColumn(options: {th: HTMLTableHeaderCellElement; colinfo: IColumnInfo;}) {
-                    var col: BaseColumn, utils = RIAPP.global.utils;
+                    var col: BaseColumn;
                     switch (options.colinfo.type) {
                         case COLUMN_TYPE.ROW_EXPANDER:
                             if (!this._expanderCol) {
@@ -1784,7 +1785,7 @@ module RIAPP {
                 showEditDialog() {
                     if (!this._options.editor || !this._options.editor.templateID || !this._editingRow)
                         return false;
-                    var editorOptions: datadialog.IDialogConstructorOptions, item = this._editingRow.item, utils = RIAPP.global.utils;
+                    var editorOptions: datadialog.IDialogConstructorOptions, item = this._editingRow.item;
                     if (!item.isEditing)
                         item.beginEdit();
                     if (!this._dialog) {

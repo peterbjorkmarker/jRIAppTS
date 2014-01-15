@@ -550,9 +550,41 @@ var RIAPP;
             this._moduleNames = [];
             this._parser = null;
             this._isReady = false;
-            this._init();
+            this._isInitialized = false;
+            this._onCreate();
         }
-        Global.prototype._init = function () {
+        Global.prototype._initialize = function () {
+            if (this._isInitialized)
+                return;
+            var self = this, isOK, name;
+            name = 'utils';
+            isOK = this.isModuleLoaded(name);
+            if (isOK)
+                self._utils = new RIAPP.MOD.utils.Utils();
+            name = 'parser';
+            isOK = this.isModuleLoaded(name);
+            if (isOK)
+                self._parser = new RIAPP.MOD.parser.Parser();
+            name = 'defaults';
+            isOK = this.isModuleLoaded(name);
+            if (isOK) {
+                self._defaults = new RIAPP.MOD.defaults.Defaults();
+            }
+            name = 'datepicker';
+            isOK = this.isModuleLoaded(name);
+            if (isOK && !!self._defaults) {
+                self._defaults.datepicker = new RIAPP.MOD.datepicker.Datepicker();
+            }
+            if (!isOK)
+                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
+
+            this._isInitialized = true;
+            self.raiseEvent('initialize', {});
+            setTimeout(function () {
+                self.removeHandler('initialize', null);
+            }, 0);
+        };
+        Global.prototype._onCreate = function () {
             var self = this;
             self.$(self.document).ready(function ($) {
                 self._waitQueue = new RIAPP.MOD.utils.WaitQueue(self);
@@ -596,13 +628,19 @@ var RIAPP;
         };
         Global.prototype._getEventNames = function () {
             var base_events = _super.prototype._getEventNames.call(this);
-            return ['load', 'unload'].concat(base_events);
+            return ['load', 'unload', 'initialize'].concat(base_events);
         };
         Global.prototype.addOnLoad = function (fn, namespace) {
             this._addHandler('load', fn, namespace, false);
         };
         Global.prototype.addOnUnLoad = function (fn, namespace) {
             this._addHandler('unload', fn, namespace, false);
+        };
+        Global.prototype.addOnInitialize = function (fn, namespace) {
+            if (this._isInitialized) {
+                fn.apply(this, [this, {}]);
+            } else
+                this._addHandler('initialize', fn, namespace, false);
         };
         Global.prototype._addHandler = function (name, fn, namespace, prepend) {
             var self = this;
@@ -876,29 +914,6 @@ var RIAPP;
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_MODULE_ALREDY_REGISTERED, name));
 
             this._moduleNames.push(name);
-        };
-        Global.prototype._initialize = function () {
-            var self = this, isOK, name;
-            name = 'utils';
-            isOK = this.isModuleLoaded(name);
-            if (isOK)
-                self._utils = new RIAPP.MOD.utils.Utils();
-            name = 'parser';
-            isOK = this.isModuleLoaded(name);
-            if (isOK)
-                self._parser = new RIAPP.MOD.parser.Parser();
-            name = 'defaults';
-            isOK = this.isModuleLoaded(name);
-            if (isOK) {
-                self._defaults = new RIAPP.MOD.defaults.Defaults();
-            }
-            name = 'datepicker';
-            isOK = this.isModuleLoaded(name);
-            if (isOK && !!self._defaults) {
-                self._defaults.datepicker = new RIAPP.MOD.datepicker.Datepicker();
-            }
-            if (!isOK)
-                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
         };
         Global.prototype.isModuleLoaded = function (name) {
             return this._moduleNames.indexOf(name) > -1;
@@ -2653,6 +2668,11 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (parser) {
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
+
             var Parser = (function () {
                 function Parser() {
                 }
@@ -2673,7 +2693,6 @@ var RIAPP;
                     return parts2;
                 };
                 Parser.prototype._resolveProp = function (obj, prop) {
-                    var utils = RIAPP.global.utils;
                     if (!prop)
                         return obj;
                     if (utils.str.startsWith(prop, '[')) {
@@ -2691,7 +2710,6 @@ var RIAPP;
                         return obj[prop];
                 };
                 Parser.prototype._setPropertyValue = function (obj, prop, val) {
-                    var utils = RIAPP.global.utils;
                     if (utils.str.startsWith(prop, '[')) {
                         prop = this.trimQuotes(this.trimBrackets(prop)); //remove brakets from a string like: [index]
                         if (utils.check.isArray(obj)) {
@@ -2704,7 +2722,7 @@ var RIAPP;
 
                 //extract key - value pairs
                 Parser.prototype._getKeyVals = function (val) {
-                    var utils = RIAPP.global.utils, i, ch, literal, parts = [], kv = { key: '', val: '' }, isKey = true, bracePart, vd1 = Parser.__valueDelimeter1, vd2 = Parser.__valueDelimeter2, kvd = Parser.__keyValDelimeter;
+                    var i, ch, literal, parts = [], kv = { key: '', val: '' }, isKey = true, bracePart, vd1 = Parser.__valueDelimeter1, vd2 = Parser.__valueDelimeter2, kvd = Parser.__keyValDelimeter;
 
                     var addNewKeyValPair = function (kv) {
                         if (kv.val) {
@@ -2840,20 +2858,19 @@ var RIAPP;
                     return parts;
                 };
                 Parser.prototype.trimOuterBraces = function (val) {
-                    return RIAPP.global.utils.str.trim(val.replace(Parser.__trimOuterBracesRX, ''));
+                    return utils.str.trim(val.replace(Parser.__trimOuterBracesRX, ''));
                 };
                 Parser.prototype.trimQuotes = function (val) {
-                    return RIAPP.global.utils.str.trim(val.replace(Parser.__trimQuotsRX, ''));
+                    return utils.str.trim(val.replace(Parser.__trimQuotsRX, ''));
                 };
                 Parser.prototype.trimBrackets = function (val) {
-                    return RIAPP.global.utils.str.trim(val.replace(Parser.__trimBracketsRX, ''));
+                    return utils.str.trim(val.replace(Parser.__trimBracketsRX, ''));
                 };
                 Parser.prototype.isWithOuterBraces = function (str) {
-                    var utils = RIAPP.global.utils;
                     return (utils.str.startsWith(str, '{') && utils.str.endsWith(str, '}'));
                 };
                 Parser.prototype.parseOption = function (part) {
-                    var res = {}, self = this, utils = RIAPP.global.utils;
+                    var res = {}, self = this;
                     part = utils.str.trim(part);
                     if (self.isWithOuterBraces(part))
                         part = self.trimOuterBraces(part);
@@ -2873,7 +2890,7 @@ var RIAPP;
                     return res;
                 };
                 Parser.prototype.parseOptions = function (str) {
-                    var res = [], self = this, utils = RIAPP.global.utils;
+                    var res = [], self = this;
 
                     str = utils.str.trim(str);
                     var parts = [str];
@@ -3116,6 +3133,10 @@ var RIAPP;
         (function (baseElView) {
             //local variables for optimization
             var ERRTEXT = RIAPP.localizable.VALIDATE;
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
 
             var PropChangedCommand = (function (_super) {
                 __extends(PropChangedCommand, _super);
@@ -3142,7 +3163,7 @@ var RIAPP;
 
                     //save previous css display style
                     this._oldDisplay = null;
-                    this._objId = 'elv' + RIAPP.global.utils.getNewID();
+                    this._objId = 'elv' + utils.getNewID();
                     this._propChangedCommand = null;
                     app._setElView(this._el, this);
                     this._errors = null;
@@ -3212,7 +3233,7 @@ var RIAPP;
                     }
                     var $el = this.$el;
                     if (!!errors && errors.length > 0) {
-                        RIAPP.global.utils.addToolTip($el, this._getErrorTipInfo(errors), baseElView.css.errorTip);
+                        utils.addToolTip($el, this._getErrorTipInfo(errors), baseElView.css.errorTip);
                         this._setFieldError(true);
                     } else {
                         this._setToolTip($el, this.toolTip);
@@ -3227,7 +3248,7 @@ var RIAPP;
                     return isHandled;
                 };
                 BaseElView.prototype._setToolTip = function ($el, tip, className) {
-                    RIAPP.global.utils.addToolTip($el, tip, className);
+                    utils.addToolTip($el, tip, className);
                 };
                 BaseElView.prototype.toString = function () {
                     return 'BaseElView';
@@ -3583,7 +3604,7 @@ var RIAPP;
                         img = RIAPP.MOD.consts.LOADER_GIF.NORMAL;
                     this._delay = 400;
                     this._timeOut = null;
-                    if (!RIAPP.global.utils.check.isNt(options.delay))
+                    if (!utils.check.isNt(options.delay))
                         this._delay = parseInt(options.delay);
                     this._loaderPath = RIAPP.global.getImagePath(img);
                     this._$loader = RIAPP.global.$(new Image());
@@ -4795,12 +4816,12 @@ var RIAPP;
                             self.invokeTabsEvent("load", tab);
                         }
                     };
-                    tabOpts = RIAPP.global.utils.extend(false, tabOpts, self._tabOpts);
+                    tabOpts = utils.extend(false, tabOpts, self._tabOpts);
                     $el.tabs(tabOpts);
                 };
                 TabsElView.prototype._destroyTabs = function () {
                     var $el = this.$el;
-                    RIAPP.global.utils.destroyJQueryPlugin($el, 'tabs');
+                    utils.destroyJQueryPlugin($el, 'tabs');
                 };
                 TabsElView.prototype.invokeTabsEvent = function (eventName, args) {
                     var self = this, data = { eventName: eventName, args: args };
@@ -4901,6 +4922,11 @@ var RIAPP;
     (function (MOD) {
         (function (binding) {
             binding.BINDING_MODE = ['OneTime', 'OneWay', 'TwoWay'];
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
+
             var BindTo;
             (function (BindTo) {
                 BindTo[BindTo["Source"] = 0] = "Source";
@@ -4910,10 +4936,10 @@ var RIAPP;
             function _checkIsErrorNotification(obj) {
                 if (!obj)
                     return false;
-                if (!RIAPP.global.utils.check.isFunction(obj.getIErrorNotification))
+                if (!utils.check.isFunction(obj.getIErrorNotification))
                     return false;
                 var tmp = obj.getIErrorNotification();
-                return !!tmp && RIAPP.global.utils.check.isFunction(tmp.getIErrorNotification);
+                return !!tmp && utils.check.isFunction(tmp.getIErrorNotification);
             }
             binding._checkIsErrorNotification = _checkIsErrorNotification;
 
@@ -4956,7 +4982,7 @@ var RIAPP;
                 __extends(Binding, _super);
                 function Binding(options, appName) {
                     _super.call(this);
-                    var opts = RIAPP.global.utils.extend(false, {
+                    var opts = utils.extend(false, {
                         target: null, source: null,
                         targetPath: null, sourcePath: null, mode: binding.BINDING_MODE[1],
                         converter: null, converterParam: null, isSourceFixed: false
@@ -4966,15 +4992,15 @@ var RIAPP;
                         throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_EMPTY);
                     }
 
-                    if (!RIAPP.global.utils.check.isString(opts.targetPath)) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
+                    if (!utils.check.isString(opts.targetPath)) {
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     }
 
                     if (binding.BINDING_MODE.indexOf(opts.mode) < 0) {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_BIND_MODE_INVALID, opts.mode));
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_MODE_INVALID, opts.mode));
                     }
 
-                    if (!RIAPP.global.utils.check.isBaseObj(opts.target)) {
+                    if (!utils.check.isBaseObj(opts.target)) {
                         throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
                     }
                     this._appName = appName;
@@ -4985,10 +5011,10 @@ var RIAPP;
                     this._srcPath = RIAPP.global.parser._getPathParts(opts.sourcePath);
                     this._tgtPath = RIAPP.global.parser._getPathParts(opts.targetPath);
                     if (this._tgtPath.length < 1)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     this._isSourceFixed = (!!opts.isSourceFixed);
                     this._pathItems = {};
-                    this._objId = 'bnd' + RIAPP.global.utils.getNewID();
+                    this._objId = 'bnd' + utils.getNewID();
                     this._ignoreSrcChange = false;
                     this._ignoreTgtChange = false;
                     this._sourceObj = null;
@@ -4997,7 +5023,7 @@ var RIAPP;
                     this._target = null;
                     this.target = opts.target;
                     this.source = opts.source;
-                    if (!!this._sourceObj && RIAPP.global.utils.check.isFunction(this._sourceObj.getIErrorNotification)) {
+                    if (!!this._sourceObj && utils.check.isFunction(this._sourceObj.getIErrorNotification)) {
                         if (this._sourceObj.getIsHasErrors())
                             this._onSrcErrorsChanged();
                     }
@@ -5034,7 +5060,7 @@ var RIAPP;
                 };
                 Binding.prototype._onSrcErrorsChanged = function () {
                     var errors = [], tgt = this._targetObj, src = this._sourceObj, srcPath = this._srcPath;
-                    if (!!tgt && RIAPP.global.utils.check.isElView(tgt)) {
+                    if (!!tgt && utils.check.isElView(tgt)) {
                         if (!!src && srcPath.length > 0) {
                             var prop = srcPath[srcPath.length - 1];
                             errors = src.getFieldErrors(prop);
@@ -5074,7 +5100,7 @@ var RIAPP;
                 };
                 Binding.prototype._parseSrcPath2 = function (obj, path, lvl) {
                     var self = this, nextObj;
-                    var isBaseObj = (!!obj && RIAPP.global.utils.check.isBaseObj(obj));
+                    var isBaseObj = (!!obj && utils.check.isBaseObj(obj));
 
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnSrcDestroyedProxy(), self._objId);
@@ -5099,7 +5125,7 @@ var RIAPP;
                         if (updateOnChange && isBaseObj) {
                             obj.addOnPropertyChange(path[0], self._getUpdTgtProxy(), this._objId);
                         }
-                        if (!!obj && RIAPP.global.utils.check.isFunction(obj.getIErrorNotification)) {
+                        if (!!obj && utils.check.isFunction(obj.getIErrorNotification)) {
                             obj.addOnErrorsChanged(self._getSrcErrChangedProxy(), self._objId);
                         }
                         this._sourceObj = obj;
@@ -5117,7 +5143,7 @@ var RIAPP;
                 };
                 Binding.prototype._parseTgtPath2 = function (obj, path, lvl) {
                     var self = this, nextObj;
-                    var isBaseObj = (!!obj && RIAPP.global.utils.check.isBaseObj(obj));
+                    var isBaseObj = (!!obj && utils.check.isBaseObj(obj));
 
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnTgtDestroyedProxy(), self._objId);
@@ -5220,7 +5246,7 @@ var RIAPP;
                         if (res !== undefined)
                             this.sourceValue = res;
                     } catch (ex) {
-                        if (!(ex instanceof ValidationError) || !RIAPP.global.utils.check.isElView(this._targetObj)) {
+                        if (!(ex instanceof ValidationError) || !utils.check.isElView(this._targetObj)) {
                             //BaseElView is notified about errors in _onSrcErrorsChanged event handler
                             //we only need to invoke _onError in other cases
                             //1) when target is not BaseElView
@@ -5249,7 +5275,7 @@ var RIAPP;
                         return;
                     this._isDestroyCalled = true;
                     var self = this;
-                    RIAPP.global.utils.forEachProp(this._pathItems, function (key) {
+                    utils.forEachProp(this._pathItems, function (key) {
                         var old = self._pathItems[key];
                         old.removeNSHandlers(self._objId);
                     });
@@ -5297,12 +5323,12 @@ var RIAPP;
                                 }
                             }
                             this._setPathItem(null, 1 /* Target */, 0, this._tgtPath);
-                            if (!!v && !RIAPP.global.utils.check.isBaseObj(v))
+                            if (!!v && !utils.check.isBaseObj(v))
                                 throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
                             this._target = v;
                             this._bindToTarget();
                             if (!!this._target && !this._targetObj)
-                                throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, this._tgtPath.join('.')));
+                                throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, this._tgtPath.join('.')));
                         }
                     },
                     enumerable: true,
@@ -5459,8 +5485,10 @@ var RIAPP;
     (function (MOD) {
         (function (collection) {
             //local variables for optimization
-            var ValidationError = RIAPP.MOD.binding.ValidationError, DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE, valueUtils = RIAPP.MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils;
-
+            var ValidationError = RIAPP.MOD.binding.ValidationError, DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE, valueUtils = RIAPP.MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils, utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
             (function (FIELD_TYPE) {
                 FIELD_TYPE[FIELD_TYPE["None"] = 0] = "None";
                 FIELD_TYPE[FIELD_TYPE["ClientOnly"] = 1] = "ClientOnly";
@@ -5508,7 +5536,7 @@ var RIAPP;
                     return f.fieldName == name;
                 });
                 if (!arrProps || arrProps.length != 1)
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "arrProps.length == 1"));
+                    throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "arrProps.length == 1"));
                 return arrProps[0];
             }
             collection.fn_getPropertyByName = fn_getPropertyByName;
@@ -5589,7 +5617,7 @@ var RIAPP;
                     if (!this._key)
                         return false;
                     this._isEditing = true;
-                    this._saveVals = RIAPP.global.utils.cloneObj(this._vals);
+                    this._saveVals = utils.cloneObj(this._vals);
                     this._collection.currentItem = this;
                     return true;
                 };
@@ -5661,7 +5689,7 @@ var RIAPP;
                     return errs;
                 };
                 CollectionItem.prototype._checkVal = function (fieldInfo, val) {
-                    var res = val, ERRS = RIAPP.ERRS, utils = RIAPP.global.utils;
+                    var res = val, ERRS = RIAPP.ERRS;
                     if (this._skipValidate(fieldInfo, val))
                         return res;
                     if (fieldInfo.isReadOnly && !(fieldInfo.allowClientDefault && this._isNew))
@@ -5762,7 +5790,7 @@ var RIAPP;
                     if (!itemErrors)
                         return [];
                     var res = [];
-                    RIAPP.global.utils.forEachProp(itemErrors, function (name) {
+                    utils.forEachProp(itemErrors, function (name) {
                         var fieldName = null;
                         if (name !== '*') {
                             fieldName = name;
@@ -5776,13 +5804,13 @@ var RIAPP;
                     if (!itemErrors)
                         return '';
                     var res = [];
-                    RIAPP.global.utils.forEachProp(itemErrors, function (name) {
+                    utils.forEachProp(itemErrors, function (name) {
                         res.push(baseUtils.format('{0}: {1}', name, itemErrors[name]));
                     });
                     return res.join('|');
                 };
                 CollectionItem.prototype.submitChanges = function () {
-                    var deffered = RIAPP.global.utils.createDeferred();
+                    var deffered = utils.createDeferred();
                     deffered.reject();
                     return deffered.promise();
                 };
@@ -6087,14 +6115,14 @@ var RIAPP;
                     this.removeHandler('status_changed', namespace);
                 };
                 BaseCollection.prototype._getStrValue = function (val, fieldInfo) {
-                    var dcnv = fieldInfo.dateConversion, stz = RIAPP.global.utils.get_timeZoneOffset();
+                    var dcnv = fieldInfo.dateConversion, stz = utils.get_timeZoneOffset();
                     return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
                 };
                 BaseCollection.prototype._getPKFieldInfos = function () {
                     if (!!this._pkInfo)
                         return this._pkInfo;
                     var fldMap = this._fieldMap, pk = [];
-                    RIAPP.global.utils.forEachProp(fldMap, function (fldName) {
+                    utils.forEachProp(fldMap, function (fldName) {
                         if (fldMap[fldName].isPrimaryKey > 0) {
                             pk.push(fldMap[fldName]);
                         }
@@ -6175,7 +6203,7 @@ var RIAPP;
                 BaseCollection.prototype._addError = function (item, fieldName, errors) {
                     if (!fieldName)
                         fieldName = '*';
-                    if (!(RIAPP.global.utils.check.isArray(errors) && errors.length > 0)) {
+                    if (!(utils.check.isArray(errors) && errors.length > 0)) {
                         this._removeError(item, fieldName);
                         return;
                     }
@@ -6195,7 +6223,7 @@ var RIAPP;
                     if (!itemErrors[fieldName])
                         return;
                     delete itemErrors[fieldName];
-                    if (RIAPP.global.utils.getProps(itemErrors).length === 0) {
+                    if (utils.getProps(itemErrors).length === 0) {
                         delete this._errors[item._key];
                     }
                     this._onErrorsChanged(item);
@@ -6257,12 +6285,12 @@ var RIAPP;
                     }
                     var pos;
                     item._onAttaching();
-                    if (RIAPP.global.utils.check.isNt(itemPos)) {
+                    if (utils.check.isNt(itemPos)) {
                         pos = this._items.length;
                         this._items.push(item);
                     } else {
                         pos = itemPos;
-                        RIAPP.global.utils.insertIntoArray(this._items, item, pos);
+                        utils.insertIntoArray(this._items, item, pos);
                     }
                     this._itemsByKey[item._key] = item;
                     this._onItemsChanged({ change_type: 1 /* ADDED */, items: [item], pos: [pos] });
@@ -6364,7 +6392,7 @@ var RIAPP;
                 };
                 BaseCollection.prototype.getItemsWithErrors = function () {
                     var self = this, res = [];
-                    RIAPP.global.utils.forEachProp(this._errors, function (key) {
+                    utils.forEachProp(this._errors, function (key) {
                         var item = self.getItemByKey(key);
                         res.push(item);
                     });
@@ -6405,7 +6433,7 @@ var RIAPP;
                     if (arguments.length === 0)
                         return null;
                     var self = this, pkInfo = self._getPKFieldInfos(), arr = [], key, values = [];
-                    if (vals.length === 1 && RIAPP.global.utils.check.isArray(vals[0])) {
+                    if (vals.length === 1 && utils.check.isArray(vals[0])) {
                         values = vals[0];
                     } else
                         values = vals;
@@ -6516,7 +6544,7 @@ var RIAPP;
                     }
                     if (!this._itemsByKey[item._key])
                         return;
-                    var oldPos = RIAPP.global.utils.removeFromArray(this._items, item);
+                    var oldPos = utils.removeFromArray(this._items, item);
                     if (oldPos < 0) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
                     }
@@ -6543,10 +6571,10 @@ var RIAPP;
                 BaseCollection.prototype.getIsHasErrors = function () {
                     if (!this._errors)
                         return false;
-                    return (RIAPP.global.utils.getProps(this._errors).length > 0);
+                    return (utils.getProps(this._errors).length > 0);
                 };
                 BaseCollection.prototype.sort = function (fieldNames, sortOrder) {
-                    var self = this, deffered = RIAPP.global.utils.createDeferred();
+                    var self = this, deffered = utils.createDeferred();
                     setTimeout(function () {
                         try  {
                             self.sortLocal(fieldNames, SORT_ORDER[sortOrder]);
@@ -6890,7 +6918,7 @@ var RIAPP;
                 }
                 BaseList.prototype._updateFieldMap = function (props) {
                     var self = this;
-                    if (!RIAPP.global.utils.check.isArray(props) || props.length == 0)
+                    if (!utils.check.isArray(props) || props.length == 0)
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'props', props));
 
                     self._fieldMap = {};
@@ -6995,7 +7023,7 @@ var RIAPP;
                         return _super.prototype._getNewKey.call(this, null);
                     }
                     var key = item[this._keyName];
-                    if (RIAPP.global.utils.check.isNt(key))
+                    if (utils.check.isNt(key))
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
                     return '' + key;
                 };
@@ -7024,7 +7052,7 @@ var RIAPP;
             ;
             function getPropInfos(properties) {
                 var props = null;
-                if (RIAPP.global.utils.check.isArray(properties)) {
+                if (utils.check.isArray(properties)) {
                     props = properties.map(function (p) {
                         return { name: p, dtype: 0 };
                     });
@@ -7074,7 +7102,7 @@ var RIAPP;
                         return _super.prototype._getNewKey.call(this, null);
                     }
                     var key = item[this._keyName];
-                    if (RIAPP.global.utils.check.isNt(key))
+                    if (utils.check.isNt(key))
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
                     return '' + key;
                 };
@@ -7095,7 +7123,10 @@ var RIAPP;
             template.css = {
                 templateContainer: 'ria-template-container'
             };
-
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
             var Template = (function (_super) {
                 __extends(Template, _super);
                 function Template(app, templateID) {
@@ -7113,7 +7144,6 @@ var RIAPP;
                         this._loadTemplate();
                 }
                 Template.prototype._getBindings = function () {
-                    var utils = RIAPP.global.utils;
                     if (!this._lfTime)
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
@@ -7124,7 +7154,6 @@ var RIAPP;
                     return res;
                 };
                 Template.prototype._getElViews = function () {
-                    var utils = RIAPP.global.utils;
                     if (!this._lfTime)
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
@@ -7135,7 +7164,6 @@ var RIAPP;
                     return res;
                 };
                 Template.prototype._getTemplateElView = function () {
-                    var utils = RIAPP.global.utils;
                     if (!this._lfTime || this._templElView === null)
                         return null;
                     if (!!this._templElView)
@@ -7151,20 +7179,22 @@ var RIAPP;
                     return res;
                 };
 
-                //returns promise which resolves with loaded template DOM element
+                //returns a deferred which resolves with loaded template DOM element
                 Template.prototype._loadTemplateElAsync = function (name) {
-                    var self = this, utils = RIAPP.global.utils, fn_loader = this.app.getTemplateLoader(name), deferred;
+                    var self = this, fn_loader = this.app.getTemplateLoader(name), deferred = utils.createDeferred();
                     if (!!fn_loader) {
-                        return fn_loader().then(function (html) {
+                        fn_loader().then(function (html) {
                             var tmpDiv = RIAPP.global.document.createElement('div');
                             tmpDiv.innerHTML = html;
-                            return tmpDiv.firstElementChild;
+                            var el = tmpDiv.firstElementChild;
+                            deferred.resolve(el);
+                        }, function (err) {
+                            deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID)));
                         });
                     } else {
-                        deferred = utils.createDeferred();
                         deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID)));
-                        return deferred.promise();
                     }
+                    return deferred;
                 };
                 Template.prototype._appendIsBusy = function (el) {
                     var self = this;
@@ -7188,7 +7218,7 @@ var RIAPP;
                     }
                 };
                 Template.prototype._loadTemplate = function () {
-                    var self = this, utils = RIAPP.global.utils, tid = self._templateID, promise, deffered, tmpDiv, asyncLoad = false;
+                    var self = this, tid = self._templateID, promise, deffered, tmpDiv, asyncLoad = false;
                     if (!!self._promise) {
                         self._promise.reject('cancel'); //cancel previous load
                         self._promise = null;
@@ -7413,6 +7443,10 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (baseContent) {
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
             baseContent.css = {
                 content: 'ria-content-field',
                 required: 'ria-required-field'
@@ -7457,7 +7491,7 @@ var RIAPP;
                     if (!!attr.options)
                         res.options = attr.options;
                     if (!(attr.readOnly === undefined))
-                        res.readOnly = RIAPP.global.utils.parseBool(attr.readOnly);
+                        res.readOnly = utils.parseBool(attr.readOnly);
                 } else if (!!attr.template) {
                     res.templateInfo = attr.template;
                     delete attr.template;
@@ -7493,7 +7527,7 @@ var RIAPP;
                     opts.mode = options.mode;
 
                 if (!!options.converter) {
-                    if (RIAPP.global.utils.check.isString(options.converter))
+                    if (utils.check.isString(options.converter))
                         opts.converter = app.getConverter(options.converter);
                     else
                         opts.converter = options.converter;
@@ -7502,7 +7536,7 @@ var RIAPP;
                 if (!fixedTarget)
                     opts.target = defaultTarget;
                 else {
-                    if (RIAPP.global.utils.check.isString(fixedTarget)) {
+                    if (utils.check.isString(fixedTarget)) {
                         if (fixedTarget == 'this')
                             opts.target = defaultTarget;
                         else {
@@ -7518,7 +7552,7 @@ var RIAPP;
                     opts.source = defaultSource;
                 } else {
                     opts.isSourceFixed = true;
-                    if (RIAPP.global.utils.check.isString(fixedSource)) {
+                    if (utils.check.isString(fixedSource)) {
                         if (fixedSource == 'this') {
                             opts.source = defaultTarget;
                         } else {
@@ -7621,7 +7655,7 @@ var RIAPP;
                         return [];
                     var arr = this._lfScope.getObjs(), res = [];
                     for (var i = 0, len = arr.length; i < len; i += 1) {
-                        if (RIAPP.global.utils.check.isBinding(arr[i]))
+                        if (utils.check.isBinding(arr[i]))
                             res.push(arr[i]);
                     }
                     return res;
@@ -7640,7 +7674,7 @@ var RIAPP;
                         this._lfScope = null;
                     }
                     if (!!this._el) {
-                        RIAPP.global.utils.removeNode(this._el);
+                        utils.removeNode(this._el);
                         this._el = null;
                     }
                     this._tgt = null;
@@ -7936,7 +7970,7 @@ var RIAPP;
                 __extends(DateContent, _super);
                 function DateContent(app, parentEl, options, dctx, isEditing) {
                     if (options.name != 'datepicker') {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'datepicker'"));
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'datepicker'"));
                     }
                     _super.call(this, app, parentEl, options, dctx, isEditing);
                     this._fn_cleanup = null;
@@ -8107,7 +8141,7 @@ var RIAPP;
                 __extends(MultyLineContent, _super);
                 function MultyLineContent(app, parentEl, options, dctx, isEditing) {
                     if (options.name != 'multyline') {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'multyline'"));
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'multyline'"));
                     }
                     _super.call(this, app, parentEl, options, dctx, isEditing);
                 }
@@ -8168,7 +8202,7 @@ var RIAPP;
                         return TemplateContent;
                     }
                     if (!options.bindingInfo)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'options', 'bindingInfo'));
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'options', 'bindingInfo'));
 
                     var fieldInfo = options.fieldInfo, res;
                     switch (fieldInfo.dataType) {
@@ -8206,7 +8240,7 @@ var RIAPP;
                             res = BindingContent;
                             break;
                         default:
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_FIELD_DATATYPE, fieldInfo.dataType));
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_FIELD_DATATYPE, fieldInfo.dataType));
                     }
                     if (!res && this._nextFactory) {
                         res = this._nextFactory.getContentType(options);
@@ -8258,6 +8292,10 @@ var RIAPP;
             dataform.css = {
                 dataform: 'ria-dataform'
             };
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
             var ERRTEXT = RIAPP.localizable.VALIDATE;
 
             var DataForm = (function (_super) {
@@ -8268,7 +8306,7 @@ var RIAPP;
                     this._app = app;
                     this._el = el;
                     this._$el = RIAPP.global.$(this._el);
-                    this._objId = 'frm' + RIAPP.global.utils.getNewID();
+                    this._objId = 'frm' + utils.getNewID();
                     this._dataContext = null;
                     this._$el.addClass(dataform.css.dataform);
                     this._isEditing = false;
@@ -8280,7 +8318,7 @@ var RIAPP;
                     this._supportErrNotify = false;
                     this._parentDataForm = null;
                     this._errors = null;
-                    parent = RIAPP.global.utils.getParentDataForm(null, this._el);
+                    parent = utils.getParentDataForm(null, this._el);
 
                     //if this form is nested inside another dataform
                     //subscribe for parent's destroy event
@@ -8306,7 +8344,7 @@ var RIAPP;
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
                     for (var i = 0, len = arr.length; i < len; i += 1) {
-                        if (RIAPP.global.utils.check.isBinding(arr[i]))
+                        if (utils.check.isBinding(arr[i]))
                             res.push(arr[i]);
                     }
                     return res;
@@ -8316,7 +8354,7 @@ var RIAPP;
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
                     for (var i = 0, len = arr.length; i < len; i += 1) {
-                        if (RIAPP.global.utils.check.isElView(arr[i]))
+                        if (utils.check.isElView(arr[i]))
                             res.push(arr[i]);
                     }
                     return res;
@@ -8355,13 +8393,13 @@ var RIAPP;
                     if (!dctx) {
                         return;
                     }
-                    var supportsGetFieldInfo = RIAPP.global.utils.check.isFunction(dctx.getFieldInfo);
+                    var supportsGetFieldInfo = utils.check.isFunction(dctx.getFieldInfo);
 
                     var elements = RIAPP.ArrayHelper.fromList(this._el.querySelectorAll(self._DATA_CONTENT_SELECTOR)), isEditing = this.isEditing;
 
                     elements.forEach(function (el) {
                         //check if the element inside nested dataform
-                        if (RIAPP.global.utils.getParentDataForm(self._el, el) !== self._el)
+                        if (utils.getParentDataForm(self._el, el) !== self._el)
                             return;
                         var attr = el.getAttribute(RIAPP.MOD.consts.DATA_ATTR.DATA_CONTENT), op = RIAPP.MOD.baseContent.parseContentAttr(attr);
                         if (!!op.fieldName && !op.fieldInfo) {
@@ -8370,7 +8408,7 @@ var RIAPP;
                             }
                             op.fieldInfo = dctx.getFieldInfo(op.fieldName);
                             if (!op.fieldInfo) {
-                                throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, '', op.fieldName));
+                                throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, '', op.fieldName));
                             }
                         }
 
@@ -8470,7 +8508,7 @@ var RIAPP;
                         try  {
                             if (v === this._dataContext)
                                 return;
-                            if (!!v && !RIAPP.global.utils.check.isBaseObj(v)) {
+                            if (!!v && !utils.check.isBaseObj(v)) {
                                 throw new Error(RIAPP.ERRS.ERR_DATAFRM_DCTX_INVALID);
                             }
                             this._unbindDS();
@@ -8480,7 +8518,7 @@ var RIAPP;
                             dataContext = this._dataContext;
 
                             if (!!dataContext) {
-                                this._supportEdit = RIAPP.global.utils.check.isEditable(dataContext);
+                                this._supportEdit = utils.check.isEditable(dataContext);
                                 this._supportErrNotify = RIAPP.MOD.binding._checkIsErrorNotification(dataContext);
                             }
                             this._bindDS();
@@ -8610,7 +8648,7 @@ var RIAPP;
                         $img = RIAPP.global.$('<img name="error_info" alt="error_info" class="error-info" />');
                         $el.prepend($img);
                         $img.get(0).src = image_src;
-                        RIAPP.global.utils.addToolTip($img, this._getErrorTipInfo(errors), RIAPP.MOD.baseElView.css.errorTip);
+                        utils.addToolTip($img, this._getErrorTipInfo(errors), RIAPP.MOD.baseElView.css.errorTip);
                         this._setFieldError(true);
                     } else {
                         $el.children('img[name="error_info"]').remove();
@@ -8678,10 +8716,11 @@ var RIAPP;
     (function (MOD) {
         (function (db) {
             //local variables for optimization
-            var ValidationError = RIAPP.MOD.binding.ValidationError, valueUtils = RIAPP.MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils;
+            var ValidationError = RIAPP.MOD.binding.ValidationError, valueUtils = RIAPP.MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils, utils, HEAD_MARK_RX = /^<head:(\d{1,6})>/;
             var collMod = RIAPP.MOD.collection;
-
-            var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
 
             (function (FLAGS) {
                 FLAGS[FLAGS["None"] = 0] = "None";
@@ -8800,7 +8839,6 @@ var RIAPP;
             function __checkError(svcError, oper) {
                 if (!svcError)
                     return;
-                var utils = RIAPP.global.utils;
                 switch (svcError.name) {
                     case "AccessDeniedException":
                         throw new AccessDeniedError(RIAPP.ERRS.ERR_ACCESS_DENIED, oper);
@@ -9048,7 +9086,7 @@ var RIAPP;
                         return this._totalCount;
                     },
                     set: function (v) {
-                        if (RIAPP.global.utils.check.isNt(v))
+                        if (utils.check.isNt(v))
                             v = 0;
                         if (v !== this._totalCount) {
                             this._totalCount = v;
@@ -9092,11 +9130,11 @@ var RIAPP;
                 };
                 TDataQuery.prototype.getFieldNames = function () {
                     var fldMap = this._dbSet._fieldMap;
-                    return RIAPP.global.utils.getProps(fldMap);
+                    return utils.getProps(fldMap);
                 };
                 TDataQuery.prototype._addSort = function (fieldName, sortOrder) {
                     var ord = 0 /* ASC */;
-                    if (!RIAPP.global.utils.check.isNt(sortOrder))
+                    if (!utils.check.isNt(sortOrder))
                         ord = sortOrder;
 
                     var sortItem = { fieldName: fieldName, sortOrder: ord };
@@ -9104,7 +9142,7 @@ var RIAPP;
                     this._cacheInvalidated = true;
                 };
                 TDataQuery.prototype._addFilterItem = function (fieldName, operand, value) {
-                    var fkind = 0 /* Equals */, utils = RIAPP.global.utils;
+                    var fkind = 0 /* Equals */;
                     var fld = this.getFieldInfo(fieldName);
                     if (!fld)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
@@ -9597,7 +9635,7 @@ var RIAPP;
                 };
                 Entity.prototype._fldChanging = function (fieldName, fieldInfo, oldV, newV) {
                     if (!this._origVals) {
-                        this._origVals = RIAPP.global.utils.cloneObj(this._vals);
+                        this._origVals = utils.cloneObj(this._vals);
                     }
                     return true;
                 };
@@ -9721,7 +9759,7 @@ var RIAPP;
                     return true;
                 };
                 Entity.prototype.acceptChanges = function (rowInfo) {
-                    var oldCT = this._changeType, eset = this._dbSet, utils = RIAPP.global.utils;
+                    var oldCT = this._changeType, eset = this._dbSet;
                     if (this._key === null)
                         return;
                     if (oldCT !== 0 /* NONE */) {
@@ -9741,7 +9779,7 @@ var RIAPP;
                     }
                 };
                 Entity.prototype.rejectChanges = function () {
-                    var self = this, oldCT = self._changeType, eset = self._dbSet, utils = RIAPP.global.utils;
+                    var self = this, oldCT = self._changeType, eset = self._dbSet;
                     if (!self._key)
                         return;
                     if (oldCT !== 0 /* NONE */) {
@@ -9770,7 +9808,7 @@ var RIAPP;
                     }
                 };
                 Entity.prototype.submitChanges = function () {
-                    var utils = RIAPP.global.utils, dbContext = this.getDbContext(), uniqueID = utils.uuid();
+                    var dbContext = this.getDbContext(), uniqueID = utils.uuid();
                     dbContext.addOnSubmitError(function (sender, args) {
                         if (args.error instanceof db.SubmitError) {
                             var submitErr = args.error;
@@ -10034,7 +10072,7 @@ var RIAPP;
                         assoc = trackAssoc[tasKeys[i]];
                         for (var j = 0, len2 = assoc.fieldRels.length; j < len2; j += 1) {
                             frel = assoc.fieldRels[j];
-                            if (!RIAPP.global.utils.check.isArray(trackAssocMap[frel.childField])) {
+                            if (!utils.check.isArray(trackAssocMap[frel.childField])) {
                                 trackAssocMap[frel.childField] = [assoc.childToParentName];
                             } else {
                                 trackAssocMap[frel.childField].push(assoc.childToParentName);
@@ -10127,7 +10165,7 @@ var RIAPP;
                     return result;
                 };
                 DbSet.prototype._doCalculatedField = function (opts, fInfo) {
-                    var self = this, utils = RIAPP.global.utils, result = { getFunc: function () {
+                    var self = this, result = { getFunc: function () {
                             throw new Error(utils.format("Calculated field:'{0}' is not initialized", fInfo.fieldName));
                         } };
                     function doDependences(f) {
@@ -10169,7 +10207,6 @@ var RIAPP;
                     });
                 };
                 DbSet.prototype._fillFromService = function (data) {
-                    var utils = RIAPP.global.utils;
                     data = utils.extend(false, {
                         res: { names: [], rows: [], pageIndex: null, pageCount: null, dbSetName: this.dbSetName, totalCount: null },
                         isPageChanged: false,
@@ -10261,7 +10298,6 @@ var RIAPP;
                     return { fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
                 };
                 DbSet.prototype._fillFromCache = function (data) {
-                    var utils = RIAPP.global.utils;
                     data = utils.extend(false, {
                         isPageChanged: false,
                         fn_beforeFillEnd: null
@@ -10324,7 +10360,7 @@ var RIAPP;
                     });
                 };
                 DbSet.prototype._setItemInvalid = function (row) {
-                    var keyMap = this._itemsByKey, item = keyMap[row.clientKey], utils = RIAPP.global.utils;
+                    var keyMap = this._itemsByKey, item = keyMap[row.clientKey];
                     var errors = {};
                     row.invalid.forEach(function (err) {
                         if (!err.fieldName)
@@ -10348,7 +10384,7 @@ var RIAPP;
                     _super.prototype._setCurrentItem.call(this, v);
                 };
                 DbSet.prototype._getChanges = function () {
-                    var changes = [], utils = RIAPP.global.utils;
+                    var changes = [];
                     var csh = this._changeCache;
                     utils.forEachProp(csh, function (key) {
                         var item = csh[key];
@@ -10357,7 +10393,7 @@ var RIAPP;
                     return changes;
                 };
                 DbSet.prototype._getTrackAssocInfo = function () {
-                    var self = this, res = [], utils = RIAPP.global.utils;
+                    var self = this, res = [];
                     var csh = this._changeCache, assocNames = Object.keys(self._trackAssoc);
                     utils.forEachProp(csh, function (key) {
                         var item = csh[key];
@@ -10481,7 +10517,7 @@ var RIAPP;
                 //from data stored inside page (without ajax request)
                 //convenient for loading classifiers (for lookup data)
                 DbSet.prototype.fillItems = function (data) {
-                    var utils = RIAPP.global.utils, res = utils.extend(false, {
+                    var res = utils.extend(false, {
                         names: [],
                         rows: [],
                         pageIndex: (!!this.query) ? this.query.pageIndex : null,
@@ -10503,7 +10539,7 @@ var RIAPP;
                 };
                 DbSet.prototype.acceptChanges = function () {
                     var csh = this._changeCache;
-                    RIAPP.global.utils.forEachProp(csh, function (key) {
+                    utils.forEachProp(csh, function (key) {
                         var item = csh[key];
                         item.acceptChanges(null);
                     });
@@ -10511,7 +10547,7 @@ var RIAPP;
                 };
                 DbSet.prototype.rejectChanges = function () {
                     var csh = this._changeCache;
-                    RIAPP.global.utils.forEachProp(csh, function (key) {
+                    utils.forEachProp(csh, function (key) {
                         var item = csh[key];
                         item.rejectChanges();
                     });
@@ -10700,7 +10736,7 @@ var RIAPP;
                     this._isSubmiting = false;
                     this._hasChanges = false;
                     this._pendingSubmit = null;
-                    this._serverTimezone = RIAPP.global.utils.get_timeZoneOffset();
+                    this._serverTimezone = utils.get_timeZoneOffset();
                     this._waitQueue = new RIAPP.MOD.utils.WaitQueue(this);
                 }
                 DbContext.prototype._getEventNames = function () {
@@ -10795,7 +10831,7 @@ var RIAPP;
                     };
                 };
                 DbContext.prototype._initMethod = function (methodInfo) {
-                    var self = this, utils = RIAPP.global.utils;
+                    var self = this;
 
                     //function expects method parameters
                     this._svcMethods[methodInfo.methodName] = function (args) {
@@ -10822,7 +10858,7 @@ var RIAPP;
                     };
                 };
                 DbContext.prototype._getMethodParams = function (methodInfo, args) {
-                    var self = this, methodName = methodInfo.methodName, utils = RIAPP.global.utils, data = { methodName: methodName, paramInfo: { parameters: [] } };
+                    var self = this, methodName = methodInfo.methodName, data = { methodName: methodName, paramInfo: { parameters: [] } };
                     var i, parameterInfos = methodInfo.parameters, len = parameterInfos.length, pinfo, val, value;
                     if (!args)
                         args = {};
@@ -10859,7 +10895,7 @@ var RIAPP;
                     return data;
                 };
                 DbContext.prototype._invokeMethod = function (methodInfo, data, callback) {
-                    var self = this, operType = 2 /* INVOKE */, postData, invokeUrl, utils = RIAPP.global.utils;
+                    var self = this, operType = 2 /* INVOKE */, postData, invokeUrl;
                     var fn_onComplete = function (res) {
                         try  {
                             if (!res)
@@ -10996,7 +11032,7 @@ var RIAPP;
                     return changeSet;
                 };
                 DbContext.prototype._getUrl = function (action) {
-                    var loadUrl = this.service_url, utils = RIAPP.global.utils;
+                    var loadUrl = this.service_url;
                     if (!utils.str.endsWith(loadUrl, '/'))
                         loadUrl = loadUrl + '/';
                     loadUrl = loadUrl + [action, ''].join('/');
@@ -11021,7 +11057,7 @@ var RIAPP;
                     }
                 };
                 DbContext.prototype._refreshItem = function (item) {
-                    var utils = RIAPP.global.utils, deferred = utils.createDeferred(), callback = function (isOk) {
+                    var deferred = utils.createDeferred(), callback = function (isOk) {
                         if (isOk) {
                             deferred.resolve(item);
                         } else {
@@ -11131,7 +11167,6 @@ var RIAPP;
                     }
                 };
                 DbContext.prototype._load = function (query, isPageChanged) {
-                    var utils = RIAPP.global.utils;
                     if (!query) {
                         throw new Error(RIAPP.ERRS.ERR_DB_LOAD_NO_QUERY);
                     }
@@ -11277,11 +11312,9 @@ var RIAPP;
 
                 //returns promise
                 DbContext.prototype.submitChanges = function () {
-                    var utils = RIAPP.global.utils;
-
-                    //dont submit when the submit already in the queue
+                    //don't submit when the submit is already in the queue
                     if (!!this._pendingSubmit) {
-                        //return promise for the already enqueued submit
+                        //return a promise for the already enqueued submit
                         return this._pendingSubmit.deferred.promise();
                     }
 
@@ -11364,7 +11397,7 @@ var RIAPP;
                 DbContext.prototype.initialize = function (options) {
                     if (this._isInitialized)
                         return;
-                    var self = this, utils = RIAPP.global.utils, opts = utils.extend(false, {
+                    var self = this, opts = utils.extend(false, {
                         serviceUrl: null,
                         permissions: null
                     }, options), loadUrl, operType;
@@ -11553,7 +11586,7 @@ var RIAPP;
                 __extends(Association, _super);
                 function Association(options) {
                     _super.call(this);
-                    var self = this, utils = RIAPP.global.utils;
+                    var self = this;
                     this._objId = 'ass' + utils.getNewID();
                     var opts = utils.extend(false, {
                         dbContext: null,
@@ -11957,7 +11990,7 @@ var RIAPP;
                     }
                 };
                 Association.prototype._checkChildFKey = function (item) {
-                    var self = this, savedKey = self._saveChildFKey, fkey, arr, utils = RIAPP.global.utils;
+                    var self = this, savedKey = self._saveChildFKey, fkey, arr;
                     self._saveChildFKey = null;
                     fkey = self.getChildFKey(item);
                     if (fkey !== savedKey) {
@@ -12010,7 +12043,7 @@ var RIAPP;
                     self._notifyParentChanged(fkeys);
                 };
                 Association.prototype._unMapChildItem = function (item) {
-                    var fkey, arr, idx, changedKey = null, utils = RIAPP.global.utils;
+                    var fkey, arr, idx, changedKey = null;
                     fkey = this.getChildFKey(item);
                     if (!!fkey) {
                         arr = this._childMap[fkey];
@@ -12237,7 +12270,7 @@ var RIAPP;
                 __extends(DataView, _super);
                 function DataView(options) {
                     _super.call(this);
-                    var utils = RIAPP.global.utils, opts = utils.extend(false, {
+                    var opts = utils.extend(false, {
                         dataSource: null,
                         fn_filter: null,
                         fn_sort: null,
@@ -12309,7 +12342,6 @@ var RIAPP;
                     this._onViewRefreshed({});
                 };
                 DataView.prototype._fillItems = function (data) {
-                    var utils = RIAPP.global.utils;
                     data = utils.extend(false, {
                         items: [],
                         isPageChanged: false,
@@ -12557,7 +12589,6 @@ var RIAPP;
                     return item;
                 };
                 DataView.prototype.removeItem = function (item) {
-                    var utils = RIAPP.global.utils;
                     if (item._key === null) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     }
@@ -12715,7 +12746,7 @@ var RIAPP;
                     this._parentItem = null;
                     this._refreshTimeout = null;
                     this._association = options.association;
-                    var utils = RIAPP.global.utils, opts = utils.extend(false, {
+                    var opts = utils.extend(false, {
                         dataSource: this._association.childDS,
                         fn_filter: null,
                         fn_sort: null,
@@ -12862,7 +12893,7 @@ var RIAPP;
                         return f.fieldName == name;
                     });
                     if (!arrProps || arrProps.length != 1)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "arrProps.length == 1"));
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "arrProps.length == 1"));
                     return arrProps[0];
                 };
                 BaseComplexProperty.prototype.getIsHasErrors = function () {
@@ -12950,7 +12981,7 @@ var RIAPP;
                         parent = parent.getParent();
                     }
                     if (!parent || !(parent instanceof RootComplexProperty))
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "parent instanceof RootComplexProperty"));
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "parent instanceof RootComplexProperty"));
                     return parent;
                 };
                 ChildComplexProperty.prototype.getFullPath = function (name) {
@@ -12974,11 +13005,16 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (listbox) {
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
+
             var ListBox = (function (_super) {
                 __extends(ListBox, _super);
                 function ListBox(el, dataSource, options) {
                     _super.call(this);
-                    var self = this, utils = RIAPP.global.utils;
+                    var self = this;
                     this._el = el;
                     this._$el = RIAPP.global.$(this._el);
                     this._objId = 'lst' + utils.getNewID();
@@ -13029,7 +13065,7 @@ var RIAPP;
                     }
                 };
                 ListBox.prototype._getValue = function (item) {
-                    var v = this._getRealValue(item), utils = RIAPP.global.utils;
+                    var v = this._getRealValue(item);
                     if (utils.check.isNt(v))
                         return '';
                     return v;
@@ -13047,7 +13083,7 @@ var RIAPP;
                         return '';
                     if (!!this._textPath) {
                         var t = RIAPP.global.parser.resolvePath(item, this._textPath);
-                        if (RIAPP.global.utils.check.isNt(t))
+                        if (utils.check.isNt(t))
                             return '';
                         return '' + t;
                     } else
@@ -13538,7 +13574,6 @@ var RIAPP;
             var LookupContent = (function (_super) {
                 __extends(LookupContent, _super);
                 function LookupContent(app, parentEl, options, dctx, isEditing) {
-                    var utils = RIAPP.global.utils;
                     if (options.name != 'lookup') {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'lookup'"));
                     }
@@ -13651,7 +13686,6 @@ var RIAPP;
                     return tgt;
                 };
                 LookupContent.prototype._cleanUp = function () {
-                    var utils = RIAPP.global.utils;
                     if (!!this._el) {
                         utils.removeNode(this._el);
                         this._el = null;
@@ -13791,6 +13825,10 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (datadialog) {
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
             (function (DIALOG_ACTION) {
                 DIALOG_ACTION[DIALOG_ACTION["Default"] = 0] = "Default";
                 DIALOG_ACTION[DIALOG_ACTION["StayOpen"] = 1] = "StayOpen";
@@ -13804,8 +13842,8 @@ var RIAPP;
                     _super.call(this);
                     var self = this;
                     this._app = app;
-                    this._objId = 'dlg' + RIAPP.global.utils.getNewID();
-                    var opts = RIAPP.global.utils.extend(false, {
+                    this._objId = 'dlg' + utils.getNewID();
+                    var opts = utils.extend(false, {
                         dataContext: null,
                         templateID: null,
                         width: 500,
@@ -13841,7 +13879,7 @@ var RIAPP;
                     this._fn_submitOnOK = function () {
                         if (!self._dataContext._isCanSubmit) {
                             //signals immediatly
-                            return RIAPP.global.utils.createDeferred().resolve().promise();
+                            return utils.createDeferred().resolve().promise();
                         }
                         var dctxt = self._dataContext;
                         return dctxt.submitChanges();
@@ -13874,7 +13912,7 @@ var RIAPP;
                     this.removeHandler('refresh', namespace);
                 };
                 DataEditDialog.prototype._updateIsEditable = function () {
-                    this._isEditable = RIAPP.global.utils.check.isEditable(this._dataContext);
+                    this._isEditable = utils.check.isEditable(this._dataContext);
                 };
                 DataEditDialog.prototype._createDialog = function () {
                     if (this._dialogCreated)
@@ -14026,7 +14064,7 @@ var RIAPP;
                     this.raiseEvent('refresh', args);
                     if (args.isHandled)
                         return;
-                    if (!!this._dataContext && RIAPP.global.utils.check.isFunction(this._dataContext.refresh)) {
+                    if (!!this._dataContext && utils.check.isFunction(this._dataContext.refresh)) {
                         this._dataContext.refresh();
                     }
                 };
@@ -14035,7 +14073,7 @@ var RIAPP;
                         if (this._result != 'ok' && !!this._dataContext) {
                             if (this._isEditable)
                                 this._dataContext.cancelEdit();
-                            if (this._submitOnOK && RIAPP.global.utils.check.isFunction(this._dataContext.rejectChanges)) {
+                            if (this._submitOnOK && utils.check.isFunction(this._dataContext.rejectChanges)) {
                                 this._dataContext.rejectChanges();
                             }
                         }
@@ -14216,6 +14254,10 @@ var RIAPP;
     (function (MOD) {
         (function (datagrid) {
             var COLUMN_TYPE = { DATA: 'data', ROW_EXPANDER: 'row_expander', ROW_ACTIONS: 'row_actions', ROW_SELECTOR: 'row_selector' };
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
             datagrid.css = {
                 container: 'ria-table-container',
                 dataTable: 'ria-data-table',
@@ -14366,7 +14408,7 @@ var RIAPP;
                     _super.call(this, row, options);
                 }
                 DataCell.prototype._init = function () {
-                    var options = this.column.options.content, utils = RIAPP.global.utils;
+                    var options = this.column.options.content;
                     if (!options.fieldInfo && !!options.fieldName) {
                         options.fieldInfo = this.item.getFieldInfo(options.fieldName);
                         if (!options.fieldInfo) {
@@ -14516,7 +14558,7 @@ var RIAPP;
                         img_delete: 'txtDelete'
                     };
                     $div.empty();
-                    var opts = self._column.options, utils = RIAPP.global.utils, fn_setUpImages = function ($images) {
+                    var opts = self._column.options, fn_setUpImages = function ($images) {
                         $images.each(function (index, img) {
                             var $img = RIAPP.global.$(img);
                             img.style.cursor = 'pointer';
@@ -14966,7 +15008,6 @@ var RIAPP;
                 __extends(DetailsRow, _super);
                 function DetailsRow(grid, options) {
                     _super.call(this);
-                    var utils = RIAPP.global.utils;
                     this._grid = grid;
                     this._el = options.tr;
                     this._item = null;
@@ -14997,7 +15038,7 @@ var RIAPP;
                     _super.prototype.destroy.call(this);
                 };
                 DetailsRow.prototype._setParentRow = function (row) {
-                    var self = this, utils = RIAPP.global.utils;
+                    var self = this;
                     this._item = null;
                     this._cell.item = null;
 
@@ -15109,7 +15150,7 @@ var RIAPP;
                 __extends(BaseColumn, _super);
                 function BaseColumn(grid, options) {
                     _super.call(this);
-                    var self = this, utils = RIAPP.global.utils;
+                    var self = this;
                     this._grid = grid;
                     this._el = options.th;
                     this._options = options.colinfo;
@@ -15302,7 +15343,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    var self = this, utils = RIAPP.global.utils;
+                    var self = this;
                     utils.forEachProp(self._objCache, function (key) {
                         self._objCache[key].destroy();
                     });
@@ -15487,7 +15528,6 @@ var RIAPP;
                     _super.call(this);
                     if (!!dataSource && !(dataSource instanceof RIAPP.MOD.collection.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
-                    var utils = RIAPP.global.utils;
                     this._options = utils.extend(false, {
                         isUseScrollInto: true,
                         isUseScrollIntoDetails: true,
@@ -15587,7 +15627,7 @@ var RIAPP;
                         sortable: false,
                         sortMemberName: null,
                         content: null
-                    }, options, utils = RIAPP.global.utils;
+                    }, options;
 
                     var temp_opts = RIAPP.global.parser.parseOptions(column_attr);
                     if (temp_opts.length > 0)
@@ -15674,7 +15714,7 @@ var RIAPP;
                     }
                 };
                 DataGrid.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, row, items = args.items, utils = RIAPP.global.utils;
+                    var self = this, row, items = args.items;
                     switch (args.change_type) {
                         case 2 /* RESET */:
                             if (!this._isDSFilling)
@@ -15852,7 +15892,6 @@ var RIAPP;
                         return row;
                 };
                 DataGrid.prototype._removeRow = function (row) {
-                    var utils = RIAPP.global.utils;
                     if (this._expandedRow === row) {
                         this.collapseDetails();
                     }
@@ -15973,7 +16012,7 @@ var RIAPP;
                     });
                 };
                 DataGrid.prototype._createColumn = function (options) {
-                    var col, utils = RIAPP.global.utils;
+                    var col;
                     switch (options.colinfo.type) {
                         case COLUMN_TYPE.ROW_EXPANDER:
                             if (!this._expanderCol) {
@@ -16210,7 +16249,7 @@ var RIAPP;
                 DataGrid.prototype.showEditDialog = function () {
                     if (!this._options.editor || !this._options.editor.templateID || !this._editingRow)
                         return false;
-                    var editorOptions, item = this._editingRow.item, utils = RIAPP.global.utils;
+                    var editorOptions, item = this._editingRow.item;
                     if (!item.isEditing)
                         item.beginEdit();
                     if (!this._dialog) {
@@ -16567,6 +16606,10 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (pager) {
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
             pager.css = {
                 pager: 'ria-data-pager',
                 info: 'pager-info',
@@ -16579,7 +16622,6 @@ var RIAPP;
                 __extends(Pager, _super);
                 function Pager(el, dataSource, options) {
                     _super.call(this);
-                    var utils = RIAPP.global.utils;
                     this._el = el;
                     this._$el = RIAPP.global.$(this._el);
                     this._objId = 'pgr' + utils.getNewID();
@@ -16606,7 +16648,7 @@ var RIAPP;
                     return RIAPP.global.$(RIAPP.global.document.createElement(tag));
                 };
                 Pager.prototype._render = function () {
-                    var utils = RIAPP.global.utils, $el = this._$el, rowCount, currentPage, pageCount;
+                    var $el = this._$el, rowCount, currentPage, pageCount;
                     this._clearContent();
 
                     if (this.rowsPerPage <= 0) {
@@ -16745,7 +16787,7 @@ var RIAPP;
                     a.attr('href', 'javascript:void(0)');
 
                     if (!!tip) {
-                        RIAPP.global.utils.addToolTip(a, tip);
+                        utils.addToolTip(a, tip);
                     }
                     a.click(function (e) {
                         e.preventDefault();
@@ -16769,7 +16811,7 @@ var RIAPP;
                     var span = this._createElement('span'), previousPage = this.currentPage - 1, tip, a;
 
                     if (this.showTip) {
-                        tip = RIAPP.global.utils.format(PAGER_TXT.prevPageTip, previousPage);
+                        tip = utils.format(PAGER_TXT.prevPageTip, previousPage);
                     }
 
                     a = this._createLink(previousPage, PAGER_TXT.previousText, tip);
@@ -16782,7 +16824,7 @@ var RIAPP;
                     span.text('' + currentPage);
 
                     if (this.showTip) {
-                        RIAPP.global.utils.addToolTip(span, this._buildTip(currentPage));
+                        utils.addToolTip(span, this._buildTip(currentPage));
                     }
 
                     span.addClass(pager.css.currentPage);
@@ -16804,7 +16846,7 @@ var RIAPP;
                     var span = this._createElement('span'), nextPage = this.currentPage + 1, tip, a;
 
                     if (this.showTip) {
-                        tip = RIAPP.global.utils.format(PAGER_TXT.nextPageTip, nextPage);
+                        tip = utils.format(PAGER_TXT.nextPageTip, nextPage);
                     }
                     a = this._createLink(nextPage, PAGER_TXT.nextText, tip);
                     span.addClass(pager.css.otherPage).append(a);
@@ -16821,7 +16863,7 @@ var RIAPP;
                     return span;
                 };
                 Pager.prototype._buildTip = function (page) {
-                    var utils = RIAPP.global.utils, rowsPerPage = this.rowsPerPage, rowCount = this.rowCount, start = (((page - 1) * rowsPerPage) + 1), end = (page == this.pageCount) ? rowCount : (page * rowsPerPage), tip = '';
+                    var rowsPerPage = this.rowsPerPage, rowCount = this.rowCount, start = (((page - 1) * rowsPerPage) + 1), end = (page == this.pageCount) ? rowCount : (page * rowsPerPage), tip = '';
 
                     if (page == this.currentPage) {
                         tip = utils.format(PAGER_TXT.showingTip, start, end, rowCount);
@@ -18068,6 +18110,6 @@ var RIAPP;
     })(RIAPP.BaseObject);
     RIAPP.Application = Application;
 
-    //MUST INITIALIZE THE GLOBAL
+    //ALL CORE MODULES are LOADED, INITIALIZE THE Global
     RIAPP.global._initialize();
 })(RIAPP || (RIAPP = {}));

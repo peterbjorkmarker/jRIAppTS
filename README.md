@@ -44,42 +44,6 @@ You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
 
-<p>2013-07-30   Bug fix in a dataform usage inside templates. Corrected data bindings in these cases.</p>
-<p>2013-07-30   The DataService class enhancements.Now besides getting typescript like, for example, http://YOURSERVER/RIAppDemoService/GetTypeScript<br/>
-The DataService now exposes two other methods to get XAML version of the metadata and C# implementation of the dataservice's methods.<br/>
- You can test them in the DEMO using<br/>
- http://YOURSERVER/RIAppDemoService/GetXAML<br/>
- http://YOURSERVER/RIAppDemoService/GetCSharp
-</p>
-<p>2013-08-31  Published generics version of the framework - <b>tested to work and to be compilable with 0.9.1.1 version of the compiler.</b></p>
-<p>2013-09-07  Improved typed List and Dictionary code generation, to include properties' data types.</p>
-<p>2013-09-09  List and Dictionary code modifications</p>
-<p>2013-09-20  CSharp enums to typescript enums dataservice's code generation</p>
-<p>2013-09-25  Bug fix in the datagrid</p>
-<p>2013-10-19  Improvements in the code generation</p>
-<p>2013-11-13  Changes in dataservice's query methods. Now, they don't accept GetDataInfo parameter as a method's argument!
-It is accessible now through dataservice's CurrentQueryInfo property. See demo detaservice for example.</p>
-<p>2013-11-14  Improvements in the dataservice's code. Now query methods and service methods can accept complex type arguments. Fixed bug in dataservice's authorizer class. Improved code generation.</p>
-<p>2013-11-23  Updated jriappTS code to be compilable using <b>the typescript v0.95 beta compiler</b></p>
-<p>2013-11-26  Code modernization</p>
-<p>2013-11-29  jriappTS typescript solution was split into two parts. <br/>1) jriappTS - the framework's code<br/>2) demoTS - the code (user modules) for the DEMO ASP.NET MVC project.</p>
-<p>2013-11-29  Added <b>User's Guide</b> (meap). It requires some editing, but it is better than nothing.</p>
-<p>2013-12-03  <br/>1) <b>Code refactoring with breaking changes</b><br/>
-2) Added a new module datepicker.ts. It implements IDatePicker interface, so the datepicker can be easily swapped with another implementation.<br/>
-3) Added a new element view, registered with the name: <b>datepicker</b>. It allows to add a datepicker declaratively. See the DataGrid demo- in its filter parameter section it is used to enter the sales dates.<br/>
-4) Date values now displayed by default without a datepicker. You need to add name=datepicker in the data-content attribute's value. See the DataGrid demo - in the edit dialog.<br/>
-5) Replaced dependency of the framework from date.js to moment.js. It is more widely used js library that date.js, and better coexists with other libs.<b>It requires different date format.For example, DD.MM.YYYY instead of dd.MM.yyyy</b><br/>
-6) The defaults for datepicker's datetime format are factored out into separate property on global.defaults. See the Defaults class.<br/>
-7) Composing filtering and sorting in queries now use enums FILTER_TYPE and SORT_ORDER instead of string literals.<br/>
-8) updated the DEMO project to work properly after those changes.<br/>
-P.S. after these changes i will soon commit new docs version.<br/>So many changes was made because Typescript 0.95 much better than 0.91 and it is easy to do when you have a proper tool. With javascript the refactoring on such scale was impossible.
-</p>
-<p>2013-12-04 Code refactoring and documentation update.</p>
-<p>2013-12-05 documentation update.</p>
-<p>2013-12-06 <b>Wire format change!</b> documentation update.<br/>
-A security switch to enable disable invocation of GetTypeScript, GetCSharp, GetXAML methods.<br/>
-Fixed product image uploading in the DEMO.
-</p>
 <p>2013-12-25   The DataService enhancements for performance reason. Also changed getting typescript code generation to a new syntax, like http://YOURSERVER/RIAppDemoService/CodeGen?type=ts<br/>
  And also for XAML and for C# code generation use it like -<br/>
  http://YOURSERVER/RIAppDemoService//CodeGen?type=xaml<br/>
@@ -102,6 +66,7 @@ P.S. The docs to be updated soon. This version will be probably a RC version.<br
 <p>2014-01-08 Added a specific Model Binder for dataservice's method arguments. The serializer was changed to NewtonSoft's serializer. Performance of AJAX requests was improved by an order of magnitude.</p>
 <p>2014-01-13 <b>Docs update!</b>  Added capabilities to add explicit additional dataset results to the main query result. Added new RC Version.</p>
 <p>2014-01-14 Docs update. Demo app update.</p>
+<p>2014-01-15 Docs update. Internal code optimization.</p>
 --
 Maxim V. Tsapov<br/>
 Moscow, Russian Federation<br/> 

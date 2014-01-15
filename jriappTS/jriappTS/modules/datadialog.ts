@@ -1,6 +1,10 @@
 module RIAPP {
     export module MOD {
         export module datadialog {
+            var utils: MOD.utils.Utils;
+            RIAPP.global.addOnInitialize((s, args) => {
+                utils = s.utils;
+            });
            export enum DIALOG_ACTION { Default = 0, StayOpen = 1 };
            
             
@@ -49,8 +53,8 @@ module RIAPP {
                     super();
                     var self = this;
                     this._app = app;
-                    this._objId = 'dlg' + RIAPP.global.utils.getNewID();
-                    var opts: IDialogConstructorOptions = RIAPP.global.utils.extend(false, {
+                    this._objId = 'dlg' + utils.getNewID();
+                    var opts: IDialogConstructorOptions = utils.extend(false, {
                         dataContext: null,
                         templateID: null,
                         width: 500,
@@ -86,7 +90,7 @@ module RIAPP {
                     this._fn_submitOnOK = function () {
                        if (!self._dataContext._isCanSubmit) {
                           //signals immediatly
-                           return RIAPP.global.utils.createDeferred().resolve().promise();
+                           return utils.createDeferred().resolve().promise();
                        }
                        var dctxt: MOD.utils.ISubmittable = self._dataContext;
                        return dctxt.submitChanges();
@@ -119,7 +123,7 @@ module RIAPP {
                     this.removeHandler('refresh', namespace);
                 }
                 _updateIsEditable() {
-                    this._isEditable = RIAPP.global.utils.check.isEditable(this._dataContext);
+                    this._isEditable = utils.check.isEditable(this._dataContext);
                 }
                 _createDialog() {
                     if (this._dialogCreated)
@@ -271,7 +275,7 @@ module RIAPP {
                     this.raiseEvent('refresh', args);
                     if (args.isHandled)
                         return;
-                    if (!!this._dataContext && RIAPP.global.utils.check.isFunction(this._dataContext.refresh)) {
+                    if (!!this._dataContext && utils.check.isFunction(this._dataContext.refresh)) {
                         this._dataContext.refresh();
                     }
                 }
@@ -280,7 +284,7 @@ module RIAPP {
                         if (this._result != 'ok' && !!this._dataContext) {
                             if (this._isEditable)
                                 this._dataContext.cancelEdit();
-                            if (this._submitOnOK && RIAPP.global.utils.check.isFunction(this._dataContext.rejectChanges)) {
+                            if (this._submitOnOK && utils.check.isFunction(this._dataContext.rejectChanges)) {
                                 this._dataContext.rejectChanges();
                             }
                         }

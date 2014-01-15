@@ -500,6 +500,6 @@ module RIAPP {
         get app() { return this; }
     }
 
-    //MUST INITIALIZE THE GLOBAL
+    //ALL CORE MODULES are LOADED, INITIALIZE THE Global
     RIAPP.global._initialize();
 }

@@ -3,6 +3,10 @@ module RIAPP {
         export module baseElView {
            //local variables for optimization
             var ERRTEXT = RIAPP.localizable.VALIDATE;
+            var utils: MOD.utils.Utils;
+            RIAPP.global.addOnInitialize((s, args) => {
+                utils = s.utils;
+            });
 
             export class PropChangedCommand extends MOD.mvvm.Command {
                 constructor(fn_action: (sender:any, param: { property: string; }) => void , thisObj, fn_canExecute: (sender: any, param: { property: string; }) => boolean) {
@@ -43,7 +47,7 @@ module RIAPP {
                     this._$el = null;
                     //save previous css display style
                     this._oldDisplay = null;
-                    this._objId = 'elv' + RIAPP.global.utils.getNewID();
+                    this._objId = 'elv' + utils.getNewID();
                     this._propChangedCommand = null;
                     app._setElView(this._el, this);
                     this._errors = null;
@@ -115,7 +119,7 @@ module RIAPP {
                     }
                     var $el = this.$el;
                     if (!!errors && errors.length > 0) {
-                        RIAPP.global.utils.addToolTip($el, this._getErrorTipInfo(errors), css.errorTip);
+                        utils.addToolTip($el, this._getErrorTipInfo(errors), css.errorTip);
                         this._setFieldError(true);
                     }
                     else {
@@ -131,7 +135,7 @@ module RIAPP {
                     return isHandled;
                 }
                 _setToolTip($el:JQuery, tip:string, className?:string) {
-                    RIAPP.global.utils.addToolTip($el, tip, className);
+                    utils.addToolTip($el, tip, className);
                 }
                 toString() {
                     return 'BaseElView';
@@ -382,7 +386,7 @@ module RIAPP {
                         img = consts.LOADER_GIF.NORMAL;
                     this._delay = 400;
                     this._timeOut = null;
-                    if (!RIAPP.global.utils.check.isNt(options.delay))
+                    if (!utils.check.isNt(options.delay))
                         this._delay = parseInt(options.delay);
                     this._loaderPath = global.getImagePath(img);
                     this._$loader = global.$(new Image());
@@ -1380,12 +1384,12 @@ module RIAPP {
                             self.invokeTabsEvent("load", tab);
                         }
                     };
-                    tabOpts = RIAPP.global.utils.extend(false, tabOpts, self._tabOpts);
+                    tabOpts = utils.extend(false, tabOpts, self._tabOpts);
                     (<any>$el).tabs(tabOpts);
                 }
                 _destroyTabs() {
                     var $el = this.$el;
-                    RIAPP.global.utils.destroyJQueryPlugin($el, 'tabs');
+                    utils.destroyJQueryPlugin($el, 'tabs');
                 }
                 invokeTabsEvent(eventName:string, args) {
                     var self = this, data = { eventName: eventName, args: args };

@@ -4,17 +4,20 @@ module RIAPP {
             export var css = {
                 templateContainer: 'ria-template-container'
             };
-         
+            var utils: MOD.utils.Utils;
+            RIAPP.global.addOnInitialize((s, args) => {
+                utils = s.utils;
+            });
             export class Template extends RIAPP.BaseObject {
-                _dctxt: any;
-                _el: HTMLElement;
-                _isDisabled: boolean;
-                _lfTime: MOD.utils.LifeTimeScope;
-                _templateID: string;
-                _templElView: MOD.baseElView.TemplateElView;
-                _promise: any;
-                _busyTimeOut: number;
-                _app: Application;
+                private _dctxt: any;
+                private _el: HTMLElement;
+                private _isDisabled: boolean;
+                private _lfTime: MOD.utils.LifeTimeScope;
+                private _templateID: string;
+                private _templElView: MOD.baseElView.TemplateElView;
+                private _promise: RIAPP.IDeferred<any>;
+                private _busyTimeOut: number;
+                private _app: Application;
 
                 constructor(app: Application, templateID:string) {
                     super();
@@ -30,8 +33,7 @@ module RIAPP {
                     if (!!this._templateID)
                         this._loadTemplate();
                 }
-                _getBindings(): MOD.binding.Binding[]{
-                    var utils = RIAPP.global.utils;
+                private _getBindings(): MOD.binding.Binding[]{
                     if (!this._lfTime)
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
@@ -41,8 +43,7 @@ module RIAPP {
                     }
                     return res;
                 }
-                _getElViews(): MOD.baseElView.BaseElView[]{
-                    var utils = RIAPP.global.utils;
+                private _getElViews(): MOD.baseElView.BaseElView[]{
                     if (!this._lfTime)
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
@@ -52,8 +53,7 @@ module RIAPP {
                     }
                     return res;
                 }
-                _getTemplateElView(): MOD.baseElView.TemplateElView {
-                    var utils = RIAPP.global.utils;
+                private _getTemplateElView(): MOD.baseElView.TemplateElView {
                     if (!this._lfTime || this._templElView === null)
                         return null;
                     if (!!this._templElView)
@@ -68,23 +68,25 @@ module RIAPP {
                     this._templElView = res;
                     return res;
                 }
-                //returns promise which resolves with loaded template DOM element
-                _loadTemplateElAsync(name) {
-                    var self = this, utils = RIAPP.global.utils, fn_loader = this.app.getTemplateLoader(name), deferred;
+                //returns a deferred which resolves with loaded template DOM element
+                private _loadTemplateElAsync(name): RIAPP.IDeferred<any> {
+                    var self = this, fn_loader = this.app.getTemplateLoader(name), deferred = utils.createDeferred();
                     if (!!fn_loader) {
-                        return fn_loader().then(function (html:string) {
+                        fn_loader().then(function (html: string) {
                             var tmpDiv = global.document.createElement('div');
                             tmpDiv.innerHTML = html;
-                            return tmpDiv.firstElementChild;
+                            var el = tmpDiv.firstElementChild;
+                            deferred.resolve(el);
+                        }, function (err) {
+                            deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID)));
                         });
                     }
                     else {
-                        deferred = utils.createDeferred();
                         deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID)));
-                        return deferred.promise();
                     }
+                    return deferred;
                 }
-                _appendIsBusy(el) {
+                private _appendIsBusy(el: HTMLElement) {
                     var self = this;
                     this._busyTimeOut = setTimeout(function () {
                         if (!self._busyTimeOut || self._isDestroyCalled)
@@ -94,7 +96,7 @@ module RIAPP {
                         vw_inst.isBusy = true;
                     }, 400);
                 }
-                _removeIsBusy(el) {
+                private _removeIsBusy(el: HTMLElement) {
                     var self = this;
                     if (!!self._busyTimeOut) {
                         clearTimeout(self._busyTimeOut);
@@ -106,7 +108,8 @@ module RIAPP {
                     }
                 }
                 _loadTemplate() {
-                    var self = this, utils = RIAPP.global.utils, tid = self._templateID, promise, deffered, tmpDiv, asyncLoad = false;
+                    var self = this, tid = self._templateID, promise: RIAPP.IDeferred<any>, deffered: RIAPP.IDeferred<any>,
+                        tmpDiv: HTMLElement, asyncLoad = false;
                     if (!!self._promise) {
                         self._promise.reject('cancel'); //cancel previous load
                         self._promise = null;

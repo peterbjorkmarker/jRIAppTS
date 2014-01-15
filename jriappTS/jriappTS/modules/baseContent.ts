@@ -1,6 +1,10 @@
 module RIAPP {
     export module MOD {
         export module baseContent {
+            var utils: MOD.utils.Utils;
+            RIAPP.global.addOnInitialize((s, args) => {
+                utils = s.utils;
+            });
             export var css = {
                 content: 'ria-content-field',
                 required: 'ria-required-field'
@@ -91,7 +95,7 @@ module RIAPP {
                     if (!!attr.options)
                         res.options = attr.options;
                     if (!(attr.readOnly === undefined))
-                        res.readOnly = RIAPP.global.utils.parseBool(attr.readOnly);
+                        res.readOnly = utils.parseBool(attr.readOnly);
                 }
                 else if (!!attr.template) {
                     res.templateInfo = attr.template;
@@ -127,7 +131,7 @@ module RIAPP {
                     opts.mode = options.mode;
 
                 if (!!options.converter) {
-                    if (RIAPP.global.utils.check.isString(options.converter))
+                    if (utils.check.isString(options.converter))
                         opts.converter = app.getConverter(options.converter);
                     else
                         opts.converter = options.converter;
@@ -137,7 +141,7 @@ module RIAPP {
                 if (!fixedTarget)
                     opts.target = defaultTarget;
                 else {
-                    if (RIAPP.global.utils.check.isString(fixedTarget)) {
+                    if (utils.check.isString(fixedTarget)) {
                         if (fixedTarget == 'this')
                             opts.target = defaultTarget;
                         else {
@@ -155,7 +159,7 @@ module RIAPP {
                 }
                 else {
                     opts.isSourceFixed = true;
-                    if (RIAPP.global.utils.check.isString(fixedSource)) {
+                    if (utils.check.isString(fixedSource)) {
                         if (fixedSource == 'this') {
                             opts.source = defaultTarget;
                         }
@@ -273,7 +277,7 @@ module RIAPP {
                         return [];
                     var arr = this._lfScope.getObjs(), res = [];
                     for (var i = 0, len = arr.length; i < len; i += 1) {
-                        if (RIAPP.global.utils.check.isBinding(arr[i]))
+                        if (utils.check.isBinding(arr[i]))
                             res.push(arr[i]);
                     }
                     return res;
@@ -292,7 +296,7 @@ module RIAPP {
                         this._lfScope = null;
                     }
                     if (!!this._el) {
-                        RIAPP.global.utils.removeNode(this._el);
+                        utils.removeNode(this._el);
                         this._el = null;
                     }
                     this._tgt = null;
@@ -526,7 +530,7 @@ module RIAPP {
                 _fn_cleanup: () => void;
                 constructor(app: Application, parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean) {
                     if (options.name != 'datepicker') {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'datepicker'"));
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'datepicker'"));
                     }
                     super(app, parentEl, options, dctx, isEditing);
                     this._fn_cleanup = null;
@@ -678,7 +682,7 @@ module RIAPP {
                 }
                 constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean) {
                     if (options.name != 'multyline') {
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'multyline'"));
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'multyline'"));
                     }
                     super(app, parentEl, options, dctx, isEditing);
                 }
@@ -729,7 +733,7 @@ module RIAPP {
                        return TemplateContent;
                     }
                     if (!options.bindingInfo)
-                        throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'options', 'bindingInfo'));
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'options', 'bindingInfo'));
 
                     var fieldInfo = options.fieldInfo, res;
                     switch (fieldInfo.dataType) {
@@ -767,7 +771,7 @@ module RIAPP {
                             res = BindingContent;
                             break;
                         default:
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_FIELD_DATATYPE, fieldInfo.dataType));
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_FIELD_DATATYPE, fieldInfo.dataType));
                     }
                     if (!res && this._nextFactory) {
                         res = this._nextFactory.getContentType(options);

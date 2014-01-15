@@ -4,6 +4,10 @@ module RIAPP {
             export var css = {
                 dataform: 'ria-dataform'
             };
+            var utils: MOD.utils.Utils;
+            RIAPP.global.addOnInitialize((s, args) => {
+                utils = s.utils;
+            });
             var ERRTEXT = RIAPP.localizable.VALIDATE;
 
             export class DataForm extends RIAPP.BaseObject {
@@ -29,7 +33,7 @@ module RIAPP {
                     this._app = app;
                     this._el = el;
                     this._$el = global.$(this._el);
-                    this._objId = 'frm' + RIAPP.global.utils.getNewID();
+                    this._objId = 'frm' + utils.getNewID();
                     this._dataContext = null;
                     this._$el.addClass(css.dataform);
                     this._isEditing = false;
@@ -41,7 +45,7 @@ module RIAPP {
                     this._supportErrNotify = false;
                     this._parentDataForm = null;
                     this._errors = null;
-                    parent = RIAPP.global.utils.getParentDataForm(null, this._el);
+                    parent = utils.getParentDataForm(null, this._el);
                     //if this form is nested inside another dataform
                     //subscribe for parent's destroy event
                     if (!!parent) {
@@ -58,7 +62,7 @@ module RIAPP {
                         return [];
                     var arr:any[] = this._lfTime.getObjs(), res:binding.Binding[] = [];
                     for (var i = 0, len = arr.length; i < len; i += 1) {
-                        if (RIAPP.global.utils.check.isBinding(arr[i]))
+                        if (utils.check.isBinding(arr[i]))
                             res.push(arr[i]);
                     }
                     return res;
@@ -68,7 +72,7 @@ module RIAPP {
                         return [];
                     var arr: any[] = this._lfTime.getObjs(), res: baseElView.BaseElView[] = [];
                     for (var i = 0, len = arr.length; i < len; i += 1) {
-                        if (RIAPP.global.utils.check.isElView(arr[i]))
+                        if (utils.check.isElView(arr[i]))
                             res.push(arr[i]);
                     }
                     return res;
@@ -108,14 +112,14 @@ module RIAPP {
                     if (!dctx) {
                         return;
                     }
-                    var supportsGetFieldInfo = RIAPP.global.utils.check.isFunction(dctx.getFieldInfo);
+                    var supportsGetFieldInfo = utils.check.isFunction(dctx.getFieldInfo);
 
                     var elements = <HTMLElement[]>ArrayHelper.fromList(this._el.querySelectorAll(self._DATA_CONTENT_SELECTOR)),
                         isEditing = this.isEditing;
 
                     elements.forEach(function (el) {
                         //check if the element inside nested dataform
-                        if (RIAPP.global.utils.getParentDataForm(self._el, el) !== self._el)
+                        if (utils.getParentDataForm(self._el, el) !== self._el)
                             return;
                         var attr = el.getAttribute(consts.DATA_ATTR.DATA_CONTENT), op = baseContent.parseContentAttr(attr);
                         if (!!op.fieldName && !op.fieldInfo) {
@@ -124,7 +128,7 @@ module RIAPP {
                             }
                             op.fieldInfo = dctx.getFieldInfo(op.fieldName);
                             if (!op.fieldInfo) {
-                                throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, '', op.fieldName));
+                                throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, '', op.fieldName));
                             }
                         }
 
@@ -209,7 +213,7 @@ module RIAPP {
                     try {
                         if (v === this._dataContext)
                             return;
-                        if (!!v && !RIAPP.global.utils.check.isBaseObj(v)) {
+                        if (!!v && !utils.check.isBaseObj(v)) {
                             throw new Error(RIAPP.ERRS.ERR_DATAFRM_DCTX_INVALID);
                         }
                         this._unbindDS();
@@ -219,7 +223,7 @@ module RIAPP {
                         dataContext = this._dataContext;
 
                         if (!!dataContext) {
-                            this._supportEdit = RIAPP.global.utils.check.isEditable(dataContext);
+                            this._supportEdit = utils.check.isEditable(dataContext);
                             this._supportErrNotify = binding._checkIsErrorNotification(dataContext);
                         }
                         this._bindDS();
@@ -331,7 +335,7 @@ module RIAPP {
                         $img = global.$('<img name="error_info" alt="error_info" class="error-info" />');
                         $el.prepend($img);
                         $img.get(0).src = image_src;
-                        RIAPP.global.utils.addToolTip($img, this._getErrorTipInfo(errors), baseElView.css.errorTip);
+                        utils.addToolTip($img, this._getErrorTipInfo(errors), baseElView.css.errorTip);
                         this._setFieldError(true);
                     }
                     else {

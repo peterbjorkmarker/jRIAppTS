@@ -1,6 +1,11 @@
 module RIAPP {
     export module MOD {
         export module listbox{
+            var utils: MOD.utils.Utils;
+            RIAPP.global.addOnInitialize((s, args) => {
+                utils = s.utils;
+            });
+
             export interface IListBoxOptions{
                 valuePath: string;
                 textPath: string;
@@ -29,7 +34,7 @@ module RIAPP {
 
                 constructor(el: HTMLSelectElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options: IListBoxOptions) {
                     super();
-                    var self = this, utils = RIAPP.global.utils;
+                    var self = this;
                     this._el = el;
                     this._$el = global.$(this._el);
                     this._objId = 'lst' + utils.getNewID();
@@ -81,7 +86,7 @@ module RIAPP {
                     }
                 }
                 _getValue(item: collection.CollectionItem) {
-                    var v = this._getRealValue(item), utils = RIAPP.global.utils;
+                    var v = this._getRealValue(item);
                     if (utils.check.isNt(v))
                         return '';
                     return v;
@@ -100,7 +105,7 @@ module RIAPP {
                         return '';
                     if (!!this._textPath) {
                         var t = global.parser.resolvePath(item, this._textPath);
-                        if (global.utils.check.isNt(t))
+                        if (utils.check.isNt(t))
                             return '';
                         return '' + t;
                     }
@@ -535,7 +540,6 @@ module RIAPP {
                 _value: any;
 
                 constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean) {
-                    var utils = RIAPP.global.utils;
                     if (options.name != 'lookup') {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'lookup'"));
                     }
@@ -647,7 +651,6 @@ module RIAPP {
                     return tgt;
                 }
                 _cleanUp() {
-                    var utils = RIAPP.global.utils;
                     if (!!this._el) {
                         utils.removeNode(this._el);
                         this._el = null;

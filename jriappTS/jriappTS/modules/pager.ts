@@ -1,6 +1,10 @@
 module RIAPP {
     export module MOD {
         export module pager {
+            var utils: MOD.utils.Utils;
+            RIAPP.global.addOnInitialize((s, args) => {
+                utils = s.utils;
+            });
           export var css = {
                 pager: 'ria-data-pager',
                 info: 'pager-info',
@@ -39,7 +43,6 @@ module RIAPP {
 
                 constructor(el:HTMLElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options:IPagerOptions) {
                     super();
-                    var utils = RIAPP.global.utils;
                     this._el = el;
                     this._$el = global.$(this._el);
                     this._objId = 'pgr' + utils.getNewID();
@@ -66,7 +69,7 @@ module RIAPP {
                     return global.$(global.document.createElement(tag));
                 }
                 _render() {
-                    var utils = RIAPP.global.utils, $el = this._$el, rowCount:number, currentPage:number, pageCount:number;
+                    var $el = this._$el, rowCount:number, currentPage:number, pageCount:number;
                     this._clearContent();
 
                     if (this.rowsPerPage <= 0) {
@@ -205,7 +208,7 @@ module RIAPP {
                     a.attr('href', 'javascript:void(0)');
 
                     if (!!tip) {
-                        global.utils.addToolTip(a, tip);
+                        utils.addToolTip(a, tip);
                     }
                     a.click(function (e) {
                         e.preventDefault();
@@ -229,7 +232,7 @@ module RIAPP {
                     var span = this._createElement('span'), previousPage = this.currentPage - 1, tip:string, a;
 
                     if (this.showTip) {
-                        tip = global.utils.format(PAGER_TXT.prevPageTip, previousPage);
+                        tip = utils.format(PAGER_TXT.prevPageTip, previousPage);
                     }
 
                     a = this._createLink(previousPage, PAGER_TXT.previousText, tip);
@@ -242,7 +245,7 @@ module RIAPP {
                     span.text('' + currentPage);
 
                     if (this.showTip) {
-                        global.utils.addToolTip(span, this._buildTip(currentPage));
+                        utils.addToolTip(span, this._buildTip(currentPage));
                     }
 
                     span.addClass(css.currentPage);
@@ -264,7 +267,7 @@ module RIAPP {
                     var span = this._createElement('span'), nextPage = this.currentPage + 1, tip, a;
 
                     if (this.showTip) {
-                        tip = global.utils.format(PAGER_TXT.nextPageTip, nextPage);
+                        tip = utils.format(PAGER_TXT.nextPageTip, nextPage);
                     }
                     a = this._createLink(nextPage, PAGER_TXT.nextText, tip);
                     span.addClass(css.otherPage).append(a);
@@ -281,7 +284,7 @@ module RIAPP {
                     return span;
                 }
                 _buildTip(page:number) {
-                    var utils = RIAPP.global.utils, rowsPerPage = this.rowsPerPage, rowCount = this.rowCount,
+                    var rowsPerPage = this.rowsPerPage, rowCount = this.rowCount,
                         start = (((page - 1) * rowsPerPage) + 1),
                         end = (page == this.pageCount) ? rowCount : (page * rowsPerPage), tip = '';
 
