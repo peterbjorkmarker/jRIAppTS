@@ -746,7 +746,7 @@ var RIAPP;
             if (self.isLoading !== old)
                 self.raisePropertyChanged('isLoading');
             var deferred = self.utils.createDeferred();
-            promise.done(function (html) {
+            promise.then(function (html) {
                 self.utils.removeFromArray(self._promises, promise);
                 try  {
                     var tmpDiv = self.document.createElement('div');
@@ -759,8 +759,7 @@ var RIAPP;
                 }
                 if (!self.isLoading)
                     self.raisePropertyChanged('isLoading');
-            });
-            promise.fail(function (err) {
+            }, function (err) {
                 self.utils.removeFromArray(self._promises, promise);
                 if (!self.isLoading)
                     self.raisePropertyChanged('isLoading');
@@ -900,6 +899,13 @@ var RIAPP;
                 actionArgs: callbackArgs
             });
         };
+        Global.prototype._getConverter = function (name) {
+            var name2 = 'converters.' + name;
+            var res = this._getObject(this, name2);
+            if (!res)
+                throw new Error(this.utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
+            return res;
+        };
         Global.prototype.reThrow = function (ex, isHandled) {
             if (!!isHandled)
                 this._throwDummy(ex);
@@ -956,13 +962,6 @@ var RIAPP;
                 this._registerObject(this, name2, obj);
             } else
                 throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
-        };
-        Global.prototype._getConverter = function (name) {
-            var name2 = 'converters.' + name;
-            var res = this._getObject(this, name2);
-            if (!res)
-                throw new Error(this.utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
-            return res;
         };
         Global.prototype.registerElView = function (name, elViewType) {
             var name2 = 'elvws.' + name;
@@ -1312,6 +1311,25 @@ var RIAPP;
                     }
                     return false;
                 };
+
+                //check if the element inside of any dataform in the array
+                Checks.isInNestedForm = function (root, forms, el) {
+                    var form, oNode;
+                    for (var i = 0, len = forms.length; i < len; i += 1) {
+                        form = forms[i];
+                        oNode = el.parentElement;
+
+                        while (!!oNode) {
+                            if (oNode === form)
+                                return true;
+                            if (!!root && oNode === root)
+                                oNode = null;
+                            else
+                                oNode = oNode.parentElement;
+                        }
+                    }
+                    return false;
+                };
                 Checks.isFunction = base_utils.isFunc;
 
                 Checks.isArray = base_utils.isArray;
@@ -1625,7 +1643,6 @@ var RIAPP;
                 return LifeTimeScope;
             })(RIAPP.BaseObject);
             utils.LifeTimeScope = LifeTimeScope;
-            ;
 
             var PropWatcher = (function (_super) {
                 __extends(PropWatcher, _super);
@@ -1684,7 +1701,6 @@ var RIAPP;
                 return PropWatcher;
             })(RIAPP.BaseObject);
             utils.PropWatcher = PropWatcher;
-            ;
 
             /*
             waits for property change on the object (the owner)
@@ -1848,7 +1864,6 @@ var RIAPP;
                 return WaitQueue;
             })(RIAPP.BaseObject);
             utils.WaitQueue = WaitQueue;
-            ;
 
             var Utils = (function () {
                 function Utils() {
@@ -2184,7 +2199,6 @@ var RIAPP;
                 return Utils;
             })();
             utils.Utils = Utils;
-            ;
 
             RIAPP.global.registerType('PropWatcher', PropWatcher);
             RIAPP.global.registerType('LifeTimeScope', LifeTimeScope);
@@ -8372,24 +8386,8 @@ var RIAPP;
                         }
                     }
                 };
-                DataForm.prototype._updateContent = function () {
+                DataForm.prototype._createContent = function () {
                     var dctx = this._dataContext, self = this;
-
-                    if (this._contentCreated) {
-                        this._content.forEach(function (content) {
-                            content.dataContext = dctx;
-                            content.isEditing = self.isEditing;
-                        });
-
-                        var bindings = this._getBindings();
-                        bindings.forEach(function (binding) {
-                            if (!binding.isSourceFixed)
-                                binding.source = dctx;
-                        });
-
-                        return;
-                    }
-
                     if (!dctx) {
                         return;
                     }
@@ -8397,9 +8395,12 @@ var RIAPP;
 
                     var elements = RIAPP.ArrayHelper.fromList(this._el.querySelectorAll(self._DATA_CONTENT_SELECTOR)), isEditing = this.isEditing;
 
+                    //select all dataforms inside the scope
+                    var formSelector = ['*[', RIAPP.global.consts.DATA_ATTR.DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(this._el.querySelectorAll(formSelector));
+
                     elements.forEach(function (el) {
-                        //check if the element inside nested dataform
-                        if (utils.getParentDataForm(self._el, el) !== self._el)
+                        //check if the element inside a nested dataform
+                        if (utils.check.isInNestedForm(self._el, forms, el))
                             return;
                         var attr = el.getAttribute(RIAPP.MOD.consts.DATA_ATTR.DATA_CONTENT), op = RIAPP.MOD.baseContent.parseContentAttr(attr);
                         if (!!op.fieldName && !op.fieldInfo) {
@@ -8418,8 +8419,28 @@ var RIAPP;
                             self._content.push(content);
                         }
                     });
-                    this._lfTime = self.app._bindElements(this._el, dctx, true);
+                    this._lfTime = self.app._bindElements(this._el, dctx, true, this.isInsideTemplate);
                     this._contentCreated = true;
+                };
+                DataForm.prototype._updateContent = function () {
+                    var dctx = this._dataContext, self = this;
+
+                    if (this._contentCreated) {
+                        this._content.forEach(function (content) {
+                            content.dataContext = dctx;
+                            content.isEditing = self.isEditing;
+                        });
+
+                        var bindings = this._getBindings();
+                        bindings.forEach(function (binding) {
+                            if (!binding.isSourceFixed)
+                                binding.source = dctx;
+                        });
+
+                        return;
+                    }
+
+                    this._createContent();
                 };
                 DataForm.prototype._onDSErrorsChanged = function () {
                     var dataContext = this._dataContext;
@@ -8483,7 +8504,7 @@ var RIAPP;
                     _super.prototype.destroy.call(this);
                 };
                 DataForm.prototype.toString = function () {
-                    return 'DataForm';
+                    return 'DataForm_' + this._objId;
                 };
                 Object.defineProperty(DataForm.prototype, "app", {
                     get: function () {
@@ -8607,6 +8628,16 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
+                Object.defineProperty(DataForm.prototype, "isInsideTemplate", {
+                    get: function () {
+                        return this._isInsideTemplate;
+                    },
+                    set: function (v) {
+                        this._isInsideTemplate = v;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
                 return DataForm;
             })(RIAPP.BaseObject);
             dataform.DataForm = DataForm;
@@ -8614,10 +8645,17 @@ var RIAPP;
             var DataFormElView = (function (_super) {
                 __extends(DataFormElView, _super);
                 function DataFormElView(app, el, options) {
-                    this._dataContext = null;
-                    this._form = null;
-                    this._options = options;
                     _super.call(this, app, el, options);
+                    var self = this;
+                    this._options = options;
+                    this._form = new DataForm(this.app, el);
+                    this._form.addOnDestroyed(function () {
+                        self._form = null;
+                        self.invokePropChanged('form');
+                    });
+                    this._form.addOnPropertyChange('validationErrors', function (form, args) {
+                        self.validationErrors = form.validationErrors;
+                    }, this._objId);
                 }
                 DataFormElView.prototype._getErrorTipInfo = function (errors) {
                     var tip = ['<b>', ERRTEXT.errorInfo, '</b>', '<ul>'];
@@ -8663,7 +8701,6 @@ var RIAPP;
                         this._form.destroy();
                     }
                     this._form = null;
-                    this._dataContext = null;
                     _super.prototype.destroy.call(this);
                 };
                 DataFormElView.prototype.toString = function () {
@@ -8671,23 +8708,12 @@ var RIAPP;
                 };
                 Object.defineProperty(DataFormElView.prototype, "dataContext", {
                     get: function () {
-                        return this._dataContext;
+                        if (!this._form)
+                            return null;
+                        return this._form.dataContext;
                     },
                     set: function (v) {
-                        var self = this;
-                        if (this._dataContext !== v) {
-                            this._dataContext = v;
-                            if (!this._form)
-                                this._form = new DataForm(this.app, this._el);
-                            this._form.dataContext = this._dataContext;
-                            this._form.addOnDestroyed(function () {
-                                self._form = null;
-                            });
-                            this._form.addOnPropertyChange('validationErrors', function (form, args) {
-                                self.validationErrors = form.validationErrors;
-                            }, this._objId);
-                            self.invokePropChanged('form');
-                        }
+                        this._form.dataContext = v;
                     },
                     enumerable: true,
                     configurable: true
@@ -17599,7 +17625,7 @@ var RIAPP;
             this._app_name = app_name;
             this._objId = 'app:' + RIAPP.global.utils.getNewID();
 
-            //lifetime object to store references foo the bindings and element views created by this application
+            //lifetime object to store references to the bindings and element views created by this application
             this._objLifeTime = null;
             this._ELV_STORE_KEY = RIAPP.global.consts.DATA_ATTR.EL_VIEW_KEY + Application._newInstanceNum;
             Application._newInstanceNum += 1;
@@ -17660,6 +17686,7 @@ var RIAPP;
             this._objMaps = [];
         };
         Application.prototype._initModules = function () {
+            //initialize core modules
             var self = this;
             self.global.moduleNames.forEach(function (mod_name) {
                 //checks for initModule function and executes it if the module has it
@@ -17674,8 +17701,31 @@ var RIAPP;
                 self._modules[mod.name] = mod.initFn(self);
             });
         };
-        Application.prototype.getExports = function () {
-            return this._exports;
+        Application.prototype._destroyBindings = function () {
+            if (!!this._objLifeTime) {
+                this._objLifeTime.destroy();
+                this._objLifeTime = null;
+            }
+        };
+        Application.prototype._setUpBindings = function () {
+            var defScope = this.appRoot, defaultDataCtxt = this;
+            this._destroyBindings();
+            this._objLifeTime = this._bindElements(defScope, defaultDataCtxt, false, false);
+        };
+        Application.prototype._getElementViewInfo = function (el) {
+            var view_name = null, vw_options = null, attr, data_view_op_arr, data_view_op;
+            if (el.hasAttribute(RIAPP.global.consts.DATA_ATTR.DATA_VIEW)) {
+                attr = el.getAttribute(RIAPP.global.consts.DATA_ATTR.DATA_VIEW);
+                data_view_op_arr = RIAPP.global.parser.parseOptions(attr);
+                if (!!data_view_op_arr && data_view_op_arr.length > 0) {
+                    data_view_op = data_view_op_arr[0];
+                    if (!!data_view_op.name && data_view_op.name != 'default') {
+                        view_name = data_view_op.name;
+                    }
+                    vw_options = data_view_op.options;
+                }
+            }
+            return { name: view_name, options: vw_options };
         };
         Application.prototype._onError = function (error, source) {
             if (RIAPP.global._checkIsDummy(error)) {
@@ -17695,148 +17745,6 @@ var RIAPP;
                 return this._elViewStore[storeID];
             }
             return null;
-        };
-
-        //store association of HTML element with its element View
-        Application.prototype._setElView = function (el, view) {
-            var storeID = el.getAttribute(this._ELV_STORE_KEY);
-            if (!storeID) {
-                if (!view)
-                    return;
-                storeID = 's_' + this._nextElViewStoreKey;
-                this._nextElViewStoreKey += 1;
-                el.setAttribute(this._ELV_STORE_KEY, storeID);
-                this._elViewStore[storeID] = view;
-            } else {
-                if (!view) {
-                    el.removeAttribute(this._ELV_STORE_KEY);
-                    delete this._elViewStore[storeID];
-                } else {
-                    this._elViewStore[storeID] = view;
-                }
-            }
-        };
-        Application.prototype._bindTemplateElements = function (templateEl) {
-            var self = this, global = self.global, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR, selectedElem = RIAPP.ArrayHelper.fromList(templateEl.querySelectorAll(selector)), lftm = new RIAPP.MOD.utils.LifeTimeScope(), checks = global.utils.check;
-            if (templateEl.hasAttribute(global.consts.DATA_ATTR.DATA_BIND) || templateEl.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
-                selectedElem.push(templateEl);
-            }
-
-            selectedElem.forEach(function (el) {
-                var op, j, len, binding, bind_attr, temp_opts, elView;
-                if (checks.isInsideDataForm(el))
-                    return;
-
-                //first create element view
-                elView = self.getElementView(el);
-                lftm.addObj(elView);
-                if (el.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
-                    el.removeAttribute(global.consts.DATA_ATTR.DATA_VIEW);
-                    if (elView instanceof RIAPP.MOD.dataform.DataFormElView)
-                        el.setAttribute(global.consts.DATA_ATTR.DATA_FORM, 'yes');
-                }
-
-                //then create databinding if element has data-bind attribute
-                bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);
-                if (!!bind_attr) {
-                    el.removeAttribute(global.consts.DATA_ATTR.DATA_BIND);
-                    temp_opts = global.parser.parseOptions(bind_attr);
-                    for (j = 0, len = temp_opts.length; j < len; j += 1) {
-                        op = RIAPP.MOD.baseContent.getBindingOptions(self, temp_opts[j], elView, null);
-                        binding = self.bind(op);
-                        op.target = null;
-                        lftm.addObj(binding);
-                    }
-                }
-            });
-
-            return lftm;
-        };
-        Application.prototype._bindElements = function (scope, dctx, isDataFormBind) {
-            var self = this, global = self.global, checks = global.utils.check, isDataForm = false;
-            scope = scope || global.document;
-
-            //select all elements with binding attributes inside templates
-            var selectedElem = RIAPP.ArrayHelper.fromList(scope.querySelectorAll(self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR));
-            var lftm = new RIAPP.MOD.utils.LifeTimeScope();
-
-            selectedElem.forEach(function (el) {
-                var bind_attr, temp_opts, bind_op, elView;
-
-                if (isDataFormBind) {
-                    //check, that the current element not inside a nested dataform
-                    if (!(global.utils.getParentDataForm(scope, el) === scope))
-                        return;
-                } else {
-                    //skip elements inside dataform, they are databound when dataform is databound
-                    if (checks.isInsideDataForm(el))
-                        return;
-                }
-
-                //first create element view
-                elView = self.getElementView(el);
-                lftm.addObj(elView);
-                isDataForm = (elView instanceof RIAPP.MOD.dataform.DataFormElView);
-
-                if (isDataForm && !el.hasAttribute(global.consts.DATA_ATTR.DATA_FORM))
-                    el.setAttribute(global.consts.DATA_ATTR.DATA_FORM, 'yes');
-
-                bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);
-
-                //if it has data-bind attribute then proceed to create binding
-                if (!!bind_attr) {
-                    temp_opts = global.parser.parseOptions(bind_attr);
-                    for (var i = 0, len = temp_opts.length; i < len; i += 1) {
-                        bind_op = RIAPP.MOD.baseContent.getBindingOptions(self, temp_opts[i], elView, dctx);
-                        lftm.addObj(self.bind(bind_op));
-                    }
-                }
-            });
-            return lftm;
-        };
-
-        //used as a factory to create Data Contents
-        Application.prototype._getContent = function (contentType, options, parentEl, dctx, isEditing) {
-            var content;
-            return new contentType(this, parentEl, options, dctx, isEditing);
-        };
-
-        //used to select contentType based on content options
-        Application.prototype._getContentType = function (options) {
-            return this.contentFactory.getContentType(options);
-        };
-        Application.prototype._destroyBindings = function () {
-            if (!!this._objLifeTime) {
-                this._objLifeTime.destroy();
-                this._objLifeTime = null;
-            }
-        };
-        Application.prototype._setUpBindings = function () {
-            var defScope = this.appRoot, defaultDataCtxt = this;
-            this._destroyBindings();
-            this._objLifeTime = this._bindElements(defScope, defaultDataCtxt, false);
-        };
-        Application.prototype.registerElView = function (name, type) {
-            var name2 = 'elvws.' + name;
-            if (!RIAPP.global._getObject(this, name2)) {
-                RIAPP.global._registerObject(this, name2, type);
-            } else
-                throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
-        };
-        Application.prototype._getElementViewInfo = function (el) {
-            var view_name = null, vw_options = null, attr, data_view_op_arr, data_view_op;
-            if (el.hasAttribute(RIAPP.global.consts.DATA_ATTR.DATA_VIEW)) {
-                attr = el.getAttribute(RIAPP.global.consts.DATA_ATTR.DATA_VIEW);
-                data_view_op_arr = RIAPP.global.parser.parseOptions(attr);
-                if (!!data_view_op_arr && data_view_op_arr.length > 0) {
-                    data_view_op = data_view_op_arr[0];
-                    if (!!data_view_op.name && data_view_op.name != 'default') {
-                        view_name = data_view_op.name;
-                    }
-                    vw_options = data_view_op.options;
-                }
-            }
-            return { name: view_name, options: vw_options };
         };
         Application.prototype._createElementView = function (el, view_info) {
             var viewType, elView;
@@ -17866,6 +17774,166 @@ var RIAPP;
 
             elView = new viewType(this, el, view_info.options || {});
             return elView;
+        };
+
+        //store association of HTML element with its element View
+        Application.prototype._setElView = function (el, view) {
+            var storeID = el.getAttribute(this._ELV_STORE_KEY);
+            if (!storeID) {
+                if (!view)
+                    return;
+                storeID = 's_' + this._nextElViewStoreKey;
+                this._nextElViewStoreKey += 1;
+                el.setAttribute(this._ELV_STORE_KEY, storeID);
+                this._elViewStore[storeID] = view;
+            } else {
+                if (!view) {
+                    el.removeAttribute(this._ELV_STORE_KEY);
+                    delete this._elViewStore[storeID];
+                } else {
+                    this._elViewStore[storeID] = view;
+                }
+            }
+        };
+        Application.prototype._bindTemplateElements = function (templateEl) {
+            var self = this, global = self.global, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR, selectedElem = RIAPP.ArrayHelper.fromList(templateEl.querySelectorAll(selector)), lftm = new RIAPP.MOD.utils.LifeTimeScope(), checks = global.utils.check;
+            if (templateEl.hasAttribute(global.consts.DATA_ATTR.DATA_BIND) || templateEl.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
+                selectedElem.push(templateEl);
+            }
+
+            //mark all dataforms for easier checking that the element is a dataform
+            selectedElem.forEach(function (el) {
+                if (checks.isDataForm(el))
+                    el.setAttribute(global.consts.DATA_ATTR.DATA_FORM, 'yes');
+            });
+
+            //select all dataforms inside the scope
+            var formSelector = ['*[', global.consts.DATA_ATTR.DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(templateEl.querySelectorAll(formSelector));
+
+            if (checks.isDataForm(templateEl)) {
+                //in this case process only this element
+                selectedElem = [templateEl];
+            }
+
+            selectedElem.forEach(function (el) {
+                var op, j, len, binding, bind_attr, temp_opts, elView;
+
+                //if element inside a dataform return
+                if (checks.isInNestedForm(templateEl, forms, el)) {
+                    return;
+                }
+
+                //first create element view
+                elView = self.getElementView(el);
+                lftm.addObj(elView);
+                if (elView instanceof RIAPP.MOD.dataform.DataFormElView) {
+                    elView.form.isInsideTemplate = true;
+                }
+
+                if (el.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
+                    el.removeAttribute(global.consts.DATA_ATTR.DATA_VIEW);
+                }
+
+                //then create databinding if element has data-bind attribute
+                bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);
+                if (!!bind_attr) {
+                    el.removeAttribute(global.consts.DATA_ATTR.DATA_BIND);
+                    temp_opts = global.parser.parseOptions(bind_attr);
+                    for (j = 0, len = temp_opts.length; j < len; j += 1) {
+                        op = RIAPP.MOD.baseContent.getBindingOptions(self, temp_opts[j], elView, null);
+                        binding = self.bind(op);
+                        op.target = null;
+                        lftm.addObj(binding);
+                    }
+                }
+            });
+
+            return lftm;
+        };
+        Application.prototype._bindElements = function (scope, dctx, isDataFormBind, isInsideTemplate) {
+            var self = this, global = self.global, checks = global.utils.check;
+            scope = scope || global.document;
+
+            //select all elements with binding attributes inside templates
+            var selectedElem = RIAPP.ArrayHelper.fromList(scope.querySelectorAll(self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR));
+            var lftm = new RIAPP.MOD.utils.LifeTimeScope();
+
+            if (!isDataFormBind) {
+                //mark all dataforms for easier checking that the element is a dataform
+                selectedElem.forEach(function (el) {
+                    if (checks.isDataForm(el))
+                        el.setAttribute(global.consts.DATA_ATTR.DATA_FORM, 'yes');
+                });
+            }
+
+            //select all dataforms inside the scope
+            var formSelector = ['*[', global.consts.DATA_ATTR.DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(scope.querySelectorAll(formSelector));
+
+            selectedElem.forEach(function (el) {
+                var bind_attr, temp_opts, bind_op, elView;
+
+                //return if the current element is inside a dataform
+                if (checks.isInNestedForm(scope, forms, el)) {
+                    return;
+                }
+
+                //first create element view
+                elView = self.getElementView(el);
+                lftm.addObj(elView);
+                if (elView instanceof RIAPP.MOD.dataform.DataFormElView) {
+                    elView.form.isInsideTemplate = isInsideTemplate;
+                }
+
+                if (isInsideTemplate) {
+                    if (el.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
+                        el.removeAttribute(global.consts.DATA_ATTR.DATA_VIEW);
+                    }
+                }
+
+                bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);
+
+                //if it has data-bind attribute then proceed to create binding
+                if (!!bind_attr) {
+                    if (isInsideTemplate) {
+                        el.removeAttribute(global.consts.DATA_ATTR.DATA_BIND);
+                    }
+                    temp_opts = global.parser.parseOptions(bind_attr);
+                    for (var i = 0, len = temp_opts.length; i < len; i += 1) {
+                        bind_op = RIAPP.MOD.baseContent.getBindingOptions(self, temp_opts[i], elView, dctx);
+                        lftm.addObj(self.bind(bind_op));
+                    }
+                }
+            });
+            return lftm;
+        };
+
+        //used as a factory to create Data Contents
+        Application.prototype._getContent = function (contentType, options, parentEl, dctx, isEditing) {
+            var content;
+            return new contentType(this, parentEl, options, dctx, isEditing);
+        };
+
+        //used to select contentType based on content options
+        Application.prototype._getContentType = function (options) {
+            return this.contentFactory.getContentType(options);
+        };
+        Application.prototype._getElViewType = function (name) {
+            var name2 = 'elvws.' + name;
+            var res = RIAPP.global._getObject(this, name2);
+            if (!res) {
+                res = RIAPP.global._getObject(RIAPP.global, name2);
+            }
+            return res;
+        };
+        Application.prototype.getExports = function () {
+            return this._exports;
+        };
+        Application.prototype.registerElView = function (name, type) {
+            var name2 = 'elvws.' + name;
+            if (!RIAPP.global._getObject(this, name2)) {
+                RIAPP.global._registerObject(this, name2, type);
+            } else
+                throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         };
 
         //checks if the element already has created and attached ElView, if no then it creates and attaches ElView for the element
@@ -17907,14 +17975,6 @@ var RIAPP;
         };
         Application.prototype.getType = function (name) {
             var name2 = 'types.' + name;
-            var res = RIAPP.global._getObject(this, name2);
-            if (!res) {
-                res = RIAPP.global._getObject(RIAPP.global, name2);
-            }
-            return res;
-        };
-        Application.prototype._getElViewType = function (name) {
-            var name2 = 'elvws.' + name;
             var res = RIAPP.global._getObject(this, name2);
             if (!res) {
                 res = RIAPP.global._getObject(RIAPP.global, name2);

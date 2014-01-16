@@ -12,20 +12,21 @@ module RIAPP {
 
             export class DataForm extends RIAPP.BaseObject {
                 private get _DATA_CONTENT_SELECTOR() { return '*[' + consts.DATA_ATTR.DATA_CONTENT + ']:not([' + consts.DATA_ATTR.DATA_COLUMN + '])'; }
-                _el: HTMLElement;
-                _$el: JQuery;
-                _objId: string;
-                _dataContext: BaseObject;
-                _isEditing: boolean;
-                _isDisabled: boolean;
-                _content: baseContent.IContent[];
-                _lfTime: MOD.utils.LifeTimeScope;
-                _contentCreated: boolean;
-                _supportEdit: boolean;
-                _supportErrNotify: boolean;
-                _parentDataForm: baseElView.BaseElView;
-                _errors: binding.IValidationInfo[];
-                _app: Application;
+                private _el: HTMLElement;
+                private _$el: JQuery;
+                private _objId: string;
+                private _dataContext: BaseObject;
+                private _isEditing: boolean;
+                private _isDisabled: boolean;
+                private _content: baseContent.IContent[];
+                private _lfTime: MOD.utils.LifeTimeScope;
+                private _contentCreated: boolean;
+                private _supportEdit: boolean;
+                private _supportErrNotify: boolean;
+                private _parentDataForm: baseElView.BaseElView;
+                private _errors: binding.IValidationInfo[];
+                private _app: Application;
+                private _isInsideTemplate: boolean;
 
                 constructor(app:Application, el:HTMLElement) {
                     super();
@@ -57,7 +58,7 @@ module RIAPP {
                         }, self._objId);
                     }
                 }
-                _getBindings(): binding.Binding[] {
+                private _getBindings(): binding.Binding[] {
                     if (!this._lfTime)
                         return [];
                     var arr:any[] = this._lfTime.getObjs(), res:binding.Binding[] = [];
@@ -67,7 +68,7 @@ module RIAPP {
                     }
                     return res;
                 }
-                _getElViews():baseElView.BaseElView[] {
+                private _getElViews():baseElView.BaseElView[] {
                     if (!this._lfTime)
                         return [];
                     var arr: any[] = this._lfTime.getObjs(), res: baseElView.BaseElView[] = [];
@@ -77,7 +78,7 @@ module RIAPP {
                     }
                     return res;
                 }
-                _updateIsDisabled() {
+                private _updateIsDisabled() {
                     var i, len, bnd: binding.Binding, vw: baseElView.BaseElView, bindings = this._getBindings(), elViews = this._getElViews(),
                         DataFormElView = this.app._getElViewType(consts.ELVIEW_NM.DATAFORM);
                     for (i = 0, len = bindings.length; i < len; i += 1) {
@@ -91,35 +92,23 @@ module RIAPP {
                         }
                     }
                 }
-                _updateContent() {
-                    var dctx:any = this._dataContext, self = this;
-
-                    if (this._contentCreated) {
-                        this._content.forEach(function (content) {
-                            content.dataContext = dctx;
-                            content.isEditing = self.isEditing;
-                        });
-
-                        var bindings = this._getBindings();
-                        bindings.forEach(function (binding) {
-                            if (!binding.isSourceFixed)
-                                binding.source = dctx;
-                        });
-
-                        return;
-                    }
-
+                private _createContent() {
+                    var dctx: any = this._dataContext, self = this;
                     if (!dctx) {
                         return;
                     }
                     var supportsGetFieldInfo = utils.check.isFunction(dctx.getFieldInfo);
 
-                    var elements = <HTMLElement[]>ArrayHelper.fromList(this._el.querySelectorAll(self._DATA_CONTENT_SELECTOR)),
+                    var elements: HTMLElement[] = ArrayHelper.fromList(this._el.querySelectorAll(self._DATA_CONTENT_SELECTOR)),
                         isEditing = this.isEditing;
 
+                    //select all dataforms inside the scope
+                    var formSelector = ['*[', global.consts.DATA_ATTR.DATA_FORM, ']'].join(''),
+                        forms = ArrayHelper.fromList(this._el.querySelectorAll(formSelector));
+
                     elements.forEach(function (el) {
-                        //check if the element inside nested dataform
-                        if (utils.getParentDataForm(self._el, el) !== self._el)
+                        //check if the element inside a nested dataform
+                        if (utils.check.isInNestedForm(self._el, forms, el))
                             return;
                         var attr = el.getAttribute(consts.DATA_ATTR.DATA_CONTENT), op = baseContent.parseContentAttr(attr);
                         if (!!op.fieldName && !op.fieldInfo) {
@@ -138,14 +127,34 @@ module RIAPP {
                             self._content.push(content);
                         }
                     });
-                    this._lfTime = self.app._bindElements(this._el, dctx, true);
+                    this._lfTime = self.app._bindElements(this._el, dctx, true, this.isInsideTemplate);
                     this._contentCreated = true;
                 }
-                _onDSErrorsChanged() {
+                private _updateContent() {
+                    var dctx:any = this._dataContext, self = this;
+
+                    if (this._contentCreated) {
+                        this._content.forEach(function (content) {
+                            content.dataContext = dctx;
+                            content.isEditing = self.isEditing;
+                        });
+
+                        var bindings = this._getBindings();
+                        bindings.forEach(function (binding) {
+                            if (!binding.isSourceFixed)
+                                binding.source = dctx;
+                        });
+
+                        return;
+                    }
+
+                    this._createContent();
+                }
+                private _onDSErrorsChanged() {
                     var dataContext: binding.IErrorNotification = <any>this._dataContext;
                     this.validationErrors = dataContext.getAllErrors();
                 }
-                _bindDS() {
+                private _bindDS() {
                     var dataContext:any = this._dataContext, self = this;
                     if (!dataContext)
                         return;
@@ -165,14 +174,14 @@ module RIAPP {
                         }, self._objId);
                     }
                 }
-                _unbindDS() {
+                private _unbindDS() {
                     var dataContext = this._dataContext;
                     this.validationErrors = null;
                     if (!!dataContext && !dataContext._isDestroyCalled) {
                         dataContext.removeNSHandlers(this._objId);
                     }
                 }
-                _clearContent() {
+                private _clearContent() {
                     this._content.forEach(function (content) {
                         content.destroy();
                     });
@@ -203,7 +212,7 @@ module RIAPP {
                     super.destroy();
                 }
                 toString() {
-                    return 'DataForm';
+                    return 'DataForm_' + this._objId;
                 }
                 get app() { return this._app; }
                 get el() { return this._el; }
@@ -293,18 +302,28 @@ module RIAPP {
                         this.raisePropertyChanged('isDisabled');
                     }
                 }
+                get isInsideTemplate() { return this._isInsideTemplate; }
+                set isInsideTemplate(v: boolean) {
+                    this._isInsideTemplate = v;
+                }
             }
      
             export class DataFormElView extends baseElView.BaseElView {
-                _dataContext: BaseObject;
                 _form: DataForm;
                 _options: baseElView.IViewOptions;
 
                 constructor(app: Application, el: HTMLSelectElement, options: baseElView.IViewOptions) {
-                    this._dataContext = null;
-                    this._form = null;
-                    this._options = options;
                     super(app, el, options);
+                    var self = this;
+                    this._options = options;
+                    this._form = new DataForm(this.app, el);
+                    this._form.addOnDestroyed(function () {
+                        self._form = null;
+                        self.invokePropChanged('form');
+                    });
+                    this._form.addOnPropertyChange('validationErrors', function (form, args) {
+                        self.validationErrors = form.validationErrors;
+                    }, this._objId);
                 }
                 _getErrorTipInfo(errors: MOD.binding.IValidationInfo[]) {
                     var tip = ['<b>', ERRTEXT.errorInfo, '</b>', '<ul>'];
@@ -351,28 +370,18 @@ module RIAPP {
                         this._form.destroy();
                     }
                     this._form = null;
-                    this._dataContext = null;
                     super.destroy();
                 }
                 toString() {
                     return 'DataFormElView';
                 }
-                get dataContext() { return this._dataContext; }
+                get dataContext() {
+                    if (!this._form)
+                        return null;
+                    return this._form.dataContext;
+                }
                 set dataContext(v) {
-                    var self = this;
-                    if (this._dataContext !== v) {
-                        this._dataContext = v;
-                        if (!this._form)
-                            this._form = new DataForm(this.app, this._el);
-                        this._form.dataContext = this._dataContext;
-                        this._form.addOnDestroyed(function () {
-                            self._form = null;
-                        });
-                        this._form.addOnPropertyChange('validationErrors', function (form, args) {
-                            self.validationErrors = form.validationErrors;
-                        }, this._objId);
-                        self.invokePropChanged('form');
-                    }
+                    this._form.dataContext = v;
                 }
                 get form() { return this._form; }
             }

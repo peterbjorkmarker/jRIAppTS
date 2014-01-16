@@ -170,6 +170,24 @@ module RIAPP {
                     }
                     return false;
                 }
+                //check if the element inside of any dataform in the array
+                static isInNestedForm(root: any, forms: HTMLElement[], el: HTMLElement): boolean {
+                    var form: HTMLElement, oNode: HTMLElement;
+                    for (var i = 0, len = forms.length; i < len; i += 1) {
+                        form = forms[i];
+                        oNode = el.parentElement;
+
+                        while (!!oNode) {
+                            if (oNode === form)
+                                return true;
+                            if (!!root && oNode === root)
+                                oNode = null;
+                            else
+                                oNode = oNode.parentElement;
+                        }
+                    }
+                    return false;
+                }
             }
 
             export class StringUtils {
@@ -482,7 +500,7 @@ module RIAPP {
                 toString(){
                     return 'LifeTimeScope';
                 }
-            };
+            }
 
             export class PropWatcher extends RIAPP.BaseObject{
                 _objId: string;
@@ -535,7 +553,7 @@ module RIAPP {
                 get uniqueID() {
                     return this._objId;
                 }
-            };
+            }
              
            /* 
               waits for property change on the object (the owner)
@@ -696,7 +714,7 @@ module RIAPP {
                 get owner() {
                     return this._owner;
                 }
-            };
+            }
 
             export class Utils {
                 constructor() {
@@ -1017,7 +1035,7 @@ module RIAPP {
                         return uuid.join('');
                     };
                 }) ();
-            };
+            }
 
             global.registerType('PropWatcher', PropWatcher);
             global.registerType('LifeTimeScope', LifeTimeScope);

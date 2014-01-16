@@ -292,6 +292,7 @@ declare module RIAPP {
             promise?: IPromise<string>;
         };
         public _waitForNotLoading(callback: any, callbackArgs: any): void;
+        public _getConverter(name: string): RIAPP.MOD.converter.IConverter;
         public reThrow(ex: any, isHandled: any): void;
         public onModuleLoaded(name: string, module_obj: any): void;
         public isModuleLoaded(name: string): boolean;
@@ -300,7 +301,6 @@ declare module RIAPP {
         public registerType(name: string, obj: any): void;
         public getType(name: string): any;
         public registerConverter(name: string, obj: RIAPP.MOD.converter.IConverter): void;
-        public _getConverter(name: string): RIAPP.MOD.converter.IConverter;
         public registerElView(name: string, elViewType: any): void;
         public getImagePath(imageName: string): string;
         public loadTemplates(url: string): void;
@@ -423,6 +423,7 @@ declare module RIAPP {
                 static isEditable(obj: any): boolean;
                 static isDataForm(el: HTMLElement): boolean;
                 static isInsideDataForm(el: HTMLElement): any;
+                static isInNestedForm(root: any, forms: HTMLElement[], el: HTMLElement): boolean;
             }
             class StringUtils {
                 static endsWith: (str: any, suffix: any) => boolean;
@@ -1695,29 +1696,31 @@ declare module RIAPP {
             };
             class DataForm extends RIAPP.BaseObject {
                 private _DATA_CONTENT_SELECTOR;
-                public _el: HTMLElement;
-                public _$el: JQuery;
-                public _objId: string;
-                public _dataContext: RIAPP.BaseObject;
-                public _isEditing: boolean;
-                public _isDisabled: boolean;
-                public _content: MOD.baseContent.IContent[];
-                public _lfTime: MOD.utils.LifeTimeScope;
-                public _contentCreated: boolean;
-                public _supportEdit: boolean;
-                public _supportErrNotify: boolean;
-                public _parentDataForm: MOD.baseElView.BaseElView;
-                public _errors: MOD.binding.IValidationInfo[];
-                public _app: RIAPP.Application;
+                private _el;
+                private _$el;
+                private _objId;
+                private _dataContext;
+                private _isEditing;
+                private _isDisabled;
+                private _content;
+                private _lfTime;
+                private _contentCreated;
+                private _supportEdit;
+                private _supportErrNotify;
+                private _parentDataForm;
+                private _errors;
+                private _app;
+                private _isInsideTemplate;
                 constructor(app: RIAPP.Application, el: HTMLElement);
-                public _getBindings(): MOD.binding.Binding[];
-                public _getElViews(): MOD.baseElView.BaseElView[];
-                public _updateIsDisabled(): void;
-                public _updateContent(): void;
-                public _onDSErrorsChanged(): void;
-                public _bindDS(): void;
-                public _unbindDS(): void;
-                public _clearContent(): void;
+                private _getBindings();
+                private _getElViews();
+                private _updateIsDisabled();
+                private _createContent();
+                private _updateContent();
+                private _onDSErrorsChanged();
+                private _bindDS();
+                private _unbindDS();
+                private _clearContent();
                 public destroy(): void;
                 public toString(): string;
                 public app : RIAPP.Application;
@@ -1726,9 +1729,9 @@ declare module RIAPP {
                 public isEditing : boolean;
                 public validationErrors : MOD.binding.IValidationInfo[];
                 public isDisabled : boolean;
+                public isInsideTemplate : boolean;
             }
             class DataFormElView extends MOD.baseElView.BaseElView {
-                public _dataContext: RIAPP.BaseObject;
                 public _form: DataForm;
                 public _options: MOD.baseElView.IViewOptions;
                 constructor(app: RIAPP.Application, el: HTMLSelectElement, options: MOD.baseElView.IViewOptions);
@@ -3344,29 +3347,27 @@ declare module RIAPP {
         private _cleanUpObjMaps();
         private _initModules();
         private _initUserModules(user_modules);
-        public getExports(): {
-            [name: string]: any;
-        };
+        private _destroyBindings();
+        private _setUpBindings();
+        private _getElementViewInfo(el);
         public _onError(error: any, source: any): boolean;
         public _getElView(el: HTMLElement): RIAPP.MOD.baseElView.BaseElView;
-        public _setElView(el: HTMLElement, view?: RIAPP.MOD.baseElView.BaseElView): void;
-        public _bindTemplateElements(templateEl: HTMLElement): RIAPP.MOD.utils.LifeTimeScope;
-        public _bindElements(scope: {
-            querySelectorAll: (selectors: string) => NodeList;
-        }, dctx: any, isDataFormBind: boolean): RIAPP.MOD.utils.LifeTimeScope;
-        public _getContent(contentType: RIAPP.MOD.baseContent.IContentType, options: RIAPP.MOD.baseContent.IContentOptions, parentEl: HTMLElement, dctx: any, isEditing: boolean): RIAPP.MOD.baseContent.IContent;
-        public _getContentType(options: RIAPP.MOD.baseContent.IContentOptions): RIAPP.MOD.baseContent.IContentType;
-        public _destroyBindings(): void;
-        public _setUpBindings(): void;
-        public registerElView(name: string, type: RIAPP.MOD.baseElView.IViewType): void;
-        public _getElementViewInfo(el: HTMLElement): {
-            name: string;
-            options: any;
-        };
         public _createElementView(el: HTMLElement, view_info: {
             name: string;
             options: any;
         }): RIAPP.MOD.baseElView.BaseElView;
+        public _setElView(el: HTMLElement, view?: RIAPP.MOD.baseElView.BaseElView): void;
+        public _bindTemplateElements(templateEl: HTMLElement): RIAPP.MOD.utils.LifeTimeScope;
+        public _bindElements(scope: {
+            querySelectorAll: (selectors: string) => NodeList;
+        }, dctx: any, isDataFormBind: boolean, isInsideTemplate: boolean): RIAPP.MOD.utils.LifeTimeScope;
+        public _getContent(contentType: RIAPP.MOD.baseContent.IContentType, options: RIAPP.MOD.baseContent.IContentOptions, parentEl: HTMLElement, dctx: any, isEditing: boolean): RIAPP.MOD.baseContent.IContent;
+        public _getContentType(options: RIAPP.MOD.baseContent.IContentOptions): RIAPP.MOD.baseContent.IContentType;
+        public _getElViewType(name: string): RIAPP.MOD.baseElView.IViewType;
+        public getExports(): {
+            [name: string]: any;
+        };
+        public registerElView(name: string, type: RIAPP.MOD.baseElView.IViewType): void;
         public getElementView(el: HTMLElement): RIAPP.MOD.baseElView.BaseElView;
         public bind(opts: RIAPP.MOD.binding.IBindingOptions): RIAPP.MOD.binding.Binding;
         public registerContentFactory(fn: (nextFactory?: RIAPP.MOD.baseContent.IContentFactory) => RIAPP.MOD.baseContent.IContentFactory): void;
@@ -3374,7 +3375,6 @@ declare module RIAPP {
         public getConverter(name: string): RIAPP.MOD.converter.IConverter;
         public registerType(name: string, obj: any): void;
         public getType(name: string): any;
-        public _getElViewType(name: string): RIAPP.MOD.baseElView.IViewType;
         public registerObject(name: string, obj: any): void;
         public getObject(name: string): any;
         public onStartUp(): void;

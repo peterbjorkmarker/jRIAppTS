@@ -237,7 +237,8 @@ module RIAPP {
             var self = this;
             var templates:HTMLElement[] = ArrayHelper.fromList(templateSection.querySelectorAll(Global._TEMPLATE_SELECTOR));
             templates.forEach(function (el) {
-                var tmpDiv = self.document.createElement('div'), html, name = el.getAttribute('id'), deferred = self.utils.createDeferred();
+                var tmpDiv = self.document.createElement('div'), html: string,
+                    name = el.getAttribute('id'), deferred = self.utils.createDeferred();
                 el.removeAttribute('id');
                 tmpDiv.appendChild(el);
                 html = tmpDiv.innerHTML;
@@ -265,7 +266,7 @@ module RIAPP {
             if (self.isLoading !== old)
                 self.raisePropertyChanged('isLoading');
             var deferred = self.utils.createDeferred();
-            promise.done(function (html:string) {
+            promise.then(function (html:string) {
                 self.utils.removeFromArray(self._promises, promise);
                 try {
                     var tmpDiv = self.document.createElement('div');
@@ -279,8 +280,7 @@ module RIAPP {
                 }
                 if (!self.isLoading)
                     self.raisePropertyChanged('isLoading');
-            });
-            promise.fail(function (err) {
+            },function (err) {
                 self.utils.removeFromArray(self._promises, promise);
                 if (!self.isLoading)
                     self.raisePropertyChanged('isLoading');
@@ -438,6 +438,13 @@ module RIAPP {
                 actionArgs: callbackArgs
             });
         }
+        _getConverter(name: string): MOD.converter.IConverter {
+            var name2 = 'converters.' + name;
+            var res = this._getObject(this, name2);
+            if (!res)
+                throw new Error(this.utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
+            return res;
+        }
         reThrow(ex, isHandled) {
             if (!!isHandled)
                 this._throwDummy(ex);
@@ -494,13 +501,6 @@ module RIAPP {
             }
             else
                 throw new Error(global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
-        }
-        _getConverter(name: string): MOD.converter.IConverter {
-            var name2 = 'converters.' + name;
-            var res = this._getObject(this, name2);
-            if (!res)
-                throw new Error(this.utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
-            return res;
         }
         registerElView(name:string, elViewType:any) {
             var name2 = 'elvws.' + name;

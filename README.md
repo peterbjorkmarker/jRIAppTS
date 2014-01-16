@@ -43,15 +43,13 @@ In my real world applications i use ASP.NET MVC 4 bundling feature. For desktop 
 You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
-
-<p>2013-12-25   The DataService enhancements for performance reason. Also changed getting typescript code generation to a new syntax, like http://YOURSERVER/RIAppDemoService/CodeGen?type=ts<br/>
- And also for XAML and for C# code generation use it like -<br/>
- http://YOURSERVER/RIAppDemoService//CodeGen?type=xaml<br/>
- http://YOURSERVER/RIAppDemoService/CodeGen?type=csharp
-</p>
-<p>2013-12-28 Code generation enhancement. Now strongly typed DbSets have findEntity method, and strongly typed dictionaries have findItem method. Which have strongly typed arguments.</p>
-<p>2013-12-29 <b>Changed wire dateformat!</b></p>
-<p>2013-12-29 Internal DataService's code refactoring.</p>
+<p>2014-01-16 Internal code optimization (Improved databindings processing).</p>
+<p>2014-01-15 Docs update. Internal code optimization.</p>
+<p>2014-01-14 Docs update. Demo app update.</p>
+<p>2014-01-13 <b>Docs update!</b>  Added capabilities to add explicit additional dataset results to the main query result. Added new RC Version.</p>
+<p>2014-01-08 Added a specific Model Binder for dataservice's method arguments. The serializer was changed to NewtonSoft's serializer. Performance of AJAX requests was improved by an order of magnitude.</p>
+<p>2014-01-07 DataService's code refactoring. Types and namespaces renaming. Performance improvements.</p>
+<p>2014-01-06 Code refactoring. Code generation changes. Demo update.</p>
 <p>2014-01-04 <br/>1) <b>Entities- Complex type property support. Code refactoring.</b><br/>
 2) Breaking changes. Wire format is changed. Instead of isNavigation, isCalculated, isClientOnly props on FieldInfo i added one enum property fieldType. It is needed to update dataservice's metadata to reflect this changes. (I used text replace in the demo)<br/>
 3) In the demo project i added complex type property to Customer entity, in order to test the complex types on the entities feature.<br/>
@@ -61,13 +59,14 @@ You are welcome to use it in your applications.
 P.S. The docs to be updated soon. This version will be probably a RC version.<br/>
 <b>Once again thanks to typescript. Without it so much refactoring was impossible.</b><br/>
 </p>
-<p>2014-01-06 Code refactoring. Code generation changes. Demo update.</p>
-<p>2014-01-07 DataService's code refactoring. Types and namespaces renaming. Performance improvements.</p>
-<p>2014-01-08 Added a specific Model Binder for dataservice's method arguments. The serializer was changed to NewtonSoft's serializer. Performance of AJAX requests was improved by an order of magnitude.</p>
-<p>2014-01-13 <b>Docs update!</b>  Added capabilities to add explicit additional dataset results to the main query result. Added new RC Version.</p>
-<p>2014-01-14 Docs update. Demo app update.</p>
-<p>2014-01-15 Docs update. Internal code optimization.</p>
+<p>2013-12-29 <b>Changed wire dateformat!</b> Internal DataService's code refactoring.</p>
+<p>2013-12-28 Code generation enhancement. Now strongly typed DbSets have findEntity method, and strongly typed dictionaries have findItem method. Which have strongly typed arguments.</p>
+<p>2013-12-25   The DataService enhancements for performance reason. Also changed getting typescript code generation to a new syntax, like http://YOURSERVER/RIAppDemoService/CodeGen?type=ts<br/>
+ And also for XAML and for C# code generation use it like -<br/>
+ http://YOURSERVER/RIAppDemoService//CodeGen?type=xaml<br/>
+ http://YOURSERVER/RIAppDemoService/CodeGen?type=csharp
+</p>
+<br/>
 --
-Maxim V. Tsapov<br/>
-Moscow, Russian Federation<br/> 
-<a href="https://plus.google.com/u/0/102838307743207067758/about?tab=wX" target="_blank">I'm on Google+</a>
+Maxim V. Tsapov<br/> 
+<a href="https://plus.google.com/u/0/+MaximT/posts" target="_blank">I'm on Google+</a>
