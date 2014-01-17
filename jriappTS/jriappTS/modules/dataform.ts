@@ -79,7 +79,8 @@ module RIAPP {
                     return res;
                 }
                 private _updateIsDisabled() {
-                    var i, len, bnd: binding.Binding, vw: baseElView.BaseElView, bindings = this._getBindings(), elViews = this._getElViews(),
+                    var i: number, len: number, bnd: binding.Binding, vw: baseElView.BaseElView,
+                        bindings = this._getBindings(), elViews = this._getElViews(),
                         DataFormElView = this.app._getElViewType(consts.ELVIEW_NM.DATAFORM);
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         bnd = bindings[i];
@@ -87,8 +88,9 @@ module RIAPP {
                     }
                     for (i = 0, len = elViews.length; i < len; i += 1) {
                         vw = elViews[i];
-                        if ((vw instanceof DataFormElView) && !!(<DataFormElView>vw).form) {
-                            (<DataFormElView>vw).form.isDisabled = this._isDisabled;
+                        //can have a nested dataform. disable it too
+                        if (vw instanceof DataFormElView) {
+                            (<DataFormElView>vw).isDisabled = this._isDisabled;
                         }
                     }
                 }
@@ -297,7 +299,7 @@ module RIAPP {
                 get isDisabled() { return this._isDisabled; }
                 set isDisabled(v: boolean) {
                     if (this._isDisabled !== v) {
-                        this._isDisabled = !!v;
+                        this._isDisabled = v;
                         this._updateIsDisabled();
                         this.raisePropertyChanged('isDisabled');
                     }
@@ -381,7 +383,23 @@ module RIAPP {
                     return this._form.dataContext;
                 }
                 set dataContext(v) {
-                    this._form.dataContext = v;
+                    if (this.dataContext !== v) {
+                        this._form.dataContext = v;
+                        this.raisePropertyChanged('dataContext');
+                    }
+                }
+                get isDisabled() {
+                    if (!this._form)
+                        return true;
+                    return this._form.isDisabled;
+                }
+                set isDisabled(v: boolean) {
+                    if (this._isDestroyCalled)
+                        return;
+                    if (this.isDisabled !== v) {
+                        this._form.isDisabled = v;
+                        this.raisePropertyChanged('isDisabled');
+                    }
                 }
                 get form() { return this._form; }
             }

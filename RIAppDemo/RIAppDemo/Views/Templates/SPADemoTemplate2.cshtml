@@ -66,10 +66,11 @@
                 </tr>
             </tbody>
         </table>
-        <div style="float: right; margin-right: 60px;">
-            <button class="btn btn-info btn-small" style="margin: 5px;" data-bind="{this.command,to=editCommand,source=customerVM}{this.isVisible,to=currentItem.isEditing,converter=notConverter,source=customerVM}"><i class="icon-plus"></i>&nbsp;Edit Customer</button>
-            <button class="btn btn-info btn-small" style="width:100px;margin: 5px;" data-bind="{this.command,to=endEditCommand,source=customerVM}{this.isVisible,to=currentItem.isEditing,source=customerVM}">OK</button>
-            <button class="btn btn-info btn-small" style="width:100px;margin: 5px;" data-bind="{this.command,to=cancelEditCommand,source=customerVM}{this.isVisible,to=currentItem.isEditing,source=customerVM}">Cancel</button>
+        <!--this nested dataform is only to test how the dataform nesting is working!!! it is not needed here, really.-->
+        <div style="float: right; margin-right: 60px;"  data-bind="{this.dataContext}" data-view="name=dataform">
+            <button class="btn btn-info btn-small" style="margin: 5px;" data-bind="{this.command,to=editCommand,source=customerVM}{this.isVisible,to=isEditing,converter=notConverter}"><i class="icon-plus"></i>&nbsp;Edit Customer</button>
+            <button class="btn btn-info btn-small" style="width:100px;margin: 5px;" data-bind="{this.command,to=endEditCommand,source=customerVM}{this.isVisible,to=isEditing}">OK</button>
+            <button class="btn btn-info btn-small" style="width:100px;margin: 5px;" data-bind="{this.command,to=cancelEditCommand,source=customerVM}{this.isVisible,to=isEditing}">Cancel</button>
         </div>
     </fieldset>
 </div>

@@ -1314,20 +1314,29 @@ var RIAPP;
 
                 //check if the element inside of any dataform in the array
                 Checks.isInNestedForm = function (root, forms, el) {
-                    var form, oNode;
-                    for (var i = 0, len = forms.length; i < len; i += 1) {
-                        form = forms[i];
-                        oNode = el.parentElement;
-
-                        while (!!oNode) {
-                            if (oNode === form)
-                                return true;
-                            if (!!root && oNode === root)
-                                oNode = null;
-                            else
-                                oNode = oNode.parentElement;
-                        }
+                    var oNode, len = forms.length;
+                    if (len == 0) {
+                        return false;
                     }
+                    oNode = el.parentElement;
+
+                    while (!!oNode) {
+                        if (!!root && oNode === root) {
+                            //reached up to the root
+                            return false;
+                        } else {
+                            for (var i = 0; i < len; i += 1) {
+                                if (oNode === forms[i]) {
+                                    //we found the form to be among the parents
+                                    return true;
+                                }
+                            }
+                        }
+
+                        //try parent element
+                        oNode = oNode.parentElement;
+                    }
+
                     return false;
                 };
                 Checks.isFunction = base_utils.isFunc;
@@ -8381,8 +8390,10 @@ var RIAPP;
                     }
                     for (i = 0, len = elViews.length; i < len; i += 1) {
                         vw = elViews[i];
-                        if ((vw instanceof DataFormElView) && !!vw.form) {
-                            vw.form.isDisabled = this._isDisabled;
+
+                        //can have a nested dataform. disable it too
+                        if (vw instanceof DataFormElView) {
+                            vw.isDisabled = this._isDisabled;
                         }
                     }
                 };
@@ -8620,7 +8631,7 @@ var RIAPP;
                     },
                     set: function (v) {
                         if (this._isDisabled !== v) {
-                            this._isDisabled = !!v;
+                            this._isDisabled = v;
                             this._updateIsDisabled();
                             this.raisePropertyChanged('isDisabled');
                         }
@@ -8713,7 +8724,27 @@ var RIAPP;
                         return this._form.dataContext;
                     },
                     set: function (v) {
-                        this._form.dataContext = v;
+                        if (this.dataContext !== v) {
+                            this._form.dataContext = v;
+                            this.raisePropertyChanged('dataContext');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataFormElView.prototype, "isDisabled", {
+                    get: function () {
+                        if (!this._form)
+                            return true;
+                        return this._form.isDisabled;
+                    },
+                    set: function (v) {
+                        if (this._isDestroyCalled)
+                            return;
+                        if (this.isDisabled !== v) {
+                            this._form.isDisabled = v;
+                            this.raisePropertyChanged('isDisabled');
+                        }
                     },
                     enumerable: true,
                     configurable: true

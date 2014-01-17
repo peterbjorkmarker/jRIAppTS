@@ -1740,6 +1740,7 @@ declare module RIAPP {
                 public destroy(): void;
                 public toString(): string;
                 public dataContext : RIAPP.BaseObject;
+                public isDisabled : boolean;
                 public form : DataForm;
             }
         }

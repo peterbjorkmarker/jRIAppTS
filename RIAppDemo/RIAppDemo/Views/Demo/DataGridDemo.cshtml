@@ -175,9 +175,11 @@
             </td>
         </tr>
     </table>
-
-    <a id="btn_filter" class="btn btn-info btn-small" data-bind="{this.command,to=loadCommand}"><i class="icon-search"></i>&nbsp;Filter</a>
-    <a id="btn_reset" class="btn btn-info btn-small" data-bind="{this.command,to=filter.resetCommand}"><i class="icon-retweet"></i>&nbsp;Reset</a>
+    <!--this nested dataform is only to test how the dataform nesting is working!!! it is not needed here, really.-->
+    <div  data-bind="{this.dataContext}" data-view="name=dataform">
+        <a id="btn_filter" class="btn btn-info btn-small" data-bind="{this.command,to=loadCommand}"><i class="icon-search"></i>&nbsp;Filter</a>
+        <a id="btn_reset" class="btn btn-info btn-small" data-bind="{this.command,to=filter.resetCommand}"><i class="icon-retweet"></i>&nbsp;Reset</a>
+    </div>
 </form>
 
 <div id="demoContent" data-bind="{this.isBusy,to=dbContext.isBusy}" data-view="name=busy_indicator">
