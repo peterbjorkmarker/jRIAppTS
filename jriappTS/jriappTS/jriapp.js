@@ -1314,23 +1314,23 @@ var RIAPP;
 
                 //check if the element inside of any dataform in the array
                 Checks.isInNestedForm = function (root, forms, el) {
-                    var oNode, len = forms.length;
+                    var i, oNode, len = forms.length;
                     if (len == 0) {
                         return false;
                     }
                     oNode = el.parentElement;
 
                     while (!!oNode) {
+                        for (i = 0; i < len; i += 1) {
+                            if (oNode === forms[i]) {
+                                //we found the form to be among the parents
+                                return true;
+                            }
+                        }
+
                         if (!!root && oNode === root) {
                             //reached up to the root
                             return false;
-                        } else {
-                            for (var i = 0; i < len; i += 1) {
-                                if (oNode === forms[i]) {
-                                    //we found the form to be among the parents
-                                    return true;
-                                }
-                            }
                         }
 
                         //try parent element

@@ -172,25 +172,25 @@ module RIAPP {
                 }
                 //check if the element inside of any dataform in the array
                 static isInNestedForm(root: any, forms: HTMLElement[], el: HTMLElement): boolean {
-                    var oNode: HTMLElement, len = forms.length;
+                    var i: number, oNode: HTMLElement, len = forms.length;
                     if (len == 0) {
                         return false;
                     }
                     oNode = el.parentElement;
 
                     while (!!oNode) {
+                        for (i = 0; i < len; i += 1) {
+                            if (oNode === forms[i]) {
+                                //we found the form to be among the parents
+                                return true;
+                            }
+                        }
+
                         if (!!root && oNode === root) { 
                             //reached up to the root
                             return false;
                         }
-                        else {
-                            for (var i = 0; i < len; i += 1) {
-                                if (oNode === forms[i]) {
-                                    //we found the form to be among the parents
-                                    return true;
-                                }
-                            }
-                        }
+
                         //try parent element
                         oNode = oNode.parentElement;
                     }
