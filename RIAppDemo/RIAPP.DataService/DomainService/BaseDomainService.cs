@@ -205,6 +205,8 @@ namespace RIAPP.DataService
                     int keyIndex = Array.IndexOf(pkInfos, fieldInfo);
                     if (keyIndex > -1)
                     {
+                        if (fv == null)
+                            throw new Exception(string.Format("Primary Key Field \"{0}\" Has a NULL Value", fieldInfo._FullName));
                         pk[keyIndex] = fv.ToString();
                     }
                     row.v[i] = fv;
@@ -237,6 +239,8 @@ namespace RIAPP.DataService
                     int keyIndex = Array.IndexOf(pkInfos, fieldInfo);
                     if (keyIndex > -1)
                     {
+                        if (fv == null)
+                            throw new Exception(string.Format("Primary Key Field \"{0}\" Has a NULL Value", fieldInfo._FullName));
                         pk[keyIndex] = fv.ToString();
                     }
                     row.v[i] = fv;

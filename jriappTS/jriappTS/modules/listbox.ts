@@ -17,20 +17,20 @@ module RIAPP {
             }
 
             export class ListBox extends RIAPP.BaseObject {
-                _el: HTMLSelectElement;
-                _$el: JQuery;
-                _objId: string;
-                _dataSource: collection.BaseCollection<collection.CollectionItem>;
-                _isRefreshing: boolean;
-                _isDSFilling: boolean;
-                _valuePath: string;
-                _textPath: string;
-                _selectedItem: collection.CollectionItem;
-                _saveSelected: collection.CollectionItem;
-                _keyMap: { [key: string]: IMappedItem; };
-                _valMap: { [val: string]: IMappedItem; };
-                _saveVal: any;
-                _selectedValue: any;
+                private _el: HTMLSelectElement;
+                private _$el: JQuery;
+                private _objId: string;
+                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _isRefreshing: boolean;
+                private _isDSFilling: boolean;
+                private _valuePath: string;
+                private _textPath: string;
+                private _selectedItem: collection.CollectionItem;
+                private _saveSelected: collection.CollectionItem;
+                private _keyMap: { [key: string]: IMappedItem; };
+                private _valMap: { [val: string]: IMappedItem; };
+                private _saveVal: any;
+                private _selectedValue: any;
 
                 constructor(el: HTMLSelectElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options: IListBoxOptions) {
                     super();
@@ -449,9 +449,9 @@ module RIAPP {
             }
 
             export class SelectElView extends baseElView.BaseElView {
-                _dataSource: collection.BaseCollection<collection.CollectionItem>;
-                _listBox: ListBox;
-                _options: ISelectViewOptions;
+                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _listBox: ListBox;
+                private _options: ISelectViewOptions;
                 constructor(app: Application, el: HTMLSelectElement, options: ISelectViewOptions) {
                     this._dataSource = null;
                     this._listBox = null;
@@ -493,6 +493,7 @@ module RIAPP {
                             this._listBox = new ListBox(<HTMLSelectElement>this._el, this._dataSource, this._options);
                             this._listBox.addOnDestroyed(function () {
                                 self._listBox = null;
+                                self.invokePropChanged('listBox');
                             }, this.uniqueID);
                             this._listBox.addOnPropertyChange('*', function (sender, args) {
                                 self.raisePropertyChanged(args.property);
@@ -532,12 +533,12 @@ module RIAPP {
             }
 
             export class LookupContent extends baseContent.BindingContent implements baseContent.IExternallyCachable {
-                _spanView: baseElView.SpanElView;
-                _valBinding: binding.Binding;
-                _listBinding: binding.Binding;
-                _selectView: SelectElView;
-                _isListBoxCachedExternally: boolean;
-                _value: any;
+                private _spanView: baseElView.SpanElView;
+                private _valBinding: binding.Binding;
+                private _listBinding: binding.Binding;
+                private _selectView: SelectElView;
+                private _isListBoxCachedExternally: boolean;
+                private _value: any;
 
                 constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean) {
                     if (options.name != 'lookup') {
@@ -727,8 +728,8 @@ module RIAPP {
             }
 
             export class ContentFactory implements baseContent.IContentFactory  {
-                _app: Application;
-                _nextFactory: baseContent.IContentFactory;
+                private _app: Application;
+                private _nextFactory: baseContent.IContentFactory;
 
                 constructor(app: Application, nextFactory?: baseContent.IContentFactory) {
                     this._app = app;

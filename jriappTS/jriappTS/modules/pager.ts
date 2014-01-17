@@ -25,21 +25,21 @@ module RIAPP {
             }
 
             export class Pager extends RIAPP.BaseObject {
-                _el: HTMLElement;
-                _$el: JQuery;
-                _objId: string;
-                _dataSource: collection.BaseCollection<collection.CollectionItem>;
-                _showTip: boolean;
-                _showInfo: boolean;
-                _showFirstAndLast: boolean;
-                _showPreviousAndNext: boolean;
-                _showNumbers: boolean;
-                _rowsPerPage: number;
-                _rowCount: number;
-                _currentPage: number;
-                _useSlider: boolean;
-                _sliderSize: number;
-                _hideOnSinglePage: boolean;
+                private _el: HTMLElement;
+                private _$el: JQuery;
+                private _objId: string;
+                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _showTip: boolean;
+                private _showInfo: boolean;
+                private _showFirstAndLast: boolean;
+                private _showPreviousAndNext: boolean;
+                private _showNumbers: boolean;
+                private _rowsPerPage: number;
+                private _rowCount: number;
+                private _currentPage: number;
+                private _useSlider: boolean;
+                private _sliderSize: number;
+                private _hideOnSinglePage: boolean;
 
                 constructor(el:HTMLElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options:IPagerOptions) {
                     super();
@@ -413,9 +413,9 @@ module RIAPP {
             }
 
             export class PagerElView extends baseElView.BaseElView {
-                _options: IPagerOptions;
-                _dataSource: collection.BaseCollection<collection.CollectionItem>;
-                _pager: Pager;
+                private _options: IPagerOptions;
+                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _pager: Pager;
                 constructor(app: Application, el: HTMLElement, options: IPagerViewOptions) {
                     this._dataSource = null;
                     this._pager = null;
@@ -448,6 +448,7 @@ module RIAPP {
                             this._pager = new Pager(this._el, this._dataSource, this._options);
                             this._pager.addOnDestroyed(function () {
                                 self._pager = null;
+                                self.invokePropChanged('pager');
                             });
                         }
                         self.invokePropChanged('pager');

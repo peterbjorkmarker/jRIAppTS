@@ -8663,9 +8663,18 @@ var RIAPP;
                     this._form.addOnDestroyed(function () {
                         self._form = null;
                         self.invokePropChanged('form');
+                        self.raisePropertyChanged('form');
                     });
-                    this._form.addOnPropertyChange('validationErrors', function (form, args) {
-                        self.validationErrors = form.validationErrors;
+                    this._form.addOnPropertyChange('*', function (form, args) {
+                        switch (args.property) {
+                            case 'validationErrors':
+                                self.validationErrors = form.validationErrors;
+                                break;
+                            case 'dataContext':
+                            case 'isDisabled':
+                                self.raisePropertyChanged(args.property);
+                                break;
+                        }
                     }, this._objId);
                 }
                 DataFormElView.prototype._getErrorTipInfo = function (errors) {
@@ -8719,14 +8728,15 @@ var RIAPP;
                 };
                 Object.defineProperty(DataFormElView.prototype, "dataContext", {
                     get: function () {
-                        if (!this._form)
+                        if (this._isDestroyCalled)
                             return null;
                         return this._form.dataContext;
                     },
                     set: function (v) {
+                        if (this._isDestroyCalled)
+                            return;
                         if (this.dataContext !== v) {
                             this._form.dataContext = v;
-                            this.raisePropertyChanged('dataContext');
                         }
                     },
                     enumerable: true,
@@ -8734,7 +8744,7 @@ var RIAPP;
                 });
                 Object.defineProperty(DataFormElView.prototype, "isDisabled", {
                     get: function () {
-                        if (!this._form)
+                        if (this._isDestroyCalled)
                             return true;
                         return this._form.isDisabled;
                     },
@@ -8743,7 +8753,6 @@ var RIAPP;
                             return;
                         if (this.isDisabled !== v) {
                             this._form.isDisabled = v;
-                            this.raisePropertyChanged('isDisabled');
                         }
                     },
                     enumerable: true,
@@ -13576,6 +13585,7 @@ var RIAPP;
                                 this._listBox = new ListBox(this._el, this._dataSource, this._options);
                                 this._listBox.addOnDestroyed(function () {
                                     self._listBox = null;
+                                    self.invokePropChanged('listBox');
                                 }, this.uniqueID);
                                 this._listBox.addOnPropertyChange('*', function (sender, args) {
                                     self.raisePropertyChanged(args.property);
@@ -14689,7 +14699,7 @@ var RIAPP;
                 RowSelectorCell.prototype.destroy = function () {
                     if (this._isDestroyed)
                         return;
-
+                    this._isDestroyCalled = true;
                     if (!!this._content) {
                         this._content.destroy();
                         this._content = null;
@@ -14766,6 +14776,13 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
+                Object.defineProperty(DetailsCell.prototype, "template", {
+                    get: function () {
+                        return this._template;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
                 return DetailsCell;
             })(RIAPP.BaseObject);
             datagrid.DetailsCell = DetailsCell;
@@ -14807,12 +14824,10 @@ var RIAPP;
                     return isHandled;
                 };
                 Row.prototype._createCells = function () {
-                    var self = this;
+                    var self = this, i = 0;
                     self._cells = new Array(this.columns.length);
-                    var i = 0;
                     this.columns.forEach(function (col) {
-                        var cell = self._createCell(col);
-                        self._cells[i] = cell;
+                        self._cells[i] = self._createCell(col);
                         i += 1;
                     });
                 };
@@ -15001,7 +15016,7 @@ var RIAPP;
                 });
                 Object.defineProperty(Row.prototype, "isExpanded", {
                     get: function () {
-                        return this.grid._expandedRow === this;
+                        return this.grid._isRowExpanded(this);
                     },
                     set: function (v) {
                         if (v !== this.isExpanded) {
@@ -15079,21 +15094,6 @@ var RIAPP;
                     var td = RIAPP.global.document.createElement('td');
                     this._cell = new DetailsCell(this, { td: td, details_id: details_id });
                 };
-                DetailsRow.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._cell) {
-                        this._cell.destroy();
-                        this._cell = null;
-                    }
-                    this._$el.remove();
-                    this._$el = null;
-                    this._item = null;
-                    this._el = null;
-                    this._grid = null;
-                    _super.prototype.destroy.call(this);
-                };
                 DetailsRow.prototype._setParentRow = function (row) {
                     var self = this;
                     this._item = null;
@@ -15109,7 +15109,7 @@ var RIAPP;
                     this._item = row.item;
                     this._cell.item = this._item;
                     utils.insertAfter(row.el, this._el);
-                    var $cell = RIAPP.global.$(this._cell._template.el);
+                    var $cell = RIAPP.global.$(this._cell.template.el);
 
                     //var isLast = this.grid._getLastRow() === this._parentRow;
                     $cell.slideDown('fast', function () {
@@ -15119,6 +15119,21 @@ var RIAPP;
                         if (self.grid._options.isUseScrollIntoDetails)
                             row.scrollIntoView(true);
                     });
+                };
+                DetailsRow.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._cell) {
+                        this._cell.destroy();
+                        this._cell = null;
+                    }
+                    this._$el.remove();
+                    this._$el = null;
+                    this._item = null;
+                    this._el = null;
+                    this._grid = null;
+                    _super.prototype.destroy.call(this);
                 };
                 DetailsRow.prototype.toString = function () {
                     return 'DetailsRow';
@@ -15186,7 +15201,7 @@ var RIAPP;
                     set: function (v) {
                         var self = this;
                         if (v !== this._parentRow) {
-                            var $cell = RIAPP.global.$(this._cell._template.el);
+                            var $cell = RIAPP.global.$(this._cell.template.el);
                             if (!!self._parentRow) {
                                 $cell.slideUp('fast', function () {
                                     self._setParentRow(v);
@@ -15214,26 +15229,25 @@ var RIAPP;
                     this._isSelected = false;
                     this._objId = 'col' + utils.getNewID();
 
-                    var $extcol = RIAPP.global.$('<div></div>');
-                    $extcol.addClass(datagrid.css.column);
-                    this._grid._$headerDiv.append($extcol);
-                    this._$extcol = $extcol;
+                    var extcolDiv = RIAPP.global.document.createElement('div');
+                    this._$extcol = RIAPP.global.$(extcolDiv);
+                    this._$extcol.addClass(datagrid.css.column);
+                    this._grid._appendToHeader(extcolDiv);
 
-                    var $div = RIAPP.global.$('<div></div>');
-                    $div.addClass(datagrid.css.cellDiv).click(function (e) {
+                    var div = RIAPP.global.document.createElement('div');
+                    this._$div = RIAPP.global.$(div);
+                    this._$div.addClass(datagrid.css.cellDiv).click(function (e) {
                         e.stopPropagation();
                         RIAPP.global.currentSelectable = grid;
                         grid._setCurrentColumn(self);
                         self._onColumnClicked();
                     });
 
-                    $extcol.append($div);
-                    $div.get(0).cell = this;
-                    this._$div = $div;
+                    extcolDiv.appendChild(div);
 
-                    RIAPP.global.$(this.grid._tableEl).on('click', ['div[', RIAPP.MOD.consts.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''), function (e) {
+                    this.grid._$tableEl.on('click', ['div[', RIAPP.MOD.consts.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''), function (e) {
                         e.stopPropagation();
-                        var cell = RIAPP.global.$(this).data('cell');
+                        var $div = RIAPP.global.$(this), cell = $div.data('cell');
                         if (!!cell) {
                             RIAPP.global.currentSelectable = grid;
                             grid._setCurrentColumn(self);
@@ -15260,7 +15274,7 @@ var RIAPP;
                     this._init();
 
                     if (this._options.colCellCss) {
-                        $div.addClass(this._options.colCellCss);
+                        self._$div.addClass(this._options.colCellCss);
                     }
                 }
                 BaseColumn.prototype._init = function () {
@@ -15273,7 +15287,6 @@ var RIAPP;
                     this._isDestroyCalled = true;
                     this._$extcol.remove();
                     this._$extcol = null;
-                    this._$div.get(0).cell = null;
                     this._$div = null;
                     this._el = null;
                     this._grid = null;
@@ -15364,7 +15377,7 @@ var RIAPP;
                 function DataColumn(grid, options) {
                     _super.call(this, grid, options);
 
-                    // DataCell caches here listbox (for LookupContent)
+                    //the DataCell caches here listbox (for the LookupContent)
                     //so not to create it for every cell
                     this._objCache = {};
                     this.$div.addClass(datagrid.css.dataColumn);
@@ -15412,14 +15425,14 @@ var RIAPP;
                 };
                 Object.defineProperty(DataColumn.prototype, "isSortable", {
                     get: function () {
-                        return !!(this._options.sortable);
+                        return !!(this.options.sortable);
                     },
                     enumerable: true,
                     configurable: true
                 });
                 Object.defineProperty(DataColumn.prototype, "sortMemberName", {
                     get: function () {
-                        return this._options.sortMemberName;
+                        return this.options.sortMemberName;
                     },
                     enumerable: true,
                     configurable: true
@@ -15529,9 +15542,9 @@ var RIAPP;
                     opts.img_cancel = RIAPP.global.getImagePath(opts.img_cancel || 'cancel.png');
                     opts.img_edit = RIAPP.global.getImagePath(opts.img_edit || 'edit.png');
                     opts.img_delete = RIAPP.global.getImagePath(opts.img_delete || 'delete.png');
-                    RIAPP.global.$(this.grid._tableEl).on("click", 'img[' + RIAPP.MOD.consts.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]', function (e) {
+                    this.grid._$tableEl.on("click", 'img[' + RIAPP.MOD.consts.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]', function (e) {
                         e.stopPropagation();
-                        var name = this.name, cell = RIAPP.global.$(this).data('cell');
+                        var $img = RIAPP.global.$(this), name = this.name, cell = $img.data('cell');
                         switch (name) {
                             case 'img_ok':
                                 self._onOk(cell);
@@ -15669,7 +15682,12 @@ var RIAPP;
                 DataGrid.prototype.removeOnCellDblClicked = function (namespace) {
                     this.removeHandler('cell_dblclicked', namespace);
                 };
-
+                DataGrid.prototype._isRowExpanded = function (row) {
+                    return this._expandedRow === row;
+                };
+                DataGrid.prototype._appendToHeader = function (el) {
+                    this._$headerDiv.append(el);
+                };
                 DataGrid.prototype._setCurrentColumn = function (column) {
                     if (!!this._currentColumn)
                         this._currentColumn.isSelected = false;
@@ -15900,30 +15918,30 @@ var RIAPP;
                     var self = this, ds = this._dataSource;
                     if (!ds)
                         return;
-                    ds.addHandler('coll_changed', function (sender, args) {
+                    ds.addOnCollChanged(function (sender, args) {
                         self._onDSCollectionChanged(args);
                     }, self._objId);
-                    ds.addHandler('fill', function (sender, args) {
+                    ds.addOnFill(function (sender, args) {
                         self._onDSFill(args);
                     }, self._objId);
                     ds.addOnPropertyChange('currentItem', function (sender, args) {
                         self._onDSCurrentChanged();
                     }, self._objId);
-                    ds.addHandler('begin_edit', function (sender, args) {
+                    ds.addOnBeginEdit(function (sender, args) {
                         self._onItemEdit(args.item, true, undefined);
                     }, self._objId);
-                    ds.addHandler('end_edit', function (sender, args) {
+                    ds.addOnEndEdit(function (sender, args) {
                         self._onItemEdit(args.item, false, args.isCanceled);
                     }, self._objId);
-                    ds.addHandler('errors_changed', function (sender, args) {
+                    ds.addOnErrorsChanged(function (sender, args) {
                         self._onDSErrorsChanged(args.item);
                     }, self._objId);
-                    ds.addHandler('status_changed', function (sender, args) {
+                    ds.addOnStatusChanged(function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onItemStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
-                    ds.addHandler('item_added', function (sender, args) {
+                    ds.addOnItemAdded(function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onItemAdded(args);
@@ -16591,6 +16609,8 @@ var RIAPP;
                     }, this.uniqueID);
                     this._grid.addOnDestroyed(function (s, args) {
                         self._grid = null;
+                        self.invokePropChanged('grid');
+                        self.raisePropertyChanged('grid');
                     }, this.uniqueID);
                 };
                 GridElView.prototype.invokeGridEvent = function (eventName, args) {
@@ -16612,8 +16632,8 @@ var RIAPP;
                             this._dataSource = v;
                             if (!!this._grid && !this._grid._isDestroyCalled) {
                                 this._grid.destroy();
-                                this._grid = null;
                             }
+                            this._grid = null;
                             if (!!this._dataSource) {
                                 this._createGrid();
                             }
@@ -17162,6 +17182,7 @@ var RIAPP;
                                 this._pager = new Pager(this._el, this._dataSource, this._options);
                                 this._pager.addOnDestroyed(function () {
                                     self._pager = null;
+                                    self.invokePropChanged('pager');
                                 });
                             }
                             self.invokePropChanged('pager');
@@ -17584,6 +17605,7 @@ var RIAPP;
                                 this._panel = new StackPanel(this.app, this._el, this._dataSource, this._options);
                                 this._panel.addOnDestroyed(function () {
                                     self._panel = null;
+                                    self.invokePropChanged('panel');
                                 });
                             }
                             self.invokePropChanged('panel');

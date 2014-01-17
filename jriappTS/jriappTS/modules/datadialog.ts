@@ -26,22 +26,22 @@ module RIAPP {
             }
 
             export class DataEditDialog extends BaseObject {
-                _objId: string;
-                _dataContext: any;
-                _templateID: string;
-                _submitOnOK: boolean;
-                _canRefresh: boolean;
-                _canCancel: boolean;
-                _fn_OnClose: (dialog: DataEditDialog) => void;
-                _fn_OnOK: (dialog: DataEditDialog) => number;
-                _fn_OnShow: (dialog: DataEditDialog) => void;
-                _fn_OnCancel: (dialog: DataEditDialog) => number;
-                _fn_OnTemplateCreated: (template: template.Template) => void;
-                _fn_OnTemplateDestroy: (template: template.Template) => void;
-                _isEditable: boolean;
-                _template: template.Template;
-                _$template: JQuery;
-                _result: string;
+                private _objId: string;
+                private _dataContext: any;
+                private _templateID: string;
+                private _submitOnOK: boolean;
+                private _canRefresh: boolean;
+                private _canCancel: boolean;
+                private _fn_OnClose: (dialog: DataEditDialog) => void;
+                private _fn_OnOK: (dialog: DataEditDialog) => number;
+                private _fn_OnShow: (dialog: DataEditDialog) => void;
+                private _fn_OnCancel: (dialog: DataEditDialog) => number;
+                private _fn_OnTemplateCreated: (template: template.Template) => void;
+                private _fn_OnTemplateDestroy: (template: template.Template) => void;
+                private _isEditable: boolean;
+                private _template: template.Template;
+                private _$template: JQuery;
+                private _result: string;
                 private _options: any;
                 private _dialogCreated: boolean;
                 private _fn_submitOnOK: () => IVoidPromise;

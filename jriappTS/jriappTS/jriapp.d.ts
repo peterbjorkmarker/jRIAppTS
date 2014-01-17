@@ -1732,8 +1732,8 @@ declare module RIAPP {
                 public isInsideTemplate : boolean;
             }
             class DataFormElView extends MOD.baseElView.BaseElView {
-                public _form: DataForm;
-                public _options: MOD.baseElView.IViewOptions;
+                private _form;
+                private _options;
                 constructor(app: RIAPP.Application, el: HTMLSelectElement, options: MOD.baseElView.IViewOptions);
                 public _getErrorTipInfo(errors: MOD.binding.IValidationInfo[]): string;
                 public _updateErrorUI(el: HTMLElement, errors: MOD.binding.IValidationInfo[]): void;
@@ -2518,24 +2518,20 @@ declare module RIAPP {
                 };
             }
             class ListBox extends RIAPP.BaseObject {
-                public _el: HTMLSelectElement;
-                public _$el: JQuery;
-                public _objId: string;
-                public _dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public _isRefreshing: boolean;
-                public _isDSFilling: boolean;
-                public _valuePath: string;
-                public _textPath: string;
-                public _selectedItem: MOD.collection.CollectionItem;
-                public _saveSelected: MOD.collection.CollectionItem;
-                public _keyMap: {
-                    [key: string]: IMappedItem;
-                };
-                public _valMap: {
-                    [val: string]: IMappedItem;
-                };
-                public _saveVal: any;
-                public _selectedValue: any;
+                private _el;
+                private _$el;
+                private _objId;
+                private _dataSource;
+                private _isRefreshing;
+                private _isDSFilling;
+                private _valuePath;
+                private _textPath;
+                private _selectedItem;
+                private _saveSelected;
+                private _keyMap;
+                private _valMap;
+                private _saveVal;
+                private _selectedValue;
                 constructor(el: HTMLSelectElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IListBoxOptions);
                 public destroy(): void;
                 public _onChanged(): void;
@@ -2571,9 +2567,9 @@ declare module RIAPP {
             interface ISelectViewOptions extends IListBoxOptions, MOD.baseElView.IViewOptions {
             }
             class SelectElView extends MOD.baseElView.BaseElView {
-                public _dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public _listBox: ListBox;
-                public _options: ISelectViewOptions;
+                private _dataSource;
+                private _listBox;
+                private _options;
                 constructor(app: RIAPP.Application, el: HTMLSelectElement, options: ISelectViewOptions);
                 public destroy(): void;
                 public toString(): string;
@@ -2590,12 +2586,12 @@ declare module RIAPP {
                 textPath: string;
             }
             class LookupContent extends MOD.baseContent.BindingContent implements MOD.baseContent.IExternallyCachable {
-                public _spanView: MOD.baseElView.SpanElView;
-                public _valBinding: MOD.binding.Binding;
-                public _listBinding: MOD.binding.Binding;
-                public _selectView: SelectElView;
-                public _isListBoxCachedExternally: boolean;
-                public _value: any;
+                private _spanView;
+                private _valBinding;
+                private _listBinding;
+                private _selectView;
+                private _isListBoxCachedExternally;
+                private _value;
                 constructor(app: RIAPP.Application, parentEl: HTMLElement, options: MOD.baseContent.IContentOptions, dctx: any, isEditing: boolean);
                 public _init(): void;
                 public _getEventNames(): string[];
@@ -2626,8 +2622,8 @@ declare module RIAPP {
                 public value : any;
             }
             class ContentFactory implements MOD.baseContent.IContentFactory {
-                public _app: RIAPP.Application;
-                public _nextFactory: MOD.baseContent.IContentFactory;
+                private _app;
+                private _nextFactory;
                 constructor(app: RIAPP.Application, nextFactory?: MOD.baseContent.IContentFactory);
                 public getContentType(options: MOD.baseContent.IContentOptions): MOD.baseContent.IContentType;
                 public createContent(parentEl: HTMLElement, options: MOD.baseContent.IContentOptions, dctx: any, isEditing: boolean): MOD.baseContent.IContent;
@@ -2662,22 +2658,22 @@ declare module RIAPP {
                 fn_OnTemplateDestroy?: (template: MOD.template.Template) => void;
             }
             class DataEditDialog extends RIAPP.BaseObject {
-                public _objId: string;
-                public _dataContext: any;
-                public _templateID: string;
-                public _submitOnOK: boolean;
-                public _canRefresh: boolean;
-                public _canCancel: boolean;
-                public _fn_OnClose: (dialog: DataEditDialog) => void;
-                public _fn_OnOK: (dialog: DataEditDialog) => number;
-                public _fn_OnShow: (dialog: DataEditDialog) => void;
-                public _fn_OnCancel: (dialog: DataEditDialog) => number;
-                public _fn_OnTemplateCreated: (template: MOD.template.Template) => void;
-                public _fn_OnTemplateDestroy: (template: MOD.template.Template) => void;
-                public _isEditable: boolean;
-                public _template: MOD.template.Template;
-                public _$template: JQuery;
-                public _result: string;
+                private _objId;
+                private _dataContext;
+                private _templateID;
+                private _submitOnOK;
+                private _canRefresh;
+                private _canCancel;
+                private _fn_OnClose;
+                private _fn_OnOK;
+                private _fn_OnShow;
+                private _fn_OnCancel;
+                private _fn_OnTemplateCreated;
+                private _fn_OnTemplateDestroy;
+                private _isEditable;
+                private _template;
+                private _$template;
+                private _result;
                 private _options;
                 private _dialogCreated;
                 private _fn_submitOnOK;
@@ -2785,8 +2781,8 @@ declare module RIAPP {
                 public item : MOD.collection.CollectionItem;
             }
             class DataCell extends BaseCell {
-                public _content: MOD.baseContent.IContent;
-                public _stateCss: string;
+                private _content;
+                private _stateCss;
                 constructor(row: Row, options: {
                     td: HTMLTableCellElement;
                     column: DataColumn;
@@ -2807,7 +2803,7 @@ declare module RIAPP {
                 public toString(): string;
             }
             class ActionsCell extends BaseCell {
-                public _isEditing: boolean;
+                private _isEditing;
                 constructor(row: Row, options: {
                     td: HTMLTableCellElement;
                     column: any;
@@ -2821,15 +2817,15 @@ declare module RIAPP {
                 public isCanDelete : boolean;
             }
             class RowSelectorCell extends BaseCell {
-                public _content: MOD.baseContent.IContent;
+                private _content;
                 public _init(): void;
                 public destroy(): void;
                 public toString(): string;
             }
             class DetailsCell extends RIAPP.BaseObject {
-                public _row: DetailsRow;
-                public _el: HTMLTableCellElement;
-                public _template: MOD.template.Template;
+                private _row;
+                private _el;
+                private _template;
                 constructor(row: DetailsRow, options: {
                     td: HTMLTableCellElement;
                     details_id: string;
@@ -2844,6 +2840,7 @@ declare module RIAPP {
                 public row : DetailsRow;
                 public grid : DataGrid;
                 public item : any;
+                public template : MOD.template.Template;
             }
             class Row extends RIAPP.BaseObject {
                 public _grid: DataGrid;
@@ -2891,20 +2888,20 @@ declare module RIAPP {
                 public isEditing : boolean;
             }
             class DetailsRow extends RIAPP.BaseObject {
-                public _grid: DataGrid;
-                public _el: HTMLTableRowElement;
-                public _item: any;
-                public _cell: DetailsCell;
-                public _parentRow: Row;
-                public _objId: string;
-                public _$el: JQuery;
+                private _grid;
+                private _el;
+                private _item;
+                private _cell;
+                private _parentRow;
+                private _objId;
+                private _$el;
                 constructor(grid: DataGrid, options: {
                     tr: HTMLTableRowElement;
                     details_id: string;
                 });
-                public _createCell(details_id: string): void;
-                public destroy(): void;
+                private _createCell(details_id);
                 public _setParentRow(row: Row): void;
+                public destroy(): void;
                 public toString(): string;
                 public el : HTMLTableRowElement;
                 public $el : JQuery;
@@ -2926,13 +2923,13 @@ declare module RIAPP {
                 content?: MOD.baseContent.IContentOptions;
             }
             class BaseColumn extends RIAPP.BaseObject {
-                public _grid: DataGrid;
-                public _el: HTMLTableHeaderCellElement;
-                public _options: IColumnInfo;
-                public _isSelected: boolean;
-                public _objId: string;
-                public _$extcol: JQuery;
-                public _$div: JQuery;
+                private _grid;
+                private _el;
+                private _options;
+                private _isSelected;
+                private _objId;
+                private _$extcol;
+                private _$div;
                 constructor(grid: DataGrid, options: {
                     th: HTMLTableHeaderCellElement;
                     colinfo: IColumnInfo;
@@ -2952,10 +2949,8 @@ declare module RIAPP {
                 public isSelected : boolean;
             }
             class DataColumn extends BaseColumn {
-                public _sortOrder: string;
-                public _objCache: {
-                    [key: string]: RIAPP.BaseObject;
-                };
+                private _sortOrder;
+                private _objCache;
                 constructor(grid: DataGrid, options: {
                     th: HTMLTableHeaderCellElement;
                     colinfo: IColumnInfo;
@@ -2975,8 +2970,8 @@ declare module RIAPP {
                 public toString(): string;
             }
             class RowSelectorColumn extends BaseColumn {
-                public _val: boolean;
-                public _$chk: JQuery;
+                private _val;
+                private _$chk;
                 public _init(): void;
                 public _onCheckBoxClicked(isChecked: boolean): void;
                 public toString(): string;
@@ -3013,33 +3008,31 @@ declare module RIAPP {
             }
             class DataGrid extends RIAPP.BaseObject implements RIAPP.ISelectable {
                 public _options: IGridOptions;
-                public _tableEl: HTMLTableElement;
                 public _$tableEl: JQuery;
-                public _name: string;
-                public _objId: string;
-                public _dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public _rowMap: {
-                    [key: string]: Row;
-                };
-                public _rows: Row[];
-                public _columns: BaseColumn[];
                 public _isClearing: boolean;
-                public _isDSFilling: boolean;
-                public _currentRow: Row;
-                public _expandedRow: Row;
-                public _details: DetailsRow;
-                public _expanderCol: ExpanderColumn;
-                public _actionsCol: ActionsColumn;
-                public _rowSelectorCol: RowSelectorColumn;
-                public _currentColumn: BaseColumn;
-                public _editingRow: Row;
-                public _isSorting: boolean;
-                public _dialog: MOD.datadialog.DataEditDialog;
-                public _$headerDiv: JQuery;
-                public _$wrapDiv: JQuery;
-                public _$contaner: JQuery;
-                public _chkWidthInterval: number;
-                public _app: RIAPP.Application;
+                private _tableEl;
+                private _name;
+                private _objId;
+                private _dataSource;
+                private _rowMap;
+                private _rows;
+                private _columns;
+                private _isDSFilling;
+                private _currentRow;
+                private _expandedRow;
+                private _details;
+                private _expanderCol;
+                private _actionsCol;
+                private _rowSelectorCol;
+                private _currentColumn;
+                private _editingRow;
+                private _isSorting;
+                private _dialog;
+                private _$headerDiv;
+                private _$wrapDiv;
+                private _$contaner;
+                private _chkWidthInterval;
+                private _app;
                 constructor(app: RIAPP.Application, el: HTMLTableElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IGridOptions);
                 public _getEventNames(): string[];
                 public addOnRowExpanded(fn: (sender: DataGrid, args: {
@@ -3064,6 +3057,8 @@ declare module RIAPP {
                     cell: BaseCell;
                 }) => void, namespace?: string): void;
                 public removeOnCellDblClicked(namespace?: string): void;
+                public _isRowExpanded(row: Row): boolean;
+                public _appendToHeader(el: HTMLElement): void;
                 public _setCurrentColumn(column: BaseColumn): void;
                 public _parseColumnAttr(column_attr: string, content_attr: string): IColumnInfo;
                 public _findUndeleted(row: Row, isUp: boolean): Row;
@@ -3171,21 +3166,21 @@ declare module RIAPP {
                 sliderSize?: number;
             }
             class Pager extends RIAPP.BaseObject {
-                public _el: HTMLElement;
-                public _$el: JQuery;
-                public _objId: string;
-                public _dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public _showTip: boolean;
-                public _showInfo: boolean;
-                public _showFirstAndLast: boolean;
-                public _showPreviousAndNext: boolean;
-                public _showNumbers: boolean;
-                public _rowsPerPage: number;
-                public _rowCount: number;
-                public _currentPage: number;
-                public _useSlider: boolean;
-                public _sliderSize: number;
-                public _hideOnSinglePage: boolean;
+                private _el;
+                private _$el;
+                private _objId;
+                private _dataSource;
+                private _showTip;
+                private _showInfo;
+                private _showFirstAndLast;
+                private _showPreviousAndNext;
+                private _showNumbers;
+                private _rowsPerPage;
+                private _rowCount;
+                private _currentPage;
+                private _useSlider;
+                private _sliderSize;
+                private _hideOnSinglePage;
                 constructor(el: HTMLElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IPagerOptions);
                 public _createElement(tag: string): JQuery;
                 public _render(): void;
@@ -3224,9 +3219,9 @@ declare module RIAPP {
             interface IPagerViewOptions extends IPagerOptions, MOD.baseElView.IViewOptions {
             }
             class PagerElView extends MOD.baseElView.BaseElView {
-                public _options: IPagerOptions;
-                public _dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public _pager: Pager;
+                private _options;
+                private _dataSource;
+                private _pager;
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IPagerViewOptions);
                 public destroy(): void;
                 public toString(): string;
@@ -3303,9 +3298,9 @@ declare module RIAPP {
             interface IStackPanelViewOptions extends IStackPanelOptions, MOD.baseElView.IViewOptions {
             }
             class StackPanelElView extends MOD.baseElView.BaseElView {
-                public _dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public _panel: StackPanel;
-                public _options: IStackPanelOptions;
+                private _dataSource;
+                private _panel;
+                private _options;
                 constructor(app: RIAPP.Application, el: HTMLSelectElement, options: IStackPanelViewOptions);
                 public destroy(): void;
                 public toString(): string;

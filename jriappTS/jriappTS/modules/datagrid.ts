@@ -116,8 +116,8 @@ module RIAPP {
             }
 
             export class DataCell extends BaseCell {
-                _content: baseContent.IContent;
-                _stateCss: string;
+                private _content: baseContent.IContent;
+                private _stateCss: string;
 
                 constructor(row: Row, options: { td: HTMLTableCellElement; column: DataColumn; }) {
                     this._content = null;
@@ -223,7 +223,7 @@ module RIAPP {
             }
 
             export class ActionsCell extends BaseCell {
-                _isEditing: boolean;
+                private _isEditing: boolean;
                 constructor(row: Row, options: { td: HTMLTableCellElement; column: any; }) {
                     this._isEditing = false;
                     super(row, options);
@@ -308,7 +308,7 @@ module RIAPP {
             }
 
             export class RowSelectorCell extends BaseCell {
-                _content: baseContent.IContent;
+                private _content: baseContent.IContent;
                 _init() {
                     var $el = global.$(this.el);
                     $el.addClass(css.rowSelector);
@@ -322,7 +322,7 @@ module RIAPP {
                 destroy() {
                     if (this._isDestroyed)
                         return;
-
+                    this._isDestroyCalled = true;
                     if (!!this._content) {
                         this._content.destroy();
                         this._content = null;
@@ -335,9 +335,9 @@ module RIAPP {
             }
 
             export class DetailsCell extends BaseObject {
-                _row: DetailsRow;
-                _el: HTMLTableCellElement;
-                _template: template.Template;
+                private _row: DetailsRow;
+                private _el: HTMLTableCellElement;
+                private _template: template.Template;
                 constructor(row: DetailsRow , options: { td: HTMLTableCellElement; details_id: string; }) {
                     super();
                     this._row = row;
@@ -373,6 +373,7 @@ module RIAPP {
                 get grid() { return this._row.grid; }
                 get item() { return this._template.dataContext; }
                 set item(v) { this._template.dataContext = v; }
+                get template() { return this._template; }
             }
 
             export class Row extends RIAPP.BaseObject {
@@ -423,12 +424,10 @@ module RIAPP {
                     return isHandled;
                 }
                 _createCells() {
-                    var self = this;
+                    var self = this, i = 0;
                     self._cells = new Array(this.columns.length);
-                    var i = 0;
                     this.columns.forEach(function (col) {
-                        var cell = self._createCell(col);
-                        self._cells[i] = cell;
+                        self._cells[i] = self._createCell(col);
                         i += 1;
                     });
                 }
@@ -568,7 +567,7 @@ module RIAPP {
                         this.grid._onRowSelectionChanged(this);
                     }
                 }
-                get isExpanded() { return this.grid._expandedRow === this; }
+                get isExpanded() { return this.grid._isRowExpanded(this); }
                 set isExpanded(v) {
                     if (v !== this.isExpanded) {
                         if (!v && this.isExpanded) {
@@ -603,13 +602,13 @@ module RIAPP {
             }
 
             export class DetailsRow extends RIAPP.BaseObject {
-                _grid: DataGrid;
-                _el: HTMLTableRowElement;
-                _item: any;
-                _cell: DetailsCell;
-                _parentRow: Row;
-                _objId: string;
-                _$el: JQuery;
+                private _grid: DataGrid;
+                private _el: HTMLTableRowElement;
+                private _item: any;
+                private _cell: DetailsCell;
+                private _parentRow: Row;
+                private _objId: string;
+                private _$el: JQuery;
 
                 constructor(grid: DataGrid, options: { tr: HTMLTableRowElement; details_id: string; }) {
                     super();
@@ -623,24 +622,9 @@ module RIAPP {
                     this._$el = global.$(this._el);
                     this._$el.addClass(css.rowDetails);
                 }
-                _createCell(details_id: string) {
+                private _createCell(details_id: string) {
                     var td: HTMLTableCellElement = <HTMLTableCellElement>global.document.createElement('td');
                     this._cell = new DetailsCell(this, { td: td, details_id: details_id });
-                }
-                destroy() {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._cell) {
-                        this._cell.destroy();
-                        this._cell = null;
-                    }
-                    this._$el.remove();
-                    this._$el = null;
-                    this._item = null;
-                    this._el = null;
-                    this._grid = null;
-                    super.destroy();
                 }
                 _setParentRow(row:Row) {
                     var self = this;
@@ -656,7 +640,7 @@ module RIAPP {
                     this._item = row.item;
                     this._cell.item = this._item;
                     utils.insertAfter(row.el, this._el);
-                    var $cell = global.$(this._cell._template.el);
+                    var $cell = global.$(this._cell.template.el);
                     //var isLast = this.grid._getLastRow() === this._parentRow;
                     $cell.slideDown('fast', function () {
                         var row = self._parentRow;
@@ -665,6 +649,21 @@ module RIAPP {
                         if (self.grid._options.isUseScrollIntoDetails)
                             row.scrollIntoView(true);
                     });
+                }
+                destroy() {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._cell) {
+                        this._cell.destroy();
+                        this._cell = null;
+                    }
+                    this._$el.remove();
+                    this._$el = null;
+                    this._item = null;
+                    this._el = null;
+                    this._grid = null;
+                    super.destroy();
                 }
                 toString() {
                     return 'DetailsRow';
@@ -689,7 +688,7 @@ module RIAPP {
                 set parentRow(v:Row) {
                     var self = this;
                     if (v !== this._parentRow) {
-                        var $cell = global.$(this._cell._template.el);
+                        var $cell = global.$(this._cell.template.el);
                         if (!!self._parentRow) {
                             $cell.slideUp('fast', function () {
                                 self._setParentRow(v);
@@ -714,13 +713,13 @@ module RIAPP {
             }
 
             export class BaseColumn extends RIAPP.BaseObject {
-                _grid: DataGrid;
-                _el: HTMLTableHeaderCellElement;
-                _options: IColumnInfo;
-                _isSelected: boolean;
-                _objId: string;
-                _$extcol: JQuery;
-                _$div: JQuery;
+                private _grid: DataGrid;
+                private _el: HTMLTableHeaderCellElement;
+                private _options: IColumnInfo;
+                private _isSelected: boolean;
+                private _objId: string;
+                private _$extcol: JQuery;
+                private _$div: JQuery;
 
                 constructor(grid:DataGrid, options: { th: HTMLTableHeaderCellElement; colinfo: IColumnInfo; }) {
                     super();
@@ -731,27 +730,27 @@ module RIAPP {
                     this._isSelected = false;
                     this._objId = 'col' + utils.getNewID();
 
-                    var $extcol = global.$('<div></div>');
-                    $extcol.addClass(css.column);
-                    this._grid._$headerDiv.append($extcol);
-                    this._$extcol = $extcol;
+                    var extcolDiv = global.document.createElement('div');
+                    this._$extcol = global.$(extcolDiv);
+                    this._$extcol.addClass(css.column);
+                    this._grid._appendToHeader(extcolDiv);
 
-                    var $div = global.$('<div></div>');
-                    $div.addClass(css.cellDiv).click(function (e) {
+                    var div = global.document.createElement('div');
+                    this._$div = global.$(div);
+                    this._$div.addClass(css.cellDiv).click(function (e) {
                         e.stopPropagation();
                         global.currentSelectable = grid;
                         grid._setCurrentColumn(self);
                         self._onColumnClicked();
                     });
 
-                    $extcol.append($div);
-                    $div.get(0).cell = this;
-                    this._$div = $div;
+                    extcolDiv.appendChild(div);
+                   
 
-                    global.$(this.grid._tableEl).on('click', ['div[',consts.DATA_ATTR.DATA_EVENT_SCOPE,'="',this.uniqueID,'"]'].join(''),
+                    this.grid._$tableEl.on('click', ['div[',consts.DATA_ATTR.DATA_EVENT_SCOPE,'="',this.uniqueID,'"]'].join(''),
                         function (e) {
                             e.stopPropagation();
-                            var cell: BaseCell = global.$(this).data('cell');
+                            var $div = global.$(this), cell: BaseCell = $div.data('cell');
                             if (!!cell) {
                                 global.currentSelectable = grid;
                                 grid._setCurrentColumn(self);
@@ -780,7 +779,7 @@ module RIAPP {
                     this._init();
 
                     if (this._options.colCellCss) {
-                        $div.addClass(this._options.colCellCss);
+                        self._$div.addClass(this._options.colCellCss);
                     }
                 }
                 _init() {
@@ -793,7 +792,6 @@ module RIAPP {
                     this._isDestroyCalled = true;
                     this._$extcol.remove();
                     this._$extcol = null;
-                    this._$div.get(0).cell = null;
                     this._$div = null;
                     this._el = null;
                     this._grid = null;
@@ -831,12 +829,12 @@ module RIAPP {
             }
 
             export class DataColumn extends BaseColumn{
-                _sortOrder: string;
-                _objCache: { [key: string]: BaseObject; };
+                private _sortOrder: string;
+                private _objCache: { [key: string]: BaseObject; };
 
                 constructor(grid: DataGrid, options: { th: HTMLTableHeaderCellElement; colinfo: IColumnInfo; }) {
                     super(grid, options);
-                    // DataCell caches here listbox (for LookupContent)
+                    //the DataCell caches here listbox (for the LookupContent)
                     //so not to create it for every cell
                     this._objCache = {};
                     this.$div.addClass(css.dataColumn);
@@ -884,8 +882,8 @@ module RIAPP {
                 toString() {
                     return 'DataColumn';
                 }
-                get isSortable() { return !!(this._options.sortable); }
-                get sortMemberName() { return this._options.sortMemberName; }
+                get isSortable() { return !!(this.options.sortable); }
+                get sortMemberName() { return this.options.sortMemberName; }
                 get sortOrder() { return this._sortOrder; }
                 set sortOrder(v) {
                     this.$div.removeClass([css.colSortable, css.colSortAsc, css.colSortDesc].join(' '));
@@ -915,8 +913,8 @@ module RIAPP {
             }
 
             export class RowSelectorColumn extends BaseColumn {
-                _val: boolean;
-                _$chk: JQuery;
+                private _val: boolean;
+                private _$chk: JQuery;
                 _init() {
                     super._init();
                     var self = this;
@@ -971,10 +969,10 @@ module RIAPP {
                     opts.img_cancel = global.getImagePath(opts.img_cancel || 'cancel.png');
                     opts.img_edit = global.getImagePath(opts.img_edit || 'edit.png');
                     opts.img_delete = global.getImagePath(opts.img_delete || 'delete.png');
-                    global.$(this.grid._tableEl).on("click", 'img[' + consts.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]',
+                    this.grid._$tableEl.on("click", 'img[' + consts.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]',
                         function (e) {
                             e.stopPropagation();
-                            var name = this.name, cell: ActionsCell = global.$(this).data('cell');
+                            var $img = global.$(this), name = this.name, cell: ActionsCell = $img.data('cell');
                             switch (name) {
                                 case 'img_ok':
                                     self._onOk(cell);
@@ -1036,31 +1034,31 @@ module RIAPP {
 
             export class DataGrid extends RIAPP.BaseObject implements RIAPP.ISelectable {
                 _options: IGridOptions;
-                _tableEl: HTMLTableElement;
                 _$tableEl: JQuery;
-                _name: string;
-                _objId: string;
-                _dataSource: collection.BaseCollection<collection.CollectionItem>;
-                _rowMap: { [key: string]: Row; };
-                _rows: Row[];
-                _columns: BaseColumn[];
                 _isClearing: boolean;
-                _isDSFilling: boolean;
-                _currentRow: Row;
-                _expandedRow: Row;
-                _details: DetailsRow;
-                _expanderCol: ExpanderColumn;
-                _actionsCol: ActionsColumn;
-                _rowSelectorCol: RowSelectorColumn;
-                _currentColumn: BaseColumn;
-                _editingRow: Row;
-                _isSorting: boolean;
-                _dialog: datadialog.DataEditDialog;
-                _$headerDiv: JQuery;
-                _$wrapDiv: JQuery;
-                _$contaner: JQuery;
-                _chkWidthInterval: number;
-                _app: Application;
+                private _tableEl: HTMLTableElement;
+                private _name: string;
+                private _objId: string;
+                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _rowMap: { [key: string]: Row; };
+                private _rows: Row[];
+                private _columns: BaseColumn[];
+                private _isDSFilling: boolean;
+                private _currentRow: Row;
+                private _expandedRow: Row;
+                private _details: DetailsRow;
+                private _expanderCol: ExpanderColumn;
+                private _actionsCol: ActionsColumn;
+                private _rowSelectorCol: RowSelectorColumn;
+                private _currentColumn: BaseColumn;
+                private _editingRow: Row;
+                private _isSorting: boolean;
+                private _dialog: datadialog.DataEditDialog;
+                private _$headerDiv: JQuery;
+                private _$wrapDiv: JQuery;
+                private _$contaner: JQuery;
+                private _chkWidthInterval: number;
+                private _app: Application;
 
                 constructor(app:Application, el: HTMLTableElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options: IGridOptions) {
                     super();
@@ -1149,7 +1147,12 @@ module RIAPP {
                 removeOnCellDblClicked(namespace?: string) {
                     this.removeHandler('cell_dblclicked', namespace);
                 }
-
+                _isRowExpanded(row: Row): boolean {
+                    return this._expandedRow === row;
+                }
+                _appendToHeader(el: HTMLElement) {
+                    this._$headerDiv.append(el);
+                }
                 _setCurrentColumn(column:BaseColumn) {
                     if (!!this._currentColumn)
                         this._currentColumn.isSelected = false;
@@ -1381,29 +1384,29 @@ module RIAPP {
                 _bindDS() {
                     var self = this, ds = this._dataSource;
                     if (!ds) return;
-                    ds.addHandler('coll_changed', function (sender, args) {
+                    ds.addOnCollChanged(function (sender, args) {
                         self._onDSCollectionChanged(args);
                     }, self._objId);
-                    ds.addHandler('fill', function (sender, args) {
+                    ds.addOnFill(function (sender, args) {
                         self._onDSFill(args);
                     }, self._objId);
                     ds.addOnPropertyChange('currentItem', function (sender, args) {
                         self._onDSCurrentChanged();
                     }, self._objId);
-                    ds.addHandler('begin_edit', function (sender, args) {
+                    ds.addOnBeginEdit(function (sender, args) {
                         self._onItemEdit(args.item, true, undefined);
                     }, self._objId);
-                    ds.addHandler('end_edit', function (sender, args) {
+                    ds.addOnEndEdit(function (sender, args) {
                         self._onItemEdit(args.item, false, args.isCanceled);
                     }, self._objId);
-                    ds.addHandler('errors_changed', function (sender, args) {
+                    ds.addOnErrorsChanged(function (sender, args) {
                         self._onDSErrorsChanged(args.item);
                     }, self._objId);
-                    ds.addHandler('status_changed', function (sender, args) {
+                    ds.addOnStatusChanged(function (sender, args) {
                         if (ds !== sender) return;
                         self._onItemStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
-                    ds.addHandler('item_added', function (sender, args) {
+                    ds.addOnItemAdded(function (sender, args) {
                         if (ds !== sender) return;
                         self._onItemAdded(args);
                     }, self._objId);
@@ -1968,6 +1971,8 @@ module RIAPP {
                     }, this.uniqueID);
                     this._grid.addOnDestroyed(function (s, args) {
                         self._grid = null;
+                        self.invokePropChanged('grid');
+                        self.raisePropertyChanged('grid');
                     }, this.uniqueID);
 
                 }
@@ -1987,8 +1992,8 @@ module RIAPP {
                         this._dataSource = v;
                         if (!!this._grid && !this._grid._isDestroyCalled) {
                             this._grid.destroy();
-                            this._grid = null;
                         }
+                        this._grid = null;
                         if (!!this._dataSource) {
                             this._createGrid();
                         }

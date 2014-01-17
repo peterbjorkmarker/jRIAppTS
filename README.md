@@ -43,7 +43,7 @@ In my real world applications i use ASP.NET MVC 4 bundling feature. For LOB apps
 You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
-<p>2014-01-17 Internal code optimization (Improved databindings processing).</p>
+<p>2014-01-17 Internal code optimization (Improved databindings processing, DataForm improvements). Added dataservice PK values checks for nulls when getting the data.</p>
 <p>2014-01-15 Docs update. Internal code optimization.</p>
 <p>2014-01-14 Docs update. Demo app update.</p>
 <p>2014-01-13 <b>Docs update!</b>  Added capabilities to add explicit additional dataset results to the main query result. Added new RC Version.</p>

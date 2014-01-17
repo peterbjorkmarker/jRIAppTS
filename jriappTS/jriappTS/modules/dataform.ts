@@ -311,8 +311,8 @@ module RIAPP {
             }
      
             export class DataFormElView extends baseElView.BaseElView {
-                _form: DataForm;
-                _options: baseElView.IViewOptions;
+                private _form: DataForm;
+                private _options: baseElView.IViewOptions;
 
                 constructor(app: Application, el: HTMLSelectElement, options: baseElView.IViewOptions) {
                     super(app, el, options);
@@ -322,9 +322,18 @@ module RIAPP {
                     this._form.addOnDestroyed(function () {
                         self._form = null;
                         self.invokePropChanged('form');
+                        self.raisePropertyChanged('form');
                     });
-                    this._form.addOnPropertyChange('validationErrors', function (form, args) {
-                        self.validationErrors = form.validationErrors;
+                    this._form.addOnPropertyChange('*', function (form, args) {
+                        switch (args.property) {
+                            case 'validationErrors':
+                                self.validationErrors = form.validationErrors;
+                                break;
+                            case 'dataContext':
+                            case 'isDisabled':
+                                self.raisePropertyChanged(args.property);
+                                break;
+                        }
                     }, this._objId);
                 }
                 _getErrorTipInfo(errors: MOD.binding.IValidationInfo[]) {
@@ -378,18 +387,19 @@ module RIAPP {
                     return 'DataFormElView';
                 }
                 get dataContext() {
-                    if (!this._form)
+                    if (this._isDestroyCalled)
                         return null;
                     return this._form.dataContext;
                 }
                 set dataContext(v) {
+                    if (this._isDestroyCalled)
+                        return;
                     if (this.dataContext !== v) {
                         this._form.dataContext = v;
-                        this.raisePropertyChanged('dataContext');
                     }
                 }
                 get isDisabled() {
-                    if (!this._form)
+                    if (this._isDestroyCalled)
                         return true;
                     return this._form.isDisabled;
                 }
@@ -398,7 +408,6 @@ module RIAPP {
                         return;
                     if (this.isDisabled !== v) {
                         this._form.isDisabled = v;
-                        this.raisePropertyChanged('isDisabled');
                     }
                 }
                 get form() { return this._form; }

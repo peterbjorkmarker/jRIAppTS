@@ -334,9 +334,9 @@ module RIAPP {
             }
 
             export class StackPanelElView extends baseElView.BaseElView {
-                _dataSource: collection.BaseCollection<collection.CollectionItem>;
-                _panel: StackPanel;
-                _options: IStackPanelOptions;
+                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _panel: StackPanel;
+                private _options: IStackPanelOptions;
                 constructor(app: Application, el: HTMLSelectElement, options: IStackPanelViewOptions) {
                     this._dataSource = null;
                     this._panel = null;
@@ -369,6 +369,7 @@ module RIAPP {
                             this._panel = new StackPanel(this.app, this._el, this._dataSource, this._options);
                             this._panel.addOnDestroyed(function () {
                                 self._panel = null;
+                                self.invokePropChanged('panel');
                             });
                         }
                         self.invokePropChanged('panel');
