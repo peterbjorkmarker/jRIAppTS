@@ -43,6 +43,7 @@ In my real world applications i use ASP.NET MVC 4 bundling feature. For LOB apps
 You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
+<p>2014-01-18 Docs update</p>
 <p>2014-01-17 Internal code optimization (Improved databindings processing, DataForm improvements). Added dataservice PK values checks for nulls when getting the data.</p>
 <p>2014-01-15 Docs update. Internal code optimization.</p>
 <p>2014-01-14 Docs update. Demo app update.</p>
@@ -66,7 +67,6 @@ P.S. The docs to be updated soon. This version will be probably a RC version.<br
  http://YOURSERVER/RIAppDemoService//CodeGen?type=xaml<br/>
  http://YOURSERVER/RIAppDemoService/CodeGen?type=csharp
 </p>
-<br/>
 --
 Maxim V. Tsapov<br/> 
 <a href="https://plus.google.com/u/0/+MaximT/posts" target="_blank">I'm on Google+</a>
