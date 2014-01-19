@@ -17849,19 +17849,20 @@ var RIAPP;
             }
         };
         Application.prototype._bindTemplateElements = function (templateEl) {
-            var self = this, global = self.global, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR, selectedElem = RIAPP.ArrayHelper.fromList(templateEl.querySelectorAll(selector)), lftm = new RIAPP.MOD.utils.LifeTimeScope(), checks = global.utils.check;
-            if (templateEl.hasAttribute(global.consts.DATA_ATTR.DATA_BIND) || templateEl.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
+            var self = this, global = self.global, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR, selectedElem = RIAPP.ArrayHelper.fromList(templateEl.querySelectorAll(selector)), lftm = new RIAPP.MOD.utils.LifeTimeScope(), checks = global.utils.check, parser = global.parser, DATA_FORM = global.consts.DATA_ATTR.DATA_FORM, DATA_BIND = global.consts.DATA_ATTR.DATA_BIND, DATA_VIEW = global.consts.DATA_ATTR.DATA_VIEW;
+
+            if (templateEl.hasAttribute(DATA_BIND) || templateEl.hasAttribute(DATA_VIEW)) {
                 selectedElem.push(templateEl);
             }
 
             //mark all dataforms for easier checking that the element is a dataform
             selectedElem.forEach(function (el) {
                 if (checks.isDataForm(el))
-                    el.setAttribute(global.consts.DATA_ATTR.DATA_FORM, 'yes');
+                    el.setAttribute(DATA_FORM, 'yes');
             });
 
             //select all dataforms inside the scope
-            var formSelector = ['*[', global.consts.DATA_ATTR.DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(templateEl.querySelectorAll(formSelector));
+            var formSelector = ['*[', DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(templateEl.querySelectorAll(formSelector));
 
             if (checks.isDataForm(templateEl)) {
                 //in this case process only this element
@@ -17869,7 +17870,7 @@ var RIAPP;
             }
 
             selectedElem.forEach(function (el) {
-                var op, j, len, binding, bind_attr, temp_opts, elView;
+                var op, binding, bind_attr, temp_opts, elView, j, len;
 
                 //if element inside a dataform return
                 if (checks.isInNestedForm(templateEl, forms, el)) {
@@ -17883,15 +17884,15 @@ var RIAPP;
                     elView.form.isInsideTemplate = true;
                 }
 
-                if (el.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
-                    el.removeAttribute(global.consts.DATA_ATTR.DATA_VIEW);
+                if (el.hasAttribute(DATA_VIEW)) {
+                    el.removeAttribute(DATA_VIEW);
                 }
 
                 //then create databinding if element has data-bind attribute
-                bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);
+                bind_attr = el.getAttribute(DATA_BIND);
                 if (!!bind_attr) {
-                    el.removeAttribute(global.consts.DATA_ATTR.DATA_BIND);
-                    temp_opts = global.parser.parseOptions(bind_attr);
+                    el.removeAttribute(DATA_BIND);
+                    temp_opts = parser.parseOptions(bind_attr);
                     for (j = 0, len = temp_opts.length; j < len; j += 1) {
                         op = RIAPP.MOD.baseContent.getBindingOptions(self, temp_opts[j], elView, null);
                         binding = self.bind(op);
@@ -17904,26 +17905,27 @@ var RIAPP;
             return lftm;
         };
         Application.prototype._bindElements = function (scope, dctx, isDataFormBind, isInsideTemplate) {
-            var self = this, global = self.global, checks = global.utils.check;
+            var self = this, global = self.global, checks = global.utils.check, parser = global.parser, DATA_FORM = global.consts.DATA_ATTR.DATA_FORM, DATA_BIND = global.consts.DATA_ATTR.DATA_BIND, DATA_VIEW = global.consts.DATA_ATTR.DATA_VIEW, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR;
+
             scope = scope || global.document;
 
-            //select all elements with binding attributes inside templates
-            var selectedElem = RIAPP.ArrayHelper.fromList(scope.querySelectorAll(self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR));
+            //select all elements with binding attributes
+            var selectedElem = RIAPP.ArrayHelper.fromList(scope.querySelectorAll(selector));
             var lftm = new RIAPP.MOD.utils.LifeTimeScope();
 
             if (!isDataFormBind) {
                 //mark all dataforms for easier checking that the element is a dataform
                 selectedElem.forEach(function (el) {
                     if (checks.isDataForm(el))
-                        el.setAttribute(global.consts.DATA_ATTR.DATA_FORM, 'yes');
+                        el.setAttribute(DATA_FORM, 'yes');
                 });
             }
 
             //select all dataforms inside the scope
-            var formSelector = ['*[', global.consts.DATA_ATTR.DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(scope.querySelectorAll(formSelector));
+            var formSelector = ['*[', DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(scope.querySelectorAll(formSelector));
 
             selectedElem.forEach(function (el) {
-                var bind_attr, temp_opts, bind_op, elView;
+                var bind_attr, temp_opts, bind_op, elView, i, len;
 
                 //return if the current element is inside a dataform
                 if (checks.isInNestedForm(scope, forms, el)) {
@@ -17938,20 +17940,20 @@ var RIAPP;
                 }
 
                 if (isInsideTemplate) {
-                    if (el.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
-                        el.removeAttribute(global.consts.DATA_ATTR.DATA_VIEW);
+                    if (el.hasAttribute(DATA_VIEW)) {
+                        el.removeAttribute(DATA_VIEW);
                     }
                 }
 
-                bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);
+                bind_attr = el.getAttribute(DATA_BIND);
 
                 //if it has data-bind attribute then proceed to create binding
                 if (!!bind_attr) {
                     if (isInsideTemplate) {
-                        el.removeAttribute(global.consts.DATA_ATTR.DATA_BIND);
+                        el.removeAttribute(DATA_BIND);
                     }
-                    temp_opts = global.parser.parseOptions(bind_attr);
-                    for (var i = 0, len = temp_opts.length; i < len; i += 1) {
+                    temp_opts = parser.parseOptions(bind_attr);
+                    for (i = 0, len = temp_opts.length; i < len; i += 1) {
                         bind_op = RIAPP.MOD.baseContent.getBindingOptions(self, temp_opts[i], elView, dctx);
                         lftm.addObj(self.bind(bind_op));
                     }
@@ -17962,7 +17964,6 @@ var RIAPP;
 
         //used as a factory to create Data Contents
         Application.prototype._getContent = function (contentType, options, parentEl, dctx, isEditing) {
-            var content;
             return new contentType(this, parentEl, options, dctx, isEditing);
         };
 
@@ -17971,10 +17972,10 @@ var RIAPP;
             return this.contentFactory.getContentType(options);
         };
         Application.prototype._getElViewType = function (name) {
-            var name2 = 'elvws.' + name;
-            var res = RIAPP.global._getObject(this, name2);
+            var name2 = 'elvws.' + name, global = this.global;
+            var res = global._getObject(this, name2);
             if (!res) {
-                res = RIAPP.global._getObject(RIAPP.global, name2);
+                res = global._getObject(global, name2);
             }
             return res;
         };
@@ -17982,11 +17983,11 @@ var RIAPP;
             return this._exports;
         };
         Application.prototype.registerElView = function (name, type) {
-            var name2 = 'elvws.' + name;
-            if (!RIAPP.global._getObject(this, name2)) {
-                RIAPP.global._registerObject(this, name2, type);
+            var name2 = 'elvws.' + name, global = this.global;
+            if (!global._getObject(this, name2)) {
+                global._registerObject(this, name2, type);
             } else
-                throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
+                throw new Error(global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         };
 
         //checks if the element already has created and attached ElView, if no then it creates and attaches ElView for the element
@@ -18036,7 +18037,7 @@ var RIAPP;
         };
 
         //registers instances of objects, so they can be retrieved later anywhere in the application's code
-        //very similar to a dependency injection container - you can later obtain it with getObject function
+        //very similar to a dependency injection container - you can later obtain the registerd object with the getObject function
         Application.prototype.registerObject = function (name, obj) {
             var self = this, name2 = 'objects.' + name;
             if (obj instanceof RIAPP.BaseObject) {
