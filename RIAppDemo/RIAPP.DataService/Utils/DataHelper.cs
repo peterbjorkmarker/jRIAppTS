@@ -177,7 +177,9 @@ namespace RIAPP.DataService.Utils
                 Type enityType = fieldOwner.GetType();
                 PropertyInfo pinfo = enityType.GetProperty(fieldInfo.fieldName);
                 if (pinfo == null)
+                {
                     throw new Exception(string.Format(ErrorStrings.ERR_PROPERTY_IS_MISSING, enityType.Name, fieldInfo.fieldName));
+                }
                 object fieldValue = pinfo.GetValue(fieldOwner, null);
                 return this._serviceContainer.ValueConverter.SerializeField(pinfo.PropertyType, fieldInfo, fieldValue);
             }

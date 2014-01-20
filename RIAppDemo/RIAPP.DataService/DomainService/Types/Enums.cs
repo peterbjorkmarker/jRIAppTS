@@ -3,7 +3,7 @@ namespace RIAPP.DataService.Types
 {
     public enum FieldType : int
     {
-        None = 0, ClientOnly = 1, Calculated = 2, Navigation = 3, RowTimeStamp = 4, Object = 5
+        None = 0, ClientOnly = 1, Calculated = 2, Navigation = 3, RowTimeStamp = 4, Object = 5, ServerCalculated = 6
     }
 
     public enum ChangeType : int

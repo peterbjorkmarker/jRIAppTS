@@ -2,7 +2,9 @@ module RIAPP {
     export module MOD {
         export module db {
             //local variables for optimization
-            var ValidationError = binding.ValidationError, valueUtils = MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils,
+            var ValidationError = binding.ValidationError,
+                valueUtils = MOD.utils.valueUtils,
+                baseUtils = RIAPP.baseUtils,
                 utils: MOD.utils.Utils, HEAD_MARK_RX = /^<head:(\d{1,6})>/;
             import collMod = MOD.collection;
             RIAPP.global.addOnInitialize((s, args) => {
@@ -231,29 +233,30 @@ module RIAPP {
                 new (dbContext: DbContext): DbSet<Entity>;
             }
 
+            //don't submit these types of fields to the server
             function fn_isNotSubmittable(fld: collMod.IFieldInfo) {
-                return (fld.fieldType == collMod.FIELD_TYPE.ClientOnly || fld.fieldType == collMod.FIELD_TYPE.Navigation || fld.fieldType == collMod.FIELD_TYPE.Calculated);
+                return (fld.fieldType == collMod.FIELD_TYPE.ClientOnly || fld.fieldType == collMod.FIELD_TYPE.Navigation || fld.fieldType == collMod.FIELD_TYPE.Calculated || fld.fieldType == collMod.FIELD_TYPE.ServerCalculated);
             }
 
             function fn_traverseChanges(val: IValueChange, fn: (name: string, val: IValueChange) => void): void {
-              function _fn_traverseChanges(name: string, val: IValueChange, fn: (name: string, val: IValueChange) => void ) {
-                if (!!val.nested && val.nested.length > 0) {
-                    var prop: IValueChange, i: number, len = val.nested.length;
-                    for (i = 0; i < len; i += 1) {
-                        prop = val.nested[i];
-                        if (!!prop.nested && prop.nested.length > 0) {
-                            _fn_traverseChanges(name + '.' + prop.fieldName, prop, fn);
-                        }
-                        else {
-                            fn(name + '.' + prop.fieldName, prop);
+                function _fn_traverseChanges(name: string, val: IValueChange, fn: (name: string, val: IValueChange) => void) {
+                    if (!!val.nested && val.nested.length > 0) {
+                        var prop: IValueChange, i: number, len = val.nested.length;
+                        for (i = 0; i < len; i += 1) {
+                            prop = val.nested[i];
+                            if (!!prop.nested && prop.nested.length > 0) {
+                                _fn_traverseChanges(name + '.' + prop.fieldName, prop, fn);
+                            }
+                            else {
+                                fn(name + '.' + prop.fieldName, prop);
+                            }
                         }
                     }
+                    else {
+                        fn(name, val);
+                    }
                 }
-                else {
-                    fn(name, val);
-                }
-            }
-            _fn_traverseChanges(val.fieldName, val, fn);
+                _fn_traverseChanges(val.fieldName, val, fn);
             }
 
             export class DataCache extends RIAPP.BaseObject {
@@ -905,7 +908,7 @@ module RIAPP {
                     return true;
                 }
                 _fldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV, newV) {
-                    if (fieldInfo.fieldType != collMod.FIELD_TYPE.ClientOnly) {
+                    if (!(fieldInfo.fieldType == collMod.FIELD_TYPE.ClientOnly || fieldInfo.fieldType == collMod.FIELD_TYPE.ServerCalculated)) {
                         switch (this._changeType) {
                             case collMod.STATUS.NONE:
                                 this._changeType = collMod.STATUS.UPDATED;
@@ -936,7 +939,8 @@ module RIAPP {
                 }
                 _setFieldVal(fieldName: string, val):boolean {
                     var validation_error, error, dbSetName = this._dbSetName, dbSet = this._dbSet,
-                        ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val, fld = this.getFieldInfo(fieldName), res = false;
+                        ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val,
+                        fld = this.getFieldInfo(fieldName), res = false;
                     if (!fld)
                         throw new Error(baseUtils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
                     if (!this._isEditing && !this._isUpdating)

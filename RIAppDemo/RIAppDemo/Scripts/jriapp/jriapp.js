@@ -5519,6 +5519,7 @@ var RIAPP;
                 FIELD_TYPE[FIELD_TYPE["Navigation"] = 3] = "Navigation";
                 FIELD_TYPE[FIELD_TYPE["RowTimeStamp"] = 4] = "RowTimeStamp";
                 FIELD_TYPE[FIELD_TYPE["Object"] = 5] = "Object";
+                FIELD_TYPE[FIELD_TYPE["ServerCalculated"] = 6] = "ServerCalculated";
             })(collection.FIELD_TYPE || (collection.FIELD_TYPE = {}));
             var FIELD_TYPE = collection.FIELD_TYPE;
             (function (STATUS) {
@@ -8924,8 +8925,9 @@ var RIAPP;
             }
             ;
 
+            //don't submit these types of fields to the server
             function fn_isNotSubmittable(fld) {
-                return (fld.fieldType == 1 /* ClientOnly */ || fld.fieldType == 3 /* Navigation */ || fld.fieldType == 2 /* Calculated */);
+                return (fld.fieldType == 1 /* ClientOnly */ || fld.fieldType == 3 /* Navigation */ || fld.fieldType == 2 /* Calculated */ || fld.fieldType == 6 /* ServerCalculated */);
             }
 
             function fn_traverseChanges(val, fn) {
@@ -9706,7 +9708,7 @@ var RIAPP;
                     return true;
                 };
                 Entity.prototype._fldChanged = function (fieldName, fieldInfo, oldV, newV) {
-                    if (fieldInfo.fieldType != 1 /* ClientOnly */) {
+                    if (!(fieldInfo.fieldType == 1 /* ClientOnly */ || fieldInfo.fieldType == 6 /* ServerCalculated */)) {
                         switch (this._changeType) {
                             case 0 /* NONE */:
                                 this._changeType = 2 /* UPDATED */;

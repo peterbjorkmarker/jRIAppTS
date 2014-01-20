@@ -179,9 +179,33 @@ namespace RIAppDemo.BLL.DataServices
                 //and is not good from the security considerations
                 includeHierarchy = new string[] { "CustomerAddresses.Address" };
             }
-
+            var customers = this.DB.Customers as IQueryable<Customer>;
+            
+            //AddressCount does not exists in Database (we calculate it), so it is needed to sort it manually
+            var addressCountSortItem = this.CurrentQueryInfo.sortInfo.sortItems.FirstOrDefault((sortItem)=> sortItem.fieldName== "AddressCount");
+            if (addressCountSortItem != null){
+                this.CurrentQueryInfo.sortInfo.sortItems.Remove(addressCountSortItem);
+                if (addressCountSortItem.sortOrder == RIAPP.DataService.Types.SortOrder.ASC)
+                    customers = customers.OrderBy(c => c.CustomerAddresses.Count());
+                else
+                    customers = customers.OrderByDescending(c => c.CustomerAddresses.Count());
+            }
+            
+            //perform query
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.Customers, this.CurrentQueryInfo, ref totalCount).AsEnumerable();
+            var res = this.QueryHelper.PerformQuery(customers, this.CurrentQueryInfo, ref totalCount).ToList();
+
+            //if we preloaded customer addresses then update server side calculated field: AddressCount 
+            //(which i introduced for testing purposes)
+            if (includeNav == true)
+            {
+                res.ForEach((customer) =>
+                {
+                    customer.AddressCount = customer.CustomerAddresses.Count();
+                });
+            }
+
+            //return result
             return new QueryResult<Customer>(result: res, totalCount: totalCount, includeNavigations: includeHierarchy);
         }
 

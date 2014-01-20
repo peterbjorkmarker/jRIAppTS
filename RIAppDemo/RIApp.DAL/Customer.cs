@@ -5,6 +5,9 @@ using System.Text;
 
 namespace RIAppDemo.DAL
 {
+    /// <summary>
+    /// Complex type property, for testing complex types 
+    /// </summary>
     public class CustomerLvl1
     {
         protected internal Customer _owner;
@@ -61,6 +64,9 @@ namespace RIAppDemo.DAL
         }
     }
 
+    /// <summary>
+    /// Nested Complex type property, for testing complex types 
+    /// </summary>
     public class CustomerLvl2
     {
         private CustomerLvl1 _owner;
@@ -100,6 +106,9 @@ namespace RIAppDemo.DAL
         }
     }
 
+    /// <summary>
+    /// Extend a Customer class with new properties
+    /// </summary>
     public partial class Customer
     {
         private CustomerLvl1 _lvl1;
@@ -114,12 +123,24 @@ namespace RIAppDemo.DAL
             this._lvl1 = new CustomerLvl1(this);
         }
 
+        /// <summary>
+        /// This field is for testing complex type fields
+        /// </summary>
         public CustomerLvl1 ComplexProp
         {
             get
             {
                 return this._lvl1;
             }
+        }
+
+        /// <summary>
+        /// This field is for testing server side calculated fields
+        /// </summary>
+        public int? AddressCount
+        {
+            get;
+            set;
         }
     }
 }

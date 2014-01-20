@@ -1093,6 +1093,7 @@ declare module RIAPP {
                 Navigation = 3,
                 RowTimeStamp = 4,
                 Object = 5,
+                ServerCalculated = 6,
             }
             enum STATUS {
                 NONE = 0,

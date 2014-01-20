@@ -218,21 +218,28 @@ module RIAPP {
             }
         }
         _bindTemplateElements(templateEl: HTMLElement) {
-            var self = this, global = self.global, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR,
-                selectedElem = ArrayHelper.fromList(templateEl.querySelectorAll(selector)), lftm = new MOD.utils.LifeTimeScope(),
-                checks = global.utils.check;
-            if (templateEl.hasAttribute(global.consts.DATA_ATTR.DATA_BIND) || templateEl.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
+            var self = this, global = self.global,
+                selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR,
+                selectedElem = ArrayHelper.fromList(templateEl.querySelectorAll(selector)),
+                lftm = new MOD.utils.LifeTimeScope(),
+                checks = global.utils.check,
+                parser = global.parser,
+                DATA_FORM = global.consts.DATA_ATTR.DATA_FORM,
+                DATA_BIND = global.consts.DATA_ATTR.DATA_BIND,
+                DATA_VIEW = global.consts.DATA_ATTR.DATA_VIEW;
+
+            if (templateEl.hasAttribute(DATA_BIND) || templateEl.hasAttribute(DATA_VIEW)) {
                 selectedElem.push(templateEl);
             }
 
             //mark all dataforms for easier checking that the element is a dataform
             selectedElem.forEach(function (el) {
                 if (checks.isDataForm(el))
-                    el.setAttribute(global.consts.DATA_ATTR.DATA_FORM, 'yes');
+                    el.setAttribute(DATA_FORM, 'yes');
             });
 
             //select all dataforms inside the scope
-            var formSelector = ['*[', global.consts.DATA_ATTR.DATA_FORM, ']'].join(''),
+            var formSelector = ['*[', DATA_FORM, ']'].join(''),
                 forms = ArrayHelper.fromList(templateEl.querySelectorAll(formSelector));
 
             if (checks.isDataForm(templateEl)) {
@@ -241,8 +248,13 @@ module RIAPP {
             }
 
             selectedElem.forEach(function (el) {
-                var op: MOD.binding.IBindingOptions, j: number, len: number, binding: MOD.binding.Binding,
-                    bind_attr: string, temp_opts: any[], elView: MOD.baseElView.BaseElView;
+                var op: MOD.binding.IBindingOptions,
+                    binding: MOD.binding.Binding,
+                    bind_attr: string,
+                    temp_opts: any[],
+                    elView: MOD.baseElView.BaseElView,
+                    j: number, len: number;
+
                 //if element inside a dataform return
                 if (checks.isInNestedForm(templateEl, forms, el)) {
                    return;
@@ -255,15 +267,15 @@ module RIAPP {
                     (<MOD.dataform.DataFormElView>elView).form.isInsideTemplate = true;
                 }
 
-                if (el.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
-                    el.removeAttribute(global.consts.DATA_ATTR.DATA_VIEW);
+                if (el.hasAttribute(DATA_VIEW)) {
+                    el.removeAttribute(DATA_VIEW);
                 }
               
                 //then create databinding if element has data-bind attribute
-                bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);
+                bind_attr = el.getAttribute(DATA_BIND);
                 if (!!bind_attr) {
-                    el.removeAttribute(global.consts.DATA_ATTR.DATA_BIND);
-                    temp_opts = global.parser.parseOptions(bind_attr);
+                    el.removeAttribute(DATA_BIND);
+                    temp_opts = parser.parseOptions(bind_attr);
                     for (j = 0, len = temp_opts.length; j < len; j += 1) {
                         op = MOD.baseContent.getBindingOptions(self, temp_opts[j], elView, null);
                         binding = self.bind(op);
@@ -276,26 +288,37 @@ module RIAPP {
             return lftm;
         }
         _bindElements(scope: { querySelectorAll: (selectors: string) => NodeList; }, dctx, isDataFormBind: boolean, isInsideTemplate: boolean) {
-            var self = this, global = self.global, checks = global.utils.check;
+            var self = this, global = self.global,
+                checks = global.utils.check,
+                parser = global.parser,
+                DATA_FORM = global.consts.DATA_ATTR.DATA_FORM,
+                DATA_BIND = global.consts.DATA_ATTR.DATA_BIND,
+                DATA_VIEW = global.consts.DATA_ATTR.DATA_VIEW,
+                selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR;
+
             scope = scope || global.document;
-            //select all elements with binding attributes inside templates
-            var selectedElem: HTMLElement[] = ArrayHelper.fromList(scope.querySelectorAll(self._DATA_BIND_SELECTOR +', '+self._DATA_VIEW_SELECTOR));
+            //select all elements with binding attributes
+            var selectedElem: HTMLElement[] = ArrayHelper.fromList(scope.querySelectorAll(selector));
             var lftm = new MOD.utils.LifeTimeScope();
 
             if (!isDataFormBind) {
                 //mark all dataforms for easier checking that the element is a dataform
                 selectedElem.forEach(function (el) {
                     if (checks.isDataForm(el))
-                        el.setAttribute(global.consts.DATA_ATTR.DATA_FORM, 'yes');
+                        el.setAttribute(DATA_FORM, 'yes');
                 });
             }
 
             //select all dataforms inside the scope
-            var formSelector = ['*[', global.consts.DATA_ATTR.DATA_FORM, ']'].join(''),
+            var formSelector = ['*[', DATA_FORM, ']'].join(''),
                 forms = ArrayHelper.fromList(scope.querySelectorAll(formSelector));
 
             selectedElem.forEach(function (el) {
-                var bind_attr:string, temp_opts:any[], bind_op: MOD.binding.IBindingOptions, elView: MOD.baseElView.BaseElView;
+                var bind_attr: string,
+                    temp_opts: any[],
+                    bind_op: MOD.binding.IBindingOptions,
+                    elView: MOD.baseElView.BaseElView,
+                    i:number, len:number;
 
                 //return if the current element is inside a dataform
                 if (checks.isInNestedForm(scope, forms, el)) {
@@ -310,19 +333,19 @@ module RIAPP {
                 }
 
                 if (isInsideTemplate) {
-                    if (el.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
-                        el.removeAttribute(global.consts.DATA_ATTR.DATA_VIEW);
+                    if (el.hasAttribute(DATA_VIEW)) {
+                        el.removeAttribute(DATA_VIEW);
                     }
                 }
 
-                bind_attr = el.getAttribute(global.consts.DATA_ATTR.DATA_BIND);
+                bind_attr = el.getAttribute(DATA_BIND);
                 //if it has data-bind attribute then proceed to create binding
                 if (!!bind_attr) {
                     if (isInsideTemplate) {
-                        el.removeAttribute(global.consts.DATA_ATTR.DATA_BIND);
+                        el.removeAttribute(DATA_BIND);
                     }
-                    temp_opts = global.parser.parseOptions(bind_attr);
-                    for (var i = 0, len = temp_opts.length; i < len; i += 1) {
+                    temp_opts = parser.parseOptions(bind_attr);
+                    for (i = 0, len = temp_opts.length; i < len; i += 1) {
                         bind_op = MOD.baseContent.getBindingOptions(self, temp_opts[i], elView, dctx);
                         lftm.addObj(self.bind(bind_op));
                     }
@@ -332,15 +355,14 @@ module RIAPP {
         }
         //used as a factory to create Data Contents
         _getContent(contentType: MOD.baseContent.IContentType, options: MOD.baseContent.IContentOptions, parentEl: HTMLElement, dctx, isEditing: boolean) {
-            var content: MOD.baseContent.IContent;
             return new contentType(this, parentEl, options, dctx, isEditing);
         }
         //used to select contentType based on content options
-        _getContentType(options: MOD.baseContent.IContentOptions) {
+        _getContentType(options: MOD.baseContent.IContentOptions): MOD.baseContent.IContentType {
             return this.contentFactory.getContentType(options);
         }
         _getElViewType(name: string): MOD.baseElView.IViewType {
-            var name2 = 'elvws.' + name;
+            var name2 = 'elvws.' + name, global = this.global;
             var res = global._getObject(this, name2);
             if (!res) {
                 res = global._getObject(global, name2);
@@ -351,7 +373,7 @@ module RIAPP {
             return this._exports;
         }
         registerElView(name: string, type: MOD.baseElView.IViewType) {
-            var name2 = 'elvws.' + name;
+            var name2 = 'elvws.' + name, global = this.global;
             if (!global._getObject(this, name2)) {
                 global._registerObject(this, name2, type);
             }
@@ -404,7 +426,7 @@ module RIAPP {
             return res;
         }
         //registers instances of objects, so they can be retrieved later anywhere in the application's code
-        //very similar to a dependency injection container - you can later obtain it with getObject function
+        //very similar to a dependency injection container - you can later obtain the registerd object with the getObject function
         registerObject(name: string, obj) {
             var self = this, name2 = 'objects.' + name;
             if (obj instanceof BaseObject) {

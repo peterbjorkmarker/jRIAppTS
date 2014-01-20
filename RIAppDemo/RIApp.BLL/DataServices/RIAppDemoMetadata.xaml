@@ -37,6 +37,7 @@
                                 </data:Field>
                             </data:Field.nested>
                         </data:Field>
+                        <data:Field fieldName="AddressCount" dataType="Integer" fieldType="ServerCalculated"  />
                     </data:DbSetInfo.fieldInfos>
                 </data:DbSetInfo>
                 <data:DbSetInfo dbSetName="CustomerAddress" insertDataMethod="Insert{0}" updateDataMethod="Update{0}" deleteDataMethod="Delete{0}" enablePaging="False" EntityType="{x:Type dal:CustomerAddress}">
