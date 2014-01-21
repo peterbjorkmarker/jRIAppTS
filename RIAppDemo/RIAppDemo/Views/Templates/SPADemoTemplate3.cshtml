@@ -82,7 +82,7 @@
 @*used for managing of customer's addresses in many to many relationship*@
 <div id="addAddressTemplate" data-role="template" style="width: 95%; margin:4px;">
     <div style="margin-bottom: 4px;">
-        <span>Customer:</span>&nbsp;<span style="font-weight: bold; color: Blue;" data-bind="{this.value,to=customer.Name}"></span>
+        <span>Customer:</span>&nbsp;<span style="font-weight: bold; color: Blue;" data-bind="{this.value,to=customer.ComplexProp.Name}"></span>
     </div>
     <!--for switching views between linkAdrTemplate and newAdrTemplate-->
      <div id="addrDynaContent" data-bind="{this.templateID,to=uiViewVM.viewName}{this.dataContext}" data-view="name=dynacontent"></div>
