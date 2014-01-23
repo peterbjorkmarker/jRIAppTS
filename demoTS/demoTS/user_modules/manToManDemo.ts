@@ -734,6 +734,21 @@ module RIAPP
             alert(args.error.message);
         });
 
+        RIAPP.global.addOnUnResolvedBinding((s, args) => {
+            var msg = "unresolved databound property for";
+            if (args.bindTo == RIAPP.BindTo.Source) {
+                msg += " Source: "
+            }
+            else {
+                msg += " Target: "
+            }
+            msg += "'" + args.root + "'";
+            msg += ", property: '" + args.propName + "'";
+            msg += ", binding path: '" + args.path + "'";
+            
+            console.log(msg);
+        });
+
         RIAPP.global.addOnLoad(function (sender, a) {
             var global = sender;
             //initialize images folder path

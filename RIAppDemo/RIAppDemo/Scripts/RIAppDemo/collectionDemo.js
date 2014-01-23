@@ -208,6 +208,20 @@ var RIAPP;
             alert(args.error.message);
         });
 
+        RIAPP.global.addOnUnResolvedBinding(function (s, args) {
+            var msg = "unresolved databound property for";
+            if (args.bindTo == 0 /* Source */) {
+                msg += " Source: ";
+            } else {
+                msg += " Target: ";
+            }
+            msg += "'" + args.root + "'";
+            msg += ", property: '" + args.propName + "'";
+            msg += ", binding path: '" + args.path + "'";
+
+            console.log(msg);
+        });
+
         function initModule(app) {
             app.registerConverter('radioValueConverter', new RadioValueConverter());
             return COLLDEMO;

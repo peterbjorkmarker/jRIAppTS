@@ -43,6 +43,10 @@ In my real world applications i use ASP.NET MVC 4 bundling feature. For LOB apps
 You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
+<p>2014-01-23 Added the <b>ability to test databindings</b> on the page. For this purpose the global object has a new event handler adding method addOnUnResolvedBinding.
+It registers an event handler which will be triggered when the path is not resolved. See the UserGuide.pdf for more info.<br/>
+Updated the docs and the demo. 
+</p>
 <p>2014-01-21 Documentation update.</p>
 <p>2014-01-20 Added ServerCalculated field type.</p>
 <p>2014-01-18 Docs update</p>

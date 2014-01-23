@@ -225,6 +225,27 @@ declare module RIAPP {
         promise(): IPromise<T>;
         state(): string;
     }
+    enum BindTo {
+        Source = 0,
+        Target = 1,
+    }
+    interface IGroupInfo {
+        fn_loader?: () => IPromise<string>;
+        url?: string;
+        names: string[];
+        app?: RIAPP.Application;
+        promise?: IPromise<string>;
+    }
+    interface ITemplateLoaderInfo {
+        fn_loader: () => IPromise<string>;
+        groupName?: string;
+    }
+    interface IUnResolvedBindingArgs {
+        bindTo: BindTo;
+        root: any;
+        path: string;
+        propName: string;
+    }
     class Global extends RIAPP.BaseObject implements IExports {
         static vesion: string;
         static _TEMPLATES_SELECTOR: string;
@@ -246,12 +267,12 @@ declare module RIAPP {
         private _moduleNames;
         private _exports;
         constructor(window: Window, jQuery: JQueryStatic);
-        public _initialize(): void;
         private _onCreate();
+        private _processTemplateSection(templateSection, app);
+        private _registerTemplateLoaderCore(name, loader);
+        private _getTemplateLoaderCore(name);
         public _getEventNames(): string[];
-        public addOnLoad(fn: (sender: Global, args: any) => void, namespace?: string): void;
-        public addOnUnLoad(fn: (sender: Global, args: any) => void, namespace?: string): void;
-        public addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string): void;
+        public _initialize(): void;
         public _addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string, prepend?: boolean): void;
         public _trackSelectable(selectable: ISelectable): void;
         public _untrackSelectable(selectable: ISelectable): void;
@@ -259,9 +280,6 @@ declare module RIAPP {
         public _unregisterApp(app: RIAPP.Application): void;
         public _destroyApps(): void;
         public _throwDummy(origErr: any): void;
-        public getExports(): {
-            [name: string]: any;
-        };
         public _checkIsDummy(error: any): boolean;
         public _registerObject(root: IExports, name: string, obj: any): void;
         public _getObject(root: IExports, name: string): any;
@@ -269,30 +287,22 @@ declare module RIAPP {
         public _processTemplateSections(root: {
             querySelectorAll: (selectors: string) => NodeList;
         }): void;
-        private _processTemplateSection(templateSection, app);
-        private _registerTemplateLoaderCore(name, loader);
-        private _getTemplateLoaderCore(name);
         public _loadTemplatesAsync(fn_loader: () => IPromise<string>, app: RIAPP.Application): IPromise<any>;
-        public _registerTemplateLoader(name: any, loader: {
-            fn_loader: () => IPromise<string>;
-            groupName?: string;
-        }): void;
-        public _getTemplateLoader(name: string): () => IPromise<any>;
-        public _registerTemplateGroup(groupName: string, group: {
-            fn_loader?: () => IPromise<string>;
-            url?: string;
-            names: string[];
-            app?: RIAPP.Application;
-        }): void;
-        public _getTemplateGroup(name: string): {
-            fn_loader?: () => IPromise<string>;
-            url?: string;
-            names: string[];
-            app?: RIAPP.Application;
-            promise?: IPromise<string>;
-        };
+        public _registerTemplateLoader(name: any, loader: ITemplateLoaderInfo): void;
+        public _getTemplateLoader(name: string): () => IPromise<string>;
+        public _registerTemplateGroup(groupName: string, group: IGroupInfo): void;
+        public _getTemplateGroup(name: string): IGroupInfo;
         public _waitForNotLoading(callback: any, callbackArgs: any): void;
         public _getConverter(name: string): RIAPP.MOD.converter.IConverter;
+        public _onUnResolvedBinding(bindTo: BindTo, root: any, path: string, propName: string): void;
+        public addOnLoad(fn: (sender: Global, args: any) => void, namespace?: string): void;
+        public addOnUnLoad(fn: (sender: Global, args: any) => void, namespace?: string): void;
+        public addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string): void;
+        public addOnUnResolvedBinding(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string): void;
+        public removeOnUnResolvedBinding(namespace?: string): void;
+        public getExports(): {
+            [name: string]: any;
+        };
         public reThrow(ex: any, isHandled: any): void;
         public onModuleLoaded(name: string, module_obj: any): void;
         public isModuleLoaded(name: string): boolean;
@@ -305,6 +315,7 @@ declare module RIAPP {
         public getImagePath(imageName: string): string;
         public loadTemplates(url: string): void;
         public toString(): string;
+        public moduleNames : any[];
         public parser : RIAPP.MOD.parser.Parser;
         public isLoading : boolean;
         public $ : JQueryStatic;
@@ -315,7 +326,6 @@ declare module RIAPP {
         public consts : typeof RIAPP.MOD.consts;
         public utils : RIAPP.MOD.utils.Utils;
         public UC : any;
-        public moduleNames : any[];
     }
 }
 declare module RIAPP {
@@ -3379,7 +3389,7 @@ declare module RIAPP {
         public loadTemplates(url: any): void;
         public loadTemplatesAsync(fn_loader: () => RIAPP.IPromise<string>): void;
         public registerTemplateLoader(name: string, fn_loader: () => RIAPP.IPromise<string>): void;
-        public getTemplateLoader(name: any): () => RIAPP.IPromise<any>;
+        public getTemplateLoader(name: any): () => RIAPP.IPromise<string>;
         public registerTemplateGroup(name: string, group: {
             fn_loader?: () => RIAPP.IPromise<string>;
             url?: string;

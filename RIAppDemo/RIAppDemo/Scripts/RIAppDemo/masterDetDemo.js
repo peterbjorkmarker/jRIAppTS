@@ -1060,6 +1060,20 @@ var RIAPP;
             alert(args.error.message);
         });
 
+        RIAPP.global.addOnUnResolvedBinding(function (s, args) {
+            var msg = "unresolved databound property for";
+            if (args.bindTo == 0 /* Source */) {
+                msg += " Source: ";
+            } else {
+                msg += " Target: ";
+            }
+            msg += "'" + args.root + "'";
+            msg += ", property: '" + args.propName + "'";
+            msg += ", binding path: '" + args.path + "'";
+
+            console.log(msg);
+        });
+
         //create and start application here
         RIAPP.global.addOnLoad(function (sender, a) {
             var global = sender;

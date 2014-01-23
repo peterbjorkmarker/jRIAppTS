@@ -38,8 +38,32 @@ module RIAPP {
         state(): string;
     }
 
+    export enum BindTo {
+        Source= 0, Target= 1
+    }
+
+    export interface IGroupInfo {
+        fn_loader?: () => IPromise<string>;
+        url?: string;
+        names: string[];
+        app?: Application;
+        promise?: IPromise<string>;
+    }
+
+    export interface ITemplateLoaderInfo {
+        fn_loader: () => IPromise<string>;
+        groupName?: string;
+    }
+
+    export interface IUnResolvedBindingArgs {
+        bindTo: BindTo;
+        root: any;
+        path: string;
+        propName: string;
+    }
+
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.0.0.1';
+        public static vesion = '2.2.1.0';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;
@@ -59,7 +83,7 @@ module RIAPP {
         //all loaded modules
         private _moduleNames: string[];
         private _exports: { [name: string]: any; };
-
+        
         constructor(window: Window, jQuery: JQueryStatic) {
             super();
             if (!!RIAPP.global)
@@ -81,31 +105,6 @@ module RIAPP {
             this._isReady = false;
             this._isInitialized = false;
             this._onCreate();
-        }
-        _initialize() {
-            if (this._isInitialized)
-                return;
-            var self = this, isOK: boolean, name: string;
-            name = 'utils'; isOK = this.isModuleLoaded(name);
-            if (isOK)
-                self._utils = new MOD.utils.Utils();
-            name = 'parser'; isOK = this.isModuleLoaded(name);
-            if (isOK)
-                self._parser = new MOD.parser.Parser();
-            name = 'defaults'; isOK = this.isModuleLoaded(name);
-            if (isOK) {
-                self._defaults = new MOD.defaults.Defaults();
-            }
-            name = 'datepicker'; isOK = this.isModuleLoaded(name);
-            if (isOK && !!self._defaults) {
-                self._defaults.datepicker = new MOD.datepicker.Datepicker();
-            }
-            if (!isOK)
-                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
-
-            this._isInitialized = true;
-            self.raiseEvent('initialize', {});
-            setTimeout(function () { self.removeHandler('initialize', null); }, 0);
         }
         private _onCreate() {
             var self = this;
@@ -146,22 +145,61 @@ module RIAPP {
                 return false;
             }
         }
+        private _processTemplateSection(templateSection: { querySelectorAll: (selectors: string) => NodeList; }, app: Application) {
+            var self = this;
+            var templates: HTMLElement[] = ArrayHelper.fromList(templateSection.querySelectorAll(Global._TEMPLATE_SELECTOR));
+            templates.forEach(function (el) {
+                var tmpDiv = self.document.createElement('div'), html: string,
+                    name = el.getAttribute('id'), deferred = self.utils.createDeferred();
+                el.removeAttribute('id');
+                tmpDiv.appendChild(el);
+                html = tmpDiv.innerHTML;
+                deferred.resolve(html);
+                var fn_loader = function () {
+                    return deferred.promise();
+                };
+                if (!!app) {
+                    name = app.appName + '.' + name;
+                }
+                self._registerTemplateLoader(name, {
+                    fn_loader: fn_loader
+                });
+            });
+        }
+        private _registerTemplateLoaderCore(name: string, loader: ITemplateLoaderInfo) {
+            return RIAPP.baseUtils.setValue(this._templateLoaders, name, loader, false);
+        }
+        private _getTemplateLoaderCore(name: string): ITemplateLoaderInfo {
+            return RIAPP.baseUtils.getValue(this._templateLoaders, name);
+        }
         _getEventNames() {
             var base_events = super._getEventNames();
-            return ['load', 'unload','initialize'].concat(base_events);
+            return ['load', 'unload','initialize', 'unresolvedBind'].concat(base_events);
         }
-        addOnLoad(fn: (sender: Global, args: any) => void , namespace?: string) {
-            this._addHandler('load', fn, namespace, false);
-        }
-        addOnUnLoad(fn: (sender: Global, args: any) => void , namespace?: string) {
-            this._addHandler('unload', fn, namespace, false);
-        }
-        addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string) {
-            if (this._isInitialized) {
-                fn.apply(this, [this, {}]);
+        _initialize() {
+            if (this._isInitialized)
+                return;
+            var self = this, isOK: boolean, name: string;
+            name = 'utils'; isOK = this.isModuleLoaded(name);
+            if (isOK)
+                self._utils = new MOD.utils.Utils();
+            name = 'parser'; isOK = this.isModuleLoaded(name);
+            if (isOK)
+                self._parser = new MOD.parser.Parser();
+            name = 'defaults'; isOK = this.isModuleLoaded(name);
+            if (isOK) {
+                self._defaults = new MOD.defaults.Defaults();
             }
-            else
-                this._addHandler('initialize', fn, namespace, false);
+            name = 'datepicker'; isOK = this.isModuleLoaded(name);
+            if (isOK && !!self._defaults) {
+                self._defaults.datepicker = new MOD.datepicker.Datepicker();
+            }
+            if (!isOK)
+                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
+
+            this._isInitialized = true;
+            self.raiseEvent('initialize', {});
+            setTimeout(function () { self.removeHandler('initialize', null); }, 0);
         }
         _addHandler(name: string, fn: (sender, args) => void , namespace?: string, prepend?: boolean) {
             var self = this;
@@ -210,9 +248,6 @@ module RIAPP {
             }
             throw origErr;
         }
-        getExports() {
-            return this._exports;
-        }
         _checkIsDummy(error) {
             return !!error.isDummy;
         }
@@ -232,33 +267,6 @@ module RIAPP {
                 self._processTemplateSection(el, null);
                 self.utils.removeNode(el);
             });
-        }
-        private _processTemplateSection(templateSection: { querySelectorAll: (selectors: string) => NodeList; }, app: Application) {
-            var self = this;
-            var templates:HTMLElement[] = ArrayHelper.fromList(templateSection.querySelectorAll(Global._TEMPLATE_SELECTOR));
-            templates.forEach(function (el) {
-                var tmpDiv = self.document.createElement('div'), html: string,
-                    name = el.getAttribute('id'), deferred = self.utils.createDeferred();
-                el.removeAttribute('id');
-                tmpDiv.appendChild(el);
-                html = tmpDiv.innerHTML;
-                deferred.resolve(html);
-                var fn_loader = function () {
-                    return deferred.promise();
-                };
-                if (!!app) {
-                    name = app.appName + '.' + name;
-                }
-                self._registerTemplateLoader(name, {
-                    fn_loader: fn_loader
-                });
-            });
-        }
-        private _registerTemplateLoaderCore(name: string, loader: { fn_loader: () => IPromise<string>; groupName?: string; }) {
-            return RIAPP.baseUtils.setValue(this._templateLoaders, name, loader, false);
-        }
-        private _getTemplateLoaderCore(name: string): { fn_loader: () => IPromise<string>; groupName?: string; } {
-            return RIAPP.baseUtils.getValue(this._templateLoaders, name);
         }
         _loadTemplatesAsync(fn_loader: () => IPromise<string>, app: Application) {
             var self = this, promise = fn_loader(), old = self.isLoading;
@@ -299,7 +307,7 @@ module RIAPP {
         /*
          fn_loader must load template and return promise which resolves with loaded HTML string
          */
-        _registerTemplateLoader(name, loader: { fn_loader: () => IPromise<string>; groupName?: string; }) {
+        _registerTemplateLoader(name, loader: ITemplateLoaderInfo) {
             var self = this;
             loader = self.utils.extend(false, {
                 fn_loader: null,
@@ -319,8 +327,8 @@ module RIAPP {
             }
             return self._registerTemplateLoaderCore(name, loader);
         }
-        _getTemplateLoader(name: string) {
-            var self = this, loader: { fn_loader: () => IPromise<string>; groupName?: string; } = self._getTemplateLoaderCore(name);
+        _getTemplateLoader(name: string): () => IPromise<string> {
+            var self = this, loader = self._getTemplateLoaderCore(name);
             if (!loader)
                 return null;
             if (!loader.fn_loader && !!loader.groupName) {
@@ -377,20 +385,8 @@ module RIAPP {
             else
                 return loader.fn_loader;
         }
-        _registerTemplateGroup(groupName: string, group: {
-            fn_loader?: () => IPromise<string>;
-            url?: string;
-            names: string[];
-            app?: Application;
-        }) {
-            var self = this;
-            var group2:{
-                fn_loader?: () =>IPromise<string>;
-                url?: string;
-                names: string[];
-                app?: Application;
-                promise?: IPromise<string>;
-            } = self.utils.extend(false, {
+        _registerTemplateGroup(groupName: string, group: IGroupInfo) {
+            var self = this, group2: IGroupInfo = self.utils.extend(false, {
                 fn_loader: null,
                 url: null,
                 names: null,
@@ -418,13 +414,7 @@ module RIAPP {
                 });
             });
         }
-        _getTemplateGroup(name: string): {
-                fn_loader?: () => IPromise<string>;
-                url?: string;
-                names: string[];
-                app?: Application;
-                promise?: IPromise<string>;
-        } {
+        _getTemplateGroup(name: string): IGroupInfo {
             return RIAPP.baseUtils.getValue(this._templateGroups, name);
         }
         _waitForNotLoading(callback, callbackArgs) {
@@ -444,6 +434,32 @@ module RIAPP {
             if (!res)
                 throw new Error(this.utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
             return res;
+        }
+        _onUnResolvedBinding(bindTo: BindTo, root: any, path: string, propName: string) {
+            var args: IUnResolvedBindingArgs = { bindTo: bindTo, root: root, path: path, propName: propName };
+            this.raiseEvent('unresolvedBind', args);
+        }
+        addOnLoad(fn: (sender: Global, args: any) => void, namespace?: string) {
+            this._addHandler('load', fn, namespace, false);
+        }
+        addOnUnLoad(fn: (sender: Global, args: any) => void, namespace?: string) {
+            this._addHandler('unload', fn, namespace, false);
+        }
+        addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string) {
+            if (this._isInitialized) {
+                fn.apply(this, [this, {}]);
+            }
+            else
+                this._addHandler('initialize', fn, namespace, false);
+        }
+        addOnUnResolvedBinding(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string) {
+            this.addHandler('unresolvedBind', fn, namespace);
+        }
+        removeOnUnResolvedBinding(namespace?: string) {
+            this.removeHandler('unresolvedBind', namespace);
+        }
+        getExports() {
+            return this._exports;
         }
         reThrow(ex, isHandled) {
             if (!!isHandled)
@@ -523,6 +539,7 @@ module RIAPP {
         toString() {
             return 'Global';
         }
+        get moduleNames() { return ArrayHelper.clone(this._moduleNames); }
         get parser() { return this._parser; }
         get isLoading() {
             return this._promises.length > 0;
@@ -557,7 +574,6 @@ module RIAPP {
         get UC() {
             return this._userCode;
         }
-        get moduleNames() { return ArrayHelper.clone(this._moduleNames); }
     }
 
     RIAPP.global = new Global(window, jQuery);

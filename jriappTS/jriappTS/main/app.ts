@@ -489,7 +489,7 @@ module RIAPP {
                 fn_loader: fn_loader
             });
         }
-        getTemplateLoader(name) {
+        getTemplateLoader(name): () => IPromise<string> {
             var res = global._getTemplateLoader(this.appName + '.' + name);
             if (!res) {
                 res = global._getTemplateLoader(name);
@@ -501,12 +501,7 @@ module RIAPP {
             url?: string;
             names: string[];
         }) {
-            var group2: {
-                fn_loader?: () => IPromise<string>;
-                url?: string;
-                names: string[];
-                app: Application;
-            } = global.utils.extend(false, {
+            var group2: IGroupInfo = global.utils.extend(false, {
                 fn_loader: null,
                 url: null,
                 names: null,
