@@ -19,6 +19,7 @@ var RIAPP;
         ERR_MODULE_NOT_REGISTERED: 'Module: {0} is not registered',
         ERR_MODULE_ALREDY_REGISTERED: 'Module: {0} is already registered',
         ERR_PROP_NAME_EMPTY: 'Empty property name parameter',
+        ERR_PROP_NAME_INVALID: 'The object does not have a property with a name: "{0}"',
         ERR_GLOBAL_SINGLTON: 'There must be only one instance of Global object',
         ERR_OBJ_ALREADY_REGISTERED: 'Object with the name: {0} is already registered in the type system',
         ERR_TEMPLATE_ALREADY_REGISTERED: 'TEMPLATE with the name: {0} is already registered',
@@ -157,11 +158,47 @@ var RIAPP;
     var baseUtils = (function () {
         function baseUtils() {
         }
+        baseUtils.isNull = function (a) {
+            return a === null;
+        };
+        baseUtils.isUndefined = function (a) {
+            return a === undefined;
+        };
+        baseUtils.isNt = function (a) {
+            return (a === null || a === undefined);
+        };
+        baseUtils.isString = function (a) {
+            if (baseUtils.isNt(a))
+                return false;
+            var rx = /string/i;
+            return (typeof (a) === 'string') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
+        };
         baseUtils.isFunc = function (a) {
-            if (!a)
+            if (baseUtils.isNt(a))
                 return false;
             var rx = /Function/;
             return (typeof (a) === 'function') ? rx.test(a.constructor.toString()) : false;
+        };
+        baseUtils.isBoolean = function (a) {
+            if (baseUtils.isNt(a))
+                return false;
+            var rx = /boolean/i;
+            return (typeof (a) === 'boolean') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
+        };
+        baseUtils.isDate = function (a) {
+            if (baseUtils.isNt(a))
+                return false;
+            var rx = /date/i;
+            return (typeof (a) === 'date') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
+        };
+        baseUtils.isNumber = function (a) {
+            if (baseUtils.isNt(a))
+                return false;
+            var rx = /Number/;
+            return (typeof (a) === 'number') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
+        };
+        baseUtils.isNumeric = function (obj) {
+            return baseUtils.isNumber(obj) || (baseUtils.isString(obj) && !isNaN(Number(obj)));
         };
         baseUtils.endsWith = function (str, suffix) {
             return (str.substr(str.length - suffix.length) === suffix);
@@ -191,11 +228,26 @@ var RIAPP;
                 return false;
             return Array.isArray(o);
         };
+        baseUtils.hasProp = function (obj, prop) {
+            if (!obj)
+                return false;
+            var res = obj.hasOwnProperty(prop);
+            if (res)
+                return true;
+            else {
+                if (Object === obj)
+                    return false;
+                else {
+                    var pr = Object.getPrototypeOf(obj);
+                    return baseUtils.hasProp(pr, prop);
+                }
+            }
+        };
 
-        /**
+        /*
         *    Usage:     format('test {0}={1}', 'x', 100);
         *    result:    test x=100
-        **/
+        */
         baseUtils.format = function (format_str) {
             var args = [];
             for (var _i = 0; _i < (arguments.length - 1); _i++) {
@@ -299,14 +351,16 @@ var RIAPP;
 
         //the object that directly has this property (last object in chain)
         baseUtils.resolveOwner = function (obj, path) {
-            var parts = path.split('.');
-            if (parts.length == 1)
+            var parts = path.split('.'), i, res, len = parts.length;
+            if (len == 1)
                 return obj;
-            var res = obj;
-            for (var i = 0; i < parts.length - 1; i += 1) {
-                if (!res[parts[i]])
-                    return null;
+            res = obj;
+            for (i = 0; i < len - 1; i += 1) {
                 res = res[parts[i]];
+                if (res === undefined)
+                    return undefined;
+                if (res === null)
+                    return null;
             }
             return res;
         };
@@ -416,13 +470,14 @@ var RIAPP;
             if (ev === null)
                 return;
             if (ev === undefined) {
-                throw new Error("Object's constructor was not called");
+                throw new Error("Object instance is invalid. The constructor was not called.");
             }
 
             if (!!name) {
-                //property changed
+                //if property changed
                 if (name != '0*' && RIAPP.baseUtils.startsWith(name, '0')) {
-                    this._raiseEvent('0*', data); //who subscribed for all property changes
+                    //notify those who subscribed for all property changes
+                    this._raiseEvent('0*', data);
                 }
                 if (!ev[name])
                     return;
@@ -447,16 +502,24 @@ var RIAPP;
             if (this._getEventNames().indexOf(name) === -1)
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
         };
+        BaseObject.prototype._isHasProp = function (prop) {
+            return baseUtils.hasProp(this, prop);
+        };
         BaseObject.prototype.raisePropertyChanged = function (name) {
             var data = { property: name };
-            var parts = name.split('.'), propName = parts[parts.length - 1];
+            var parts = name.split('.'), lastPropName = parts[parts.length - 1];
             if (parts.length > 1) {
                 var obj = baseUtils.resolveOwner(this, name);
+                if (baseUtils.isUndefined(obj))
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, name));
                 if (obj instanceof BaseObject) {
-                    obj._raiseEvent('0' + propName, data);
+                    obj._raiseEvent('0' + lastPropName, data);
                 }
-            } else
-                this._raiseEvent('0' + propName, data);
+            } else {
+                if (!baseUtils.hasProp(this, lastPropName))
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, lastPropName));
+                this._raiseEvent('0' + lastPropName, data);
+            }
         };
         BaseObject.prototype.addHandler = function (name, fn, namespace) {
             this._checkEventName(name);
@@ -490,16 +553,22 @@ var RIAPP;
             this._raiseEvent(name, args);
         };
 
-        //to subscribe for the changes on all properties, pass in prop parameter asterisk: '*'
+        //to subscribe for the changes on all properties, pass in the prop parameter: '*'
         BaseObject.prototype.addOnPropertyChange = function (prop, fn, namespace) {
             if (!prop)
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);
+            if (prop != '*' && !this._isHasProp(prop)) {
+                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
+            }
             prop = '0' + prop;
             this._addHandler(prop, fn, namespace, false);
         };
         BaseObject.prototype.removeOnPropertyChange = function (prop, namespace) {
-            if (!!prop)
+            if (!!prop) {
+                if (prop != '*' && !this._isHasProp(prop))
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
                 prop = '0' + prop;
+            }
             this._removeHandler(prop, namespace);
         };
         BaseObject.prototype.destroy = function () {
@@ -1216,48 +1285,11 @@ var RIAPP;
             var Checks = (function () {
                 function Checks() {
                 }
-                Checks.isNull = function (a) {
-                    return a === null;
-                };
-                Checks.isUndefined = function (a) {
-                    return a === undefined;
-                };
-
-                //checking for null type
-                Checks.isNt = function (a) {
-                    return (a === null || a === undefined);
-                };
-
-                Checks.isString = function (a) {
-                    if (Checks.isNt(a))
-                        return false;
-                    var rx = /string/i;
-                    return (typeof (a) === 'string') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
-                };
-
-                Checks.isBoolean = function (a) {
-                    if (Checks.isNt(a))
-                        return false;
-                    var rx = /boolean/i;
-                    return (typeof (a) === 'boolean') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
-                };
-                Checks.isDate = function (a) {
-                    if (Checks.isNt(a))
-                        return false;
-                    var rx = /date/i;
-                    return (typeof (a) === 'date') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
-                };
                 Checks.isHTML = function (a) {
                     if (Checks.isNt(a))
                         return false;
                     var rx = /html/i;
                     return (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
-                };
-                Checks.isNumber = function (a) {
-                    if (Checks.isNt(a))
-                        return false;
-                    var rx = /Number/;
-                    return (typeof (a) === 'number') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
                 };
                 Checks.isObject = function (a) {
                     if (Checks.isNt(a))
@@ -1276,9 +1308,6 @@ var RIAPP;
                         return false;
                     var rx = /regexp/i;
                     return (typeof (a) === 'function') ? rx.test(a.constructor.toString()) : false;
-                };
-                Checks.isNumeric = function (obj) {
-                    return Checks.isNumber(obj) || (Checks.isString(obj) && !isNaN(Number(obj)));
                 };
                 Checks.isBoolString = function (a) {
                     if (Checks.isNt(a))
@@ -1354,9 +1383,17 @@ var RIAPP;
 
                     return false;
                 };
-                Checks.isFunction = base_utils.isFunc;
+                Checks.isNull = base_utils.isNull;
+                Checks.isUndefined = base_utils.isUndefined;
 
+                Checks.isNt = base_utils.isNt;
+                Checks.isFunction = base_utils.isFunc;
+                Checks.isString = base_utils.isString;
                 Checks.isArray = base_utils.isArray;
+                Checks.isBoolean = base_utils.isBoolean;
+                Checks.isDate = base_utils.isDate;
+                Checks.isNumber = base_utils.isNumber;
+                Checks.isNumeric = base_utils.isNumeric;
                 return Checks;
             })();
             utils.Checks = Checks;
@@ -2146,19 +2183,7 @@ var RIAPP;
                     }
                 };
                 Utils.prototype.hasProp = function (obj, prop) {
-                    if (!obj)
-                        return false;
-                    var res = obj.hasOwnProperty(prop);
-                    if (res)
-                        return true;
-                    else {
-                        if (Object === obj)
-                            return false;
-                        else {
-                            var pr = Object.getPrototypeOf(obj);
-                            return this.hasProp(pr, prop);
-                        }
-                    }
+                    return base_utils.hasProp(obj, prop);
                 };
                 Utils.prototype.createDeferred = function () {
                     return RIAPP.global.$.Deferred();
@@ -3421,6 +3446,9 @@ var RIAPP;
                 function InputElView(app, el, options) {
                     _super.call(this, app, el, options);
                 }
+                InputElView.prototype.toString = function () {
+                    return 'InputElView';
+                };
                 Object.defineProperty(InputElView.prototype, "isEnabled", {
                     get: function () {
                         return !this.el.disabled;
@@ -3586,18 +3614,24 @@ var RIAPP;
                 }
                 TemplateElView.prototype.templateLoaded = function (template) {
                     var self = this, p = self._commandParam;
-                    self._template = template;
-                    self._template.isDisabled = !self._isEnabled;
-                    self._commandParam = { template: template, isLoaded: true };
-                    self.invokeCommand();
-                    self._commandParam = p;
-                    this.raisePropertyChanged('template');
+                    try  {
+                        self._template = template;
+                        self._template.isDisabled = !self._isEnabled;
+                        self._commandParam = { template: template, isLoaded: true };
+                        self.invokeCommand();
+                        self._commandParam = p;
+                        this.raisePropertyChanged('template');
+                    } catch (ex) {
+                        this._onError(ex, this);
+                    }
                 };
                 TemplateElView.prototype.templateUnloading = function (template) {
                     var self = this, p = self._commandParam;
                     try  {
                         self._commandParam = { template: template, isLoaded: false };
                         self.invokeCommand();
+                    } catch (ex) {
+                        this._onError(ex, this);
                     } finally {
                         self._commandParam = p;
                         self._template = null;
@@ -3619,6 +3653,13 @@ var RIAPP;
                             }
                             this.raisePropertyChanged('isEnabled');
                         }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(TemplateElView.prototype, "template", {
+                    get: function () {
+                        return this._template;
                     },
                     enumerable: true,
                     configurable: true
@@ -3730,10 +3771,14 @@ var RIAPP;
                     this._template = null;
                 }
                 DynaContentElView.prototype._templateChanged = function () {
-                    this.raisePropertyChanged('templateID');
-                    if (!this._template)
+                    if (!this._template) {
+                        this.raisePropertyChanged('templateID');
+                        this.raisePropertyChanged('template');
                         return;
+                    }
                     this.$el.empty().append(this._template.el);
+                    this.raisePropertyChanged('templateID');
+                    this.raisePropertyChanged('template');
                 };
                 DynaContentElView.prototype.updateTemplate = function (name) {
                     var self = this;
@@ -3803,8 +3848,10 @@ var RIAPP;
                     set: function (v) {
                         if (this._dataContext !== v) {
                             this._dataContext = v;
-                            if (!!this._template)
+                            if (!!this._template) {
                                 this._template.dataContext = this._dataContext;
+                            }
+                            this.raisePropertyChanged('dataContext');
                         }
                     },
                     enumerable: true,
@@ -4022,7 +4069,7 @@ var RIAPP;
                     _super.apply(this, arguments);
                 }
                 HiddenElView.prototype.toString = function () {
-                    return 'EditableElView';
+                    return 'HiddenElView';
                 };
                 return HiddenElView;
             })(InputElView);
@@ -4456,7 +4503,7 @@ var RIAPP;
                     _super.prototype.destroy.call(this);
                 };
                 AnchorElView.prototype.toString = function () {
-                    return 'AncorButtonElView';
+                    return 'AnchorElView';
                 };
                 Object.defineProperty(AnchorElView.prototype, "el", {
                     get: function () {
@@ -4716,7 +4763,7 @@ var RIAPP;
                     _super.apply(this, arguments);
                 }
                 BlockElView.prototype.toString = function () {
-                    return 'DivElView';
+                    return 'BlockElView';
                 };
                 Object.defineProperty(BlockElView.prototype, "borderColor", {
                     get: function () {
@@ -4960,7 +5007,7 @@ var RIAPP;
     (function (MOD) {
         (function (binding) {
             binding.BINDING_MODE = ['OneTime', 'OneWay', 'TwoWay'];
-            var utils, global = RIAPP.global;
+            var utils, global = RIAPP.global, base_utils = RIAPP.baseUtils;
             global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
@@ -5147,7 +5194,7 @@ var RIAPP;
                             nextObj = global.parser._resolveProp(obj, path[0]);
                             if (!!nextObj) {
                                 self._parseSrcPath2(nextObj, path.slice(1), lvl + 1);
-                            } else if (nextObj === undefined) {
+                            } else if (base_utils.isUndefined(nextObj)) {
                                 global._onUnResolvedBinding(0 /* Source */, this.source, this._srcPath.join('.'), path[0]);
                             }
                         }
@@ -5155,7 +5202,7 @@ var RIAPP;
                     }
 
                     if (!!obj && path.length === 1) {
-                        if (utils.hasProp(obj, path[0])) {
+                        if (isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0])) {
                             var updateOnChange = (self._mode === binding.BINDING_MODE[1] || self._mode === binding.BINDING_MODE[2]);
                             if (updateOnChange && isBaseObj) {
                                 obj.addOnPropertyChange(path[0], self._getUpdTgtProxy(), this._objId);
@@ -5195,7 +5242,7 @@ var RIAPP;
                             nextObj = global.parser._resolveProp(obj, path[0]);
                             if (!!nextObj) {
                                 self._parseTgtPath2(nextObj, path.slice(1), lvl + 1);
-                            } else if (nextObj === undefined) {
+                            } else if (base_utils.isUndefined(nextObj)) {
                                 global._onUnResolvedBinding(1 /* Target */, this.target, this._tgtPath.join('.'), path[0]);
                             }
                         }
@@ -5203,7 +5250,7 @@ var RIAPP;
                     }
 
                     if (!!obj && path.length === 1) {
-                        if (utils.hasProp(obj, path[0])) {
+                        if (isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0])) {
                             var updateOnChange = (self._mode === binding.BINDING_MODE[2]);
                             if (updateOnChange && isBaseObj) {
                                 obj.addOnPropertyChange(path[0], self._getUpdSrcProxy(), this._objId);
@@ -6400,6 +6447,14 @@ var RIAPP;
                         item.destroy();
                     });
                 };
+                BaseCollection.prototype._isHasProp = function (prop) {
+                    //first check for indexed property name
+                    if (baseUtils.startsWith(prop, '[')) {
+                        var res = RIAPP.global.parser._resolveProp(this, prop);
+                        return !baseUtils.isUndefined(res);
+                    }
+                    return _super.prototype._isHasProp.call(this, prop);
+                };
                 BaseCollection.prototype.getFieldInfo = function (fieldName) {
                     var parts = fieldName.split('.'), fld = this._fieldMap[parts[0]];
                     if (parts.length == 1) {
@@ -7069,9 +7124,26 @@ var RIAPP;
                     }
                     var key = item[this._keyName];
                     if (utils.check.isNt(key))
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this.keyName));
                     return '' + key;
                 };
+                BaseDictionary.prototype._onItemAdded = function (item) {
+                    _super.prototype._onItemAdded.call(this, item);
+                    var key = item[this._keyName];
+                    this.raisePropertyChanged('[' + key + ']');
+                };
+                BaseDictionary.prototype._onRemoved = function (item, pos) {
+                    var key = item[this._keyName];
+                    _super.prototype._onRemoved.call(this, item, pos);
+                    this.raisePropertyChanged('[' + key + ']');
+                };
+                Object.defineProperty(BaseDictionary.prototype, "keyName", {
+                    get: function () {
+                        return this._keyName;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
                 return BaseDictionary;
             })(BaseList);
             collection.BaseDictionary = BaseDictionary;
@@ -7146,9 +7218,9 @@ var RIAPP;
                     if (!item) {
                         return _super.prototype._getNewKey.call(this, null);
                     }
-                    var key = item[this._keyName];
+                    var key = item[this.keyName];
                     if (utils.check.isNt(key))
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this.keyName));
                     return '' + key;
                 };
                 return Dictionary;
@@ -13491,6 +13563,7 @@ var RIAPP;
                                 this._selectedValue = undefined;
                             }
                             this._selectedItem = v;
+                            this._selectedValue = undefined;
                             this._el.selectedIndex = this._findItemIndex(this._selectedItem);
                             this.raisePropertyChanged('selectedItem');
                             this.raisePropertyChanged('selectedValue');
@@ -13553,9 +13626,17 @@ var RIAPP;
             var SelectElView = (function (_super) {
                 __extends(SelectElView, _super);
                 function SelectElView(app, el, options) {
-                    this._dataSource = null;
-                    this._listBox = null;
-                    this._options = options;
+                    var self = this;
+                    self._options = options;
+                    self._listBox = new ListBox(el, null, self._options);
+                    self._listBox.addOnDestroyed(function () {
+                        self._listBox = null;
+                        self.invokePropChanged('listBox');
+                        self.raisePropertyChanged('listBox');
+                    }, this.uniqueID);
+                    self._listBox.addOnPropertyChange('*', function (sender, args) {
+                        self.raisePropertyChanged(args.property);
+                    }, self.uniqueID);
                     _super.call(this, app, el, options);
                 }
                 SelectElView.prototype.destroy = function () {
@@ -13566,7 +13647,6 @@ var RIAPP;
                         this._listBox.destroy();
                     }
                     this._listBox = null;
-                    this._dataSource = null;
                     _super.prototype.destroy.call(this);
                 };
                 SelectElView.prototype.toString = function () {
@@ -13574,6 +13654,8 @@ var RIAPP;
                 };
                 Object.defineProperty(SelectElView.prototype, "isEnabled", {
                     get: function () {
+                        if (this._isDestroyCalled)
+                            return false;
                         return !this.el.disabled;
                     },
                     set: function (v) {
@@ -13595,26 +13677,14 @@ var RIAPP;
                 });
                 Object.defineProperty(SelectElView.prototype, "dataSource", {
                     get: function () {
-                        return this._dataSource;
+                        if (this._isDestroyCalled)
+                            return undefined;
+                        return this._listBox.dataSource;
                     },
                     set: function (v) {
                         var self = this;
-                        if (this._dataSource !== v) {
-                            this._dataSource = v;
-                            if (!!this._listBox)
-                                this._listBox.destroy();
-                            this._listBox = null;
-                            if (!!this._dataSource) {
-                                this._listBox = new ListBox(this._el, this._dataSource, this._options);
-                                this._listBox.addOnDestroyed(function () {
-                                    self._listBox = null;
-                                    self.invokePropChanged('listBox');
-                                }, this.uniqueID);
-                                this._listBox.addOnPropertyChange('*', function (sender, args) {
-                                    self.raisePropertyChanged(args.property);
-                                }, this.uniqueID);
-                            }
-                            self.invokePropChanged('listBox');
+                        if (self.dataSource !== v) {
+                            self._listBox.dataSource = v;
                         }
                     },
                     enumerable: true,
@@ -13622,12 +13692,12 @@ var RIAPP;
                 });
                 Object.defineProperty(SelectElView.prototype, "selectedValue", {
                     get: function () {
-                        if (!this._listBox)
-                            return null;
+                        if (this._isDestroyCalled)
+                            return undefined;
                         return this._listBox.selectedValue;
                     },
                     set: function (v) {
-                        if (!this._listBox)
+                        if (this._isDestroyCalled)
                             return;
                         if (this._listBox.selectedValue !== v) {
                             this._listBox.selectedValue = v;
@@ -13638,12 +13708,12 @@ var RIAPP;
                 });
                 Object.defineProperty(SelectElView.prototype, "selectedItem", {
                     get: function () {
-                        if (!this._listBox)
-                            return null;
+                        if (this._isDestroyCalled)
+                            return undefined;
                         return this._listBox.selectedItem;
                     },
                     set: function (v) {
-                        if (!this._listBox)
+                        if (this._isDestroyCalled)
                             return;
                         this._listBox.selectedItem = v;
                     },
@@ -17171,9 +17241,15 @@ var RIAPP;
             var PagerElView = (function (_super) {
                 __extends(PagerElView, _super);
                 function PagerElView(app, el, options) {
-                    this._dataSource = null;
+                    var self = this;
                     this._pager = null;
                     this._options = options;
+                    this._pager = new Pager(el, null, this._options);
+                    this._pager.addOnDestroyed(function () {
+                        self._pager = null;
+                        self.invokePropChanged('pager');
+                        self.raisePropertyChanged('pager');
+                    });
                     _super.call(this, app, el, options);
                 }
                 PagerElView.prototype.destroy = function () {
@@ -17184,7 +17260,6 @@ var RIAPP;
                         this._pager.destroy();
                     }
                     this._pager = null;
-                    this._dataSource = null;
                     _super.prototype.destroy.call(this);
                 };
                 PagerElView.prototype.toString = function () {
@@ -17192,23 +17267,16 @@ var RIAPP;
                 };
                 Object.defineProperty(PagerElView.prototype, "dataSource", {
                     get: function () {
-                        return this._dataSource;
+                        if (this._isDestroyCalled)
+                            return undefined;
+                        return this._pager.dataSource;
                     },
                     set: function (v) {
-                        var self = this;
-                        if (this._dataSource !== v) {
-                            this._dataSource = v;
-                            if (!!this._pager)
-                                this._pager.destroy();
-                            this._pager = null;
-                            if (!!this._dataSource && this._dataSource.isPagingEnabled) {
-                                this._pager = new Pager(this._el, this._dataSource, this._options);
-                                this._pager.addOnDestroyed(function () {
-                                    self._pager = null;
-                                    self.invokePropChanged('pager');
-                                });
-                            }
-                            self.invokePropChanged('pager');
+                        if (this._isDestroyCalled)
+                            return;
+                        if (this.dataSource !== v) {
+                            this._pager.dataSource = v;
+                            this.raisePropertyChanged('dataSource');
                         }
                     },
                     enumerable: true,
@@ -17594,9 +17662,15 @@ var RIAPP;
             var StackPanelElView = (function (_super) {
                 __extends(StackPanelElView, _super);
                 function StackPanelElView(app, el, options) {
-                    this._dataSource = null;
+                    var self = this;
                     this._panel = null;
                     this._options = options;
+                    this._panel = new StackPanel(app, el, null, this._options);
+                    this._panel.addOnDestroyed(function () {
+                        self._panel = null;
+                        self.invokePropChanged('panel');
+                        self.raisePropertyChanged('panel');
+                    });
                     _super.call(this, app, el, options);
                 }
                 StackPanelElView.prototype.destroy = function () {
@@ -17607,7 +17681,6 @@ var RIAPP;
                         this._panel.destroy();
                     }
                     this._panel = null;
-                    this._dataSource = null;
                     _super.prototype.destroy.call(this);
                 };
                 StackPanelElView.prototype.toString = function () {
@@ -17615,23 +17688,16 @@ var RIAPP;
                 };
                 Object.defineProperty(StackPanelElView.prototype, "dataSource", {
                     get: function () {
-                        return this._dataSource;
+                        if (this._isDestroyCalled)
+                            return undefined;
+                        return this._panel.dataSource;
                     },
                     set: function (v) {
-                        var self = this;
-                        if (this._dataSource !== v) {
-                            this._dataSource = v;
-                            if (!!this._panel)
-                                this._panel.destroy();
-                            this._panel = null;
-                            if (!!this._dataSource) {
-                                this._panel = new StackPanel(this.app, this._el, this._dataSource, this._options);
-                                this._panel.addOnDestroyed(function () {
-                                    self._panel = null;
-                                    self.invokePropChanged('panel');
-                                });
-                            }
-                            self.invokePropChanged('panel');
+                        if (this._isDestroyCalled)
+                            return;
+                        if (this.dataSource !== v) {
+                            this._panel.dataSource = v;
+                            this.raisePropertyChanged('dataSource');
                         }
                     },
                     enumerable: true,

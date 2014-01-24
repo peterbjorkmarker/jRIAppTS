@@ -1,29 +1,27 @@
 /// <reference path="..\jriapp.d.ts"/>
-
 module RIAPP
 {
     export module AUTOCOMPLETE {
         var global = RIAPP.global, utils = global.utils;
-        import collMod = MOD.collection;
         
-        function addTextQuery(query: MOD.db.DataQuery, fldName:string, val) {
+        function addTextQuery(query: MOD.db.DataQuery, fldName: string, val) {
             var tmp;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, collMod.FILTER_TYPE.Contains, [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.Contains, [tmp])
                 }
                 else if (utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, collMod.FILTER_TYPE.EndsWith, [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.EndsWith, [tmp])
                 }
                 else if (utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
-                    query.where(fldName, collMod.FILTER_TYPE.StartsWith, [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.StartsWith, [tmp])
                 }
                 else {
                     tmp = utils.str.trim(val);
-                    query.where(fldName, collMod.FILTER_TYPE.Equals, [tmp])
+                    query.where(fldName, MOD.collection.FILTER_TYPE.Equals, [tmp])
                 }
             }
             return query;
@@ -90,11 +88,12 @@ module RIAPP
 
                 $el.on('change.' + this._objId, function (e) {
                     e.stopPropagation();
+                    self._onTextChange();
                     self.raisePropertyChanged('value');
                 });
                 $el.on('keyup.' + this._objId, function (e) {
                     e.stopPropagation();
-                    self._onTextChange((<any>e.target).value);
+                    self._onKeyUp((<any>e.target).value);
                 });
                 $el.on('keypress.' + this._objId, function (e) {
                     e.stopPropagation();
@@ -170,7 +169,9 @@ module RIAPP
                 t.dataContext = this;
                 return t;
             }
-            _onTextChange(text:string) {
+            _onTextChange() {
+            }
+            _onKeyUp(text:string) {
                 var self = this;
                 clearTimeout(this._loadTimeout);
                 if (!!text && text.length >= self._minTextLength) {
@@ -274,7 +275,7 @@ module RIAPP
                 query.pageSize = 50;
                 query.isClearPrevData = true;
                 addTextQuery(query, this._fieldName, str + '%');
-                query.orderBy(this._fieldName, MOD.collection.SORT_ORDER.ASC);
+                query.orderBy(this._fieldName);
                 this._isLoading = true;
                 this.raisePropertyChanged('isLoading');
                 query.load().always(function (res) {
@@ -339,6 +340,9 @@ module RIAPP
                     this._prevText = v;
                     this.raisePropertyChanged('value');
                 }
+            }
+            get isLoading() {
+                return this._isLoading;
             }
         }
 

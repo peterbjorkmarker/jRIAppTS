@@ -1,15 +1,14 @@
-/// <reference path="..\jriapp.d.ts"/>
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
+/// <reference path="..\jriapp.d.ts"/>
 var RIAPP;
 (function (RIAPP) {
     (function (AUTOCOMPLETE) {
         var global = RIAPP.global, utils = global.utils;
-        var collMod = RIAPP.MOD.collection;
 
         function addTextQuery(query, fldName, val) {
             var tmp;
@@ -64,11 +63,12 @@ var RIAPP;
 
                 $el.on('change.' + this._objId, function (e) {
                     e.stopPropagation();
+                    self._onTextChange();
                     self.raisePropertyChanged('value');
                 });
                 $el.on('keyup.' + this._objId, function (e) {
                     e.stopPropagation();
-                    self._onTextChange(e.target.value);
+                    self._onKeyUp(e.target.value);
                 });
                 $el.on('keypress.' + this._objId, function (e) {
                     e.stopPropagation();
@@ -144,7 +144,9 @@ var RIAPP;
                 t.dataContext = this;
                 return t;
             };
-            AutoCompleteElView.prototype._onTextChange = function (text) {
+            AutoCompleteElView.prototype._onTextChange = function () {
+            };
+            AutoCompleteElView.prototype._onKeyUp = function (text) {
                 var self = this;
                 clearTimeout(this._loadTimeout);
                 if (!!text && text.length >= self._minTextLength) {
@@ -247,7 +249,7 @@ var RIAPP;
                 query.pageSize = 50;
                 query.isClearPrevData = true;
                 addTextQuery(query, this._fieldName, str + '%');
-                query.orderBy(this._fieldName, 0 /* ASC */);
+                query.orderBy(this._fieldName);
                 this._isLoading = true;
                 this.raisePropertyChanged('isLoading');
                 query.load().always(function (res) {
@@ -351,6 +353,13 @@ var RIAPP;
                         this._prevText = v;
                         this.raisePropertyChanged('value');
                     }
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(AutoCompleteElView.prototype, "isLoading", {
+                get: function () {
+                    return this._isLoading;
                 },
                 enumerable: true,
                 configurable: true

@@ -19,6 +19,7 @@ declare module RIAPP {
         ERR_MODULE_NOT_REGISTERED: string;
         ERR_MODULE_ALREDY_REGISTERED: string;
         ERR_PROP_NAME_EMPTY: string;
+        ERR_PROP_NAME_INVALID: string;
         ERR_GLOBAL_SINGLTON: string;
         ERR_OBJ_ALREADY_REGISTERED: string;
         ERR_TEMPLATE_ALREADY_REGISTERED: string;
@@ -124,7 +125,15 @@ declare module RIAPP {
         static distinct(arr: any[]): any[];
     }
     class baseUtils {
+        static isNull(a: any): boolean;
+        static isUndefined(a: any): boolean;
+        static isNt(a: any): boolean;
+        static isString(a: any): boolean;
         static isFunc(a: any): boolean;
+        static isBoolean(a: any): boolean;
+        static isDate(a: any): boolean;
+        static isNumber(a: any): boolean;
+        static isNumeric(obj: any): boolean;
         static endsWith(str: any, suffix: any): boolean;
         static startsWith(str: any, prefix: any): boolean;
         static fastTrim(str: any): string;
@@ -132,10 +141,7 @@ declare module RIAPP {
         static ltrim(str: string, chars?: string): string;
         static rtrim(str: string, chars?: string): string;
         static isArray(o: any): boolean;
-        /**
-        *    Usage:     format('test {0}={1}', 'x', 100);
-        *    result:    test x=100
-        **/
+        static hasProp(obj: any, prop: string): boolean;
         static format(format_str: string, ...args: any[]): string;
         static setValue(root: any, namePath: string, val: any, checkOverwrite: boolean): void;
         static getValue(root: any, namePath: string): any;
@@ -153,6 +159,7 @@ declare module RIAPP {
         public _raiseEvent(name: string, data: any): void;
         public _onError(error: any, source: any): boolean;
         public _checkEventName(name: string): void;
+        public _isHasProp(prop: string): boolean;
         public raisePropertyChanged(name: string): void;
         public addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string): void;
         public removeHandler(name?: string, namespace?: string): void;
@@ -411,20 +418,20 @@ declare module RIAPP {
                 formatDate(date: Date): string;
             }
             class Checks {
-                static isNull(a: any): boolean;
-                static isUndefined(a: any): boolean;
-                static isNt(a: any): boolean;
+                static isNull: (a: any) => boolean;
+                static isUndefined: (a: any) => boolean;
+                static isNt: (a: any) => boolean;
                 static isFunction: (a: any) => boolean;
-                static isString(a: any): boolean;
+                static isString: (a: any) => boolean;
                 static isArray: (o: any) => boolean;
-                static isBoolean(a: any): boolean;
-                static isDate(a: any): boolean;
+                static isBoolean: (a: any) => boolean;
+                static isDate: (a: any) => boolean;
+                static isNumber: (a: any) => boolean;
+                static isNumeric: (obj: any) => boolean;
                 static isHTML(a: any): boolean;
-                static isNumber(a: any): boolean;
                 static isObject(a: any): boolean;
                 static isSimpleObject(a: any): boolean;
                 static isRegExp(a: any): boolean;
-                static isNumeric(obj: any): boolean;
                 static isBoolString(a: any): boolean;
                 static isBaseObj(obj: any): boolean;
                 static isBinding(obj: any): boolean;
@@ -781,12 +788,13 @@ declare module RIAPP {
             }
             class InputElView extends BaseElView {
                 constructor(app: RIAPP.Application, el: HTMLInputElement, options: IViewOptions);
+                public toString(): string;
                 public isEnabled : boolean;
                 public el : HTMLInputElement;
                 public value : string;
             }
             class CommandElView extends BaseElView {
-                public _command: MOD.mvvm.Command;
+                private _command;
                 public _commandParam: any;
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions);
                 public destroy(): void;
@@ -808,20 +816,21 @@ declare module RIAPP {
                 }) => boolean);
             }
             class TemplateElView extends CommandElView {
-                public _template: MOD.template.Template;
-                public _isEnabled: boolean;
+                private _template;
+                private _isEnabled;
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions);
                 public templateLoaded(template: MOD.template.Template): void;
                 public templateUnloading(template: MOD.template.Template): void;
                 public toString(): string;
                 public isEnabled : boolean;
+                public template : MOD.template.Template;
             }
             class BusyElView extends BaseElView {
-                public _delay: number;
-                public _timeOut: number;
-                public _loaderPath: string;
-                public _$loader: any;
-                public _isBusy: boolean;
+                private _delay;
+                private _timeOut;
+                private _loaderPath;
+                private _$loader;
+                private _isBusy;
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions);
                 public _init(options: any): void;
                 public destroy(): void;
@@ -830,10 +839,10 @@ declare module RIAPP {
                 public delay : number;
             }
             class DynaContentElView extends BaseElView {
-                public _dataContext: any;
-                public _template: MOD.template.Template;
+                private _dataContext;
+                private _template;
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions);
-                public _templateChanged(): void;
+                private _templateChanged();
                 public updateTemplate(name: string): void;
                 public destroy(): void;
                 public templateID : string;
@@ -841,7 +850,7 @@ declare module RIAPP {
                 public dataContext : any;
             }
             class CheckBoxElView extends InputElView {
-                public _val: boolean;
+                private _val;
                 public _init(options: IViewOptions): void;
                 public _setFieldError(isError: boolean): void;
                 public destroy(): void;
@@ -849,8 +858,8 @@ declare module RIAPP {
                 public checked : boolean;
             }
             class CheckBoxThreeStateElView extends InputElView {
-                public _val: boolean;
-                public _cbxVal: number;
+                private _val;
+                private _cbxVal;
                 public _init(options: IViewOptions): void;
                 public _setFieldError(isError: boolean): void;
                 public destroy(): void;
@@ -899,7 +908,7 @@ declare module RIAPP {
                 public wrap : string;
             }
             class RadioElView extends InputElView {
-                public _val: boolean;
+                private _val;
                 public _init(options: IViewOptions): void;
                 public _updateGroup(): void;
                 public _setFieldError(isError: boolean): void;
@@ -912,7 +921,7 @@ declare module RIAPP {
                 preventDefault?: boolean;
             }
             class ButtonElView extends CommandElView {
-                public _preventDefault: boolean;
+                private _preventDefault;
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IAncorOptions);
                 public _init(options: IButtonOptions): void;
                 public _onClick(e: Event): void;
@@ -926,9 +935,9 @@ declare module RIAPP {
                 imageSrc?: string;
             }
             class AnchorElView extends CommandElView {
-                public _imageSrc: string;
-                public _image: HTMLImageElement;
-                public _preventDefault: boolean;
+                private _imageSrc;
+                private _image;
+                private _preventDefault;
                 constructor(app: RIAPP.Application, el: HTMLAnchorElement, options: IAncorOptions);
                 public _init(options: IAncorOptions): void;
                 public _onClick(e: Event): void;
@@ -948,9 +957,9 @@ declare module RIAPP {
                 isExpanded?: boolean;
             }
             class ExpanderElView extends AnchorElView {
-                public _expandedsrc: string;
-                public _collapsedsrc: string;
-                public _isExpanded: boolean;
+                private _expandedsrc;
+                private _collapsedsrc;
+                private _isExpanded;
                 public _init(options: IExpanderOptions): void;
                 public destroy(): void;
                 public _onCommandChanged(): void;
@@ -981,8 +990,8 @@ declare module RIAPP {
                 public src : string;
             }
             class TabsElView extends BaseElView {
-                public _tabsEventCommand: MOD.mvvm.ICommand;
-                public _tabOpts: any;
+                private _tabsEventCommand;
+                private _tabOpts;
                 public _init(options: any): void;
                 public _createTabs(): void;
                 public _destroyTabs(): void;
@@ -1385,6 +1394,7 @@ declare module RIAPP {
                 public _onPageChanged(): void;
                 public _setCurrentItem(v: TItem): void;
                 public _destroyItems(): void;
+                public _isHasProp(prop: string): boolean;
                 public getFieldInfo(fieldName: string): IFieldInfo;
                 public getFieldNames(): string[];
                 public getFieldInfos(): IFieldInfo[];
@@ -1458,9 +1468,12 @@ declare module RIAPP {
                 public toString(): string;
             }
             class BaseDictionary<TItem extends ListItem, TObj> extends BaseList<TItem, TObj> {
-                public _keyName: string;
+                private _keyName;
                 constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]);
                 public _getNewKey(item: TItem): string;
+                public _onItemAdded(item: TItem): void;
+                public _onRemoved(item: TItem, pos: number): void;
+                public keyName : string;
             }
             class List extends BaseList<ListItem, any> {
                 constructor(type_name: string, properties: any);
@@ -2578,7 +2591,6 @@ declare module RIAPP {
             interface ISelectViewOptions extends IListBoxOptions, MOD.baseElView.IViewOptions {
             }
             class SelectElView extends MOD.baseElView.BaseElView {
-                private _dataSource;
                 private _listBox;
                 private _options;
                 constructor(app: RIAPP.Application, el: HTMLSelectElement, options: ISelectViewOptions);
@@ -3231,7 +3243,6 @@ declare module RIAPP {
             }
             class PagerElView extends MOD.baseElView.BaseElView {
                 private _options;
-                private _dataSource;
                 private _pager;
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IPagerViewOptions);
                 public destroy(): void;
@@ -3255,22 +3266,16 @@ declare module RIAPP {
                 templateID: string;
             }
             class StackPanel extends RIAPP.BaseObject implements RIAPP.ISelectable {
-                public _el: HTMLElement;
-                public _$el: JQuery;
-                public _objId: string;
-                public _dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public _isDSFilling: boolean;
-                public _orientation: string;
-                public _templateID: string;
-                public _currentItem: MOD.collection.CollectionItem;
-                public _itemMap: {
-                    [key: string]: {
-                        div: HTMLElement;
-                        template: MOD.template.Template;
-                        item: MOD.collection.CollectionItem;
-                    };
-                };
-                public _app: RIAPP.Application;
+                private _el;
+                private _$el;
+                private _objId;
+                private _dataSource;
+                private _isDSFilling;
+                private _orientation;
+                private _templateID;
+                private _currentItem;
+                private _itemMap;
+                private _app;
                 constructor(app: RIAPP.Application, el: HTMLElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IStackPanelOptions);
                 public _getEventNames(): string[];
                 public addOnItemClicked(fn: (sender: StackPanel, args: {
@@ -3309,7 +3314,6 @@ declare module RIAPP {
             interface IStackPanelViewOptions extends IStackPanelOptions, MOD.baseElView.IViewOptions {
             }
             class StackPanelElView extends MOD.baseElView.BaseElView {
-                private _dataSource;
                 private _panel;
                 private _options;
                 constructor(app: RIAPP.Application, el: HTMLSelectElement, options: IStackPanelViewOptions);

@@ -71,7 +71,7 @@ module RIAPP {
                     super.destroy();
                 }
                 _onChanged() {
-                    var op = null, key, data;
+                    var op = null, key, data: IMappedItem;
                     if (this._el.selectedIndex >= 0) {
                         op = (<any>this._el.options)[this._el.selectedIndex];
                         key = op.value;
@@ -415,6 +415,7 @@ module RIAPP {
                             this._selectedValue = undefined;
                         }
                         this._selectedItem = v;
+                        this._selectedValue = undefined;
                         this._el.selectedIndex = this._findItemIndex(this._selectedItem);
                         this.raisePropertyChanged('selectedItem');
                         this.raisePropertyChanged('selectedValue');
@@ -449,13 +450,20 @@ module RIAPP {
             }
 
             export class SelectElView extends baseElView.BaseElView {
-                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
                 private _listBox: ListBox;
                 private _options: ISelectViewOptions;
                 constructor(app: Application, el: HTMLSelectElement, options: ISelectViewOptions) {
-                    this._dataSource = null;
-                    this._listBox = null;
-                    this._options = options;
+                    var self = this;
+                    self._options = options;
+                    self._listBox = new ListBox(el, null, self._options);
+                    self._listBox.addOnDestroyed(function () {
+                        self._listBox = null;
+                        self.invokePropChanged('listBox');
+                        self.raisePropertyChanged('listBox');
+                    }, this.uniqueID);
+                    self._listBox.addOnPropertyChange('*', function (sender, args) {
+                        self.raisePropertyChanged(args.property);
+                    }, self.uniqueID);
                     super(app, el, options);
                 }
                 destroy() {
@@ -466,13 +474,16 @@ module RIAPP {
                         this._listBox.destroy();
                     }
                     this._listBox = null;
-                    this._dataSource = null;
                     super.destroy();
                 }
                 toString() {
                     return 'SelectElView';
                 }
-                get isEnabled() { return !this.el.disabled; }
+                get isEnabled() {
+                    if (this._isDestroyCalled)
+                        return false;
+                    return !this.el.disabled;
+                }
                 set isEnabled(v: boolean) {
                     v = !!v;
                     if (v !== this.isEnabled) {
@@ -481,46 +492,36 @@ module RIAPP {
                     }
                 }
                 get el() { return <HTMLSelectElement>this._el; }
-                get dataSource() { return this._dataSource; }
+                get dataSource() {
+                    if (this._isDestroyCalled)
+                        return undefined;
+                    return this._listBox.dataSource;
+                }
                 set dataSource(v) {
                     var self = this;
-                    if (this._dataSource !== v) {
-                        this._dataSource = v;
-                        if (!!this._listBox)
-                            this._listBox.destroy();
-                        this._listBox = null;
-                        if (!!this._dataSource) {
-                            this._listBox = new ListBox(<HTMLSelectElement>this._el, this._dataSource, this._options);
-                            this._listBox.addOnDestroyed(function () {
-                                self._listBox = null;
-                                self.invokePropChanged('listBox');
-                            }, this.uniqueID);
-                            this._listBox.addOnPropertyChange('*', function (sender, args) {
-                                self.raisePropertyChanged(args.property);
-                            }, this.uniqueID);
-                        }
-                        self.invokePropChanged('listBox');
+                    if (self.dataSource !== v) {
+                        self._listBox.dataSource = v;
                     }
                 }
                 get selectedValue() {
-                    if (!this._listBox)
-                        return null;
+                    if (this._isDestroyCalled)
+                        return undefined;
                     return this._listBox.selectedValue;
                 }
                 set selectedValue(v) {
-                    if (!this._listBox)
+                    if (this._isDestroyCalled)
                         return;
                     if (this._listBox.selectedValue !== v) {
                         this._listBox.selectedValue = v;
                     }
                 }
                 get selectedItem() {
-                    if (!this._listBox)
-                        return null;
+                    if (this._isDestroyCalled)
+                        return undefined;
                     return this._listBox.selectedItem;
                 }
                 set selectedItem(v: collection.CollectionItem) {
-                    if (!this._listBox)
+                    if (this._isDestroyCalled)
                         return;
                     this._listBox.selectedItem = v;
                 }

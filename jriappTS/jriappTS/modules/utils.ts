@@ -70,42 +70,21 @@ module RIAPP {
             } 
 
             export class Checks {
-                static isNull(a) {
-                    return a === null;
-                }
-                static isUndefined(a) {
-                    return a === undefined;
-                }
+                static isNull = base_utils.isNull;
+                static isUndefined = base_utils.isUndefined;
                 //checking for null type
-                static isNt(a) {
-                    return (a === null || a === undefined);
-                }
+                static isNt = base_utils.isNt;
                 static isFunction = base_utils.isFunc;
-                static isString(a) {
-                    if (Checks.isNt(a)) return false;
-                    var rx = /string/i;
-                    return (typeof (a) === 'string') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
-                }
+                static isString = base_utils.isString;
                 static isArray = base_utils.isArray;
-                static isBoolean(a) {
-                    if (Checks.isNt(a)) return false;
-                    var rx = /boolean/i;
-                    return (typeof (a) === 'boolean') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
-                }
-                static isDate(a) {
-                    if (Checks.isNt(a)) return false;
-                    var rx = /date/i;
-                    return (typeof (a) === 'date') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
-                }
+                static isBoolean = base_utils.isBoolean;
+                static isDate = base_utils.isDate;
+                static isNumber = base_utils.isNumber;
+                static isNumeric = base_utils.isNumeric;
                 static isHTML(a) {
                     if (Checks.isNt(a)) return false;
                     var rx = /html/i;
                     return (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
-                }
-                static isNumber(a) {
-                    if (Checks.isNt(a)) return false;
-                    var rx = /Number/;
-                    return (typeof (a) === 'number') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
                 }
                 static isObject(a) {
                     if (Checks.isNt(a)) return false;
@@ -121,9 +100,6 @@ module RIAPP {
                     if (Checks.isNt(a)) return false;
                     var rx = /regexp/i;
                     return (typeof (a) === 'function') ? rx.test(a.constructor.toString()) : false;
-                }
-                static isNumeric(obj) {
-                    return Checks.isNumber(obj) || (Checks.isString(obj) && !isNaN(Number(obj)));
                 }
                 static isBoolString(a) {
                     if (Checks.isNt(a)) return false;
@@ -912,22 +888,10 @@ module RIAPP {
                     }
                 }
                 hasProp(obj, prop:string):boolean {
-                    if (!obj)
-                        return false;
-                    var res = obj.hasOwnProperty(prop);
-                    if (res)
-                        return true;
-                    else {
-                        if (Object === obj)
-                            return false;
-                        else {
-                            var pr = Object.getPrototypeOf(obj);
-                            return this.hasProp(pr, prop);
-                        }
-                    }
+                    return base_utils.hasProp(obj, prop);
                 }
                 createDeferred(): IDeferred<any> {
-                    return <any>global.$.Deferred();
+                    return global.$.Deferred();
                 }
                 cloneObj(o:any, mergeIntoObj?:any) {
                     var c:any, i:number, len:number, self = this;

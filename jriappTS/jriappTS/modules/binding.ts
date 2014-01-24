@@ -2,7 +2,7 @@ module RIAPP {
     export module MOD {
         export module binding {
             export var BINDING_MODE = ['OneTime', 'OneWay', 'TwoWay'];
-            var utils: MOD.utils.Utils, global = RIAPP.global;
+            var utils: MOD.utils.Utils, global = RIAPP.global, base_utils = RIAPP.baseUtils;
             global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
@@ -222,7 +222,7 @@ module RIAPP {
                             if (!!nextObj) {
                                 self._parseSrcPath2(nextObj, path.slice(1), lvl + 1);
                             }
-                            else if (nextObj === undefined) {
+                            else if (base_utils.isUndefined(nextObj)) {
                                 global._onUnResolvedBinding(BindTo.Source, this.source, this._srcPath.join('.'), path[0]);
                             }
                         }
@@ -230,7 +230,7 @@ module RIAPP {
                     }
 
                     if (!!obj && path.length === 1) {
-                        if (utils.hasProp(obj, path[0])) {
+                        if (isBaseObj ? obj._isHasProp(path[0]): base_utils.hasProp(obj, path[0])) {
                             var updateOnChange = (self._mode === BINDING_MODE[1] || self._mode === BINDING_MODE[2]);
                             if (updateOnChange && isBaseObj) {
                                 obj.addOnPropertyChange(path[0], self._getUpdTgtProxy(), this._objId);
@@ -273,7 +273,7 @@ module RIAPP {
                             if (!!nextObj) {
                                 self._parseTgtPath2(nextObj, path.slice(1), lvl + 1);
                             }
-                            else if (nextObj === undefined) {
+                            else if (base_utils.isUndefined(nextObj)) {
                                 global._onUnResolvedBinding(BindTo.Target, this.target, this._tgtPath.join('.'), path[0]);
                             }
                         }
@@ -281,7 +281,7 @@ module RIAPP {
                     }
 
                     if (!!obj && path.length === 1) {
-                        if (utils.hasProp(obj, path[0])) {
+                        if (isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0])) {
                             var updateOnChange = (self._mode === BINDING_MODE[2]);
                             if (updateOnChange && isBaseObj) {
                                 obj.addOnPropertyChange(path[0], self._getUpdSrcProxy(), this._objId);

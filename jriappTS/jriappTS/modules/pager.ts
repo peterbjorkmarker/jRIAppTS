@@ -414,12 +414,17 @@ module RIAPP {
 
             export class PagerElView extends baseElView.BaseElView {
                 private _options: IPagerOptions;
-                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
                 private _pager: Pager;
                 constructor(app: Application, el: HTMLElement, options: IPagerViewOptions) {
-                    this._dataSource = null;
+                    var self = this;
                     this._pager = null;
                     this._options = options;
+                    this._pager = new Pager(el, null, this._options);
+                    this._pager.addOnDestroyed(function () {
+                        self._pager = null;
+                        self.invokePropChanged('pager');
+                        self.raisePropertyChanged('pager');
+                    });
                     super(app, el, options);
                 }
                 destroy() {
@@ -430,28 +435,22 @@ module RIAPP {
                         this._pager.destroy();
                     }
                     this._pager = null;
-                    this._dataSource = null;
                     super.destroy();
                 }
                 toString() {
                     return 'PagerElView';
                 }
-                get dataSource() { return this._dataSource; }
+                get dataSource() {
+                    if (this._isDestroyCalled)
+                        return undefined;
+                    return this._pager.dataSource;
+                }
                 set dataSource(v) {
-                    var self = this;
-                    if (this._dataSource !== v) {
-                        this._dataSource = v;
-                        if (!!this._pager)
-                            this._pager.destroy();
-                        this._pager = null;
-                        if (!!this._dataSource && this._dataSource.isPagingEnabled) {
-                            this._pager = new Pager(this._el, this._dataSource, this._options);
-                            this._pager.addOnDestroyed(function () {
-                                self._pager = null;
-                                self.invokePropChanged('pager');
-                            });
-                        }
-                        self.invokePropChanged('pager');
+                    if (this._isDestroyCalled)
+                        return;
+                    if (this.dataSource !== v) {
+                        this._pager.dataSource = v;
+                        this.raisePropertyChanged('dataSource');
                     }
                 }
                 get pager() { return this._pager; }

@@ -842,6 +842,14 @@ module RIAPP {
                         item.destroy();
                     });
                 }
+                _isHasProp(prop: string) {
+                    //first check for indexed property name
+                    if (baseUtils.startsWith(prop, '[')) {
+                        var res = global.parser._resolveProp(this, prop);
+                        return !baseUtils.isUndefined(res);
+                    }
+                    return super._isHasProp(prop);
+                }
                 getFieldInfo(fieldName: string): IFieldInfo {
                     var parts = fieldName.split('.'), fld = this._fieldMap[parts[0]];
                     if (parts.length == 1) {
@@ -1402,7 +1410,7 @@ module RIAPP {
             }
 
             export class BaseDictionary<TItem extends ListItem, TObj> extends BaseList<TItem, TObj>{
-                _keyName: string;
+                private _keyName: string;
                 constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]) {
                     if (!keyName)
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
@@ -1419,8 +1427,21 @@ module RIAPP {
                     }
                     var key = item[this._keyName];
                     if (utils.check.isNt(key))
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this.keyName));
                     return '' + key;
+                }
+                _onItemAdded(item: TItem) {
+                    super._onItemAdded(item);
+                    var key = item[this._keyName];
+                    this.raisePropertyChanged('[' + key + ']');
+                }
+                _onRemoved(item: TItem, pos: number) {
+                    var key = item[this._keyName];
+                    super._onRemoved(item, pos);
+                    this.raisePropertyChanged('[' + key + ']');
+                }
+                get keyName() {
+                    return this._keyName;
                 }
             }
    
@@ -1486,9 +1507,9 @@ module RIAPP {
                     if (!item) {
                         return super._getNewKey(null);
                     }
-                    var key = item[this._keyName];
+                    var key = item[this.keyName];
                     if (utils.check.isNt(key))
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this._keyName));
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this.keyName));
                     return '' + key;
                 }
             }

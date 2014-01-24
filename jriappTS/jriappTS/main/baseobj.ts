@@ -30,11 +30,42 @@ module RIAPP {
  
     //essential basic utils
     export class baseUtils {
+        static isNull(a) {
+            return a === null;
+        }
+        static isUndefined(a) {
+            return a === undefined;
+        }
+        static isNt(a) {
+            return (a === null || a === undefined);
+        }
+        static isString(a) {
+            if (baseUtils.isNt(a)) return false;
+            var rx = /string/i;
+            return (typeof (a) === 'string') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
+        }
         static isFunc(a): boolean {
-            if (!a)
-                return false;
+            if (baseUtils.isNt(a)) return false;
             var rx = /Function/;
             return (typeof (a) === 'function') ? rx.test(a.constructor.toString()) : false;
+        }
+        static isBoolean(a) {
+            if (baseUtils.isNt(a)) return false;
+            var rx = /boolean/i;
+            return (typeof (a) === 'boolean') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
+        }
+        static isDate(a) {
+            if (baseUtils.isNt(a)) return false;
+            var rx = /date/i;
+            return (typeof (a) === 'date') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
+        }
+        static isNumber(a) {
+            if (baseUtils.isNt(a)) return false;
+            var rx = /Number/;
+            return (typeof (a) === 'number') ? true : (typeof (a) === 'object') ? rx.test(a.constructor.toString()) : false;
+        }
+        static isNumeric(obj) {
+            return baseUtils.isNumber(obj) || (baseUtils.isString(obj) && !isNaN(Number(obj)));
         }
         static endsWith(str, suffix): boolean {
             return (str.substr(str.length - suffix.length) === suffix);
@@ -64,10 +95,25 @@ module RIAPP {
                 return false;
             return Array.isArray(o);
         }
-        /**
+        static hasProp(obj, prop: string): boolean {
+            if (!obj)
+                return false;
+            var res = obj.hasOwnProperty(prop);
+            if (res)
+                return true;
+            else {
+                if (Object === obj)
+                    return false;
+                else {
+                    var pr = Object.getPrototypeOf(obj);
+                    return baseUtils.hasProp(pr, prop);
+                }
+            }
+        }
+        /*
          *    Usage:     format('test {0}={1}', 'x', 100);
          *    result:    test x=100
-         **/
+        */
         static format(format_str: string, ...args: any[]): string {
             var result = '';
             for (var i = 0; ;) {
@@ -169,14 +215,16 @@ module RIAPP {
         }
         //the object that directly has this property (last object in chain)
         static resolveOwner(obj: any, path: string): any {
-            var parts = path.split('.');
-            if (parts.length == 1)
+            var parts = path.split('.'), i, res, len = parts.length;
+            if (len == 1)
                 return obj;
-            var res: any = obj;
-            for (var i = 0; i < parts.length - 1; i += 1) {
-                if (!res[parts[i]])
-                    return null;
+            res = obj;
+            for (i = 0; i < len - 1; i += 1) {
                 res = res[parts[i]];
+                if (res === undefined)
+                    return undefined;
+                if (res === null)
+                    return null;
             }
             return res;
         }
@@ -289,14 +337,15 @@ module RIAPP {
             if (ev === null)
                 return;
             if (ev === undefined) {
-                throw new Error("Object's constructor was not called");
+                throw new Error("Object instance is invalid. The constructor was not called.");
             }
 
             if (!!name) {
-                //property changed
+                //if property changed
                 if (name != '0*' && RIAPP.baseUtils.startsWith(name, '0'))  
                 {
-                    this._raiseEvent('0*', data); //who subscribed for all property changes
+                    //notify those who subscribed for all property changes
+                    this._raiseEvent('0*', data); 
                 }
                 if (!ev[name])
                     return;
@@ -321,17 +370,25 @@ module RIAPP {
             if (this._getEventNames().indexOf(name) === -1)
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
         }
+        _isHasProp(prop: string) {
+            return baseUtils.hasProp(this, prop);
+        }
         raisePropertyChanged(name: string) {
             var data = { property: name };
-            var parts = name.split('.'), propName = parts[parts.length - 1];
+            var parts = name.split('.'), lastPropName = parts[parts.length - 1];
             if (parts.length > 1) {
                 var obj = baseUtils.resolveOwner(this, name);
+                if (baseUtils.isUndefined(obj))
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, name));
                 if (obj instanceof BaseObject) {
-                    obj._raiseEvent('0' + propName, data);
+                    obj._raiseEvent('0' + lastPropName, data);
                 }
             }
-            else
-                this._raiseEvent('0' + propName, data);
+            else {
+                if (!baseUtils.hasProp(this, lastPropName))
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, lastPropName));
+                this._raiseEvent('0' + lastPropName, data);
+            }
         }
         addHandler(name: string, fn: (sender,args)=>void, namespace?: string) {
             this._checkEventName(name);
@@ -363,15 +420,22 @@ module RIAPP {
             this._checkEventName(name);
             this._raiseEvent(name, args);
         }
-        //to subscribe for the changes on all properties, pass in prop parameter asterisk: '*'
+        //to subscribe for the changes on all properties, pass in the prop parameter: '*'
         addOnPropertyChange(prop: string, fn: (sender, args: { property: string; })=>void, namespace?: string) {
             if (!prop)
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);
+            if (prop != '*' && !this._isHasProp(prop)) {
+                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
+            }
             prop = '0' + prop;
             this._addHandler(prop, fn, namespace, false);
         }
         removeOnPropertyChange(prop?: string, namespace?: string) {
-            if (!!prop) prop = '0' + prop;
+            if (!!prop) {
+                if (prop != '*' && !this._isHasProp(prop))
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
+                prop = '0' + prop;
+            }
             this._removeHandler(prop, namespace);
         }
         destroy() {

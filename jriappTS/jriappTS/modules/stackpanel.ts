@@ -13,16 +13,16 @@ module RIAPP {
             }
 
             export class StackPanel extends RIAPP.BaseObject implements RIAPP.ISelectable {
-                _el: HTMLElement;
-                _$el: JQuery;
-                _objId: string;
-                _dataSource: collection.BaseCollection<collection.CollectionItem>;
-                _isDSFilling: boolean;
-                _orientation: string;
-                _templateID: string;
-                _currentItem: collection.CollectionItem;
-                _itemMap: { [key: string]: { div: HTMLElement; template: template.Template; item: collection.CollectionItem; }; };
-                _app: Application;
+                private _el: HTMLElement;
+                private _$el: JQuery;
+                private _objId: string;
+                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _isDSFilling: boolean;
+                private _orientation: string;
+                private _templateID: string;
+                private _currentItem: collection.CollectionItem;
+                private _itemMap: { [key: string]: { div: HTMLElement; template: template.Template; item: collection.CollectionItem; }; };
+                private _app: Application;
 
                 constructor(app:Application, el:HTMLElement, dataSource:collection.BaseCollection<collection.CollectionItem>, options: IStackPanelOptions) {
                     super();
@@ -334,13 +334,18 @@ module RIAPP {
             }
 
             export class StackPanelElView extends baseElView.BaseElView {
-                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
                 private _panel: StackPanel;
                 private _options: IStackPanelOptions;
                 constructor(app: Application, el: HTMLSelectElement, options: IStackPanelViewOptions) {
-                    this._dataSource = null;
+                    var self = this;
                     this._panel = null;
                     this._options = options;
+                    this._panel = new StackPanel(app, el, null, this._options);
+                    this._panel.addOnDestroyed(function () {
+                        self._panel = null;
+                        self.invokePropChanged('panel');
+                        self.raisePropertyChanged('panel');
+                    });
                     super(app, el, options);
                 }
                 destroy() {
@@ -351,28 +356,22 @@ module RIAPP {
                         this._panel.destroy();
                     }
                     this._panel = null;
-                    this._dataSource = null;
                     super.destroy();
                 }
                 toString() {
                     return 'StackPanelElView';
                 }
-                get dataSource() { return this._dataSource; }
+                get dataSource() {
+                    if (this._isDestroyCalled)
+                        return undefined;
+                    return this._panel.dataSource;
+                }
                 set dataSource(v) {
-                    var self = this;
-                    if (this._dataSource !== v) {
-                        this._dataSource = v;
-                        if (!!this._panel)
-                            this._panel.destroy();
-                        this._panel = null;
-                        if (!!this._dataSource) {
-                            this._panel = new StackPanel(this.app, this._el, this._dataSource, this._options);
-                            this._panel.addOnDestroyed(function () {
-                                self._panel = null;
-                                self.invokePropChanged('panel');
-                            });
-                        }
-                        self.invokePropChanged('panel');
+                    if (this._isDestroyCalled)
+                        return;
+                    if (this.dataSource !== v) {
+                        this._panel.dataSource = v;
+                        this.raisePropertyChanged('dataSource');
                     }
                 }
                 get panel() { return this._panel; }

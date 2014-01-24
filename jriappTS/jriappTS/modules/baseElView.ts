@@ -211,6 +211,9 @@ module RIAPP {
                 constructor(app: Application, el: HTMLInputElement, options: IViewOptions) {
                     super(app, el, options);
                 }
+                toString() {
+                    return 'InputElView';
+                }
                 get isEnabled() { return !this.el.disabled; }
                 set isEnabled(v:boolean) {
                     v = !!v;
@@ -241,7 +244,7 @@ module RIAPP {
             };
 
             export class CommandElView extends BaseElView {
-                _command: MOD.mvvm.Command;
+                private _command: MOD.mvvm.Command;
                 _commandParam: any;
                 constructor(app: Application, el: HTMLElement, options: IViewOptions) {
                     super(app, el, options);
@@ -325,8 +328,8 @@ module RIAPP {
             }
 
             export class TemplateElView extends CommandElView {
-                _template: MOD.template.Template;
-                _isEnabled: boolean;
+                private _template: MOD.template.Template;
+                private _isEnabled: boolean;
                 constructor(app: Application, el: HTMLElement, options: IViewOptions) {
                     this._template = null;
                     this._isEnabled = true;
@@ -334,18 +337,26 @@ module RIAPP {
                 }
                 templateLoaded(template: MOD.template.Template) {
                     var self = this, p = self._commandParam;
-                    self._template = template;
-                    self._template.isDisabled = !self._isEnabled;
-                    self._commandParam = { template: template, isLoaded: true };
-                    self.invokeCommand();
-                    self._commandParam = p;
-                    this.raisePropertyChanged('template');
+                    try {
+                        self._template = template;
+                        self._template.isDisabled = !self._isEnabled;
+                        self._commandParam = { template: template, isLoaded: true };
+                        self.invokeCommand();
+                        self._commandParam = p;
+                        this.raisePropertyChanged('template');
+                    }
+                    catch (ex) {
+                        this._onError(ex, this);
+                    }
                 }
                 templateUnloading(template:MOD.template.Template) {
                     var self = this, p = self._commandParam;
                     try {
                         self._commandParam = { template: template, isLoaded: false };
                         self.invokeCommand();
+                    }
+                    catch (ex) {
+                        this._onError(ex, this);
                     }
                     finally {
                         self._commandParam = p;
@@ -366,14 +377,17 @@ module RIAPP {
                         this.raisePropertyChanged('isEnabled');
                     }
                 }
+                get template() {
+                    return this._template;
+                }
             };
 
             export class BusyElView extends BaseElView {
-                _delay: number;
-                _timeOut: number;
-                _loaderPath: string;
-                _$loader: any;
-                _isBusy: boolean;
+                private _delay: number;
+                private _timeOut: number;
+                private _loaderPath: string;
+                private _$loader: any;
+                private _isBusy: boolean;
                 constructor(app: Application, el: HTMLElement, options: IViewOptions) {
                     super(app, el, options);
                 }
@@ -456,18 +470,22 @@ module RIAPP {
             }
 
             export class DynaContentElView extends BaseElView {
-                _dataContext: any;
-                _template: MOD.template.Template;
+                private _dataContext: any;
+                private _template: MOD.template.Template;
                 constructor(app: Application, el: HTMLElement, options: IViewOptions) {
                     super(app, el, options);
                     this._dataContext = null;
                     this._template = null;
                 }
-                _templateChanged() {
-                    this.raisePropertyChanged('templateID');
-                    if (!this._template)
+                private _templateChanged() {
+                    if (!this._template) {
+                        this.raisePropertyChanged('templateID');
+                        this.raisePropertyChanged('template');
                         return;
+                    }
                     this.$el.empty().append(this._template.el);
+                    this.raisePropertyChanged('templateID');
+                    this.raisePropertyChanged('template');
                 }
                 updateTemplate(name:string) {
                     var self = this;
@@ -522,14 +540,16 @@ module RIAPP {
                 set dataContext(v) {
                     if (this._dataContext !== v) {
                         this._dataContext = v;
-                        if (!!this._template)
+                        if (!!this._template) {
                             this._template.dataContext = this._dataContext;
+                        }
+                        this.raisePropertyChanged('dataContext');
                     }
                 }
             }
 
             export class CheckBoxElView extends InputElView {
-                _val: boolean;
+                private _val: boolean;
                 _init(options: IViewOptions) {
                     var self = this;
                     super._init(options);
@@ -581,8 +601,8 @@ module RIAPP {
             }
 
             export class CheckBoxThreeStateElView extends InputElView {
-                _val: boolean;
-                _cbxVal: number;
+                private _val: boolean;
+                private _cbxVal: number;
                 _init(options: IViewOptions) {
                     var self = this;
                     super._init(options);
@@ -710,7 +730,7 @@ module RIAPP {
 
             export class HiddenElView extends InputElView {
                 toString() {
-                    return 'EditableElView';
+                    return 'HiddenElView';
                 }
             }
 
@@ -851,7 +871,7 @@ module RIAPP {
             }
 
             export class RadioElView extends InputElView {
-                _val: boolean;
+                private _val: boolean;
                 _init(options: IViewOptions) {
                     var self = this;
                     super._init(options);
@@ -932,7 +952,7 @@ module RIAPP {
             }
 
             export class ButtonElView extends CommandElView {
-                _preventDefault: boolean;
+                private _preventDefault: boolean;
                 constructor(app: Application, el: HTMLElement, options: IAncorOptions) {
                     this._preventDefault = false;
                     super(app, el, options);
@@ -1028,9 +1048,9 @@ module RIAPP {
             }
 
             export class AnchorElView extends CommandElView{
-                _imageSrc: string;
-                _image: HTMLImageElement;
-                _preventDefault: boolean;
+                private _imageSrc: string;
+                private _image: HTMLImageElement;
+                private _preventDefault: boolean;
                 constructor(app: Application, el: HTMLAnchorElement, options: IAncorOptions) {
                     this._imageSrc = null;
                     this._image = null;
@@ -1091,7 +1111,7 @@ module RIAPP {
                     super.destroy();
                 }
                 toString() {
-                    return 'AncorButtonElView';
+                    return 'AnchorElView';
                 }
                 get el() { return <HTMLAnchorElement>this._el; }
                 get imageSrc() { return this._imageSrc; }
@@ -1179,9 +1199,9 @@ module RIAPP {
             }
 
             export class ExpanderElView extends AnchorElView {
-                _expandedsrc: string;
-                _collapsedsrc: string;
-                _isExpanded: boolean;
+                private _expandedsrc: string;
+                private _collapsedsrc: string;
+                private _isExpanded: boolean;
                 _init(options: IExpanderOptions) {
                     this._expandedsrc = options.expandedsrc || global.getImagePath('collapse.jpg');
                     this._collapsedsrc = options.collapsedsrc || global.getImagePath('expand.jpg');
@@ -1280,7 +1300,7 @@ module RIAPP {
 
             export class BlockElView extends SpanElView {
                 toString() {
-                    return 'DivElView';
+                    return 'BlockElView';
                 }
                 get borderColor() {
                     var $el = this.$el;
@@ -1351,8 +1371,8 @@ module RIAPP {
             }
 
             export class TabsElView extends BaseElView {
-                _tabsEventCommand: mvvm.ICommand;
-                _tabOpts: any;
+                private _tabsEventCommand: mvvm.ICommand;
+                private _tabOpts: any;
 
                 _init(options) {
                     super._init(options);

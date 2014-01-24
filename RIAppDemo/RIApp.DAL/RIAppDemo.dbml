@@ -132,7 +132,7 @@
   <Table Name="SalesLT.SalesOrderHeader" Member="SalesOrderHeaders">
     <Type Name="SalesOrderHeader">
       <Column Name="SalesOrderID" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
-      <Column Name="RevisionNumber" Type="System.Byte" DbType="TinyInt NOT NULL" CanBeNull="false" />
+      <Column Name="RevisionNumber" AutoSync="Always" Type="System.Byte" DbType="TinyInt NOT NULL" CanBeNull="false" />
       <Column Name="OrderDate" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
       <Column Name="DueDate" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
       <Column Name="ShipDate" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />

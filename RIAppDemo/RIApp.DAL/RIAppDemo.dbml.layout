@@ -69,14 +69,14 @@
         <classShapeMoniker Id="269e78be-3f73-432a-9945-216a09a4f15b" />
       </nodes>
     </associationConnector>
-    <associationConnector edgePoints="[(1.5 : 4.1939111328125); (1.5 : 4.5)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+    <associationConnector edgePoints="[(1.5 : 4.1939111328125); (1.5 : 4.5)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/RIAppDemoDataContext/Customer/Customer_CustomerAddress" />
       <nodes>
         <classShapeMoniker Id="e51979b0-63ac-4763-abc7-2d3f39c8ac73" />
         <classShapeMoniker Id="269e78be-3f73-432a-9945-216a09a4f15b" />
       </nodes>
     </associationConnector>
-    <associationConnector edgePoints="[(2.5 : 7.16425699869792); (2.79166666666667 : 7.16425699869792 : JumpStart); (2.95833333333333 : 7.16425699869792 : JumpEnd); (3.375 : 7.16425699869792)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+    <associationConnector edgePoints="[(2.5 : 7.16425699869792); (3.375 : 7.16425699869792)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/RIAppDemoDataContext/ProductCategory/ProductCategory_Product" />
       <nodes>
         <classShapeMoniker Id="7e7653d6-0991-4461-9f14-2e449633ee37" />
@@ -90,14 +90,14 @@
         <classShapeMoniker Id="7e7653d6-0991-4461-9f14-2e449633ee37" />
       </nodes>
     </associationConnector>
-    <associationConnector edgePoints="[(2.5 : 8.50136122831531); (2.875 : 8.12636122831531); (2.875 : 6.24360020182292); (3.375 : 6.24360020182292)]" fixedFrom="NotFixed" fixedTo="Algorithm">
+    <associationConnector edgePoints="[(2.5 : 8.50136122831531); (2.875 : 8.12636122831531); (2.875 : 6.24360020182292); (3.375 : 6.24360020182292)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/RIAppDemoDataContext/ProductModel/ProductModel_Product" />
       <nodes>
         <classShapeMoniker Id="61a0b2ba-b819-400d-9c88-030da977a426" />
         <classShapeMoniker Id="f96a5fdb-0ad4-4566-a455-53c967a38a91" />
       </nodes>
     </associationConnector>
-    <associationConnector edgePoints="[(6.5 : 9.63544840494792); (5.375 : 9.63544840494792)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+    <associationConnector edgePoints="[(6.5 : 9.63544840494792); (5.375 : 9.63544840494792)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/RIAppDemoDataContext/ProductDescription/ProductDescription_ProductModelProductDescription" />
       <nodes>
         <classShapeMoniker Id="715d93b5-b31a-43d1-bc0a-bec20711d8b5" />
@@ -111,35 +111,35 @@
         <classShapeMoniker Id="80237d48-18b2-41af-ac5a-577b14720c90" />
       </nodes>
     </associationConnector>
-    <associationConnector edgePoints="[(5.375 : 6.78925699869792); (7.51041466666667 : 6.78925699869792 : JumpStart); (7.67708133333333 : 6.78925699869792 : JumpEnd); (8.5 : 6.78925699869792)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+    <associationConnector edgePoints="[(5.375 : 6.78925699869792); (7.51041466666667 : 6.78925699869792 : JumpStart); (7.67708133333333 : 6.78925699869792 : JumpEnd); (8.5 : 6.78925699869792)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/RIAppDemoDataContext/Product/Product_SalesOrderDetail" />
       <nodes>
         <classShapeMoniker Id="f96a5fdb-0ad4-4566-a455-53c967a38a91" />
         <classShapeMoniker Id="1de3a0b3-e60a-4b07-b123-b9f852a7469e" />
       </nodes>
     </associationConnector>
-    <associationConnector edgePoints="[(7.593748 : 5.54002115885417); (7.593748 : 7.57093176888021); (8.5 : 7.57093176888021)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+    <associationConnector edgePoints="[(7.593748 : 5.54002115885417); (7.593748 : 7.57093176888021); (8.5 : 7.57093176888021)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/RIAppDemoDataContext/SalesOrderHeader/SalesOrderHeader_SalesOrderDetail" />
       <nodes>
         <classShapeMoniker Id="888458d2-1983-41f0-86d1-c569250c9454" />
         <classShapeMoniker Id="1de3a0b3-e60a-4b07-b123-b9f852a7469e" />
       </nodes>
     </associationConnector>
-    <associationConnector edgePoints="[(5.5 : 1.77005126953125); (6.75 : 1.77005126953125)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+    <associationConnector edgePoints="[(5.5 : 1.77005126953125); (6.75 : 1.77005126953125)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/RIAppDemoDataContext/Address/Address_SalesOrderHeader" />
       <nodes>
         <classShapeMoniker Id="1c4fb5ea-c842-4513-a144-0ab6e4295581" />
         <classShapeMoniker Id="888458d2-1983-41f0-86d1-c569250c9454" />
       </nodes>
     </associationConnector>
-    <associationConnector edgePoints="[(5.5 : 1.07252563476563); (6.75 : 1.07252563476563)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+    <associationConnector edgePoints="[(5.5 : 1.07252563476563); (6.75 : 1.07252563476563)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/RIAppDemoDataContext/Address/Address_SalesOrderHeader1" />
       <nodes>
         <classShapeMoniker Id="1c4fb5ea-c842-4513-a144-0ab6e4295581" />
         <classShapeMoniker Id="888458d2-1983-41f0-86d1-c569250c9454" />
       </nodes>
     </associationConnector>
-    <associationConnector edgePoints="[(2.5 : 3.1963525390625); (3.26041666666667 : 3.1963525390625 : JumpStart); (3.42708333333333 : 3.1963525390625 : JumpEnd); (6.75 : 3.1963525390625)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+    <associationConnector edgePoints="[(2.5 : 3.1963525390625); (6.75 : 3.1963525390625)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/RIAppDemoDataContext/Customer/Customer_SalesOrderHeader" />
       <nodes>
         <classShapeMoniker Id="e51979b0-63ac-4763-abc7-2d3f39c8ac73" />
