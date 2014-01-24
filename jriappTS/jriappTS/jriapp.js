@@ -3623,6 +3623,7 @@ var RIAPP;
                         this.raisePropertyChanged('template');
                     } catch (ex) {
                         this._onError(ex, this);
+                        RIAPP.global._throwDummy(ex);
                     }
                 };
                 TemplateElView.prototype.templateUnloading = function (template) {

@@ -347,6 +347,7 @@ module RIAPP {
                     }
                     catch (ex) {
                         this._onError(ex, this);
+                        global._throwDummy(ex);
                     }
                 }
                 templateUnloading(template:MOD.template.Template) {
