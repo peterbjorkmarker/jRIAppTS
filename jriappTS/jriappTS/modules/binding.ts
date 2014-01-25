@@ -252,7 +252,10 @@ module RIAPP {
                     }
 
                     if (!!obj && path.length == 1) {
-                        isValidProp = (DebugLevel == DEBUG_LEVEL.NONE) || isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0]);
+                        isValidProp = true;
+                        if (DebugLevel != DEBUG_LEVEL.NONE)
+                            isValidProp = isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0]);
+
                         if (isValidProp) {
                             var updateOnChange = isBaseObj && (self._mode === BINDING_MODE.OneWay || self._mode === BINDING_MODE.TwoWay);
                             if (updateOnChange) {
@@ -311,8 +314,10 @@ module RIAPP {
                     }
 
                     if (!!obj && path.length === 1) {
-                        isValidProp = (DebugLevel == DEBUG_LEVEL.NONE) || isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0]);
-
+                        isValidProp = true;
+                        if (DebugLevel != DEBUG_LEVEL.NONE)
+                            isValidProp = isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0]);
+                       
                         if (isValidProp) {
                             var updateOnChange = isBaseObj && (self._mode === BINDING_MODE.TwoWay);
                             if (updateOnChange) {
