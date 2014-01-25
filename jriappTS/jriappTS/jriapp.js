@@ -6750,7 +6750,7 @@ var RIAPP;
                     return this.sortLocal(fieldNames, sortOrder);
                 };
                 BaseCollection.prototype.sortLocal = function (fieldNames, sortOrder) {
-                    var self = this, deffered = utils.createDeferred();
+                    var self = this;
                     var mult = 1;
                     if (sortOrder === 1 /* DESC */)
                         mult = -1;
@@ -6772,19 +6772,10 @@ var RIAPP;
                         }
                         return res;
                     };
-                    setTimeout(function () {
-                        try  {
-                            self.sortLocalByFunc(fn_sort);
-                            deffered.resolve();
-                        } catch (ex) {
-                            deffered.reject();
-                            self._onError(ex, self);
-                        }
-                    }, 0);
-                    return deffered.promise();
+                    return self.sortLocalByFunc(fn_sort);
                 };
                 BaseCollection.prototype.sortLocalByFunc = function (fn) {
-                    var self = this;
+                    var self = this, deffered = utils.createDeferred();
                     this.waitForNotLoading(function () {
                         var cur = self.currentItem;
                         self.isLoading = true;
@@ -6793,10 +6784,13 @@ var RIAPP;
                             self._onItemsChanged({ change_type: 2 /* RESET */, items: [], pos: [] });
                         } finally {
                             self.isLoading = false;
+                            deffered.resolve();
                         }
                         self.currentItem = null;
                         self.currentItem = cur;
                     }, [], false, null);
+
+                    return deffered.promise();
                 };
                 BaseCollection.prototype.clear = function () {
                     this._isClearing = true;
@@ -12564,31 +12558,23 @@ var RIAPP;
                     this.raiseEvent('view_refreshed', args);
                 };
                 DataView.prototype._refresh = function (isPageChanged) {
-                    var items, deffered = utils.createDeferred();
+                    var items;
                     var ds = this._dataSource;
                     if (!ds) {
-                        deffered.reject();
-                        return deffered.promise();
+                        return;
                     }
-                    try  {
-                        if (!!this._fn_itemsProvider) {
-                            items = this._fn_itemsProvider(ds);
-                        } else
-                            items = ds.items;
-                        if (!!this._fn_filter) {
-                            items = items.filter(this._fn_filter);
-                        }
-                        if (!!this._fn_sort) {
-                            items = items.sort(this._fn_sort);
-                        }
-                        this._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
-                        this._onViewRefreshed({});
-                        deffered.resolve();
-                    } catch (ex) {
-                        deffered.reject(ex);
-                        this._onError(ex, this);
+                    if (!!this._fn_itemsProvider) {
+                        items = this._fn_itemsProvider(ds);
+                    } else
+                        items = ds.items;
+                    if (!!this._fn_filter) {
+                        items = items.filter(this._fn_filter);
                     }
-                    return deffered.promise();
+                    if (!!this._fn_sort) {
+                        items = items.sort(this._fn_sort);
+                    }
+                    this._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
+                    this._onViewRefreshed({});
                 };
                 DataView.prototype._fillItems = function (data) {
                     data = utils.extend(false, {
@@ -12867,7 +12853,7 @@ var RIAPP;
                     }
                 };
                 DataView.prototype.sortLocal = function (fieldNames, sortOrder) {
-                    var mult = 1, parser = RIAPP.global.parser;
+                    var mult = 1, parser = RIAPP.global.parser, deffered = utils.createDeferred();
                     if (sortOrder === 1 /* DESC */)
                         mult = -1;
                     var fn_sort = function (a, b) {
@@ -12888,8 +12874,15 @@ var RIAPP;
                         }
                         return res;
                     };
-                    this._fn_sort = fn_sort;
-                    return this._refresh(false);
+                    try  {
+                        this.fn_sort = fn_sort;
+                        deffered.resolve();
+                    } catch (ex) {
+                        deffered.reject(ex);
+                        this._onError(ex, this);
+                        RIAPP.global._throwDummy(ex);
+                    }
+                    return deffered.promise();
                 };
                 DataView.prototype.getIsHasErrors = function () {
                     return this._dataSource.getIsHasErrors();
@@ -12907,7 +12900,7 @@ var RIAPP;
                     this.raisePropertyChanged('count');
                 };
                 DataView.prototype.refresh = function () {
-                    return this._refresh(false);
+                    this._refresh(false);
                 };
                 DataView.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -13023,36 +13016,19 @@ var RIAPP;
                     _super.call(this, opts);
                 }
                 ChildDataView.prototype._refresh = function (isPageChanged) {
-                    var self = this, ds = this._dataSource, deffered = utils.createDeferred();
+                    var self = this, ds = this._dataSource;
                     if (!ds) {
-                        deffered.reject();
-                        return deffered.promise();
+                        return;
                     }
-
-                    clearTimeout(self._refreshTimeout);
-                    self._refreshTimeout = setTimeout(function () {
-                        if (self._isDestroyCalled) {
-                            deffered.reject();
-                            return;
-                        }
-                        try  {
-                            var items = self._association.getChildItems(self._parentItem);
-                            if (!!self._fn_filter) {
-                                items = items.filter(self._fn_filter);
-                            }
-                            if (!!self._fn_sort) {
-                                items = items.sort(self._fn_sort);
-                            }
-                            self._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
-                            self._onViewRefreshed({});
-                            deffered.resolve();
-                        } catch (ex) {
-                            deffered.reject();
-                            self._onError(ex, self);
-                        }
-                    }, 250);
-
-                    return deffered.promise();
+                    var items = self._association.getChildItems(self._parentItem);
+                    if (!!self._fn_filter) {
+                        items = items.filter(self._fn_filter);
+                    }
+                    if (!!self._fn_sort) {
+                        items = items.sort(self._fn_sort);
+                    }
+                    self._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
+                    self._onViewRefreshed({});
                 };
                 ChildDataView.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -13075,11 +13051,18 @@ var RIAPP;
                         if (this._parentItem !== v) {
                             this._parentItem = v;
                             this.raisePropertyChanged('parentItem');
+                            var self = this;
                             if (this.items.length > 0) {
                                 this.clear();
                                 this._onViewRefreshed({});
                             }
-                            this._refresh(false);
+                            clearTimeout(self._refreshTimeout);
+                            self._refreshTimeout = setTimeout(function () {
+                                if (self._isDestroyCalled) {
+                                    return;
+                                }
+                                self._refresh(false);
+                            }, 250);
                         }
                     },
                     enumerable: true,

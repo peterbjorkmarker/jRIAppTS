@@ -1070,7 +1070,7 @@ module RIAPP {
                     return this.sortLocal(fieldNames, sortOrder);
                 }
                 sortLocal(fieldNames: string[], sortOrder: SORT_ORDER): IPromise<any>  {
-                    var self = this, deffered = utils.createDeferred();
+                    var self = this;
                     var mult = 1;
                     if (sortOrder === SORT_ORDER.DESC)
                         mult = -1;
@@ -1092,20 +1092,10 @@ module RIAPP {
                         }
                         return res;
                     };
-                    setTimeout(function () {
-                        try {
-                            self.sortLocalByFunc(fn_sort);
-                            deffered.resolve();
-                        }
-                        catch(ex) {
-                            deffered.reject();
-                            self._onError(ex, self);
-                        }
-                    }, 0);
-                    return deffered.promise();
+                    return self.sortLocalByFunc(fn_sort);
                 }
-                sortLocalByFunc(fn: (a, b) => number) {
-                    var self = this;
+                sortLocalByFunc(fn: (a, b) => number): IPromise<any> {
+                    var self = this, deffered = utils.createDeferred();
                     this.waitForNotLoading(function () {
                         var cur = self.currentItem;
                         self.isLoading = true;
@@ -1114,10 +1104,13 @@ module RIAPP {
                             self._onItemsChanged({ change_type: COLL_CHANGE_TYPE.RESET, items: [], pos: [] });
                         } finally {
                             self.isLoading = false;
+                            deffered.resolve();
                         }
                         self.currentItem = null;
                         self.currentItem = cur;
                     }, [], false, null);
+
+                    return deffered.promise();
                 }
                 clear() {
                     this._isClearing = true;

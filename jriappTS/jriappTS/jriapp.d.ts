@@ -1427,7 +1427,7 @@ declare module RIAPP {
                 public getIsHasErrors(): boolean;
                 public sort(fieldNames: string[], sortOrder: SORT_ORDER): RIAPP.IPromise<any>;
                 public sortLocal(fieldNames: string[], sortOrder: SORT_ORDER): RIAPP.IPromise<any>;
-                public sortLocalByFunc(fn: (a: any, b: any) => number): void;
+                public sortLocalByFunc(fn: (a: any, b: any) => number): RIAPP.IPromise<any>;
                 public clear(): void;
                 public destroy(): void;
                 public waitForNotLoading(callback: any, callbackArgs: any[], syncCheck: boolean, groupName: string): void;
@@ -2437,7 +2437,7 @@ declare module RIAPP {
                 public removeOnViewRefreshed(namespace?: string): void;
                 public _filterForPaging(items: TItem[]): TItem[];
                 public _onViewRefreshed(args: {}): void;
-                public _refresh(isPageChanged: boolean): RIAPP.IPromise<any>;
+                public _refresh(isPageChanged: boolean): void;
                 public _fillItems(data: {
                     items: TItem[];
                     isPageChanged: boolean;
@@ -2462,7 +2462,7 @@ declare module RIAPP {
                 public sortLocal(fieldNames: string[], sortOrder: MOD.collection.SORT_ORDER): RIAPP.IPromise<any>;
                 public getIsHasErrors(): boolean;
                 public clear(): void;
-                public refresh(): RIAPP.IPromise<any>;
+                public refresh(): void;
                 public destroy(): void;
                 public dataSource : MOD.collection.BaseCollection<TItem>;
                 public isPagingEnabled : boolean;
@@ -2480,7 +2480,7 @@ declare module RIAPP {
                     fn_filter?: (item: TEntity) => boolean;
                     fn_sort?: (item1: TEntity, item2: TEntity) => number;
                 });
-                public _refresh(isPageChanged: boolean): RIAPP.IPromise<any>;
+                public _refresh(isPageChanged: boolean): void;
                 public destroy(): void;
                 public toString(): string;
                 public parentItem : Entity;
