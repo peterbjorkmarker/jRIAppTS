@@ -3484,24 +3484,33 @@ module RIAPP {
                 _onViewRefreshed(args: {}) {
                     this.raiseEvent('view_refreshed', args);
                 }
-                _refresh(isPageChanged: boolean) {
-                    var items;
+                _refresh(isPageChanged: boolean): IPromise<any> {
+                    var items, deffered = utils.createDeferred();
                     var ds = this._dataSource;
-                    if (!ds)
-                        return;
-                    if (!!this._fn_itemsProvider) {
-                        items = this._fn_itemsProvider(ds);
+                    if (!ds) {
+                        deffered.reject();
+                        return deffered.promise();
                     }
-                    else
-                        items = ds.items;
-                    if (!!this._fn_filter) {
-                        items = items.filter(this._fn_filter);
+                    try {
+                        if (!!this._fn_itemsProvider) {
+                            items = this._fn_itemsProvider(ds);
+                        }
+                        else
+                            items = ds.items;
+                        if (!!this._fn_filter) {
+                            items = items.filter(this._fn_filter);
+                        }
+                        if (!!this._fn_sort) {
+                            items = items.sort(this._fn_sort);
+                        }
+                        this._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
+                        this._onViewRefreshed({});
+                        deffered.resolve();
+                    } catch (ex) {
+                        deffered.reject(ex);
+                        this._onError(ex, this);
                     }
-                    if (!!this._fn_sort) {
-                        items = items.sort(this._fn_sort);
-                    }
-                    this._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
-                    this._onViewRefreshed({});
+                    return deffered.promise();
                 }
                 _fillItems(data: {
                     items: TItem[];
@@ -3778,9 +3787,9 @@ module RIAPP {
                         this._onCurrentChanged();
                     }
                 }
-                sortLocal(fieldNames: string[], sortOrder: string) {
+                sortLocal(fieldNames: string[], sortOrder: collMod.SORT_ORDER): IPromise<any> {
                     var mult = 1, parser = global.parser;
-                    if (!!sortOrder && sortOrder.toUpperCase() === 'DESC')
+                    if (sortOrder === collMod.SORT_ORDER.DESC)
                         mult = -1;
                     var fn_sort = function (a, b) {
                         var res = 0, i, len, af, bf, fieldName;
@@ -3800,7 +3809,8 @@ module RIAPP {
                         }
                         return res;
                     };
-                    this.fn_sort = fn_sort;
+                    this._fn_sort = fn_sort;
+                    return this._refresh(false);
                 }
                 getIsHasErrors() {
                     return this._dataSource.getIsHasErrors();
@@ -3817,8 +3827,8 @@ module RIAPP {
                     this.pageIndex = 0;
                     this.raisePropertyChanged('count');
                 }
-                refresh() {
-                    this._refresh(false);
+                refresh(): IPromise<any> {
+                    return this._refresh(false);
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -3864,9 +3874,9 @@ module RIAPP {
             }
 
             export class ChildDataView<TEntity extends Entity> extends DataView<TEntity> {
-                _parentItem: Entity;
-                _refreshTimeout: number;
-                _association: Association;
+                private _parentItem: Entity;
+                private _refreshTimeout: number;
+                private _association: Association;
 
                 constructor(options: {
                     association: Association;
@@ -3907,24 +3917,38 @@ module RIAPP {
                     };
                     super(opts);
                 }
-                _refresh() {
-                    var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
+                _refresh(isPageChanged: boolean) : IPromise<any> {
+                    var self = this, ds = this._dataSource, deffered = utils.createDeferred();
+                    if (!ds) {
+                        deffered.reject();
+                        return deffered.promise();
+                    }
+
                     clearTimeout(self._refreshTimeout);
                     self._refreshTimeout = setTimeout(function () {
-                        if (self._isDestroyCalled)
+                        if (self._isDestroyCalled) {
+                            deffered.reject();
                             return;
-                        var items = <TEntity[]>self._association.getChildItems(self._parentItem);
-                        if (!!self._fn_filter) {
-                            items = items.filter(self._fn_filter);
                         }
-                        if (!!self._fn_sort) {
-                            items = items.sort(self._fn_sort);
+                        try {
+                            var items = <TEntity[]>self._association.getChildItems(self._parentItem);
+                            if (!!self._fn_filter) {
+                                items = items.filter(self._fn_filter);
+                            }
+                            if (!!self._fn_sort) {
+                                items = items.sort(self._fn_sort);
+                            }
+                            self._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
+                            self._onViewRefreshed({});
+                            deffered.resolve();
                         }
-                        self._fillItems({ items: items, isPageChanged: false, clear: true, isAppend: false });
-                        self._onViewRefreshed({});
+                        catch (ex) {
+                            deffered.reject();
+                            self._onError(ex, self);
+                        }
                     }, 250);
+
+                    return deffered.promise();
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -3948,7 +3972,7 @@ module RIAPP {
                             this.clear();
                             this._onViewRefreshed({});
                         }
-                        this._refresh();
+                        this._refresh(false);
                     }
                 }
                 get association() { return this._association; }

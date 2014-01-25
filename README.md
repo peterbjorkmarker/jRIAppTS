@@ -43,8 +43,8 @@ In my real world applications i use ASP.NET MVC 4 bundling feature. For LOB apps
 You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
-<p>2014-01-24 Fixed bug in the ListBox control. Added checks for valid (existing) property names in property change notifications. Updated the DEMO. 
-</p>
+<p>2014-01-25 Added a new DebugLevel variable to RIAPP module (in order to set a debugging level in the framework). Fixed a bug with the DataView sorting.</p>
+<p>2014-01-24 Fixed bug in the ListBox control. Added checks for valid (existing) property names in property change notifications. Updated the DEMO.</p>
 <p>2014-01-23 Added the <b>ability to test databindings</b> on the page. For this purpose the global object has a new event handler adding method addOnUnResolvedBinding.
 It registers an event handler which will be triggered when the path is not resolved. See the UserGuide.pdf for more info.<br/>
 Updated the docs and the demo. 

@@ -115,83 +115,12 @@ declare module RIAPP {
     var localizable: ILocaleText;
 }
 declare module RIAPP {
-    class ArrayHelper {
-        static clone(arr: any[]): any[];
-        static fromList(list: {
-            length: number;
-            [index: number]: any;
-        }): any[];
-        static fromCollection(list: HTMLCollection): any[];
-        static distinct(arr: any[]): any[];
+    enum DEBUG_LEVEL {
+        NONE = 0,
+        NORMAL = 1,
+        HIGH = 2,
     }
-    class baseUtils {
-        static isNull(a: any): boolean;
-        static isUndefined(a: any): boolean;
-        static isNt(a: any): boolean;
-        static isString(a: any): boolean;
-        static isFunc(a: any): boolean;
-        static isBoolean(a: any): boolean;
-        static isDate(a: any): boolean;
-        static isNumber(a: any): boolean;
-        static isNumeric(obj: any): boolean;
-        static endsWith(str: any, suffix: any): boolean;
-        static startsWith(str: any, prefix: any): boolean;
-        static fastTrim(str: any): string;
-        static trim(str: string, chars?: string): string;
-        static ltrim(str: string, chars?: string): string;
-        static rtrim(str: string, chars?: string): string;
-        static isArray(o: any): boolean;
-        static hasProp(obj: any, prop: string): boolean;
-        static format(format_str: string, ...args: any[]): string;
-        static setValue(root: any, namePath: string, val: any, checkOverwrite: boolean): void;
-        static getValue(root: any, namePath: string): any;
-        static removeValue(root: any, namePath: string): any;
-        static resolveOwner(obj: any, path: string): any;
-    }
-    class BaseObject {
-        public _isDestroyed: boolean;
-        public _isDestroyCalled: boolean;
-        private __events;
-        constructor();
-        public _getEventNames(): string[];
-        public _addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string, prepend?: boolean): void;
-        public _removeHandler(name?: string, namespace?: string): void;
-        public _raiseEvent(name: string, data: any): void;
-        public _onError(error: any, source: any): boolean;
-        public _checkEventName(name: string): void;
-        public _isHasProp(prop: string): boolean;
-        public raisePropertyChanged(name: string): void;
-        public addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string): void;
-        public removeHandler(name?: string, namespace?: string): void;
-        public addOnDestroyed(fn: (sender: any, args: {}) => void, namespace?: string): void;
-        public removeOnDestroyed(namespace?: string): void;
-        public addOnError(fn: (sender: any, args: {
-            error: any;
-            source: any;
-            isHandled: boolean;
-        }) => void, namespace?: string): void;
-        public removeOnError(namespace?: string): void;
-        public removeNSHandlers(namespace?: string): void;
-        public raiseEvent(name: string, args: any): void;
-        public addOnPropertyChange(prop: string, fn: (sender: any, args: {
-            property: string;
-        }) => void, namespace?: string): void;
-        public removeOnPropertyChange(prop?: string, namespace?: string): void;
-        public destroy(): void;
-    }
-}
-declare module RIAPP {
-    var global: Global;
-    var css_riaTemplate: string;
-    interface ISelectable {
-        containerEl: HTMLElement;
-        uniqueID: string;
-        _onKeyDown(key: number, event: Event): any;
-        _onKeyUp(key: number, event: Event): any;
-    }
-    interface IExports {
-        getExports(): any;
-    }
+    var DebugLevel: DEBUG_LEVEL;
     interface IPromise<T> {
         always(...alwaysCallbacks: {
             (res: any): void;
@@ -232,19 +161,98 @@ declare module RIAPP {
         promise(): IPromise<T>;
         state(): string;
     }
+    class ArrayHelper {
+        static clone(arr: any[]): any[];
+        static fromList(list: {
+            length: number;
+            [index: number]: any;
+        }): any[];
+        static fromCollection(list: HTMLCollection): any[];
+        static distinct(arr: any[]): any[];
+    }
+    class baseUtils {
+        static isNull(a: any): boolean;
+        static isUndefined(a: any): boolean;
+        static isNt(a: any): boolean;
+        static isString(a: any): boolean;
+        static isFunc(a: any): boolean;
+        static isBoolean(a: any): boolean;
+        static isDate(a: any): boolean;
+        static isNumber(a: any): boolean;
+        static isNumeric(obj: any): boolean;
+        static endsWith(str: any, suffix: any): boolean;
+        static startsWith(str: any, prefix: any): boolean;
+        static fastTrim(str: any): string;
+        static trim(str: string, chars?: string): string;
+        static ltrim(str: string, chars?: string): string;
+        static rtrim(str: string, chars?: string): string;
+        static isArray(o: any): boolean;
+        static hasProp(obj: any, prop: string): boolean;
+        static format(format_str: string, ...args: any[]): string;
+        static setValue(root: any, namePath: string, val: any, checkOverwrite: boolean): void;
+        static getValue(root: any, namePath: string): any;
+        static removeValue(root: any, namePath: string): any;
+        static resolveOwner(obj: any, path: string): any;
+    }
+}
+declare module RIAPP {
+    class BaseObject {
+        public _isDestroyed: boolean;
+        public _isDestroyCalled: boolean;
+        private __events;
+        constructor();
+        public _getEventNames(): string[];
+        public _addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string, prepend?: boolean): void;
+        public _removeHandler(name?: string, namespace?: string): void;
+        public _raiseEvent(name: string, data: any): void;
+        public _onError(error: any, source: any): boolean;
+        public _checkEventName(name: string): void;
+        public _isHasProp(prop: string): boolean;
+        public raisePropertyChanged(name: string): void;
+        public addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string): void;
+        public removeHandler(name?: string, namespace?: string): void;
+        public addOnDestroyed(fn: (sender: any, args: {}) => void, namespace?: string): void;
+        public removeOnDestroyed(namespace?: string): void;
+        public addOnError(fn: (sender: any, args: {
+            error: any;
+            source: any;
+            isHandled: boolean;
+        }) => void, namespace?: string): void;
+        public removeOnError(namespace?: string): void;
+        public removeNSHandlers(namespace?: string): void;
+        public raiseEvent(name: string, args: any): void;
+        public addOnPropertyChange(prop: string, fn: (sender: any, args: {
+            property: string;
+        }) => void, namespace?: string): void;
+        public removeOnPropertyChange(prop?: string, namespace?: string): void;
+        public destroy(): void;
+    }
+}
+declare module RIAPP {
+    var global: Global;
+    var css_riaTemplate: string;
     enum BindTo {
         Source = 0,
         Target = 1,
     }
+    interface ISelectable {
+        containerEl: HTMLElement;
+        uniqueID: string;
+        _onKeyDown(key: number, event: Event): any;
+        _onKeyUp(key: number, event: Event): any;
+    }
+    interface IExports {
+        getExports(): any;
+    }
     interface IGroupInfo {
-        fn_loader?: () => IPromise<string>;
+        fn_loader?: () => RIAPP.IPromise<string>;
         url?: string;
         names: string[];
         app?: RIAPP.Application;
-        promise?: IPromise<string>;
+        promise?: RIAPP.IPromise<string>;
     }
     interface ITemplateLoaderInfo {
-        fn_loader: () => IPromise<string>;
+        fn_loader: () => RIAPP.IPromise<string>;
         groupName?: string;
     }
     interface IUnResolvedBindingArgs {
@@ -294,9 +302,9 @@ declare module RIAPP {
         public _processTemplateSections(root: {
             querySelectorAll: (selectors: string) => NodeList;
         }): void;
-        public _loadTemplatesAsync(fn_loader: () => IPromise<string>, app: RIAPP.Application): IPromise<any>;
+        public _loadTemplatesAsync(fn_loader: () => RIAPP.IPromise<string>, app: RIAPP.Application): RIAPP.IPromise<any>;
         public _registerTemplateLoader(name: any, loader: ITemplateLoaderInfo): void;
-        public _getTemplateLoader(name: string): () => IPromise<string>;
+        public _getTemplateLoader(name: string): () => RIAPP.IPromise<string>;
         public _registerTemplateGroup(groupName: string, group: IGroupInfo): void;
         public _getTemplateGroup(name: string): IGroupInfo;
         public _waitForNotLoading(callback: any, callbackArgs: any): void;
@@ -1014,9 +1022,13 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module binding {
-            var BINDING_MODE: string[];
+            enum BINDING_MODE {
+                OneTime = 0,
+                OneWay = 1,
+                TwoWay = 2,
+            }
             interface IBindingOptions {
-                mode?: string;
+                mode?: BINDING_MODE;
                 converterParam?: any;
                 converter?: MOD.converter.IConverter;
                 targetPath: string;
@@ -1092,7 +1104,7 @@ declare module RIAPP {
                 public sourcePath : string[];
                 public sourceValue : any;
                 public targetValue : any;
-                public mode : string;
+                public mode : BINDING_MODE;
                 public converter : MOD.converter.IConverter;
                 public converterParam : any;
                 public isSourceFixed : boolean;
@@ -1414,7 +1426,7 @@ declare module RIAPP {
                 public removeItem(item: TItem): void;
                 public getIsHasErrors(): boolean;
                 public sort(fieldNames: string[], sortOrder: SORT_ORDER): RIAPP.IPromise<any>;
-                public sortLocal(fieldNames: string[], sortOrder: string): void;
+                public sortLocal(fieldNames: string[], sortOrder: SORT_ORDER): RIAPP.IPromise<any>;
                 public sortLocalByFunc(fn: (a: any, b: any) => number): void;
                 public clear(): void;
                 public destroy(): void;
@@ -1591,7 +1603,7 @@ declare module RIAPP {
                 isExternallyCachable(contentType: any): boolean;
             }
             function parseContentAttr(content_attr: string): IContentOptions;
-            function getBindingOptions(app: RIAPP.Application, options: IBindingInfo, defaultTarget: RIAPP.BaseObject, defaultSource: any): MOD.binding.IBindingOptions;
+            function getBindingOptions(app: RIAPP.Application, bindInfo: IBindingInfo, defaultTarget: RIAPP.BaseObject, defaultSource: any): MOD.binding.IBindingOptions;
             interface IContent {
                 isEditing: boolean;
                 dataContext: any;
@@ -2425,7 +2437,7 @@ declare module RIAPP {
                 public removeOnViewRefreshed(namespace?: string): void;
                 public _filterForPaging(items: TItem[]): TItem[];
                 public _onViewRefreshed(args: {}): void;
-                public _refresh(isPageChanged: boolean): void;
+                public _refresh(isPageChanged: boolean): RIAPP.IPromise<any>;
                 public _fillItems(data: {
                     items: TItem[];
                     isPageChanged: boolean;
@@ -2447,10 +2459,10 @@ declare module RIAPP {
                 public appendItems(items: TItem[]): TItem[];
                 public addNew(): TItem;
                 public removeItem(item: TItem): void;
-                public sortLocal(fieldNames: string[], sortOrder: string): void;
+                public sortLocal(fieldNames: string[], sortOrder: MOD.collection.SORT_ORDER): RIAPP.IPromise<any>;
                 public getIsHasErrors(): boolean;
                 public clear(): void;
-                public refresh(): void;
+                public refresh(): RIAPP.IPromise<any>;
                 public destroy(): void;
                 public dataSource : MOD.collection.BaseCollection<TItem>;
                 public isPagingEnabled : boolean;
@@ -2460,15 +2472,15 @@ declare module RIAPP {
                 public fn_itemsProvider : (ds: MOD.collection.BaseCollection<TItem>) => TItem[];
             }
             class ChildDataView<TEntity extends Entity> extends DataView<TEntity> {
-                public _parentItem: Entity;
-                public _refreshTimeout: number;
-                public _association: Association;
+                private _parentItem;
+                private _refreshTimeout;
+                private _association;
                 constructor(options: {
                     association: Association;
                     fn_filter?: (item: TEntity) => boolean;
                     fn_sort?: (item1: TEntity, item2: TEntity) => number;
                 });
-                public _refresh(): void;
+                public _refresh(isPageChanged: boolean): RIAPP.IPromise<any>;
                 public destroy(): void;
                 public toString(): string;
                 public parentItem : Entity;
@@ -2569,16 +2581,16 @@ declare module RIAPP {
                 public _onCommitChanges(item: MOD.collection.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: MOD.collection.STATUS): void;
                 public _bindDS(): void;
                 public _unbindDS(): void;
-                public _addOption(item: MOD.collection.CollectionItem, first: boolean): any;
+                public _addOption(item: MOD.collection.CollectionItem, first: boolean): HTMLOptionElement;
                 public _removeOption(item: MOD.collection.CollectionItem): void;
                 public _clear(isDestroy: boolean): void;
-                public clear(): void;
                 public _refresh(): void;
                 public _findItemIndex(item: MOD.collection.CollectionItem): number;
-                public findItemByValue(val: any): MOD.collection.CollectionItem;
-                public getTextByValue(val: any): string;
                 public _setIsEnabled(el: HTMLSelectElement, v: boolean): void;
                 public _getIsEnabled(el: HTMLSelectElement): boolean;
+                public clear(): void;
+                public findItemByValue(val: any): MOD.collection.CollectionItem;
+                public getTextByValue(val: any): string;
                 public toString(): string;
                 public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
                 public selectedValue : any;
@@ -2986,7 +2998,7 @@ declare module RIAPP {
                 public toString(): string;
                 public isSortable : boolean;
                 public sortMemberName : string;
-                public sortOrder : string;
+                public sortOrder : MOD.collection.SORT_ORDER;
             }
             class ExpanderColumn extends BaseColumn {
                 public _init(): void;

@@ -261,7 +261,7 @@ module RIAPP {
                 _addOption(item: collection.CollectionItem, first:boolean) {
                     if (this._isDestroyCalled)
                         return null;
-                    var oOption, key = '', val, text;
+                    var oOption: HTMLOptionElement, key = '', val, text: string;
                     if (!!item) {
                         key = item._key;
                     }
@@ -273,7 +273,7 @@ module RIAPP {
                     oOption = global.document.createElement("option");
                     oOption.text = text;
                     oOption.value = key;
-                    var data = { item: item, op: oOption };
+                    var data: IMappedItem = { item: item, op: oOption };
                     this._keyMap[key] = data;
                     if (val !== '')
                         this._valMap[val] = data;
@@ -281,7 +281,7 @@ module RIAPP {
                         if (this._el.options.length < 2)
                             this._el.add(oOption, null);
                         else
-                            this._el.add(oOption, (<any>this._el).options[1]);
+                            this._el.add(oOption, this._el.options[1]);
                     }
                     else
                         this._el.add(oOption, null);
@@ -290,7 +290,7 @@ module RIAPP {
                 _removeOption(item: collection.CollectionItem) {
                     if (this._isDestroyCalled)
                         return;
-                    var key = '', data, val;
+                    var key = '', data: IMappedItem, val;
                     if (!!item) {
                         key = item._key;
                         data = this._keyMap[key];
@@ -321,9 +321,6 @@ module RIAPP {
                     }
                     else
                         this._selectedItem = null;
-                }
-                clear() {
-                    this._clear(false);
                 }
                 _refresh() {
                     var self = this, ds = this._dataSource, oldItem = this._selectedItem;
@@ -356,6 +353,15 @@ module RIAPP {
                         return 0;
                     return data.op.index;
                 }
+                _setIsEnabled(el: HTMLSelectElement, v:boolean) {
+                    el.disabled = !v;
+                }
+                _getIsEnabled(el: HTMLSelectElement) {
+                    return !el.disabled;
+                }
+                clear() {
+                    this._clear(false);
+                }
                 findItemByValue(val) {
                     var data: IMappedItem = this._valMap[val];
                     if (!data)
@@ -368,12 +374,6 @@ module RIAPP {
                         return '';
                     else
                         return data.op.text;
-                }
-                _setIsEnabled(el: HTMLSelectElement, v:boolean) {
-                    el.disabled = !v;
-                }
-                _getIsEnabled(el: HTMLSelectElement) {
-                    return !el.disabled;
                 }
                 toString() {
                     return 'ListBox';
@@ -682,9 +682,9 @@ module RIAPP {
                     if (!this._options.fieldName)
                         return null;
 
-                    var options = {
+                    var options: RIAPP.MOD.binding.IBindingOptions = {
                         target: this, source: this._dctx,
-                        targetPath: 'value', sourcePath: this._options.fieldName, mode: "OneWay",
+                        targetPath: 'value', sourcePath: this._options.fieldName, mode: RIAPP.MOD.binding.BINDING_MODE.OneWay,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
                     return new binding.Binding(options);
@@ -693,9 +693,9 @@ module RIAPP {
                     if (!this._options.fieldName)
                         return null;
 
-                    var options = {
+                    var options: RIAPP.MOD.binding.IBindingOptions = {
                         target: selectView, source: this._dctx,
-                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: "TwoWay",
+                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: RIAPP.MOD.binding.BINDING_MODE.TwoWay,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
                     return new binding.Binding(options);

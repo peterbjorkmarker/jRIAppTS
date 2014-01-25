@@ -1,10 +1,12 @@
 module RIAPP {
     export module MOD {
         export module baseContent {
-            var utils: MOD.utils.Utils;
+            var utils: MOD.utils.Utils, parser: MOD.parser.Parser;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
+                parser = s.parser;
             });
+            import bindMOD = RIAPP.MOD.binding;
             export var css = {
                 content: 'ria-content-field',
                 required: 'ria-required-field'
@@ -68,7 +70,7 @@ module RIAPP {
             }
 
             export function parseContentAttr(content_attr: string): IContentOptions {
-                var res: IContentOptions = {
+                var contentOptions: IContentOptions = {
                     name:null,
                     templateInfo: null,
                     bindingInfo: null,
@@ -77,102 +79,103 @@ module RIAPP {
                     options: null
                 };
 
-                var temp_opts = global.parser.parseOptions(content_attr);
+                var attr: IDataContentAttr, temp_opts = parser.parseOptions(content_attr);
                 if (temp_opts.length === 0)
-                    return res;
-                var attr: IDataContentAttr = temp_opts[0];
+                    return contentOptions;
+                attr = temp_opts[0];
                 if (!attr.template && !!attr.fieldName) {
-                    var bindOpt: binding.IBindingOptions = {
+                    var bindInfo: RIAPP.MOD.baseContent.IBindingInfo = {
                         target: null, source: null,
-                        targetPath: null, sourcePath: attr.fieldName, mode: "OneWay",
+                        targetPath: null, sourcePath: attr.fieldName,
+                        mode: bindMOD.BINDING_MODE[bindMOD.BINDING_MODE.OneWay],
                         converter: null, converterParam: null
                     };
-                    res.bindingInfo = bindOpt;
-                    res.displayInfo = attr.css;
-                    res.fieldName = attr.fieldName;
+
+                    contentOptions.bindingInfo = bindInfo;
+                    contentOptions.displayInfo = attr.css;
+                    contentOptions.fieldName = attr.fieldName;
                     if (!!attr.name)
-                        res.name = attr.name;
+                        contentOptions.name = attr.name;
                     if (!!attr.options)
-                        res.options = attr.options;
-                    if (!(attr.readOnly === undefined))
-                        res.readOnly = utils.parseBool(attr.readOnly);
+                        contentOptions.options = attr.options;
+                    if (attr.readOnly !== undefined)
+                        contentOptions.readOnly = utils.parseBool(attr.readOnly);
                 }
                 else if (!!attr.template) {
-                    res.templateInfo = attr.template;
+                    contentOptions.templateInfo = attr.template;
                     delete attr.template;
                 }
-                return res;
+                return contentOptions;
             };
 
-            export function getBindingOptions(app: Application, options: MOD.baseContent.IBindingInfo, defaultTarget: BaseObject, defaultSource:any) {
-                var BINDING_MODE = binding.BINDING_MODE,
-                    opts: binding.IBindingOptions = {
-                        mode: BINDING_MODE[1],
-                        converterParam: null,
-                        converter: null,
-                        targetPath: null,
-                        sourcePath: null,
-                        target: null,
-                        source: null,
-                        isSourceFixed: false
-                    };
+            export function getBindingOptions(app: Application, bindInfo: IBindingInfo, defaultTarget: BaseObject, defaultSource:any) {
+                var bindingOpts: bindMOD.IBindingOptions = {
+                    mode: bindMOD.BINDING_MODE.OneWay,
+                    converterParam: null,
+                    converter: null,
+                    targetPath: null,
+                    sourcePath: null,
+                    target: null,
+                    source: null,
+                    isSourceFixed: false
+                };
 
-                var fixedSource = options.source, fixedTarget = options.target;
+                var fixedSource = bindInfo.source, fixedTarget = bindInfo.target;
 
-                if (!options.sourcePath && !!options.to)
-                    opts.sourcePath = options.to;
-                else if (!!options.sourcePath)
-                    opts.sourcePath = options.sourcePath;
-                if (!!options.targetPath)
-                    opts.targetPath = options.targetPath;
-                if (!!options.converterParam)
-                    opts.converterParam = options.converterParam;
-                if (!!options.mode)
-                    opts.mode = options.mode;
+                if (!bindInfo.sourcePath && !!bindInfo.to)
+                    bindingOpts.sourcePath = bindInfo.to;
+                else if (!!bindInfo.sourcePath)
+                    bindingOpts.sourcePath = bindInfo.sourcePath;
+                if (!!bindInfo.targetPath)
+                    bindingOpts.targetPath = bindInfo.targetPath;
+                if (!!bindInfo.converterParam)
+                    bindingOpts.converterParam = bindInfo.converterParam;
+                if (!!bindInfo.mode)
+                    bindingOpts.mode = bindMOD.BINDING_MODE[bindInfo.mode];
 
-                if (!!options.converter) {
-                    if (utils.check.isString(options.converter))
-                        opts.converter = app.getConverter(options.converter);
+                if (!!bindInfo.converter) {
+                    if (utils.check.isString(bindInfo.converter))
+                        bindingOpts.converter = app.getConverter(bindInfo.converter);
                     else
-                        opts.converter = options.converter;
+                        bindingOpts.converter = bindInfo.converter;
                 }
 
 
                 if (!fixedTarget)
-                    opts.target = defaultTarget;
+                    bindingOpts.target = defaultTarget;
                 else {
                     if (utils.check.isString(fixedTarget)) {
                         if (fixedTarget == 'this')
-                            opts.target = defaultTarget;
+                            bindingOpts.target = defaultTarget;
                         else {
                             //if no fixed target, then target evaluation starts from this app
-                            opts.target = global.parser.resolveBindingSource(app, global.parser._getPathParts(fixedTarget));
+                            bindingOpts.target = parser.resolveBindingSource(app, parser._getPathParts(fixedTarget));
                         }
                     }
                     else
-                        opts.target = fixedTarget;
+                        bindingOpts.target = fixedTarget;
                 }
 
                 if (!fixedSource) {
                     //if source is not supplied use defaultSource parameter as source
-                    opts.source = defaultSource; 
+                    bindingOpts.source = defaultSource; 
                 }
                 else {
-                    opts.isSourceFixed = true;
+                    bindingOpts.isSourceFixed = true;
                     if (utils.check.isString(fixedSource)) {
                         if (fixedSource == 'this') {
-                            opts.source = defaultTarget;
+                            bindingOpts.source = defaultTarget;
                         }
                         else {
                             //source evaluation starts from this app
-                            opts.source = global.parser.resolveBindingSource(app, global.parser._getPathParts(fixedSource));
+                            bindingOpts.source = parser.resolveBindingSource(app, parser._getPathParts(fixedSource));
                         }
                     }
                     else
-                        opts.source = fixedSource;
+                        bindingOpts.source = fixedSource;
                 }
 
-                return opts;
+                return bindingOpts;
             };
 
             export interface IContent {
@@ -265,14 +268,14 @@ module RIAPP {
                 _getBindingOption(bindingInfo:IBindingInfo, tgt:BaseObject, dctx, targetPath:string) {
                     var options = getBindingOptions(this.app,bindingInfo, tgt, dctx);
                     if (this.isEditing && this._canBeEdited())
-                        options.mode = 'TwoWay';
+                        options.mode = bindMOD.BINDING_MODE.TwoWay;
                     else
-                        options.mode = 'OneWay';
+                        options.mode = bindMOD.BINDING_MODE.OneWay;
                     if (!!targetPath)
                         options.targetPath = targetPath;
                     return options;
                 }
-                _getBindings(): binding.Binding[] {
+                _getBindings(): bindMOD.Binding[] {
                     if (!this._lfScope)
                         return [];
                     var arr = this._lfScope.getObjs(), res = [];
@@ -283,7 +286,7 @@ module RIAPP {
                     return res;
                 }
                 _updateBindingSource() {
-                    var i:number, len: number, obj: binding.Binding, bindings = this._getBindings();
+                    var i: number, len: number, obj: bindMOD.Binding, bindings = this._getBindings();
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         obj = bindings[i];
                         if (!obj.isSourceFixed)
@@ -470,12 +473,12 @@ module RIAPP {
                         this._updateCss();
                         this._lfScope = new MOD.utils.LifeTimeScope();
                         var options = this._getBindingOption(bindingInfo, this._tgt, this._dctx, 'checked');
-                        options.mode = 'TwoWay';
+                        options.mode = bindMOD.BINDING_MODE.TwoWay;
                         this._lfScope.addObj(this.app.bind(options));
                     }
                 }
                 _createCheckBoxView() {
-                    var el = <HTMLInputElement>global.document.createElement('input');
+                    var el = global.document.createElement('input');
                     el.setAttribute('type', 'checkbox');
                     var chbxView = new baseElView.CheckBoxElView(this.app, el, {});
                     return chbxView;

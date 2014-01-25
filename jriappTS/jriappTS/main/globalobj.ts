@@ -1,45 +1,20 @@
 module RIAPP {
     export var global: Global = null;
     export var css_riaTemplate = 'ria-template';
+
+    export enum BindTo {
+        Source= 0, Target= 1
+    }
+
     export interface ISelectable {
         containerEl: HTMLElement;
         uniqueID: string;
         _onKeyDown(key: number, event: Event);
         _onKeyUp(key: number, event: Event);
     }
+
     export interface IExports {
         getExports();
-    }
-    
-    export interface IPromise<T>{
-        always(...alwaysCallbacks: { (res: any): void; }[]): IPromise<any>;
-        done(...doneCallbacks: { (res: T): void; }[]): IPromise<any>;
-        fail(...failCallbacks: { (res: any): void; }[]): IPromise<any>;
-        progress(...progressCallbacks: { (res: any): void; }[]): IPromise<any>;
-        then(doneCallbacks: (res: T) => any, failCallbacks?: (res: any) => any, progressCallbacks?: (res: any) => any): IPromise<any>;
-    }
-
-    export interface IVoidPromise {
-        always(...alwaysCallbacks: { (res: any): void; }[]): IPromise<any>;
-        done(...doneCallbacks: { (): void; }[]): IPromise<any>;
-        fail(...failCallbacks: { (res: any): void; }[]): IPromise<any>;
-        progress(...progressCallbacks: { (res: any): void; }[]): IPromise<any>;
-        then(doneCallbacks: () => any, failCallbacks?: (res: any) => any, progressCallbacks?: (res: any) => any): IPromise<any>;
-    }
-
-    export interface IDeferred<T> extends IPromise<T>{
-        notify(arg: any): IDeferred<any>;
-        notifyWith(context: any, arg: any): IDeferred<any>
-        reject(arg?: any): IDeferred<any>;
-        rejectWith(context: any, arg?: any): IDeferred<any>;
-        resolve(arg?: T): IDeferred<any>;
-        resolveWith(context: any, arg?: T): IDeferred<any>;
-        promise(): IPromise<T>;
-        state(): string;
-    }
-
-    export enum BindTo {
-        Source= 0, Target= 1
     }
 
     export interface IGroupInfo {
@@ -63,7 +38,7 @@ module RIAPP {
     }
 
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.2.1.0';
+        public static vesion = '2.2.2.0';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;

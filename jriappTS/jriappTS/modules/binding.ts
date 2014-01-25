@@ -1,14 +1,20 @@
 module RIAPP {
     export module MOD {
         export module binding {
-            export var BINDING_MODE = ['OneTime', 'OneWay', 'TwoWay'];
-            var utils: MOD.utils.Utils, global = RIAPP.global, base_utils = RIAPP.baseUtils;
+            export enum BINDING_MODE {
+                OneTime = 0,
+                OneWay = 1,
+                TwoWay = 2
+            }
+
+            var utils: MOD.utils.Utils, global = RIAPP.global, base_utils = RIAPP.baseUtils, parser: MOD.parser.Parser;
             global.addOnInitialize((s, args) => {
                 utils = s.utils;
+                parser = s.parser;
             });
 
             export interface IBindingOptions {
-                mode?: string;
+                mode?: BINDING_MODE;
                 converterParam?: any;
                 converter?: MOD.converter.IConverter;
                 targetPath: string;
@@ -69,7 +75,7 @@ module RIAPP {
 
             export class Binding extends RIAPP.BaseObject{
                 private _state:any;
-                private _mode:string;
+                private _mode: BINDING_MODE;
                 private _converter: MOD.converter.IConverter;
                 private _converterParam: any;
                 private _srcPath:string[];
@@ -87,34 +93,45 @@ module RIAPP {
 
                 constructor (options: IBindingOptions, appName?: string) {
                     super();
-                     var opts = utils.extend(false, {
+                     var opts: IBindingOptions = utils.extend(false, {
                         target: null, source: null,
-                        targetPath: null, sourcePath: null, mode: BINDING_MODE[1],
+                        targetPath: null, sourcePath: null, mode: BINDING_MODE.OneWay,
                         converter: null, converterParam: null, isSourceFixed: false
                     }, options);
+
+                    if (utils.check.isString(opts.mode)) {
+                        opts.mode = <any>BINDING_MODE[opts.mode];
+                    }
+
+                    if (!utils.check.isString(opts.targetPath)) {
+                        if (RIAPP.DebugLevel == RIAPP.DEBUG_LEVEL.HIGH) {
+                            debugger;
+                        }
+                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
+                    }
+
+                    if (utils.check.isUndefined(BINDING_MODE[opts.mode])) {
+                        if (RIAPP.DebugLevel == RIAPP.DEBUG_LEVEL.HIGH) {
+                            debugger;
+                        }
+                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_BIND_MODE_INVALID, opts.mode));
+                    }
 
                     if (!opts.target) {
                         throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_EMPTY);
                     }
 
-                     if (!utils.check.isString(opts.targetPath)) {
-                         throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
-                    }
-
-                    if (BINDING_MODE.indexOf(opts.mode) < 0) {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_MODE_INVALID, opts.mode));
-                    }
-
-                     if (!utils.check.isBaseObj(opts.target)) {
+                    if (!utils.check.isBaseObj(opts.target)) {
                         throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
                     }
+
                     this._appName = appName;
                     this._state = null; //save state - source and target when binding is disabled
                     this._mode = opts.mode;
                     this._converter = opts.converter || global._getConverter('BaseConverter');
                     this._converterParam = opts.converterParam;
-                    this._srcPath = global.parser._getPathParts(opts.sourcePath);
-                    this._tgtPath = global.parser._getPathParts(opts.targetPath);
+                    this._srcPath = parser._getPathParts(opts.sourcePath);
+                    this._tgtPath = parser._getPathParts(opts.targetPath);
                     if (this._tgtPath.length < 1)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     this._isSourceFixed = (!!opts.isSourceFixed);
@@ -147,13 +164,13 @@ module RIAPP {
                 }
                 private _getUpdTgtProxy() {
                     var self = this;
-                    return function () {
+                    return function (sender, args) {
                         self._updateTarget();
                     };
                 }
                 private _getUpdSrcProxy() {
                     var self = this;
-                    return function () {
+                    return function (sender, args) {
                         self._updateSource();
                     };
                 }
@@ -175,7 +192,7 @@ module RIAPP {
                 }
                 private _getTgtChangedFn(self: Binding, obj, prop:string, restPath:string[], lvl:number) {
                     var fn = function (sender, data) {
-                        var val = global.parser._resolveProp(obj, prop);
+                        var val = parser._resolveProp(obj, prop);
                         if (restPath.length > 0) {
                             self._setPathItem(null, BindTo.Target, lvl, restPath);
                         }
@@ -185,7 +202,7 @@ module RIAPP {
                 }
                 private _getSrcChangedFn(self: Binding, obj, prop:string, restPath:string[], lvl:number) {
                     var fn = function (sender, data) {
-                        var val = global.parser._resolveProp(obj, prop);
+                        var val = parser._resolveProp(obj, prop);
                         if (restPath.length > 0) {
                             self._setPathItem(null, BindTo.Source, lvl, restPath);
                         }
@@ -205,7 +222,7 @@ module RIAPP {
                         self._updateTarget();
                 }
                 private _parseSrcPath2(obj, path:string[], lvl:number) {
-                    var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj));
+                    var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj)), isValidProp: boolean;
                     
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnSrcDestroyedProxy(), self._objId);
@@ -214,7 +231,7 @@ module RIAPP {
 
                     if (path.length > 1) {
                         if (isBaseObj) {
-                            obj.addOnPropertyChange(path[0], self._getSrcChangedFn(self, obj, path[0], path.slice(1), lvl + 1), self._objId);
+                            (<BaseObject>obj).addOnPropertyChange(path[0], self._getSrcChangedFn(self, obj, path[0], path.slice(1), lvl + 1), self._objId);
                         }
 
                         if (!!obj) {
@@ -223,27 +240,35 @@ module RIAPP {
                                 self._parseSrcPath2(nextObj, path.slice(1), lvl + 1);
                             }
                             else if (base_utils.isUndefined(nextObj)) {
-                                global._onUnResolvedBinding(BindTo.Source, this.source, this._srcPath.join('.'), path[0]);
+                                if (DebugLevel == DEBUG_LEVEL.HIGH) {
+                                    debugger;
+                                }
+                                if (DebugLevel > DEBUG_LEVEL.NONE) {
+                                    global._onUnResolvedBinding(BindTo.Source, self.source, self._srcPath.join('.'), path[0]);
+                                }
                             }
                         }
                         return;
                     }
 
-                    if (!!obj && path.length === 1) {
-                        if (isBaseObj ? obj._isHasProp(path[0]): base_utils.hasProp(obj, path[0])) {
-                            var updateOnChange = (self._mode === BINDING_MODE[1] || self._mode === BINDING_MODE[2]);
-                            if (updateOnChange && isBaseObj) {
-                                obj.addOnPropertyChange(path[0], self._getUpdTgtProxy(), this._objId);
+                    if (!!obj && path.length == 1) {
+                        isValidProp = (DebugLevel == DEBUG_LEVEL.NONE) || isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0]);
+                        if (isValidProp) {
+                            var updateOnChange = isBaseObj && (self._mode === BINDING_MODE.OneWay || self._mode === BINDING_MODE.TwoWay);
+                            if (updateOnChange) {
+                                (<BaseObject>obj).addOnPropertyChange(path[0], self._getUpdTgtProxy(), self._objId);
                             }
                             if (!!obj && utils.check.isFunction(obj.getIErrorNotification)) {
                                 (<IErrorNotification>obj).addOnErrorsChanged(self._getSrcErrChangedProxy(), self._objId);
                             }
-                            this._sourceObj = obj;
+                            self._sourceObj = obj;
                         }
                         else {
-                            global._onUnResolvedBinding(BindTo.Source, this.source, this._srcPath.join('.'), path[0]);
+                            if (DebugLevel == DEBUG_LEVEL.HIGH) {
+                                debugger;
+                            }
+                            global._onUnResolvedBinding(BindTo.Source, self.source, self._srcPath.join('.'), path[0]);                        }
                         }
-                    }
                 }
                 private _parseTgtPath(obj, path: string[], lvl: number) {
                     var self = this;
@@ -257,16 +282,16 @@ module RIAPP {
                         self._updateTarget();  //update target (not source!)
                 }
                 private _parseTgtPath2(obj, path:string[], lvl:number) {
-                    var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj));
+                    var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj)), isValidProp: boolean;
 
                     if (isBaseObj) {
-                        obj.addOnDestroyed(self._getOnTgtDestroyedProxy(), self._objId);
+                        (<BaseObject>obj).addOnDestroyed(self._getOnTgtDestroyedProxy(), self._objId);
                         self._setPathItem(obj, BindTo.Target, lvl, path);
                     }
 
                     if (path.length > 1) {
                         if (isBaseObj) {
-                            obj.addOnPropertyChange(path[0], self._getTgtChangedFn(self, obj, path[0], path.slice(1), lvl + 1), self._objId);
+                            (<BaseObject>obj).addOnPropertyChange(path[0], self._getTgtChangedFn(self, obj, path[0], path.slice(1), lvl + 1), self._objId);
                         }
                         if (!!obj) {
                             nextObj = global.parser._resolveProp(obj, path[0]);
@@ -274,22 +299,32 @@ module RIAPP {
                                 self._parseTgtPath2(nextObj, path.slice(1), lvl + 1);
                             }
                             else if (base_utils.isUndefined(nextObj)) {
-                                global._onUnResolvedBinding(BindTo.Target, this.target, this._tgtPath.join('.'), path[0]);
+                                if (DebugLevel == DEBUG_LEVEL.HIGH) {
+                                    debugger;
+                                }
+                                if (DebugLevel > DEBUG_LEVEL.NONE) {
+                                    global._onUnResolvedBinding(BindTo.Target, self.target, self._tgtPath.join('.'), path[0]);
+                                }
                             }
                         }
                         return;
                     }
 
                     if (!!obj && path.length === 1) {
-                        if (isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0])) {
-                            var updateOnChange = (self._mode === BINDING_MODE[2]);
-                            if (updateOnChange && isBaseObj) {
-                                obj.addOnPropertyChange(path[0], self._getUpdSrcProxy(), this._objId);
+                        isValidProp = (DebugLevel == DEBUG_LEVEL.NONE) || isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0]);
+
+                        if (isValidProp) {
+                            var updateOnChange = isBaseObj && (self._mode === BINDING_MODE.TwoWay);
+                            if (updateOnChange) {
+                                (<BaseObject>obj).addOnPropertyChange(path[0], self._getUpdSrcProxy(), self._objId);
                             }
                             self._targetObj = obj;
                         }
                         else {
-                            global._onUnResolvedBinding(BindTo.Target, this.target, this._tgtPath.join('.'), path[0]);
+                            if (DebugLevel == DEBUG_LEVEL.HIGH) {
+                                debugger;
+                            }
+                            global._onUnResolvedBinding(BindTo.Target, self.target, self._tgtPath.join('.'), path[0]);
                         }
                     }
                 }

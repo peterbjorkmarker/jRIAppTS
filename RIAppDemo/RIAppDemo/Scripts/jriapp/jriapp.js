@@ -119,9 +119,17 @@ var RIAPP;
         return locale;
     })();
 })(RIAPP || (RIAPP = {}));
-'use strict';
 var RIAPP;
 (function (RIAPP) {
+    (function (DEBUG_LEVEL) {
+        DEBUG_LEVEL[DEBUG_LEVEL["NONE"] = 0] = "NONE";
+        DEBUG_LEVEL[DEBUG_LEVEL["NORMAL"] = 1] = "NORMAL";
+        DEBUG_LEVEL[DEBUG_LEVEL["HIGH"] = 2] = "HIGH";
+    })(RIAPP.DEBUG_LEVEL || (RIAPP.DEBUG_LEVEL = {}));
+    var DEBUG_LEVEL = RIAPP.DEBUG_LEVEL;
+
+    RIAPP.DebugLevel = 0 /* NONE */;
+
     var ArrayHelper = (function () {
         function ArrayHelper() {
         }
@@ -367,7 +375,10 @@ var RIAPP;
         return baseUtils;
     })();
     RIAPP.baseUtils = baseUtils;
-
+})(RIAPP || (RIAPP = {}));
+'use strict';
+var RIAPP;
+(function (RIAPP) {
     var BaseObject = (function () {
         function BaseObject() {
             this._isDestroyed = false;
@@ -481,7 +492,7 @@ var RIAPP;
                 }
                 if (!ev[name])
                     return;
-                var arr = ArrayHelper.clone(ev[name]);
+                var arr = RIAPP.ArrayHelper.clone(ev[name]);
                 arr.forEach(function (obj) {
                     obj.fn.apply(self, [self, data]);
                 });
@@ -499,25 +510,37 @@ var RIAPP;
             return args.isHandled;
         };
         BaseObject.prototype._checkEventName = function (name) {
-            if (this._getEventNames().indexOf(name) === -1)
+            if (this._getEventNames().indexOf(name) === -1) {
+                if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                    debugger;
+                }
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
+            }
         };
         BaseObject.prototype._isHasProp = function (prop) {
-            return baseUtils.hasProp(this, prop);
+            return RIAPP.baseUtils.hasProp(this, prop);
         };
         BaseObject.prototype.raisePropertyChanged = function (name) {
             var data = { property: name };
             var parts = name.split('.'), lastPropName = parts[parts.length - 1];
             if (parts.length > 1) {
-                var obj = baseUtils.resolveOwner(this, name);
-                if (baseUtils.isUndefined(obj))
-                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, name));
+                var obj = RIAPP.baseUtils.resolveOwner(this, name);
+                if (RIAPP.DebugLevel > 0 /* NONE */ && RIAPP.baseUtils.isUndefined(obj)) {
+                    if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                        debugger;
+                    }
+                    throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, name));
+                }
                 if (obj instanceof BaseObject) {
                     obj._raiseEvent('0' + lastPropName, data);
                 }
             } else {
-                if (!baseUtils.hasProp(this, lastPropName))
-                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, lastPropName));
+                if (RIAPP.DebugLevel > 0 /* NONE */ && !RIAPP.baseUtils.hasProp(this, lastPropName)) {
+                    if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                        debugger;
+                    }
+                    throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, lastPropName));
+                }
                 this._raiseEvent('0' + lastPropName, data);
             }
         };
@@ -557,16 +580,23 @@ var RIAPP;
         BaseObject.prototype.addOnPropertyChange = function (prop, fn, namespace) {
             if (!prop)
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);
-            if (prop != '*' && !this._isHasProp(prop)) {
-                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
+            if (RIAPP.DebugLevel > 0 /* NONE */ && prop != '*' && !this._isHasProp(prop)) {
+                if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                    debugger;
+                }
+                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
             }
             prop = '0' + prop;
             this._addHandler(prop, fn, namespace, false);
         };
         BaseObject.prototype.removeOnPropertyChange = function (prop, namespace) {
             if (!!prop) {
-                if (prop != '*' && !this._isHasProp(prop))
-                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
+                if (RIAPP.DebugLevel > 0 /* NONE */ && prop != '*' && !this._isHasProp(prop)) {
+                    if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                        debugger;
+                    }
+                    throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
+                }
                 prop = '0' + prop;
             }
             this._removeHandler(prop, namespace);
@@ -1150,7 +1180,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.2.1.0';
+        Global.vesion = '2.2.2.0';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -5007,10 +5037,17 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (binding) {
-            binding.BINDING_MODE = ['OneTime', 'OneWay', 'TwoWay'];
-            var utils, global = RIAPP.global, base_utils = RIAPP.baseUtils;
+            (function (BINDING_MODE) {
+                BINDING_MODE[BINDING_MODE["OneTime"] = 0] = "OneTime";
+                BINDING_MODE[BINDING_MODE["OneWay"] = 1] = "OneWay";
+                BINDING_MODE[BINDING_MODE["TwoWay"] = 2] = "TwoWay";
+            })(binding.BINDING_MODE || (binding.BINDING_MODE = {}));
+            var BINDING_MODE = binding.BINDING_MODE;
+
+            var utils, global = RIAPP.global, base_utils = RIAPP.baseUtils, parser;
             global.addOnInitialize(function (s, args) {
                 utils = s.utils;
+                parser = s.parser;
             });
 
             function _checkIsErrorNotification(obj) {
@@ -5064,32 +5101,43 @@ var RIAPP;
                     _super.call(this);
                     var opts = utils.extend(false, {
                         target: null, source: null,
-                        targetPath: null, sourcePath: null, mode: binding.BINDING_MODE[1],
+                        targetPath: null, sourcePath: null, mode: 1 /* OneWay */,
                         converter: null, converterParam: null, isSourceFixed: false
                     }, options);
+
+                    if (utils.check.isString(opts.mode)) {
+                        opts.mode = BINDING_MODE[opts.mode];
+                    }
+
+                    if (!utils.check.isString(opts.targetPath)) {
+                        if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                            debugger;
+                        }
+                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
+                    }
+
+                    if (utils.check.isUndefined(BINDING_MODE[opts.mode])) {
+                        if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                            debugger;
+                        }
+                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_BIND_MODE_INVALID, opts.mode));
+                    }
 
                     if (!opts.target) {
                         throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_EMPTY);
                     }
 
-                    if (!utils.check.isString(opts.targetPath)) {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
-                    }
-
-                    if (binding.BINDING_MODE.indexOf(opts.mode) < 0) {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_MODE_INVALID, opts.mode));
-                    }
-
                     if (!utils.check.isBaseObj(opts.target)) {
                         throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
                     }
+
                     this._appName = appName;
                     this._state = null; //save state - source and target when binding is disabled
                     this._mode = opts.mode;
                     this._converter = opts.converter || global._getConverter('BaseConverter');
                     this._converterParam = opts.converterParam;
-                    this._srcPath = global.parser._getPathParts(opts.sourcePath);
-                    this._tgtPath = global.parser._getPathParts(opts.targetPath);
+                    this._srcPath = parser._getPathParts(opts.sourcePath);
+                    this._tgtPath = parser._getPathParts(opts.targetPath);
                     if (this._tgtPath.length < 1)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     this._isSourceFixed = (!!opts.isSourceFixed);
@@ -5122,13 +5170,13 @@ var RIAPP;
                 };
                 Binding.prototype._getUpdTgtProxy = function () {
                     var self = this;
-                    return function () {
+                    return function (sender, args) {
                         self._updateTarget();
                     };
                 };
                 Binding.prototype._getUpdSrcProxy = function () {
                     var self = this;
-                    return function () {
+                    return function (sender, args) {
                         self._updateSource();
                     };
                 };
@@ -5150,7 +5198,7 @@ var RIAPP;
                 };
                 Binding.prototype._getTgtChangedFn = function (self, obj, prop, restPath, lvl) {
                     var fn = function (sender, data) {
-                        var val = global.parser._resolveProp(obj, prop);
+                        var val = parser._resolveProp(obj, prop);
                         if (restPath.length > 0) {
                             self._setPathItem(null, 1 /* Target */, lvl, restPath);
                         }
@@ -5160,7 +5208,7 @@ var RIAPP;
                 };
                 Binding.prototype._getSrcChangedFn = function (self, obj, prop, restPath, lvl) {
                     var fn = function (sender, data) {
-                        var val = global.parser._resolveProp(obj, prop);
+                        var val = parser._resolveProp(obj, prop);
                         if (restPath.length > 0) {
                             self._setPathItem(null, 0 /* Source */, lvl, restPath);
                         }
@@ -5179,7 +5227,7 @@ var RIAPP;
                         self._updateTarget();
                 };
                 Binding.prototype._parseSrcPath2 = function (obj, path, lvl) {
-                    var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj));
+                    var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj)), isValidProp;
 
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnSrcDestroyedProxy(), self._objId);
@@ -5196,24 +5244,33 @@ var RIAPP;
                             if (!!nextObj) {
                                 self._parseSrcPath2(nextObj, path.slice(1), lvl + 1);
                             } else if (base_utils.isUndefined(nextObj)) {
-                                global._onUnResolvedBinding(0 /* Source */, this.source, this._srcPath.join('.'), path[0]);
+                                if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                                    debugger;
+                                }
+                                if (RIAPP.DebugLevel > 0 /* NONE */) {
+                                    global._onUnResolvedBinding(0 /* Source */, self.source, self._srcPath.join('.'), path[0]);
+                                }
                             }
                         }
                         return;
                     }
 
-                    if (!!obj && path.length === 1) {
-                        if (isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0])) {
-                            var updateOnChange = (self._mode === binding.BINDING_MODE[1] || self._mode === binding.BINDING_MODE[2]);
-                            if (updateOnChange && isBaseObj) {
-                                obj.addOnPropertyChange(path[0], self._getUpdTgtProxy(), this._objId);
+                    if (!!obj && path.length == 1) {
+                        isValidProp = (RIAPP.DebugLevel == 0 /* NONE */) || isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0]);
+                        if (isValidProp) {
+                            var updateOnChange = isBaseObj && (self._mode === 1 /* OneWay */ || self._mode === 2 /* TwoWay */);
+                            if (updateOnChange) {
+                                obj.addOnPropertyChange(path[0], self._getUpdTgtProxy(), self._objId);
                             }
                             if (!!obj && utils.check.isFunction(obj.getIErrorNotification)) {
                                 obj.addOnErrorsChanged(self._getSrcErrChangedProxy(), self._objId);
                             }
-                            this._sourceObj = obj;
+                            self._sourceObj = obj;
                         } else {
-                            global._onUnResolvedBinding(0 /* Source */, this.source, this._srcPath.join('.'), path[0]);
+                            if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                                debugger;
+                            }
+                            global._onUnResolvedBinding(0 /* Source */, self.source, self._srcPath.join('.'), path[0]);
                         }
                     }
                 };
@@ -5228,7 +5285,7 @@ var RIAPP;
                         self._updateTarget(); //update target (not source!)
                 };
                 Binding.prototype._parseTgtPath2 = function (obj, path, lvl) {
-                    var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj));
+                    var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj)), isValidProp;
 
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnTgtDestroyedProxy(), self._objId);
@@ -5244,21 +5301,31 @@ var RIAPP;
                             if (!!nextObj) {
                                 self._parseTgtPath2(nextObj, path.slice(1), lvl + 1);
                             } else if (base_utils.isUndefined(nextObj)) {
-                                global._onUnResolvedBinding(1 /* Target */, this.target, this._tgtPath.join('.'), path[0]);
+                                if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                                    debugger;
+                                }
+                                if (RIAPP.DebugLevel > 0 /* NONE */) {
+                                    global._onUnResolvedBinding(1 /* Target */, self.target, self._tgtPath.join('.'), path[0]);
+                                }
                             }
                         }
                         return;
                     }
 
                     if (!!obj && path.length === 1) {
-                        if (isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0])) {
-                            var updateOnChange = (self._mode === binding.BINDING_MODE[2]);
-                            if (updateOnChange && isBaseObj) {
-                                obj.addOnPropertyChange(path[0], self._getUpdSrcProxy(), this._objId);
+                        isValidProp = (RIAPP.DebugLevel == 0 /* NONE */) || isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0]);
+
+                        if (isValidProp) {
+                            var updateOnChange = isBaseObj && (self._mode === 2 /* TwoWay */);
+                            if (updateOnChange) {
+                                obj.addOnPropertyChange(path[0], self._getUpdSrcProxy(), self._objId);
                             }
                             self._targetObj = obj;
                         } else {
-                            global._onUnResolvedBinding(1 /* Target */, this.target, this._tgtPath.join('.'), path[0]);
+                            if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                                debugger;
+                            }
+                            global._onUnResolvedBinding(1 /* Target */, self.target, self._tgtPath.join('.'), path[0]);
                         }
                     }
                 };
@@ -6675,19 +6742,12 @@ var RIAPP;
                     return (utils.getProps(this._errors).length > 0);
                 };
                 BaseCollection.prototype.sort = function (fieldNames, sortOrder) {
-                    var self = this, deffered = utils.createDeferred();
-                    setTimeout(function () {
-                        try  {
-                            self.sortLocal(fieldNames, SORT_ORDER[sortOrder]);
-                        } finally {
-                            deffered.resolve();
-                        }
-                    }, 0);
-                    return deffered.promise();
+                    return this.sortLocal(fieldNames, sortOrder);
                 };
                 BaseCollection.prototype.sortLocal = function (fieldNames, sortOrder) {
+                    var self = this, deffered = utils.createDeferred();
                     var mult = 1;
-                    if (!!sortOrder && sortOrder.toUpperCase() === 'DESC')
+                    if (sortOrder === 1 /* DESC */)
                         mult = -1;
                     var fn_sort = function (a, b) {
                         var res = 0, i, len, af, bf, fieldName;
@@ -6707,7 +6767,16 @@ var RIAPP;
                         }
                         return res;
                     };
-                    this.sortLocalByFunc(fn_sort);
+                    setTimeout(function () {
+                        try  {
+                            self.sortLocalByFunc(fn_sort);
+                            deffered.resolve();
+                        } catch (ex) {
+                            deffered.reject();
+                            self._onError(ex, self);
+                        }
+                    }, 0);
+                    return deffered.promise();
                 };
                 BaseCollection.prototype.sortLocalByFunc = function (fn) {
                     var self = this;
@@ -7561,10 +7630,12 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (baseContent) {
-            var utils;
+            var utils, parser;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
+                parser = s.parser;
             });
+            var bindMOD = RIAPP.MOD.binding;
             baseContent.css = {
                 content: 'ria-content-field',
                 required: 'ria-required-field'
@@ -7582,7 +7653,7 @@ var RIAPP;
             ;
 
             function parseContentAttr(content_attr) {
-                var res = {
+                var contentOptions = {
                     name: null,
                     templateInfo: null,
                     bindingInfo: null,
@@ -7591,37 +7662,39 @@ var RIAPP;
                     options: null
                 };
 
-                var temp_opts = RIAPP.global.parser.parseOptions(content_attr);
+                var attr, temp_opts = parser.parseOptions(content_attr);
                 if (temp_opts.length === 0)
-                    return res;
-                var attr = temp_opts[0];
+                    return contentOptions;
+                attr = temp_opts[0];
                 if (!attr.template && !!attr.fieldName) {
-                    var bindOpt = {
+                    var bindInfo = {
                         target: null, source: null,
-                        targetPath: null, sourcePath: attr.fieldName, mode: "OneWay",
+                        targetPath: null, sourcePath: attr.fieldName,
+                        mode: bindMOD.BINDING_MODE[1 /* OneWay */],
                         converter: null, converterParam: null
                     };
-                    res.bindingInfo = bindOpt;
-                    res.displayInfo = attr.css;
-                    res.fieldName = attr.fieldName;
+
+                    contentOptions.bindingInfo = bindInfo;
+                    contentOptions.displayInfo = attr.css;
+                    contentOptions.fieldName = attr.fieldName;
                     if (!!attr.name)
-                        res.name = attr.name;
+                        contentOptions.name = attr.name;
                     if (!!attr.options)
-                        res.options = attr.options;
-                    if (!(attr.readOnly === undefined))
-                        res.readOnly = utils.parseBool(attr.readOnly);
+                        contentOptions.options = attr.options;
+                    if (attr.readOnly !== undefined)
+                        contentOptions.readOnly = utils.parseBool(attr.readOnly);
                 } else if (!!attr.template) {
-                    res.templateInfo = attr.template;
+                    contentOptions.templateInfo = attr.template;
                     delete attr.template;
                 }
-                return res;
+                return contentOptions;
             }
             baseContent.parseContentAttr = parseContentAttr;
             ;
 
-            function getBindingOptions(app, options, defaultTarget, defaultSource) {
-                var BINDING_MODE = RIAPP.MOD.binding.BINDING_MODE, opts = {
-                    mode: BINDING_MODE[1],
+            function getBindingOptions(app, bindInfo, defaultTarget, defaultSource) {
+                var bindingOpts = {
+                    mode: 1 /* OneWay */,
                     converterParam: null,
                     converter: null,
                     targetPath: null,
@@ -7631,57 +7704,57 @@ var RIAPP;
                     isSourceFixed: false
                 };
 
-                var fixedSource = options.source, fixedTarget = options.target;
+                var fixedSource = bindInfo.source, fixedTarget = bindInfo.target;
 
-                if (!options.sourcePath && !!options.to)
-                    opts.sourcePath = options.to;
-                else if (!!options.sourcePath)
-                    opts.sourcePath = options.sourcePath;
-                if (!!options.targetPath)
-                    opts.targetPath = options.targetPath;
-                if (!!options.converterParam)
-                    opts.converterParam = options.converterParam;
-                if (!!options.mode)
-                    opts.mode = options.mode;
+                if (!bindInfo.sourcePath && !!bindInfo.to)
+                    bindingOpts.sourcePath = bindInfo.to;
+                else if (!!bindInfo.sourcePath)
+                    bindingOpts.sourcePath = bindInfo.sourcePath;
+                if (!!bindInfo.targetPath)
+                    bindingOpts.targetPath = bindInfo.targetPath;
+                if (!!bindInfo.converterParam)
+                    bindingOpts.converterParam = bindInfo.converterParam;
+                if (!!bindInfo.mode)
+                    bindingOpts.mode = bindMOD.BINDING_MODE[bindInfo.mode];
 
-                if (!!options.converter) {
-                    if (utils.check.isString(options.converter))
-                        opts.converter = app.getConverter(options.converter);
+                if (!!bindInfo.converter) {
+                    if (utils.check.isString(bindInfo.converter))
+                        bindingOpts.converter = app.getConverter(bindInfo.converter);
                     else
-                        opts.converter = options.converter;
+                        bindingOpts.converter = bindInfo.converter;
                 }
 
                 if (!fixedTarget)
-                    opts.target = defaultTarget;
+                    bindingOpts.target = defaultTarget;
                 else {
                     if (utils.check.isString(fixedTarget)) {
                         if (fixedTarget == 'this')
-                            opts.target = defaultTarget;
+                            bindingOpts.target = defaultTarget;
                         else {
                             //if no fixed target, then target evaluation starts from this app
-                            opts.target = RIAPP.global.parser.resolveBindingSource(app, RIAPP.global.parser._getPathParts(fixedTarget));
+                            bindingOpts.target = parser.resolveBindingSource(app, parser._getPathParts(fixedTarget));
                         }
                     } else
-                        opts.target = fixedTarget;
+                        bindingOpts.target = fixedTarget;
                 }
 
                 if (!fixedSource) {
                     //if source is not supplied use defaultSource parameter as source
-                    opts.source = defaultSource;
+                    bindingOpts.source = defaultSource;
                 } else {
-                    opts.isSourceFixed = true;
+                    bindingOpts.isSourceFixed = true;
                     if (utils.check.isString(fixedSource)) {
                         if (fixedSource == 'this') {
-                            opts.source = defaultTarget;
+                            bindingOpts.source = defaultTarget;
                         } else {
                             //source evaluation starts from this app
-                            opts.source = RIAPP.global.parser.resolveBindingSource(app, RIAPP.global.parser._getPathParts(fixedSource));
+                            bindingOpts.source = parser.resolveBindingSource(app, parser._getPathParts(fixedSource));
                         }
                     } else
-                        opts.source = fixedSource;
+                        bindingOpts.source = fixedSource;
                 }
 
-                return opts;
+                return bindingOpts;
             }
             baseContent.getBindingOptions = getBindingOptions;
             ;
@@ -7761,9 +7834,9 @@ var RIAPP;
                 BindingContent.prototype._getBindingOption = function (bindingInfo, tgt, dctx, targetPath) {
                     var options = getBindingOptions(this.app, bindingInfo, tgt, dctx);
                     if (this.isEditing && this._canBeEdited())
-                        options.mode = 'TwoWay';
+                        options.mode = 2 /* TwoWay */;
                     else
-                        options.mode = 'OneWay';
+                        options.mode = 1 /* OneWay */;
                     if (!!targetPath)
                         options.targetPath = targetPath;
                     return options;
@@ -8027,7 +8100,7 @@ var RIAPP;
                         this._updateCss();
                         this._lfScope = new RIAPP.MOD.utils.LifeTimeScope();
                         var options = this._getBindingOption(bindingInfo, this._tgt, this._dctx, 'checked');
-                        options.mode = 'TwoWay';
+                        options.mode = 2 /* TwoWay */;
                         this._lfScope.addObj(this.app.bind(options));
                     }
                 };
@@ -12486,22 +12559,31 @@ var RIAPP;
                     this.raiseEvent('view_refreshed', args);
                 };
                 DataView.prototype._refresh = function (isPageChanged) {
-                    var items;
+                    var items, deffered = utils.createDeferred();
                     var ds = this._dataSource;
-                    if (!ds)
-                        return;
-                    if (!!this._fn_itemsProvider) {
-                        items = this._fn_itemsProvider(ds);
-                    } else
-                        items = ds.items;
-                    if (!!this._fn_filter) {
-                        items = items.filter(this._fn_filter);
+                    if (!ds) {
+                        deffered.reject();
+                        return deffered.promise();
                     }
-                    if (!!this._fn_sort) {
-                        items = items.sort(this._fn_sort);
+                    try  {
+                        if (!!this._fn_itemsProvider) {
+                            items = this._fn_itemsProvider(ds);
+                        } else
+                            items = ds.items;
+                        if (!!this._fn_filter) {
+                            items = items.filter(this._fn_filter);
+                        }
+                        if (!!this._fn_sort) {
+                            items = items.sort(this._fn_sort);
+                        }
+                        this._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
+                        this._onViewRefreshed({});
+                        deffered.resolve();
+                    } catch (ex) {
+                        deffered.reject(ex);
+                        this._onError(ex, this);
                     }
-                    this._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
-                    this._onViewRefreshed({});
+                    return deffered.promise();
                 };
                 DataView.prototype._fillItems = function (data) {
                     data = utils.extend(false, {
@@ -12781,7 +12863,7 @@ var RIAPP;
                 };
                 DataView.prototype.sortLocal = function (fieldNames, sortOrder) {
                     var mult = 1, parser = RIAPP.global.parser;
-                    if (!!sortOrder && sortOrder.toUpperCase() === 'DESC')
+                    if (sortOrder === 1 /* DESC */)
                         mult = -1;
                     var fn_sort = function (a, b) {
                         var res = 0, i, len, af, bf, fieldName;
@@ -12801,7 +12883,8 @@ var RIAPP;
                         }
                         return res;
                     };
-                    this.fn_sort = fn_sort;
+                    this._fn_sort = fn_sort;
+                    return this._refresh(false);
                 };
                 DataView.prototype.getIsHasErrors = function () {
                     return this._dataSource.getIsHasErrors();
@@ -12819,7 +12902,7 @@ var RIAPP;
                     this.raisePropertyChanged('count');
                 };
                 DataView.prototype.refresh = function () {
-                    this._refresh(false);
+                    return this._refresh(false);
                 };
                 DataView.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -12934,24 +13017,37 @@ var RIAPP;
                     };
                     _super.call(this, opts);
                 }
-                ChildDataView.prototype._refresh = function () {
-                    var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
+                ChildDataView.prototype._refresh = function (isPageChanged) {
+                    var self = this, ds = this._dataSource, deffered = utils.createDeferred();
+                    if (!ds) {
+                        deffered.reject();
+                        return deffered.promise();
+                    }
+
                     clearTimeout(self._refreshTimeout);
                     self._refreshTimeout = setTimeout(function () {
-                        if (self._isDestroyCalled)
+                        if (self._isDestroyCalled) {
+                            deffered.reject();
                             return;
-                        var items = self._association.getChildItems(self._parentItem);
-                        if (!!self._fn_filter) {
-                            items = items.filter(self._fn_filter);
                         }
-                        if (!!self._fn_sort) {
-                            items = items.sort(self._fn_sort);
+                        try  {
+                            var items = self._association.getChildItems(self._parentItem);
+                            if (!!self._fn_filter) {
+                                items = items.filter(self._fn_filter);
+                            }
+                            if (!!self._fn_sort) {
+                                items = items.sort(self._fn_sort);
+                            }
+                            self._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
+                            self._onViewRefreshed({});
+                            deffered.resolve();
+                        } catch (ex) {
+                            deffered.reject();
+                            self._onError(ex, self);
                         }
-                        self._fillItems({ items: items, isPageChanged: false, clear: true, isAppend: false });
-                        self._onViewRefreshed({});
                     }, 250);
+
+                    return deffered.promise();
                 };
                 ChildDataView.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -12978,7 +13074,7 @@ var RIAPP;
                                 this.clear();
                                 this._onViewRefreshed({});
                             }
-                            this._refresh();
+                            this._refresh(false);
                         }
                     },
                     enumerable: true,
@@ -13460,9 +13556,6 @@ var RIAPP;
                     } else
                         this._selectedItem = null;
                 };
-                ListBox.prototype.clear = function () {
-                    this._clear(false);
-                };
                 ListBox.prototype._refresh = function () {
                     var self = this, ds = this._dataSource, oldItem = this._selectedItem;
                     this._isRefreshing = true;
@@ -13492,6 +13585,15 @@ var RIAPP;
                         return 0;
                     return data.op.index;
                 };
+                ListBox.prototype._setIsEnabled = function (el, v) {
+                    el.disabled = !v;
+                };
+                ListBox.prototype._getIsEnabled = function (el) {
+                    return !el.disabled;
+                };
+                ListBox.prototype.clear = function () {
+                    this._clear(false);
+                };
                 ListBox.prototype.findItemByValue = function (val) {
                     var data = this._valMap[val];
                     if (!data)
@@ -13504,12 +13606,6 @@ var RIAPP;
                         return '';
                     else
                         return data.op.text;
-                };
-                ListBox.prototype._setIsEnabled = function (el, v) {
-                    el.disabled = !v;
-                };
-                ListBox.prototype._getIsEnabled = function (el) {
-                    return !el.disabled;
                 };
                 ListBox.prototype.toString = function () {
                     return 'ListBox';
@@ -13878,7 +13974,7 @@ var RIAPP;
 
                     var options = {
                         target: this, source: this._dctx,
-                        targetPath: 'value', sourcePath: this._options.fieldName, mode: "OneWay",
+                        targetPath: 'value', sourcePath: this._options.fieldName, mode: 1 /* OneWay */,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
                     return new RIAPP.MOD.binding.Binding(options);
@@ -13889,7 +13985,7 @@ var RIAPP;
 
                     var options = {
                         target: selectView, source: this._dctx,
-                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: "TwoWay",
+                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: 2 /* TwoWay */,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
                     return new RIAPP.MOD.binding.Binding(options);
@@ -14419,6 +14515,8 @@ var RIAPP;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
+            var collMOD = RIAPP.MOD.collection;
+
             datagrid.css = {
                 container: 'ria-table-container',
                 dataTable: 'ria-data-table',
@@ -14783,12 +14881,13 @@ var RIAPP;
                 RowSelectorCell.prototype._init = function () {
                     var $el = RIAPP.global.$(this.el);
                     $el.addClass(datagrid.css.rowSelector);
-                    var bindOpt = {
+                    var bindInfo = {
                         target: null, source: null,
-                        targetPath: null, sourcePath: 'isSelected', mode: 'TwoWay',
+                        targetPath: null, sourcePath: 'isSelected',
+                        mode: RIAPP.MOD.binding.BINDING_MODE[2 /* TwoWay */],
                         converter: null, converterParam: null
-                    }, op = { fieldName: 'isSelected', bindingInfo: bindOpt, displayInfo: null };
-                    this._content = new RowSelectContent(this.grid.app, this._div, op, this.row, true);
+                    }, contentOpts = { fieldName: 'isSelected', bindingInfo: bindInfo, displayInfo: null };
+                    this._content = new RowSelectContent(this.grid.app, this._div, contentOpts, this.row, true);
                 };
                 RowSelectorCell.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -15488,12 +15587,12 @@ var RIAPP;
                         var sortOrd = this._sortOrder;
                         this.grid._resetColumnsSort();
 
-                        if (sortOrd == 'ASC') {
-                            this.sortOrder = 'DESC';
-                        } else if (sortOrd == 'DESC') {
-                            this.sortOrder = 'ASC';
+                        if (sortOrd == 0 /* ASC */) {
+                            this.sortOrder = 1 /* DESC */;
+                        } else if (sortOrd == 1 /* DESC */) {
+                            this.sortOrder = 0 /* ASC */;
                         } else
-                            this.sortOrder = 'ASC';
+                            this.sortOrder = 0 /* ASC */;
                         this.grid.sortByColumn(this);
                     }
                 };
@@ -15538,10 +15637,10 @@ var RIAPP;
                     set: function (v) {
                         this.$div.removeClass([datagrid.css.colSortable, datagrid.css.colSortAsc, datagrid.css.colSortDesc].join(' '));
                         switch (v) {
-                            case 'ASC':
+                            case 0 /* ASC */:
                                 this.$div.addClass(datagrid.css.colSortAsc);
                                 break;
-                            case 'DESC':
+                            case 1 /* DESC */:
                                 this.$div.addClass(datagrid.css.colSortDesc);
                                 break;
                             default:
@@ -15549,6 +15648,7 @@ var RIAPP;
                                     this.$div.addClass(datagrid.css.colSortable);
                         }
                         this._sortOrder = v;
+                        this.raisePropertyChanged('sortOrder');
                     },
                     enumerable: true,
                     configurable: true
@@ -16376,7 +16476,7 @@ var RIAPP;
                     var self = this, ds = this._dataSource;
                     var sorts = column.sortMemberName.split(';');
                     self._isSorting = true;
-                    var promise = ds.sort(sorts, RIAPP.MOD.collection.SORT_ORDER[column.sortOrder]);
+                    var promise = ds.sort(sorts, column.sortOrder);
                     promise.always(function () {
                         self._isSorting = false;
                     });
@@ -17725,6 +17825,7 @@ var RIAPP;
 /// <reference path="..\thirdparty\jquery.d.ts" />
 /// <reference path="..\thirdparty\moment.d.ts" />
 /// <reference path="app_en.ts"/>
+/// <reference path="common.ts"/>
 /// <reference path="baseobj.ts"/>
 /// <reference path="globalobj.ts"/>
 /// <reference path="..\modules\consts.ts"/>

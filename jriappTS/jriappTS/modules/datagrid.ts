@@ -6,6 +6,8 @@ module RIAPP {
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
+            import collMOD = RIAPP.MOD.collection;
+
             export var css = {
                 container: 'ria-table-container',
                 dataTable: 'ria-data-table',
@@ -312,12 +314,13 @@ module RIAPP {
                 _init() {
                     var $el = global.$(this.el);
                     $el.addClass(css.rowSelector);
-                    var bindOpt = {
+                    var bindInfo: RIAPP.MOD.baseContent.IBindingInfo = {
                         target: null, source: null,
-                        targetPath: null, sourcePath: 'isSelected', mode: 'TwoWay',
+                        targetPath: null, sourcePath: 'isSelected',
+                        mode: RIAPP.MOD.binding.BINDING_MODE[RIAPP.MOD.binding.BINDING_MODE.TwoWay],
                         converter: null, converterParam: null
-                    }, op: baseContent.IContentOptions = { fieldName: 'isSelected', bindingInfo: bindOpt, displayInfo: null };
-                    this._content = new RowSelectContent(this.grid.app, this._div, op, this.row, true);
+                    }, contentOpts: baseContent.IContentOptions = { fieldName: 'isSelected', bindingInfo: bindInfo, displayInfo: null };
+                    this._content = new RowSelectContent(this.grid.app, this._div, contentOpts, this.row, true);
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -829,7 +832,7 @@ module RIAPP {
             }
 
             export class DataColumn extends BaseColumn{
-                private _sortOrder: string;
+                private _sortOrder: collMOD.SORT_ORDER;
                 private _objCache: { [key: string]: BaseObject; };
 
                 constructor(grid: DataGrid, options: { th: HTMLTableHeaderCellElement; colinfo: IColumnInfo; }) {
@@ -851,14 +854,14 @@ module RIAPP {
                         var sortOrd = this._sortOrder;
                         this.grid._resetColumnsSort();
 
-                        if (sortOrd == 'ASC') {
-                            this.sortOrder = 'DESC';
+                        if (sortOrd == collMOD.SORT_ORDER.ASC) {
+                            this.sortOrder = collMOD.SORT_ORDER.DESC;
                         }
-                        else if (sortOrd == 'DESC') {
-                            this.sortOrder = 'ASC';
+                        else if (sortOrd == collMOD.SORT_ORDER.DESC) {
+                            this.sortOrder = collMOD.SORT_ORDER.ASC;
                         }
                         else
-                            this.sortOrder = 'ASC';
+                            this.sortOrder = collMOD.SORT_ORDER.ASC;
                         this.grid.sortByColumn(this);
                     }
                 }
@@ -888,10 +891,10 @@ module RIAPP {
                 set sortOrder(v) {
                     this.$div.removeClass([css.colSortable, css.colSortAsc, css.colSortDesc].join(' '));
                     switch (v) {
-                        case 'ASC':
+                        case collMOD.SORT_ORDER.ASC:
                             this.$div.addClass(css.colSortAsc);
                             break;
-                        case 'DESC':
+                        case collMOD.SORT_ORDER.DESC:
                             this.$div.addClass(css.colSortDesc);
                             break;
                         default:
@@ -899,6 +902,7 @@ module RIAPP {
                                 this.$div.addClass(css.colSortable);
                     }
                     this._sortOrder = v;
+                    this.raisePropertyChanged('sortOrder');
                 }
             }
 
@@ -1746,7 +1750,7 @@ module RIAPP {
                     var self=this, ds = this._dataSource;
                     var sorts = column.sortMemberName.split(';');
                     self._isSorting = true;
-                    var promise = ds.sort(sorts, collection.SORT_ORDER[column.sortOrder]);
+                    var promise = ds.sort(sorts, column.sortOrder);
                     promise.always(function () {
                         self._isSorting = false;
                     });

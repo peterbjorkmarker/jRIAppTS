@@ -1067,20 +1067,12 @@ module RIAPP {
                     return (utils.getProps(this._errors).length > 0);
                 }
                 sort(fieldNames: string[], sortOrder: SORT_ORDER): IPromise<any> {
-                    var self = this, deffered = utils.createDeferred();
-                    setTimeout(function () {
-                        try {
-                            self.sortLocal(fieldNames, SORT_ORDER[sortOrder]);
-                        }
-                        finally {
-                            deffered.resolve();
-                        }
-                    }, 0);
-                    return deffered.promise();
+                    return this.sortLocal(fieldNames, sortOrder);
                 }
-                sortLocal(fieldNames: string[], sortOrder: string) {
+                sortLocal(fieldNames: string[], sortOrder: SORT_ORDER): IPromise<any>  {
+                    var self = this, deffered = utils.createDeferred();
                     var mult = 1;
-                    if (!!sortOrder && sortOrder.toUpperCase() === 'DESC')
+                    if (sortOrder === SORT_ORDER.DESC)
                         mult = -1;
                     var fn_sort = function (a, b) {
                         var res = 0, i, len, af, bf, fieldName;
@@ -1100,7 +1092,17 @@ module RIAPP {
                         }
                         return res;
                     };
-                    this.sortLocalByFunc(fn_sort);
+                    setTimeout(function () {
+                        try {
+                            self.sortLocalByFunc(fn_sort);
+                            deffered.resolve();
+                        }
+                        catch(ex) {
+                            deffered.reject();
+                            self._onError(ex, self);
+                        }
+                    }, 0);
+                    return deffered.promise();
                 }
                 sortLocalByFunc(fn: (a, b) => number) {
                     var self = this;

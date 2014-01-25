@@ -40,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="modules\datepicker.ts" />
+    <TypeScriptCompile Include="main\common.ts" />
     <Content Include="thirdparty\moment.d.ts" />
     <TypeScriptCompile Include="modules\utils.ts" />
     <TypeScriptCompile Include="modules\consts.ts" />
