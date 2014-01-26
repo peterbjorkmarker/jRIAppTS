@@ -27,6 +27,18 @@
 /// <reference path="..\modules\stackpanel.ts"/>
 
 module RIAPP {
+    import constsMOD = MOD.consts;
+    import utilsMOD = RIAPP.MOD.utils;
+    import bindMOD = RIAPP.MOD.binding;
+    import elviewMOD = MOD.baseElView;
+    import contentMOD = RIAPP.MOD.baseContent;
+    import formMOD = RIAPP.MOD.dataform;
+    import convertMOD = RIAPP.MOD.converter;
+    //ALL CORE MODULES are LOADED, INITIALIZE THE Global
+    global._initialize();
+    //local variable for optimization
+    var utils = global.utils, parser = global.parser;
+
     export interface IAppOptions {
         application_name?: string;
         user_modules?: { name: string; initFn: (app: Application) => any; }[];
@@ -35,12 +47,12 @@ module RIAPP {
 
     export class Application extends RIAPP.BaseObject implements IExports {
         private static _newInstanceNum = 1;
-        private get _DATA_BIND_SELECTOR() { return ['*[', global.consts.DATA_ATTR.DATA_BIND, ']'].join(''); }
-        private get _DATA_VIEW_SELECTOR() { return ['*[', global.consts.DATA_ATTR.DATA_VIEW, ']'].join(''); }
-        private _contentFactories: { (nextFactory?: MOD.baseContent.IContentFactory): MOD.baseContent.IContentFactory; }[];
-        private _objLifeTime: MOD.utils.LifeTimeScope;
+        private get _DATA_BIND_SELECTOR() { return ['*[', constsMOD.DATA_ATTR.DATA_BIND, ']'].join(''); }
+        private get _DATA_VIEW_SELECTOR() { return ['*[', constsMOD.DATA_ATTR.DATA_VIEW, ']'].join(''); }
+        private _contentFactories: { (nextFactory?: contentMOD.IContentFactory): contentMOD.IContentFactory; }[];
+        private _objLifeTime: utilsMOD.LifeTimeScope;
         private _ELV_STORE_KEY: string;
-        private _contentFactory: MOD.baseContent.IContentFactory;
+        private _contentFactory: contentMOD.IContentFactory;
         private _elViewStore: any;
         private _nextElViewStoreKey: number;
         private _userCode: any;
@@ -64,12 +76,12 @@ module RIAPP {
                     user_modules = options.user_modules;
             }
             if (!!global.findApp(app_name))
-                throw new Error(global.utils.format(RIAPP.ERRS.ERR_APP_NAME_NOT_UNIQUE, app_name));
+                throw new Error(utils.format(RIAPP.ERRS.ERR_APP_NAME_NOT_UNIQUE, app_name));
             this._app_name = app_name;
-            this._objId = 'app:' + global.utils.getNewID();
+            this._objId = 'app:' + utils.getNewID();
             //lifetime object to store references to the bindings and element views created by this application
             this._objLifeTime = null;
-            this._ELV_STORE_KEY = global.consts.DATA_ATTR.EL_VIEW_KEY + Application._newInstanceNum;
+            this._ELV_STORE_KEY = constsMOD.DATA_ATTR.EL_VIEW_KEY + Application._newInstanceNum;
             Application._newInstanceNum += 1;
             this._contentFactory = null;
             this._contentFactories = [];
@@ -87,7 +99,7 @@ module RIAPP {
             this._viewModels = {};
             this._initModules();
             this._initUserModules(user_modules);
-            var nextFactory: MOD.baseContent.IContentFactory = null;
+            var nextFactory: contentMOD.IContentFactory = null;
             self._contentFactories.forEach((fn_Factory) => {
                 nextFactory = fn_Factory(nextFactory);
             });
@@ -97,7 +109,7 @@ module RIAPP {
         private _cleanUpObjMaps() {
             var self = this;
             this._objMaps.forEach((objMap) => {
-                global.utils.forEachProp(objMap, (name) => {
+                utils.forEachProp(objMap, (name) => {
                     var obj = objMap[name];
                     if (obj instanceof BaseObject) {
                         if (!(<BaseObject>obj)._isDestroyed) {
@@ -110,11 +122,11 @@ module RIAPP {
         }
         private _initModules() {
             //initialize core modules
-            var self = this;
+            var self = this, modules = RIAPP.MOD;
             self.global.moduleNames.forEach((mod_name) => {
                 //checks for initModule function and executes it if the module has it
-                if (!!MOD[mod_name] && !!MOD[mod_name].initModule) {
-                    MOD[mod_name].initModule(self);
+                if (!!modules[mod_name] && !!modules[mod_name].initModule) {
+                    modules[mod_name].initModule(self);
                 }
             });
         }
@@ -137,9 +149,9 @@ module RIAPP {
         }
         private _getElementViewInfo(el: HTMLElement) {
             var view_name: string = null, vw_options: any = null, attr: string, data_view_op_arr: any[], data_view_op;
-            if (el.hasAttribute(global.consts.DATA_ATTR.DATA_VIEW)) {
-                attr = el.getAttribute(global.consts.DATA_ATTR.DATA_VIEW);
-                data_view_op_arr = global.parser.parseOptions(attr);
+            if (el.hasAttribute(constsMOD.DATA_ATTR.DATA_VIEW)) {
+                attr = el.getAttribute(constsMOD.DATA_ATTR.DATA_VIEW);
+                data_view_op_arr = parser.parseOptions(attr);
                 if (!!data_view_op_arr && data_view_op_arr.length > 0) {
                     data_view_op = data_view_op_arr[0];
                     if (!!data_view_op.name && data_view_op.name != 'default') {
@@ -161,7 +173,7 @@ module RIAPP {
             return isHandled;
         }
         //get element view associated with HTML element(if any)
-        _getElView(el: HTMLElement): MOD.baseElView.BaseElView {
+        _getElView(el: HTMLElement): elviewMOD.BaseElView {
             var storeID = el.getAttribute(this._ELV_STORE_KEY);
             if (!!storeID) {
                 return this._elViewStore[storeID];
@@ -169,12 +181,12 @@ module RIAPP {
             return null;
         }
         _createElementView(el: HTMLElement, view_info: { name: string; options: any; }) {
-            var viewType: MOD.baseElView.IViewType, elView: MOD.baseElView.BaseElView;
+            var viewType: elviewMOD.IViewType, elView: elviewMOD.BaseElView;
 
             if (!!view_info.name) {
                 viewType = this._getElViewType(view_info.name);
                 if (!viewType)
-                    throw new Error(global.utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_REGISTERED, view_info.name));
+                    throw new Error(utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_REGISTERED, view_info.name));
             }
             if (!viewType) {
                 var nodeNm = el.nodeName.toLowerCase(), type;
@@ -191,14 +203,14 @@ module RIAPP {
                 }
 
                 if (!viewType)
-                    throw new Error(global.utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_CREATED, nodeNm));
+                    throw new Error(utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_CREATED, nodeNm));
             }
 
             elView = new viewType(this, el, view_info.options || {});
             return elView;
         }
         //store association of HTML element with its element View
-        _setElView(el: HTMLElement, view?: MOD.baseElView.BaseElView) {
+        _setElView(el: HTMLElement, view?: elviewMOD.BaseElView) {
             var storeID = el.getAttribute(this._ELV_STORE_KEY);
             if (!storeID) {
                 if (!view)
@@ -222,12 +234,11 @@ module RIAPP {
             var self = this, global = self.global,
                 selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR,
                 selectedElem = ArrayHelper.fromList(templateEl.querySelectorAll(selector)),
-                lftm = new MOD.utils.LifeTimeScope(),
-                checks = global.utils.check,
-                parser = global.parser,
-                DATA_FORM = global.consts.DATA_ATTR.DATA_FORM,
-                DATA_BIND = global.consts.DATA_ATTR.DATA_BIND,
-                DATA_VIEW = global.consts.DATA_ATTR.DATA_VIEW;
+                lftm = new utilsMOD.LifeTimeScope(),
+                checks = utils.check,
+                DATA_FORM = constsMOD.DATA_ATTR.DATA_FORM,
+                DATA_BIND = constsMOD.DATA_ATTR.DATA_BIND,
+                DATA_VIEW = constsMOD.DATA_ATTR.DATA_VIEW;
 
             if (templateEl.hasAttribute(DATA_BIND) || templateEl.hasAttribute(DATA_VIEW)) {
                 selectedElem.push(templateEl);
@@ -249,11 +260,11 @@ module RIAPP {
             }
 
             selectedElem.forEach(function (el) {
-                var op: MOD.binding.IBindingOptions,
-                    binding: MOD.binding.Binding,
+                var op: bindMOD.IBindingOptions,
+                    binding: bindMOD.Binding,
                     bind_attr: string,
                     temp_opts: any[],
-                    elView: MOD.baseElView.BaseElView,
+                    elView: elviewMOD.BaseElView,
                     j: number, len: number;
 
                 //if element inside a dataform return
@@ -264,8 +275,8 @@ module RIAPP {
                 //first create element view
                 elView = self.getElementView(el);
                 lftm.addObj(elView);
-                if (elView instanceof MOD.dataform.DataFormElView) {
-                    (<MOD.dataform.DataFormElView>elView).form.isInsideTemplate = true;
+                if (elView instanceof formMOD.DataFormElView) {
+                    (<formMOD.DataFormElView>elView).form.isInsideTemplate = true;
                 }
 
                 if (el.hasAttribute(DATA_VIEW)) {
@@ -278,7 +289,7 @@ module RIAPP {
                     el.removeAttribute(DATA_BIND);
                     temp_opts = parser.parseOptions(bind_attr);
                     for (j = 0, len = temp_opts.length; j < len; j += 1) {
-                        op = MOD.baseContent.getBindingOptions(self, temp_opts[j], elView, null);
+                        op = contentMOD.getBindingOptions(self, temp_opts[j], elView, null);
                         binding = self.bind(op);
                         op.target = null;
                         lftm.addObj(binding);
@@ -290,17 +301,16 @@ module RIAPP {
         }
         _bindElements(scope: { querySelectorAll: (selectors: string) => NodeList; }, dctx, isDataFormBind: boolean, isInsideTemplate: boolean) {
             var self = this, global = self.global,
-                checks = global.utils.check,
-                parser = global.parser,
-                DATA_FORM = global.consts.DATA_ATTR.DATA_FORM,
-                DATA_BIND = global.consts.DATA_ATTR.DATA_BIND,
-                DATA_VIEW = global.consts.DATA_ATTR.DATA_VIEW,
+                checks = utils.check,
+                DATA_FORM = constsMOD.DATA_ATTR.DATA_FORM,
+                DATA_BIND = constsMOD.DATA_ATTR.DATA_BIND,
+                DATA_VIEW = constsMOD.DATA_ATTR.DATA_VIEW,
                 selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR;
 
             scope = scope || global.document;
             //select all elements with binding attributes
             var selectedElem: HTMLElement[] = ArrayHelper.fromList(scope.querySelectorAll(selector));
-            var lftm = new MOD.utils.LifeTimeScope();
+            var lftm = new utilsMOD.LifeTimeScope();
 
             if (!isDataFormBind) {
                 //mark all dataforms for easier checking that the element is a dataform
@@ -317,8 +327,8 @@ module RIAPP {
             selectedElem.forEach(function (el) {
                 var bind_attr: string,
                     temp_opts: any[],
-                    bind_op: MOD.binding.IBindingOptions,
-                    elView: MOD.baseElView.BaseElView,
+                    bind_op: bindMOD.IBindingOptions,
+                    elView: elviewMOD.BaseElView,
                     i:number, len:number;
 
                 //return if the current element is inside a dataform
@@ -329,8 +339,8 @@ module RIAPP {
                 //first create element view
                 elView = self.getElementView(el);
                 lftm.addObj(elView);
-                if (elView instanceof MOD.dataform.DataFormElView) {
-                    (<MOD.dataform.DataFormElView>elView).form.isInsideTemplate = isInsideTemplate;
+                if (elView instanceof formMOD.DataFormElView) {
+                    (<formMOD.DataFormElView>elView).form.isInsideTemplate = isInsideTemplate;
                 }
 
                 if (isInsideTemplate) {
@@ -347,7 +357,7 @@ module RIAPP {
                     }
                     temp_opts = parser.parseOptions(bind_attr);
                     for (i = 0, len = temp_opts.length; i < len; i += 1) {
-                        bind_op = MOD.baseContent.getBindingOptions(self, temp_opts[i], elView, dctx);
+                        bind_op = contentMOD.getBindingOptions(self, temp_opts[i], elView, dctx);
                         lftm.addObj(self.bind(bind_op));
                     }
                 }
@@ -355,14 +365,14 @@ module RIAPP {
             return lftm;
         }
         //used as a factory to create Data Contents
-        _getContent(contentType: MOD.baseContent.IContentType, options: MOD.baseContent.IContentOptions, parentEl: HTMLElement, dctx, isEditing: boolean) {
+        _getContent(contentType: contentMOD.IContentType, options: contentMOD.IContentOptions, parentEl: HTMLElement, dctx, isEditing: boolean) {
             return new contentType(this, parentEl, options, dctx, isEditing);
         }
         //used to select contentType based on content options
-        _getContentType(options: MOD.baseContent.IContentOptions): MOD.baseContent.IContentType {
+        _getContentType(options: contentMOD.IContentOptions): contentMOD.IContentType {
             return this.contentFactory.getContentType(options);
         }
-        _getElViewType(name: string): MOD.baseElView.IViewType {
+        _getElViewType(name: string): elviewMOD.IViewType {
             var name2 = 'elvws.' + name, global = this.global;
             var res = global._getObject(this, name2);
             if (!res) {
@@ -373,13 +383,13 @@ module RIAPP {
         getExports() {
             return this._exports;
         }
-        registerElView(name: string, type: MOD.baseElView.IViewType) {
+        registerElView(name: string, type: elviewMOD.IViewType) {
             var name2 = 'elvws.' + name, global = this.global;
             if (!global._getObject(this, name2)) {
                 global._registerObject(this, name2, type);
             }
             else
-                throw new Error(global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
+                throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         }
         //checks if the element already has created and attached ElView, if no then it creates and attaches ElView for the element
         getElementView(el: HTMLElement) {
@@ -390,28 +400,28 @@ module RIAPP {
             var info = this._getElementViewInfo(el); 
             return this._createElementView(el, info);
         }
-        bind(opts: MOD.binding.IBindingOptions) {
-            return new MOD.binding.Binding(opts, this.appName);
+        bind(opts: bindMOD.IBindingOptions) {
+            return new bindMOD.Binding(opts, this.appName);
         }
-        registerContentFactory(fn: (nextFactory?: MOD.baseContent.IContentFactory) => MOD.baseContent.IContentFactory) {
+        registerContentFactory(fn: (nextFactory?: contentMOD.IContentFactory) => contentMOD.IContentFactory) {
             this._contentFactories.push(fn);
         }
-        registerConverter(name: string, obj: MOD.converter.IConverter) {
+        registerConverter(name: string, obj: convertMOD.IConverter) {
             var name2 = 'converters.' + name;
             if (!global._getObject(this, name2)) {
                 global._registerObject(this, name2, obj);
             }
             else
-                throw new Error(global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
+                throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         }
-        getConverter(name: string): MOD.converter.IConverter {
+        getConverter(name: string): convertMOD.IConverter {
             var name2 = 'converters.' + name;
             var res = global._getObject(this, name2);
             if (!res) {
                 res = global._getObject(global, name2);
             }
             if (!res)
-                throw new Error(global.utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
+                throw new Error(utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
             return res;
         }
         registerType(name: string, obj) {
@@ -464,7 +474,7 @@ module RIAPP {
             };
 
             try {
-                if (!!fn_sandbox && !global.utils.check.isFunction(fn_sandbox))
+                if (!!fn_sandbox && !utils.check.isFunction(fn_sandbox))
                     throw new Error(RIAPP.ERRS.ERR_APP_SETUP_INVALID);
                 global._waitForNotLoading(fn_init, null);
             }
@@ -475,7 +485,7 @@ module RIAPP {
         //loads a group of templates from the server
         loadTemplates(url) {
             this.loadTemplatesAsync(function () {
-                return global.utils.performAjaxGet(url);
+                return utils.performAjaxGet(url);
             });
         }
         //loads a group of templates from the server
@@ -502,7 +512,7 @@ module RIAPP {
             url?: string;
             names: string[];
         }) {
-            var group2: IGroupInfo = global.utils.extend(false, {
+            var group2: IGroupInfo = utils.extend(false, {
                 fn_loader: null,
                 url: null,
                 names: null,
@@ -552,6 +562,4 @@ module RIAPP {
         get app() { return this; }
     }
 
-    //ALL CORE MODULES are LOADED, INITIALIZE THE Global
-    RIAPP.global._initialize();
 }

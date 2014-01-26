@@ -6,12 +6,23 @@ module RIAPP {
                 OneWay = 1,
                 TwoWay = 2
             }
-
-            var utils: MOD.utils.Utils, global = RIAPP.global, base_utils = RIAPP.baseUtils, parser: MOD.parser.Parser;
+            var global = RIAPP.global, base_utils = RIAPP.baseUtils, utils: MOD.utils.Utils, parser: MOD.parser.Parser;
             global.addOnInitialize((s, args) => {
                 utils = s.utils;
                 parser = s.parser;
             });
+
+            //result of parsing binding expression -all props typically are strings
+            export interface IBindingInfo {
+                mode?: string;
+                converterParam?: any;
+                converter?: any;
+                targetPath: string;
+                sourcePath?: string;
+                to?: string;
+                target?: any;
+                source?: any;
+            }
 
             export interface IBindingOptions {
                 mode?: BINDING_MODE;

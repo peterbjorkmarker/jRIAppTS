@@ -7,6 +7,7 @@ module RIAPP {
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
+
             export enum FIELD_TYPE { None = 0, ClientOnly = 1, Calculated = 2, Navigation = 3, RowTimeStamp = 4, Object = 5, ServerCalculated = 6 }
             export enum STATUS { NONE= 0, ADDED= 1, UPDATED= 2, DELETED= 3 }
             export enum COLL_CHANGE_TYPE { REMOVE= 0, ADDED=1, RESET=2, REMAP_KEY=3 }
@@ -67,7 +68,7 @@ module RIAPP {
                 _fn_traverseField(fld.fieldName, fld, fn);
             }
          
-            export class CollectionItem extends RIAPP.BaseObject implements binding.IErrorNotification, MOD.utils.IEditable, MOD.utils.ISubmittable {
+            export class CollectionItem extends RIAPP.BaseObject implements MOD.binding.IErrorNotification, MOD.utils.IEditable, MOD.utils.ISubmittable {
                 _fkey: string;
                 _isEditing: boolean;
                 _saveVals: { [fieldName: string]: any; };

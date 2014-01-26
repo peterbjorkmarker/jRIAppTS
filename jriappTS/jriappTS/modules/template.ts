@@ -1,25 +1,31 @@
 module RIAPP {
     export module MOD {
         export module template {
+            import constsMOD = MOD.consts;
+            import utilsMOD = RIAPP.MOD.utils;
+            import bindMOD = RIAPP.MOD.binding;
+            import elviewMOD = MOD.baseElView;
+
             export var css = {
                 templateContainer: 'ria-template-container'
             };
-            var utils: MOD.utils.Utils;
+            var utils: utilsMOD.Utils;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
+
             export class Template extends RIAPP.BaseObject {
                 private _dctxt: any;
                 private _el: HTMLElement;
                 private _isDisabled: boolean;
-                private _lfTime: MOD.utils.LifeTimeScope;
+                private _lfTime: utilsMOD.LifeTimeScope;
                 private _templateID: string;
-                private _templElView: MOD.baseElView.TemplateElView;
+                private _templElView: elviewMOD.TemplateElView;
                 private _promise: RIAPP.IDeferred<any>;
                 private _busyTimeOut: number;
-                private _app: Application;
+                private _app: RIAPP.Application;
 
-                constructor(app: Application, templateID:string) {
+                constructor(app: RIAPP.Application, templateID:string) {
                     super();
                     this._app = app;
                     this._dctxt = null;
@@ -33,7 +39,7 @@ module RIAPP {
                     if (!!this._templateID)
                         this._loadTemplate();
                 }
-                private _getBindings(): MOD.binding.Binding[]{
+                private _getBindings(): bindMOD.Binding[]{
                     if (!this._lfTime)
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
@@ -43,7 +49,7 @@ module RIAPP {
                     }
                     return res;
                 }
-                private _getElViews(): MOD.baseElView.BaseElView[]{
+                private _getElViews(): elviewMOD.BaseElView[]{
                     if (!this._lfTime)
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
@@ -53,7 +59,7 @@ module RIAPP {
                     }
                     return res;
                 }
-                private _getTemplateElView(): MOD.baseElView.TemplateElView {
+                private _getTemplateElView(): elviewMOD.TemplateElView {
                     if (!this._lfTime || this._templElView === null)
                         return null;
                     if (!!this._templElView)
@@ -92,7 +98,7 @@ module RIAPP {
                         if (!self._busyTimeOut || self._isDestroyCalled)
                             return;
                         self._busyTimeOut = null;
-                        var vw_inst = new MOD.baseElView.BusyElView(self.app, el, { img: consts.LOADER_GIF.SMALL, delay: 0 });
+                        var vw_inst = new elviewMOD.BusyElView(self.app, el, { img: constsMOD.LOADER_GIF.SMALL, delay: 0 });
                         vw_inst.isBusy = true;
                     }, 400);
                 }
@@ -103,7 +109,7 @@ module RIAPP {
                         self._busyTimeOut = null;
                     }
                     var vw = this.app._getElView(el);
-                    if (!!vw && (vw instanceof MOD.baseElView.BusyElView)) {
+                    if (!!vw && (vw instanceof elviewMOD.BusyElView)) {
                         vw.destroy();
                     }
                 }
@@ -183,7 +189,7 @@ module RIAPP {
                     }
                 }
                 _updateBindingSource() {
-                    var i, len, obj: MOD.binding.Binding, bindings = this._getBindings();
+                    var i, len, obj: bindMOD.Binding, bindings = this._getBindings();
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         obj = bindings[i];
                         obj.isDisabled = this._isDisabled;
@@ -193,7 +199,7 @@ module RIAPP {
                 }
                 _updateIsDisabled() {
                     var i, len, obj, bindings = this._getBindings(), elViews = this._getElViews(),
-                        DataFormElView = this.app._getElViewType(consts.ELVIEW_NM.DATAFORM);
+                        DataFormElView = this.app._getElViewType(constsMOD.ELVIEW_NM.DATAFORM);
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         obj = bindings[i];
                         obj.isDisabled = this._isDisabled;
@@ -250,12 +256,12 @@ module RIAPP {
                 //find elements which has specific data-name attribute value
                 //returns plain array of elements, or empty array
                 findElByDataName(name:string):HTMLElement[] {
-                    var $foundEl = global.$(this._el).find(['*[', consts.DATA_ATTR.DATA_NAME, '="', name, '"]'].join(''));
+                    var $foundEl = global.$(this._el).find(['*[', constsMOD.DATA_ATTR.DATA_NAME, '="', name, '"]'].join(''));
                     return $foundEl.toArray();
                 }
                 findElViewsByDataName(name:string) {
                     //first return elements with the needed data attributes those are inside template
-                    var self = this, els = this.findElByDataName(name), res:baseElView.BaseElView[] = [];
+                    var self = this, els = this.findElByDataName(name), res: elviewMOD.BaseElView[] = [];
                     els.forEach(function (el) {
                         var elView = self.app._getElView(el);
                         if (!!elView)

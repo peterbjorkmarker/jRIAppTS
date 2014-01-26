@@ -38,7 +38,7 @@ module RIAPP {
     }
 
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.2.2.0';
+        public static vesion = '2.2.3.0';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;
@@ -539,9 +539,6 @@ module RIAPP {
         }
         get defaults() {
             return this._defaults;
-        }
-        get consts() {
-            return MOD.consts;
         }
         get utils() {
             return this._utils;

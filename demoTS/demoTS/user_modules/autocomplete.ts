@@ -2,6 +2,7 @@
 module RIAPP
 {
     export module AUTOCOMPLETE {
+        import constsMOD = RIAPP.MOD.consts;
         var global = RIAPP.global, utils = global.utils;
         
         function addTextQuery(query: MOD.db.DataQuery, fldName: string, val) {
@@ -191,11 +192,11 @@ module RIAPP
                     self.gridDataSource.clear();
             }
             _onKeyPress(keyCode:number) {
-                if (keyCode === global.consts.KEYS.esc) {
+                if (keyCode === constsMOD.KEYS.esc) {
                     this._hide();
                     return;
                 }
-                if (keyCode === global.consts.KEYS.enter) {
+                if (keyCode === constsMOD.KEYS.enter) {
                     this._updateSelection();
                     this._hide();
                     return;

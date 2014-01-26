@@ -1159,13 +1159,6 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Object.defineProperty(Global.prototype, "consts", {
-            get: function () {
-                return RIAPP.MOD.consts;
-            },
-            enumerable: true,
-            configurable: true
-        });
         Object.defineProperty(Global.prototype, "utils", {
             get: function () {
                 return this._utils;
@@ -1180,7 +1173,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.2.2.0';
+        Global.vesion = '2.2.3.0';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -1254,6 +1247,7 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (utils) {
+            var constsMOD = RIAPP.MOD.consts;
             var base_utils = RIAPP.baseUtils, _newID = 0;
 
             //adds new properties to some prototype
@@ -1309,7 +1303,6 @@ var RIAPP;
                 return fn;
             }
             utils.__extendType = __extendType;
-
             ;
 
             var Checks = (function () {
@@ -1362,14 +1355,14 @@ var RIAPP;
                 Checks.isDataForm = function (el) {
                     if (!el)
                         return false;
-                    if (el.hasAttribute(RIAPP.global.consts.DATA_ATTR.DATA_FORM))
+                    if (el.hasAttribute(constsMOD.DATA_ATTR.DATA_FORM))
                         return true;
-                    var attr = el.getAttribute(RIAPP.global.consts.DATA_ATTR.DATA_VIEW);
+                    var attr = el.getAttribute(constsMOD.DATA_ATTR.DATA_VIEW);
                     if (!attr) {
                         return false;
                     }
                     var opts = RIAPP.global.parser.parseOptions(attr);
-                    return (opts.length > 0 && opts[0].name === RIAPP.global.consts.ELVIEW_NM.DATAFORM);
+                    return (opts.length > 0 && opts[0].name === constsMOD.ELVIEW_NM.DATAFORM);
                 };
 
                 //check if element is placed inside DataForm
@@ -3224,9 +3217,10 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (baseElView) {
+            var constsMOD = RIAPP.MOD.consts;
+
             //local variables for optimization
-            var ERRTEXT = RIAPP.localizable.VALIDATE;
-            var utils;
+            var ERRTEXT = RIAPP.localizable.VALIDATE, utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
@@ -5005,7 +4999,7 @@ var RIAPP;
 
             RIAPP.global.registerElView('template', TemplateElView);
             RIAPP.global.registerElView('busy_indicator', BusyElView);
-            RIAPP.global.registerElView(RIAPP.global.consts.ELVIEW_NM.DYNACONT, DynaContentElView);
+            RIAPP.global.registerElView(constsMOD.ELVIEW_NM.DYNACONT, DynaContentElView);
             RIAPP.global.registerElView('input:checkbox', CheckBoxElView);
             RIAPP.global.registerElView('threeState', CheckBoxThreeStateElView);
             RIAPP.global.registerElView('input:text', TextBoxElView);
@@ -5043,12 +5037,13 @@ var RIAPP;
                 BINDING_MODE[BINDING_MODE["TwoWay"] = 2] = "TwoWay";
             })(binding.BINDING_MODE || (binding.BINDING_MODE = {}));
             var BINDING_MODE = binding.BINDING_MODE;
-
-            var utils, global = RIAPP.global, base_utils = RIAPP.baseUtils, parser;
+            var global = RIAPP.global, base_utils = RIAPP.baseUtils, utils, parser;
             global.addOnInitialize(function (s, args) {
                 utils = s.utils;
                 parser = s.parser;
             });
+
+            
 
             function _checkIsErrorNotification(obj) {
                 if (!obj)
@@ -5653,6 +5648,7 @@ var RIAPP;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
+
             (function (FIELD_TYPE) {
                 FIELD_TYPE[FIELD_TYPE["None"] = 0] = "None";
                 FIELD_TYPE[FIELD_TYPE["ClientOnly"] = 1] = "ClientOnly";
@@ -7306,6 +7302,11 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (template) {
+            var constsMOD = RIAPP.MOD.consts;
+            var utilsMOD = RIAPP.MOD.utils;
+            var bindMOD = RIAPP.MOD.binding;
+            var elviewMOD = RIAPP.MOD.baseElView;
+
             template.css = {
                 templateContainer: 'ria-template-container'
             };
@@ -7313,6 +7314,7 @@ var RIAPP;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
+
             var Template = (function (_super) {
                 __extends(Template, _super);
                 function Template(app, templateID) {
@@ -7388,7 +7390,7 @@ var RIAPP;
                         if (!self._busyTimeOut || self._isDestroyCalled)
                             return;
                         self._busyTimeOut = null;
-                        var vw_inst = new RIAPP.MOD.baseElView.BusyElView(self.app, el, { img: RIAPP.MOD.consts.LOADER_GIF.SMALL, delay: 0 });
+                        var vw_inst = new elviewMOD.BusyElView(self.app, el, { img: constsMOD.LOADER_GIF.SMALL, delay: 0 });
                         vw_inst.isBusy = true;
                     }, 400);
                 };
@@ -7399,7 +7401,7 @@ var RIAPP;
                         self._busyTimeOut = null;
                     }
                     var vw = this.app._getElView(el);
-                    if (!!vw && (vw instanceof RIAPP.MOD.baseElView.BusyElView)) {
+                    if (!!vw && (vw instanceof elviewMOD.BusyElView)) {
                         vw.destroy();
                     }
                 };
@@ -7485,7 +7487,7 @@ var RIAPP;
                     }
                 };
                 Template.prototype._updateIsDisabled = function () {
-                    var i, len, obj, bindings = this._getBindings(), elViews = this._getElViews(), DataFormElView = this.app._getElViewType(RIAPP.MOD.consts.ELVIEW_NM.DATAFORM);
+                    var i, len, obj, bindings = this._getBindings(), elViews = this._getElViews(), DataFormElView = this.app._getElViewType(constsMOD.ELVIEW_NM.DATAFORM);
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         obj = bindings[i];
                         obj.isDisabled = this._isDisabled;
@@ -7542,7 +7544,7 @@ var RIAPP;
                 //find elements which has specific data-name attribute value
                 //returns plain array of elements, or empty array
                 Template.prototype.findElByDataName = function (name) {
-                    var $foundEl = RIAPP.global.$(this._el).find(['*[', RIAPP.MOD.consts.DATA_ATTR.DATA_NAME, '="', name, '"]'].join(''));
+                    var $foundEl = RIAPP.global.$(this._el).find(['*[', constsMOD.DATA_ATTR.DATA_NAME, '="', name, '"]'].join(''));
                     return $foundEl.toArray();
                 };
                 Template.prototype.findElViewsByDataName = function (name) {
@@ -7629,27 +7631,22 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (baseContent) {
+            var constsMOD = RIAPP.MOD.consts;
+            var bindMOD = RIAPP.MOD.binding;
+
             var utils, parser;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
                 parser = s.parser;
             });
-            var bindMOD = RIAPP.MOD.binding;
             baseContent.css = {
                 content: 'ria-content-field',
                 required: 'ria-required-field'
             };
 
             
-            ;
 
             
-            ;
-
-            
-            ;
-
-            ;
 
             function parseContentAttr(content_attr) {
                 var contentOptions = {
@@ -8231,7 +8228,7 @@ var RIAPP;
                 Object.defineProperty(NumberContent.prototype, "_allowedKeys", {
                     get: function () {
                         if (!NumberContent.__allowedKeys) {
-                            var KEYS = RIAPP.global.consts.KEYS;
+                            var KEYS = constsMOD.KEYS;
                             NumberContent.__allowedKeys = [0, 8 /* backspace */, 127 /* del */, 37 /* left */, 39 /* right */, 35 /* end */, 36 /* home */, 9 /* tab */, 27 /* esc */, 13 /* enter */];
                         }
                         return NumberContent.__allowedKeys;
@@ -8299,7 +8296,7 @@ var RIAPP;
                 Object.defineProperty(StringContent.prototype, "_allowedKeys", {
                     get: function () {
                         if (!StringContent.__allowedKeys) {
-                            var KEYS = RIAPP.global.consts.KEYS;
+                            var KEYS = constsMOD.KEYS;
                             StringContent.__allowedKeys = [0, 8 /* backspace */, 127 /* del */, 37 /* left */, 39 /* right */, 35 /* end */, 36 /* home */, 9 /* tab */, 27 /* esc */, 13 /* enter */];
                         }
                         return StringContent.__allowedKeys;
@@ -8338,7 +8335,7 @@ var RIAPP;
                 Object.defineProperty(MultyLineContent.prototype, "_allowedKeys", {
                     get: function () {
                         if (!MultyLineContent.__allowedKeys) {
-                            var KEYS = RIAPP.global.consts.KEYS;
+                            var KEYS = constsMOD.KEYS;
                             MultyLineContent.__allowedKeys = [0, 8 /* backspace */, 127 /* del */, 37 /* left */, 39 /* right */, 35 /* end */, 36 /* home */, 9 /* tab */, 27 /* esc */, 13 /* enter */];
                         }
                         return MultyLineContent.__allowedKeys;
@@ -8479,14 +8476,18 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (dataform) {
+            var constsMOD = RIAPP.MOD.consts;
+            var utilsMOD = RIAPP.MOD.utils;
+            var bindMOD = RIAPP.MOD.binding;
+            var elviewMOD = RIAPP.MOD.baseElView;
+            var contentMOD = RIAPP.MOD.baseContent;
             dataform.css = {
                 dataform: 'ria-dataform'
             };
-            var utils;
+            var ERRTEXT = RIAPP.localizable.VALIDATE, utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-            var ERRTEXT = RIAPP.localizable.VALIDATE;
 
             var DataForm = (function (_super) {
                 __extends(DataForm, _super);
@@ -8523,7 +8524,7 @@ var RIAPP;
                 }
                 Object.defineProperty(DataForm.prototype, "_DATA_CONTENT_SELECTOR", {
                     get: function () {
-                        return '*[' + RIAPP.MOD.consts.DATA_ATTR.DATA_CONTENT + ']:not([' + RIAPP.MOD.consts.DATA_ATTR.DATA_COLUMN + '])';
+                        return '*[' + constsMOD.DATA_ATTR.DATA_CONTENT + ']:not([' + constsMOD.DATA_ATTR.DATA_COLUMN + '])';
                     },
                     enumerable: true,
                     configurable: true
@@ -8550,7 +8551,7 @@ var RIAPP;
                     return res;
                 };
                 DataForm.prototype._updateIsDisabled = function () {
-                    var i, len, bnd, vw, bindings = this._getBindings(), elViews = this._getElViews(), DataFormElView = this.app._getElViewType(RIAPP.MOD.consts.ELVIEW_NM.DATAFORM);
+                    var i, len, bnd, vw, bindings = this._getBindings(), elViews = this._getElViews(), DataFormElView = this.app._getElViewType(constsMOD.ELVIEW_NM.DATAFORM);
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         bnd = bindings[i];
                         bnd.isDisabled = this._isDisabled;
@@ -8574,13 +8575,13 @@ var RIAPP;
                     var elements = RIAPP.ArrayHelper.fromList(this._el.querySelectorAll(self._DATA_CONTENT_SELECTOR)), isEditing = this.isEditing;
 
                     //select all dataforms inside the scope
-                    var formSelector = ['*[', RIAPP.global.consts.DATA_ATTR.DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(this._el.querySelectorAll(formSelector));
+                    var formSelector = ['*[', constsMOD.DATA_ATTR.DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(this._el.querySelectorAll(formSelector));
 
                     elements.forEach(function (el) {
                         //check if the element inside a nested dataform
                         if (utils.check.isInNestedForm(self._el, forms, el))
                             return;
-                        var attr = el.getAttribute(RIAPP.MOD.consts.DATA_ATTR.DATA_CONTENT), op = RIAPP.MOD.baseContent.parseContentAttr(attr);
+                        var attr = el.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT), op = contentMOD.parseContentAttr(attr);
                         if (!!op.fieldName && !op.fieldInfo) {
                             if (!supportsGetFieldInfo) {
                                 throw new Error(RIAPP.ERRS.ERR_DCTX_HAS_NO_FIELDINFO);
@@ -8718,7 +8719,7 @@ var RIAPP;
 
                             if (!!dataContext) {
                                 this._supportEdit = utils.check.isEditable(dataContext);
-                                this._supportErrNotify = RIAPP.MOD.binding._checkIsErrorNotification(dataContext);
+                                this._supportErrNotify = bindMOD._checkIsErrorNotification(dataContext);
                             }
                             this._bindDS();
                             this._updateContent();
@@ -8873,7 +8874,7 @@ var RIAPP;
                         $img = RIAPP.global.$('<img name="error_info" alt="error_info" class="error-info" />');
                         $el.prepend($img);
                         $img.get(0).src = image_src;
-                        utils.addToolTip($img, this._getErrorTipInfo(errors), RIAPP.MOD.baseElView.css.errorTip);
+                        utils.addToolTip($img, this._getErrorTipInfo(errors), elviewMOD.css.errorTip);
                         this._setFieldError(true);
                     } else {
                         $el.children('img[name="error_info"]').remove();
@@ -8933,11 +8934,11 @@ var RIAPP;
                     configurable: true
                 });
                 return DataFormElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
+            })(elviewMOD.BaseElView);
             dataform.DataFormElView = DataFormElView;
 
             RIAPP.global.registerType('DataFormElView', DataFormElView);
-            RIAPP.global.registerElView(RIAPP.MOD.consts.ELVIEW_NM.DATAFORM, DataFormElView);
+            RIAPP.global.registerElView(constsMOD.ELVIEW_NM.DATAFORM, DataFormElView);
             RIAPP.global.onModuleLoaded('dataform', dataform);
         })(MOD.dataform || (MOD.dataform = {}));
         var dataform = MOD.dataform;
@@ -8948,9 +8949,11 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (db) {
-            //local variables for optimization
-            var ValidationError = RIAPP.MOD.binding.ValidationError, valueUtils = RIAPP.MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils, utils, HEAD_MARK_RX = /^<head:(\d{1,6})>/;
             var collMod = RIAPP.MOD.collection;
+            var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
+
+            //local variables for optimization
+            var ValidationError = RIAPP.MOD.binding.ValidationError, valueUtils = RIAPP.MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils, utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
@@ -14498,12 +14501,17 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (datagrid) {
+            var constsMOD = RIAPP.MOD.consts;
+            var utilsMOD = RIAPP.MOD.utils;
+            var bindMOD = RIAPP.MOD.binding;
+            var contentMOD = RIAPP.MOD.baseContent;
+            var collMOD = RIAPP.MOD.collection;
+
             var COLUMN_TYPE = { DATA: 'data', ROW_EXPANDER: 'row_expander', ROW_ACTIONS: 'row_actions', ROW_SELECTOR: 'row_selector' };
             var utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-            var collMOD = RIAPP.MOD.collection;
 
             datagrid.css = {
                 container: 'ria-table-container',
@@ -14543,7 +14551,7 @@ var RIAPP;
                     return 'RowSelectContent';
                 };
                 return RowSelectContent;
-            })(RIAPP.MOD.baseContent.BoolContent);
+            })(contentMOD.BoolContent);
             datagrid.RowSelectContent = RowSelectContent;
 
             var BaseCell = (function (_super) {
@@ -14556,7 +14564,7 @@ var RIAPP;
                     this._div = RIAPP.global.document.createElement("div");
                     var $div = RIAPP.global.$(this._div);
                     this._clickTimeOut = null;
-                    $div.addClass(datagrid.css.cellDiv).attr(RIAPP.MOD.consts.DATA_ATTR.DATA_EVENT_SCOPE, this._column.uniqueID);
+                    $div.addClass(datagrid.css.cellDiv).attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, this._column.uniqueID);
                     $div.data('cell', this);
                     if (this._column.options.width) {
                         this._el.style.width = this._column.options.width;
@@ -14812,7 +14820,7 @@ var RIAPP;
                             img.src = opts[img.name];
                             $img.data('cell', self);
                             utils.addToolTip($img, RIAPP.localizable.TEXT[txtMap[img.name]]);
-                            $img.attr(RIAPP.MOD.consts.DATA_ATTR.DATA_EVENT_SCOPE, self._column.uniqueID);
+                            $img.attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, self._column.uniqueID);
                         });
                     };
 
@@ -14872,9 +14880,12 @@ var RIAPP;
                     var bindInfo = {
                         target: null, source: null,
                         targetPath: null, sourcePath: 'isSelected',
-                        mode: RIAPP.MOD.binding.BINDING_MODE[2 /* TwoWay */],
+                        mode: bindMOD.BINDING_MODE[2 /* TwoWay */],
                         converter: null, converterParam: null
-                    }, contentOpts = { fieldName: 'isSelected', bindingInfo: bindInfo, displayInfo: null };
+                    }, contentOpts = {
+                        fieldName: 'isSelected',
+                        bindingInfo: bindInfo, displayInfo: null
+                    };
                     this._content = new RowSelectContent(this.grid.app, this._div, contentOpts, this.row, true);
                 };
                 RowSelectorCell.prototype.destroy = function () {
@@ -15426,7 +15437,7 @@ var RIAPP;
 
                     extcolDiv.appendChild(div);
 
-                    this.grid._$tableEl.on('click', ['div[', RIAPP.MOD.consts.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''), function (e) {
+                    this.grid._$tableEl.on('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''), function (e) {
                         e.stopPropagation();
                         var $div = RIAPP.global.$(this), cell = $div.data('cell');
                         if (!!cell) {
@@ -15724,7 +15735,7 @@ var RIAPP;
                     opts.img_cancel = RIAPP.global.getImagePath(opts.img_cancel || 'cancel.png');
                     opts.img_edit = RIAPP.global.getImagePath(opts.img_edit || 'edit.png');
                     opts.img_delete = RIAPP.global.getImagePath(opts.img_delete || 'delete.png');
-                    this.grid._$tableEl.on("click", 'img[' + RIAPP.MOD.consts.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]', function (e) {
+                    this.grid._$tableEl.on("click", 'img[' + constsMOD.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]', function (e) {
                         e.stopPropagation();
                         var $img = RIAPP.global.$(this), name = this.name, cell = $img.data('cell');
                         switch (name) {
@@ -15796,7 +15807,7 @@ var RIAPP;
                     this._tableEl = el;
                     this._$tableEl = $t;
                     $t.addClass(datagrid.css.dataTable);
-                    this._name = $t.attr(RIAPP.MOD.consts.DATA_ATTR.DATA_NAME);
+                    this._name = $t.attr(constsMOD.DATA_ATTR.DATA_NAME);
                     this._objId = 'grd' + utils.getNewID();
                     this._dataSource = dataSource;
                     this._rowMap = {};
@@ -15893,7 +15904,7 @@ var RIAPP;
                         options = defaultOp;
 
                     if (!!content_attr) {
-                        options.content = RIAPP.MOD.baseContent.parseContentAttr(content_attr);
+                        options.content = contentMOD.parseContentAttr(content_attr);
                         if (!options.sortMemberName && !!options.content.fieldName)
                             options.sortMemberName = options.content.fieldName;
                     }
@@ -16258,7 +16269,7 @@ var RIAPP;
                     var th, attr;
                     for (var i = 0; i < cnt; i += 1) {
                         th = headCells[i];
-                        attr = this._parseColumnAttr(th.getAttribute(RIAPP.MOD.consts.DATA_ATTR.DATA_COLUMN), th.getAttribute(RIAPP.MOD.consts.DATA_ATTR.DATA_CONTENT));
+                        attr = this._parseColumnAttr(th.getAttribute(constsMOD.DATA_ATTR.DATA_COLUMN), th.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT));
                         cellInfo.push({ th: th, colinfo: attr });
                     }
 
@@ -16308,7 +16319,7 @@ var RIAPP;
                     }
                 };
                 DataGrid.prototype._onKeyDown = function (key, event) {
-                    var ds = this._dataSource, Keys = RIAPP.MOD.consts.KEYS, self = this;
+                    var ds = this._dataSource, Keys = constsMOD.KEYS, self = this;
                     if (!ds)
                         return;
                     switch (key) {
@@ -16371,7 +16382,7 @@ var RIAPP;
                     }
                 };
                 DataGrid.prototype._onKeyUp = function (key, event) {
-                    var ds = this._dataSource, Keys = RIAPP.MOD.consts.KEYS;
+                    var ds = this._dataSource, Keys = constsMOD.KEYS;
                     if (!ds)
                         return;
                     switch (key) {
@@ -17839,6 +17850,20 @@ var RIAPP;
 /// <reference path="..\modules\stackpanel.ts"/>
 var RIAPP;
 (function (RIAPP) {
+    var constsMOD = RIAPP.MOD.consts;
+    var utilsMOD = RIAPP.MOD.utils;
+    var bindMOD = RIAPP.MOD.binding;
+    var elviewMOD = RIAPP.MOD.baseElView;
+    var contentMOD = RIAPP.MOD.baseContent;
+    var formMOD = RIAPP.MOD.dataform;
+    var convertMOD = RIAPP.MOD.converter;
+
+    //ALL CORE MODULES are LOADED, INITIALIZE THE Global
+    RIAPP.global._initialize();
+
+    //local variable for optimization
+    var utils = RIAPP.global.utils, parser = RIAPP.global.parser;
+
     var Application = (function (_super) {
         __extends(Application, _super);
         function Application(options) {
@@ -17853,13 +17878,13 @@ var RIAPP;
                     user_modules = options.user_modules;
             }
             if (!!RIAPP.global.findApp(app_name))
-                throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_APP_NAME_NOT_UNIQUE, app_name));
+                throw new Error(utils.format(RIAPP.ERRS.ERR_APP_NAME_NOT_UNIQUE, app_name));
             this._app_name = app_name;
-            this._objId = 'app:' + RIAPP.global.utils.getNewID();
+            this._objId = 'app:' + utils.getNewID();
 
             //lifetime object to store references to the bindings and element views created by this application
             this._objLifeTime = null;
-            this._ELV_STORE_KEY = RIAPP.global.consts.DATA_ATTR.EL_VIEW_KEY + Application._newInstanceNum;
+            this._ELV_STORE_KEY = constsMOD.DATA_ATTR.EL_VIEW_KEY + Application._newInstanceNum;
             Application._newInstanceNum += 1;
             this._contentFactory = null;
             this._contentFactories = [];
@@ -17890,14 +17915,14 @@ var RIAPP;
         }
         Object.defineProperty(Application.prototype, "_DATA_BIND_SELECTOR", {
             get: function () {
-                return ['*[', RIAPP.global.consts.DATA_ATTR.DATA_BIND, ']'].join('');
+                return ['*[', constsMOD.DATA_ATTR.DATA_BIND, ']'].join('');
             },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(Application.prototype, "_DATA_VIEW_SELECTOR", {
             get: function () {
-                return ['*[', RIAPP.global.consts.DATA_ATTR.DATA_VIEW, ']'].join('');
+                return ['*[', constsMOD.DATA_ATTR.DATA_VIEW, ']'].join('');
             },
             enumerable: true,
             configurable: true
@@ -17906,7 +17931,7 @@ var RIAPP;
         Application.prototype._cleanUpObjMaps = function () {
             var self = this;
             this._objMaps.forEach(function (objMap) {
-                RIAPP.global.utils.forEachProp(objMap, function (name) {
+                utils.forEachProp(objMap, function (name) {
                     var obj = objMap[name];
                     if (obj instanceof RIAPP.BaseObject) {
                         if (!obj._isDestroyed) {
@@ -17919,11 +17944,11 @@ var RIAPP;
         };
         Application.prototype._initModules = function () {
             //initialize core modules
-            var self = this;
+            var self = this, modules = RIAPP.MOD;
             self.global.moduleNames.forEach(function (mod_name) {
                 //checks for initModule function and executes it if the module has it
-                if (!!RIAPP.MOD[mod_name] && !!RIAPP.MOD[mod_name].initModule) {
-                    RIAPP.MOD[mod_name].initModule(self);
+                if (!!modules[mod_name] && !!modules[mod_name].initModule) {
+                    modules[mod_name].initModule(self);
                 }
             });
         };
@@ -17946,9 +17971,9 @@ var RIAPP;
         };
         Application.prototype._getElementViewInfo = function (el) {
             var view_name = null, vw_options = null, attr, data_view_op_arr, data_view_op;
-            if (el.hasAttribute(RIAPP.global.consts.DATA_ATTR.DATA_VIEW)) {
-                attr = el.getAttribute(RIAPP.global.consts.DATA_ATTR.DATA_VIEW);
-                data_view_op_arr = RIAPP.global.parser.parseOptions(attr);
+            if (el.hasAttribute(constsMOD.DATA_ATTR.DATA_VIEW)) {
+                attr = el.getAttribute(constsMOD.DATA_ATTR.DATA_VIEW);
+                data_view_op_arr = parser.parseOptions(attr);
                 if (!!data_view_op_arr && data_view_op_arr.length > 0) {
                     data_view_op = data_view_op_arr[0];
                     if (!!data_view_op.name && data_view_op.name != 'default') {
@@ -17984,7 +18009,7 @@ var RIAPP;
             if (!!view_info.name) {
                 viewType = this._getElViewType(view_info.name);
                 if (!viewType)
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_REGISTERED, view_info.name));
+                    throw new Error(utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_REGISTERED, view_info.name));
             }
             if (!viewType) {
                 var nodeNm = el.nodeName.toLowerCase(), type;
@@ -18001,7 +18026,7 @@ var RIAPP;
                 }
 
                 if (!viewType)
-                    throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_CREATED, nodeNm));
+                    throw new Error(utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_CREATED, nodeNm));
             }
 
             elView = new viewType(this, el, view_info.options || {});
@@ -18028,7 +18053,7 @@ var RIAPP;
             }
         };
         Application.prototype._bindTemplateElements = function (templateEl) {
-            var self = this, global = self.global, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR, selectedElem = RIAPP.ArrayHelper.fromList(templateEl.querySelectorAll(selector)), lftm = new RIAPP.MOD.utils.LifeTimeScope(), checks = global.utils.check, parser = global.parser, DATA_FORM = global.consts.DATA_ATTR.DATA_FORM, DATA_BIND = global.consts.DATA_ATTR.DATA_BIND, DATA_VIEW = global.consts.DATA_ATTR.DATA_VIEW;
+            var self = this, global = self.global, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR, selectedElem = RIAPP.ArrayHelper.fromList(templateEl.querySelectorAll(selector)), lftm = new utilsMOD.LifeTimeScope(), checks = utils.check, DATA_FORM = constsMOD.DATA_ATTR.DATA_FORM, DATA_BIND = constsMOD.DATA_ATTR.DATA_BIND, DATA_VIEW = constsMOD.DATA_ATTR.DATA_VIEW;
 
             if (templateEl.hasAttribute(DATA_BIND) || templateEl.hasAttribute(DATA_VIEW)) {
                 selectedElem.push(templateEl);
@@ -18059,7 +18084,7 @@ var RIAPP;
                 //first create element view
                 elView = self.getElementView(el);
                 lftm.addObj(elView);
-                if (elView instanceof RIAPP.MOD.dataform.DataFormElView) {
+                if (elView instanceof formMOD.DataFormElView) {
                     elView.form.isInsideTemplate = true;
                 }
 
@@ -18073,7 +18098,7 @@ var RIAPP;
                     el.removeAttribute(DATA_BIND);
                     temp_opts = parser.parseOptions(bind_attr);
                     for (j = 0, len = temp_opts.length; j < len; j += 1) {
-                        op = RIAPP.MOD.baseContent.getBindingOptions(self, temp_opts[j], elView, null);
+                        op = contentMOD.getBindingOptions(self, temp_opts[j], elView, null);
                         binding = self.bind(op);
                         op.target = null;
                         lftm.addObj(binding);
@@ -18084,13 +18109,13 @@ var RIAPP;
             return lftm;
         };
         Application.prototype._bindElements = function (scope, dctx, isDataFormBind, isInsideTemplate) {
-            var self = this, global = self.global, checks = global.utils.check, parser = global.parser, DATA_FORM = global.consts.DATA_ATTR.DATA_FORM, DATA_BIND = global.consts.DATA_ATTR.DATA_BIND, DATA_VIEW = global.consts.DATA_ATTR.DATA_VIEW, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR;
+            var self = this, global = self.global, checks = utils.check, DATA_FORM = constsMOD.DATA_ATTR.DATA_FORM, DATA_BIND = constsMOD.DATA_ATTR.DATA_BIND, DATA_VIEW = constsMOD.DATA_ATTR.DATA_VIEW, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR;
 
             scope = scope || global.document;
 
             //select all elements with binding attributes
             var selectedElem = RIAPP.ArrayHelper.fromList(scope.querySelectorAll(selector));
-            var lftm = new RIAPP.MOD.utils.LifeTimeScope();
+            var lftm = new utilsMOD.LifeTimeScope();
 
             if (!isDataFormBind) {
                 //mark all dataforms for easier checking that the element is a dataform
@@ -18114,7 +18139,7 @@ var RIAPP;
                 //first create element view
                 elView = self.getElementView(el);
                 lftm.addObj(elView);
-                if (elView instanceof RIAPP.MOD.dataform.DataFormElView) {
+                if (elView instanceof formMOD.DataFormElView) {
                     elView.form.isInsideTemplate = isInsideTemplate;
                 }
 
@@ -18133,7 +18158,7 @@ var RIAPP;
                     }
                     temp_opts = parser.parseOptions(bind_attr);
                     for (i = 0, len = temp_opts.length; i < len; i += 1) {
-                        bind_op = RIAPP.MOD.baseContent.getBindingOptions(self, temp_opts[i], elView, dctx);
+                        bind_op = contentMOD.getBindingOptions(self, temp_opts[i], elView, dctx);
                         lftm.addObj(self.bind(bind_op));
                     }
                 }
@@ -18166,7 +18191,7 @@ var RIAPP;
             if (!global._getObject(this, name2)) {
                 global._registerObject(this, name2, type);
             } else
-                throw new Error(global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
+                throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         };
 
         //checks if the element already has created and attached ElView, if no then it creates and attaches ElView for the element
@@ -18180,7 +18205,7 @@ var RIAPP;
             return this._createElementView(el, info);
         };
         Application.prototype.bind = function (opts) {
-            return new RIAPP.MOD.binding.Binding(opts, this.appName);
+            return new bindMOD.Binding(opts, this.appName);
         };
         Application.prototype.registerContentFactory = function (fn) {
             this._contentFactories.push(fn);
@@ -18190,7 +18215,7 @@ var RIAPP;
             if (!RIAPP.global._getObject(this, name2)) {
                 RIAPP.global._registerObject(this, name2, obj);
             } else
-                throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
+                throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         };
         Application.prototype.getConverter = function (name) {
             var name2 = 'converters.' + name;
@@ -18199,7 +18224,7 @@ var RIAPP;
                 res = RIAPP.global._getObject(RIAPP.global, name2);
             }
             if (!res)
-                throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
+                throw new Error(utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
             return res;
         };
         Application.prototype.registerType = function (name, obj) {
@@ -18252,7 +18277,7 @@ var RIAPP;
             };
 
             try  {
-                if (!!fn_sandbox && !RIAPP.global.utils.check.isFunction(fn_sandbox))
+                if (!!fn_sandbox && !utils.check.isFunction(fn_sandbox))
                     throw new Error(RIAPP.ERRS.ERR_APP_SETUP_INVALID);
                 RIAPP.global._waitForNotLoading(fn_init, null);
             } catch (ex) {
@@ -18263,7 +18288,7 @@ var RIAPP;
         //loads a group of templates from the server
         Application.prototype.loadTemplates = function (url) {
             this.loadTemplatesAsync(function () {
-                return RIAPP.global.utils.performAjaxGet(url);
+                return utils.performAjaxGet(url);
             });
         };
 
@@ -18288,7 +18313,7 @@ var RIAPP;
             return res;
         };
         Application.prototype.registerTemplateGroup = function (name, group) {
-            var group2 = RIAPP.global.utils.extend(false, {
+            var group2 = utils.extend(false, {
                 fn_loader: null,
                 url: null,
                 names: null,
@@ -18402,7 +18427,4 @@ var RIAPP;
         return Application;
     })(RIAPP.BaseObject);
     RIAPP.Application = Application;
-
-    //ALL CORE MODULES are LOADED, INITIALIZE THE Global
-    RIAPP.global._initialize();
 })(RIAPP || (RIAPP = {}));

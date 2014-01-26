@@ -1,9 +1,9 @@
 module RIAPP {
     export module MOD {
         export module baseElView {
+            import constsMOD = MOD.consts;
            //local variables for optimization
-            var ERRTEXT = RIAPP.localizable.VALIDATE;
-            var utils: MOD.utils.Utils;
+            var ERRTEXT = RIAPP.localizable.VALIDATE, utils: MOD.utils.Utils;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
@@ -1468,7 +1468,7 @@ module RIAPP {
 
             global.registerElView('template', TemplateElView);
             global.registerElView('busy_indicator', BusyElView);
-            global.registerElView(global.consts.ELVIEW_NM.DYNACONT, DynaContentElView);
+            global.registerElView(constsMOD.ELVIEW_NM.DYNACONT, DynaContentElView);
             global.registerElView('input:checkbox', CheckBoxElView);
             global.registerElView('threeState', CheckBoxThreeStateElView);
             global.registerElView('input:text', TextBoxElView);

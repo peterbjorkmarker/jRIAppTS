@@ -1,12 +1,13 @@
 module RIAPP {
     export module MOD {
         export module db {
+            import collMod = MOD.collection;
+            var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
             //local variables for optimization
             var ValidationError = binding.ValidationError,
                 valueUtils = MOD.utils.valueUtils,
                 baseUtils = RIAPP.baseUtils,
-                utils: MOD.utils.Utils, HEAD_MARK_RX = /^<head:(\d{1,6})>/;
-            import collMod = MOD.collection;
+                utils: MOD.utils.Utils;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });

@@ -1,35 +1,25 @@
 module RIAPP {
     export module MOD {
         export module baseContent {
+            import constsMOD = MOD.consts;
+            import bindMOD = RIAPP.MOD.binding;
+
             var utils: MOD.utils.Utils, parser: MOD.parser.Parser;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
                 parser = s.parser;
             });
-            import bindMOD = RIAPP.MOD.binding;
             export var css = {
                 content: 'ria-content-field',
                 required: 'ria-required-field'
             };
             
-             //result of parsing binding expression -all props typically are strings
-            export interface IBindingInfo {
-                mode?: string;
-                converterParam?: any;
-                converter?: any;
-                targetPath: string;
-                sourcePath?: string;
-                to?: string;
-                target?: any;
-                source?: any;
-            };
-
-       
+         
             //can contain two template ids - for display and editing
             export interface ITemplateInfo {
                 displayID?: string;
                 editID?: string;
-            };
+            }
 
             //the result of parsing od data-content attribute
             export interface IDataContentAttr {
@@ -39,7 +29,7 @@ module RIAPP {
                 template?: ITemplateInfo;
                 name?: string;
                 options?: any;
-            };
+            }
 
 
             export interface IExternallyCachable {
@@ -52,12 +42,12 @@ module RIAPP {
                 readOnly?: boolean;
                 initContentFn?: (content: IExternallyCachable) => void;
                 fieldInfo?: collection.IFieldInfo;
-                bindingInfo?: IBindingInfo;
+                bindingInfo?: bindMOD.IBindingInfo;
                 displayInfo?: { displayCss?: string; editCss?: string; };
                 templateInfo?: ITemplateInfo;
                 fieldName?: string;
                 options?: any;
-            };
+            }
 
             export interface IContentType {
                 new (app: Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean): IContent;
@@ -84,7 +74,7 @@ module RIAPP {
                     return contentOptions;
                 attr = temp_opts[0];
                 if (!attr.template && !!attr.fieldName) {
-                    var bindInfo: RIAPP.MOD.baseContent.IBindingInfo = {
+                    var bindInfo: bindMOD.IBindingInfo = {
                         target: null, source: null,
                         targetPath: null, sourcePath: attr.fieldName,
                         mode: bindMOD.BINDING_MODE[bindMOD.BINDING_MODE.OneWay],
@@ -108,7 +98,7 @@ module RIAPP {
                 return contentOptions;
             };
 
-            export function getBindingOptions(app: Application, bindInfo: IBindingInfo, defaultTarget: BaseObject, defaultSource:any) {
+            export function getBindingOptions(app: Application, bindInfo: bindMOD.IBindingInfo, defaultTarget: BaseObject, defaultSource:any) {
                 var bindingOpts: bindMOD.IBindingOptions = {
                     mode: bindMOD.BINDING_MODE.OneWay,
                     converterParam: null,
@@ -265,7 +255,7 @@ module RIAPP {
                     this._el = el;
                     return this._getElementView(this._el, info);
                 }
-                _getBindingOption(bindingInfo:IBindingInfo, tgt:BaseObject, dctx, targetPath:string) {
+                _getBindingOption(bindingInfo:bindMOD.IBindingInfo, tgt:BaseObject, dctx:any, targetPath:string) {
                     var options = getBindingOptions(this.app,bindingInfo, tgt, dctx);
                     if (this.isEditing && this._canBeEdited())
                         options.mode = bindMOD.BINDING_MODE.TwoWay;
@@ -538,7 +528,7 @@ module RIAPP {
                     super(app, parentEl, options, dctx, isEditing);
                     this._fn_cleanup = null;
                 }
-                _getBindingOption(bindingInfo: IBindingInfo, tgt: BaseObject, dctx, targetPath:string) {
+                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: BaseObject, dctx:any, targetPath:string) {
                     var options =super._getBindingOption(bindingInfo, tgt, dctx, targetPath);
                     options.converter = this.app.getConverter('dateConverter');
                     return options;
@@ -564,7 +554,7 @@ module RIAPP {
             }
 
             export class DateTimeContent extends BindingContent {
-                _getBindingOption(bindingInfo: IBindingInfo, tgt: BaseObject, dctx, targetPath: string) {
+                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: BaseObject, dctx, targetPath: string) {
                     var options = super._getBindingOption(bindingInfo, tgt, dctx, targetPath);
                     options.converter = this.app.getConverter('dateTimeConverter');
                     var finf = this.getFieldInfo(), defaults = global.defaults;
@@ -593,12 +583,12 @@ module RIAPP {
                 static __allowedKeys:number[] = null;
                 private get _allowedKeys() {
                     if (!NumberContent.__allowedKeys) {
-                        var KEYS = global.consts.KEYS;
+                        var KEYS = constsMOD.KEYS;
                         NumberContent.__allowedKeys = [0, KEYS.backspace, KEYS.del, KEYS.left, KEYS.right, KEYS.end, KEYS.home, KEYS.tab, KEYS.esc, KEYS.enter];
                     }
                     return NumberContent.__allowedKeys;
                 }
-                _getBindingOption(bindingInfo: IBindingInfo, tgt: BaseObject, dctx, targetPath: string) {
+                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: BaseObject, dctx, targetPath: string) {
                     var options = super._getBindingOption(bindingInfo, tgt, dctx, targetPath);
                     var finf = this.getFieldInfo();
                     switch (finf.dataType) {
@@ -651,7 +641,7 @@ module RIAPP {
                 static __allowedKeys: number[] = null;
                 private get _allowedKeys() {
                     if (!StringContent.__allowedKeys) {
-                        var KEYS = global.consts.KEYS;
+                        var KEYS = constsMOD.KEYS;
                         StringContent.__allowedKeys = [0, KEYS.backspace, KEYS.del, KEYS.left, KEYS.right, KEYS.end, KEYS.home, KEYS.tab, KEYS.esc, KEYS.enter];
                     }
                     return StringContent.__allowedKeys;
@@ -678,7 +668,7 @@ module RIAPP {
                 static __allowedKeys: number[] = null;
                 private get _allowedKeys() {
                     if (!MultyLineContent.__allowedKeys) {
-                        var KEYS = global.consts.KEYS;
+                        var KEYS = constsMOD.KEYS;
                         MultyLineContent.__allowedKeys = [0, KEYS.backspace, KEYS.del, KEYS.left, KEYS.right, KEYS.end, KEYS.home, KEYS.tab, KEYS.esc, KEYS.enter];
                     }
                     return MultyLineContent.__allowedKeys;

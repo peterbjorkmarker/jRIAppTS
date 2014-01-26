@@ -1,12 +1,17 @@
 module RIAPP {
     export module MOD {
         export module datagrid {
+            import constsMOD = MOD.consts;
+            import utilsMOD = RIAPP.MOD.utils;
+            import bindMOD = RIAPP.MOD.binding;
+            import contentMOD = RIAPP.MOD.baseContent;
+            import collMOD = RIAPP.MOD.collection;
+
             var COLUMN_TYPE = { DATA: 'data', ROW_EXPANDER: 'row_expander', ROW_ACTIONS: 'row_actions', ROW_SELECTOR: 'row_selector' };
-            var utils: MOD.utils.Utils;
+            var utils: utilsMOD.Utils;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
-            import collMOD = RIAPP.MOD.collection;
 
             export var css = {
                 container: 'ria-table-container',
@@ -34,7 +39,7 @@ module RIAPP {
                 colSortDesc: 'sort-desc'
             };
 
-            export class RowSelectContent extends baseContent.BoolContent {
+            export class RowSelectContent extends contentMOD.BoolContent {
                 _canBeEdited() {
                     return true;
                 }
@@ -58,7 +63,7 @@ module RIAPP {
                     this._div = global.document.createElement("div");
                     var $div = global.$(this._div);
                     this._clickTimeOut = null;
-                    $div.addClass(css.cellDiv).attr(consts.DATA_ATTR.DATA_EVENT_SCOPE, this._column.uniqueID);
+                    $div.addClass(css.cellDiv).attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, this._column.uniqueID);
                     $div.data('cell',this);
                     if (this._column.options.width) {
                         this._el.style.width = this._column.options.width;
@@ -118,7 +123,7 @@ module RIAPP {
             }
 
             export class DataCell extends BaseCell {
-                private _content: baseContent.IContent;
+                private _content: contentMOD.IContent;
                 private _stateCss: string;
 
                 constructor(row: Row, options: { td: HTMLTableCellElement; column: DataColumn; }) {
@@ -149,7 +154,7 @@ module RIAPP {
                 }
                 _getInitContentFn() {
                     var self = this;
-                    return function (content: baseContent.IExternallyCachable) {
+                    return function (content: contentMOD.IExternallyCachable) {
                         content.addOnObjectCreated(function (sender, args) {
                             self.column._cacheObject(args.objectKey,args.object);
                             args.isCachedExternally = !!self.column._getCachedObject(args.objectKey);
@@ -273,7 +278,7 @@ module RIAPP {
                             img.src = opts[img.name];
                             $img.data('cell', self);
                             utils.addToolTip($img, localizable.TEXT[txtMap[img.name]]);
-                            $img.attr(consts.DATA_ATTR.DATA_EVENT_SCOPE, self._column.uniqueID);
+                            $img.attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, self._column.uniqueID);
                         });
                     };
 
@@ -310,16 +315,20 @@ module RIAPP {
             }
 
             export class RowSelectorCell extends BaseCell {
-                private _content: baseContent.IContent;
+                private _content: contentMOD.IContent;
                 _init() {
                     var $el = global.$(this.el);
                     $el.addClass(css.rowSelector);
-                    var bindInfo: RIAPP.MOD.baseContent.IBindingInfo = {
+                    var bindInfo: bindMOD.IBindingInfo = {
                         target: null, source: null,
                         targetPath: null, sourcePath: 'isSelected',
-                        mode: RIAPP.MOD.binding.BINDING_MODE[RIAPP.MOD.binding.BINDING_MODE.TwoWay],
+                        mode: bindMOD.BINDING_MODE[bindMOD.BINDING_MODE.TwoWay],
                         converter: null, converterParam: null
-                    }, contentOpts: baseContent.IContentOptions = { fieldName: 'isSelected', bindingInfo: bindInfo, displayInfo: null };
+                    },
+                        contentOpts: contentMOD.IContentOptions = {
+                            fieldName: 'isSelected',
+                            bindingInfo: bindInfo, displayInfo: null
+                        };
                     this._content = new RowSelectContent(this.grid.app, this._div, contentOpts, this.row, true);
                 }
                 destroy() {
@@ -712,7 +721,7 @@ module RIAPP {
                 colCellCss?: string;
                 rowCellCss?: string;
                 width?: any;
-                content?: baseContent.IContentOptions;
+                content?: contentMOD.IContentOptions;
             }
 
             export class BaseColumn extends RIAPP.BaseObject {
@@ -750,7 +759,7 @@ module RIAPP {
                     extcolDiv.appendChild(div);
                    
 
-                    this.grid._$tableEl.on('click', ['div[',consts.DATA_ATTR.DATA_EVENT_SCOPE,'="',this.uniqueID,'"]'].join(''),
+                    this.grid._$tableEl.on('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE,'="',this.uniqueID,'"]'].join(''),
                         function (e) {
                             e.stopPropagation();
                             var $div = global.$(this), cell: BaseCell = $div.data('cell');
@@ -973,7 +982,7 @@ module RIAPP {
                     opts.img_cancel = global.getImagePath(opts.img_cancel || 'cancel.png');
                     opts.img_edit = global.getImagePath(opts.img_edit || 'edit.png');
                     opts.img_delete = global.getImagePath(opts.img_delete || 'delete.png');
-                    this.grid._$tableEl.on("click", 'img[' + consts.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]',
+                    this.grid._$tableEl.on("click", 'img[' + constsMOD.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]',
                         function (e) {
                             e.stopPropagation();
                             var $img = global.$(this), name = this.name, cell: ActionsCell = $img.data('cell');
@@ -1085,7 +1094,7 @@ module RIAPP {
                     this._tableEl = el;
                     this._$tableEl = $t;
                     $t.addClass(css.dataTable);
-                    this._name = $t.attr(consts.DATA_ATTR.DATA_NAME);
+                    this._name = $t.attr(constsMOD.DATA_ATTR.DATA_NAME);
                     this._objId = 'grd' + utils.getNewID();
                     this._dataSource = dataSource;
                     this._rowMap = {};
@@ -1180,7 +1189,7 @@ module RIAPP {
                         options = defaultOp;
 
                     if (!!content_attr) {
-                        options.content = baseContent.parseContentAttr(content_attr);
+                        options.content = contentMOD.parseContentAttr(content_attr);
                         if (!options.sortMemberName && !!options.content.fieldName)
                             options.sortMemberName = options.content.fieldName;
                     }
@@ -1543,7 +1552,7 @@ module RIAPP {
                     var th, attr: IColumnInfo;
                     for (var i = 0; i < cnt; i += 1) {
                         th = headCells[i];
-                        attr = this._parseColumnAttr(th.getAttribute(consts.DATA_ATTR.DATA_COLUMN), th.getAttribute(consts.DATA_ATTR.DATA_CONTENT));
+                        attr = this._parseColumnAttr(th.getAttribute(constsMOD.DATA_ATTR.DATA_COLUMN), th.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT));
                         cellInfo.push({ th: th, colinfo: attr });
                     }
 
@@ -1593,7 +1602,7 @@ module RIAPP {
                     }
                 }
                 _onKeyDown(key:number, event: Event) {
-                    var ds = this._dataSource, Keys = consts.KEYS, self = this;
+                    var ds = this._dataSource, Keys = constsMOD.KEYS, self = this;
                     if (!ds)
                         return;
                     switch (key) {
@@ -1657,7 +1666,7 @@ module RIAPP {
                     }
                 }
                 _onKeyUp(key:number, event:Event) {
-                    var ds = this._dataSource, Keys = consts.KEYS;
+                    var ds = this._dataSource, Keys = constsMOD.KEYS;
                     if (!ds)
                         return;
                     switch (key) {

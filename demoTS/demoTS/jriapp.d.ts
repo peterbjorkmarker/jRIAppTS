@@ -338,7 +338,6 @@ declare module RIAPP {
         public document : Document;
         public currentSelectable : ISelectable;
         public defaults : RIAPP.MOD.defaults.Defaults;
-        public consts : typeof RIAPP.MOD.consts;
         public utils : RIAPP.MOD.utils.Utils;
         public UC : any;
     }
@@ -1027,6 +1026,16 @@ declare module RIAPP {
                 OneWay = 1,
                 TwoWay = 2,
             }
+            interface IBindingInfo {
+                mode?: string;
+                converterParam?: any;
+                converter?: any;
+                targetPath: string;
+                sourcePath?: string;
+                to?: string;
+                target?: any;
+                source?: any;
+            }
             interface IBindingOptions {
                 mode?: BINDING_MODE;
                 converterParam?: any;
@@ -1544,16 +1553,6 @@ declare module RIAPP {
                 content: string;
                 required: string;
             };
-            interface IBindingInfo {
-                mode?: string;
-                converterParam?: any;
-                converter?: any;
-                targetPath: string;
-                sourcePath?: string;
-                to?: string;
-                target?: any;
-                source?: any;
-            }
             interface ITemplateInfo {
                 displayID?: string;
                 editID?: string;
@@ -1585,7 +1584,7 @@ declare module RIAPP {
                 readOnly?: boolean;
                 initContentFn?: (content: IExternallyCachable) => void;
                 fieldInfo?: MOD.collection.IFieldInfo;
-                bindingInfo?: IBindingInfo;
+                bindingInfo?: MOD.binding.IBindingInfo;
                 displayInfo?: {
                     displayCss?: string;
                     editCss?: string;
@@ -1603,7 +1602,7 @@ declare module RIAPP {
                 isExternallyCachable(contentType: any): boolean;
             }
             function parseContentAttr(content_attr: string): IContentOptions;
-            function getBindingOptions(app: RIAPP.Application, bindInfo: IBindingInfo, defaultTarget: RIAPP.BaseObject, defaultSource: any): MOD.binding.IBindingOptions;
+            function getBindingOptions(app: RIAPP.Application, bindInfo: MOD.binding.IBindingInfo, defaultTarget: RIAPP.BaseObject, defaultSource: any): MOD.binding.IBindingOptions;
             interface IContent {
                 isEditing: boolean;
                 dataContext: any;
@@ -1624,12 +1623,12 @@ declare module RIAPP {
                 public _updateCss(): void;
                 public _canBeEdited(): boolean;
                 public _createTargetElement(): MOD.baseElView.BaseElView;
-                public _getBindingOption(bindingInfo: IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
+                public _getBindingOption(bindingInfo: MOD.binding.IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
                 public _getBindings(): MOD.binding.Binding[];
                 public _updateBindingSource(): void;
                 public _cleanUp(): void;
                 public getFieldInfo(): MOD.collection.IFieldInfo;
-                public _getBindingInfo(): IBindingInfo;
+                public _getBindingInfo(): MOD.binding.IBindingInfo;
                 public _getDisplayInfo(): {
                     displayCss?: string;
                     editCss?: string;
@@ -1679,18 +1678,18 @@ declare module RIAPP {
             class DateContent extends BindingContent {
                 public _fn_cleanup: () => void;
                 constructor(app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx: any, isEditing: boolean);
-                public _getBindingOption(bindingInfo: IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
+                public _getBindingOption(bindingInfo: MOD.binding.IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
                 public _createTargetElement(): MOD.baseElView.BaseElView;
                 public toString(): string;
             }
             class DateTimeContent extends BindingContent {
-                public _getBindingOption(bindingInfo: IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
+                public _getBindingOption(bindingInfo: MOD.binding.IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
                 public toString(): string;
             }
             class NumberContent extends BindingContent {
                 static __allowedKeys: number[];
                 private _allowedKeys;
-                public _getBindingOption(bindingInfo: IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
+                public _getBindingOption(bindingInfo: MOD.binding.IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
                 public update(): void;
                 public _previewKeyPress(keyCode: number, value: string): boolean;
                 public toString(): string;

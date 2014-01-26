@@ -1,30 +1,34 @@
 module RIAPP {
     export module MOD {
         export module dataform {
+            import constsMOD = MOD.consts;
+            import utilsMOD = RIAPP.MOD.utils;
+            import bindMOD = RIAPP.MOD.binding;
+            import elviewMOD = MOD.baseElView;
+            import contentMOD = RIAPP.MOD.baseContent;
             export var css = {
                 dataform: 'ria-dataform'
             };
-            var utils: MOD.utils.Utils;
+            var ERRTEXT = RIAPP.localizable.VALIDATE, utils: utilsMOD.Utils;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
-            var ERRTEXT = RIAPP.localizable.VALIDATE;
-
+            
             export class DataForm extends RIAPP.BaseObject {
-                private get _DATA_CONTENT_SELECTOR() { return '*[' + consts.DATA_ATTR.DATA_CONTENT + ']:not([' + consts.DATA_ATTR.DATA_COLUMN + '])'; }
+                private get _DATA_CONTENT_SELECTOR() { return '*[' + constsMOD.DATA_ATTR.DATA_CONTENT + ']:not([' + constsMOD.DATA_ATTR.DATA_COLUMN + '])'; }
                 private _el: HTMLElement;
                 private _$el: JQuery;
                 private _objId: string;
                 private _dataContext: BaseObject;
                 private _isEditing: boolean;
                 private _isDisabled: boolean;
-                private _content: baseContent.IContent[];
-                private _lfTime: MOD.utils.LifeTimeScope;
+                private _content: contentMOD.IContent[];
+                private _lfTime: utilsMOD.LifeTimeScope;
                 private _contentCreated: boolean;
                 private _supportEdit: boolean;
                 private _supportErrNotify: boolean;
-                private _parentDataForm: baseElView.BaseElView;
-                private _errors: binding.IValidationInfo[];
+                private _parentDataForm: elviewMOD.BaseElView;
+                private _errors: bindMOD.IValidationInfo[];
                 private _app: Application;
                 private _isInsideTemplate: boolean;
 
@@ -58,20 +62,20 @@ module RIAPP {
                         }, self._objId);
                     }
                 }
-                private _getBindings(): binding.Binding[] {
+                private _getBindings(): bindMOD.Binding[] {
                     if (!this._lfTime)
                         return [];
-                    var arr:any[] = this._lfTime.getObjs(), res:binding.Binding[] = [];
+                    var arr: any[] = this._lfTime.getObjs(), res: bindMOD.Binding[] = [];
                     for (var i = 0, len = arr.length; i < len; i += 1) {
                         if (utils.check.isBinding(arr[i]))
                             res.push(arr[i]);
                     }
                     return res;
                 }
-                private _getElViews():baseElView.BaseElView[] {
+                private _getElViews(): elviewMOD.BaseElView[] {
                     if (!this._lfTime)
                         return [];
-                    var arr: any[] = this._lfTime.getObjs(), res: baseElView.BaseElView[] = [];
+                    var arr: any[] = this._lfTime.getObjs(), res: elviewMOD.BaseElView[] = [];
                     for (var i = 0, len = arr.length; i < len; i += 1) {
                         if (utils.check.isElView(arr[i]))
                             res.push(arr[i]);
@@ -79,9 +83,9 @@ module RIAPP {
                     return res;
                 }
                 private _updateIsDisabled() {
-                    var i: number, len: number, bnd: binding.Binding, vw: baseElView.BaseElView,
+                    var i: number, len: number, bnd: bindMOD.Binding, vw: elviewMOD.BaseElView,
                         bindings = this._getBindings(), elViews = this._getElViews(),
-                        DataFormElView = this.app._getElViewType(consts.ELVIEW_NM.DATAFORM);
+                        DataFormElView = this.app._getElViewType(constsMOD.ELVIEW_NM.DATAFORM);
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         bnd = bindings[i];
                         bnd.isDisabled = this._isDisabled;
@@ -105,14 +109,14 @@ module RIAPP {
                         isEditing = this.isEditing;
 
                     //select all dataforms inside the scope
-                    var formSelector = ['*[', global.consts.DATA_ATTR.DATA_FORM, ']'].join(''),
+                    var formSelector = ['*[', constsMOD.DATA_ATTR.DATA_FORM, ']'].join(''),
                         forms = ArrayHelper.fromList(this._el.querySelectorAll(formSelector));
 
                     elements.forEach(function (el) {
                         //check if the element inside a nested dataform
                         if (utils.check.isInNestedForm(self._el, forms, el))
                             return;
-                        var attr = el.getAttribute(consts.DATA_ATTR.DATA_CONTENT), op = baseContent.parseContentAttr(attr);
+                        var attr = el.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT), op = contentMOD.parseContentAttr(attr);
                         if (!!op.fieldName && !op.fieldInfo) {
                             if (!supportsGetFieldInfo) {
                                 throw new Error(RIAPP.ERRS.ERR_DCTX_HAS_NO_FIELDINFO);
@@ -153,7 +157,7 @@ module RIAPP {
                     this._createContent();
                 }
                 private _onDSErrorsChanged() {
-                    var dataContext: binding.IErrorNotification = <any>this._dataContext;
+                    var dataContext: bindMOD.IErrorNotification = <any>this._dataContext;
                     this.validationErrors = dataContext.getAllErrors();
                 }
                 private _bindDS() {
@@ -171,7 +175,7 @@ module RIAPP {
                     }
 
                     if (this._supportErrNotify) {
-                        (<binding.IErrorNotification>dataContext).addOnErrorsChanged(function (sender, args) {
+                        (<bindMOD.IErrorNotification>dataContext).addOnErrorsChanged(function (sender, args) {
                             self._onDSErrorsChanged();
                         }, self._objId);
                     }
@@ -235,14 +239,14 @@ module RIAPP {
 
                         if (!!dataContext) {
                             this._supportEdit = utils.check.isEditable(dataContext);
-                            this._supportErrNotify = binding._checkIsErrorNotification(dataContext);
+                            this._supportErrNotify = bindMOD._checkIsErrorNotification(dataContext);
                         }
                         this._bindDS();
                         this._updateContent();
                         this.raisePropertyChanged('dataContext');
                         if (!!dataContext) {
-                            if (this._supportEdit && this._isEditing !== (<MOD.utils.IEditable>dataContext).isEditing) {
-                                this.isEditing = (<MOD.utils.IEditable>dataContext).isEditing;
+                            if (this._supportEdit && this._isEditing !== (<utilsMOD.IEditable>dataContext).isEditing) {
+                                this.isEditing = (<utilsMOD.IEditable>dataContext).isEditing;
                             }
                             if (this._supportErrNotify) {
                                 this._onDSErrorsChanged();
@@ -257,7 +261,7 @@ module RIAPP {
                     var dataContext: any = this._dataContext;
                     if (!dataContext)
                         return;
-                    var isEditing = this._isEditing, editable: MOD.utils.IEditable;
+                    var isEditing = this._isEditing, editable: utilsMOD.IEditable;
 
                     if (!this._supportEdit && v !== isEditing) {
                         this._isEditing = v;
@@ -267,7 +271,7 @@ module RIAPP {
                     }
 
                     if (this._supportEdit)
-                        editable = <MOD.utils.IEditable>dataContext;
+                        editable = <utilsMOD.IEditable>dataContext;
 
                     if (v !== isEditing) {
                         try {
@@ -310,11 +314,11 @@ module RIAPP {
                 }
             }
      
-            export class DataFormElView extends baseElView.BaseElView {
+            export class DataFormElView extends elviewMOD.BaseElView {
                 private _form: DataForm;
-                private _options: baseElView.IViewOptions;
+                private _options: elviewMOD.IViewOptions;
 
-                constructor(app: Application, el: HTMLSelectElement, options: baseElView.IViewOptions) {
+                constructor(app: Application, el: HTMLSelectElement, options: elviewMOD.IViewOptions) {
                     super(app, el, options);
                     var self = this;
                     this._options = options;
@@ -336,7 +340,7 @@ module RIAPP {
                         }
                     }, this._objId);
                 }
-                _getErrorTipInfo(errors: MOD.binding.IValidationInfo[]) {
+                _getErrorTipInfo(errors: bindMOD.IValidationInfo[]) {
                     var tip = ['<b>', ERRTEXT.errorInfo, '</b>', '<ul>'];
                     errors.forEach(function (info) {
                         var fieldName = info.fieldName, res = '';
@@ -355,7 +359,7 @@ module RIAPP {
                     tip.push('</ul>');
                     return tip.join('');
                 }
-                _updateErrorUI(el: HTMLElement, errors: MOD.binding.IValidationInfo[]) {
+                _updateErrorUI(el: HTMLElement, errors: bindMOD.IValidationInfo[]) {
                     if (!el) {
                         return;
                     }
@@ -365,7 +369,7 @@ module RIAPP {
                         $img = global.$('<img name="error_info" alt="error_info" class="error-info" />');
                         $el.prepend($img);
                         $img.get(0).src = image_src;
-                        utils.addToolTip($img, this._getErrorTipInfo(errors), baseElView.css.errorTip);
+                        utils.addToolTip($img, this._getErrorTipInfo(errors), elviewMOD.css.errorTip);
                         this._setFieldError(true);
                     }
                     else {
@@ -414,7 +418,7 @@ module RIAPP {
             }
 
             global.registerType('DataFormElView', DataFormElView);
-            global.registerElView(consts.ELVIEW_NM.DATAFORM, DataFormElView);
+            global.registerElView(constsMOD.ELVIEW_NM.DATAFORM, DataFormElView);
             global.onModuleLoaded('dataform', dataform);
         }
     }

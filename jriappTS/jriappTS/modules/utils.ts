@@ -1,6 +1,7 @@
 module RIAPP {
     export module MOD {
         export module utils {
+            import constsMOD = MOD.consts;
             var base_utils = RIAPP.baseUtils, _newID = 0;
             //adds new properties to some prototype
             export function defineProps(proto, props?: any, propertyDescriptors?:any) {
@@ -46,14 +47,14 @@ module RIAPP {
                 extend(fn, _super);
                 defineProps(fn.prototype, pds, props);
                 return fn;
-            }
+            };
 
             export interface IEditable {
                 beginEdit(): boolean;
                 endEdit(): boolean;
                 cancelEdit(): boolean;
                 isEditing: boolean;
-            };
+            }
 
             export interface ISubmittable {
                 submitChanges(): IVoidPromise;
@@ -123,14 +124,14 @@ module RIAPP {
                 static isDataForm(el: HTMLElement) {
                     if (!el)
                         return false;
-                    if (el.hasAttribute(global.consts.DATA_ATTR.DATA_FORM))
+                    if (el.hasAttribute(constsMOD.DATA_ATTR.DATA_FORM))
                         return true;
-                    var attr = el.getAttribute(global.consts.DATA_ATTR.DATA_VIEW);
+                    var attr = el.getAttribute(constsMOD.DATA_ATTR.DATA_VIEW);
                     if (!attr) {
                         return false;
                     }
                     var opts = global.parser.parseOptions(attr);
-                    return (opts.length > 0 && opts[0].name === global.consts.ELVIEW_NM.DATAFORM);
+                    return (opts.length > 0 && opts[0].name === constsMOD.ELVIEW_NM.DATAFORM);
                 }
                 //check if element is placed inside DataForm
                 static isInsideDataForm(el:HTMLElement) {
@@ -182,7 +183,7 @@ module RIAPP {
                 /**
                  *    Usage:     formatNumber(123456.789, 2, '.', ',');
                  *    result:    123,456.79
-                 **/
+                **/
                 static formatNumber(num:any, decimals?:number, dec_point?:string, thousands_sep?:string) {
                     num = (num + '').replace(/[^0-9+-Ee.]/g, '');
                     var n = !isFinite(+num) ? 0 : +num,
