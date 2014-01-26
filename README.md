@@ -37,8 +37,8 @@ A DbContext – the control used as a data manager to store the data (DbSets) and 
 The framework also has a special element view registered by the name dynacontent, which helps to create content regions on the page using data templates. 
 The templates in these regions are easily switchable. This feature enables to create single page applications.<br/>
 
-After minification jriapp.js has size about 300 KB. But it can be further gzipped, for it to reach the size of about 65 KB.
-In my real world applications i use ASP.NET MVC 4 bundling feature. For LOB apps it will suffice.
+After minification jriapp.js has size about 305 KB. But it can be further gzipped, for it to reach the size of about 69 KB.
+In my real world applications i use an ASP.NET MVC 4 bundling feature.
 
 You are welcome to use it in your applications.
 
