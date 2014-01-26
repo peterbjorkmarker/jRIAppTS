@@ -2436,6 +2436,7 @@ declare module RIAPP {
                 public removeOnViewRefreshed(namespace?: string): void;
                 public _filterForPaging(items: TItem[]): TItem[];
                 public _onViewRefreshed(args: {}): void;
+                public _clear(isPageChanged: boolean): void;
                 public _refresh(isPageChanged: boolean): void;
                 public _fillItems(data: {
                     items: TItem[];

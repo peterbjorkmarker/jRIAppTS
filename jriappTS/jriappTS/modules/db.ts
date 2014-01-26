@@ -3485,6 +3485,19 @@ module RIAPP {
                 _onViewRefreshed(args: {}) {
                     this.raiseEvent('view_refreshed', args);
                 }
+                _clear(isPageChanged: boolean) {
+                    this.cancelEdit();
+                    this._EditingItem = null;
+                    this._newKey = 0;
+                    this.currentItem = null;
+                    this._items = [];
+                    this._itemsByKey = {};
+                    this._errors = {};
+                    this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.RESET, items: [] });
+                    if (!isPageChanged)
+                        this.pageIndex = 0;
+                    this.raisePropertyChanged('count');
+                }
                 _refresh(isPageChanged: boolean): void {
                     var items;
                     var ds = this._dataSource;
@@ -3521,7 +3534,7 @@ module RIAPP {
                     this._onFillStart({ isBegin: true, rowCount: data.items.length, time: new Date(), isPageChanged: data.isPageChanged });
                     try {
                         if (!!data.clear)
-                            this.clear();
+                            this._clear(data.isPageChanged);
                         if (this.isPagingEnabled && !data.isAppend) {
                             items = this._filterForPaging(data.items);
                         }
@@ -3531,7 +3544,7 @@ module RIAPP {
                         items.forEach(function (item) {
                             var oldItem = self._itemsByKey[item._key];
                             if (!oldItem) {
-                                self._itemsByKey[item._key] = <any>item;
+                                self._itemsByKey[item._key] = item;
                                 newItems.push(item);
                                 positions.push(self._items.length - 1);
                                 self._items.push(item);
@@ -3816,16 +3829,7 @@ module RIAPP {
                     return this._dataSource.getIsHasErrors();
                 }
                 clear() {
-                    this.cancelEdit();
-                    this._EditingItem = null;
-                    this._newKey = 0;
-                    this.currentItem = null;
-                    this._items = [];
-                    this._itemsByKey = {};
-                    this._errors = {};
-                    this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.RESET, items: [] });
-                    this.pageIndex = 0;
-                    this.raisePropertyChanged('count');
+                    this._clear(false);
                 }
                 refresh(): void {
                     this._refresh(false);

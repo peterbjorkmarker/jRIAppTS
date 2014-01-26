@@ -12560,6 +12560,19 @@ var RIAPP;
                 DataView.prototype._onViewRefreshed = function (args) {
                     this.raiseEvent('view_refreshed', args);
                 };
+                DataView.prototype._clear = function (isPageChanged) {
+                    this.cancelEdit();
+                    this._EditingItem = null;
+                    this._newKey = 0;
+                    this.currentItem = null;
+                    this._items = [];
+                    this._itemsByKey = {};
+                    this._errors = {};
+                    this._onItemsChanged({ change_type: 2 /* RESET */, items: [] });
+                    if (!isPageChanged)
+                        this.pageIndex = 0;
+                    this.raisePropertyChanged('count');
+                };
                 DataView.prototype._refresh = function (isPageChanged) {
                     var items;
                     var ds = this._dataSource;
@@ -12590,7 +12603,7 @@ var RIAPP;
                     this._onFillStart({ isBegin: true, rowCount: data.items.length, time: new Date(), isPageChanged: data.isPageChanged });
                     try  {
                         if (!!data.clear)
-                            this.clear();
+                            this._clear(data.isPageChanged);
                         if (this.isPagingEnabled && !data.isAppend) {
                             items = this._filterForPaging(data.items);
                         } else
@@ -12891,16 +12904,7 @@ var RIAPP;
                     return this._dataSource.getIsHasErrors();
                 };
                 DataView.prototype.clear = function () {
-                    this.cancelEdit();
-                    this._EditingItem = null;
-                    this._newKey = 0;
-                    this.currentItem = null;
-                    this._items = [];
-                    this._itemsByKey = {};
-                    this._errors = {};
-                    this._onItemsChanged({ change_type: 2 /* RESET */, items: [] });
-                    this.pageIndex = 0;
-                    this.raisePropertyChanged('count');
+                    this._clear(false);
                 };
                 DataView.prototype.refresh = function () {
                     this._refresh(false);
