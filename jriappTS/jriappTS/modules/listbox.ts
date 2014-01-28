@@ -92,13 +92,13 @@ module RIAPP {
                         this.selectedItem = data.item;
                     }
                 }
-                _getValue(item: collMod.CollectionItem):string {
-                    var v = this._getRealValue(item);
+                _getStringValue(item: collMod.CollectionItem):string {
+                    var v = this._getValue(item);
                     if (utils.check.isNt(v))
                         return '';
                     return '' + v;
                 }
-                _getRealValue(item: collMod.CollectionItem):any {
+                _getValue(item: collMod.CollectionItem):any {
                     if (!item)
                         return null;
                     if (!!this._valuePath) {
@@ -117,7 +117,7 @@ module RIAPP {
                         return '' + t;
                     }
                     else
-                        return this._getValue(item);
+                        return this._getStringValue(item);
                 }
                 _onDSCollectionChanged(args: collMod.ICollChangedArgs<collMod.CollectionItem>) {
                     var self = this, data;
@@ -163,7 +163,7 @@ module RIAPP {
                 _onEdit(item: collMod.CollectionItem, isBegin:boolean, isCanceled:boolean) {
                     var self = this, key:string, data: IMappedItem, oldVal:string, val:string;
                     if (isBegin) {
-                        this._savedValue = this._getValue(item);
+                        this._savedValue = this._getStringValue(item);
                     }
                     else {
                         oldVal = this._savedValue;
@@ -173,7 +173,7 @@ module RIAPP {
                             data = self._keyMap[key];
                             if (!!data) {
                                 data.op.text = self._getText(item);
-                                val = this._getValue(item);
+                                val = this._getStringValue(item);
                                 if (oldVal !== val) {
                                     if (!!oldVal) {
                                         delete self._valMap[oldVal];
@@ -207,7 +207,7 @@ module RIAPP {
                             return;
                         }
 
-                        this._savedValue = this._getValue(item);
+                        this._savedValue = this._getStringValue(item);
                     }
                     else {
                         oldVal = this._savedValue;
@@ -217,7 +217,7 @@ module RIAPP {
                             this._addOption(item, true);
                             return;
                         }
-                        val = this._getValue(item);
+                        val = this._getStringValue(item);
                         data = self._keyMap[item._key];
                         if (oldVal !== val) {
                             if (oldVal !== '') {
@@ -232,7 +232,7 @@ module RIAPP {
                         }
                     }
                 }
-                _bindDS() {
+                private _bindDS() {
                     var self = this, ds = this._dataSource;
                     if (!ds) return;
                     ds.addOnCollChanged(function (sender, args) {
@@ -260,12 +260,12 @@ module RIAPP {
                         self._onCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId);
                 }
-                _unbindDS() {
+                private _unbindDS() {
                     var self = this, ds = this._dataSource;
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
-                _addOption(item: collMod.CollectionItem, first:boolean) {
+                private _addOption(item: collMod.CollectionItem, first:boolean) {
                     if (this._isDestroyCalled)
                         return null;
                     var oOption: HTMLOptionElement, key = '', val: string, text: string;
@@ -276,7 +276,7 @@ module RIAPP {
                         return null;
                     }
                     text = this._getText(item);
-                    val = this._getValue(item);
+                    val = this._getStringValue(item);
                     oOption = global.document.createElement("option");
                     oOption.text = text;
                     oOption.value = key;
@@ -294,23 +294,23 @@ module RIAPP {
                         this._el.add(oOption, null);
                     return oOption;
                 }
-                _mapByValue() {
+                private _mapByValue() {
                     var self = this;
                     this._valMap = {};
                     utils.forEachProp(this._keyMap, (key) => {
-                        var data = self._keyMap[key], val = self._getValue(data.item);
+                        var data = self._keyMap[key], val = self._getStringValue(data.item);
                         if (!!val)
                             self._valMap[val] = data;
                     });
                 }
-                _resetText() {
+                private _resetText() {
                     var self = this;
                     utils.forEachProp(this._keyMap, (key) => {
                         var data = self._keyMap[key];
                         data.op.text = self._getText(data.item); 
                     });
                 }
-                _removeOption(item: collMod.CollectionItem) {
+                private _removeOption(item: collMod.CollectionItem) {
                     if (this._isDestroyCalled)
                         return;
                     var key = '', data: IMappedItem, val: string;
@@ -321,9 +321,9 @@ module RIAPP {
                             return;
                         }
                         this._el.remove(data.op.index);
-                        val = this._getValue(item);
+                        val = this._getStringValue(item);
                         delete this._keyMap[key];
-                        if (val !== '')
+                        if (!!val)
                             delete this._valMap[val];
                         if (this._prevSelected === item) {
                             this._prevSelected = null;
@@ -333,7 +333,7 @@ module RIAPP {
                         }
                     }
                 }
-                _clear(isDestroy: boolean) {
+                private _clear(isDestroy: boolean) {
                     this._el.options.length = 0;
                     this._keyMap = {};
                     this._valMap = {};
@@ -345,7 +345,7 @@ module RIAPP {
                     else
                         this.selectedItem = null;
                 }
-                _refresh() {
+                private _refresh() {
                     var self = this, ds = this._dataSource, oldItem = this._selectedItem, tmp = self._tempValue;
                     this._isRefreshing = true;
                     try {
@@ -370,7 +370,7 @@ module RIAPP {
                     }
                     self._onChanged();
                 }
-                _findItemIndex(item: collMod.CollectionItem) {
+                private _findItemIndex(item: collMod.CollectionItem) {
                     if (!item)
                         return 0;
                     var data:IMappedItem = this._keyMap[item._key];
@@ -387,13 +387,19 @@ module RIAPP {
                 clear() {
                     this._clear(false);
                 }
-                findItemByValue(val) {
+                findItemByValue(val): collMod.CollectionItem {
+                    if (utils.check.isNt(val))
+                        return null;
+                    val = '' + val;
                     var data: IMappedItem = this._valMap[val];
                     if (!data)
                         return null;
                     return data.item;
                 }
-                getTextByValue(val) {
+                getTextByValue(val):string {
+                    if (utils.check.isNt(val))
+                        return '';
+                    val = '' + val;
                     var data: IMappedItem = this._valMap[val];
                     if (!data)
                         return '';
@@ -424,7 +430,7 @@ module RIAPP {
                 }
                 get selectedValue() {
                     if (!!this._dataSource)
-                        return this._getRealValue(this.selectedItem);
+                        return this._getValue(this.selectedItem);
                     else
                         return undefined;
                 }

@@ -13324,13 +13324,13 @@ var RIAPP;
                         this.selectedItem = data.item;
                     }
                 };
-                ListBox.prototype._getValue = function (item) {
-                    var v = this._getRealValue(item);
+                ListBox.prototype._getStringValue = function (item) {
+                    var v = this._getValue(item);
                     if (utils.check.isNt(v))
                         return '';
                     return '' + v;
                 };
-                ListBox.prototype._getRealValue = function (item) {
+                ListBox.prototype._getValue = function (item) {
                     if (!item)
                         return null;
                     if (!!this._valuePath) {
@@ -13347,7 +13347,7 @@ var RIAPP;
                             return '';
                         return '' + t;
                     } else
-                        return this._getValue(item);
+                        return this._getStringValue(item);
                 };
                 ListBox.prototype._onDSCollectionChanged = function (args) {
                     var self = this, data;
@@ -13390,7 +13390,7 @@ var RIAPP;
                 ListBox.prototype._onEdit = function (item, isBegin, isCanceled) {
                     var self = this, key, data, oldVal, val;
                     if (isBegin) {
-                        this._savedValue = this._getValue(item);
+                        this._savedValue = this._getStringValue(item);
                     } else {
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
@@ -13399,7 +13399,7 @@ var RIAPP;
                             data = self._keyMap[key];
                             if (!!data) {
                                 data.op.text = self._getText(item);
-                                val = this._getValue(item);
+                                val = this._getStringValue(item);
                                 if (oldVal !== val) {
                                     if (!!oldVal) {
                                         delete self._valMap[oldVal];
@@ -13431,7 +13431,7 @@ var RIAPP;
                             return;
                         }
 
-                        this._savedValue = this._getValue(item);
+                        this._savedValue = this._getStringValue(item);
                     } else {
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
@@ -13440,7 +13440,7 @@ var RIAPP;
                             this._addOption(item, true);
                             return;
                         }
-                        val = this._getValue(item);
+                        val = this._getStringValue(item);
                         data = self._keyMap[item._key];
                         if (oldVal !== val) {
                             if (oldVal !== '') {
@@ -13507,7 +13507,7 @@ var RIAPP;
                         return null;
                     }
                     text = this._getText(item);
-                    val = this._getValue(item);
+                    val = this._getStringValue(item);
                     oOption = RIAPP.global.document.createElement("option");
                     oOption.text = text;
                     oOption.value = key;
@@ -13528,7 +13528,7 @@ var RIAPP;
                     var self = this;
                     this._valMap = {};
                     utils.forEachProp(this._keyMap, function (key) {
-                        var data = self._keyMap[key], val = self._getValue(data.item);
+                        var data = self._keyMap[key], val = self._getStringValue(data.item);
                         if (!!val)
                             self._valMap[val] = data;
                     });
@@ -13551,9 +13551,9 @@ var RIAPP;
                             return;
                         }
                         this._el.remove(data.op.index);
-                        val = this._getValue(item);
+                        val = this._getStringValue(item);
                         delete this._keyMap[key];
-                        if (val !== '')
+                        if (!!val)
                             delete this._valMap[val];
                         if (this._prevSelected === item) {
                             this._prevSelected = null;
@@ -13615,12 +13615,18 @@ var RIAPP;
                     this._clear(false);
                 };
                 ListBox.prototype.findItemByValue = function (val) {
+                    if (utils.check.isNt(val))
+                        return null;
+                    val = '' + val;
                     var data = this._valMap[val];
                     if (!data)
                         return null;
                     return data.item;
                 };
                 ListBox.prototype.getTextByValue = function (val) {
+                    if (utils.check.isNt(val))
+                        return '';
+                    val = '' + val;
                     var data = this._valMap[val];
                     if (!data)
                         return '';
@@ -13645,6 +13651,8 @@ var RIAPP;
                                 this._bindDS();
                             }
                             this._refresh();
+                            if (!!this._dataSource)
+                                this._tempValue = undefined;
                             this.raisePropertyChanged('dataSource');
                             this.raisePropertyChanged('selectedItem');
                             this.raisePropertyChanged('selectedValue');
@@ -13656,7 +13664,7 @@ var RIAPP;
                 Object.defineProperty(ListBox.prototype, "selectedValue", {
                     get: function () {
                         if (!!this._dataSource)
-                            return this._getRealValue(this.selectedItem);
+                            return this._getValue(this.selectedItem);
                         else
                             return undefined;
                     },
