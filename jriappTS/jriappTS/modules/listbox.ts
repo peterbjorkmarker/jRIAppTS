@@ -1,9 +1,11 @@
 module RIAPP {
     export module MOD {
         export module listbox{
-            var utils: MOD.utils.Utils;
+            import collMod = MOD.collection;
+            var utils: MOD.utils.Utils, parser: MOD.parser.Parser;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
+                parser = s.parser;
             });
 
             export interface IListBoxOptions{
@@ -12,7 +14,7 @@ module RIAPP {
             }
 
             export interface IMappedItem {
-                item: collection.CollectionItem;
+                item: collMod.CollectionItem;
                 op: { text: string; value: any; index: number; }; 
             }
 
@@ -20,25 +22,25 @@ module RIAPP {
                 private _el: HTMLSelectElement;
                 private _$el: JQuery;
                 private _objId: string;
-                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _dataSource: collMod.BaseCollection<collMod.CollectionItem>;
                 private _isRefreshing: boolean;
                 private _isDSFilling: boolean;
                 private _valuePath: string;
                 private _textPath: string;
-                private _selectedItem: collection.CollectionItem;
-                private _saveSelected: collection.CollectionItem;
+                private _selectedItem: collMod.CollectionItem;
+                private _prevSelected: collMod.CollectionItem;
                 private _keyMap: { [key: string]: IMappedItem; };
                 private _valMap: { [val: string]: IMappedItem; };
-                private _saveVal: any;
-                private _selectedValue: any;
+                private _savedValue: string;
+                private _tempValue: any;
 
-                constructor(el: HTMLSelectElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options: IListBoxOptions) {
+                constructor(el: HTMLSelectElement, dataSource: collMod.BaseCollection<collMod.CollectionItem>, options: IListBoxOptions) {
                     super();
                     var self = this;
                     this._el = el;
                     this._$el = global.$(this._el);
                     this._objId = 'lst' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof collection.BaseCollection))
+                    if (!!dataSource && !(dataSource instanceof collMod.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_LISTBOX_DATASRC_INVALID);
                     this._$el.on('change.' + this._objId, function (e) {
                         e.stopPropagation();
@@ -52,11 +54,11 @@ module RIAPP {
                     this._valuePath = options.valuePath;
                     this._textPath = options.textPath;
                     this._selectedItem = null;
-                    this._saveSelected = null;
+                    this._prevSelected = null;
                     this._keyMap = {};
                     this._valMap = {};
-                    this._saveVal = undefined;
-                    this._selectedValue = undefined;
+                    this._savedValue = undefined;
+                    this._tempValue = undefined;
                     this.dataSource = dataSource;
                 }
                 destroy() {
@@ -68,12 +70,17 @@ module RIAPP {
                     this._clear(true);
                     this._el = null;
                     this._$el = null;
+                    this._dataSource = null;
+                    this._tempValue = undefined;
+                    this._selectedItem = null;
+                    this._prevSelected = null;
+                    this._savedValue = null;
                     super.destroy();
                 }
                 _onChanged() {
-                    var op = null, key, data: IMappedItem;
+                    var op = null, key: string, data: IMappedItem;
                     if (this._el.selectedIndex >= 0) {
-                        op = (<any>this._el.options)[this._el.selectedIndex];
+                        op = this._el.options[this._el.selectedIndex];
                         key = op.value;
                         data = this._keyMap[key];
                     }
@@ -85,22 +92,22 @@ module RIAPP {
                         this.selectedItem = data.item;
                     }
                 }
-                _getValue(item: collection.CollectionItem) {
+                _getValue(item: collMod.CollectionItem):string {
                     var v = this._getRealValue(item);
                     if (utils.check.isNt(v))
                         return '';
-                    return v;
+                    return '' + v;
                 }
-                _getRealValue(item: collection.CollectionItem) {
+                _getRealValue(item: collMod.CollectionItem):any {
                     if (!item)
                         return null;
                     if (!!this._valuePath) {
-                        return global.parser.resolvePath(item, this._valuePath);
+                        return parser.resolvePath(item, this._valuePath);
                     }
                     else
                         return undefined;
                 }
-                _getText(item: collection.CollectionItem) {
+                _getText(item: collMod.CollectionItem):string {
                     if (!item)
                         return '';
                     if (!!this._textPath) {
@@ -110,16 +117,16 @@ module RIAPP {
                         return '' + t;
                     }
                     else
-                        return '' + this._getValue(item);
+                        return this._getValue(item);
                 }
-                _onDSCollectionChanged(args: collection.ICollChangedArgs<collection.CollectionItem>) {
+                _onDSCollectionChanged(args: collMod.ICollChangedArgs<collMod.CollectionItem>) {
                     var self = this, data;
                     switch (args.change_type) {
-                        case collection.COLL_CHANGE_TYPE.RESET:
+                        case collMod.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh();
                             break;
-                        case collection.COLL_CHANGE_TYPE.ADDED:
+                        case collMod.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isDSFilling) //if items are filling then it will be appended when fill ends
                             {
                                 args.items.forEach(function (item) {
@@ -127,12 +134,12 @@ module RIAPP {
                                 });
                             }
                             break;
-                        case collection.COLL_CHANGE_TYPE.REMOVE:
+                        case collMod.COLL_CHANGE_TYPE.REMOVE:
                             args.items.forEach(function (item) {
                                 self._removeOption(item);
                             });
                             break;
-                        case collection.COLL_CHANGE_TYPE.REMAP_KEY:
+                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 data = self._keyMap[args.old_key];
                                 if (!!data) {
@@ -143,7 +150,7 @@ module RIAPP {
                             }
                     }
                 }
-                _onDSFill(args: collection.ICollFillArgs<collection.CollectionItem>) {
+                _onDSFill(args: collMod.ICollFillArgs<collMod.CollectionItem>) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -153,14 +160,14 @@ module RIAPP {
                         this._isDSFilling = true;
                     }
                 }
-                _onEdit(item: collection.CollectionItem, isBegin:boolean, isCanceled:boolean) {
-                    var self = this, key, data, oldVal, val;
+                _onEdit(item: collMod.CollectionItem, isBegin:boolean, isCanceled:boolean) {
+                    var self = this, key:string, data: IMappedItem, oldVal:string, val:string;
                     if (isBegin) {
-                        this._saveVal = this._getValue(item);
+                        this._savedValue = this._getValue(item);
                     }
                     else {
-                        oldVal = this._saveVal;
-                        this._saveVal = undefined;
+                        oldVal = this._savedValue;
+                        this._savedValue = undefined;
                         if (!isCanceled) {
                             key = item._key;
                             data = self._keyMap[key];
@@ -168,45 +175,45 @@ module RIAPP {
                                 data.op.text = self._getText(item);
                                 val = this._getValue(item);
                                 if (oldVal !== val) {
-                                    if (oldVal !== '') {
+                                    if (!!oldVal) {
                                         delete self._valMap[oldVal];
                                     }
-                                    if (val !== '') {
+                                    if (!!val) {
                                         self._valMap[val] = data;
                                     }
                                 }
                             }
                             else {
-                                if (oldVal !== '') {
+                                if (!!oldVal) {
                                     delete self._valMap[oldVal];
                                 }
                             }
                         }
                     }
                 }
-                _onStatusChanged(item: collection.CollectionItem, oldChangeType:number) {
-                    var DEL_STATUS = collection.STATUS.DELETED, newChangeType = item._changeType;
-                    if (newChangeType === DEL_STATUS) {
+                _onStatusChanged(item: collMod.CollectionItem, oldChangeType:number) {
+                    var newChangeType = item._changeType;
+                    if (newChangeType === collMod.STATUS.DELETED) {
                         this._removeOption(item);
                     }
                 }
-                _onCommitChanges(item: collection.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collection.STATUS) {
-                    var self = this, ct = collection.STATUS, oldVal, val, data;
+                _onCommitChanges(item: collMod.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
+                    var self = this, oldVal, val, data;
                     if (isBegin) {
-                        if (isRejected && changeType === ct.ADDED) {
+                        if (isRejected && changeType === collMod.STATUS.ADDED) {
                             return;
                         }
-                        else if (!isRejected && changeType === ct.DELETED) {
+                        else if (!isRejected && changeType === collMod.STATUS.DELETED) {
                             return;
                         }
 
-                        this._saveVal = this._getValue(item);
+                        this._savedValue = this._getValue(item);
                     }
                     else {
-                        oldVal = this._saveVal;
-                        this._saveVal = undefined;
+                        oldVal = this._savedValue;
+                        this._savedValue = undefined;
 
-                        if (isRejected && changeType === ct.DELETED) {
+                        if (isRejected && changeType === collMod.STATUS.DELETED) {
                             this._addOption(item, true);
                             return;
                         }
@@ -258,10 +265,10 @@ module RIAPP {
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
-                _addOption(item: collection.CollectionItem, first:boolean) {
+                _addOption(item: collMod.CollectionItem, first:boolean) {
                     if (this._isDestroyCalled)
                         return null;
-                    var oOption: HTMLOptionElement, key = '', val, text: string;
+                    var oOption: HTMLOptionElement, key = '', val: string, text: string;
                     if (!!item) {
                         key = item._key;
                     }
@@ -275,7 +282,7 @@ module RIAPP {
                     oOption.value = key;
                     var data: IMappedItem = { item: item, op: oOption };
                     this._keyMap[key] = data;
-                    if (val !== '')
+                    if (!!val)
                         this._valMap[val] = data;
                     if (!!first) {
                         if (this._el.options.length < 2)
@@ -287,10 +294,26 @@ module RIAPP {
                         this._el.add(oOption, null);
                     return oOption;
                 }
-                _removeOption(item: collection.CollectionItem) {
+                _mapByValue() {
+                    var self = this;
+                    this._valMap = {};
+                    utils.forEachProp(this._keyMap, (key) => {
+                        var data = self._keyMap[key], val = self._getValue(data.item);
+                        if (!!val)
+                            self._valMap[val] = data;
+                    });
+                }
+                _resetText() {
+                    var self = this;
+                    utils.forEachProp(this._keyMap, (key) => {
+                        var data = self._keyMap[key];
+                        data.op.text = self._getText(data.item); 
+                    });
+                }
+                _removeOption(item: collMod.CollectionItem) {
                     if (this._isDestroyCalled)
                         return;
-                    var key = '', data: IMappedItem, val;
+                    var key = '', data: IMappedItem, val: string;
                     if (!!item) {
                         key = item._key;
                         data = this._keyMap[key];
@@ -302,28 +325,28 @@ module RIAPP {
                         delete this._keyMap[key];
                         if (val !== '')
                             delete this._valMap[val];
-                        if (this._saveSelected === item) {
-                            this._saveSelected = null;
+                        if (this._prevSelected === item) {
+                            this._prevSelected = null;
                         }
                         if (this.selectedItem === item) {
-                            this.selectedItem = this._saveSelected;
+                            this.selectedItem = this._prevSelected;
                         }
                     }
                 }
-                _clear(isDestroy:boolean) {
+                _clear(isDestroy: boolean) {
                     this._el.options.length = 0;
                     this._keyMap = {};
                     this._valMap = {};
-                    this._saveSelected = null;
+                    this._prevSelected = null;
                     if (!isDestroy) {
                         this._addOption(null, false);
                         this.selectedItem = null;
                     }
                     else
-                        this._selectedItem = null;
+                        this.selectedItem = null;
                 }
                 _refresh() {
-                    var self = this, ds = this._dataSource, oldItem = this._selectedItem;
+                    var self = this, ds = this._dataSource, oldItem = this._selectedItem, tmp = self._tempValue;
                     this._isRefreshing = true;
                     try {
                         this.clear();
@@ -331,21 +354,23 @@ module RIAPP {
                             ds.forEach(function (item) {
                                 self._addOption(item, false);
                             });
+
+                            if (tmp === undefined) {
+                                self._el.selectedIndex = self._findItemIndex(oldItem);
+                            }
+                            else {
+                                oldItem = self.findItemByValue(tmp);
+                                self.selectedItem = oldItem;
+                                self._tempValue = undefined;
+                            }
                         }
-                        if (this._selectedValue === undefined) {
-                            this._el.selectedIndex = this._findItemIndex(oldItem);
-                        }
-                        else
-                        {
-                            oldItem = self.findItemByValue(this._selectedValue);
-                            self.selectedItem = oldItem;
-                        }
+                    
                     } finally {
-                        this._isRefreshing = false;
+                        self._isRefreshing = false;
                     }
-                    this._onChanged();
+                    self._onChanged();
                 }
-                _findItemIndex(item: collection.CollectionItem) {
+                _findItemIndex(item: collMod.CollectionItem) {
                     if (!item)
                         return 0;
                     var data:IMappedItem = this._keyMap[item._key];
@@ -379,43 +404,60 @@ module RIAPP {
                     return 'ListBox';
                 }
                 get dataSource() { return this._dataSource; }
-                set dataSource(v: collection.BaseCollection<collection.CollectionItem>) {
+                set dataSource(v: collMod.BaseCollection<collMod.CollectionItem>) {
                     if (this._dataSource !== v) {
                         if (!!this._dataSource)
+                            this._tempValue = this.selectedValue;
+                        if (!!this._dataSource)
                             this._unbindDS();
-                        this.clear();
                         this._dataSource = v;
                         if (!!this._dataSource) {
                             this._bindDS();
                         }
                         this._refresh();
+                        if (!!this._dataSource)
+                            this._tempValue = undefined;
                         this.raisePropertyChanged('dataSource');
+                        this.raisePropertyChanged('selectedItem');
+                        this.raisePropertyChanged('selectedValue');
                     }
                 }
                 get selectedValue() {
-                    if (this._selectedValue === undefined)
+                    if (!!this._dataSource)
                         return this._getRealValue(this.selectedItem);
                     else
-                        return this._selectedValue;
+                        return undefined;
                 }
                 set selectedValue(v) {
                     var self = this;
-                    if (this.selectedValue !== v) {
-                        var item = self.findItemByValue(v);
-                        self.selectedItem = item;
-                        if (!item)
-                            this._selectedValue = v;
+                    if (!!this._dataSource) {
+                        if (this.selectedValue !== v) {
+                            var item = self.findItemByValue(v);
+                            self.selectedItem = item;
+                            self._tempValue = undefined;
+                        }
+                    }
+                    else {
+                        if (this._tempValue !== v) {
+                            this._selectedItem = null;
+                            this._tempValue = v;
+                            this.raisePropertyChanged('selectedItem');
+                            this.raisePropertyChanged('selectedValue');
+                        }
                     }
                 }
-                get selectedItem() { return this._selectedItem; }
-                set selectedItem(v: collection.CollectionItem) {
+                get selectedItem() {
+                    if (!!this._dataSource)
+                        return this._selectedItem;
+                    else
+                        return undefined;
+                }
+                set selectedItem(v: collMod.CollectionItem) {
                     if (this._selectedItem !== v) {
                         if (!!this._selectedItem) {
-                            this._saveSelected = this._selectedItem;
-                            this._selectedValue = undefined;
+                            this._prevSelected = this._selectedItem;
                         }
                         this._selectedItem = v;
-                        this._selectedValue = undefined;
                         this._el.selectedIndex = this._findItemIndex(this._selectedItem);
                         this.raisePropertyChanged('selectedItem');
                         this.raisePropertyChanged('selectedValue');
@@ -425,6 +467,7 @@ module RIAPP {
                 set valuePath(v:string) {
                     if (v !== this._valuePath) {
                         this._valuePath = v;
+                        this._mapByValue();
                         this.raisePropertyChanged('valuePath');
                     }
                 }
@@ -432,7 +475,7 @@ module RIAPP {
                 set textPath(v:string) {
                     if (v !== this._textPath) {
                         this._textPath = v;
-                        this._refresh();
+                        this._resetText();
                         this.raisePropertyChanged('textPath');
                     }
                 }
@@ -520,7 +563,7 @@ module RIAPP {
                         return undefined;
                     return this._listBox.selectedItem;
                 }
-                set selectedItem(v: collection.CollectionItem) {
+                set selectedItem(v: collMod.CollectionItem) {
                     if (this._isDestroyCalled)
                         return;
                     this._listBox.selectedItem = v;

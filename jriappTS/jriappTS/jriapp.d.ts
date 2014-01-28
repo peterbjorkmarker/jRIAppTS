@@ -2563,15 +2563,15 @@ declare module RIAPP {
                 private _valuePath;
                 private _textPath;
                 private _selectedItem;
-                private _saveSelected;
+                private _prevSelected;
                 private _keyMap;
                 private _valMap;
-                private _saveVal;
-                private _selectedValue;
+                private _savedValue;
+                private _tempValue;
                 constructor(el: HTMLSelectElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IListBoxOptions);
                 public destroy(): void;
                 public _onChanged(): void;
-                public _getValue(item: MOD.collection.CollectionItem): any;
+                public _getValue(item: MOD.collection.CollectionItem): string;
                 public _getRealValue(item: MOD.collection.CollectionItem): any;
                 public _getText(item: MOD.collection.CollectionItem): string;
                 public _onDSCollectionChanged(args: MOD.collection.ICollChangedArgs<MOD.collection.CollectionItem>): void;
@@ -2582,6 +2582,8 @@ declare module RIAPP {
                 public _bindDS(): void;
                 public _unbindDS(): void;
                 public _addOption(item: MOD.collection.CollectionItem, first: boolean): HTMLOptionElement;
+                public _mapByValue(): void;
+                public _resetText(): void;
                 public _removeOption(item: MOD.collection.CollectionItem): void;
                 public _clear(isDestroy: boolean): void;
                 public _refresh(): void;

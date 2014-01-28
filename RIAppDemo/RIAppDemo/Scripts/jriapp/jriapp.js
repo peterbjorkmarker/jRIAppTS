@@ -13258,9 +13258,11 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (listbox) {
-            var utils;
+            var collMod = RIAPP.MOD.collection;
+            var utils, parser;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
+                parser = s.parser;
             });
 
             var ListBox = (function (_super) {
@@ -13271,7 +13273,7 @@ var RIAPP;
                     this._el = el;
                     this._$el = RIAPP.global.$(this._el);
                     this._objId = 'lst' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof RIAPP.MOD.collection.BaseCollection))
+                    if (!!dataSource && !(dataSource instanceof collMod.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_LISTBOX_DATASRC_INVALID);
                     this._$el.on('change.' + this._objId, function (e) {
                         e.stopPropagation();
@@ -13285,11 +13287,11 @@ var RIAPP;
                     this._valuePath = options.valuePath;
                     this._textPath = options.textPath;
                     this._selectedItem = null;
-                    this._saveSelected = null;
+                    this._prevSelected = null;
                     this._keyMap = {};
                     this._valMap = {};
-                    this._saveVal = undefined;
-                    this._selectedValue = undefined;
+                    this._savedValue = undefined;
+                    this._tempValue = undefined;
                     this.dataSource = dataSource;
                 }
                 ListBox.prototype.destroy = function () {
@@ -13301,6 +13303,11 @@ var RIAPP;
                     this._clear(true);
                     this._el = null;
                     this._$el = null;
+                    this._dataSource = null;
+                    this._tempValue = undefined;
+                    this._selectedItem = null;
+                    this._prevSelected = null;
+                    this._savedValue = null;
                     _super.prototype.destroy.call(this);
                 };
                 ListBox.prototype._onChanged = function () {
@@ -13321,13 +13328,13 @@ var RIAPP;
                     var v = this._getRealValue(item);
                     if (utils.check.isNt(v))
                         return '';
-                    return v;
+                    return '' + v;
                 };
                 ListBox.prototype._getRealValue = function (item) {
                     if (!item)
                         return null;
                     if (!!this._valuePath) {
-                        return RIAPP.global.parser.resolvePath(item, this._valuePath);
+                        return parser.resolvePath(item, this._valuePath);
                     } else
                         return undefined;
                 };
@@ -13340,7 +13347,7 @@ var RIAPP;
                             return '';
                         return '' + t;
                     } else
-                        return '' + this._getValue(item);
+                        return this._getValue(item);
                 };
                 ListBox.prototype._onDSCollectionChanged = function (args) {
                     var self = this, data;
@@ -13383,10 +13390,10 @@ var RIAPP;
                 ListBox.prototype._onEdit = function (item, isBegin, isCanceled) {
                     var self = this, key, data, oldVal, val;
                     if (isBegin) {
-                        this._saveVal = this._getValue(item);
+                        this._savedValue = this._getValue(item);
                     } else {
-                        oldVal = this._saveVal;
-                        this._saveVal = undefined;
+                        oldVal = this._savedValue;
+                        this._savedValue = undefined;
                         if (!isCanceled) {
                             key = item._key;
                             data = self._keyMap[key];
@@ -13394,15 +13401,15 @@ var RIAPP;
                                 data.op.text = self._getText(item);
                                 val = this._getValue(item);
                                 if (oldVal !== val) {
-                                    if (oldVal !== '') {
+                                    if (!!oldVal) {
                                         delete self._valMap[oldVal];
                                     }
-                                    if (val !== '') {
+                                    if (!!val) {
                                         self._valMap[val] = data;
                                     }
                                 }
                             } else {
-                                if (oldVal !== '') {
+                                if (!!oldVal) {
                                     delete self._valMap[oldVal];
                                 }
                             }
@@ -13410,13 +13417,13 @@ var RIAPP;
                     }
                 };
                 ListBox.prototype._onStatusChanged = function (item, oldChangeType) {
-                    var DEL_STATUS = 3 /* DELETED */, newChangeType = item._changeType;
-                    if (newChangeType === DEL_STATUS) {
+                    var newChangeType = item._changeType;
+                    if (newChangeType === 3 /* DELETED */) {
                         this._removeOption(item);
                     }
                 };
                 ListBox.prototype._onCommitChanges = function (item, isBegin, isRejected, changeType) {
-                    var self = this, ct = RIAPP.MOD.collection.STATUS, oldVal, val, data;
+                    var self = this, oldVal, val, data;
                     if (isBegin) {
                         if (isRejected && changeType === 1 /* ADDED */) {
                             return;
@@ -13424,10 +13431,10 @@ var RIAPP;
                             return;
                         }
 
-                        this._saveVal = this._getValue(item);
+                        this._savedValue = this._getValue(item);
                     } else {
-                        oldVal = this._saveVal;
-                        this._saveVal = undefined;
+                        oldVal = this._savedValue;
+                        this._savedValue = undefined;
 
                         if (isRejected && changeType === 3 /* DELETED */) {
                             this._addOption(item, true);
@@ -13506,7 +13513,7 @@ var RIAPP;
                     oOption.value = key;
                     var data = { item: item, op: oOption };
                     this._keyMap[key] = data;
-                    if (val !== '')
+                    if (!!val)
                         this._valMap[val] = data;
                     if (!!first) {
                         if (this._el.options.length < 2)
@@ -13516,6 +13523,22 @@ var RIAPP;
                     } else
                         this._el.add(oOption, null);
                     return oOption;
+                };
+                ListBox.prototype._mapByValue = function () {
+                    var self = this;
+                    this._valMap = {};
+                    utils.forEachProp(this._keyMap, function (key) {
+                        var data = self._keyMap[key], val = self._getValue(data.item);
+                        if (!!val)
+                            self._valMap[val] = data;
+                    });
+                };
+                ListBox.prototype._resetText = function () {
+                    var self = this;
+                    utils.forEachProp(this._keyMap, function (key) {
+                        var data = self._keyMap[key];
+                        data.op.text = self._getText(data.item);
+                    });
                 };
                 ListBox.prototype._removeOption = function (item) {
                     if (this._isDestroyCalled)
@@ -13532,11 +13555,11 @@ var RIAPP;
                         delete this._keyMap[key];
                         if (val !== '')
                             delete this._valMap[val];
-                        if (this._saveSelected === item) {
-                            this._saveSelected = null;
+                        if (this._prevSelected === item) {
+                            this._prevSelected = null;
                         }
                         if (this.selectedItem === item) {
-                            this.selectedItem = this._saveSelected;
+                            this.selectedItem = this._prevSelected;
                         }
                     }
                 };
@@ -13544,15 +13567,15 @@ var RIAPP;
                     this._el.options.length = 0;
                     this._keyMap = {};
                     this._valMap = {};
-                    this._saveSelected = null;
+                    this._prevSelected = null;
                     if (!isDestroy) {
                         this._addOption(null, false);
                         this.selectedItem = null;
                     } else
-                        this._selectedItem = null;
+                        this.selectedItem = null;
                 };
                 ListBox.prototype._refresh = function () {
-                    var self = this, ds = this._dataSource, oldItem = this._selectedItem;
+                    var self = this, ds = this._dataSource, oldItem = this._selectedItem, tmp = self._tempValue;
                     this._isRefreshing = true;
                     try  {
                         this.clear();
@@ -13560,17 +13583,19 @@ var RIAPP;
                             ds.forEach(function (item) {
                                 self._addOption(item, false);
                             });
-                        }
-                        if (this._selectedValue === undefined) {
-                            this._el.selectedIndex = this._findItemIndex(oldItem);
-                        } else {
-                            oldItem = self.findItemByValue(this._selectedValue);
-                            self.selectedItem = oldItem;
+
+                            if (tmp === undefined) {
+                                self._el.selectedIndex = self._findItemIndex(oldItem);
+                            } else {
+                                oldItem = self.findItemByValue(tmp);
+                                self.selectedItem = oldItem;
+                                self._tempValue = undefined;
+                            }
                         }
                     } finally {
-                        this._isRefreshing = false;
+                        self._isRefreshing = false;
                     }
-                    this._onChanged();
+                    self._onChanged();
                 };
                 ListBox.prototype._findItemIndex = function (item) {
                     if (!item)
@@ -13612,14 +13637,17 @@ var RIAPP;
                     set: function (v) {
                         if (this._dataSource !== v) {
                             if (!!this._dataSource)
+                                this._tempValue = this.selectedValue;
+                            if (!!this._dataSource)
                                 this._unbindDS();
-                            this.clear();
                             this._dataSource = v;
                             if (!!this._dataSource) {
                                 this._bindDS();
                             }
                             this._refresh();
                             this.raisePropertyChanged('dataSource');
+                            this.raisePropertyChanged('selectedItem');
+                            this.raisePropertyChanged('selectedValue');
                         }
                     },
                     enumerable: true,
@@ -13627,18 +13655,26 @@ var RIAPP;
                 });
                 Object.defineProperty(ListBox.prototype, "selectedValue", {
                     get: function () {
-                        if (this._selectedValue === undefined)
+                        if (!!this._dataSource)
                             return this._getRealValue(this.selectedItem);
                         else
-                            return this._selectedValue;
+                            return undefined;
                     },
                     set: function (v) {
                         var self = this;
-                        if (this.selectedValue !== v) {
-                            var item = self.findItemByValue(v);
-                            self.selectedItem = item;
-                            if (!item)
-                                this._selectedValue = v;
+                        if (!!this._dataSource) {
+                            if (this.selectedValue !== v) {
+                                var item = self.findItemByValue(v);
+                                self.selectedItem = item;
+                                self._tempValue = undefined;
+                            }
+                        } else {
+                            if (this._tempValue !== v) {
+                                this._selectedItem = null;
+                                this._tempValue = v;
+                                this.raisePropertyChanged('selectedItem');
+                                this.raisePropertyChanged('selectedValue');
+                            }
                         }
                     },
                     enumerable: true,
@@ -13646,16 +13682,17 @@ var RIAPP;
                 });
                 Object.defineProperty(ListBox.prototype, "selectedItem", {
                     get: function () {
-                        return this._selectedItem;
+                        if (!!this._dataSource)
+                            return this._selectedItem;
+                        else
+                            return undefined;
                     },
                     set: function (v) {
                         if (this._selectedItem !== v) {
                             if (!!this._selectedItem) {
-                                this._saveSelected = this._selectedItem;
-                                this._selectedValue = undefined;
+                                this._prevSelected = this._selectedItem;
                             }
                             this._selectedItem = v;
-                            this._selectedValue = undefined;
                             this._el.selectedIndex = this._findItemIndex(this._selectedItem);
                             this.raisePropertyChanged('selectedItem');
                             this.raisePropertyChanged('selectedValue');
@@ -13671,6 +13708,7 @@ var RIAPP;
                     set: function (v) {
                         if (v !== this._valuePath) {
                             this._valuePath = v;
+                            this._mapByValue();
                             this.raisePropertyChanged('valuePath');
                         }
                     },
@@ -13684,7 +13722,7 @@ var RIAPP;
                     set: function (v) {
                         if (v !== this._textPath) {
                             this._textPath = v;
-                            this._refresh();
+                            this._resetText();
                             this.raisePropertyChanged('textPath');
                         }
                     },
