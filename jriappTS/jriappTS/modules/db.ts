@@ -1,105 +1,49 @@
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-var RIAPP;
-(function (RIAPP) {
-    (function (MOD) {
-        (function (db) {
-            var collMod = RIAPP.MOD.collection;
+module RIAPP {
+    export module MOD {
+        export module db {
+            import collMod = MOD.collection;
             var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
-
             //local variables for optimization
-            var ValidationError = RIAPP.MOD.binding.ValidationError, valueUtils = RIAPP.MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils, utils;
-            RIAPP.global.addOnInitialize(function (s, args) {
+            var ValidationError = binding.ValidationError,
+                valueUtils = MOD.utils.valueUtils,
+                baseUtils = RIAPP.baseUtils,
+                utils: MOD.utils.Utils;
+            RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
-
-            (function (FLAGS) {
-                FLAGS[FLAGS["None"] = 0] = "None";
-                FLAGS[FLAGS["Changed"] = 1] = "Changed";
-                FLAGS[FLAGS["Setted"] = 2] = "Setted";
-                FLAGS[FLAGS["Refreshed"] = 4] = "Refreshed";
-            })(db.FLAGS || (db.FLAGS = {}));
-            var FLAGS = db.FLAGS;
-            (function (REFRESH_MODE) {
-                REFRESH_MODE[REFRESH_MODE["NONE"] = 0] = "NONE";
-                REFRESH_MODE[REFRESH_MODE["RefreshCurrent"] = 1] = "RefreshCurrent";
-                REFRESH_MODE[REFRESH_MODE["MergeIntoCurrent"] = 2] = "MergeIntoCurrent";
-                REFRESH_MODE[REFRESH_MODE["CommitChanges"] = 3] = "CommitChanges";
-            })(db.REFRESH_MODE || (db.REFRESH_MODE = {}));
-            var REFRESH_MODE = db.REFRESH_MODE;
-            (function (DELETE_ACTION) {
-                DELETE_ACTION[DELETE_ACTION["NoAction"] = 0] = "NoAction";
-                DELETE_ACTION[DELETE_ACTION["Cascade"] = 1] = "Cascade";
-                DELETE_ACTION[DELETE_ACTION["SetNulls"] = 2] = "SetNulls";
-            })(db.DELETE_ACTION || (db.DELETE_ACTION = {}));
-            var DELETE_ACTION = db.DELETE_ACTION;
-            (function (DATA_OPER) {
-                DATA_OPER[DATA_OPER["SUBMIT"] = 0] = "SUBMIT";
-                DATA_OPER[DATA_OPER["LOAD"] = 1] = "LOAD";
-                DATA_OPER[DATA_OPER["INVOKE"] = 2] = "INVOKE";
-                DATA_OPER[DATA_OPER["REFRESH"] = 3] = "REFRESH";
-                DATA_OPER[DATA_OPER["INIT"] = 4] = "INIT";
-            })(db.DATA_OPER || (db.DATA_OPER = {}));
-            var DATA_OPER = db.DATA_OPER;
+            
+            export enum FLAGS { None = 0, Changed= 1, Setted= 2, Refreshed= 4 }
+            export enum REFRESH_MODE { NONE= 0, RefreshCurrent = 1, MergeIntoCurrent= 2, CommitChanges= 3 }
+            export enum DELETE_ACTION { NoAction = 0, Cascade = 1, SetNulls= 2 }
+            export enum DATA_OPER { SUBMIT, LOAD, INVOKE, REFRESH, INIT }
 
             var DATA_SVC_METH = {
                 Invoke: 'InvokeMethod', LoadData: 'GetItems', GetMetadata: 'GetMetadata', GetPermissions: 'GetPermissions',
                 Submit: 'SaveChanges', Refresh: 'RefreshItem'
             };
 
-            var DataOperationError = (function (_super) {
-                __extends(DataOperationError, _super);
-                function DataOperationError(ex, operationName) {
+            export class DataOperationError extends MOD.errors.BaseError {
+                _operationName: DATA_OPER;
+                constructor(ex, operationName: DATA_OPER) {
                     var message;
                     if (!!ex)
                         message = ex.message;
                     if (!message)
                         message = '' + ex;
-                    _super.call(this, message);
+                    super(message);
                     this._origError = ex;
                     this._operationName = operationName;
                 }
-                Object.defineProperty(DataOperationError.prototype, "operationName", {
-                    get: function () {
-                        return this._operationName;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DataOperationError;
-            })(RIAPP.MOD.errors.BaseError);
-            db.DataOperationError = DataOperationError;
-            var AccessDeniedError = (function (_super) {
-                __extends(AccessDeniedError, _super);
-                function AccessDeniedError() {
-                    _super.apply(this, arguments);
-                }
-                return AccessDeniedError;
-            })(DataOperationError);
-            db.AccessDeniedError = AccessDeniedError;
-            var ConcurrencyError = (function (_super) {
-                __extends(ConcurrencyError, _super);
-                function ConcurrencyError() {
-                    _super.apply(this, arguments);
-                }
-                return ConcurrencyError;
-            })(DataOperationError);
-            db.ConcurrencyError = ConcurrencyError;
-            var SvcValidationError = (function (_super) {
-                __extends(SvcValidationError, _super);
-                function SvcValidationError() {
-                    _super.apply(this, arguments);
-                }
-                return SvcValidationError;
-            })(DataOperationError);
-            db.SvcValidationError = SvcValidationError;
-            var SubmitError = (function (_super) {
-                __extends(SubmitError, _super);
-                function SubmitError(origError, allSubmitted, notValidated) {
+                get operationName() { return this._operationName; }
+            }
+            export class AccessDeniedError extends DataOperationError { }
+            export class ConcurrencyError extends DataOperationError { }
+            export class SvcValidationError extends DataOperationError { }
+            export class SubmitError extends DataOperationError {
+                _allSubmitted: Entity[];
+                _notValidated: Entity[];
+
+                constructor(origError, allSubmitted: Entity[], notValidated: Entity[]) {
                     var message = origError.message || ('' + origError);
                     this._origError = origError;
                     this._allSubmitted = allSubmitted || [];
@@ -111,27 +55,13 @@ var RIAPP;
                         });
                         message = res.join('\r\n');
                     }
-                    _super.call(this, message, 0 /* SUBMIT */);
+                    super(message, DATA_OPER.SUBMIT);
                 }
-                Object.defineProperty(SubmitError.prototype, "allSubmitted", {
-                    get: function () {
-                        return this._allSubmitted;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(SubmitError.prototype, "notValidated", {
-                    get: function () {
-                        return this._notValidated;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return SubmitError;
-            })(DataOperationError);
-            db.SubmitError = SubmitError;
+                get allSubmitted() { return this._allSubmitted; }
+                get notValidated() { return this._notValidated; }
+            }
 
-            function __checkError(svcError, oper) {
+            function __checkError(svcError: { name: string; message?: string; }, oper: DATA_OPER) {
                 if (!svcError)
                     return;
                 switch (svcError.name) {
@@ -142,52 +72,209 @@ var RIAPP;
                         throw new ConcurrencyError(RIAPP.ERRS.ERR_CONCURRENCY, oper);
                         break;
                     case "ValidationException":
-                        throw new SvcValidationError(utils.format(RIAPP.ERRS.ERR_VALIDATION, svcError.message), oper);
+                        throw new SvcValidationError(utils.format(RIAPP.ERRS.ERR_VALIDATION,
+                            svcError.message), oper);
                         break;
                     case "DomainServiceException":
-                        throw new DataOperationError(utils.format(RIAPP.ERRS.ERR_SVC_ERROR, svcError.message), oper);
+                        throw new DataOperationError(utils.format(RIAPP.ERRS.ERR_SVC_ERROR,
+                            svcError.message), oper);
                         break;
                     default:
-                        throw new DataOperationError(utils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, svcError.message), oper);
+                        throw new DataOperationError(utils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR,
+                            svcError.message), oper);
                 }
+            };
+            export interface IFieldName {
+                n: string; //field's name
+                p: IFieldName[]; //for object field contains its properties, for others is null
             }
-            ;
+            export interface ICachedPage { items: Entity[]; pageIndex: number; }
+            export interface IQueryParamInfo {
+                dataType: consts.DATA_TYPE;
+                dateConversion: consts.DATE_CONVERSION;
+                isArray: boolean;
+                isNullable: boolean;
+                name: string;
+                ordinal: number;
+            }
+            export interface IQueryInfo {
+                isQuery: boolean;
+                methodName: string;
+                methodResult: boolean;
+                parameters: IQueryParamInfo[];
+            }
+            export interface IFilterInfo { filterItems: { fieldName: string; kind: collMod.FILTER_TYPE; values: any[]; }[]; }
+            export interface ISortInfo { sortItems: { fieldName: string; sortOrder: collMod.SORT_ORDER; }[]; }
+            export interface IEntityConstructor {
+                new (dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]): Entity;
+            }
+            export interface IValueChange {
+                val: any;
+                orig: any;
+                fieldName: string;
+                flags: number;
+                nested: IValueChange[];
+            }
+            export interface IValidationErrorInfo {
+                fieldName: string;
+                message: string;
+            }
+            export interface IRowInfo {
+                values: IValueChange[];
+                changeType: number;
+                serverKey: string;
+                clientKey: string;
+                error: string;
+                invalid?: IValidationErrorInfo[];
+            }
+            export interface IPermissions extends collMod.IPermissions { dbSetName: string; }
+            export interface IPermissionsInfo {
+                serverTimezone: number;
+                permissions: IPermissions[];
+            }
+
+            export interface IParamInfo { parameters: { name: string; value: any; }[]; }
+            export interface IErrorInfo { name: string; message: string; }
+            export interface IInvokeRequest { methodName: string; paramInfo: IParamInfo; }
+            export interface IInvokeResponse {
+                result: any;
+                error: IErrorInfo;
+            }
+            export interface IDbSetInfo {
+                dbSetName: string;
+                enablePaging: boolean;
+                pageSize: number;
+                fieldInfos: collMod.IFieldInfo[];
+            }
+            export interface IRefreshRowInfo {
+                dbSetName: string;
+                rowInfo: IRowInfo;
+                error: { name: string; message: string; };
+            }
+            export interface IDbSetConstuctorOptions {
+                dbContext: DbContext;
+                dbSetInfo: IDbSetInfo;
+                childAssoc: IAssociationInfo[];
+                parentAssoc: IAssociationInfo[];
+            }
+            export interface IAssocConstructorOptions {
+                dbContext: DbContext;
+                parentName: string;
+                childName: string;
+                onDeleteAction: DELETE_ACTION;
+                parentKeyFields: string[];
+                childKeyFields: string[];
+                parentToChildrenName: string;
+                childToParentName: string;
+                name: string;
+            }
+            export interface IAssociationInfo {
+                childDbSetName: string;
+                childToParentName: string;
+                name: string;
+                onDeleteAction: number;
+                parentDbSetName: string;
+                parentToChildrenName: string;
+                fieldRels: { childField: string; parentField: string; }[];
+            }
+            export interface IDbSetOptions extends collMod.ICollectionOptions {
+                dbSetName: string;
+            }
+          
+            export interface IMetadata {
+                associations: IAssociationInfo[];
+                dbSets: IDbSetInfo[];
+                methods: IQueryInfo[];
+                serverTimezone: number;
+            }
+            export interface ITrackAssoc {
+                assocName: string;
+                parentKey: string;
+                childKey: string;
+            }
+            export interface IChangeSet {
+                dbSets: { dbSetName: string; rows: IRowInfo[]; }[];
+                error: { name: string; message: string; };
+                trackAssocs: ITrackAssoc[];
+            }
+            export interface IQueryRequest {
+                dbSetName: string;
+                pageIndex: number;
+                pageSize: number;
+                pageCount: number;
+                isIncludeTotalCount: boolean;
+                filterInfo: IFilterInfo;
+                sortInfo: ISortInfo;
+                paramInfo: IParamInfo;
+                queryName: string;
+            }
+            export interface IRowData {
+                k: string; v: any[]; //key and values
+            }
+            export interface IQueryResult<TEntity extends Entity> { fetchedItems: TEntity[]; newItems: TEntity[]; isPageChanged: boolean; outOfBandData: any; }
+            export interface IIncludedResult {
+                names: IFieldName[];
+                rows: IRowData[];
+                rowCount: number;
+                dbSetName: string;
+            }
+            export interface IQueryResponse {
+                names: IFieldName[];
+                rows: IRowData[];
+                rowCount: number;
+                dbSetName: string;
+                pageIndex: number;
+                pageCount: number;
+                totalCount: number;
+                extraInfo: any;
+                error: IErrorInfo;
+                included: IIncludedResult[];
+            }
+            export interface IDbSetConstructor {
+                new (dbContext: DbContext): DbSet<Entity>;
+            }
 
             //don't submit these types of fields to the server
-            function fn_isNotSubmittable(fld) {
-                return (fld.fieldType == 1 /* ClientOnly */ || fld.fieldType == 3 /* Navigation */ || fld.fieldType == 2 /* Calculated */ || fld.fieldType == 6 /* ServerCalculated */);
+            function fn_isNotSubmittable(fld: collMod.IFieldInfo) {
+                return (fld.fieldType == collMod.FIELD_TYPE.ClientOnly || fld.fieldType == collMod.FIELD_TYPE.Navigation || fld.fieldType == collMod.FIELD_TYPE.Calculated || fld.fieldType == collMod.FIELD_TYPE.ServerCalculated);
             }
 
-            function fn_traverseChanges(val, fn) {
-                function _fn_traverseChanges(name, val, fn) {
+            function fn_traverseChanges(val: IValueChange, fn: (name: string, val: IValueChange) => void): void {
+                function _fn_traverseChanges(name: string, val: IValueChange, fn: (name: string, val: IValueChange) => void) {
                     if (!!val.nested && val.nested.length > 0) {
-                        var prop, i, len = val.nested.length;
+                        var prop: IValueChange, i: number, len = val.nested.length;
                         for (i = 0; i < len; i += 1) {
                             prop = val.nested[i];
                             if (!!prop.nested && prop.nested.length > 0) {
                                 _fn_traverseChanges(name + '.' + prop.fieldName, prop, fn);
-                            } else {
+                            }
+                            else {
                                 fn(name + '.' + prop.fieldName, prop);
                             }
                         }
-                    } else {
+                    }
+                    else {
                         fn(name, val);
                     }
                 }
                 _fn_traverseChanges(val.fieldName, val, fn);
             }
 
-            var DataCache = (function (_super) {
-                __extends(DataCache, _super);
-                function DataCache(query) {
-                    _super.call(this);
+            export class DataCache extends RIAPP.BaseObject {
+                _query: TDataQuery<Entity>;
+                _cache: ICachedPage[];
+                _totalCount: number;
+                _itemsByKey: { [key: string]: Entity; };
+
+                constructor(query: TDataQuery<Entity>) {
+                    super();
                     this._query = query;
                     this._cache = [];
                     this._totalCount = 0;
                     this._itemsByKey = {};
                 }
-                DataCache.prototype.getCachedPage = function (pageIndex) {
-                    var res = this._cache.filter(function (page) {
+                getCachedPage(pageIndex: number) {
+                    var res: ICachedPage[] = this._cache.filter(function (page: ICachedPage) {
                         return page.pageIndex === pageIndex;
                     });
                     if (res.length == 0)
@@ -195,11 +282,10 @@ var RIAPP;
                     if (res.length != 1)
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "res.length == 1"));
                     return res[0];
-                };
-
+                }
                 //reset items key index
-                DataCache.prototype.reindexCache = function () {
-                    var self = this, page;
+                reindexCache() {
+                    var self = this, page: ICachedPage;
                     this._itemsByKey = {};
                     for (var i = 0; i < this._cache.length; i += 1) {
                         page = this._cache[i];
@@ -207,17 +293,17 @@ var RIAPP;
                             self._itemsByKey[item._key] = item;
                         });
                     }
-                };
-                DataCache.prototype.getPrevCachedPageIndex = function (currentPageIndex) {
-                    var pageIndex = -1, cachePageIndex;
+                }
+                getPrevCachedPageIndex(currentPageIndex: number) {
+                    var pageIndex = -1, cachePageIndex: number;
                     for (var i = 0; i < this._cache.length; i += 1) {
                         cachePageIndex = this._cache[i].pageIndex;
                         if (cachePageIndex > pageIndex && cachePageIndex < currentPageIndex)
                             pageIndex = cachePageIndex;
                     }
                     return pageIndex;
-                };
-                DataCache.prototype.getNextRange = function (pageIndex) {
+                }
+                getNextRange(pageIndex: number) {
                     var half = Math.floor(((this.loadPageCount - 1) / 2));
                     var above = (pageIndex + half) + ((this.loadPageCount - 1) % 2);
                     var below = (pageIndex - half), prev = this.getPrevCachedPageIndex(pageIndex);
@@ -238,7 +324,6 @@ var RIAPP;
 
                         above = this._pageCount - 1;
                     }
-
                     //once again check for previous cached range
                     if (below <= prev) {
                         above += (prev - below + 1);
@@ -253,10 +338,10 @@ var RIAPP;
                     var start = below;
                     var end = above;
                     return { start: start, end: end, cnt: cnt };
-                };
-                DataCache.prototype.fillCache = function (start, items) {
-                    var item, keyMap = this._itemsByKey;
-                    var i, j, k, len = items.length, pageIndex, page, pageSize = this.pageSize;
+                }
+                fillCache(start: number, items: Entity[]) {
+                    var item: Entity, keyMap = this._itemsByKey;
+                    var i: number, j: number, k: number, len = items.length, pageIndex, page: ICachedPage, pageSize = this.pageSize;
                     for (i = 0; i < this.loadPageCount; i += 1) {
                         pageIndex = start + i;
                         page = this.getCachedPage(pageIndex);
@@ -274,14 +359,15 @@ var RIAPP;
                                 page.items.push(item);
                                 keyMap[item._key] = item;
                                 item._isCached = true;
-                            } else {
+                            }
+                            else {
                                 return;
                             }
                         }
                     }
-                };
-                DataCache.prototype.clear = function () {
-                    var i, j, items, item, dbSet = this._query.dbSet;
+                }
+                clear() {
+                    var i: number, j: number, items: Entity[], item: Entity, dbSet = this._query.dbSet;
                     for (i = 0; i < this._cache.length; i += 1) {
                         items = this._cache[i].items;
                         for (j = 0; j < items.length; j += 1) {
@@ -295,12 +381,12 @@ var RIAPP;
                     }
                     this._cache = [];
                     this._itemsByKey = {};
-                };
-                DataCache.prototype.clearCacheForPage = function (pageIndex) {
-                    var page = this.getCachedPage(pageIndex), dbSet = this._query.dbSet;
+                }
+                clearCacheForPage(pageIndex: number) {
+                    var page: ICachedPage = this.getCachedPage(pageIndex), dbSet = this._query.dbSet;
                     if (!page)
                         return;
-                    var j, items, item, index = this._cache.indexOf(page);
+                    var j: number, items: Entity[], item: Entity, index = this._cache.indexOf(page);
                     items = page.items;
                     for (j = 0; j < items.length; j += 1) {
                         item = items[j];
@@ -312,18 +398,18 @@ var RIAPP;
                         }
                     }
                     this._cache.splice(index, 1);
-                };
-                DataCache.prototype.hasPage = function (pageIndex) {
+                }
+                hasPage(pageIndex: number) {
                     for (var i = 0; i < this._cache.length; i += 1) {
                         if (this._cache[i].pageIndex === pageIndex)
                             return true;
                     }
                     return false;
-                };
-                DataCache.prototype.getItemByKey = function (key) {
+                }
+                getItemByKey(key: string) {
                     return this._itemsByKey[key];
-                };
-                DataCache.prototype.getPageByItem = function (item) {
+                }
+                getPageByItem(item: Entity) {
                     item = this._itemsByKey[item._key];
                     if (!item)
                         return -1;
@@ -333,80 +419,64 @@ var RIAPP;
                         }
                     }
                     return -1;
-                };
-                DataCache.prototype.destroy = function () {
+                }
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
                     this.clear();
-                    _super.prototype.destroy.call(this);
-                };
-                DataCache.prototype.toString = function () {
+                    super.destroy();
+                }
+                toString() {
                     return 'DataCache';
-                };
-                Object.defineProperty(DataCache.prototype, "_pageCount", {
-                    get: function () {
-                        var rowCount = this.totalCount, rowPerPage = this.pageSize, result;
+                }
+                get _pageCount() {
+                    var rowCount = this.totalCount, rowPerPage = this.pageSize, result: number;
 
-                        if ((rowCount === 0) || (rowPerPage === 0)) {
-                            return 0;
-                        }
+                    if ((rowCount === 0) || (rowPerPage === 0)) {
+                        return 0;
+                    }
 
-                        if ((rowCount % rowPerPage) === 0) {
-                            result = (rowCount / rowPerPage);
-                        } else {
-                            result = (rowCount / rowPerPage);
-                            result = Math.floor(result) + 1;
-                        }
-                        return result;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataCache.prototype, "pageSize", {
-                    get: function () {
-                        return this._query.pageSize;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataCache.prototype, "loadPageCount", {
-                    get: function () {
-                        return this._query.loadPageCount;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataCache.prototype, "totalCount", {
-                    get: function () {
-                        return this._totalCount;
-                    },
-                    set: function (v) {
-                        if (utils.check.isNt(v))
-                            v = 0;
-                        if (v !== this._totalCount) {
-                            this._totalCount = v;
-                            this.raisePropertyChanged('totalCount');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataCache.prototype, "cacheSize", {
-                    get: function () {
-                        return this._cache.length;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DataCache;
-            })(RIAPP.BaseObject);
-            db.DataCache = DataCache;
+                    if ((rowCount % rowPerPage) === 0) {
+                        result = (rowCount / rowPerPage);
+                    }
+                    else {
+                        result = (rowCount / rowPerPage);
+                        result = Math.floor(result) + 1;
+                    }
+                    return result;
+                }
+                get pageSize() { return this._query.pageSize; }
+                get loadPageCount() { return this._query.loadPageCount; }
+                get totalCount() { return this._totalCount; }
+                set totalCount(v: number) {
+                    if (utils.check.isNt(v))
+                        v = 0;
+                    if (v !== this._totalCount) {
+                        this._totalCount = v;
+                        this.raisePropertyChanged('totalCount');
+                    }
+                }
+                get cacheSize() { return this._cache.length; }
+            }
 
-            var TDataQuery = (function (_super) {
-                __extends(TDataQuery, _super);
-                function TDataQuery(dbSet, queryInfo) {
-                    _super.call(this);
+            export class TDataQuery<TEntity extends Entity> extends RIAPP.BaseObject {
+                _dbSet: DbSet<TEntity>;
+                __queryInfo: IQueryInfo;
+                _filterInfo: IFilterInfo;
+                _sortInfo: ISortInfo;
+                _isIncludeTotalCount: boolean;
+                _isClearPrevData: boolean;
+                _pageSize: number;
+                _pageIndex: number;
+                _params: any; //{ [name: string]: any; };
+                _loadPageCount: number;
+                _isClearCacheOnEveryLoad: boolean;
+                _dataCache: DataCache;
+                _cacheInvalidated: boolean;
+
+                constructor(dbSet: DbSet<TEntity>, queryInfo: IQueryInfo) {
+                    super();
                     this._dbSet = dbSet;
                     this.__queryInfo = queryInfo;
                     this._filterInfo = { filterItems: [] };
@@ -421,28 +491,28 @@ var RIAPP;
                     this._dataCache = null;
                     this._cacheInvalidated = false;
                 }
-                TDataQuery.prototype.getFieldInfo = function (fieldName) {
+                getFieldInfo(fieldName: string) {
                     return this._dbSet.getFieldInfo(fieldName);
-                };
-                TDataQuery.prototype.getFieldNames = function () {
+                }
+                getFieldNames() {
                     var fldMap = this._dbSet._fieldMap;
                     return utils.getProps(fldMap);
-                };
-                TDataQuery.prototype._addSort = function (fieldName, sortOrder) {
-                    var ord = 0 /* ASC */;
+                }
+                private _addSort(fieldName: string, sortOrder: collMod.SORT_ORDER) {
+                    var ord = collMod.SORT_ORDER.ASC;
                     if (!utils.check.isNt(sortOrder))
                         ord = sortOrder;
 
                     var sortItem = { fieldName: fieldName, sortOrder: ord };
                     this._sortInfo.sortItems.push(sortItem);
                     this._cacheInvalidated = true;
-                };
-                TDataQuery.prototype._addFilterItem = function (fieldName, operand, value) {
-                    var fkind = 0 /* Equals */;
+                }
+                private _addFilterItem(fieldName: string, operand: collMod.FILTER_TYPE, value: any[]) {
+                    var fkind = collMod.FILTER_TYPE.Equals;
                     var fld = this.getFieldInfo(fieldName);
                     if (!fld)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
-                    var stz = this._serverTimezone, dcnv = fld.dateConversion, vals = [];
+                    var stz = this._serverTimezone, dcnv = fld.dateConversion, vals:any[]=[];
                     if (!utils.check.isArray(value))
                         vals = [value];
                     else
@@ -453,18 +523,18 @@ var RIAPP;
                     });
 
                     switch (operand) {
-                        case 0 /* Equals */:
-                        case 9 /* NotEq */:
-                        case 2 /* StartsWith */:
-                        case 3 /* EndsWith */:
-                        case 4 /* Contains */:
-                        case 5 /* Gt */:
-                        case 7 /* GtEq */:
-                        case 6 /* Lt */:
-                        case 8 /* LtEq */:
+                        case collMod.FILTER_TYPE.Equals:
+                        case collMod.FILTER_TYPE.NotEq:
+                        case collMod.FILTER_TYPE.StartsWith:
+                        case collMod.FILTER_TYPE.EndsWith:
+                        case collMod.FILTER_TYPE.Contains:
+                        case collMod.FILTER_TYPE.Gt:
+                        case collMod.FILTER_TYPE.GtEq:
+                        case collMod.FILTER_TYPE.Lt:
+                        case collMod.FILTER_TYPE.LtEq:
                             fkind = operand;
                             break;
-                        case 1 /* Between */:
+                        case collMod.FILTER_TYPE.Between:
                             fkind = operand;
                             if (value.length != 2)
                                 throw new Error(RIAPP.ERRS.ERR_QUERY_BETWEEN);
@@ -475,339 +545,237 @@ var RIAPP;
                     var filterItem = { fieldName: fieldName, kind: fkind, values: vals };
                     this._filterInfo.filterItems.push(filterItem);
                     this._cacheInvalidated = true;
-                };
-                TDataQuery.prototype.where = function (fieldName, operand, value) {
+                }
+                where(fieldName: string, operand: collMod.FILTER_TYPE, value:any) {
                     this._addFilterItem(fieldName, operand, value);
                     return this;
-                };
-                TDataQuery.prototype.and = function (fieldName, operand, value) {
+                }
+                and(fieldName: string, operand: collMod.FILTER_TYPE, value:any) {
                     this._addFilterItem(fieldName, operand, value);
                     return this;
-                };
-                TDataQuery.prototype.orderBy = function (fieldName, sortOrder) {
+                }
+                orderBy(fieldName: string, sortOrder?: collMod.SORT_ORDER) {
                     this._addSort(fieldName, sortOrder);
                     return this;
-                };
-                TDataQuery.prototype.thenBy = function (fieldName, sortOrder) {
+                }
+                thenBy(fieldName: string, sortOrder?: collMod.SORT_ORDER) {
                     this._addSort(fieldName, sortOrder);
                     return this;
-                };
-                TDataQuery.prototype.clearSort = function () {
+                }
+                clearSort() {
                     this._sortInfo.sortItems = [];
                     this._cacheInvalidated = true;
                     return this;
-                };
-                TDataQuery.prototype.clearFilter = function () {
+                }
+                clearFilter() {
                     this._filterInfo.filterItems = [];
                     this._cacheInvalidated = true;
                     return this;
-                };
-                TDataQuery.prototype.clearParams = function () {
+                }
+                clearParams() {
                     this._params = {};
                     this._cacheInvalidated = true;
                     return this;
-                };
-                TDataQuery.prototype._clearCache = function () {
+                }
+                _clearCache() {
                     if (!!this._dataCache) {
                         this._dataCache.destroy();
                         this._dataCache = null;
                     }
                     this._resetCacheInvalidated();
-                };
-                TDataQuery.prototype._getCache = function () {
+                }
+                _getCache() {
                     if (!this._dataCache) {
                         this._dataCache = new DataCache(this);
                     }
                     return this._dataCache;
-                };
-                TDataQuery.prototype._reindexCache = function () {
+                }
+                _reindexCache() {
                     if (!this._dataCache) {
                         return;
                     }
                     this._dataCache.reindexCache();
-                };
-                TDataQuery.prototype._isPageCached = function (pageIndex) {
+                }
+                _isPageCached(pageIndex: number) {
                     if (!this._dataCache) {
                         return false;
                     }
                     return this._dataCache.hasPage(pageIndex);
-                };
-                TDataQuery.prototype._resetCacheInvalidated = function () {
+                }
+                _resetCacheInvalidated() {
                     this._cacheInvalidated = false;
-                };
-                TDataQuery.prototype.load = function () {
-                    return this.dbSet.dbContext.load(this);
-                };
-                TDataQuery.prototype.destroy = function () {
+                }
+                load(): IPromise<IQueryResult<TEntity>> {
+                    return <IPromise<IQueryResult<TEntity>>>this.dbSet.dbContext.load(this);
+                }
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
                     this._clearCache();
-                    _super.prototype.destroy.call(this);
-                };
-                TDataQuery.prototype.toString = function () {
-                    return 'DataQuery';
-                };
-                Object.defineProperty(TDataQuery.prototype, "_queryInfo", {
-                    get: function () {
-                        return this.__queryInfo;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "_serverTimezone", {
-                    get: function () {
-                        return this._dbSet.dbContext.serverTimezone;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "entityType", {
-                    get: function () {
-                        return this._dbSet.entityType;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "dbSet", {
-                    get: function () {
-                        return this._dbSet;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "dbSetName", {
-                    get: function () {
-                        return this._dbSet.dbSetName;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "queryName", {
-                    get: function () {
-                        return this.__queryInfo.methodName;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "filterInfo", {
-                    get: function () {
-                        return this._filterInfo;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "sortInfo", {
-                    get: function () {
-                        return this._sortInfo;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "isIncludeTotalCount", {
-                    get: function () {
-                        return this._isIncludeTotalCount;
-                    },
-                    set: function (v) {
-                        this._isIncludeTotalCount = v;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "isClearPrevData", {
-                    get: function () {
-                        return this._isClearPrevData;
-                    },
-                    set: function (v) {
-                        this._isClearPrevData = v;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "pageSize", {
-                    get: function () {
-                        return this._pageSize;
-                    },
-                    set: function (v) {
-                        if (this._pageSize != v) {
-                            this._pageSize = v;
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "pageIndex", {
-                    get: function () {
-                        return this._pageIndex;
-                    },
-                    set: function (v) {
-                        if (this._pageIndex != v) {
-                            this._pageIndex = v;
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "params", {
-                    get: function () {
-                        return this._params;
-                    },
-                    set: function (v) {
-                        if (this._params !== v) {
-                            this._params = v;
-                            this._cacheInvalidated = true;
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "isPagingEnabled", {
-                    get: function () {
-                        return this._dbSet.isPagingEnabled;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "loadPageCount", {
-                    get: function () {
-                        return this._loadPageCount;
-                    },
-                    set: function (v) {
-                        if (v < 1) {
-                            v = 1;
-                        }
-                        if (this._loadPageCount != v) {
-                            this._loadPageCount = v;
-                            if (v === 1) {
-                                this._clearCache();
-                            }
-                            this.raisePropertyChanged('loadPageCount');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "isClearCacheOnEveryLoad", {
-                    get: function () {
-                        return this._isClearCacheOnEveryLoad;
-                    },
-                    set: function (v) {
-                        if (this._isClearCacheOnEveryLoad != v) {
-                            this._isClearCacheOnEveryLoad = v;
-                            this.raisePropertyChanged('isClearCacheOnEveryLoad');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TDataQuery.prototype, "isCacheValid", {
-                    get: function () {
-                        return !!this._dataCache && !this._cacheInvalidated;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return TDataQuery;
-            })(RIAPP.BaseObject);
-            db.TDataQuery = TDataQuery;
-
-            var DataQuery = (function (_super) {
-                __extends(DataQuery, _super);
-                function DataQuery() {
-                    _super.apply(this, arguments);
+                    super.destroy();
                 }
-                return DataQuery;
-            })(TDataQuery);
-            db.DataQuery = DataQuery;
+                toString() {
+                    return 'DataQuery';
+                }
+                get _queryInfo() { return this.__queryInfo; }
+                get _serverTimezone() { return this._dbSet.dbContext.serverTimezone; }
+                get entityType() { return this._dbSet.entityType; }
+                get dbSet() { return this._dbSet; }
+                get dbSetName() { return this._dbSet.dbSetName; }
+                get queryName() { return this.__queryInfo.methodName; }
+                get filterInfo() { return this._filterInfo; }
+                get sortInfo() { return this._sortInfo; }
+                get isIncludeTotalCount() { return this._isIncludeTotalCount; }
+                set isIncludeTotalCount(v: boolean) { this._isIncludeTotalCount = v; }
+                get isClearPrevData() { return this._isClearPrevData; }
+                set isClearPrevData(v: boolean) { this._isClearPrevData = v; }
+                get pageSize() { return this._pageSize; }
+                set pageSize(v: number) {
+                    if (this._pageSize != v) {
+                        this._pageSize = v;
+                    }
+                }
+                get pageIndex() { return this._pageIndex; }
+                set pageIndex(v: number) {
+                    if (this._pageIndex != v) {
+                        this._pageIndex = v;
+                    }
+                }
+                get params() { return this._params; }
+                set params(v:any) {
+                    if (this._params !== v) {
+                        this._params = v;
+                        this._cacheInvalidated = true;
+                    }
+                }
+                get isPagingEnabled() { return this._dbSet.isPagingEnabled; }
+                get loadPageCount() { return this._loadPageCount; }
+                set loadPageCount(v: number) {
+                    if (v < 1) {
+                        v = 1;
+                    }
+                    if (this._loadPageCount != v) {
+                        this._loadPageCount = v;
+                        if (v === 1) {
+                            this._clearCache();
+                        }
+                        this.raisePropertyChanged('loadPageCount');
+                    }
+                }
+                get isClearCacheOnEveryLoad() { return this._isClearCacheOnEveryLoad; }
+                set isClearCacheOnEveryLoad(v) {
+                    if (this._isClearCacheOnEveryLoad != v) {
+                        this._isClearCacheOnEveryLoad = v;
+                        this.raisePropertyChanged('isClearCacheOnEveryLoad');
+                    }
+                }
+                get isCacheValid() { return !!this._dataCache && !this._cacheInvalidated; }
+            }
 
-            var Entity = (function (_super) {
-                __extends(Entity, _super);
-                function Entity(dbSet, row, names) {
+            export class DataQuery extends TDataQuery<Entity>{
+            }
+
+            export class Entity extends collMod.CollectionItem {
+                private __changeType: collMod.STATUS;
+                private __isRefreshing: boolean;
+                private __isCached: boolean;
+                private __dbSet: DbSet<Entity>;
+                private _srvRowKey: string;
+                private _origVals: { [name: string]: any; };
+                private _saveChangeType: collMod.STATUS;
+
+                constructor(dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]) {
                     this.__dbSet = dbSet;
-                    _super.call(this);
+                    super();
                     var self = this;
-                    this.__changeType = 0 /* NONE */;
+                    this.__changeType = collMod.STATUS.NONE;
                     this.__isRefreshing = false;
                     this.__isCached = false;
 
                     this._srvRowKey = null;
                     this._origVals = null;
                     this._saveChangeType = null;
-                    var fieldInfos = this._dbSet.getFieldInfos(), fld;
-                    for (var i = 0, len = fieldInfos.length; i < len; i += 1) {
+                    var fieldInfos = this._dbSet.getFieldInfos(), fld: collMod.IFieldInfo;
+                    for (var i = 0, len = fieldInfos.length; i < len; i += 1)
+                    {
                         fld = fieldInfos[i];
-                        if (fld.fieldType != 5 /* Object */) {
+                        if (fld.fieldType != collMod.FIELD_TYPE.Object) {
                             self._vals[fld.fieldName] = null;
-                        } else {
+                        }
+                        else {
                             //object field
-                            collMod.fn_traverseField(fld, function (name, f) {
-                                if (f.fieldType == 5 /* Object */)
+                            collMod.fn_traverseField(fld, (name, f) => {
+                                if (f.fieldType == collMod.FIELD_TYPE.Object)
                                     baseUtils.setValue(self._vals, name, {}, false);
                                 else
                                     baseUtils.setValue(self._vals, name, null, false);
                             });
                         }
+
                     }
                     this._initRowInfo(row, names);
                 }
-                Entity.prototype._updateKeys = function (srvKey) {
+                _updateKeys(srvKey: string) {
                     this._srvRowKey = srvKey;
                     this._key = srvKey;
-                };
-                Entity.prototype._initRowInfo = function (row, names) {
+                }
+                _initRowInfo(row: IRowData, names: IFieldName[]) {
                     if (!row)
                         return;
                     this._srvRowKey = row.k;
                     this._key = row.k;
                     this._processValues('', row.v, names);
-                };
-                Entity.prototype._processValues = function (path, values, names) {
+                }
+                _processValues(path: string, values:any[], names:IFieldName[]) {
                     var self = this, stz = self._serverTimezone;
                     values.forEach(function (value, index) {
-                        var name = names[index], fieldName = path + name.n, fld = self._dbSet.getFieldInfo(fieldName), val;
+                        var name: IFieldName = names[index], fieldName = path + name.n, fld = self._dbSet.getFieldInfo(fieldName), val;
                         if (!fld)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fieldName));
 
-                        if (fld.fieldType == 5 /* Object */) {
+                        if (fld.fieldType == collMod.FIELD_TYPE.Object) {
                             //for object fields the value should be an array of values - recursive processing
-                            self._processValues(fieldName + '.', value, name.p);
-                        } else {
+                            self._processValues(fieldName + '.', <any[]>value, name.p);
+                        }
+                        else {
                             //for other fields the value is a string, which is parsed to a typed value
                             val = valueUtils.parseValue(value, fld.dataType, fld.dateConversion, stz);
                             if (!path) {
                                 //not nested field
                                 self._vals[fieldName] = val;
-                            } else {
+                            }
+                            else {
                                 baseUtils.setValue(self._vals, fieldName, val, false);
                             }
                         }
                     });
-                };
-                Entity.prototype._checkCanRefresh = function () {
-                    if (this._key === null || this._changeType === 1 /* ADDED */) {
+                }
+                _checkCanRefresh() {
+                    if (this._key === null || this._changeType === collMod.STATUS.ADDED) {
                         throw new Error(RIAPP.ERRS.ERR_OPER_REFRESH_INVALID);
                     }
-                };
-                Entity.prototype._refreshValue = function (val, fullName, refreshMode) {
+                }
+                _refreshValue(val:any, fullName: string, refreshMode: REFRESH_MODE) {
                     var self = this, fld = self._dbSet.getFieldInfo(fullName);
                     if (!fld)
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fullName));
                     var stz = self._serverTimezone, newVal, oldVal, oldValOrig, dataType = fld.dataType, dcnv = fld.dateConversion;
                     newVal = valueUtils.parseValue(val, dataType, dcnv, stz);
-                    oldVal = baseUtils.getValue(self._vals, fullName);
+                    oldVal = baseUtils.getValue(self._vals,fullName);
                     switch (refreshMode) {
-                        case 3 /* CommitChanges */:
-                             {
+                        case REFRESH_MODE.CommitChanges:
+                            {
                                 if (!valueUtils.compareVals(newVal, oldVal, dataType)) {
                                     baseUtils.setValue(self._vals, fullName, newVal, false);
                                     self._onFieldChanged(fullName, fld);
                                 }
                             }
                             break;
-                        case 1 /* RefreshCurrent */:
-                             {
+                        case REFRESH_MODE.RefreshCurrent:
+                            {
                                 if (!!self._origVals) {
-                                    baseUtils.setValue(self._origVals, fullName, newVal, false);
+                                    baseUtils.setValue(self._origVals,fullName, newVal, false);
                                 }
                                 if (!!self._saveVals) {
                                     baseUtils.setValue(self._saveVals, fullName, newVal, false);
@@ -818,8 +786,8 @@ var RIAPP;
                                 }
                             }
                             break;
-                        case 2 /* MergeIntoCurrent */:
-                             {
+                        case REFRESH_MODE.MergeIntoCurrent:
+                            {
                                 if (!!self._origVals) {
                                     oldValOrig = baseUtils.getValue(self._origVals, fullName);
                                     baseUtils.setValue(self._origVals, fullName, newVal, false);
@@ -836,31 +804,31 @@ var RIAPP;
                         default:
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'refreshMode', refreshMode));
                     }
-                };
-                Entity.prototype._refreshValues = function (rowInfo, refreshMode) {
+                }
+                _refreshValues(rowInfo: IRowInfo, refreshMode: REFRESH_MODE) {
                     var self = this, oldCT = this._changeType;
                     if (!this._isDestroyed) {
                         if (!refreshMode) {
-                            refreshMode = 1 /* RefreshCurrent */;
+                            refreshMode = REFRESH_MODE.RefreshCurrent;
                         }
                         rowInfo.values.forEach(function (val) {
-                            fn_traverseChanges(val, function (fullName, vc) {
-                                if (!((vc.flags & 4 /* Refreshed */) === 4 /* Refreshed */))
+                            fn_traverseChanges(val, (fullName, vc) => {
+                                if (!((vc.flags & FLAGS.Refreshed) === FLAGS.Refreshed))
                                     return;
                                 self._refreshValue(vc.val, fullName, refreshMode);
                             });
                         });
 
-                        if (oldCT === 2 /* UPDATED */) {
+                        if (oldCT === collMod.STATUS.UPDATED) {
                             var changes = this._getValueChanges(true);
                             if (changes.length === 0) {
                                 this._origVals = null;
-                                this._changeType = 0 /* NONE */;
+                                this._changeType = collMod.STATUS.NONE;
                             }
                         }
                     }
-                };
-                Entity.prototype._onFieldChanged = function (fieldName, fieldInfo) {
+                }
+                _onFieldChanged(fieldName:string, fieldInfo: collMod.IFieldInfo) {
                     var self = this;
                     self.raisePropertyChanged(fieldName);
                     if (!!fieldInfo.dependents && fieldInfo.dependents.length > 0) {
@@ -868,14 +836,14 @@ var RIAPP;
                             self.raisePropertyChanged(d);
                         });
                     }
-                };
-                Entity.prototype._getValueChange = function (fullName, fld, changedOnly) {
-                    var self = this, dbSet = self._dbSet, res, i, len, tmp;
+                }
+                _getValueChange(fullName: string, fld: collMod.IFieldInfo, changedOnly: boolean): IValueChange {
+                    var self = this, dbSet = self._dbSet, res: IValueChange, i: number, len: number, tmp: IValueChange;
                     if (fn_isNotSubmittable(fld))
-                        return null;
+                        return <IValueChange>null;
 
-                    if (fld.fieldType == 5 /* Object */) {
-                        res = { fieldName: fld.fieldName, val: null, orig: null, flags: 0 /* None */, nested: [] };
+                    if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                        res = { fieldName: fld.fieldName, val: null, orig: null, flags: FLAGS.None, nested: [] };
                         len = fld.nested.length;
                         for (i = 0; i < len; i += 1) {
                             tmp = self._getValueChange(fullName + '.' + fld.nested[i].fieldName, fld.nested[i], changedOnly);
@@ -883,44 +851,49 @@ var RIAPP;
                                 res.nested.push(tmp);
                             }
                         }
-                    } else {
-                        var newVal = dbSet._getStrValue(baseUtils.getValue(self._vals, fullName), fld), oldV = self._origVals === null ? newVal : dbSet._getStrValue(baseUtils.getValue(self._origVals, fullName), fld), isChanged = (oldV !== newVal);
+                    }
+                    else {
+                        var newVal = dbSet._getStrValue(baseUtils.getValue(self._vals, fullName), fld),
+                            oldV = self._origVals === null ? newVal : dbSet._getStrValue(baseUtils.getValue(self._origVals, fullName), fld),
+                            isChanged = (oldV !== newVal);
                         if (isChanged)
-                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: (1 /* Changed */ | 2 /* Setted */), nested: null };
-                        else if (fld.isPrimaryKey > 0 || fld.fieldType == 4 /* RowTimeStamp */ || fld.isNeedOriginal)
-                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: 2 /* Setted */, nested: null };
+                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: (FLAGS.Changed | FLAGS.Setted), nested: null };
+                        else if (fld.isPrimaryKey > 0 || fld.fieldType == collMod.FIELD_TYPE.RowTimeStamp || fld.isNeedOriginal)
+                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: FLAGS.Setted, nested: null };
                         else
-                            res = { fieldName: fld.fieldName, val: null, orig: null, flags: 0 /* None */, nested: null };
+                            res = { fieldName: fld.fieldName, val: null, orig: null, flags: FLAGS.None, nested: null };
                     }
 
                     if (changedOnly) {
-                        if (fld.fieldType == 5 /* Object */) {
+                        if (fld.fieldType == collMod.FIELD_TYPE.Object) {
                             if (res.nested.length > 0)
                                 return res;
                             else
                                 return null;
-                        } else if ((res.flags & 1 /* Changed */) === 1 /* Changed */)
+                        }
+                        else if ((res.flags & FLAGS.Changed) === FLAGS.Changed)
                             return res;
                         else
                             return null;
-                    } else {
+                    }
+                    else {
                         return res;
                     }
-                };
-                Entity.prototype._getValueChanges = function (changedOnly) {
+                }
+                _getValueChanges(changedOnly: boolean): IValueChange[] {
                     var self = this, flds = this._dbSet.getFieldInfos();
-                    var res = flds.map(function (fld) {
+                    var res = flds.map((fld) => {
                         return self._getValueChange(fld.fieldName, fld, changedOnly);
                     });
 
                     //remove nulls
-                    var res2 = res.filter(function (vc) {
+                    var res2 = res.filter((vc) => {
                         return !!vc;
                     });
                     return res2;
-                };
-                Entity.prototype._getRowInfo = function () {
-                    var res = {
+                }
+                _getRowInfo() {
+                    var res: IRowInfo = {
                         values: this._getValueChanges(false),
                         changeType: this._changeType,
                         serverKey: this._srvKey,
@@ -928,28 +901,28 @@ var RIAPP;
                         error: null
                     };
                     return res;
-                };
-                Entity.prototype._fldChanging = function (fieldName, fieldInfo, oldV, newV) {
+                }
+                _fldChanging(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV, newV) {
                     if (!this._origVals) {
                         this._origVals = utils.cloneObj(this._vals);
                     }
                     return true;
-                };
-                Entity.prototype._fldChanged = function (fieldName, fieldInfo, oldV, newV) {
-                    if (!(fieldInfo.fieldType == 1 /* ClientOnly */ || fieldInfo.fieldType == 6 /* ServerCalculated */)) {
+                }
+                _fldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV, newV) {
+                    if (!(fieldInfo.fieldType == collMod.FIELD_TYPE.ClientOnly || fieldInfo.fieldType == collMod.FIELD_TYPE.ServerCalculated)) {
                         switch (this._changeType) {
-                            case 0 /* NONE */:
-                                this._changeType = 2 /* UPDATED */;
+                            case collMod.STATUS.NONE:
+                                this._changeType = collMod.STATUS.UPDATED;
                                 break;
                         }
                     }
                     this._onFieldChanged(fieldName, fieldInfo);
                     return true;
-                };
-                Entity.prototype._clearFieldVal = function (fieldName) {
+                }
+                _clearFieldVal(fieldName: string) {
                     baseUtils.setValue(this._vals, fieldName, null, false);
-                };
-                Entity.prototype._skipValidate = function (fieldInfo, val) {
+                }
+                _skipValidate(fieldInfo: collMod.IFieldInfo, val) {
                     var childToParentNames = this._dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
                     if (!!childToParentNames && val === null) {
                         for (var i = 0, len = childToParentNames.length; i < len; i += 1) {
@@ -959,23 +932,25 @@ var RIAPP;
                         }
                     }
                     return res;
-                };
-                Entity.prototype._getFieldVal = function (fieldName) {
+                }
+                _getFieldVal(fieldName: string) {
                     if (this._isDestroyCalled)
                         return null;
-                    return baseUtils.getValue(this._vals, fieldName);
-                };
-                Entity.prototype._setFieldVal = function (fieldName, val) {
-                    var validation_error, error, dbSetName = this._dbSetName, dbSet = this._dbSet, ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val, fld = this.getFieldInfo(fieldName), res = false;
+                    return baseUtils.getValue(this._vals,fieldName);
+                }
+                _setFieldVal(fieldName: string, val):boolean {
+                    var validation_error, error, dbSetName = this._dbSetName, dbSet = this._dbSet,
+                        ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val,
+                        fld = this.getFieldInfo(fieldName), res = false;
                     if (!fld)
                         throw new Error(baseUtils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
                     if (!this._isEditing && !this._isUpdating)
                         this.beginEdit();
-                    try  {
+                    try {
                         newV = this._checkVal(fld, newV);
                         if (oldV != newV) {
                             if (this._fldChanging(fieldName, fld, oldV, newV)) {
-                                baseUtils.setValue(this._vals, fieldName, newV, false);
+                                baseUtils.setValue(this._vals,fieldName,newV,false);
                                 this._fldChanged(fieldName, fld, oldV, newV);
                                 res = true;
                             }
@@ -988,7 +963,8 @@ var RIAPP;
                     } catch (ex) {
                         if (ex instanceof ValidationError) {
                             error = ex;
-                        } else {
+                        }
+                        else {
                             error = new ValidationError([
                                 { fieldName: fieldName, errors: [ex.message] }
                             ], this);
@@ -997,90 +973,90 @@ var RIAPP;
                         throw error;
                     }
                     return res;
-                };
-                Entity.prototype._getCalcFieldVal = function (fieldName) {
+                }
+                _getCalcFieldVal(fieldName: string) {
                     if (this._isDestroyCalled)
                         return null;
-                    var dbSet = this._dbSet;
+                    var dbSet = this._dbSet
                     return baseUtils.getValue(dbSet._calcfldMap, fieldName).getFunc.call(this);
-                };
-                Entity.prototype._getNavFieldVal = function (fieldName) {
+                }
+                _getNavFieldVal(fieldName: string) {
                     if (this._isDestroyCalled) {
                         return null;
                     }
-                    var dbSet = this._dbSet;
+                    var dbSet = this._dbSet
                     return baseUtils.getValue(dbSet._navfldMap, fieldName).getFunc.call(this);
-                };
-                Entity.prototype._setNavFieldVal = function (fieldName, value) {
-                    var dbSet = this._dbSet;
+                }
+                _setNavFieldVal(fieldName: string, value:any) {
+                    var dbSet = this._dbSet
                     baseUtils.getValue(dbSet._navfldMap, fieldName).setFunc.call(this, value);
-                };
-                Entity.prototype._onAttaching = function () {
-                    _super.prototype._onAttaching.call(this);
-                    this.__changeType = 1 /* ADDED */;
-                };
-                Entity.prototype._onAttach = function () {
-                    _super.prototype._onAttach.call(this);
+                }
+                _onAttaching() {
+                    super._onAttaching();
+                    this.__changeType = collMod.STATUS.ADDED;
+                }
+                _onAttach() {
+                    super._onAttach();
                     if (this._key === null)
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     this._dbSet._addToChanged(this);
-                };
-                Entity.prototype._beginEdit = function () {
-                    if (!_super.prototype._beginEdit.call(this))
+                }
+                _beginEdit() {
+                    if (!super._beginEdit())
                         return false;
                     this._saveChangeType = this._changeType;
                     return true;
-                };
-                Entity.prototype._endEdit = function () {
-                    if (!_super.prototype._endEdit.call(this))
+                }
+                _endEdit() {
+                    if (!super._endEdit())
                         return false;
                     this._saveChangeType = null;
                     return true;
-                };
-                Entity.prototype.deleteItem = function () {
+                }
+                deleteItem() {
                     return this.deleteOnSubmit();
-                };
-                Entity.prototype.deleteOnSubmit = function () {
+                }
+                deleteOnSubmit() {
                     var oldCT = this._changeType, eset = this._dbSet;
                     if (!eset._onItemDeleting(this)) {
                         return false;
                     }
                     if (this._key === null)
                         return false;
-                    if (oldCT === 1 /* ADDED */) {
+                    if (oldCT === collMod.STATUS.ADDED) {
                         eset.removeItem(this);
                         return true;
                     }
-                    this._changeType = 3 /* DELETED */;
+                    this._changeType = collMod.STATUS.DELETED;
                     return true;
-                };
-                Entity.prototype.acceptChanges = function (rowInfo) {
+                }
+                acceptChanges(rowInfo?: IRowInfo) {
                     var oldCT = this._changeType, eset = this._dbSet;
                     if (this._key === null)
                         return;
-                    if (oldCT !== 0 /* NONE */) {
+                    if (oldCT !== collMod.STATUS.NONE) {
                         eset._onCommitChanges(this, true, false, oldCT);
-                        if (oldCT === 3 /* DELETED */) {
+                        if (oldCT === collMod.STATUS.DELETED) {
                             eset.removeItem(this);
                             return;
                         }
                         this._origVals = null;
                         if (!!this._saveVals)
                             this._saveVals = utils.cloneObj(this._vals);
-                        this._changeType = 0 /* NONE */;
+                        this._changeType = collMod.STATUS.NONE;
                         eset._removeAllErrors(this);
                         if (!!rowInfo)
-                            this._refreshValues(rowInfo, 3 /* CommitChanges */);
+                            this._refreshValues(rowInfo, REFRESH_MODE.CommitChanges);
                         eset._onCommitChanges(this, false, false, oldCT);
                     }
-                };
-                Entity.prototype.rejectChanges = function () {
+                }
+                rejectChanges() {
                     var self = this, oldCT = self._changeType, eset = self._dbSet;
                     if (!self._key)
                         return;
-                    if (oldCT !== 0 /* NONE */) {
+                    if (oldCT !== collMod.STATUS.NONE) {
                         eset._onCommitChanges(self, true, true, oldCT);
-                        if (oldCT === 1 /* ADDED */) {
+                        if (oldCT === collMod.STATUS.ADDED) {
                             eset.removeItem(this);
                             return;
                         }
@@ -1093,21 +1069,21 @@ var RIAPP;
                                 self._saveVals = utils.cloneObj(self._vals);
                             }
                         }
-                        self._changeType = 0 /* NONE */;
+                        self._changeType = collMod.STATUS.NONE;
                         eset._removeAllErrors(this);
                         changes.forEach(function (v) {
-                            fn_traverseChanges(v, function (fullName, vc) {
+                            fn_traverseChanges(v, (fullName, vc) => {
                                 self._onFieldChanged(fullName, eset.getFieldInfo(fullName));
                             });
                         });
                         eset._onCommitChanges(this, false, true, oldCT);
                     }
-                };
-                Entity.prototype.submitChanges = function () {
+                }
+                submitChanges(): IVoidPromise {
                     var dbContext = this.getDbContext(), uniqueID = utils.uuid();
                     dbContext.addOnSubmitError(function (sender, args) {
                         if (args.error instanceof db.SubmitError) {
-                            var submitErr = args.error;
+                            var submitErr: db.SubmitError = args.error;
                             if (submitErr.notValidated.length > 0) {
                                 //don't reject changes,so the user can see errors in the edit dialog
                                 args.isHandled = true;
@@ -1120,12 +1096,12 @@ var RIAPP;
                         dbContext.removeOnSubmitError(uniqueID);
                     });
                     return promise;
-                };
-                Entity.prototype.refresh = function () {
+                }
+                refresh(): IPromise<Entity> {
                     var db = this.getDbContext();
                     return db._refreshItem(this);
-                };
-                Entity.prototype.cancelEdit = function () {
+                }
+                cancelEdit() {
                     if (!this._isEditing)
                         return false;
                     var self = this, changes = this._getValueChanges(true), isNew = this._isNew, coll = this._dbSet;
@@ -1144,17 +1120,17 @@ var RIAPP;
                     coll._onEditing(this, false, true);
                     this.raisePropertyChanged('isEditing');
                     return true;
-                };
-                Entity.prototype.getDbContext = function () {
+                }
+                getDbContext(): DbContext {
                     return this.__dbSet.dbContext;
-                };
-                Entity.prototype.getDbSet = function () {
+                }
+                getDbSet() {
                     return this.__dbSet;
-                };
-                Entity.prototype.toString = function () {
+                }
+                toString() {
                     return 'Entity';
-                };
-                Entity.prototype.destroy = function () {
+                }
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
@@ -1164,127 +1140,60 @@ var RIAPP;
                     this._saveChangeType = null;
                     this.__isRefreshing = false;
                     this.__isCached = false;
-                    _super.prototype.destroy.call(this);
-                };
-                Object.defineProperty(Entity.prototype, "_isCanSubmit", {
-                    get: function () {
-                        return true;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "_changeType", {
-                    get: function () {
-                        return this.__changeType;
-                    },
-                    set: function (v) {
-                        if (this.__changeType !== v) {
-                            var oldChangeType = this.__changeType;
-                            this.__changeType = v;
-                            if (v !== 0 /* NONE */)
-                                this._dbSet._addToChanged(this);
-                            else
-                                this._dbSet._removeFromChanged(this._key);
-                            this._dbSet._onItemStatusChanged(this, oldChangeType);
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "_isNew", {
-                    get: function () {
-                        return this.__changeType === 1 /* ADDED */;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "_isDeleted", {
-                    get: function () {
-                        return this.__changeType === 3 /* DELETED */;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "_entityType", {
-                    get: function () {
-                        return this.__dbSet.entityType;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "_srvKey", {
-                    get: function () {
-                        return this._srvRowKey;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "_dbSetName", {
-                    get: function () {
-                        return this.__dbSet.dbSetName;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "_serverTimezone", {
-                    get: function () {
-                        return this.getDbContext().serverTimezone;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "_collection", {
-                    get: function () {
-                        return this.__dbSet;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "_dbSet", {
-                    get: function () {
-                        return this.__dbSet;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "_isRefreshing", {
-                    get: function () {
-                        return this.__isRefreshing;
-                    },
-                    set: function (v) {
-                        if (this.__isRefreshing !== v) {
-                            this.__isRefreshing = v;
-                            this.raisePropertyChanged('_isRefreshing');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "_isCached", {
-                    get: function () {
-                        return this.__isCached;
-                    },
-                    set: function (v) {
-                        this.__isCached = v;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Entity.prototype, "isHasChanges", {
-                    get: function () {
-                        return this.__changeType !== 0 /* NONE */;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return Entity;
-            })(collMod.CollectionItem);
-            db.Entity = Entity;
+                    super.destroy();
+                }
+                get _isCanSubmit() { return true; }
+                get _changeType() { return this.__changeType; }
+                set _changeType(v) {
+                    if (this.__changeType !== v) {
+                        var oldChangeType = this.__changeType;
+                        this.__changeType = v;
+                        if (v !== collMod.STATUS.NONE)
+                            this._dbSet._addToChanged(this);
+                        else
+                            this._dbSet._removeFromChanged(this._key);
+                        this._dbSet._onItemStatusChanged(this, oldChangeType);
+                    }
+                }
+                get _isNew() { return this.__changeType === collMod.STATUS.ADDED; }
+                get _isDeleted() { return this.__changeType === collMod.STATUS.DELETED; }
+                get _entityType() { return this.__dbSet.entityType; }
+                get _srvKey() { return this._srvRowKey; }
+                get _dbSetName() { return this.__dbSet.dbSetName; }
+                get _serverTimezone() { return this.getDbContext().serverTimezone; }
+                get _collection() { return <collMod.BaseCollection<Entity>>this.__dbSet; }
+                get _dbSet() { return this.__dbSet; }
+                get _isRefreshing() { return this.__isRefreshing; }
+                set _isRefreshing(v) {
+                    if (this.__isRefreshing !== v) {
+                        this.__isRefreshing = v;
+                        this.raisePropertyChanged('_isRefreshing');
+                    }
+                }
+                get _isCached() { return this.__isCached; }
+                set _isCached(v) { this.__isCached = v; }
+                get isHasChanges() { return this.__changeType !== collMod.STATUS.NONE; }
+            }
 
-            var DbSet = (function (_super) {
-                __extends(DbSet, _super);
-                function DbSet(opts, entityType) {
-                    _super.call(this);
+            export class DbSet<TEntity extends Entity> extends collMod.BaseCollection<TEntity> {
+                private _dbContext: DbContext;
+                private _isSubmitOnDelete: boolean;
+                private _trackAssoc: { [name: string]: IAssociationInfo; };
+                private _trackAssocMap: { [childFieldName: string]: string[]; };
+                private _childAssocMap: { [fieldName: string]: IAssociationInfo; };
+                private _parentAssocMap: { [fieldName: string]: IAssociationInfo; };
+                private _changeCount: number;
+                private _changeCache: { [key: string]: TEntity; };
+                _options: IDbSetOptions;
+                _navfldMap: { [fieldName: string]: { getFunc: () => any; setFunc: (v: any) => void; }; };
+                _calcfldMap: { [fieldName: string]: { getFunc: () => any; }; };
+                _itemsByKey: { [key: string]: TEntity; };
+                _entityType: IEntityConstructor;
+                _ignorePageChanged: boolean;
+                _query: TDataQuery<TEntity>;
+
+                constructor(opts: IDbSetConstuctorOptions, entityType: IEntityConstructor) {
+                    super();
                     var self = this, dbContext = opts.dbContext, dbSetInfo = opts.dbSetInfo, fieldInfos = dbSetInfo.fieldInfos;
                     this._dbContext = dbContext;
                     this._options.dbSetName = dbSetInfo.dbSetName;
@@ -1300,13 +1209,10 @@ var RIAPP;
                     //association infos maped by name
                     //we should track changes in navigation properties for this associations
                     this._trackAssoc = {};
-
                     //map childToParentName by childField as a key
                     this._trackAssocMap = {};
-
                     //map association infos by childToParent fieldname
                     this._childAssocMap = {};
-
                     //map association infos by parentToChildren fieldname
                     this._parentAssocMap = {};
 
@@ -1315,18 +1221,19 @@ var RIAPP;
                     this._ignorePageChanged = false;
                     fieldInfos.forEach(function (f) {
                         self._fieldMap[f.fieldName] = f;
-                        collMod.fn_traverseField(f, function (fullName, fld) {
+                        collMod.fn_traverseField(f, (fullName, fld) => {
                             fld.dependents = [];
                             fld.fullName = fullName;
                         });
                     });
 
                     fieldInfos.forEach(function (f) {
-                        collMod.fn_traverseField(f, function (fullName, fld) {
-                            if (fld.fieldType == 3 /* Navigation */) {
+                        collMod.fn_traverseField(f, (fullName, fld) => {
+                            if (fld.fieldType == collMod.FIELD_TYPE.Navigation) {
                                 //navigation fields can NOT be on nested fields
                                 self._navfldMap[fld.fieldName] = self._doNavigationField(opts, fld);
-                            } else if (fld.fieldType == 2 /* Calculated */) {
+                            }
+                            else if (fld.fieldType == collMod.FIELD_TYPE.Calculated) {
                                 //calculated fields can be on nested fields
                                 baseUtils.setValue(self._calcfldMap, fullName, self._doCalculatedField(opts, fld), true);
                             }
@@ -1336,19 +1243,20 @@ var RIAPP;
                     self._mapAssocFields();
                     Object.freeze(this._perms);
                 }
-                DbSet.prototype.getFieldInfo = function (fieldName) {
-                    var assoc, parentDB, parts = fieldName.split('.');
+                getFieldInfo(fieldName: string): collMod.IFieldInfo {
+                    var assoc: IAssociationInfo, parentDB: DbSet<Entity>, parts = fieldName.split('.');
                     var fld = this._fieldMap[parts[0]];
                     if (parts.length == 1) {
                         return fld;
                     }
-
-                    if (fld.fieldType == 5 /* Object */) {
+                    
+                    if (fld.fieldType == collMod.FIELD_TYPE.Object) {
                         for (var i = 1; i < parts.length; i += 1) {
                             fld = collMod.fn_getPropertyByName(parts[i], fld.nested);
                         }
                         return fld;
-                    } else if (fld.fieldType == 3 /* Navigation */) {
+                    }
+                    else if (fld.fieldType == collMod.FIELD_TYPE.Navigation) {
                         //for example Customer.Name
                         assoc = this._childAssocMap[fld.fieldName];
                         if (!!assoc) {
@@ -1356,42 +1264,39 @@ var RIAPP;
                             return parentDB.getFieldInfo(parts.slice(1).join('.'));
                         }
                     }
-
+                    
                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
-                };
-                DbSet.prototype._onError = function (error, source) {
+                }
+                _onError(error, source): boolean {
                     return this.dbContext._onError(error, source);
-                };
-                DbSet.prototype._mapAssocFields = function () {
-                    var trackAssoc = this._trackAssoc, assoc, tasKeys = Object.keys(trackAssoc), frel, trackAssocMap = this._trackAssocMap;
+                }
+                _mapAssocFields() {
+                    var trackAssoc = this._trackAssoc, assoc: IAssociationInfo, tasKeys = Object.keys(trackAssoc),
+                        frel: { childField: string; parentField: string; },
+                        trackAssocMap = this._trackAssocMap;
                     for (var i = 0, len = tasKeys.length; i < len; i += 1) {
                         assoc = trackAssoc[tasKeys[i]];
                         for (var j = 0, len2 = assoc.fieldRels.length; j < len2; j += 1) {
                             frel = assoc.fieldRels[j];
                             if (!utils.check.isArray(trackAssocMap[frel.childField])) {
                                 trackAssocMap[frel.childField] = [assoc.childToParentName];
-                            } else {
+                            }
+                            else {
                                 trackAssocMap[frel.childField].push(assoc.childToParentName);
                             }
                         }
                     }
-                };
-                DbSet.prototype._updatePermissions = function (perms) {
+                }
+                _updatePermissions(perms: IPermissions) {
                     this._perms = perms;
-                };
-                DbSet.prototype._getChildToParentNames = function (childFieldName) {
-                    return this._trackAssocMap[childFieldName];
-                };
-                DbSet.prototype._getStrValue = function (val, fieldInfo) {
+                }
+                _getChildToParentNames(childFieldName: string) { return this._trackAssocMap[childFieldName]; }
+                _getStrValue(val: any, fieldInfo: collMod.IFieldInfo) {
                     var dcnv = fieldInfo.dateConversion, stz = this.dbContext.serverTimezone;
                     return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
-                };
-                DbSet.prototype._doNavigationField = function (opts, fInfo) {
-                    var self = this, isChild = true, result = { getFunc: function () {
-                            throw new Error('Function is not implemented');
-                        }, setFunc: function (v) {
-                            throw new Error('Function is not implemented');
-                        } };
+                }
+                _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo) {
+                    var self = this, isChild = true, result: { getFunc: () => any; setFunc: (v: any) => void; } = { getFunc: () => { throw new Error('Function is not implemented'); }, setFunc: function (v: any) { throw new Error('Function is not implemented'); } };
                     var assocs = opts.childAssoc.filter(function (a) {
                         return a.childToParentName == fInfo.fieldName;
                     });
@@ -1416,7 +1321,6 @@ var RIAPP;
                                 fInfo.isReadOnly = true;
                             }
                         });
-
                         //this property should return parent
                         result.getFunc = function () {
                             var assoc = self.dbContext.getAssociation(assocName);
@@ -1428,18 +1332,20 @@ var RIAPP;
                             self._trackAssoc[assocName] = assocs[0];
 
                             result.setFunc = function (v) {
-                                var entity = this, i, len, assoc = self.dbContext.getAssociation(assocName);
+                                var entity: Entity = this, i:number, len:number, assoc = self.dbContext.getAssociation(assocName);
                                 if (!!v && !(v instanceof assoc.parentDS.entityType)) {
                                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'value', assoc.parentDS.dbSetName));
                                 }
 
                                 if (!!v && v._isNew) {
                                     entity._setFieldVal(fInfo.fieldName, v._key);
-                                } else if (!!v) {
+                                }
+                                else if (!!v) {
                                     for (i = 0, len = assoc.childFldInfos.length; i < len; i += 1) {
                                         entity[assoc.childFldInfos[i].fieldName] = v[assoc.parentFldInfos[i].fieldName];
                                     }
-                                } else {
+                                }
+                                else {
                                     var oldKey = entity._getFieldVal(fInfo.fieldName);
                                     if (!!oldKey) {
                                         entity._setFieldVal(fInfo.fieldName, null);
@@ -1448,26 +1354,24 @@ var RIAPP;
                                         entity[assoc.childFldInfos[i].fieldName] = null;
                                     }
                                 }
-                            };
+                            }
                         }
-                    } else {
+                    } //if (isChild)
+                    else {
                         self._parentAssocMap[assocs[0].parentToChildrenName] = assocs[0];
-
                         //return children
                         result.getFunc = function () {
                             return self.dbContext.getAssociation(assocName).getChildItems(this);
                         };
                     }
                     return result;
-                };
-                DbSet.prototype._doCalculatedField = function (opts, fInfo) {
-                    var self = this, result = { getFunc: function () {
-                            throw new Error(utils.format("Calculated field:'{0}' is not initialized", fInfo.fieldName));
-                        } };
-                    function doDependences(f) {
+                }
+                _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo) {
+                    var self = this, result: { getFunc: () => any; } = { getFunc: () => { throw new Error(utils.format("Calculated field:'{0}' is not initialized", fInfo.fieldName)); } };
+                    function doDependences(f: collMod.IFieldInfo) {
                         if (!f.dependentOn)
                             return;
-                        var deps = f.dependentOn.split(',');
+                        var deps: string[] = f.dependentOn.split(',');
                         deps.forEach(function (depOn) {
                             var depOnFld = self.getFieldInfo(depOn);
                             if (!depOnFld)
@@ -1478,47 +1382,48 @@ var RIAPP;
                                 depOnFld.dependents.push(f.fullName);
                             }
                         });
-                    }
-                    ;
+                    };
                     fInfo.isReadOnly = true;
                     if (!!fInfo.dependentOn) {
                         doDependences(fInfo);
                     }
                     return result;
-                };
-                DbSet.prototype._refreshValues = function (path, item, values, names, rm) {
+                }
+                _refreshValues(path: string, item: Entity, values: any[], names: IFieldName[], rm:REFRESH_MODE) {
                     var self = this;
                     values.forEach(function (value, index) {
-                        var name = names[index], fieldName = path + name.n, fld = self.getFieldInfo(fieldName);
+                        var name: IFieldName = names[index], fieldName = path + name.n, fld = self.getFieldInfo(fieldName);
                         if (!fld)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self.dbSetName, fieldName));
 
-                        if (fld.fieldType == 5 /* Object */) {
+                        if (fld.fieldType == collMod.FIELD_TYPE.Object) {
                             //for object fields the value should be an array of values - recursive processing
-                            self._refreshValues(fieldName + '.', item, value, name.p, rm);
-                        } else {
+                            self._refreshValues(fieldName + '.', item, <any[]>value, name.p, rm);
+                        }
+                        else {
                             //for other fields the value is a string
                             item._refreshValue(value, fieldName, rm);
                         }
                     });
-                };
-                DbSet.prototype._fillFromService = function (data) {
+                }
+                _fillFromService(data: { res: IQueryResponse; isPageChanged: boolean; fn_beforeFillEnd: () => void; }): IQueryResult<TEntity> {
                     data = utils.extend(false, {
                         res: { names: [], rows: [], pageIndex: null, pageCount: null, dbSetName: this.dbSetName, totalCount: null },
                         isPageChanged: false,
                         fn_beforeFillEnd: null
                     }, data);
 
-                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length, entityType = this._entityType, newItems = [], positions = [], created_items = [], fetchedItems = [], isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache;
+                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length,
+                        entityType = this._entityType, newItems: TEntity[] = [], positions: number[] = [], created_items: TEntity[] = [], fetchedItems: TEntity[] = [],
+                        isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache: DataCache;
 
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
-                    try  {
+                    try {
                         if (!!query) {
                             clearAll = query.isClearPrevData;
                             if (query.isClearCacheOnEveryLoad)
                                 query._clearCache();
-                            if (clearAll)
-                                this.clear();
+                            if (clearAll) this.clear();
                             query._reindexCache();
                             if (query.loadPageCount > 1 && isPagingEnabled) {
                                 dataCache = query._getCache();
@@ -1526,6 +1431,8 @@ var RIAPP;
                                     dataCache.totalCount = res.totalCount;
                             }
                         }
+
+                    
 
                         created_items = rows.map(function (row) {
                             //row.key already a string value generated on server (no need to convert to string)
@@ -1536,15 +1443,17 @@ var RIAPP;
                             var item = self._itemsByKey[key];
                             if (!item) {
                                 if (!!dataCache) {
-                                    item = dataCache.getItemByKey(key);
+                                    item = <TEntity>dataCache.getItemByKey(key);
                                 }
                                 if (!item)
-                                    item = new entityType(self, row, fieldNames);
-                                else {
-                                    self._refreshValues('', item, row.v, fieldNames, 1 /* RefreshCurrent */);
+                                    item = <TEntity>new entityType(self, row, fieldNames);
+                                else
+                                {
+                                    self._refreshValues('', item, row.v, fieldNames, REFRESH_MODE.RefreshCurrent);
                                 }
-                            } else {
-                                self._refreshValues('', item, row.v, fieldNames, 1 /* RefreshCurrent */);
+                            }
+                            else {
+                                self._refreshValues('', item, row.v, fieldNames, REFRESH_MODE.RefreshCurrent);
                             }
                             return item;
                         });
@@ -1558,7 +1467,7 @@ var RIAPP;
                                 dataCache.fillCache(res.pageIndex, created_items);
                                 var pg = dataCache.getCachedPage(query.pageIndex);
                                 if (!!pg)
-                                    created_items = pg.items;
+                                    created_items = <TEntity[]>pg.items;
                                 else
                                     created_items = [];
                             }
@@ -1572,39 +1481,42 @@ var RIAPP;
                                 self._itemsByKey[item._key] = item;
                                 newItems.push(item);
                                 fetchedItems.push(item);
-                            } else
+                            }
+                            else
                                 fetchedItems.push(oldItem);
                         });
 
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
+                            this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
 
                         if (!!data.fn_beforeFillEnd) {
                             data.fn_beforeFillEnd();
                         }
-                    } finally {
+                    }
+                    finally {
                         this._onFillEnd({
                             isBegin: false, rowCount: fetchedItems.length, time: new Date(), resetUI: clearAll,
                             fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged
                         });
                     }
                     this.moveFirst();
-                    return { fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
-                };
-                DbSet.prototype._fillFromCache = function (data) {
+                    return <IQueryResult<TEntity>>{ fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
+                }
+                _fillFromCache(data: { isPageChanged: boolean; fn_beforeFillEnd: () => void; }): IQueryResult<TEntity> {
                     data = utils.extend(false, {
                         isPageChanged: false,
                         fn_beforeFillEnd: null
                     }, data);
-                    var self = this, positions = [], fetchedItems = [], query = this.query;
+                    var self = this, positions:number[] = [], fetchedItems:TEntity[] = [], query = this.query;
                     if (!query)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'query is not null'));
-                    var dataCache = query._getCache(), cachedPage = dataCache.getCachedPage(query.pageIndex), items = !cachedPage ? [] : cachedPage.items;
+                    var dataCache = query._getCache(), cachedPage = dataCache.getCachedPage(query.pageIndex),
+                        items = !cachedPage ? <TEntity[]>[] : <TEntity[]>cachedPage.items;
 
                     this._onFillStart({ isBegin: true, rowCount: items.length, time: new Date(), isPageChanged: data.isPageChanged });
-                    try  {
+                    try {
                         this.clear();
                         this._items = items;
 
@@ -1619,10 +1531,11 @@ var RIAPP;
                         }
 
                         if (fetchedItems.length > 0) {
-                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: fetchedItems, pos: positions });
+                            this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.ADDED, items: fetchedItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
-                    } finally {
+                    }
+                    finally {
                         this._onFillEnd({
                             isBegin: false, rowCount: fetchedItems.length, time: new Date(), resetUI: true,
                             fetchedItems: fetchedItems, newItems: fetchedItems, isPageChanged: data.isPageChanged
@@ -1630,90 +1543,93 @@ var RIAPP;
                     }
                     this.moveFirst();
                     return { fetchedItems: fetchedItems, newItems: fetchedItems, isPageChanged: data.isPageChanged, outOfBandData: null };
-                };
-                DbSet.prototype._commitChanges = function (rows) {
+                }
+                _commitChanges(rows: IRowInfo[]) {
                     var self = this;
 
                     rows.forEach(function (rowInfo) {
-                        var key = rowInfo.clientKey, item = self._itemsByKey[key];
+                        var key = rowInfo.clientKey, item: TEntity = self._itemsByKey[key];
                         if (!item) {
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, key));
                         }
                         var itemCT = item._changeType;
                         item.acceptChanges(rowInfo);
-                        if (itemCT === 1 /* ADDED */) {
+                        if (itemCT === collMod.STATUS.ADDED) {
                             //on insert
                             delete self._itemsByKey[key];
                             item._updateKeys(rowInfo.serverKey);
                             self._itemsByKey[item._key] = item;
                             self._onItemsChanged({
-                                change_type: 3 /* REMAP_KEY */,
+                                change_type: collMod.COLL_CHANGE_TYPE.REMAP_KEY,
                                 items: [item],
                                 old_key: key,
                                 new_key: item._key
-                            });
+                            })
                         }
                     });
-                };
-                DbSet.prototype._setItemInvalid = function (row) {
-                    var keyMap = this._itemsByKey, item = keyMap[row.clientKey];
+                }
+                _setItemInvalid(row: IRowInfo) {
+                    var keyMap = this._itemsByKey, item: TEntity = keyMap[row.clientKey];
                     var errors = {};
                     row.invalid.forEach(function (err) {
                         if (!err.fieldName)
                             err.fieldName = '*';
                         if (!!errors[err.fieldName]) {
                             errors[err.fieldName].push(err.message);
-                        } else
+                        }
+                        else
                             errors[err.fieldName] = [err.message];
                     });
-                    var res = [];
+                    var res: binding.IValidationInfo[] = [];
                     utils.forEachProp(errors, function (fieldName) {
                         res.push({ fieldName: fieldName, errors: errors[fieldName] });
                     });
                     this._addErrors(item, res);
                     return item;
-                };
-                DbSet.prototype._setCurrentItem = function (v) {
+                }
+                _setCurrentItem(v: TEntity) {
                     if (!!v && !(v instanceof this._entityType)) {
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', this._options.dbSetName));
                     }
-                    _super.prototype._setCurrentItem.call(this, v);
-                };
-                DbSet.prototype._getChanges = function () {
-                    var changes = [];
+                    super._setCurrentItem(v);
+                }
+                _getChanges() {
+                    var changes: IRowInfo[] = [];
                     var csh = this._changeCache;
                     utils.forEachProp(csh, function (key) {
                         var item = csh[key];
                         changes.push(item._getRowInfo());
                     });
                     return changes;
-                };
-                DbSet.prototype._getTrackAssocInfo = function () {
-                    var self = this, res = [];
-                    var csh = this._changeCache, assocNames = Object.keys(self._trackAssoc);
+                }
+                _getTrackAssocInfo() {
+                    var self = this, res: ITrackAssoc[] = [];
+                    var csh: { [key: string]: Entity; } = this._changeCache, assocNames = Object.keys(self._trackAssoc);
                     utils.forEachProp(csh, function (key) {
                         var item = csh[key];
                         assocNames.forEach(function (assocName) {
-                            var assocInfo = self._trackAssoc[assocName], parentKey = item._getFieldVal(assocInfo.childToParentName), childKey = item._key;
+                            var assocInfo = self._trackAssoc[assocName],
+                                parentKey = item._getFieldVal(assocInfo.childToParentName),
+                                childKey = item._key;
                             if (!!parentKey && !!childKey) {
                                 res.push({ assocName: assocName, parentKey: parentKey, childKey: childKey });
                             }
                         });
                     });
                     return res;
-                };
-                DbSet.prototype._getNewKey = function (item) {
+                }
+                _getNewKey(item: TEntity) {
                     //client's item ID
                     var key = 'clkey_' + this._newKey;
                     this._newKey += 1;
                     return key;
-                };
-                DbSet.prototype._createNew = function () {
-                    var item = new this._entityType(this, null, null);
+                }
+                _createNew() {
+                    var item = <TEntity><any>new this._entityType(this, null, null);
                     item._key = this._getNewKey(item);
                     return item;
-                };
-                DbSet.prototype._addToChanged = function (item) {
+                }
+                _addToChanged(item: TEntity) {
                     if (item._key === null)
                         return;
                     if (!this._changeCache[item._key]) {
@@ -1722,8 +1638,8 @@ var RIAPP;
                         if (this._changeCount === 1)
                             this.raisePropertyChanged('hasChanges');
                     }
-                };
-                DbSet.prototype._removeFromChanged = function (key) {
+                }
+                _removeFromChanged(key: string) {
                     if (key === null)
                         return;
                     if (!!this._changeCache[key]) {
@@ -1732,28 +1648,27 @@ var RIAPP;
                         if (this._changeCount === 0)
                             this.raisePropertyChanged('hasChanges');
                     }
-                };
-                DbSet.prototype._clearChangeCache = function () {
+                }
+                _clearChangeCache() {
                     var old = this._changeCount;
                     this._changeCache = {};
                     this._changeCount = 0;
                     if (old !== this._changeCount)
                         this.raisePropertyChanged('hasChanges');
-                };
-
+                }
                 //occurs when item changeType Changed (not used in simple collections)
-                DbSet.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    _super.prototype._onItemStatusChanged.call(this, item, oldChangeType);
+                _onItemStatusChanged(item: TEntity, oldChangeType: number) {
+                    super._onItemStatusChanged(item, oldChangeType);
                     if (item._isDeleted && this.isSubmitOnDelete) {
                         this.dbContext.submitChanges();
                     }
-                };
-                DbSet.prototype._onRemoved = function (item, pos) {
+                }
+                _onRemoved(item: TEntity, pos: number) {
                     this._removeFromChanged(item._key);
-                    _super.prototype._onRemoved.call(this, item, pos);
-                };
-                DbSet.prototype._onPageChanging = function () {
-                    var res = _super.prototype._onPageChanging.call(this);
+                    super._onRemoved(item, pos);
+                }
+                _onPageChanging() {
+                    var res = super._onPageChanging();
                     if (!res) {
                         return res;
                     }
@@ -1761,36 +1676,36 @@ var RIAPP;
                         this.rejectChanges();
                     }
                     return res;
-                };
-                DbSet.prototype._onPageChanged = function () {
+                }
+                _onPageChanged() {
                     this.cancelEdit();
-                    _super.prototype._onPageChanged.call(this);
+                    super._onPageChanged();
                     if (this._ignorePageChanged)
                         return;
                     this.query.pageIndex = this.pageIndex;
                     this.dbContext._load(this.query, true);
-                };
-                DbSet.prototype._onPageSizeChanged = function () {
-                    _super.prototype._onPageSizeChanged.call(this);
+                }
+                _onPageSizeChanged() {
+                    super._onPageSizeChanged();
                     if (!!this._query)
                         this._query.pageSize = this.pageSize;
-                };
-                DbSet.prototype._destroyItems = function () {
+                }
+                _destroyItems() {
                     this._items.forEach(function (item) {
                         if (item._isCached)
                             item.removeHandler(null, null);
                         else
                             item.destroy();
                     });
-                };
-                DbSet.prototype._defineCalculatedField = function (fullName, getFunc) {
+                }
+                _defineCalculatedField(fullName: string, getFunc: () => any) {
                     var calcDef = baseUtils.getValue(this._calcfldMap, fullName);
                     if (!calcDef) {
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'calculated fieldName', fullName));
+                        throw new Error(baseUtils.format(ERRS.ERR_PARAM_INVALID, 'calculated fieldName', fullName));
                     }
                     calcDef.getFunc = getFunc;
-                };
-                DbSet.prototype.sort = function (fieldNames, sortOrder) {
+                }
+                sort(fieldNames: string[], sortOrder: collMod.SORT_ORDER) {
                     var ds = this, query = ds.query;
                     if (!!query) {
                         query.clearSort();
@@ -1804,16 +1719,19 @@ var RIAPP;
                         query.isClearPrevData = true;
                         query.pageIndex = 0;
                         return ds.dbContext.load(query);
-                    } else {
-                        return _super.prototype.sort.call(this, fieldNames, sortOrder);
                     }
-                };
-
+                    else {
+                        return super.sort(fieldNames, sortOrder);
+                    }
+                }
                 //manually fill data from result when page is first loaded
                 //from data stored inside page (without ajax request)
                 //convenient for loading classifiers (for lookup data)
-                DbSet.prototype.fillItems = function (data) {
-                    var res = utils.extend(false, {
+                fillItems(data: {
+                    names: IFieldName[];
+                    rows: IRowData[];
+                }) {
+                    var res: IQueryResponse = utils.extend(false, {
                         names: [],
                         rows: [],
                         pageIndex: (!!this.query) ? this.query.pageIndex : null,
@@ -1832,43 +1750,43 @@ var RIAPP;
                         fn_beforeFillEnd: null
                     };
                     this._fillFromService(filldata);
-                };
-                DbSet.prototype.acceptChanges = function () {
+                }
+                acceptChanges() {
                     var csh = this._changeCache;
                     utils.forEachProp(csh, function (key) {
                         var item = csh[key];
                         item.acceptChanges(null);
                     });
                     this._changeCount = 0;
-                };
-                DbSet.prototype.rejectChanges = function () {
+                }
+                rejectChanges() {
                     var csh = this._changeCache;
                     utils.forEachProp(csh, function (key) {
                         var item = csh[key];
                         item.rejectChanges();
                     });
-                };
-                DbSet.prototype.deleteOnSubmit = function (item) {
+                }
+                deleteOnSubmit(item: TEntity) {
                     item.deleteOnSubmit();
-                };
-                DbSet.prototype.clear = function () {
+                }
+                clear() {
                     this._clearChangeCache();
-                    _super.prototype.clear.call(this);
-                };
-                DbSet.prototype.createQuery = function (name) {
+                    super.clear();
+                }
+                createQuery(name: string): TDataQuery<TEntity> {
                     var queryInfo = this.dbContext._getQueryInfo(name);
                     if (!queryInfo) {
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_QUERY_NAME_NOTFOUND, name));
                     }
-                    return new TDataQuery(this, queryInfo);
-                };
-                DbSet.prototype.clearCache = function () {
+                    return new TDataQuery<TEntity>(this, queryInfo);
+                }
+                clearCache() {
                     var query = this._query;
                     if (!!query) {
                         query._clearCache();
                     }
-                };
-                DbSet.prototype.destroy = function () {
+                }
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
@@ -1879,100 +1797,58 @@ var RIAPP;
                     }
                     this._navfldMap = {};
                     this._calcfldMap = {};
-                    _super.prototype.destroy.call(this);
-                };
-                DbSet.prototype.toString = function () {
+                    super.destroy();
+                }
+                toString() {
                     return this._options.dbSetName;
-                };
-                Object.defineProperty(DbSet.prototype, "items", {
-                    get: function () {
-                        return this._items;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbSet.prototype, "dbContext", {
-                    get: function () {
-                        return this._dbContext;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbSet.prototype, "dbSetName", {
-                    get: function () {
-                        return this._options.dbSetName;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbSet.prototype, "entityType", {
-                    get: function () {
-                        return this._entityType;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbSet.prototype, "query", {
-                    get: function () {
-                        return this._query;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbSet.prototype, "hasChanges", {
-                    get: function () {
-                        return this._changeCount > 0;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbSet.prototype, "cacheSize", {
-                    get: function () {
-                        var query = this._query, dataCache;
-                        if (!!query && query.isCacheValid) {
-                            dataCache = query._getCache();
-                            return dataCache.cacheSize;
-                        }
-                        return 0;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbSet.prototype, "isSubmitOnDelete", {
-                    get: function () {
-                        return this._isSubmitOnDelete;
-                    },
-                    set: function (v) {
-                        if (this._isSubmitOnDelete !== v) {
-                            this._isSubmitOnDelete = !!v;
-                            this.raisePropertyChanged('isSubmitOnDelete');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DbSet;
-            })(collMod.BaseCollection);
-            db.DbSet = DbSet;
+                }
+                get items() { return this._items; }
+                get dbContext(): DbContext {
+                    return this._dbContext;
+                }
+                get dbSetName() { return this._options.dbSetName; }
+                get entityType() { return this._entityType; }
+                get query() { return this._query; }
+                get hasChanges():boolean { return this._changeCount > 0; }
+                get cacheSize():number {
+                    var query = this._query, dataCache: DataCache;
+                    if (!!query && query.isCacheValid) {
+                        dataCache = query._getCache();
+                        return dataCache.cacheSize;
+                    }
+                    return 0;
+                }
+                get isSubmitOnDelete():boolean { return this._isSubmitOnDelete; }
+                set isSubmitOnDelete(v:boolean) {
+                    if (this._isSubmitOnDelete !== v) {
+                        this._isSubmitOnDelete = !!v;
+                        this.raisePropertyChanged('isSubmitOnDelete');
+                    }
+                }
+            }
 
             //implements lazy initialization pattern for creating DbSet's instances
-            var DbSets = (function (_super) {
-                __extends(DbSets, _super);
-                function DbSets(dbContext) {
-                    _super.call(this);
+            export class DbSets extends RIAPP.BaseObject {
+                _dbSetNames: string[];
+                private _dbContext: DbContext;
+                private _dbSets: { [name: string]: () => DbSet<Entity>; };
+                private _arrDbSets: DbSet<Entity>[];
+
+                constructor(dbContext: DbContext) {
+                    super();
                     this._dbContext = dbContext;
                     this._arrDbSets = [];
                     this._dbSets = {};
                     this._dbSetNames = [];
                 }
-                DbSets.prototype._dbSetCreated = function (dbSet) {
+                _dbSetCreated(dbSet: DbSet<Entity>) {
                     var self = this;
                     this._arrDbSets.push(dbSet);
                     dbSet.addOnPropertyChange('hasChanges', function (sender, args) {
                         self._dbContext._onDbSetHasChangesChanged(sender);
                     }, null);
-                };
-                DbSets.prototype._createDbSet = function (name, dbSetType) {
+                }
+                _createDbSet(name: string, dbSetType: IDbSetConstructor) {
                     var self = this, dbContext = this._dbContext;
                     self._dbSets[name] = function () {
                         var t = new dbSetType(dbContext);
@@ -1983,44 +1859,49 @@ var RIAPP;
                         self._dbSetCreated(t);
                         return f();
                     };
-                };
-                Object.defineProperty(DbSets.prototype, "dbSetNames", {
-                    get: function () {
-                        return this._dbSetNames;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbSets.prototype, "arrDbSets", {
-                    get: function () {
-                        return this._arrDbSets;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                DbSets.prototype.getDbSet = function (name) {
+                }
+                get dbSetNames() {
+                    return this._dbSetNames;
+                }
+                get arrDbSets() {
+                    return this._arrDbSets;
+                }
+                getDbSet(name: string) {
                     var f = this._dbSets[name];
                     if (!f)
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, name));
                     return f();
-                };
-                DbSets.prototype.destroy = function () {
+                }
+                destroy() {
                     this._arrDbSets.forEach(function (dbSet) {
                         dbSet.destroy();
                     });
                     this._arrDbSets = [];
                     this._dbSets = null;
                     this._dbContext = null;
-                    _super.prototype.destroy.call(this);
-                };
-                return DbSets;
-            })(RIAPP.BaseObject);
-            db.DbSets = DbSets;
+                    super.destroy();
+                }
+            }
 
-            var DbContext = (function (_super) {
-                __extends(DbContext, _super);
-                function DbContext() {
-                    _super.call(this);
+            export class DbContext extends RIAPP.BaseObject {
+                _isInitialized: boolean;
+                _dbSets: DbSets;
+                //_svcMethods: {[methodName: string]: (args: { [paramName: string]: any; }) => IPromise<any>; };
+                _svcMethods: any;
+                //_assoc: { [getname: string]: () => Association; };
+                _assoc: any;
+                _arrAssoc: Association[];
+                _queryInf: { [queryName: string]: IQueryInfo; };
+                _serviceUrl: string;
+                _isBusy: number;
+                _isSubmiting: boolean;
+                _hasChanges: boolean;
+                _pendingSubmit: { deferred: IDeferred<any>; };
+                _serverTimezone: number;
+                _waitQueue: MOD.utils.WaitQueue;
+
+                constructor() {
+                    super();
                     this._isInitialized = false;
                     this._dbSets = null;
                     this._svcMethods = {};
@@ -2033,35 +1914,35 @@ var RIAPP;
                     this._hasChanges = false;
                     this._pendingSubmit = null;
                     this._serverTimezone = utils.get_timeZoneOffset();
-                    this._waitQueue = new RIAPP.MOD.utils.WaitQueue(this);
+                    this._waitQueue = new MOD.utils.WaitQueue(this);
                 }
-                DbContext.prototype._getEventNames = function () {
-                    var base_events = _super.prototype._getEventNames.call(this);
+                _getEventNames() {
+                    var base_events = super._getEventNames();
                     return ['submit_error'].concat(base_events);
-                };
-                DbContext.prototype.addOnSubmitError = function (fn, namespace) {
+                }
+                addOnSubmitError(fn: (sender: DbContext, args: { error: any; isHandled: boolean; }) => void, namespace?: string) {
                     this.addHandler('submit_error', fn, namespace);
-                };
-                DbContext.prototype.removeOnSubmitError = function (namespace) {
+                }
+                removeOnSubmitError(namespace?: string) {
                     this.removeHandler('submit_error', namespace);
-                };
-                DbContext.prototype._onGetCalcField = function (args) {
+                }
+                _onGetCalcField(args: { dbSetName: string; fieldName: string; getFunc: () => any; }) {
                     this.raiseEvent('define_calc', args);
-                };
-                DbContext.prototype._getQueryInfo = function (name) {
+                }
+                _getQueryInfo(name: string): IQueryInfo {
                     return this._queryInf[name];
-                };
-                DbContext.prototype._initDbSets = function () {
+                }
+                _initDbSets() {
                     if (this._isInitialized)
                         throw new Error(RIAPP.ERRS.ERR_DOMAIN_CONTEXT_INITIALIZED);
-                };
-                DbContext.prototype._initAssociations = function (associations) {
+                }
+                _initAssociations(associations: IAssociationInfo[]) {
                     var self = this;
                     associations.forEach(function (assoc) {
                         self._initAssociation(assoc);
                     });
-                };
-                DbContext.prototype._initMethods = function (methods) {
+                }
+                _initMethods(methods: IQueryInfo[]) {
                     var self = this;
                     methods.forEach(function (info) {
                         if (info.isQuery)
@@ -2071,20 +1952,21 @@ var RIAPP;
                             self._initMethod(info);
                         }
                     });
-                };
-                DbContext.prototype._updatePermissions = function (info) {
+                }
+                _updatePermissions(info: IPermissionsInfo) {
                     var self = this;
                     this._serverTimezone = info.serverTimezone;
                     info.permissions.forEach(function (perms) {
                         self.getDbSet(perms.dbSetName)._updatePermissions(perms);
                     });
-                };
-                DbContext.prototype._onDbSetHasChangesChanged = function (eSet) {
-                    var old = this._hasChanges, test;
+                }
+                _onDbSetHasChangesChanged(eSet: DbSet<Entity>) {
+                    var old = this._hasChanges, test: DbSet<Entity>;
                     this._hasChanges = false;
                     if (eSet.hasChanges) {
                         this._hasChanges = true;
-                    } else {
+                    }
+                    else {
                         for (var i = 0, len = this._dbSets.arrDbSets.length; i < len; i += 1) {
                             test = this._dbSets.arrDbSets[i];
                             if (test.hasChanges) {
@@ -2096,9 +1978,9 @@ var RIAPP;
                     if (this._hasChanges !== old) {
                         this.raisePropertyChanged('hasChanges');
                     }
-                };
-                DbContext.prototype._initAssociation = function (assoc) {
-                    var self = this, options = {
+                }
+                _initAssociation(assoc: IAssociationInfo) {
+                    var self = this, options: IAssocConstructorOptions = {
                         dbContext: self,
                         parentName: assoc.parentDbSetName,
                         childName: assoc.childDbSetName,
@@ -2125,26 +2007,27 @@ var RIAPP;
                         self._assoc[name] = f;
                         return f();
                     };
-                };
-                DbContext.prototype._initMethod = function (methodInfo) {
-                    var self = this;
 
+                }
+                _initMethod(methodInfo: IQueryInfo) {
+                    var self = this;
                     //function expects method parameters
-                    this._svcMethods[methodInfo.methodName] = function (args) {
+                    this._svcMethods[methodInfo.methodName] = function (args: { [paramName: string]: any; }) {
                         var deferred = utils.createDeferred();
-                        var callback = function (res) {
+                        var callback = function (res: { result: any; error: any; }) {
                             if (!res.error) {
                                 deferred.resolve(res.result);
-                            } else {
+                            }
+                            else {
                                 deferred.reject();
                             }
                         };
 
-                        try  {
+                        try {
                             var data = self._getMethodParams(methodInfo, args);
                             self._invokeMethod(methodInfo, data, callback);
                         } catch (ex) {
-                            if (!RIAPP.global._checkIsDummy(ex)) {
+                            if (!global._checkIsDummy(ex)) {
                                 self._onError(ex, self);
                                 callback({ result: null, error: ex });
                             }
@@ -2152,16 +2035,17 @@ var RIAPP;
 
                         return deferred.promise();
                     };
-                };
-                DbContext.prototype._getMethodParams = function (methodInfo, args) {
-                    var self = this, methodName = methodInfo.methodName, data = { methodName: methodName, paramInfo: { parameters: [] } };
-                    var i, parameterInfos = methodInfo.parameters, len = parameterInfos.length, pinfo, val, value;
+                }
+                _getMethodParams(methodInfo: IQueryInfo, args: { [paramName: string]: any; }): IInvokeRequest {
+                    var self = this, methodName: string = methodInfo.methodName,
+                        data: IInvokeRequest = { methodName: methodName, paramInfo: { parameters: [] } };
+                    var i, parameterInfos = methodInfo.parameters, len = parameterInfos.length, pinfo: IQueryParamInfo, val, value;
                     if (!args)
                         args = {};
                     for (i = 0; i < len; i += 1) {
                         pinfo = parameterInfos[i];
                         val = args[pinfo.name];
-                        if (!pinfo.isNullable && !pinfo.isArray && !(pinfo.dataType == 1 /* String */ || pinfo.dataType == 10 /* Binary */) && utils.check.isNt(val)) {
+                        if (!pinfo.isNullable && !pinfo.isArray && !(pinfo.dataType == consts.DATA_TYPE.String || pinfo.dataType == consts.DATA_TYPE.Binary) && utils.check.isNt(val)) {
                             throw new Error(utils.format(RIAPP.ERRS.ERR_SVC_METH_PARAM_INVALID, pinfo.name, val, methodInfo.methodName));
                         }
                         if (utils.check.isFunction(val)) {
@@ -2171,35 +2055,36 @@ var RIAPP;
                             val = [val];
                         }
                         value = null;
-
                         //byte arrays are optimized for serialization
-                        if (pinfo.dataType == 10 /* Binary */ && utils.check.isArray(val)) {
+                        if (pinfo.dataType == consts.DATA_TYPE.Binary && utils.check.isArray(val)) {
                             value = JSON.stringify(val);
-                        } else if (utils.check.isArray(val)) {
+                        }
+                        else if (utils.check.isArray(val)) {
                             var arr = new Array(val.length);
                             for (var k = 0; k < val.length; k += 1) {
                                 //first convert all values to string
                                 arr[k] = valueUtils.stringifyValue(val[k], pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
                             }
                             value = JSON.stringify(arr);
-                        } else
+                        }
+                        else
                             value = valueUtils.stringifyValue(val, pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
 
                         data.paramInfo.parameters.push({ name: pinfo.name, value: value });
                     }
 
                     return data;
-                };
-                DbContext.prototype._invokeMethod = function (methodInfo, data, callback) {
-                    var self = this, operType = 2 /* INVOKE */, postData, invokeUrl;
-                    var fn_onComplete = function (res) {
-                        try  {
+                }
+                _invokeMethod(methodInfo: IQueryInfo, data: IInvokeRequest, callback: (res: { result: any; error: any; }) => void) {
+                    var self = this, operType = DATA_OPER.INVOKE, postData: string, invokeUrl: string;
+                    var fn_onComplete = function (res: IInvokeResponse) {
+                        try {
                             if (!res)
                                 throw new Error(utils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'operation result is undefined'));
                             __checkError(res.error, operType);
                             callback({ result: res.result, error: null });
                         } catch (ex) {
-                            if (RIAPP.global._checkIsDummy(ex)) {
+                            if (global._checkIsDummy(ex)) {
                                 return;
                             }
                             self._onDataOperError(ex, operType);
@@ -2208,40 +2093,46 @@ var RIAPP;
                     };
 
                     this.isBusy = true;
-                    try  {
+                    try {
                         postData = JSON.stringify(data);
                         invokeUrl = this._getUrl(DATA_SVC_METH.Invoke);
-                        utils.performAjaxCall(invokeUrl, postData, true, function (res) {
-                            fn_onComplete(JSON.parse(res));
-                            self.isBusy = false;
-                        }, function (er) {
-                            fn_onComplete({ result: null, error: er });
-                            self.isBusy = false;
-                        }, null);
-                    } catch (ex) {
-                        if (RIAPP.global._checkIsDummy(ex)) {
-                            RIAPP.global._throwDummy(ex);
+                        utils.performAjaxCall(
+                            invokeUrl,
+                            postData,
+                            true,
+                            function (res) { //success
+                                fn_onComplete(JSON.parse(res));
+                                self.isBusy = false;
+                            },
+                            function (er) { //error
+                                fn_onComplete({ result: null, error: er });
+                                self.isBusy = false;
+                            }, null);
+                    }
+                    catch (ex) {
+                        if (global._checkIsDummy(ex)) {
+                            global._throwDummy(ex);
                         }
                         this.isBusy = false;
                         this._onDataOperError(ex, operType);
                         callback({ result: null, error: ex });
-                        RIAPP.global._throwDummy(ex);
+                        global._throwDummy(ex);
                     }
-                };
-                DbContext.prototype._loadFromCache = function (query, isPageChanged) {
-                    var operType = 1 /* LOAD */, dbSet = query._dbSet, methRes;
-                    try  {
+                }
+                _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): IQueryResult<Entity> {
+                    var operType = DATA_OPER.LOAD, dbSet = query._dbSet, methRes: IQueryResult<Entity>;
+                    try {
                         methRes = dbSet._fillFromCache({ isPageChanged: isPageChanged, fn_beforeFillEnd: null });
                     } catch (ex) {
-                        if (RIAPP.global._checkIsDummy(ex)) {
-                            RIAPP.global._throwDummy(ex);
+                        if (global._checkIsDummy(ex)) {
+                            global._throwDummy(ex);
                         }
                         this._onDataOperError(ex, operType);
-                        RIAPP.global._throwDummy(ex);
+                        global._throwDummy(ex);
                     }
                     return methRes;
-                };
-                DbContext.prototype._loadIncluded = function (res) {
+                }
+                _loadIncluded(res: IQueryResponse) {
                     var self = this, hasIncluded = !!res.included && res.included.length > 0;
                     if (!hasIncluded)
                         return;
@@ -2249,10 +2140,10 @@ var RIAPP;
                         var dbSet = self.getDbSet(subset.dbSetName);
                         dbSet.fillItems(subset);
                     });
-                };
-                DbContext.prototype._onLoaded = function (res, isPageChanged) {
-                    var self = this, operType = 1 /* LOAD */, dbSetName, dbSet, loadRes;
-                    try  {
+                }
+                _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<Entity> {
+                    var self = this, operType = DATA_OPER.LOAD, dbSetName, dbSet: DbSet<Entity>, loadRes: IQueryResult<Entity>;
+                    try {
                         if (!res)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'null result'));
                         dbSetName = res.dbSetName;
@@ -2260,28 +2151,30 @@ var RIAPP;
                         if (!dbSet)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_NAME_INVALID, dbSetName));
                         __checkError(res.error, operType);
-                        loadRes = dbSet._fillFromService({
-                            res: res,
-                            isPageChanged: isPageChanged,
-                            fn_beforeFillEnd: function () {
-                                self._loadIncluded(res);
-                            }
-                        });
+                        loadRes = dbSet._fillFromService(
+                            {
+                                res: res,
+                                isPageChanged: isPageChanged,
+                                fn_beforeFillEnd: function () {
+                                    self._loadIncluded(res);
+                                }
+                            });
                     } catch (ex) {
-                        if (RIAPP.global._checkIsDummy(ex)) {
-                            RIAPP.global._throwDummy(ex);
+                        if (global._checkIsDummy(ex)) {
+                            global._throwDummy(ex);
                         }
                         this._onDataOperError(ex, operType);
-                        RIAPP.global._throwDummy(ex);
+                        global._throwDummy(ex);
                     }
                     return loadRes;
-                };
-                DbContext.prototype._dataSaved = function (res) {
-                    var self = this, submitted = [], notvalid = [];
-                    try  {
-                        try  {
-                            __checkError(res.error, 0 /* SUBMIT */);
-                        } catch (ex) {
+                }
+                _dataSaved(res: IChangeSet) {
+                    var self = this, submitted: Entity[] = [], notvalid: Entity[] = [];
+                    try {
+                        try {
+                            __checkError(res.error, DATA_OPER.SUBMIT);
+                        }
+                        catch (ex) {
                             res.dbSets.forEach(function (jsDB) {
                                 var eSet = self._dbSets.getDbSet(jsDB.dbSetName);
                                 jsDB.rows.forEach(function (row) {
@@ -2302,61 +2195,64 @@ var RIAPP;
                         res.dbSets.forEach(function (jsDB) {
                             self._dbSets.getDbSet(jsDB.dbSetName)._commitChanges(jsDB.rows);
                         });
-                    } catch (ex) {
-                        if (RIAPP.global._checkIsDummy(ex)) {
-                            RIAPP.global._throwDummy(ex);
+                    }
+                    catch (ex) {
+                        if (global._checkIsDummy(ex)) {
+                            global._throwDummy(ex);
                         }
                         this._onSubmitError(ex);
-                        RIAPP.global._throwDummy(ex);
+                        global._throwDummy(ex);
                     }
-                };
-                DbContext.prototype._getChanges = function () {
-                    var changeSet = { dbSets: [], error: null, trackAssocs: [] };
+                }
+                _getChanges(): IChangeSet {
+                    var changeSet: IChangeSet = { dbSets: [], error: null, trackAssocs: [] };
                     this._dbSets.arrDbSets.forEach(function (eSet) {
                         eSet.endEdit();
-                        var changes = eSet._getChanges();
+                        var changes: IRowInfo[] = eSet._getChanges();
                         if (changes.length === 0)
                             return;
-
                         //it needs to apply updates in parent-child relationship order on the server
                         //and provides child to parent map of the keys for the new entities
-                        var trackAssoc = eSet._getTrackAssocInfo();
+                        var trackAssoc: ITrackAssoc[] = eSet._getTrackAssocInfo();
                         var jsDB = { dbSetName: eSet.dbSetName, rows: changes };
                         changeSet.dbSets.push(jsDB);
                         changeSet.trackAssocs = changeSet.trackAssocs.concat(trackAssoc);
                     });
                     return changeSet;
-                };
-                DbContext.prototype._getUrl = function (action) {
+                }
+                _getUrl(action):string {
                     var loadUrl = this.service_url;
                     if (!utils.str.endsWith(loadUrl, '/'))
                         loadUrl = loadUrl + '/';
                     loadUrl = loadUrl + [action, ''].join('/');
                     return loadUrl;
-                };
-                DbContext.prototype._onItemRefreshed = function (res, item) {
-                    var operType = 3 /* REFRESH */;
-                    try  {
+                }
+                _onItemRefreshed(res: IRefreshRowInfo, item: Entity) {
+                    var operType = DATA_OPER.REFRESH;
+                    try {
                         __checkError(res.error, operType);
                         if (!res.rowInfo) {
                             item._dbSet.removeItem(item);
                             item.destroy();
                             throw new Error(RIAPP.ERRS.ERR_ITEM_DELETED_BY_ANOTHER_USER);
-                        } else
-                            item._refreshValues(res.rowInfo, 2 /* MergeIntoCurrent */);
-                    } catch (ex) {
-                        if (RIAPP.global._checkIsDummy(ex)) {
-                            RIAPP.global._throwDummy(ex);
+                        }
+                        else
+                            item._refreshValues(res.rowInfo, REFRESH_MODE.MergeIntoCurrent);
+                    }
+                    catch (ex) {
+                        if (global._checkIsDummy(ex)) {
+                            global._throwDummy(ex);
                         }
                         this._onDataOperError(ex, operType);
-                        RIAPP.global._throwDummy(ex);
+                        global._throwDummy(ex);
                     }
-                };
-                DbContext.prototype._refreshItem = function (item) {
+                }
+                _refreshItem(item: Entity): IPromise<Entity> {
                     var deferred = utils.createDeferred(), callback = function (isOk) {
                         if (isOk) {
                             deferred.resolve(item);
-                        } else {
+                        }
+                        else {
                             deferred.reject();
                         }
                     };
@@ -2364,56 +2260,65 @@ var RIAPP;
                     var self = this;
                     this.waitForNotSubmiting(function () {
                         dbSet.waitForNotLoading(function () {
-                            var args, postData, operType = 3 /* REFRESH */;
+                            var args, postData, operType = DATA_OPER.REFRESH;
                             var fn_onEnd = function () {
                                 self.isBusy = false;
                                 dbSet.isLoading = false;
                                 item._isRefreshing = false;
-                            }, fn_onErr = function (ex) {
-                                fn_onEnd();
-                                self._onDataOperError(ex, operType);
-                            }, fn_onOK = function (res) {
-                                self._onItemRefreshed(res, item);
-                                fn_onEnd();
-                            };
+                            },
+                                fn_onErr = function (ex) {
+                                    fn_onEnd();
+                                    self._onDataOperError(ex, operType);
+                                },
+                                fn_onOK = function (res: IRefreshRowInfo) {
+                                    self._onItemRefreshed(res, item);
+                                    fn_onEnd();
+                                };
 
                             item._isRefreshing = true;
                             self.isBusy = true;
                             dbSet.isLoading = true;
-                            try  {
-                                var request = { dbSetName: item._dbSetName, rowInfo: item._getRowInfo(), error: null };
+                            try {
+                                var request: IRefreshRowInfo = { dbSetName: item._dbSetName, rowInfo: item._getRowInfo(), error: null };
                                 item._checkCanRefresh();
                                 postData = JSON.stringify(request);
-                                utils.performAjaxCall(url, postData, true, function (res) {
-                                    try  {
-                                        fn_onOK(JSON.parse(res));
-                                        callback(true);
-                                    } catch (ex) {
-                                        fn_onErr(ex);
+                                utils.performAjaxCall(
+                                    url,
+                                    postData,
+                                    true,
+                                    function (res) { //success
+                                        try {
+                                            fn_onOK(JSON.parse(res));
+                                            callback(true);
+                                        }
+                                        catch (ex) {
+                                            fn_onErr(ex);
+                                            callback(false);
+                                        }
+                                    },
+                                    function (er) { //error
+                                        fn_onEnd();
+                                        self._onDataOperError(er, operType);
                                         callback(false);
-                                    }
-                                }, function (er) {
-                                    fn_onEnd();
-                                    self._onDataOperError(er, operType);
-                                    callback(false);
-                                }, null);
-                            } catch (ex) {
+                                    }, null);
+                            }
+                            catch (ex) {
                                 fn_onErr(ex);
                                 callback(false);
                             }
                         }, [], true, null);
                     }, [], null);
                     return deferred.promise();
-                };
-                DbContext.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                }
+                _onError(error, source): boolean {
+                    var isHandled = super._onError(error, source);
                     if (!isHandled) {
-                        return RIAPP.global._onError(error, source);
+                        return global._onError(error, source);
                     }
                     return isHandled;
-                };
-                DbContext.prototype._onDataOperError = function (ex, oper) {
-                    if (RIAPP.global._checkIsDummy(ex))
+                }
+                _onDataOperError(ex, oper): boolean {
+                    if (global._checkIsDummy(ex))
                         return true;
                     var er;
                     if (ex instanceof DataOperationError)
@@ -2421,16 +2326,16 @@ var RIAPP;
                     else
                         er = new DataOperationError(ex, oper);
                     return this._onError(er, this);
-                };
-                DbContext.prototype._onSubmitError = function (error) {
+                }
+                _onSubmitError(error) {
                     var args = { error: error, isHandled: false };
                     this.raiseEvent('submit_error', args);
                     if (!args.isHandled) {
                         this.rejectChanges();
-                        this._onDataOperError(error, 0 /* SUBMIT */);
+                        this._onDataOperError(error, DATA_OPER.SUBMIT);
                     }
-                };
-                DbContext.prototype._beforeLoad = function (query, oldQuery, dbSet) {
+                }
+                _beforeLoad(query: TDataQuery<Entity>, oldQuery: TDataQuery<Entity>, dbSet: DbSet<Entity>) {
                     if (query && oldQuery !== query) {
                         dbSet._query = query;
                         dbSet.pageIndex = 0;
@@ -2441,7 +2346,7 @@ var RIAPP;
 
                     if (query.pageSize !== dbSet.pageSize) {
                         dbSet._ignorePageChanged = true;
-                        try  {
+                        try {
                             dbSet.pageIndex = 0;
                             dbSet.pageSize = query.pageSize;
                         } finally {
@@ -2451,9 +2356,10 @@ var RIAPP;
 
                     if (query.pageIndex !== dbSet.pageIndex) {
                         dbSet._ignorePageChanged = true;
-                        try  {
+                        try {
                             dbSet.pageIndex = query.pageIndex;
-                        } finally {
+                        }
+                        finally {
                             dbSet._ignorePageChanged = false;
                         }
                     }
@@ -2461,45 +2367,52 @@ var RIAPP;
                     if (!query.isCacheValid) {
                         query._clearCache();
                     }
-                };
-                DbContext.prototype._load = function (query, isPageChanged) {
+                }
+                _load(query: TDataQuery<Entity>, isPageChanged: boolean): IPromise<IQueryResult<Entity>> {
                     if (!query) {
                         throw new Error(RIAPP.ERRS.ERR_DB_LOAD_NO_QUERY);
                     }
                     var self = this, deferred = utils.createDeferred();
-                    var fn_onComplete = function (isOk, res) {
+                    var fn_onComplete = function (isOk: boolean, res: IQueryResult<Entity>) {
                         if (isOk) {
                             deferred.resolve(res);
-                        } else {
+                        }
+                        else {
                             deferred.reject();
                         }
                     };
 
-                    var loadPageCount = query.loadPageCount, pageIndex = query.pageIndex, isPagingEnabled = query.isPagingEnabled, dbSetName = query.dbSetName, dbSet = this.getDbSet(dbSetName);
+                    var loadPageCount = query.loadPageCount, pageIndex = query.pageIndex, isPagingEnabled = query.isPagingEnabled,
+                        dbSetName = query.dbSetName, dbSet = this.getDbSet(dbSetName);
 
                     //this wait is asynchronous
                     this.waitForNotSubmiting(function () {
                         dbSet.waitForNotLoading(function () {
                             var oldQuery = dbSet.query;
-                            var loadUrl = self._getUrl(DATA_SVC_METH.LoadData), requestInfo, postData, operType = 1 /* LOAD */, fn_onEnd = function () {
-                                dbSet.isLoading = false;
-                                self.isBusy = false;
-                            }, fn_onOK = function (res) {
-                                fn_onEnd();
-                                fn_onComplete(true, res);
-                            }, fn_onErr = function (ex) {
-                                fn_onEnd();
-                                self._onDataOperError(ex, operType);
-                                fn_onComplete(false, null);
-                            }, fn_onErr2 = function (ex) {
-                                fn_onEnd();
-                                self._onDataOperError(ex, operType);
-                                fn_onComplete(false, null);
-                            }, loadRes, range, pageCount = 1;
+                            var loadUrl = self._getUrl(DATA_SVC_METH.LoadData), requestInfo: IQueryRequest, postData: string,
+                                operType = DATA_OPER.LOAD,
+                                fn_onEnd = function () {
+                                    dbSet.isLoading = false;
+                                    self.isBusy = false;
+                                },
+                                fn_onOK = function (res) {
+                                    fn_onEnd();
+                                    fn_onComplete(true, res);
+                                },
+                                fn_onErr = function (ex) {
+                                    fn_onEnd();
+                                    self._onDataOperError(ex, operType);
+                                    fn_onComplete(false, null);
+                                },
+                                fn_onErr2 = function (ex) {
+                                    fn_onEnd();
+                                    self._onDataOperError(ex, operType);
+                                    fn_onComplete(false, null);
+                                }, loadRes: IQueryResult<Entity>, range: { start: number; end: number; cnt: number; }, pageCount = 1;
 
                             dbSet.isLoading = true;
                             self.isBusy = true;
-                            try  {
+                            try {
                                 //restore pageIndex
                                 query.pageIndex = pageIndex;
                                 self._beforeLoad(query, oldQuery, dbSet);
@@ -2509,12 +2422,14 @@ var RIAPP;
                                         loadRes = self._loadFromCache(query, isPageChanged);
                                         fn_onOK(loadRes);
                                         return;
-                                    } else {
+                                    }
+                                    else {
                                         range = query._getCache().getNextRange(pageIndex);
                                         pageIndex = range.start;
                                         pageCount = range.cnt;
                                     }
                                 }
+
 
                                 requestInfo = {
                                     dbSetName: dbSetName,
@@ -2529,85 +2444,92 @@ var RIAPP;
                                 };
 
                                 postData = JSON.stringify(requestInfo);
-                                utils.performAjaxCall(loadUrl, postData, true, function (res) {
-                                    var parts = [], matches, header_size;
-                                    try  {
-                                        matches = res.match(HEAD_MARK_RX);
-                                        if (!!matches) {
-                                            header_size = parseInt(matches[1]);
+                                utils.performAjaxCall(
+                                    loadUrl,
+                                    postData,
+                                    true,
+                                    function (res: string) { //success
+                                        var parts:string[]=[], matches:string[], header_size: number;
+                                        try {
+                                            matches = res.match(HEAD_MARK_RX);
+                                            if (!!matches) { //rows were serialized after the header
+                                                header_size = parseInt(matches[1]);
+                                                //the first item is getDataResult
+                                                parts.push(res.substr(matches[0].length, header_size));
+                                                //the rest is rows
+                                                parts.push(res.substr(matches[0].length + header_size));
+                                            }
+                                            else {
+                                                //all the response is serialized as a getDataResult
+                                                parts.push(res);
+                                            }
 
-                                            //the first item is getDataResult
-                                            parts.push(res.substr(matches[0].length, header_size));
+                                            var data:any[] = parts.map(function (txt) {
+                                                return JSON.parse(txt);
+                                            });
+                                            parts = null;
 
-                                            //the rest is rows
-                                            parts.push(res.substr(matches[0].length + header_size));
-                                        } else {
-                                            //all the response is serialized as a getDataResult
-                                            parts.push(res);
-                                        }
-
-                                        var data = parts.map(function (txt) {
-                                            return JSON.parse(txt);
-                                        });
-                                        parts = null;
-
-                                        //let the UI some time, then do the rest of the work
-                                        setTimeout(function () {
-                                            //first item is GetDataResult
-                                            var allRows, getDataResult = data[0];
-                                            var hasIncluded = !!getDataResult.included && getDataResult.included.length > 0;
-                                            try  {
-                                                //rows was loaded separately from GetDataResult
-                                                if (data.length > 1) {
-                                                    allRows = data[1];
-                                                    if (allRows && allRows.length > 0) {
-                                                        if (hasIncluded) {
-                                                            getDataResult.included.forEach(function (subset) {
-                                                                subset.rows = allRows.splice(0, subset.rowCount);
-                                                                if (subset.rowCount != subset.rows.length) {
-                                                                    throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'subset.rowCount == subset.rows.length'));
-                                                                }
-                                                            });
-                                                        }
-                                                        getDataResult.rows = allRows;
-                                                        if (getDataResult.rowCount != getDataResult.rows.length) {
-                                                            throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'getDataResult.rowCount == getDataResult.rows.length'));
+                                            //let the UI some time, then do the rest of the work
+                                            setTimeout(function () {
+                                                //first item is GetDataResult
+                                                var allRows: IRowData[], getDataResult: IQueryResponse = data[0];
+                                                var hasIncluded = !!getDataResult.included && getDataResult.included.length > 0;
+                                                try {
+                                                    //rows was loaded separately from GetDataResult
+                                                    if (data.length > 1) {
+                                                        allRows = data[1];
+                                                        if (allRows && allRows.length > 0) {
+                                                            if (hasIncluded) {
+                                                                getDataResult.included.forEach(function (subset) {
+                                                                    subset.rows = allRows.splice(0, subset.rowCount);
+                                                                    if (subset.rowCount != subset.rows.length) {
+                                                                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'subset.rowCount == subset.rows.length'));
+                                                                    }
+                                                                });
+                                                            }
+                                                            getDataResult.rows = allRows;
+                                                            if (getDataResult.rowCount != getDataResult.rows.length) {
+                                                                throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'getDataResult.rowCount == getDataResult.rows.length'));
+                                                            }
                                                         }
                                                     }
+                                                    loadRes = self._onLoaded(getDataResult, isPageChanged);
+                                                    fn_onOK(loadRes);
                                                 }
-                                                loadRes = self._onLoaded(getDataResult, isPageChanged);
-                                                fn_onOK(loadRes);
-                                            } catch (ex) {
-                                                fn_onErr(ex);
-                                            }
-                                        }, 0);
-                                    } catch (ex) {
-                                        fn_onErr(ex);
-                                    }
-                                }, function (er) {
-                                    fn_onErr2(er);
-                                }, null);
-                            } catch (ex) {
+                                                catch (ex) {
+                                                    fn_onErr(ex);
+                                                }
+                                            }, 0);
+                                        }
+                                        catch (ex) {
+                                            fn_onErr(ex);
+                                        }
+                                    },
+                                    function (er) { //error
+                                        fn_onErr2(er);
+                                    }, null);
+                            }
+                            catch (ex) {
                                 fn_onErr(ex);
                             }
                         }, [], true, isPageChanged ? 'paging' : null);
+
                     }, [], isPageChanged ? 'paging' : null);
 
-                    return deferred.promise();
-                };
-                DbContext.prototype.getDbSet = function (name) {
+                    return <any>deferred.promise();
+                }
+                getDbSet(name: string) {
                     return this._dbSets.getDbSet(name);
-                };
-                DbContext.prototype.getAssociation = function (name) {
+                }
+                getAssociation(name: string): Association {
                     var name2 = "get" + name;
                     var f = this._assoc[name2];
                     if (!f)
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_ASSOC_NAME_INVALID, name));
                     return f();
-                };
-
+                }
                 //returns promise
-                DbContext.prototype.submitChanges = function () {
+                submitChanges(): IVoidPromise {
                     //don't submit when the submit is already in the queue
                     if (!!this._pendingSubmit) {
                         //return a promise for the already enqueued submit
@@ -2618,7 +2540,8 @@ var RIAPP;
                     var callback = function (isOk) {
                         if (isOk) {
                             submitState.deferred.resolve();
-                        } else {
+                        }
+                        else {
                             submitState.deferred.reject();
                         }
                     };
@@ -2627,17 +2550,18 @@ var RIAPP;
 
                     //this wait is asynchronous
                     this.waitForNotBusy(function () {
-                        var url, postData, operType = 0 /* SUBMIT */, changeSet;
+                        var url, postData, operType = DATA_OPER.SUBMIT, changeSet: IChangeSet;
                         var fn_onEnd = function () {
                             self.isBusy = false;
                             self.isSubmiting = false;
-                        }, fn_onErr = function (ex) {
-                            fn_onEnd();
-                            self._onDataOperError(ex, operType);
-                            callback(false);
-                        };
+                        },
+                            fn_onErr = function (ex) {
+                                fn_onEnd();
+                                self._onDataOperError(ex, operType);
+                                callback(false);
+                            };
 
-                        try  {
+                        try {
                             self.isBusy = true;
                             self.isSubmiting = true;
                             self._pendingSubmit = null; //allow to post new submit
@@ -2649,56 +2573,66 @@ var RIAPP;
                                 callback(true);
                                 return;
                             }
-                        } catch (ex) {
+                        }
+                        catch (ex) {
                             fn_onErr(ex);
                             return;
                         }
 
-                        try  {
+                        try {
                             postData = JSON.stringify(changeSet);
-                            utils.performAjaxCall(url, postData, true, function (res) {
-                                try  {
-                                    self._dataSaved(JSON.parse(res));
+                            utils.performAjaxCall(
+                                url,
+                                postData,
+                                true,
+                                function (res: string) { //success
+                                    try {
+                                        self._dataSaved(JSON.parse(res));
+                                        fn_onEnd();
+                                        callback(true);
+                                    }
+                                    catch (ex) {
+                                        fn_onErr(ex);
+                                    }
+                                },
+                                function (er) { //submit error
                                     fn_onEnd();
-                                    callback(true);
-                                } catch (ex) {
-                                    fn_onErr(ex);
-                                }
-                            }, function (er) {
-                                fn_onEnd();
-                                self._onSubmitError(er);
-                                callback(false);
-                            }, null);
-                        } catch (ex) {
+                                    self._onSubmitError(er);
+                                    callback(false);
+                                }, null);
+                        }
+                        catch (ex) {
                             fn_onErr(ex);
                         }
                     }, []);
                     return submitState.deferred.promise();
-                };
-
+                }
                 //returns promise
-                DbContext.prototype.load = function (query) {
+                load(query: TDataQuery<Entity>): IPromise<IQueryResult<Entity>> {
                     return this._load(query, false);
-                };
-                DbContext.prototype.acceptChanges = function () {
+                }
+                acceptChanges() {
                     this._dbSets.arrDbSets.forEach(function (eSet) {
                         eSet.acceptChanges();
                     });
-                };
-                DbContext.prototype.rejectChanges = function () {
+                }
+                rejectChanges() {
                     this._dbSets.arrDbSets.forEach(function (eSet) {
                         eSet.rejectChanges();
                     });
-                };
-                DbContext.prototype.initialize = function (options) {
+                }
+                initialize(options: { serviceUrl: string; permissions?: IPermissionsInfo; }) {
                     if (this._isInitialized)
                         return;
-                    var self = this, opts = utils.extend(false, {
-                        serviceUrl: null,
-                        permissions: null
-                    }, options), loadUrl, operType;
+                    var self = this, opts: {
+                        serviceUrl: string;
+                        permissions: IPermissionsInfo;
+                    } = utils.extend(false, {
+                            serviceUrl: null,
+                            permissions: null
+                        }, options), loadUrl, operType;
 
-                    try  {
+                    try {
                         if (!utils.check.isString(opts.serviceUrl)) {
                             throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, "serviceUrl", opts.serviceUrl));
                         }
@@ -2713,36 +2647,44 @@ var RIAPP;
                         }
 
                         //initialize by obtaining metadata from the data service by ajax call
-                        loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = 4 /* INIT */;
-                    } catch (ex) {
+                        loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = DATA_OPER.INIT;
+                    }
+                    catch (ex) {
                         this._onError(ex, this);
-                        RIAPP.global._throwDummy(ex);
+                        global._throwDummy(ex);
                     }
 
-                    try  {
+                    try {
                         this.isBusy = true;
-                        utils.performAjaxCall(loadUrl, undefined, true, function (permissions) {
-                            try  {
-                                self._updatePermissions(JSON.parse(permissions));
+                        utils.performAjaxCall(
+                            loadUrl,
+                            undefined,
+                            true,
+                            function (permissions: string) { //success
+                                try {
+                                    self._updatePermissions(JSON.parse(permissions));
+                                    self.isBusy = false;
+                                    self._isInitialized = true;
+                                    self.raisePropertyChanged('isInitialized');
+                                }
+                                catch (ex) {
+                                    self.isBusy = false;
+                                    self._onDataOperError(ex, operType);
+                                    global._throwDummy(ex);
+                                }
+                            },
+                            function (er) { //error
                                 self.isBusy = false;
-                                self._isInitialized = true;
-                                self.raisePropertyChanged('isInitialized');
-                            } catch (ex) {
-                                self.isBusy = false;
-                                self._onDataOperError(ex, operType);
-                                RIAPP.global._throwDummy(ex);
-                            }
-                        }, function (er) {
-                            self.isBusy = false;
-                            self._onDataOperError(er, operType);
-                        }, null);
-                    } catch (ex) {
+                                self._onDataOperError(er, operType);
+                            }, null);
+                    }
+                    catch (ex) {
                         this.isBusy = false;
                         this._onDataOperError(ex, operType);
-                        RIAPP.global._throwDummy(ex);
+                        global._throwDummy(ex);
                     }
-                };
-                DbContext.prototype.waitForNotBusy = function (callback, callbackArgs) {
+                }
+                waitForNotBusy(callback, callbackArgs) {
                     this._waitQueue.enQueue({
                         prop: 'isBusy',
                         groupName: null,
@@ -2752,8 +2694,8 @@ var RIAPP;
                         action: callback,
                         actionArgs: callbackArgs
                     });
-                };
-                DbContext.prototype.waitForNotSubmiting = function (callback, callbackArgs, groupName) {
+                }
+                waitForNotSubmiting(callback, callbackArgs, groupName) {
                     this._waitQueue.enQueue({
                         prop: 'isSubmiting',
                         predicate: function (val) {
@@ -2764,8 +2706,8 @@ var RIAPP;
                         groupName: groupName,
                         lastWins: !!groupName
                     });
-                };
-                DbContext.prototype.waitForInitialized = function (callback, callbackArgs) {
+                }
+                waitForInitialized(callback, callbackArgs) {
                     this._waitQueue.enQueue({
                         prop: 'isInitialized',
                         groupName: 'dbContext',
@@ -2775,8 +2717,8 @@ var RIAPP;
                         action: callback,
                         actionArgs: callbackArgs
                     });
-                };
-                DbContext.prototype.destroy = function () {
+                }
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
@@ -2796,95 +2738,64 @@ var RIAPP;
                     this._isBusy = 0;
                     this._isSubmiting = false;
                     this._hasChanges = false;
-                    _super.prototype.destroy.call(this);
-                };
-                Object.defineProperty(DbContext.prototype, "service_url", {
-                    get: function () {
-                        return this._serviceUrl;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbContext.prototype, "isInitialized", {
-                    get: function () {
-                        return this._isInitialized;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbContext.prototype, "isBusy", {
-                    get: function () {
-                        return this._isBusy > 0;
-                    },
-                    set: function (v) {
-                        var old = this._isBusy > 0, cur;
-                        if (!v) {
-                            this._isBusy -= 1;
-                            if (this._isBusy < 0)
-                                this._isBusy = 0;
-                        } else {
-                            this._isBusy += 1;
-                        }
-                        cur = this._isBusy > 0;
-                        if (cur != old) {
-                            this.raisePropertyChanged('isBusy');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbContext.prototype, "isSubmiting", {
-                    get: function () {
-                        return this._isSubmiting;
-                    },
-                    set: function (v) {
-                        if (this._isSubmiting !== v) {
-                            this._isSubmiting = v;
-                            this.raisePropertyChanged('isSubmiting');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbContext.prototype, "serverTimezone", {
-                    get: function () {
-                        return this._serverTimezone;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbContext.prototype, "dbSets", {
-                    get: function () {
-                        return this._dbSets;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbContext.prototype, "serviceMethods", {
-                    get: function () {
-                        return this._svcMethods;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DbContext.prototype, "hasChanges", {
-                    get: function () {
-                        return this._hasChanges;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DbContext;
-            })(RIAPP.BaseObject);
-            db.DbContext = DbContext;
+                    super.destroy();
+                }
+                get service_url() { return this._serviceUrl; }
+                get isInitialized() { return this._isInitialized; }
+                get isBusy() { return this._isBusy > 0; }
+                set isBusy(v: boolean) {
+                    var old = this._isBusy > 0, cur;
+                    if (!v) {
+                        this._isBusy -= 1;
+                        if (this._isBusy < 0)
+                            this._isBusy = 0;
+                    }
+                    else {
+                        this._isBusy += 1;
+                    }
+                    cur = this._isBusy > 0;
+                    if (cur != old) {
+                        this.raisePropertyChanged('isBusy');
+                    }
+                }
+                get isSubmiting() { return this._isSubmiting; }
+                set isSubmiting(v) {
+                    if (this._isSubmiting !== v) {
+                        this._isSubmiting = v;
+                        this.raisePropertyChanged('isSubmiting');
+                    }
+                }
+                get serverTimezone() { return this._serverTimezone; }
+                get dbSets() { return this._dbSets; }
+                get serviceMethods() { return this._svcMethods; }
+                get hasChanges() { return this._hasChanges; }
+            }
 
-            var Association = (function (_super) {
-                __extends(Association, _super);
-                function Association(options) {
-                    _super.call(this);
+            export class Association extends RIAPP.BaseObject {
+                _objId: string;
+                _name: string;
+                _dbContext: DbContext;
+                _onDeleteAction: DELETE_ACTION;
+                _parentDS: DbSet<Entity>;
+                _childDS: DbSet<Entity>;
+                _parentFldInfos: collMod.IFieldInfo[];
+                _childFldInfos: collMod.IFieldInfo[];
+                _parentToChildrenName: string;
+                _childToParentName: string;
+                _parentMap: { [key: string]: Entity; };
+                _childMap: { [key: string]: Entity[]; };
+                _isParentFilling: boolean;
+                _isChildFilling: boolean;
+                _saveParentFKey: string;
+                _saveChildFKey: string;
+                _changedTimeout: number;
+                _changed: { [key: string]: number; };
+
+                constructor(options: IAssocConstructorOptions) {
+                    super();
                     var self = this;
                     this._objId = 'ass' + utils.getNewID();
-                    var opts = utils.extend(false, {
+                    var opts: IAssocConstructorOptions = utils.extend(false, {
                         dbContext: null,
                         parentName: '',
                         childName: '',
@@ -2893,7 +2804,7 @@ var RIAPP;
                         parentToChildrenName: null,
                         childToParentName: null,
                         name: this._objId,
-                        onDeleteAction: 0 /* NoAction */
+                        onDeleteAction: DELETE_ACTION.NoAction
                     }, options);
 
                     this._name = opts.name;
@@ -2924,97 +2835,83 @@ var RIAPP;
                     self._notifyParentChanged(changed1);
                     self._notifyChildrenChanged(changed2);
                 }
-                Association.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                _onError(error, source): boolean {
+                    var isHandled = super._onError(error, source);
                     if (!isHandled) {
-                        return RIAPP.global._onError(error, source);
+                        return global._onError(error, source);
                     }
                     return isHandled;
-                };
-                Association.prototype._bindParentDS = function () {
+                }
+                _bindParentDS() {
                     var self = this, ds = this._parentDS;
-                    if (!ds)
-                        return;
+                    if (!ds) return;
                     ds._addHandler('coll_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onParentCollChanged(args);
                     }, self._objId, true);
                     ds._addHandler('fill', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onParentFill(args);
                     }, self._objId, true);
                     ds._addHandler('begin_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onParentEdit(args.item, true, undefined);
                     }, self._objId, true);
                     ds._addHandler('end_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onParentEdit(args.item, false, args.isCanceled);
                     }, self._objId, true);
                     ds._addHandler('item_deleting', function (sender, args) {
                     }, self._objId, true);
                     ds._addHandler('status_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onParentStatusChanged(args.item, args.oldChangeType);
                     }, self._objId, true);
                     ds._addHandler('commit_changes', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onParentCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId, true);
-                };
-                Association.prototype._bindChildDS = function () {
+                }
+                _bindChildDS() {
                     var self = this, ds = this._childDS;
-                    if (!ds)
-                        return;
+                    if (!ds) return;
                     ds._addHandler('coll_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onChildCollChanged(args);
                     }, self._objId, true);
                     ds._addHandler('fill', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onChildFill(args);
                     }, self._objId, true);
                     ds._addHandler('begin_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onChildEdit(args.item, true, undefined);
                     }, self._objId, true);
                     ds._addHandler('end_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onChildEdit(args.item, false, args.isCanceled);
                     }, self._objId, true);
                     ds._addHandler('status_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onChildStatusChanged(args.item, args.oldChangeType);
                     }, self._objId, true);
                     ds._addHandler('commit_changes', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId, true);
-                };
-                Association.prototype._onParentCollChanged = function (args) {
-                    var self = this, item, items = args.items, changed = [], changedKeys = {};
+                }
+                _onParentCollChanged(args: collMod.ICollChangedArgs<Entity>) {
+                    var self = this, item: Entity, items = <Entity[]>args.items, changed: string[] = [], changedKeys = {};
                     switch (args.change_type) {
-                        case 2 /* RESET */:
+                        case collMod.COLL_CHANGE_TYPE.RESET:
                             if (!self._isParentFilling)
                                 changed = self.refreshParentMap();
                             break;
-                        case 1 /* ADDED */:
-                            if (!this._isParentFilling)
+                        case collMod.COLL_CHANGE_TYPE.ADDED:
+                            if (!this._isParentFilling) //if items are filling then it will be appended when fill ends
                                 changed = self._mapParentItems(items);
                             break;
-                        case 0 /* REMOVE */:
+                        case collMod.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 var key = self._unMapParentItem(item);
                                 if (!!key) {
@@ -3023,8 +2920,8 @@ var RIAPP;
                             });
                             changed = Object.keys(changedKeys);
                             break;
-                        case 3 /* REMAP_KEY */:
-                             {
+                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
+                            {
                                 if (!!args.old_key) {
                                     item = this._parentMap[args.old_key];
                                     if (!!item) {
@@ -3038,40 +2935,44 @@ var RIAPP;
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                     self._notifyParentChanged(changed);
-                };
-                Association.prototype._onParentFill = function (args) {
+                }
+                _onParentFill(args: collMod.ICollFillArgs<Entity>) {
                     var isEnd = !args.isBegin, self = this, changed;
                     if (isEnd) {
                         self._isParentFilling = false;
                         if (args.resetUI) {
                             changed = self.refreshParentMap();
-                        } else
-                            changed = self._mapParentItems(args.newItems);
+                        }
+                        else
+                            changed = self._mapParentItems(<Entity[]>args.newItems);
                         self._notifyParentChanged(changed);
-                    } else {
+                    }
+                    else {
                         self._isParentFilling = true;
                     }
-                };
-                Association.prototype._onParentEdit = function (item, isBegin, isCanceled) {
+                }
+                _onParentEdit(item: Entity, isBegin: boolean, isCanceled: boolean) {
                     var self = this;
                     if (isBegin) {
                         self._storeParentFKey(item);
-                    } else {
+                    }
+                    else {
                         if (!isCanceled)
                             self._checkParentFKey(item);
                         else
                             self._saveParentFKey = null;
                     }
-                };
-                Association.prototype._onParentCommitChanges = function (item, isBegin, isRejected, changeType) {
+                }
+                _onParentCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
                     var self = this, fkey;
                     if (isBegin) {
-                        if (isRejected && changeType === 1 /* ADDED */) {
+                        if (isRejected && changeType === collMod.STATUS.ADDED) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
                             return;
-                        } else if (!isRejected && changeType === 3 /* DELETED */) {
+                        }
+                        else if (!isRejected && changeType === collMod.STATUS.DELETED) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
@@ -3079,18 +2980,19 @@ var RIAPP;
                         }
 
                         self._storeParentFKey(item);
-                    } else {
+                    }
+                    else {
                         self._checkParentFKey(item);
                     }
-                };
-                Association.prototype._storeParentFKey = function (item) {
+                }
+                _storeParentFKey(item: Entity) {
                     var self = this, fkey = self.getParentFKey(item);
                     if (fkey !== null && !!self._parentMap[fkey]) {
                         self._saveParentFKey = fkey;
                     }
-                };
-                Association.prototype._checkParentFKey = function (item) {
-                    var self = this, fkey, savedKey = self._saveParentFKey;
+                }
+                _checkParentFKey(item: Entity) {
+                    var self = this, fkey: string, savedKey = self._saveParentFKey;
                     self._saveParentFKey = null;
                     fkey = self.getParentFKey(item);
                     if (fkey !== savedKey) {
@@ -3106,33 +3008,35 @@ var RIAPP;
                             self._notifyParentChanged([fkey]);
                         }
                     }
-                };
-                Association.prototype._onParentStatusChanged = function (item, oldChangeType) {
-                    var self = this, newChangeType = item._changeType, fkey;
-                    var children;
-                    if (newChangeType === 3 /* DELETED */) {
+                }
+                _onParentStatusChanged(item: Entity, oldChangeType: collMod.STATUS) {
+                    var self = this, newChangeType = item._changeType, fkey:string;
+                    var children:Entity[];
+                    if (newChangeType === collMod.STATUS.DELETED) {
                         children = self.getChildItems(item);
                         fkey = this._unMapParentItem(item);
                         switch (self.onDeleteAction) {
-                            case 0 /* NoAction */:
+                            case DELETE_ACTION.NoAction:
+                                //nothing
                                 break;
-                            case 1 /* Cascade */:
+                            case DELETE_ACTION.Cascade:
                                 children.forEach(function (child) {
                                     child.deleteItem();
                                 });
                                 break;
-                            case 2 /* SetNulls */:
+                            case DELETE_ACTION.SetNulls:
                                 children.forEach(function (child) {
                                     var isEdit = child.isEditing;
                                     if (!isEdit)
                                         child.beginEdit();
-                                    try  {
+                                    try {
                                         self._childFldInfos.forEach(function (f) {
                                             child[f.fieldName] = null;
                                         });
                                         if (!isEdit)
                                             child.endEdit();
-                                    } finally {
+                                    }
+                                    finally {
                                         if (!isEdit)
                                             child.cancelEdit();
                                     }
@@ -3143,19 +3047,19 @@ var RIAPP;
                             self._notifyParentChanged([fkey]);
                         }
                     }
-                };
-                Association.prototype._onChildCollChanged = function (args) {
-                    var self = this, item, items = args.items, changed = [], changedKeys = {};
+                }
+                _onChildCollChanged(args: collMod.ICollChangedArgs<Entity>) {
+                    var self = this, item: Entity, items = args.items, changed: string[] = [], changedKeys = {};
                     switch (args.change_type) {
-                        case 2 /* RESET */:
+                        case collMod.COLL_CHANGE_TYPE.RESET:
                             if (!self._isChildFilling)
                                 changed = self.refreshChildMap();
                             break;
-                        case 1 /* ADDED */:
-                            if (!this._isChildFilling)
+                        case collMod.COLL_CHANGE_TYPE.ADDED:
+                            if (!this._isChildFilling) //if items are filling then it will be appended when fill ends
                                 changed = self._mapChildren(items);
                             break;
-                        case 0 /* REMOVE */:
+                        case collMod.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 var key = self._unMapChildItem(item);
                                 if (!!key) {
@@ -3164,8 +3068,8 @@ var RIAPP;
                             });
                             changed = Object.keys(changedKeys);
                             break;
-                        case 3 /* REMAP_KEY */:
-                             {
+                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
+                            {
                                 if (!!args.old_key) {
                                     item = items[0];
                                     if (!!item) {
@@ -3183,14 +3087,14 @@ var RIAPP;
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                     self._notifyChildrenChanged(changed);
-                };
-                Association.prototype._notifyChildrenChanged = function (changed) {
+                }
+                _notifyChildrenChanged(changed: string[]) {
                     this._notifyChanged([], changed);
-                };
-                Association.prototype._notifyParentChanged = function (changed) {
+                }
+                _notifyParentChanged(changed: string[]) {
                     this._notifyChanged(changed, []);
-                };
-                Association.prototype._notifyChanged = function (changed_pkeys, changed_ckeys) {
+                }
+                _notifyChanged(changed_pkeys: string[], changed_ckeys: string[]) {
                     var self = this;
                     if (changed_pkeys.length > 0 || changed_ckeys.length > 0) {
                         changed_pkeys.forEach(function (key) {
@@ -3230,41 +3134,45 @@ var RIAPP;
                             }, 50);
                         }
                     }
-                };
-                Association.prototype._onChildFill = function (args) {
+                }
+                _onChildFill(args: collMod.ICollFillArgs<Entity>) {
                     var isEnd = !args.isBegin, self = this, changed;
                     if (isEnd) {
                         self._isChildFilling = false;
                         if (args.resetUI) {
                             changed = self.refreshChildMap();
-                        } else
-                            changed = self._mapChildren(args.newItems);
+                        }
+                        else
+                            changed = self._mapChildren(<Entity[]>args.newItems);
                         self._notifyChildrenChanged(changed);
-                    } else {
+                    }
+                    else {
                         self._isChildFilling = true;
                     }
-                };
-                Association.prototype._onChildEdit = function (item, isBegin, isCanceled) {
+                }
+                _onChildEdit(item: Entity, isBegin: boolean, isCanceled: boolean) {
                     var self = this;
                     if (isBegin) {
                         self._storeChildFKey(item);
-                    } else {
+                    }
+                    else {
                         if (!isCanceled)
                             self._checkChildFKey(item);
                         else {
                             self._saveChildFKey = null;
                         }
                     }
-                };
-                Association.prototype._onChildCommitChanges = function (item, isBegin, isRejected, changeType) {
-                    var self = this, fkey;
+                }
+                _onChildCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
+                    var self = this, fkey: string;
                     if (isBegin) {
-                        if (isRejected && changeType === 1 /* ADDED */) {
+                        if (isRejected && changeType === collMod.STATUS.ADDED) {
                             fkey = this._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
                             return;
-                        } else if (!isRejected && changeType === 3 /* DELETED */) {
+                        }
+                        else if (!isRejected && changeType === collMod.STATUS.DELETED) {
                             fkey = self._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
@@ -3272,21 +3180,22 @@ var RIAPP;
                         }
 
                         self._storeChildFKey(item);
-                    } else {
+                    }
+                    else {
                         self._checkChildFKey(item);
                     }
-                };
-                Association.prototype._storeChildFKey = function (item) {
-                    var self = this, fkey = self.getChildFKey(item), arr;
+                }
+                _storeChildFKey(item: Entity) {
+                    var self = this, fkey = self.getChildFKey(item), arr: Entity[];
                     if (!!fkey) {
                         arr = self._childMap[fkey];
                         if (!!arr && arr.indexOf(item) > -1) {
                             self._saveChildFKey = fkey;
                         }
                     }
-                };
-                Association.prototype._checkChildFKey = function (item) {
-                    var self = this, savedKey = self._saveChildFKey, fkey, arr;
+                }
+                _checkChildFKey(item: Entity) {
+                    var self = this, savedKey = self._saveChildFKey, fkey: string, arr: Entity[];
                     self._saveChildFKey = null;
                     fkey = self.getChildFKey(item);
                     if (fkey !== savedKey) {
@@ -3305,20 +3214,20 @@ var RIAPP;
                             self._notifyChildrenChanged([fkey]);
                         }
                     }
-                };
-                Association.prototype._onChildStatusChanged = function (item, oldChangeType) {
+                }
+                _onChildStatusChanged(item: Entity, oldChangeType: collMod.STATUS) {
                     var self = this, newChangeType = item._changeType;
                     var fkey = self.getChildFKey(item);
                     if (!fkey)
                         return;
-                    if (newChangeType === 3 /* DELETED */) {
+                    if (newChangeType === collMod.STATUS.DELETED) {
                         fkey = self._unMapChildItem(item);
                         if (!!fkey)
                             self._notifyChildrenChanged([fkey]);
                     }
-                };
-                Association.prototype._getItemKey = function (finf, ds, item) {
-                    var arr = [], val, strval;
+                }
+                _getItemKey(finf: collMod.IFieldInfo[], ds: DbSet<Entity>, item: Entity) {
+                    var arr = [], val, strval: string;
                     for (var i = 0, len = finf.length; i < len; i += 1) {
                         val = item[finf[i].fieldName];
                         strval = ds._getStrValue(val, finf[i]);
@@ -3327,19 +3236,19 @@ var RIAPP;
                         arr.push(strval);
                     }
                     return arr.join(';');
-                };
-                Association.prototype._resetChildMap = function () {
+                }
+                _resetChildMap() {
                     var self = this, fkeys = Object.keys(this._childMap);
                     this._childMap = {};
                     self._notifyChildrenChanged(fkeys);
-                };
-                Association.prototype._resetParentMap = function () {
+                }
+                _resetParentMap() {
                     var self = this, fkeys = Object.keys(this._parentMap);
                     this._parentMap = {};
                     self._notifyParentChanged(fkeys);
-                };
-                Association.prototype._unMapChildItem = function (item) {
-                    var fkey, arr, idx, changedKey = null;
+                }
+                _unMapChildItem(item: Entity) {
+                    var fkey, arr: Entity[], idx: number, changedKey = null;
                     fkey = this.getChildFKey(item);
                     if (!!fkey) {
                         arr = this._childMap[fkey];
@@ -3353,22 +3262,22 @@ var RIAPP;
                         }
                     }
                     return changedKey;
-                };
-                Association.prototype._unMapParentItem = function (item) {
-                    var fkey, changedKey = null;
+                }
+                _unMapParentItem(item: Entity) {
+                    var fkey: string, changedKey = null;
                     fkey = this.getParentFKey(item);
                     if (!!fkey && !!this._parentMap[fkey]) {
                         delete this._parentMap[fkey];
                         changedKey = fkey;
                     }
                     return changedKey;
-                };
-                Association.prototype._mapParentItems = function (items) {
-                    var item, fkey, chngType, old, chngedKeys = {};
+                }
+                _mapParentItems(items: Entity[]) {
+                    var item: Entity, fkey: string, chngType: number, old: Entity, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
                         chngType = item._changeType;
-                        if (chngType === 3 /* DELETED */)
+                        if (chngType === collMod.STATUS.DELETED)
                             continue;
                         fkey = this.getParentFKey(item);
                         if (!!fkey) {
@@ -3381,17 +3290,17 @@ var RIAPP;
                         }
                     }
                     return Object.keys(chngedKeys);
-                };
-                Association.prototype._onChildrenChanged = function (fkey) {
+                }
+                _onChildrenChanged(fkey: string) {
                     if (!!fkey && !!this._parentToChildrenName) {
                         var obj = this._parentMap[fkey];
                         if (!!obj) {
                             obj.raisePropertyChanged(this._parentToChildrenName);
                         }
                     }
-                };
-                Association.prototype._onParentChanged = function (fkey) {
-                    var self = this, arr;
+                }
+                _onParentChanged(fkey: string) {
+                    var self = this, arr: Entity[];
                     if (!!fkey && !!this._childToParentName) {
                         arr = this._childMap[fkey];
                         if (!!arr) {
@@ -3400,13 +3309,13 @@ var RIAPP;
                             });
                         }
                     }
-                };
-                Association.prototype._mapChildren = function (items) {
-                    var item, fkey, arr, chngType, chngedKeys = {};
+                }
+                _mapChildren(items: Entity[]) {
+                    var item: Entity, fkey: string, arr: Entity[], chngType, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
                         chngType = item._changeType;
-                        if (chngType === 3 /* DELETED */)
+                        if (chngType === collMod.STATUS.DELETED)
                             continue;
                         fkey = this.getChildFKey(item);
                         if (!!fkey) {
@@ -3423,25 +3332,23 @@ var RIAPP;
                         }
                     }
                     return Object.keys(chngedKeys);
-                };
-                Association.prototype._unbindParentDS = function () {
+                }
+                _unbindParentDS() {
                     var self = this, ds = this.parentDS;
-                    if (!ds)
-                        return;
+                    if (!ds) return;
                     ds.removeNSHandlers(self._objId);
-                };
-                Association.prototype._unbindChildDS = function () {
+                }
+                _unbindChildDS() {
                     var self = this, ds = this.childDS;
-                    if (!ds)
-                        return;
+                    if (!ds) return;
                     ds.removeNSHandlers(self._objId);
-                };
-                Association.prototype.getParentFKey = function (item) {
+                }
+                getParentFKey(item: Entity) {
                     if (!!item && item._isNew)
                         return item._key;
                     return this._getItemKey(this._parentFldInfos, this._parentDS, item);
-                };
-                Association.prototype.getChildFKey = function (item) {
+                }
+                getChildFKey(item: Entity) {
                     if (!!item && !!this._childToParentName) {
                         //_getFieldVal for childToParentName can store temporary parent's key (which is generated on the client)
                         // we first check if it returns it
@@ -3450,23 +3357,20 @@ var RIAPP;
                             return parentKey;
                         }
                     }
-
                     //if keys are permanent (stored to the server), then return normal foreign keys
                     return this._getItemKey(this._childFldInfos, this._childDS, item);
-                };
-
+                }
                 //get all childrens for parent item
-                Association.prototype.getChildItems = function (item) {
+                getChildItems(item: Entity):Entity[] {
                     if (!item)
                         return [];
                     var fkey = this.getParentFKey(item), arr = this._childMap[fkey];
                     if (!arr)
                         return [];
                     return arr;
-                };
-
+                }
                 //get the parent for child item
-                Association.prototype.getParentItem = function (item) {
+                getParentItem(item: Entity):Entity {
                     if (!item)
                         return null;
                     var fkey = this.getChildFKey(item);
@@ -3475,16 +3379,16 @@ var RIAPP;
                         return obj;
                     else
                         return null;
-                };
-                Association.prototype.refreshParentMap = function () {
+                }
+                refreshParentMap() {
                     this._resetParentMap();
                     return this._mapParentItems(this._parentDS.items);
-                };
-                Association.prototype.refreshChildMap = function () {
+                }
+                refreshChildMap() {
                     this._resetChildMap();
                     return this._mapChildren(this._childDS.items);
-                };
-                Association.prototype.destroy = function () {
+                }
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
@@ -3497,81 +3401,43 @@ var RIAPP;
                     this._childMap = null;
                     this._parentFldInfos = null;
                     this._childFldInfos = null;
-                    _super.prototype.destroy.call(this);
-                };
-                Association.prototype.toString = function () {
+                    super.destroy();
+                }
+                toString() {
                     return this._name;
-                };
-                Object.defineProperty(Association.prototype, "name", {
-                    get: function () {
-                        return this._name;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Association.prototype, "parentToChildrenName", {
-                    get: function () {
-                        return this._parentToChildrenName;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Association.prototype, "childToParentName", {
-                    get: function () {
-                        return this._childToParentName;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Association.prototype, "parentDS", {
-                    get: function () {
-                        return this._parentDS;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Association.prototype, "childDS", {
-                    get: function () {
-                        return this._childDS;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Association.prototype, "parentFldInfos", {
-                    get: function () {
-                        return this._parentFldInfos;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Association.prototype, "childFldInfos", {
-                    get: function () {
-                        return this._childFldInfos;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Association.prototype, "onDeleteAction", {
-                    get: function () {
-                        return this._onDeleteAction;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return Association;
-            })(RIAPP.BaseObject);
-            db.Association = Association;
+                }
+                get name() { return this._name; }
+                get parentToChildrenName() { return this._parentToChildrenName; }
+                get childToParentName() { return this._childToParentName; }
+                get parentDS() { return this._parentDS; }
+                get childDS() { return this._childDS; }
+                get parentFldInfos() { return this._parentFldInfos; }
+                get childFldInfos() { return this._childFldInfos; }
+                get onDeleteAction() { return this._onDeleteAction; }
+            }
 
-            var DataView = (function (_super) {
-                __extends(DataView, _super);
-                function DataView(options) {
-                    _super.call(this);
-                    var opts = utils.extend(false, {
-                        dataSource: null,
-                        fn_filter: null,
-                        fn_sort: null,
-                        fn_itemsProvider: null
-                    }, options);
+            export class DataView<TItem extends collMod.CollectionItem> extends collMod.BaseCollection<TItem> {
+                _dataSource: collMod.BaseCollection<TItem>;
+                _fn_filter: (item: TItem) => boolean;
+                _fn_sort: (item1: TItem, item2: TItem) => number;
+                _fn_itemsProvider: (ds: collMod.BaseCollection<TItem>) => TItem[];
+                _isDSFilling: boolean;
+                _isAddingNew: boolean;
+                _objId: string;
+
+                constructor(options: {
+                    dataSource: collMod.BaseCollection<TItem>;
+                    fn_filter?: (item: TItem) => boolean;
+                    fn_sort?: (item1: TItem, item2: TItem) => number;
+                    fn_itemsProvider?: (ds: collMod.BaseCollection<TItem>) => TItem[];
+                }) {
+                    super();
+                    var opts: typeof options = utils.extend(false, {
+                            dataSource: null,
+                            fn_filter: null,
+                            fn_sort: null,
+                            fn_itemsProvider: null
+                        }, options);
 
                     if (!opts.dataSource || !(opts.dataSource instanceof collMod.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_DATASRC_INVALID);
@@ -3590,18 +3456,18 @@ var RIAPP;
                     });
                     this._bindDS();
                 }
-                DataView.prototype._getEventNames = function () {
-                    var base_events = _super.prototype._getEventNames.call(this);
+                _getEventNames() {
+                    var base_events = super._getEventNames();
                     return ['view_refreshed'].concat(base_events);
-                };
-                DataView.prototype.addOnViewRefreshed = function (fn, namespace) {
+                }
+                addOnViewRefreshed(fn: (sender: DataView<TItem>, args: {}) => void, namespace?: string) {
                     this.addHandler('view_refreshed', fn, namespace);
-                };
-                DataView.prototype.removeOnViewRefreshed = function (namespace) {
+                }
+                removeOnViewRefreshed(namespace?: string) {
                     this.removeHandler('view_refreshed', namespace);
-                };
-                DataView.prototype._filterForPaging = function (items) {
-                    var skip = 0, take = 0, pos = -1, cnt = -1, result = [];
+                }
+                _filterForPaging(items: TItem[]) {
+                    var skip = 0, take = 0, pos = -1, cnt = -1, result: TItem[] = [];
                     skip = this.pageSize * this.pageIndex;
                     take = this.pageSize;
                     items.forEach(function (item) {
@@ -3615,11 +3481,11 @@ var RIAPP;
                         }
                     });
                     return result;
-                };
-                DataView.prototype._onViewRefreshed = function (args) {
+                }
+                _onViewRefreshed(args: {}) {
                     this.raiseEvent('view_refreshed', args);
-                };
-                DataView.prototype._clear = function (isPageChanged) {
+                }
+                _clear(isPageChanged: boolean) {
                     this.cancelEdit();
                     this._EditingItem = null;
                     this._newKey = 0;
@@ -3627,12 +3493,12 @@ var RIAPP;
                     this._items = [];
                     this._itemsByKey = {};
                     this._errors = {};
-                    this._onItemsChanged({ change_type: 2 /* RESET */, items: [] });
+                    this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.RESET, items: [] });
                     if (!isPageChanged)
                         this.pageIndex = 0;
                     this.raisePropertyChanged('count');
-                };
-                DataView.prototype._refresh = function (isPageChanged) {
+                }
+                _refresh(isPageChanged: boolean): void {
                     var items;
                     var ds = this._dataSource;
                     if (!ds) {
@@ -3640,7 +3506,8 @@ var RIAPP;
                     }
                     if (!!this._fn_itemsProvider) {
                         items = this._fn_itemsProvider(ds);
-                    } else
+                    }
+                    else
                         items = ds.items;
                     if (!!this._fn_filter) {
                         items = items.filter(this._fn_filter);
@@ -3650,22 +3517,28 @@ var RIAPP;
                     }
                     this._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
                     this._onViewRefreshed({});
-                };
-                DataView.prototype._fillItems = function (data) {
+                }
+                _fillItems(data: {
+                    items: TItem[];
+                    isPageChanged: boolean;
+                    clear: boolean;
+                    isAppend: boolean;
+                }) {
                     data = utils.extend(false, {
                         items: [],
                         isPageChanged: false,
                         clear: true,
                         isAppend: false
                     }, data);
-                    var self = this, items, newItems = [], positions = [], fetchedItems = [];
+                    var self = this, items: TItem[], newItems: TItem[] = [], positions: number[] = [], fetchedItems: TItem[] = [];
                     this._onFillStart({ isBegin: true, rowCount: data.items.length, time: new Date(), isPageChanged: data.isPageChanged });
-                    try  {
+                    try {
                         if (!!data.clear)
                             this._clear(data.isPageChanged);
                         if (this.isPagingEnabled && !data.isAppend) {
                             items = this._filterForPaging(data.items);
-                        } else
+                        }
+                        else
                             items = data.items;
 
                         items.forEach(function (item) {
@@ -3676,13 +3549,14 @@ var RIAPP;
                                 positions.push(self._items.length - 1);
                                 self._items.push(item);
                                 fetchedItems.push(item);
-                            } else {
+                            }
+                            else {
                                 fetchedItems.push(oldItem);
                             }
                         });
 
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
+                            this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
                     } finally {
@@ -3697,15 +3571,15 @@ var RIAPP;
                         this.totalCount = this.totalCount + newItems.length;
                     this.moveFirst();
                     return newItems;
-                };
-                DataView.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, item, items = args.items;
+                }
+                _onDSCollectionChanged(args: collMod.ICollChangedArgs<TItem>) {
+                    var self = this, item: collMod.CollectionItem, items = args.items;
                     switch (args.change_type) {
-                        case 2 /* RESET */:
+                        case collMod.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh(false);
                             break;
-                        case 1 /* ADDED */:
+                        case collMod.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isAddingNew && !this._isDSFilling) {
                                 if (!!self._fn_filter) {
                                     items = items.filter(self._fn_filter);
@@ -3713,21 +3587,21 @@ var RIAPP;
                                 self.appendItems(items);
                             }
                             break;
-                        case 0 /* REMOVE */:
+                        case collMod.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 var key = item._key;
-                                item = self._itemsByKey[key];
+                                item = <any>self._itemsByKey[key];
                                 if (!!item) {
                                     self.removeItem(item);
                                 }
                             });
                             break;
-                        case 3 /* REMAP_KEY */:
-                             {
+                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
+                            {
                                 item = self._itemsByKey[args.old_key];
                                 if (!!item) {
                                     delete self._itemsByKey[args.old_key];
-                                    self._itemsByKey[args.new_key] = item;
+                                    self._itemsByKey[args.new_key] = <any>item;
                                     this._onItemsChanged(args);
                                 }
                             }
@@ -3735,8 +3609,8 @@ var RIAPP;
                         default:
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
-                };
-                DataView.prototype._onDSFill = function (args) {
+                }
+                _onDSFill(args: collMod.ICollFillArgs<TItem>) {
                     var self = this, items = args.fetchedItems, isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -3748,11 +3622,12 @@ var RIAPP;
                             }
                             self.appendItems(items);
                         }
-                    } else {
+                    }
+                    else {
                         this._isDSFilling = true;
                     }
-                };
-                DataView.prototype._onDSStatusChanged = function (args) {
+                }
+                _onDSStatusChanged(args: collMod.ICollItemStatusArgs<TItem>) {
                     var self = this, item = args.item, key = args.key, oldChangeType = args.oldChangeType, isOk, canFilter = !!self._fn_filter;
                     if (!!self._itemsByKey[key]) {
                         self._onItemStatusChanged(item, oldChangeType);
@@ -3763,7 +3638,8 @@ var RIAPP;
                                 self.removeItem(item);
                             }
                         }
-                    } else {
+                    }
+                    else {
                         if (canFilter) {
                             isOk = self._fn_filter(item);
                             if (isOk) {
@@ -3771,31 +3647,26 @@ var RIAPP;
                             }
                         }
                     }
-                };
-                DataView.prototype._bindDS = function () {
+                }
+                _bindDS() {
                     var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
+                    if (!ds) return;
                     ds.addHandler('coll_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onDSCollectionChanged(args);
                     }, self._objId);
                     ds.addHandler('fill', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onDSFill(args);
                     }, self._objId);
                     ds.addHandler('begin_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         if (!!self._itemsByKey[args.item._key]) {
                             self._onEditing(args.item, true, false);
                         }
                     }, self._objId);
                     ds.addHandler('end_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         var isOk, item = args.item, canFilter = !!self._fn_filter;
                         if (!!self._itemsByKey[item._key]) {
                             self._onEditing(item, false, args.isCanceled);
@@ -3804,7 +3675,8 @@ var RIAPP;
                                 if (!isOk)
                                     self.removeItem(item);
                             }
-                        } else {
+                        }
+                        else {
                             if (!args.isCanceled && canFilter) {
                                 isOk = self._fn_filter(item);
                                 if (isOk) {
@@ -3814,28 +3686,24 @@ var RIAPP;
                         }
                     }, self._objId);
                     ds.addHandler('errors_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         if (!!self._itemsByKey[args.item._key]) {
                             self._onErrorsChanged(args.item);
                         }
                     }, self._objId);
                     ds.addHandler('status_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onDSStatusChanged(args);
                     }, self._objId);
 
                     ds.addHandler('item_deleting', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         if (!!self._itemsByKey[args.item._key]) {
                             self._onItemDeleting(args);
                         }
                     }, self._objId);
                     ds.addHandler('item_added', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         if (self._isAddingNew) {
                             if (!self._itemsByKey[args.item._key]) {
                                 self._attach(args.item);
@@ -3846,59 +3714,58 @@ var RIAPP;
                         }
                     }, self._objId);
                     ds.addHandler('item_adding', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         if (self._isAddingNew) {
                             self._onItemAdding(args.item);
                         }
                     }, self._objId);
-                };
-                DataView.prototype._unbindDS = function () {
+                }
+                _unbindDS() {
                     var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
+                    if (!ds) return;
                     ds.removeNSHandlers(self._objId);
-                };
-                DataView.prototype._getStrValue = function (val, fieldInfo) {
+                }
+                _getStrValue(val, fieldInfo) {
                     return this._dataSource._getStrValue(val, fieldInfo);
-                };
-                DataView.prototype._onCurrentChanging = function (newCurrent) {
+                }
+                _onCurrentChanging(newCurrent: TItem) {
                     var ds = this._dataSource;
-                    try  {
+                    try {
                         if (!!ds._EditingItem && newCurrent !== ds._EditingItem)
                             ds.endEdit();
-                    } catch (ex) {
-                        ds.cancelEdit();
-                        RIAPP.global.reThrow(ex, this._onError(ex, this));
                     }
-                };
-                DataView.prototype._getErrors = function (item) {
+                    catch (ex) {
+                        ds.cancelEdit();
+                        global.reThrow(ex, this._onError(ex, this));
+                    }
+                }
+                _getErrors(item: TItem) {
                     var ds = this._dataSource;
                     return ds._getErrors(item);
-                };
-                DataView.prototype._onPageChanged = function () {
+                }
+                _onPageChanged() {
                     this._refresh(true);
-                };
-                DataView.prototype.getItemsWithErrors = function () {
+                }
+                getItemsWithErrors() {
                     var ds = this._dataSource;
                     return ds.getItemsWithErrors();
-                };
-                DataView.prototype.appendItems = function (items) {
+                }
+                appendItems(items: TItem[]) {
                     if (this._isDestroyCalled)
                         return [];
                     return this._fillItems({ items: items, isPageChanged: false, clear: false, isAppend: true });
-                };
-                DataView.prototype.addNew = function () {
-                    var item;
+                }
+                addNew() {
+                    var item: TItem;
                     this._isAddingNew = true;
-                    try  {
+                    try {
                         item = this._dataSource.addNew();
                     } finally {
                         this._isAddingNew = false;
                     }
                     return item;
-                };
-                DataView.prototype.removeItem = function (item) {
+                }
+                removeItem(item: TItem) {
                     if (item._key === null) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     }
@@ -3913,10 +3780,9 @@ var RIAPP;
                     this.totalCount = this.totalCount - 1;
                     this._onRemoved(item, oldPos);
                     var test = this.getItemByPos(oldPos), curPos = this._currentPos;
-
                     //if detached item was current item
                     if (curPos === oldPos) {
-                        if (!test) {
+                        if (!test) { //it was the last item
                             this._currentPos = curPos - 1;
                         }
                         this._onCurrentChanged();
@@ -3926,10 +3792,10 @@ var RIAPP;
                         this._currentPos = curPos - 1;
                         this._onCurrentChanged();
                     }
-                };
-                DataView.prototype.sortLocal = function (fieldNames, sortOrder) {
-                    var mult = 1, parser = RIAPP.global.parser, deffered = utils.createDeferred();
-                    if (sortOrder === 1 /* DESC */)
+                }
+                sortLocal(fieldNames: string[], sortOrder: collMod.SORT_ORDER): IPromise<any> {
+                    var mult = 1, parser = global.parser, deffered = utils.createDeferred();
+                    if (sortOrder === collMod.SORT_ORDER.DESC)
                         mult = -1;
                     var fn_sort = function (a, b) {
                         var res = 0, i, len, af, bf, fieldName;
@@ -3949,26 +3815,26 @@ var RIAPP;
                         }
                         return res;
                     };
-                    try  {
+                    try {
                         this.fn_sort = fn_sort;
                         deffered.resolve();
                     } catch (ex) {
                         deffered.reject(ex);
                         this._onError(ex, this);
-                        RIAPP.global._throwDummy(ex);
+                        global._throwDummy(ex);
                     }
                     return deffered.promise();
-                };
-                DataView.prototype.getIsHasErrors = function () {
+                }
+                getIsHasErrors() {
                     return this._dataSource.getIsHasErrors();
-                };
-                DataView.prototype.clear = function () {
+                }
+                clear() {
                     this._clear(false);
-                };
-                DataView.prototype.refresh = function () {
+                }
+                refresh(): void {
                     this._refresh(false);
-                };
-                DataView.prototype.destroy = function () {
+                }
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
@@ -3976,91 +3842,65 @@ var RIAPP;
                     this._dataSource = null;
                     this._fn_filter = null;
                     this._fn_sort = null;
-                    _super.prototype.destroy.call(this);
-                };
-                Object.defineProperty(DataView.prototype, "dataSource", {
-                    get: function () {
-                        return this._dataSource;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataView.prototype, "isPagingEnabled", {
-                    get: function () {
-                        return this._options.enablePaging;
-                    },
-                    set: function (v) {
-                        if (this._options.enablePaging !== v) {
-                            this._options.enablePaging = v;
-                            this.raisePropertyChanged('isPagingEnabled');
-                            this._refresh(false);
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataView.prototype, "permissions", {
-                    get: function () {
-                        return this._dataSource.permissions;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataView.prototype, "fn_filter", {
-                    get: function () {
-                        return this._fn_filter;
-                    },
-                    set: function (v) {
-                        if (this._fn_filter !== v) {
-                            this._fn_filter = v;
-                            this._refresh(false);
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataView.prototype, "fn_sort", {
-                    get: function () {
-                        return this._fn_sort;
-                    },
-                    set: function (v) {
-                        if (this._fn_sort !== v) {
-                            this._fn_sort = v;
-                            this._refresh(false);
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataView.prototype, "fn_itemsProvider", {
-                    get: function () {
-                        return this._fn_itemsProvider;
-                    },
-                    set: function (v) {
-                        if (this._fn_itemsProvider !== v) {
-                            this._fn_itemsProvider = v;
-                            this._refresh(false);
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DataView;
-            })(collMod.BaseCollection);
-            db.DataView = DataView;
+                    super.destroy();
+                }
+                get dataSource() { return this._dataSource; }
+                get isPagingEnabled() { return this._options.enablePaging; }
+                set isPagingEnabled(v) {
+                    if (this._options.enablePaging !== v) {
+                        this._options.enablePaging = v;
+                        this.raisePropertyChanged('isPagingEnabled');
+                        this._refresh(false);
+                    }
+                }
+                get permissions() { return this._dataSource.permissions; }
+                get fn_filter() { return this._fn_filter; }
+                set fn_filter(v: (item: TItem) => boolean) {
+                    if (this._fn_filter !== v) {
+                        this._fn_filter = v;
+                        this._refresh(false);
+                    }
+                }
+                get fn_sort() { return this._fn_sort; }
+                set fn_sort(v: (item1: TItem, item2: TItem) => number) {
+                    if (this._fn_sort !== v) {
+                        this._fn_sort = v;
+                        this._refresh(false);
+                    }
+                }
+                get fn_itemsProvider() { return this._fn_itemsProvider; }
+                set fn_itemsProvider(v: (ds: collMod.BaseCollection<TItem>) => TItem[]) {
+                    if (this._fn_itemsProvider !== v) {
+                        this._fn_itemsProvider = v;
+                        this._refresh(false);
+                    }
+                }
+            }
 
-            var ChildDataView = (function (_super) {
-                __extends(ChildDataView, _super);
-                function ChildDataView(options) {
+            export class ChildDataView<TEntity extends Entity> extends DataView<TEntity> {
+                private _parentItem: Entity;
+                private _refreshTimeout: number;
+                private _association: Association;
+
+                constructor(options: {
+                    association: Association;
+                    fn_filter?: (item: TEntity) => boolean;
+                    fn_sort?: (item1: TEntity, item2: TEntity) => number;
+                }) {
                     this._parentItem = null;
                     this._refreshTimeout = null;
                     this._association = options.association;
-                    var opts = utils.extend(false, {
-                        dataSource: this._association.childDS,
-                        fn_filter: null,
-                        fn_sort: null,
-                        fn_itemsProvider: null
-                    }, options);
+                    var opts: {
+                        dataSource: collMod.BaseCollection<TEntity>;
+                        fn_filter?: (item: TEntity) => boolean;
+                        fn_sort?: (item1: TEntity, item2: TEntity) => number;
+                        fn_itemsProvider?: (ds: collMod.BaseCollection<TEntity>) => TEntity[];
+                    } = utils.extend(false, {
+                            dataSource: this._association.childDS,
+                            fn_filter: null,
+                            fn_sort: null,
+                            fn_itemsProvider: null
+                        }, options);
 
                     var self = this, assoc = this._association, save_fn_filter = options.fn_filter;
                     opts.fn_filter = function (item) {
@@ -4079,14 +3919,14 @@ var RIAPP;
                         else
                             return save_fn_filter(item);
                     };
-                    _super.call(this, opts);
+                    super(opts);
                 }
-                ChildDataView.prototype._refresh = function (isPageChanged) {
+                _refresh(isPageChanged: boolean) : void {
                     var self = this, ds = this._dataSource;
                     if (!ds) {
                         return;
                     }
-                    var items = self._association.getChildItems(self._parentItem);
+                    var items = <TEntity[]>self._association.getChildItems(self._parentItem);
                     if (!!self._fn_filter) {
                         items = items.filter(self._fn_filter);
                     }
@@ -4095,222 +3935,182 @@ var RIAPP;
                     }
                     self._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
                     self._onViewRefreshed({});
-                };
-                ChildDataView.prototype.destroy = function () {
+                }
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
                     clearTimeout(this._refreshTimeout);
                     this._association = null;
-                    _super.prototype.destroy.call(this);
-                };
-                ChildDataView.prototype.toString = function () {
+                    super.destroy();
+                }
+                toString() {
                     if (!!this._association)
                         return 'ChildDataView for ' + this._association.toString();
                     return 'ChildDataView';
-                };
-                Object.defineProperty(ChildDataView.prototype, "parentItem", {
-                    get: function () {
-                        return this._parentItem;
-                    },
-                    set: function (v) {
-                        if (this._parentItem !== v) {
-                            this._parentItem = v;
-                            this.raisePropertyChanged('parentItem');
-                            var self = this;
-                            if (this.items.length > 0) {
-                                this.clear();
-                                this._onViewRefreshed({});
-                            }
-                            clearTimeout(self._refreshTimeout);
-                            self._refreshTimeout = setTimeout(function () {
-                                if (self._isDestroyCalled) {
-                                    return;
-                                }
-                                self._refresh(false);
-                            }, 250);
+                }
+                get parentItem() { return this._parentItem; }
+                set parentItem(v: Entity) {
+                    if (this._parentItem !== v) {
+                        this._parentItem = v;
+                        this.raisePropertyChanged('parentItem');
+                        var self = this;
+                        if (this.items.length > 0) {
+                            this.clear();
+                            this._onViewRefreshed({});
                         }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ChildDataView.prototype, "association", {
-                    get: function () {
-                        return this._association;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return ChildDataView;
-            })(DataView);
-            db.ChildDataView = ChildDataView;
+                        clearTimeout(self._refreshTimeout);
+                        self._refreshTimeout = setTimeout(function () {
+                            if (self._isDestroyCalled) {
+                                return;
+                            }
+                            self._refresh(false);
+                        }, 250);
+                    }
+                }
+                get association() { return this._association; }
+            }
 
-            var TDbSet = (function (_super) {
-                __extends(TDbSet, _super);
-                function TDbSet() {
-                    _super.apply(this, arguments);
-                }
-                return TDbSet;
-            })(DbSet);
-            db.TDbSet = TDbSet;
-            var TDataView = (function (_super) {
-                __extends(TDataView, _super);
-                function TDataView() {
-                    _super.apply(this, arguments);
-                }
-                return TDataView;
-            })(DataView);
-            db.TDataView = TDataView;
-            var TChildDataView = (function (_super) {
-                __extends(TChildDataView, _super);
-                function TChildDataView() {
-                    _super.apply(this, arguments);
-                }
-                return TChildDataView;
-            })(ChildDataView);
-            db.TChildDataView = TChildDataView;
+            export class TDbSet extends DbSet<Entity>{
+            }
+            export class TDataView extends DataView<Entity>{
+            }
+            export class TChildDataView extends ChildDataView<Entity>{
+            }
+            
+            export class BaseComplexProperty extends RIAPP.BaseObject implements MOD.binding.IErrorNotification {
+                _name: string;
 
-            var BaseComplexProperty = (function (_super) {
-                __extends(BaseComplexProperty, _super);
-                function BaseComplexProperty(name) {
-                    _super.call(this);
+                constructor(name: string) {
+                    super();
                     this._name = name;
                 }
-                BaseComplexProperty.prototype._getFullPath = function (path) {
+                _getFullPath(path): string {
                     throw new Error('Not Implemented');
-                };
-                BaseComplexProperty.prototype.getName = function () {
+                }
+                getName() {
                     return this._name;
-                };
-                BaseComplexProperty.prototype.setValue = function (fullName, value) {
+                }
+                setValue(fullName: string, value: any) {
                     throw new Error('Not Implemented');
-                };
-                BaseComplexProperty.prototype.getValue = function (fullName) {
+                }
+                getValue(fullName: string): any {
                     throw new Error('Not Implemented');
-                };
-                BaseComplexProperty.prototype.getFieldInfo = function () {
+                }
+                getFieldInfo(): MOD.collection.IFieldInfo {
                     throw new Error('Not Implemented');
-                };
-                BaseComplexProperty.prototype.getProperties = function () {
+                }
+                getProperties(): MOD.collection.IFieldInfo[] {
                     throw new Error('Not Implemented');
-                };
-                BaseComplexProperty.prototype.getFullPath = function (name) {
+                }
+                getFullPath(name: string): string {
                     throw new Error('Not Implemented');
-                };
-                BaseComplexProperty.prototype.getEntity = function () {
+                }
+                getEntity(): RIAPP.MOD.db.Entity {
                     throw new Error('Not Implemented');
-                };
-                BaseComplexProperty.prototype.getPropertyByName = function (name) {
-                    var arrProps = this.getProperties().filter(function (f) {
-                        return f.fieldName == name;
-                    });
+                }
+                getPropertyByName(name: string): MOD.collection.IFieldInfo {
+                    var arrProps = this.getProperties().filter((f) => { return f.fieldName == name; });
                     if (!arrProps || arrProps.length != 1)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "arrProps.length == 1"));
                     return arrProps[0];
-                };
-                BaseComplexProperty.prototype.getIsHasErrors = function () {
+                }
+                getIsHasErrors(): boolean {
                     return this.getEntity().getIsHasErrors();
-                };
-                BaseComplexProperty.prototype.addOnErrorsChanged = function (fn, namespace) {
+                }
+                addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void {
                     this.getEntity().addOnErrorsChanged(fn, namespace);
-                };
-                BaseComplexProperty.prototype.removeOnErrorsChanged = function (namespace) {
-                    this.getEntity().removeOnErrorsChanged(namespace);
-                };
-                BaseComplexProperty.prototype.getFieldErrors = function (fieldName) {
+                }
+                removeOnErrorsChanged(namespace?: string): void {
+                    this.getEntity().removeOnErrorsChanged(namespace)
+                }
+                getFieldErrors(fieldName): MOD.binding.IValidationInfo[] {
                     var fullName = this.getFullPath(fieldName);
                     return this.getEntity().getFieldErrors(fullName);
-                };
-                BaseComplexProperty.prototype.getAllErrors = function () {
+                }
+                getAllErrors(): MOD.binding.IValidationInfo[] {
                     return this.getEntity().getAllErrors();
-                };
-                BaseComplexProperty.prototype.getIErrorNotification = function () {
+                }
+                getIErrorNotification(): MOD.binding.IErrorNotification {
                     return this;
-                };
-                return BaseComplexProperty;
-            })(RIAPP.BaseObject);
-            db.BaseComplexProperty = BaseComplexProperty;
+                }
+            }
 
-            var RootComplexProperty = (function (_super) {
-                __extends(RootComplexProperty, _super);
-                function RootComplexProperty(name, owner) {
-                    _super.call(this, name);
+            export class RootComplexProperty extends BaseComplexProperty {
+                private _entity: RIAPP.MOD.db.Entity;
+
+                constructor(name: string, owner: RIAPP.MOD.db.Entity) {
+                    super(name);
                     this._entity = owner;
                 }
-                RootComplexProperty.prototype._getFullPath = function (path) {
+                _getFullPath(path): string {
                     return this.getName() + '.' + path;
-                };
-                RootComplexProperty.prototype.setValue = function (fullName, value) {
+                }
+                setValue(fullName: string, value: any) {
                     this._entity._setFieldVal(fullName, value);
-                };
-                RootComplexProperty.prototype.getValue = function (fullName) {
+                }
+                getValue(fullName: string): any {
                     return this._entity._getFieldVal(fullName);
-                };
-                RootComplexProperty.prototype.getFieldInfo = function () {
+                }
+                getFieldInfo(): MOD.collection.IFieldInfo {
                     return this._entity.getFieldInfo(this.getName());
-                };
-                RootComplexProperty.prototype.getProperties = function () {
+                }
+                getProperties(): MOD.collection.IFieldInfo[] {
                     return this.getFieldInfo().nested;
-                };
-                RootComplexProperty.prototype.getEntity = function () {
+                }
+                getEntity() {
                     return this._entity;
-                };
-                RootComplexProperty.prototype.getFullPath = function (name) {
+                }
+                getFullPath(name: string): string {
                     return this.getName() + '.' + name;
-                };
-                return RootComplexProperty;
-            })(BaseComplexProperty);
-            db.RootComplexProperty = RootComplexProperty;
+                }
+            }
 
-            var ChildComplexProperty = (function (_super) {
-                __extends(ChildComplexProperty, _super);
-                function ChildComplexProperty(name, parent) {
-                    _super.call(this, name);
+            export class ChildComplexProperty extends BaseComplexProperty {
+                private _parent: BaseComplexProperty;
+
+                constructor(name: string, parent: BaseComplexProperty) {
+                    super(name);
                     this._parent = parent;
                 }
-                ChildComplexProperty.prototype._getFullPath = function (path) {
+                _getFullPath(path: string): string {
                     return this._parent._getFullPath(this.getName() + '.' + path);
-                };
-                ChildComplexProperty.prototype.setValue = function (fullName, value) {
+                }
+                setValue(fullName: string, value: any) {
                     this.getEntity()._setFieldVal(fullName, value);
-                };
-                ChildComplexProperty.prototype.getValue = function (fullName) {
+                }
+                getValue(fullName: string) {
                     return this.getEntity()._getFieldVal(fullName);
-                };
-                ChildComplexProperty.prototype.getFieldInfo = function () {
+                }
+                getFieldInfo(): MOD.collection.IFieldInfo {
                     var name = this.getName();
                     return this._parent.getPropertyByName(name);
-                };
-                ChildComplexProperty.prototype.getProperties = function () {
+                }
+                getProperties(): MOD.collection.IFieldInfo[] {
                     return this.getFieldInfo().nested;
-                };
-                ChildComplexProperty.prototype.getParent = function () {
+                }
+                getParent(): BaseComplexProperty {
                     return this._parent;
-                };
-                ChildComplexProperty.prototype.getRootProperty = function () {
+                }
+                getRootProperty(): RootComplexProperty {
                     var parent = this._parent;
                     while (!!parent && (parent instanceof ChildComplexProperty)) {
-                        parent = parent.getParent();
+                        parent = (<ChildComplexProperty>parent).getParent();
                     }
                     if (!parent || !(parent instanceof RootComplexProperty))
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "parent instanceof RootComplexProperty"));
-                    return parent;
-                };
-                ChildComplexProperty.prototype.getFullPath = function (name) {
+                    return <RootComplexProperty>parent;
+                }
+                getFullPath(name: string): string {
                     return this._parent._getFullPath(this.getName() + '.' + name);
-                };
-                ChildComplexProperty.prototype.getEntity = function () {
+                }
+                getEntity() {
                     return this.getRootProperty().getEntity();
-                };
-                return ChildComplexProperty;
-            })(BaseComplexProperty);
-            db.ChildComplexProperty = ChildComplexProperty;
+                }
+            }
 
-            //MUST NOTIFY THE GLOBAL
-            RIAPP.global.onModuleLoaded('db', db);
-        })(MOD.db || (MOD.db = {}));
-        var db = MOD.db;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
-})(RIAPP || (RIAPP = {}));
-//# sourceMappingURL=db.js.map
+            //MUST NOTIFY THE GLOBAL 
+            global.onModuleLoaded('db', db);
+        }
+    }
+}

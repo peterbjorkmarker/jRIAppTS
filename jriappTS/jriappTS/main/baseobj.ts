@@ -1,16 +1,19 @@
 'use strict';
-var RIAPP;
-(function (RIAPP) {
-    var BaseObject = (function () {
-        function BaseObject() {
+module RIAPP {
+    export class BaseObject {
+        _isDestroyed: boolean;
+        _isDestroyCalled: boolean;
+        private __events: any;
+
+        constructor() {
             this._isDestroyed = false;
             this._isDestroyCalled = false;
             this.__events = null;
         }
-        BaseObject.prototype._getEventNames = function () {
+        _getEventNames(): string[] {
             return ['error', 'destroyed'];
-        };
-        BaseObject.prototype._addHandler = function (name, fn, namespace, prepend) {
+        }
+        _addHandler(name: string, fn: (sender,args)=>void, namespace?: string, prepend?: boolean) {
             if (this._isDestroyed)
                 return;
 
@@ -29,9 +32,9 @@ var RIAPP;
             if (!ev[n])
                 ev[n] = [];
 
-            var arr = ev[n];
+            var arr: any[] = ev[n];
 
-            if (!arr.some(function (obj) {
+            if (!arr.some(function (obj: any) {
                 return obj.fn === fn && obj.ns == ns;
             })) {
                 if (!prepend)
@@ -39,15 +42,15 @@ var RIAPP;
                 else
                     arr.unshift({ fn: fn, ns: ns });
             }
-        };
-        BaseObject.prototype._removeHandler = function (name, namespace) {
+        }
+        _removeHandler(name?: string, namespace?: string) {
             var self = this, ev = self.__events, n = name, ns = '*';
             if (!ev)
                 return;
 
             if (!!namespace)
                 ns = '' + namespace;
-            var arr, toRemove, i;
+            var arr: any[], toRemove: any[], i: number;
 
             //arguments supplyed name (and optionally namespace)
             if (!!n) {
@@ -55,9 +58,10 @@ var RIAPP;
                     return;
                 if (ns == '*') {
                     delete ev[n];
-                } else {
+                }
+                else {
                     arr = ev[n];
-                    toRemove = arr.filter(function (obj) {
+                    toRemove = arr.filter(function (obj: any) {
                         return obj.ns == ns;
                     });
                     i = arr.length;
@@ -78,8 +82,8 @@ var RIAPP;
             if (ns != '*') {
                 var keys = Object.keys(ev);
                 keys.forEach(function (n) {
-                    var arr = ev[n];
-                    var toRemove = arr.filter(function (obj) {
+                    var arr: any[] = ev[n];
+                    var toRemove: any[] = arr.filter(function (obj: any) {
                         return obj.ns == ns;
                     });
                     i = arr.length;
@@ -97,8 +101,8 @@ var RIAPP;
 
             //no arguments supplyed
             self.__events = null;
-        };
-        BaseObject.prototype._raiseEvent = function (name, data) {
+        }
+        _raiseEvent(name: string, data: any) {
             var self = this, ev = self.__events;
             if (ev === null)
                 return;
@@ -108,19 +112,20 @@ var RIAPP;
 
             if (!!name) {
                 //if property changed
-                if (name != '0*' && RIAPP.baseUtils.startsWith(name, '0')) {
+                if (name != '0*' && RIAPP.baseUtils.startsWith(name, '0'))  
+                {
                     //notify those who subscribed for all property changes
-                    this._raiseEvent('0*', data);
+                    this._raiseEvent('0*', data); 
                 }
                 if (!ev[name])
                     return;
-                var arr = RIAPP.ArrayHelper.clone(ev[name]);
+                var arr = ArrayHelper.clone(ev[name]);
                 arr.forEach(function (obj) {
                     obj.fn.apply(self, [self, data]);
                 });
             }
-        };
-        BaseObject.prototype._onError = function (error, source) {
+        }
+        _onError(error: any, source: any): boolean {
             if (!!RIAPP.global && RIAPP.global._checkIsDummy(error)) {
                 return true;
             }
@@ -130,112 +135,109 @@ var RIAPP;
             var args = { error: error, source: source, isHandled: false };
             this._raiseEvent('error', args);
             return args.isHandled;
-        };
-        BaseObject.prototype._checkEventName = function (name) {
+        }
+        _checkEventName(name: string) {
             if (this._getEventNames().indexOf(name) === -1) {
-                if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                if (DebugLevel == DEBUG_LEVEL.HIGH) {
                     debugger;
                 }
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
             }
-        };
-        BaseObject.prototype._isHasProp = function (prop) {
-            return RIAPP.baseUtils.hasProp(this, prop);
-        };
-        BaseObject.prototype.raisePropertyChanged = function (name) {
+        }
+        _isHasProp(prop: string) {
+            return baseUtils.hasProp(this, prop);
+        }
+        raisePropertyChanged(name: string) {
             var data = { property: name };
             var parts = name.split('.'), lastPropName = parts[parts.length - 1];
             if (parts.length > 1) {
-                var obj = RIAPP.baseUtils.resolveOwner(this, name);
-                if (RIAPP.DebugLevel > 0 /* NONE */ && RIAPP.baseUtils.isUndefined(obj)) {
-                    if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                var obj = baseUtils.resolveOwner(this, name);
+                if (DebugLevel > DEBUG_LEVEL.NONE && baseUtils.isUndefined(obj)) {
+                    if (DebugLevel == DEBUG_LEVEL.HIGH) {
                         debugger;
                     }
-                    throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, name));
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, name));
                 }
                 if (obj instanceof BaseObject) {
                     obj._raiseEvent('0' + lastPropName, data);
                 }
-            } else {
-                if (RIAPP.DebugLevel > 0 /* NONE */ && !RIAPP.baseUtils.hasProp(this, lastPropName)) {
-                    if (RIAPP.DebugLevel == 2 /* HIGH */) {
+            }
+            else {
+                if (DebugLevel > DEBUG_LEVEL.NONE && !baseUtils.hasProp(this, lastPropName)) {
+                    if (DebugLevel == DEBUG_LEVEL.HIGH) {
                         debugger;
                     }
-                    throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, lastPropName));
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, lastPropName));
                 }
                 this._raiseEvent('0' + lastPropName, data);
             }
-        };
-        BaseObject.prototype.addHandler = function (name, fn, namespace) {
+        }
+        addHandler(name: string, fn: (sender,args)=>void, namespace?: string) {
             this._checkEventName(name);
             this._addHandler(name, fn, namespace, false);
-        };
-        BaseObject.prototype.removeHandler = function (name, namespace) {
+        }
+        removeHandler(name?: string, namespace?: string) {
             if (!!name) {
                 this._checkEventName(name);
             }
             this._removeHandler(name, namespace);
-        };
-        BaseObject.prototype.addOnDestroyed = function (fn, namespace) {
+        }
+        addOnDestroyed(fn: (sender, args: {})=>void, namespace?: string) {
             this._addHandler('destroyed', fn, namespace, false);
-        };
-        BaseObject.prototype.removeOnDestroyed = function (namespace) {
+        }
+        removeOnDestroyed(namespace?: string) {
             this._removeHandler('destroyed', namespace);
-        };
-        BaseObject.prototype.addOnError = function (fn, namespace) {
+        }
+        addOnError(fn: (sender, args: { error: any; source: any; isHandled: boolean; }) => void , namespace?: string) {
             this._addHandler('error', fn, namespace, false);
-        };
-        BaseObject.prototype.removeOnError = function (namespace) {
+        }
+        removeOnError(namespace?: string) {
             this.removeHandler('error', namespace);
-        };
-
+        }
         //remove event handlers by namespace
-        BaseObject.prototype.removeNSHandlers = function (namespace) {
+        removeNSHandlers(namespace?: string) {
             this._removeHandler(null, namespace);
-        };
-        BaseObject.prototype.raiseEvent = function (name, args) {
+        }
+        raiseEvent(name: string, args: any) {
             this._checkEventName(name);
             this._raiseEvent(name, args);
-        };
-
+        }
         //to subscribe for the changes on all properties, pass in the prop parameter: '*'
-        BaseObject.prototype.addOnPropertyChange = function (prop, fn, namespace) {
+        addOnPropertyChange(prop: string, fn: (sender, args: { property: string; })=>void, namespace?: string) {
             if (!prop)
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);
-            if (RIAPP.DebugLevel > 0 /* NONE */ && prop != '*' && !this._isHasProp(prop)) {
-                if (RIAPP.DebugLevel == 2 /* HIGH */) {
+            if (DebugLevel > DEBUG_LEVEL.NONE && prop != '*' && !this._isHasProp(prop)) {
+                if (DebugLevel == DEBUG_LEVEL.HIGH) {
                     debugger;
                 }
-                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
+                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
             }
             prop = '0' + prop;
             this._addHandler(prop, fn, namespace, false);
-        };
-        BaseObject.prototype.removeOnPropertyChange = function (prop, namespace) {
+        }
+        removeOnPropertyChange(prop?: string, namespace?: string) {
             if (!!prop) {
-                if (RIAPP.DebugLevel > 0 /* NONE */ && prop != '*' && !this._isHasProp(prop)) {
-                    if (RIAPP.DebugLevel == 2 /* HIGH */) {
+                if (DebugLevel > DEBUG_LEVEL.NONE && prop != '*' && !this._isHasProp(prop)) {
+                    if (DebugLevel == DEBUG_LEVEL.HIGH) {
                         debugger;
                     }
-                    throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
                 }
                 prop = '0' + prop;
             }
             this._removeHandler(prop, namespace);
-        };
-        BaseObject.prototype.destroy = function () {
+        }
+        destroy() {
             if (this._isDestroyed)
                 return;
             this._isDestroyed = true;
             this._isDestroyCalled = true;
-            try  {
+            try {
                 this._raiseEvent('destroyed', {});
-            } finally {
+            }
+            finally {
                 this.__events = null;
             }
-        };
-        return BaseObject;
-    })();
-    RIAPP.BaseObject = BaseObject;
-})(RIAPP || (RIAPP = {}));
-//# sourceMappingURL=baseobj.js.map
+        }
+    }
+}

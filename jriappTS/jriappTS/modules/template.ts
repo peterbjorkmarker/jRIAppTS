@@ -1,30 +1,32 @@
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-var RIAPP;
-(function (RIAPP) {
-    (function (MOD) {
-        (function (template) {
-            var constsMOD = RIAPP.MOD.consts;
-            var utilsMOD = RIAPP.MOD.utils;
-            var bindMOD = RIAPP.MOD.binding;
-            var elviewMOD = RIAPP.MOD.baseElView;
+module RIAPP {
+    export module MOD {
+        export module template {
+            import constsMOD = MOD.consts;
+            import utilsMOD = RIAPP.MOD.utils;
+            import bindMOD = RIAPP.MOD.binding;
+            import elviewMOD = MOD.baseElView;
 
-            template.css = {
+            export var css = {
                 templateContainer: 'ria-template-container'
             };
-            var utils;
-            RIAPP.global.addOnInitialize(function (s, args) {
+            var utils: utilsMOD.Utils;
+            RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
 
-            var Template = (function (_super) {
-                __extends(Template, _super);
-                function Template(app, templateID) {
-                    _super.call(this);
+            export class Template extends RIAPP.BaseObject {
+                private _dctxt: any;
+                private _el: HTMLElement;
+                private _isDisabled: boolean;
+                private _lfTime: utilsMOD.LifeTimeScope;
+                private _templateID: string;
+                private _templElView: elviewMOD.TemplateElView;
+                private _promise: RIAPP.IDeferred<any>;
+                private _busyTimeOut: number;
+                private _app: RIAPP.Application;
+
+                constructor(app: RIAPP.Application, templateID:string) {
+                    super();
                     this._app = app;
                     this._dctxt = null;
                     this._el = null;
@@ -37,7 +39,7 @@ var RIAPP;
                     if (!!this._templateID)
                         this._loadTemplate();
                 }
-                Template.prototype._getBindings = function () {
+                private _getBindings(): bindMOD.Binding[]{
                     if (!this._lfTime)
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
@@ -46,8 +48,8 @@ var RIAPP;
                             res.push(arr[i]);
                     }
                     return res;
-                };
-                Template.prototype._getElViews = function () {
+                }
+                private _getElViews(): elviewMOD.BaseElView[]{
                     if (!this._lfTime)
                         return [];
                     var arr = this._lfTime.getObjs(), res = [];
@@ -56,8 +58,8 @@ var RIAPP;
                             res.push(arr[i]);
                     }
                     return res;
-                };
-                Template.prototype._getTemplateElView = function () {
+                }
+                private _getTemplateElView(): elviewMOD.TemplateElView {
                     if (!this._lfTime || this._templElView === null)
                         return null;
                     if (!!this._templElView)
@@ -71,26 +73,26 @@ var RIAPP;
                     }
                     this._templElView = res;
                     return res;
-                };
-
+                }
                 //returns a deferred which resolves with loaded template DOM element
-                Template.prototype._loadTemplateElAsync = function (name) {
+                private _loadTemplateElAsync(name): RIAPP.IDeferred<any> {
                     var self = this, fn_loader = this.app.getTemplateLoader(name), deferred = utils.createDeferred();
                     if (!!fn_loader) {
-                        fn_loader().then(function (html) {
-                            var tmpDiv = RIAPP.global.document.createElement('div');
+                        fn_loader().then(function (html: string) {
+                            var tmpDiv = global.document.createElement('div');
                             tmpDiv.innerHTML = html;
                             var el = tmpDiv.firstElementChild;
                             deferred.resolve(el);
                         }, function (err) {
                             deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID)));
                         });
-                    } else {
+                    }
+                    else {
                         deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID)));
                     }
                     return deferred;
-                };
-                Template.prototype._appendIsBusy = function (el) {
+                }
+                private _appendIsBusy(el: HTMLElement) {
                     var self = this;
                     this._busyTimeOut = setTimeout(function () {
                         if (!self._busyTimeOut || self._isDestroyCalled)
@@ -99,8 +101,8 @@ var RIAPP;
                         var vw_inst = new elviewMOD.BusyElView(self.app, el, { img: constsMOD.LOADER_GIF.SMALL, delay: 0 });
                         vw_inst.isBusy = true;
                     }, 400);
-                };
-                Template.prototype._removeIsBusy = function (el) {
+                }
+                private _removeIsBusy(el: HTMLElement) {
                     var self = this;
                     if (!!self._busyTimeOut) {
                         clearTimeout(self._busyTimeOut);
@@ -110,9 +112,10 @@ var RIAPP;
                     if (!!vw && (vw instanceof elviewMOD.BusyElView)) {
                         vw.destroy();
                     }
-                };
-                Template.prototype._loadTemplate = function () {
-                    var self = this, tid = self._templateID, promise, deffered, tmpDiv, asyncLoad = false;
+                }
+                _loadTemplate() {
+                    var self = this, tid = self._templateID, promise: RIAPP.IDeferred<any>, deffered: RIAPP.IDeferred<any>,
+                        tmpDiv: HTMLElement, asyncLoad = false;
                     if (!!self._promise) {
                         self._promise.reject('cancel'); //cancel previous load
                         self._promise = null;
@@ -131,8 +134,8 @@ var RIAPP;
                                 deffered.reject(err);
                         });
 
-                        self._el = tmpDiv = RIAPP.global.document.createElement("div");
-                        tmpDiv.className = template.css.templateContainer;
+                        self._el = tmpDiv = global.document.createElement("div");
+                        tmpDiv.className = css.templateContainer;
                         if (asyncLoad) {
                             self._appendIsBusy(tmpDiv);
                             deffered.done(function () {
@@ -160,40 +163,43 @@ var RIAPP;
                                 telv.templateLoaded(self);
                             }
                             self._updateBindingSource();
-                        }, function (arg) {
-                            if (self._isDestroyCalled)
-                                return;
-                            self._promise = null;
-                            if (arg == 'cancel') {
-                                return;
-                            }
-                            var ex;
-                            if (!!arg) {
-                                if (!!arg.message)
-                                    ex = arg;
-                                else if (!!arg.statusText) {
-                                    ex = new Error(arg.statusText);
-                                } else if (utils.check.isString(arg)) {
-                                    ex = new Error(arg);
+                        },
+                            function (arg) {
+                                if (self._isDestroyCalled)
+                                    return;
+                                self._promise = null;
+                                if (arg == 'cancel') {
+                                    return;
                                 }
-                            }
-                            if (!ex)
-                                ex = new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID));
-                            RIAPP.global._onError(ex, self);
-                        });
+                                var ex;
+                                if (!!arg) {
+                                    if (!!arg.message)
+                                        ex = arg;
+                                    else if (!!arg.statusText) {
+                                        ex = new Error(arg.statusText);
+                                    }
+                                    else if (utils.check.isString(arg)) {
+                                        ex = new Error(arg);
+                                    }
+                                }
+                                if (!ex)
+                                    ex = new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID));
+                                global._onError(ex, self);
+                            });
                     }
-                };
-                Template.prototype._updateBindingSource = function () {
-                    var i, len, obj, bindings = this._getBindings();
+                }
+                _updateBindingSource() {
+                    var i, len, obj: bindMOD.Binding, bindings = this._getBindings();
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         obj = bindings[i];
                         obj.isDisabled = this._isDisabled;
                         if (!obj.isSourceFixed)
                             obj.source = this._dctxt;
                     }
-                };
-                Template.prototype._updateIsDisabled = function () {
-                    var i, len, obj, bindings = this._getBindings(), elViews = this._getElViews(), DataFormElView = this.app._getElViewType(constsMOD.ELVIEW_NM.DATAFORM);
+                }
+                _updateIsDisabled() {
+                    var i, len, obj, bindings = this._getBindings(), elViews = this._getElViews(),
+                        DataFormElView = this.app._getElViewType(constsMOD.ELVIEW_NM.DATAFORM);
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         obj = bindings[i];
                         obj.isDisabled = this._isDisabled;
@@ -204,9 +210,9 @@ var RIAPP;
                             obj.form.isDisabled = this._isDisabled;
                         }
                     }
-                };
-                Template.prototype._unloadTemplate = function () {
-                    try  {
+                }
+                _unloadTemplate() {
+                    try {
                         if (!!this._el) {
                             var telv = this._templElView;
                             this._templElView = undefined;
@@ -214,7 +220,8 @@ var RIAPP;
                                 telv.templateUnloading(this);
                             }
                         }
-                    } finally {
+                    }
+                    finally {
                         if (!!this._lfTime) {
                             this._lfTime.destroy();
                             this._lfTime = null;
@@ -222,12 +229,12 @@ var RIAPP;
 
                         if (!!this._el) {
                             //remove with jQuery method to ensure proper cleanUp
-                            RIAPP.global.$(this._el).remove();
+                            global.$(this._el).remove(); 
                         }
                         this._el = null;
                     }
-                };
-                Template.prototype.destroy = function () {
+                }
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
@@ -244,93 +251,57 @@ var RIAPP;
                     this._templateID = null;
                     this._templElView = undefined;
                     this._app = null;
-                    _super.prototype.destroy.call(this);
-                };
-
+                    super.destroy();
+                }
                 //find elements which has specific data-name attribute value
                 //returns plain array of elements, or empty array
-                Template.prototype.findElByDataName = function (name) {
-                    var $foundEl = RIAPP.global.$(this._el).find(['*[', constsMOD.DATA_ATTR.DATA_NAME, '="', name, '"]'].join(''));
+                findElByDataName(name:string):HTMLElement[] {
+                    var $foundEl = global.$(this._el).find(['*[', constsMOD.DATA_ATTR.DATA_NAME, '="', name, '"]'].join(''));
                     return $foundEl.toArray();
-                };
-                Template.prototype.findElViewsByDataName = function (name) {
+                }
+                findElViewsByDataName(name:string) {
                     //first return elements with the needed data attributes those are inside template
-                    var self = this, els = this.findElByDataName(name), res = [];
+                    var self = this, els = this.findElByDataName(name), res: elviewMOD.BaseElView[] = [];
                     els.forEach(function (el) {
                         var elView = self.app._getElView(el);
                         if (!!elView)
                             res.push(elView);
                     });
                     return res;
-                };
-                Template.prototype.toString = function () {
+                }
+                toString() {
                     return 'Template';
-                };
-                Object.defineProperty(Template.prototype, "dataContext", {
-                    get: function () {
-                        return this._dctxt;
-                    },
-                    set: function (v) {
-                        if (this._dctxt !== v) {
-                            this._dctxt = v;
-                            this.raisePropertyChanged('dataContext');
-                            this._updateBindingSource();
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Template.prototype, "templateID", {
-                    get: function () {
-                        return this._templateID;
-                    },
-                    set: function (v) {
-                        if (this._templateID !== v) {
-                            this._templateID = v;
-                            this._loadTemplate();
-                            this.raisePropertyChanged('templateID');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Template.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Template.prototype, "isDisabled", {
-                    get: function () {
-                        return this._isDisabled;
-                    },
-                    set: function (v) {
-                        if (this._isDisabled !== v) {
-                            this._isDisabled = !!v;
-                            this._updateIsDisabled();
-                            this.raisePropertyChanged('isDisabled');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Template.prototype, "app", {
-                    get: function () {
-                        return this._app;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return Template;
-            })(RIAPP.BaseObject);
-            template.Template = Template;
+                }
+                get dataContext() { return this._dctxt; }
+                set dataContext(v) {
+                    if (this._dctxt !== v) {
+                        this._dctxt = v;
+                        this.raisePropertyChanged('dataContext');
+                        this._updateBindingSource();
+                    }
+                }
+                get templateID() { return this._templateID; }
+                set templateID(v) {
+                    if (this._templateID !== v) {
+                        this._templateID = v;
+                        this._loadTemplate();
+                        this.raisePropertyChanged('templateID');
+                    }
+                }
+                get el() { return this._el; }
+                get isDisabled() { return this._isDisabled; }
+                set isDisabled(v) {
+                    if (this._isDisabled !== v) {
+                        this._isDisabled = !!v;
+                        this._updateIsDisabled();
+                        this.raisePropertyChanged('isDisabled');
+                    }
+                }
+                get app() { return this._app; }
+            }
 
-            RIAPP.global.registerType('Template', Template);
-            RIAPP.global.onModuleLoaded('template', template);
-        })(MOD.template || (MOD.template = {}));
-        var template = MOD.template;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
-})(RIAPP || (RIAPP = {}));
-//# sourceMappingURL=template.js.map
+            global.registerType('Template', Template);
+            global.onModuleLoaded('template', template);
+        }
+    }
+}

@@ -1,7 +1,6 @@
 'use strict';
-var RIAPP;
-(function (RIAPP) {
-    RIAPP.ERRS = {
+module RIAPP {
+    export var ERRS = {
         ERR_APP_NEED_JQUERY: 'The project is dependent on JQuery',
         ERR_ASSERTION_FAILED: 'Assertion "{0}" was not satisfied',
         ERR_BINDING_CONTENT_NOT_FOUND: 'BindingContent is not found',
@@ -79,10 +78,39 @@ var RIAPP;
         ERR_ASSOC_NAME_INVALID: 'Invalid association name: {0}',
         ERR_DATAVIEW_DATASRC_INVALID: 'TDataView datasource must not be null and should be descendant of Collection type',
         ERR_DATAVIEW_FILTER_INVALID: 'TDataView fn_filter option must be valid function which accepts entity and returns boolean value'
-    };
+    }
 
-    RIAPP.localizable = (function () {
-        var locale = {};
+    export interface ILocaleText {
+        PAGER: {
+            firstText: string;
+            lastText: string;
+            previousText: string;
+            nextText: string;
+            pageInfo: string;
+            firstPageTip: string;
+            prevPageTip: string;
+            nextPageTip: string;
+            lastPageTip: string;
+            showingTip: string;
+            showTip: string;
+        };
+        VALIDATE: { errorInfo: string; errorField: string; };
+        TEXT: {
+            txtEdit: string;
+            txtAddNew: string;
+            txtDelete: string;
+            txtCancel: string;
+            txtOk: string;
+            txtRefresh: string;
+            txtAskDelete: string;
+            txtSubmitting: string;
+            txtSave: string;
+            txtClose: string;
+            txtField: string;
+        };
+    }
+    export var localizable:ILocaleText = (function () {
+        var locale:any = {};
         locale.PAGER = {
             firstText: '<<',
             lastText: '>>',
@@ -118,5 +146,4 @@ var RIAPP;
 
         return locale;
     })();
-})(RIAPP || (RIAPP = {}));
-//# sourceMappingURL=app_en.js.map
+}

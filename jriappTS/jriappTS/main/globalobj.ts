@@ -1,24 +1,66 @@
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-var RIAPP;
-(function (RIAPP) {
-    RIAPP.global = null;
-    RIAPP.css_riaTemplate = 'ria-template';
+module RIAPP {
+    export var global: Global = null;
+    export var css_riaTemplate = 'ria-template';
 
-    (function (BindTo) {
-        BindTo[BindTo["Source"] = 0] = "Source";
-        BindTo[BindTo["Target"] = 1] = "Target";
-    })(RIAPP.BindTo || (RIAPP.BindTo = {}));
-    var BindTo = RIAPP.BindTo;
+    export enum BindTo {
+        Source= 0, Target= 1
+    }
 
-    var Global = (function (_super) {
-        __extends(Global, _super);
-        function Global(window, jQuery) {
-            _super.call(this);
+    export interface ISelectable {
+        containerEl: HTMLElement;
+        uniqueID: string;
+        _onKeyDown(key: number, event: Event);
+        _onKeyUp(key: number, event: Event);
+    }
+
+    export interface IExports {
+        getExports();
+    }
+
+    export interface IGroupInfo {
+        fn_loader?: () => IPromise<string>;
+        url?: string;
+        names: string[];
+        app?: Application;
+        promise?: IPromise<string>;
+    }
+
+    export interface ITemplateLoaderInfo {
+        fn_loader: () => IPromise<string>;
+        groupName?: string;
+    }
+
+    export interface IUnResolvedBindingArgs {
+        bindTo: BindTo;
+        root: any;
+        path: string;
+        propName: string;
+    }
+
+    export class Global extends BaseObject implements IExports {
+        public static vesion = '2.2.3.0';
+        public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
+        public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
+        private _window: Window;
+        private _appInst: { [name: string]: Application; };
+        private _$: JQueryStatic;
+        private _currentSelectable: ISelectable;
+        private _defaults: MOD.defaults.Defaults;
+        private _userCode: any;
+        private _utils: MOD.utils.Utils;
+        private _templateLoaders: any;
+        private _templateGroups: any;
+        private _promises: IPromise<string>[];
+        private _isReady: boolean;
+        private _isInitialized: boolean;
+        private _waitQueue: MOD.utils.WaitQueue;
+        private _parser: MOD.parser.Parser;
+        //all loaded modules
+        private _moduleNames: string[];
+        private _exports: { [name: string]: any; };
+        
+        constructor(window: Window, jQuery: JQueryStatic) {
+            super();
             if (!!RIAPP.global)
                 throw new Error(RIAPP.ERRS.ERR_GLOBAL_SINGLTON);
             if (!jQuery)
@@ -28,9 +70,8 @@ var RIAPP;
             this._$ = jQuery;
             this._currentSelectable = null;
             this._userCode = {};
-
             //exported types
-            this._exports = {};
+            this._exports = {}; 
             this._templateLoaders = {};
             this._templateGroups = {};
             this._promises = [];
@@ -40,16 +81,14 @@ var RIAPP;
             this._isInitialized = false;
             this._onCreate();
         }
-        Global.prototype._onCreate = function () {
+        private _onCreate() {
             var self = this;
             self.$(self.document).ready(function ($) {
-                self._waitQueue = new RIAPP.MOD.utils.WaitQueue(self);
+                self._waitQueue = new MOD.utils.WaitQueue(self);
                 self._isReady = true;
                 self._processTemplateSections(self.document);
                 self.raiseEvent('load', {});
-                setTimeout(function () {
-                    self.removeHandler('load', null);
-                }, 0);
+                setTimeout(function () { self.removeHandler('load', null); }, 0);
             });
 
             //when clicked outside any Selectable set _currentSelectable = null
@@ -72,21 +111,21 @@ var RIAPP;
             self.$(self.window).unload(function () {
                 self.raiseEvent('unload', {});
             });
-
             //this way to attach for correct work in firefox
-            self.window.onerror = function (msg, url, linenumber) {
+            self.window.onerror = function (msg, url:string, linenumber:number) {
                 if (!!msg && msg.toString().indexOf("DUMMY_ERROR") > -1) {
                     return true;
                 }
                 alert('Error: ' + msg + '\nURL: ' + url + '\nLine Number: ' + linenumber);
                 return false;
-            };
-        };
-        Global.prototype._processTemplateSection = function (templateSection, app) {
+            }
+        }
+        private _processTemplateSection(templateSection: { querySelectorAll: (selectors: string) => NodeList; }, app: Application) {
             var self = this;
-            var templates = RIAPP.ArrayHelper.fromList(templateSection.querySelectorAll(Global._TEMPLATE_SELECTOR));
+            var templates: HTMLElement[] = ArrayHelper.fromList(templateSection.querySelectorAll(Global._TEMPLATE_SELECTOR));
             templates.forEach(function (el) {
-                var tmpDiv = self.document.createElement('div'), html, name = el.getAttribute('id'), deferred = self.utils.createDeferred();
+                var tmpDiv = self.document.createElement('div'), html: string,
+                    name = el.getAttribute('id'), deferred = self.utils.createDeferred();
                 el.removeAttribute('id');
                 tmpDiv.appendChild(el);
                 html = tmpDiv.innerHTML;
@@ -101,60 +140,52 @@ var RIAPP;
                     fn_loader: fn_loader
                 });
             });
-        };
-        Global.prototype._registerTemplateLoaderCore = function (name, loader) {
+        }
+        private _registerTemplateLoaderCore(name: string, loader: ITemplateLoaderInfo) {
             return RIAPP.baseUtils.setValue(this._templateLoaders, name, loader, false);
-        };
-        Global.prototype._getTemplateLoaderCore = function (name) {
+        }
+        private _getTemplateLoaderCore(name: string): ITemplateLoaderInfo {
             return RIAPP.baseUtils.getValue(this._templateLoaders, name);
-        };
-        Global.prototype._getEventNames = function () {
-            var base_events = _super.prototype._getEventNames.call(this);
-            return ['load', 'unload', 'initialize', 'unresolvedBind'].concat(base_events);
-        };
-        Global.prototype._initialize = function () {
+        }
+        _getEventNames() {
+            var base_events = super._getEventNames();
+            return ['load', 'unload','initialize', 'unresolvedBind'].concat(base_events);
+        }
+        _initialize() {
             if (this._isInitialized)
                 return;
-            var self = this, isOK, name;
-            name = 'utils';
-            isOK = this.isModuleLoaded(name);
+            var self = this, isOK: boolean, name: string;
+            name = 'utils'; isOK = this.isModuleLoaded(name);
             if (isOK)
-                self._utils = new RIAPP.MOD.utils.Utils();
-            name = 'parser';
-            isOK = this.isModuleLoaded(name);
+                self._utils = new MOD.utils.Utils();
+            name = 'parser'; isOK = this.isModuleLoaded(name);
             if (isOK)
-                self._parser = new RIAPP.MOD.parser.Parser();
-            name = 'defaults';
-            isOK = this.isModuleLoaded(name);
+                self._parser = new MOD.parser.Parser();
+            name = 'defaults'; isOK = this.isModuleLoaded(name);
             if (isOK) {
-                self._defaults = new RIAPP.MOD.defaults.Defaults();
+                self._defaults = new MOD.defaults.Defaults();
             }
-            name = 'datepicker';
-            isOK = this.isModuleLoaded(name);
+            name = 'datepicker'; isOK = this.isModuleLoaded(name);
             if (isOK && !!self._defaults) {
-                self._defaults.datepicker = new RIAPP.MOD.datepicker.Datepicker();
+                self._defaults.datepicker = new MOD.datepicker.Datepicker();
             }
             if (!isOK)
-                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
+                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
 
             this._isInitialized = true;
             self.raiseEvent('initialize', {});
-            setTimeout(function () {
-                self.removeHandler('initialize', null);
-            }, 0);
-        };
-        Global.prototype._addHandler = function (name, fn, namespace, prepend) {
+            setTimeout(function () { self.removeHandler('initialize', null); }, 0);
+        }
+        _addHandler(name: string, fn: (sender, args) => void , namespace?: string, prepend?: boolean) {
             var self = this;
             if ((name == 'load' && self._isReady) || (name == 'initialize' && self._isInitialized)) {
-                //when already is ready, immediately raise the event
-                setTimeout(function () {
-                    fn.apply(self, [self, {}]);
-                }, 0);
+                 //when already is ready, immediately raise the event
+                setTimeout(function () { fn.apply(self, [self, {}]); }, 0);
                 return;
             }
-            _super.prototype._addHandler.call(this, name, fn, namespace, prepend);
-        };
-        Global.prototype._trackSelectable = function (selectable) {
+            super._addHandler(name, fn, namespace, prepend);
+        }
+        _trackSelectable(selectable: ISelectable) {
             var self = this, utils = self.utils, el = selectable.containerEl;
             self.$(el).on("click." + selectable.uniqueID, function (e) {
                 e.stopPropagation();
@@ -162,95 +193,97 @@ var RIAPP;
                 if (utils.isContained(target, el))
                     self.currentSelectable = selectable;
             });
-        };
-        Global.prototype._untrackSelectable = function (selectable) {
+        }
+        _untrackSelectable(selectable: ISelectable) {
             var self = this, utils = self.utils, el = selectable.containerEl;
             self.$(el).off("click." + selectable.uniqueID);
             if (this.currentSelectable === selectable)
                 this.currentSelectable = null;
-        };
-        Global.prototype._registerApp = function (app) {
+        }
+        _registerApp(app: Application) {
             if (!this._appInst[app.appName])
                 this._appInst[app.appName] = app;
-        };
-        Global.prototype._unregisterApp = function (app) {
+        }
+        _unregisterApp(app: Application) {
             if (!this._appInst[app.appName])
                 return;
             delete this._appInst[app.appName];
             delete this._templateLoaders[app.appName];
             delete this._templateGroups[app.appName];
-        };
-        Global.prototype._destroyApps = function () {
+        }
+        _destroyApps() {
             var self = this;
             this.utils.forEachProp(this._appInst, function (id) {
                 self._appInst[id].destroy();
             });
-        };
-        Global.prototype._throwDummy = function (origErr) {
-            var errMod = RIAPP.MOD.errors;
+        }
+        _throwDummy(origErr) {
+            var errMod = MOD.errors;
             if (!!errMod && !!origErr && !origErr.isDummy) {
                 throw errMod.DummyError.create(origErr);
             }
             throw origErr;
-        };
-        Global.prototype._checkIsDummy = function (error) {
+        }
+        _checkIsDummy(error) {
             return !!error.isDummy;
-        };
-        Global.prototype._registerObject = function (root, name, obj) {
+        }
+        _registerObject(root: IExports, name: string, obj: any) {
             return RIAPP.baseUtils.setValue(root.getExports(), name, obj, true);
-        };
-        Global.prototype._getObject = function (root, name) {
+        }
+        _getObject(root: IExports, name: string) {
             return RIAPP.baseUtils.getValue(root.getExports(), name);
-        };
-        Global.prototype._removeObject = function (root, name) {
+        }
+        _removeObject(root: IExports, name: string) {
             return RIAPP.baseUtils.removeValue(root.getExports(), name);
-        };
-        Global.prototype._processTemplateSections = function (root) {
+        }
+        _processTemplateSections(root: { querySelectorAll: (selectors: string) => NodeList; }) {
             var self = this;
-            var sections = RIAPP.ArrayHelper.fromList(root.querySelectorAll(Global._TEMPLATES_SELECTOR));
+            var sections: HTMLElement[] = ArrayHelper.fromList(root.querySelectorAll(Global._TEMPLATES_SELECTOR));
             sections.forEach(function (el) {
                 self._processTemplateSection(el, null);
                 self.utils.removeNode(el);
             });
-        };
-        Global.prototype._loadTemplatesAsync = function (fn_loader, app) {
+        }
+        _loadTemplatesAsync(fn_loader: () => IPromise<string>, app: Application) {
             var self = this, promise = fn_loader(), old = self.isLoading;
             self._promises.push(promise);
             if (self.isLoading !== old)
                 self.raisePropertyChanged('isLoading');
             var deferred = self.utils.createDeferred();
-            promise.then(function (html) {
+            promise.then(function (html:string) {
                 self.utils.removeFromArray(self._promises, promise);
-                try  {
+                try {
                     var tmpDiv = self.document.createElement('div');
                     tmpDiv.innerHTML = html;
                     self._processTemplateSection(tmpDiv, app);
                     deferred.resolve();
-                } catch (ex) {
+                }
+                catch (ex) {
                     self._onError(ex, self);
                     deferred.reject();
                 }
                 if (!self.isLoading)
                     self.raisePropertyChanged('isLoading');
-            }, function (err) {
+            },function (err) {
                 self.utils.removeFromArray(self._promises, promise);
                 if (!self.isLoading)
                     self.raisePropertyChanged('isLoading');
                 deferred.reject();
                 if (!!err && !!err.message) {
                     self._onError(err, self);
-                } else if (!!err && !!err.responseText) {
+                }
+                else if (!!err && !!err.responseText) {
                     self._onError(new Error(err.responseText), self);
-                } else
+                }
+                else
                     self._onError(new Error('Failed to load templates'), self);
             });
             return deferred.promise();
-        };
-
+        }
         /*
-        fn_loader must load template and return promise which resolves with loaded HTML string
-        */
-        Global.prototype._registerTemplateLoader = function (name, loader) {
+         fn_loader must load template and return promise which resolves with loaded HTML string
+         */
+        _registerTemplateLoader(name, loader: ITemplateLoaderInfo) {
             var self = this;
             loader = self.utils.extend(false, {
                 fn_loader: null,
@@ -269,8 +302,8 @@ var RIAPP;
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_TEMPLATE_ALREADY_REGISTERED, name));
             }
             return self._registerTemplateLoaderCore(name, loader);
-        };
-        Global.prototype._getTemplateLoader = function (name) {
+        }
+        _getTemplateLoader(name: string): () => IPromise<string> {
             var self = this, loader = self._getTemplateLoaderCore(name);
             if (!loader)
                 return null;
@@ -279,17 +312,16 @@ var RIAPP;
                 if (!group) {
                     throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_TEMPLATE_GROUP_NOTREGISTERED, loader.groupName));
                 }
-
                 //this function will return promise resolved with the template's html
                 return function () {
-                    if (!group.promise) {
+                    if (!group.promise) { //prevents double loading
                         //start the loading only if no loading in progress
                         group.promise = self._loadTemplatesAsync(group.fn_loader, group.app);
                     }
 
                     var deferred = self.utils.createDeferred();
                     group.promise.done(function () {
-                        try  {
+                        try {
                             group.promise = null;
                             group.names.forEach(function (name) {
                                 if (!!group.app) {
@@ -312,7 +344,8 @@ var RIAPP;
                             }).fail(function (er) {
                                 deferred.reject(er);
                             });
-                        } catch (ex) {
+                        }
+                        catch (ex) {
                             deferred.reject(ex);
                         }
                     });
@@ -324,11 +357,12 @@ var RIAPP;
 
                     return deferred.promise();
                 };
-            } else
+            }
+            else
                 return loader.fn_loader;
-        };
-        Global.prototype._registerTemplateGroup = function (groupName, group) {
-            var self = this, group2 = self.utils.extend(false, {
+        }
+        _registerTemplateGroup(groupName: string, group: IGroupInfo) {
+            var self = this, group2: IGroupInfo = self.utils.extend(false, {
                 fn_loader: null,
                 url: null,
                 names: null,
@@ -348,19 +382,18 @@ var RIAPP;
                 if (!!group2.app) {
                     name = group2.app.appName + '.' + name;
                 }
-
                 //for each template in the group register dummy loader function which has only group name
                 //when template will be requested, this dummy loader will be replaced with the real one
                 self._registerTemplateLoader(name, {
                     groupName: groupName,
-                    fn_loader: null
+                    fn_loader: null //no loader function
                 });
             });
-        };
-        Global.prototype._getTemplateGroup = function (name) {
+        }
+        _getTemplateGroup(name: string): IGroupInfo {
             return RIAPP.baseUtils.getValue(this._templateGroups, name);
-        };
-        Global.prototype._waitForNotLoading = function (callback, callbackArgs) {
+        }
+        _waitForNotLoading(callback, callbackArgs) {
             this._waitQueue.enQueue({
                 prop: 'isLoading',
                 groupName: null,
@@ -370,64 +403,63 @@ var RIAPP;
                 action: callback,
                 actionArgs: callbackArgs
             });
-        };
-        Global.prototype._getConverter = function (name) {
+        }
+        _getConverter(name: string): MOD.converter.IConverter {
             var name2 = 'converters.' + name;
             var res = this._getObject(this, name2);
             if (!res)
                 throw new Error(this.utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
             return res;
-        };
-        Global.prototype._onUnResolvedBinding = function (bindTo, root, path, propName) {
-            var args = { bindTo: bindTo, root: root, path: path, propName: propName };
+        }
+        _onUnResolvedBinding(bindTo: BindTo, root: any, path: string, propName: string) {
+            var args: IUnResolvedBindingArgs = { bindTo: bindTo, root: root, path: path, propName: propName };
             this.raiseEvent('unresolvedBind', args);
-        };
-        Global.prototype.addOnLoad = function (fn, namespace) {
+        }
+        addOnLoad(fn: (sender: Global, args: any) => void, namespace?: string) {
             this._addHandler('load', fn, namespace, false);
-        };
-        Global.prototype.addOnUnLoad = function (fn, namespace) {
+        }
+        addOnUnLoad(fn: (sender: Global, args: any) => void, namespace?: string) {
             this._addHandler('unload', fn, namespace, false);
-        };
-        Global.prototype.addOnInitialize = function (fn, namespace) {
+        }
+        addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string) {
             this._addHandler('initialize', fn, namespace, false);
-        };
-        Global.prototype.addOnUnResolvedBinding = function (fn, namespace) {
+        }
+        addOnUnResolvedBinding(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string) {
             this.addHandler('unresolvedBind', fn, namespace);
-        };
-        Global.prototype.removeOnUnResolvedBinding = function (namespace) {
+        }
+        removeOnUnResolvedBinding(namespace?: string) {
             this.removeHandler('unresolvedBind', namespace);
-        };
-        Global.prototype.getExports = function () {
+        }
+        getExports() {
             return this._exports;
-        };
-        Global.prototype.reThrow = function (ex, isHandled) {
+        }
+        reThrow(ex, isHandled) {
             if (!!isHandled)
                 this._throwDummy(ex);
             else
                 throw ex;
-        };
-
+        }
         //each module on its loading invokes this  function
-        Global.prototype.onModuleLoaded = function (name, module_obj) {
+        onModuleLoaded(name: string, module_obj: any) {
             var self = this;
             if (this.isModuleLoaded(name))
-                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_MODULE_ALREDY_REGISTERED, name));
+                throw new Error(baseUtils.format(RIAPP.ERRS.ERR_MODULE_ALREDY_REGISTERED, name));
 
             this._moduleNames.push(name);
-        };
-        Global.prototype.isModuleLoaded = function (name) {
+        }
+        isModuleLoaded(name: string): boolean {
             return this._moduleNames.indexOf(name) > -1;
-        };
-        Global.prototype.findApp = function (name) {
+        }
+        findApp(name:string) {
             return this._appInst[name];
-        };
-        Global.prototype.destroy = function () {
+        }
+        destroy() {
             if (this._isDestroyed)
                 return;
             this._isDestroyCalled = true;
             var self = this;
             if (!!self._waitQueue) {
-                self._waitQueue.destroy();
+                self._waitQueue.destroy()
                 self._waitQueue = null;
             }
             self._promises = [];
@@ -440,126 +472,78 @@ var RIAPP;
             self.$(self.document).off(".global");
             RIAPP.global = null;
             self.window.onerror = null;
-            _super.prototype.destroy.call(this);
-        };
-        Global.prototype.registerType = function (name, obj) {
+            super.destroy();
+        }
+        registerType(name:string, obj:any) {
             var name2 = 'types.' + name;
             return this._registerObject(this, name2, obj);
-        };
-        Global.prototype.getType = function (name) {
+        }
+        getType(name:string) {
             var name2 = 'types.' + name;
             return this._getObject(this, name2);
-        };
-        Global.prototype.registerConverter = function (name, obj) {
+        }
+        registerConverter(name:string, obj: MOD.converter.IConverter) {
             var name2 = 'converters.' + name;
             if (!this._getObject(this, name2)) {
                 this._registerObject(this, name2, obj);
-            } else
-                throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
-        };
-        Global.prototype.registerElView = function (name, elViewType) {
+            }
+            else
+                throw new Error(global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
+        }
+        registerElView(name:string, elViewType:any) {
             var name2 = 'elvws.' + name;
             if (!this._getObject(this, name2)) {
                 this._registerObject(this, name2, elViewType);
-            } else
-                throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
-        };
-        Global.prototype.getImagePath = function (imageName) {
+            }
+            else
+                throw new Error(global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
+        }
+        getImagePath(imageName:string) {
             var images = this.defaults.imagesPath;
             return images + imageName;
-        };
-        Global.prototype.loadTemplates = function (url) {
+        }
+        loadTemplates(url:string) {
             var self = this;
             this._loadTemplatesAsync(function () {
                 return self.utils.performAjaxGet(url);
             }, null);
-        };
-        Global.prototype.toString = function () {
+        }
+        toString() {
             return 'Global';
-        };
-        Object.defineProperty(Global.prototype, "moduleNames", {
-            get: function () {
-                return RIAPP.ArrayHelper.clone(this._moduleNames);
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Global.prototype, "parser", {
-            get: function () {
-                return this._parser;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Global.prototype, "isLoading", {
-            get: function () {
-                return this._promises.length > 0;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Global.prototype, "$", {
-            get: function () {
-                return this._$;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Global.prototype, "window", {
-            get: function () {
-                return this._window;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Global.prototype, "document", {
-            get: function () {
-                return this._window.document;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Global.prototype, "currentSelectable", {
-            get: function () {
-                return this._currentSelectable;
-            },
-            set: function (v) {
-                if (this._currentSelectable !== v) {
-                    this._currentSelectable = v;
-                    this.raisePropertyChanged('currentSelectable');
-                }
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Global.prototype, "defaults", {
-            get: function () {
-                return this._defaults;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Global.prototype, "utils", {
-            get: function () {
-                return this._utils;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Global.prototype, "UC", {
-            get: function () {
-                return this._userCode;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Global.vesion = '2.2.3.0';
-        Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
-        Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
-        return Global;
-    })(RIAPP.BaseObject);
-    RIAPP.Global = Global;
+        }
+        get moduleNames() { return ArrayHelper.clone(this._moduleNames); }
+        get parser() { return this._parser; }
+        get isLoading() {
+            return this._promises.length > 0;
+        }
+        get $() {
+            return this._$;
+        }
+        get window() {
+            return this._window;
+        }
+        get document() {
+            return this._window.document;
+        }
+        get currentSelectable() {
+            return this._currentSelectable;
+        }
+        set currentSelectable(v: ISelectable) {
+            if (this._currentSelectable !== v) {
+                this._currentSelectable = v;
+                this.raisePropertyChanged('currentSelectable');
+            }
+        }
+        get defaults() {
+            return this._defaults;
+        }
+        get utils() {
+            return this._utils;
+        }
+        get UC() {
+            return this._userCode;
+        }
+    }
 
     RIAPP.global = new Global(window, jQuery);
-})(RIAPP || (RIAPP = {}));
-//# sourceMappingURL=globalobj.js.map
+}

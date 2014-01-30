@@ -1,27 +1,44 @@
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-var RIAPP;
-(function (RIAPP) {
-    (function (MOD) {
-        (function (listbox) {
-            var collMod = RIAPP.MOD.collection;
-            var utils, parser;
-            RIAPP.global.addOnInitialize(function (s, args) {
+module RIAPP {
+    export module MOD {
+        export module listbox{
+            import collMod = MOD.collection;
+            var utils: MOD.utils.Utils, parser: MOD.parser.Parser;
+            RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
                 parser = s.parser;
             });
 
-            var ListBox = (function (_super) {
-                __extends(ListBox, _super);
-                function ListBox(el, dataSource, options) {
-                    _super.call(this);
+            export interface IListBoxOptions{
+                valuePath: string;
+                textPath: string;
+            }
+
+            export interface IMappedItem {
+                item: collMod.CollectionItem;
+                op: { text: string; value: any; index: number; }; 
+            }
+
+            export class ListBox extends RIAPP.BaseObject {
+                private _el: HTMLSelectElement;
+                private _$el: JQuery;
+                private _objId: string;
+                private _dataSource: collMod.BaseCollection<collMod.CollectionItem>;
+                private _isRefreshing: boolean;
+                private _isDSFilling: boolean;
+                private _valuePath: string;
+                private _textPath: string;
+                private _selectedItem: collMod.CollectionItem;
+                private _prevSelected: collMod.CollectionItem;
+                private _keyMap: { [key: string]: IMappedItem; };
+                private _valMap: { [val: string]: IMappedItem; };
+                private _savedValue: string;
+                private _tempValue: any;
+
+                constructor(el: HTMLSelectElement, dataSource: collMod.BaseCollection<collMod.CollectionItem>, options: IListBoxOptions) {
+                    super();
                     var self = this;
                     this._el = el;
-                    this._$el = RIAPP.global.$(this._el);
+                    this._$el = global.$(this._el);
                     this._objId = 'lst' + utils.getNewID();
                     if (!!dataSource && !(dataSource instanceof collMod.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_LISTBOX_DATASRC_INVALID);
@@ -44,7 +61,7 @@ var RIAPP;
                     this._tempValue = undefined;
                     this.dataSource = dataSource;
                 }
-                ListBox.prototype.destroy = function () {
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
@@ -58,90 +75,97 @@ var RIAPP;
                     this._selectedItem = null;
                     this._prevSelected = null;
                     this._savedValue = null;
-                    _super.prototype.destroy.call(this);
-                };
-                ListBox.prototype._onChanged = function () {
-                    var op = null, key, data;
+                    super.destroy();
+                }
+                _onChanged() {
+                    var op = null, key: string, data: IMappedItem;
                     if (this._el.selectedIndex >= 0) {
                         op = this._el.options[this._el.selectedIndex];
                         key = op.value;
                         data = this._keyMap[key];
                     }
-
+                   
                     if (!data && !!this._selectedItem) {
                         this.selectedItem = null;
-                    } else if (data.item !== this._selectedItem) {
+                    }
+                    else if (data.item !== this._selectedItem) {
                         this.selectedItem = data.item;
                     }
-                };
-                ListBox.prototype._getStringValue = function (item) {
+                }
+                _getStringValue(item: collMod.CollectionItem):string {
                     var v = this._getValue(item);
                     if (utils.check.isNt(v))
                         return '';
                     return '' + v;
-                };
-                ListBox.prototype._getValue = function (item) {
+                }
+                _getValue(item: collMod.CollectionItem):any {
                     if (!item)
                         return null;
                     if (!!this._valuePath) {
                         return parser.resolvePath(item, this._valuePath);
-                    } else
+                    }
+                    else
                         return undefined;
-                };
-                ListBox.prototype._getText = function (item) {
+                }
+                _getText(item: collMod.CollectionItem):string {
                     if (!item)
                         return '';
                     if (!!this._textPath) {
-                        var t = RIAPP.global.parser.resolvePath(item, this._textPath);
+                        var t = global.parser.resolvePath(item, this._textPath);
                         if (utils.check.isNt(t))
                             return '';
                         return '' + t;
-                    } else
+                    }
+                    else
                         return this._getStringValue(item);
-                };
-                ListBox.prototype._onDSCollectionChanged = function (args) {
+                }
+                _onDSCollectionChanged(args: collMod.ICollChangedArgs<collMod.CollectionItem>) {
                     var self = this, data;
                     switch (args.change_type) {
-                        case 2 /* RESET */:
+                        case collMod.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh();
                             break;
-                        case 1 /* ADDED */:
-                            if (!this._isDSFilling) {
+                        case collMod.COLL_CHANGE_TYPE.ADDED:
+                            if (!this._isDSFilling) //if items are filling then it will be appended when fill ends
+                            {
                                 args.items.forEach(function (item) {
                                     self._addOption(item, item._isNew);
                                 });
                             }
                             break;
-                        case 0 /* REMOVE */:
+                        case collMod.COLL_CHANGE_TYPE.REMOVE:
                             args.items.forEach(function (item) {
                                 self._removeOption(item);
                             });
                             break;
-                        case 3 /* REMAP_KEY */: {
-                            data = self._keyMap[args.old_key];
-                            if (!!data) {
-                                delete self._keyMap[args.old_key];
-                                self._keyMap[args.new_key] = data;
-                                data.op.value = args.new_key;
+                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
+                            {
+                                data = self._keyMap[args.old_key];
+                                if (!!data) {
+                                    delete self._keyMap[args.old_key];
+                                    self._keyMap[args.new_key] = data;
+                                    data.op.value = args.new_key;
+                                }
                             }
-                        }
                     }
-                };
-                ListBox.prototype._onDSFill = function (args) {
+                }
+                _onDSFill(args: collMod.ICollFillArgs<collMod.CollectionItem>) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
                         this._refresh();
-                    } else {
+                    }
+                    else {
                         this._isDSFilling = true;
                     }
-                };
-                ListBox.prototype._onEdit = function (item, isBegin, isCanceled) {
-                    var self = this, key, data, oldVal, val;
+                }
+                _onEdit(item: collMod.CollectionItem, isBegin:boolean, isCanceled:boolean) {
+                    var self = this, key:string, data: IMappedItem, oldVal:string, val:string;
                     if (isBegin) {
                         this._savedValue = this._getStringValue(item);
-                    } else {
+                    }
+                    else {
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
                         if (!isCanceled) {
@@ -158,35 +182,38 @@ var RIAPP;
                                         self._valMap[val] = data;
                                     }
                                 }
-                            } else {
+                            }
+                            else {
                                 if (!!oldVal) {
                                     delete self._valMap[oldVal];
                                 }
                             }
                         }
                     }
-                };
-                ListBox.prototype._onStatusChanged = function (item, oldChangeType) {
+                }
+                _onStatusChanged(item: collMod.CollectionItem, oldChangeType:number) {
                     var newChangeType = item._changeType;
-                    if (newChangeType === 3 /* DELETED */) {
+                    if (newChangeType === collMod.STATUS.DELETED) {
                         this._removeOption(item);
                     }
-                };
-                ListBox.prototype._onCommitChanges = function (item, isBegin, isRejected, changeType) {
+                }
+                _onCommitChanges(item: collMod.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
                     var self = this, oldVal, val, data;
                     if (isBegin) {
-                        if (isRejected && changeType === 1 /* ADDED */) {
+                        if (isRejected && changeType === collMod.STATUS.ADDED) {
                             return;
-                        } else if (!isRejected && changeType === 3 /* DELETED */) {
+                        }
+                        else if (!isRejected && changeType === collMod.STATUS.DELETED) {
                             return;
                         }
 
                         this._savedValue = this._getStringValue(item);
-                    } else {
+                    }
+                    else {
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
 
-                        if (isRejected && changeType === 3 /* DELETED */) {
+                        if (isRejected && changeType === collMod.STATUS.DELETED) {
                             this._addOption(item, true);
                             return;
                         }
@@ -204,52 +231,44 @@ var RIAPP;
                             data.op.text = self._getText(item);
                         }
                     }
-                };
-                ListBox.prototype._bindDS = function () {
+                }
+                private _bindDS() {
                     var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
+                    if (!ds) return;
                     ds.addOnCollChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onDSCollectionChanged(args);
                     }, self._objId);
                     ds.addOnFill(function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onDSFill(args);
                     }, self._objId);
                     ds.addOnBeginEdit(function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onEdit(args.item, true, undefined);
                     }, self._objId);
                     ds.addOnEndEdit(function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onEdit(args.item, false, args.isCanceled);
                     }, self._objId);
                     ds.addOnStatusChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
                     ds.addOnCommitChanges(function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                        if (ds !== sender) return;
                         self._onCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId);
-                };
-                ListBox.prototype._unbindDS = function () {
+                }
+                private _unbindDS() {
                     var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
+                    if (!ds) return;
                     ds.removeNSHandlers(self._objId);
-                };
-                ListBox.prototype._addOption = function (item, first) {
+                }
+                private _addOption(item: collMod.CollectionItem, first:boolean) {
                     if (this._isDestroyCalled)
                         return null;
-                    var oOption, key = '', val, text;
+                    var oOption: HTMLOptionElement, key = '', val: string, text: string;
                     if (!!item) {
                         key = item._key;
                     }
@@ -258,10 +277,10 @@ var RIAPP;
                     }
                     text = this._getText(item);
                     val = this._getStringValue(item);
-                    oOption = RIAPP.global.document.createElement("option");
+                    oOption = global.document.createElement("option");
                     oOption.text = text;
                     oOption.value = key;
-                    var data = { item: item, op: oOption };
+                    var data: IMappedItem = { item: item, op: oOption };
                     this._keyMap[key] = data;
                     if (!!val)
                         this._valMap[val] = data;
@@ -270,30 +289,31 @@ var RIAPP;
                             this._el.add(oOption, null);
                         else
                             this._el.add(oOption, this._el.options[1]);
-                    } else
+                    }
+                    else
                         this._el.add(oOption, null);
                     return oOption;
-                };
-                ListBox.prototype._mapByValue = function () {
+                }
+                private _mapByValue() {
                     var self = this;
                     this._valMap = {};
-                    utils.forEachProp(this._keyMap, function (key) {
+                    utils.forEachProp(this._keyMap, (key) => {
                         var data = self._keyMap[key], val = self._getStringValue(data.item);
                         if (!!val)
                             self._valMap[val] = data;
                     });
-                };
-                ListBox.prototype._resetText = function () {
+                }
+                private _resetText() {
                     var self = this;
-                    utils.forEachProp(this._keyMap, function (key) {
+                    utils.forEachProp(this._keyMap, (key) => {
                         var data = self._keyMap[key];
-                        data.op.text = self._getText(data.item);
+                        data.op.text = self._getText(data.item); 
                     });
-                };
-                ListBox.prototype._removeOption = function (item) {
+                }
+                private _removeOption(item: collMod.CollectionItem) {
                     if (this._isDestroyCalled)
                         return;
-                    var key = '', data, val;
+                    var key = '', data: IMappedItem, val: string;
                     if (!!item) {
                         key = item._key;
                         data = this._keyMap[key];
@@ -312,8 +332,8 @@ var RIAPP;
                             this.selectedItem = this._prevSelected;
                         }
                     }
-                };
-                ListBox.prototype._clear = function (isDestroy) {
+                }
+                private _clear(isDestroy: boolean) {
                     this._el.options.length = 0;
                     this._keyMap = {};
                     this._valMap = {};
@@ -321,13 +341,14 @@ var RIAPP;
                     if (!isDestroy) {
                         this._addOption(null, false);
                         this.selectedItem = null;
-                    } else
+                    }
+                    else
                         this.selectedItem = null;
-                };
-                ListBox.prototype._refresh = function () {
+                }
+                private _refresh() {
                     var self = this, ds = this._dataSource, oldItem = this._selectedItem, tmp = self._tempValue;
                     this._isRefreshing = true;
-                    try  {
+                    try {
                         this.clear();
                         if (!!ds) {
                             ds.forEach(function (item) {
@@ -336,184 +357,151 @@ var RIAPP;
 
                             if (tmp === undefined) {
                                 self._el.selectedIndex = self._findItemIndex(oldItem);
-                            } else {
+                            }
+                            else {
                                 oldItem = self.findItemByValue(tmp);
                                 self.selectedItem = oldItem;
                                 self._tempValue = undefined;
                             }
                         }
+                    
                     } finally {
                         self._isRefreshing = false;
                     }
                     self._onChanged();
-                };
-                ListBox.prototype._findItemIndex = function (item) {
+                }
+                private _findItemIndex(item: collMod.CollectionItem) {
                     if (!item)
                         return 0;
-                    var data = this._keyMap[item._key];
+                    var data:IMappedItem = this._keyMap[item._key];
                     if (!data)
                         return 0;
                     return data.op.index;
-                };
-                ListBox.prototype._setIsEnabled = function (el, v) {
+                }
+                _setIsEnabled(el: HTMLSelectElement, v:boolean) {
                     el.disabled = !v;
-                };
-                ListBox.prototype._getIsEnabled = function (el) {
+                }
+                _getIsEnabled(el: HTMLSelectElement) {
                     return !el.disabled;
-                };
-                ListBox.prototype.clear = function () {
+                }
+                clear() {
                     this._clear(false);
-                };
-                ListBox.prototype.findItemByValue = function (val) {
+                }
+                findItemByValue(val): collMod.CollectionItem {
                     if (utils.check.isNt(val))
                         return null;
                     val = '' + val;
-                    var data = this._valMap[val];
+                    var data: IMappedItem = this._valMap[val];
                     if (!data)
                         return null;
                     return data.item;
-                };
-                ListBox.prototype.getTextByValue = function (val) {
+                }
+                getTextByValue(val):string {
                     if (utils.check.isNt(val))
                         return '';
                     val = '' + val;
-                    var data = this._valMap[val];
+                    var data: IMappedItem = this._valMap[val];
                     if (!data)
                         return '';
                     else
                         return data.op.text;
-                };
-                ListBox.prototype.toString = function () {
+                }
+                toString() {
                     return 'ListBox';
-                };
-                Object.defineProperty(ListBox.prototype, "dataSource", {
-                    get: function () {
-                        return this._dataSource;
-                    },
-                    set: function (v) {
-                        if (this._dataSource !== v) {
-                            if (!!this._dataSource)
-                                this._tempValue = this.selectedValue;
-                            if (!!this._dataSource)
-                                this._unbindDS();
-                            this._dataSource = v;
-                            if (!!this._dataSource) {
-                                this._bindDS();
-                            }
-                            this._refresh();
-                            if (!!this._dataSource)
-                                this._tempValue = undefined;
-                            this.raisePropertyChanged('dataSource');
-                            this.raisePropertyChanged('selectedItem');
-                            this.raisePropertyChanged('selectedValue');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "selectedValue", {
-                    get: function () {
+                }
+                get dataSource() { return this._dataSource; }
+                set dataSource(v: collMod.BaseCollection<collMod.CollectionItem>) {
+                    if (this._dataSource !== v) {
                         if (!!this._dataSource)
-                            return this._getValue(this.selectedItem);
-                        else
-                            return undefined;
-                    },
-                    set: function (v) {
-                        var self = this;
+                            this._tempValue = this.selectedValue;
+                        if (!!this._dataSource)
+                            this._unbindDS();
+                        this._dataSource = v;
                         if (!!this._dataSource) {
-                            if (this.selectedValue !== v) {
-                                var item = self.findItemByValue(v);
-                                self.selectedItem = item;
-                                self._tempValue = undefined;
-                            }
-                        } else {
-                            if (this._tempValue !== v) {
-                                this._selectedItem = null;
-                                this._tempValue = v;
-                                this.raisePropertyChanged('selectedItem');
-                                this.raisePropertyChanged('selectedValue');
-                            }
+                            this._bindDS();
                         }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "selectedItem", {
-                    get: function () {
+                        this._refresh();
                         if (!!this._dataSource)
-                            return this._selectedItem;
-                        else
-                            return undefined;
-                    },
-                    set: function (v) {
-                        if (this._selectedItem !== v) {
-                            if (!!this._selectedItem) {
-                                this._prevSelected = this._selectedItem;
-                            }
-                            this._selectedItem = v;
-                            this._el.selectedIndex = this._findItemIndex(this._selectedItem);
+                            this._tempValue = undefined;
+                        this.raisePropertyChanged('dataSource');
+                        this.raisePropertyChanged('selectedItem');
+                        this.raisePropertyChanged('selectedValue');
+                    }
+                }
+                get selectedValue() {
+                    if (!!this._dataSource)
+                        return this._getValue(this.selectedItem);
+                    else
+                        return undefined;
+                }
+                set selectedValue(v) {
+                    var self = this;
+                    if (!!this._dataSource) {
+                        if (this.selectedValue !== v) {
+                            var item = self.findItemByValue(v);
+                            self.selectedItem = item;
+                            self._tempValue = undefined;
+                        }
+                    }
+                    else {
+                        if (this._tempValue !== v) {
+                            this._selectedItem = null;
+                            this._tempValue = v;
                             this.raisePropertyChanged('selectedItem');
                             this.raisePropertyChanged('selectedValue');
                         }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "valuePath", {
-                    get: function () {
-                        return this._valuePath;
-                    },
-                    set: function (v) {
-                        if (v !== this._valuePath) {
-                            this._valuePath = v;
-                            this._mapByValue();
-                            this.raisePropertyChanged('valuePath');
+                    }
+                }
+                get selectedItem() {
+                    if (!!this._dataSource)
+                        return this._selectedItem;
+                    else
+                        return undefined;
+                }
+                set selectedItem(v: collMod.CollectionItem) {
+                    if (this._selectedItem !== v) {
+                        if (!!this._selectedItem) {
+                            this._prevSelected = this._selectedItem;
                         }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "textPath", {
-                    get: function () {
-                        return this._textPath;
-                    },
-                    set: function (v) {
-                        if (v !== this._textPath) {
-                            this._textPath = v;
-                            this._resetText();
-                            this.raisePropertyChanged('textPath');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "isEnabled", {
-                    get: function () {
-                        return this._getIsEnabled(this._el);
-                    },
-                    set: function (v) {
-                        if (v !== this.isEnabled) {
-                            this._setIsEnabled(this._el, v);
-                            this.raisePropertyChanged('isEnabled');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return ListBox;
-            })(RIAPP.BaseObject);
-            listbox.ListBox = ListBox;
+                        this._selectedItem = v;
+                        this._el.selectedIndex = this._findItemIndex(this._selectedItem);
+                        this.raisePropertyChanged('selectedItem');
+                        this.raisePropertyChanged('selectedValue');
+                    }
+                }
+                get valuePath() { return this._valuePath; }
+                set valuePath(v:string) {
+                    if (v !== this._valuePath) {
+                        this._valuePath = v;
+                        this._mapByValue();
+                        this.raisePropertyChanged('valuePath');
+                    }
+                }
+                get textPath() { return this._textPath; }
+                set textPath(v:string) {
+                    if (v !== this._textPath) {
+                        this._textPath = v;
+                        this._resetText();
+                        this.raisePropertyChanged('textPath');
+                    }
+                }
+                get isEnabled() { return this._getIsEnabled(this._el); }
+                set isEnabled(v) {
+                    if (v !== this.isEnabled) {
+                        this._setIsEnabled(this._el, v);
+                        this.raisePropertyChanged('isEnabled');
+                    }
+                }
+                get el() { return this._el; }
+            }
+     
+            export interface ISelectViewOptions extends IListBoxOptions, baseElView.IViewOptions {
+            }
 
-            var SelectElView = (function (_super) {
-                __extends(SelectElView, _super);
-                function SelectElView(app, el, options) {
+            export class SelectElView extends baseElView.BaseElView {
+                private _listBox: ListBox;
+                private _options: ISelectViewOptions;
+                constructor(app: Application, el: HTMLSelectElement, options: ISelectViewOptions) {
                     var self = this;
                     self._options = options;
                     self._listBox = new ListBox(el, null, self._options);
@@ -525,9 +513,9 @@ var RIAPP;
                     self._listBox.addOnPropertyChange('*', function (sender, args) {
                         self.raisePropertyChanged(args.property);
                     }, self.uniqueID);
-                    _super.call(this, app, el, options);
+                    super(app, el, options);
                 }
-                SelectElView.prototype.destroy = function () {
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
@@ -535,93 +523,74 @@ var RIAPP;
                         this._listBox.destroy();
                     }
                     this._listBox = null;
-                    _super.prototype.destroy.call(this);
-                };
-                SelectElView.prototype.toString = function () {
+                    super.destroy();
+                }
+                toString() {
                     return 'SelectElView';
-                };
-                Object.defineProperty(SelectElView.prototype, "isEnabled", {
-                    get: function () {
-                        if (this._isDestroyCalled)
-                            return false;
-                        return !this.el.disabled;
-                    },
-                    set: function (v) {
-                        v = !!v;
-                        if (v !== this.isEnabled) {
-                            this.el.disabled = !v;
-                            this.raisePropertyChanged('isEnabled');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(SelectElView.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(SelectElView.prototype, "dataSource", {
-                    get: function () {
-                        if (this._isDestroyCalled)
-                            return undefined;
-                        return this._listBox.dataSource;
-                    },
-                    set: function (v) {
-                        var self = this;
-                        if (self.dataSource !== v) {
-                            self._listBox.dataSource = v;
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(SelectElView.prototype, "selectedValue", {
-                    get: function () {
-                        if (this._isDestroyCalled)
-                            return undefined;
-                        return this._listBox.selectedValue;
-                    },
-                    set: function (v) {
-                        if (this._isDestroyCalled)
-                            return;
-                        if (this._listBox.selectedValue !== v) {
-                            this._listBox.selectedValue = v;
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(SelectElView.prototype, "selectedItem", {
-                    get: function () {
-                        if (this._isDestroyCalled)
-                            return undefined;
-                        return this._listBox.selectedItem;
-                    },
-                    set: function (v) {
-                        if (this._isDestroyCalled)
-                            return;
-                        this._listBox.selectedItem = v;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(SelectElView.prototype, "listBox", {
-                    get: function () {
-                        return this._listBox;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return SelectElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
-            listbox.SelectElView = SelectElView;
+                }
+                get isEnabled() {
+                    if (this._isDestroyCalled)
+                        return false;
+                    return !this.el.disabled;
+                }
+                set isEnabled(v: boolean) {
+                    v = !!v;
+                    if (v !== this.isEnabled) {
+                        this.el.disabled = !v;
+                        this.raisePropertyChanged('isEnabled');
+                    }
+                }
+                get el() { return <HTMLSelectElement>this._el; }
+                get dataSource() {
+                    if (this._isDestroyCalled)
+                        return undefined;
+                    return this._listBox.dataSource;
+                }
+                set dataSource(v) {
+                    var self = this;
+                    if (self.dataSource !== v) {
+                        self._listBox.dataSource = v;
+                    }
+                }
+                get selectedValue() {
+                    if (this._isDestroyCalled)
+                        return undefined;
+                    return this._listBox.selectedValue;
+                }
+                set selectedValue(v) {
+                    if (this._isDestroyCalled)
+                        return;
+                    if (this._listBox.selectedValue !== v) {
+                        this._listBox.selectedValue = v;
+                    }
+                }
+                get selectedItem() {
+                    if (this._isDestroyCalled)
+                        return undefined;
+                    return this._listBox.selectedItem;
+                }
+                set selectedItem(v: collMod.CollectionItem) {
+                    if (this._isDestroyCalled)
+                        return;
+                    this._listBox.selectedItem = v;
+                }
+                get listBox() { return this._listBox; }
+            }
+             
 
-            var LookupContent = (function (_super) {
-                __extends(LookupContent, _super);
-                function LookupContent(app, parentEl, options, dctx, isEditing) {
+            export interface ILookupOptions {
+                dataSource: string; valuePath: string; textPath: string;
+            }
+
+            export class LookupContent extends baseContent.BindingContent implements baseContent.IExternallyCachable {
+                private _spanView: baseElView.SpanElView;
+                private _valBinding: binding.Binding;
+                private _listBinding: binding.Binding;
+                private _selectView: SelectElView;
+                private _isListBoxCachedExternally: boolean;
+                private _value: any;
+
+                constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean) {
                     if (options.name != 'lookup') {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'lookup'"));
                     }
@@ -631,35 +600,34 @@ var RIAPP;
                     this._valBinding = null;
                     this._listBinding = null;
                     this._value = null;
-                    _super.call(this, app, parentEl, options, dctx, isEditing);
+                    super(app, parentEl, options, dctx, isEditing);
                 }
-                LookupContent.prototype._init = function () {
+                _init() {
                     if (!!this._options.initContentFn) {
                         this._options.initContentFn(this);
                     }
-                };
-                LookupContent.prototype._getEventNames = function () {
-                    var base_events = _super.prototype._getEventNames.call(this);
+                }
+                _getEventNames() {
+                    var base_events = super._getEventNames();
                     return ['object_created', 'object_needed'].concat(base_events);
-                };
-                LookupContent.prototype.addOnObjectCreated = function (fn, namespace) {
+                }
+                addOnObjectCreated(fn: (sender: any, args: { objectKey: string; object: BaseObject; isCachedExternally: boolean; }) => void , namespace?: string) {
                     this.addHandler('object_created', fn, namespace);
-                };
-                LookupContent.prototype.removeOnObjectCreated = function (namespace) {
+                }
+                removeOnObjectCreated(namespace?: string) {
                     this.removeHandler('object_created', namespace);
-                };
-                LookupContent.prototype.addOnObjectNeeded = function (fn, namespace) {
+                }
+                addOnObjectNeeded(fn: (sender: any, args: { objectKey: string; object: BaseObject; }) => void , namespace?: string) {
                     this.addHandler('object_needed', fn, namespace);
-                };
-                LookupContent.prototype.removeOnObjectNeeded = function (namespace) {
+                }
+                removeOnObjectNeeded(namespace?: string) {
                     this.removeHandler('object_needed', namespace);
-                };
-                LookupContent.prototype._getSelectView = function () {
+                }
+                _getSelectView(): SelectElView {
                     if (!!this._selectView)
                         return this._selectView;
-                    var lookUpOptions = this._options.options;
+                    var lookUpOptions: ILookupOptions = this._options.options;
                     var args1 = { objectKey: 'selectElView', object: null };
-
                     //try get externally externally cached listBox
                     this.raiseEvent('object_needed', args1);
                     if (!!args1.object) {
@@ -668,43 +636,42 @@ var RIAPP;
                     }
                     if (!!this._selectView)
                         return this._selectView;
-
                     //proceed creating new selectElView
-                    var dataSource = RIAPP.global.parser.resolvePath(this.app, lookUpOptions.dataSource), options = { valuePath: lookUpOptions.valuePath, textPath: lookUpOptions.textPath };
-                    var el = RIAPP.global.document.createElement('select');
+                    var dataSource = global.parser.resolvePath(this.app, lookUpOptions.dataSource),
+                        options = { valuePath: lookUpOptions.valuePath, textPath: lookUpOptions.textPath };
+                    var el = <HTMLSelectElement>global.document.createElement('select');
                     el.setAttribute('size', '1');
                     var selectElView = this._createSelectElView(el, options);
                     selectElView.dataSource = dataSource;
                     var args2 = { objectKey: 'selectElView', object: selectElView, isCachedExternally: false };
-
                     //this allows to cache listBox externally
                     this.raiseEvent('object_created', args2);
                     this._isListBoxCachedExternally = args2.isCachedExternally;
                     this._selectView = selectElView;
                     return this._selectView;
-                };
-                LookupContent.prototype._createSelectElView = function (el, options) {
+                }
+                _createSelectElView(el: HTMLSelectElement, options: ISelectViewOptions): SelectElView {
                     var elView;
                     elView = this.app._getElView(el);
                     if (!!elView)
                         return elView;
-                    elView = new SelectElView(this.app, el, options);
+                    elView =  new SelectElView(this.app, el, options);
                     return elView;
-                };
-                LookupContent.prototype._updateTextValue = function () {
+                }
+                _updateTextValue() {
                     var spanView = this._getSpanView();
                     spanView.value = this._getLookupText();
-                };
-                LookupContent.prototype._getLookupText = function () {
+                }
+                _getLookupText() {
                     var listBoxView = this._getSelectView();
                     return listBoxView.listBox.getTextByValue(this.value);
-                };
-                LookupContent.prototype._getSpanView = function () {
+                }
+                _getSpanView() {
                     if (!!this._spanView) {
                         return this._spanView;
                     }
-                    var el = RIAPP.global.document.createElement('span'), displayInfo = this._getDisplayInfo();
-                    var spanView = new RIAPP.MOD.baseElView.SpanElView(this.app, el, {});
+                    var el = global.document.createElement('span'), displayInfo = this._getDisplayInfo();
+                    var spanView = new baseElView.SpanElView(this.app, el, {});
                     if (!!displayInfo) {
                         if (!!displayInfo.displayCss) {
                             spanView.$el.addClass(displayInfo.displayCss);
@@ -712,19 +679,20 @@ var RIAPP;
                     }
                     this._spanView = spanView;
                     return this._spanView;
-                };
-                LookupContent.prototype.update = function () {
+                }
+                update() {
                     this._cleanUp();
                     this._createTargetElement();
                     this._parentEl.appendChild(this._el);
-                };
-                LookupContent.prototype._createTargetElement = function () {
-                    var tgt, el, selectView, spanView;
+                }
+                _createTargetElement(): MOD.baseElView.BaseElView {
+                    var tgt: MOD.baseElView.BaseElView, el: HTMLElement, selectView: SelectElView, spanView: baseElView.SpanElView;
                     if (this._isEditing && this._canBeEdited()) {
                         selectView = this._getSelectView();
                         this._listBinding = this._bindToList(selectView);
                         tgt = selectView;
-                    } else {
+                    }
+                    else {
                         spanView = this._getSpanView();
                         this._valBinding = this._bindToValue();
                         tgt = spanView;
@@ -732,8 +700,8 @@ var RIAPP;
                     this._el = tgt.el;
                     this._updateCss();
                     return tgt;
-                };
-                LookupContent.prototype._cleanUp = function () {
+                }
+                _cleanUp() {
                     if (!!this._el) {
                         utils.removeNode(this._el);
                         this._el = null;
@@ -750,38 +718,38 @@ var RIAPP;
                     if (!!this._selectView && this._isListBoxCachedExternally) {
                         this._selectView = null;
                     }
-                };
-                LookupContent.prototype._updateBindingSource = function () {
+                }
+                _updateBindingSource() {
                     if (!!this._valBinding) {
                         this._valBinding.source = this._dctx;
                     }
                     if (!!this._listBinding) {
                         this._listBinding.source = this._dctx;
                     }
-                };
-                LookupContent.prototype._bindToValue = function () {
+                }
+                _bindToValue() {
                     if (!this._options.fieldName)
                         return null;
 
-                    var options = {
+                    var options: RIAPP.MOD.binding.IBindingOptions = {
                         target: this, source: this._dctx,
-                        targetPath: 'value', sourcePath: this._options.fieldName, mode: 1 /* OneWay */,
+                        targetPath: 'value', sourcePath: this._options.fieldName, mode: RIAPP.MOD.binding.BINDING_MODE.OneWay,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
-                    return new RIAPP.MOD.binding.Binding(options);
-                };
-                LookupContent.prototype._bindToList = function (selectView) {
+                    return new binding.Binding(options);
+                }
+                _bindToList(selectView: SelectElView) {
                     if (!this._options.fieldName)
                         return null;
 
-                    var options = {
+                    var options: RIAPP.MOD.binding.IBindingOptions = {
                         target: selectView, source: this._dctx,
-                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: 2 /* TwoWay */,
+                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: RIAPP.MOD.binding.BINDING_MODE.TwoWay,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
-                    return new RIAPP.MOD.binding.Binding(options);
-                };
-                LookupContent.prototype.destroy = function () {
+                    return new binding.Binding(options);
+                }
+                destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
@@ -794,35 +762,31 @@ var RIAPP;
                         this._spanView.destroy();
                     }
                     this._spanView = null;
-                    _super.prototype.destroy.call(this);
-                };
-                LookupContent.prototype.toString = function () {
+                    super.destroy();
+                }
+                toString() {
                     return 'LookupContent';
-                };
-                Object.defineProperty(LookupContent.prototype, "value", {
-                    get: function () {
-                        return this._value;
-                    },
-                    set: function (v) {
-                        if (this._value !== v) {
-                            this._value = v;
-                            this._updateTextValue();
-                            this.raisePropertyChanged('value');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return LookupContent;
-            })(RIAPP.MOD.baseContent.BindingContent);
-            listbox.LookupContent = LookupContent;
+                }
+                get value() { return this._value; }
+                set value(v) {
+                    if (this._value !== v) {
+                        this._value = v;
+                        this._updateTextValue();
+                        this.raisePropertyChanged('value');
+                    }
+                }
+            }
 
-            var ContentFactory = (function () {
-                function ContentFactory(app, nextFactory) {
+            export class ContentFactory implements baseContent.IContentFactory  {
+                private _app: Application;
+                private _nextFactory: baseContent.IContentFactory;
+
+                constructor(app: Application, nextFactory?: baseContent.IContentFactory) {
                     this._app = app;
                     this._nextFactory = nextFactory;
                 }
-                ContentFactory.prototype.getContentType = function (options) {
+
+                getContentType(options: baseContent.IContentOptions): baseContent.IContentType {
                     if (options.name == 'lookup') {
                         return LookupContent;
                     }
@@ -830,43 +794,30 @@ var RIAPP;
                         return this._nextFactory.getContentType(options);
                     else
                         throw new Error(RIAPP.ERRS.ERR_BINDING_CONTENT_NOT_FOUND);
-                };
+                }
 
-                ContentFactory.prototype.createContent = function (parentEl, options, dctx, isEditing) {
+                createContent(parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean): baseContent.IContent {
                     var contentType = this.getContentType(options);
                     return new contentType(this._app, parentEl, options, dctx, isEditing);
-                };
+                }
 
-                ContentFactory.prototype.isExternallyCachable = function (contentType) {
+                isExternallyCachable(contentType): boolean {
                     if (LookupContent === contentType)
                         return true;
                     return this._nextFactory.isExternallyCachable(contentType);
-                };
-                Object.defineProperty(ContentFactory.prototype, "app", {
-                    get: function () {
-                        return this._app;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return ContentFactory;
-            })();
-            listbox.ContentFactory = ContentFactory;
+                }
+                get app() { return this._app; }
+            }
 
-            function initModule(app) {
-                app.registerContentFactory(function (nextFactory) {
+            export function initModule(app: Application) {
+                app.registerContentFactory((nextFactory?: baseContent.IContentFactory) => {
                     return new ContentFactory(app, nextFactory);
                 });
                 return listbox;
-            }
-            listbox.initModule = initModule;
-            ;
+            };
 
-            RIAPP.global.registerElView('select', SelectElView);
-            RIAPP.global.onModuleLoaded('listbox', listbox);
-        })(MOD.listbox || (MOD.listbox = {}));
-        var listbox = MOD.listbox;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
-})(RIAPP || (RIAPP = {}));
-//# sourceMappingURL=listbox.js.map
+            global.registerElView('select', SelectElView);
+            global.onModuleLoaded('listbox', listbox);
+        }
+    }
+}
