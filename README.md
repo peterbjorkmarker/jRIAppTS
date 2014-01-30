@@ -44,8 +44,8 @@ You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
 <p>2014-01-30 Code generation was updated. RIAppDemo project was updated. The SPADemo page now uses requireJS to load user modules.<br/>
-Added <b>spaAMD</b> typescript project which containes user modules only for the SPADemo page (single page application demo).<br/>
-demoTS typescript project which containes user modules for all other demo pages.<br/>
+Added a <b>spaAMD</b> typescript project which contains user modules only for the SPADemo page (single page application demo).<br/>
+The demoTS typescript project contains user modules for all other demo pages.<br/>
 </p>
 <p>2014-01-28 Listbox control code update.</p>
 <p>2014-01-26 Removed global's consts property (it was redundant). Internal code optimization. Docs update - much better fonts and readability.</p>
