@@ -197,6 +197,7 @@
     <Content Include="Scripts\qtip\jquery.qtip.js" />
     <Content Include="Scripts\qtip\jquery.qtip.min.css" />
     <Content Include="Scripts\qtip\jquery.qtip.min.js" />
+    <Content Include="Scripts\require.js" />
     <Content Include="Scripts\RIAppDemo\autocomplete.js" />
     <Content Include="Scripts\RIAppDemo\bindingsDemo.js" />
     <Content Include="Scripts\RIAppDemo\collectionDemo.js" />
@@ -208,7 +209,13 @@
     <Content Include="Scripts\RIAppDemo\header.js" />
     <Content Include="Scripts\RIAppDemo\manToManDemo.js" />
     <Content Include="Scripts\RIAppDemo\masterDetDemo.js" />
-    <Content Include="Scripts\RIAppDemo\spaDemo.js" />
+    <Content Include="Scripts\RIAppDemo\SPA\autocomplete.js" />
+    <Content Include="Scripts\RIAppDemo\SPA\common.js" />
+    <Content Include="Scripts\RIAppDemo\SPA\domainModel.js" />
+    <Content Include="Scripts\RIAppDemo\SPA\gridElView.js" />
+    <Content Include="Scripts\RIAppDemo\SPA\SPAConfig.js" />
+    <Content Include="Scripts\RIAppDemo\SPA\spaDemoApp.js" />
+    <Content Include="Scripts\RIAppDemo\SPA\spaDemoViewModels.js" />
     <Content Include="Templates\sizeDisplayTemplate.html" />
     <Content Include="Templates\productEditTemplate.html" />
     <Content Include="Web.config">

@@ -3166,17 +3166,19 @@ declare module RIAPP {
             interface IGridViewOptions extends IGridOptions, MOD.baseElView.IViewOptions {
             }
             class GridElView extends MOD.baseElView.BaseElView {
-                public _dataSource: any;
-                public _grid: DataGrid;
-                public _gridEventCommand: MOD.mvvm.ICommand;
-                public _options: IGridViewOptions;
+                private _dataSource;
+                private _grid;
+                private _gridEventCommand;
+                private _options;
+                public toString(): string;
                 public _init(options: IGridViewOptions): void;
                 public destroy(): void;
-                public _createGrid(): void;
-                public _bindGridEvents(): void;
+                private _createGrid();
+                private _bindGridEvents();
                 public invokeGridEvent(eventName: any, args: any): void;
-                public toString(): string;
-                public dataSource : any;
+                public _onGridCreated(grid: DataGrid): void;
+                public _onGridDestroyed(grid: DataGrid): void;
+                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
                 public grid : DataGrid;
                 public gridEventCommand : MOD.mvvm.ICommand;
             }
@@ -3369,6 +3371,7 @@ declare module RIAPP {
         private _exports;
         public _options: IAppOptions;
         constructor(options?: IAppOptions);
+        public _getEventNames(): string[];
         private _cleanUpObjMaps();
         private _initModules();
         private _initUserModules(user_modules);
@@ -3389,6 +3392,8 @@ declare module RIAPP {
         public _getContent(contentType: RIAPP.MOD.baseContent.IContentType, options: RIAPP.MOD.baseContent.IContentOptions, parentEl: HTMLElement, dctx: any, isEditing: boolean): RIAPP.MOD.baseContent.IContent;
         public _getContentType(options: RIAPP.MOD.baseContent.IContentOptions): RIAPP.MOD.baseContent.IContentType;
         public _getElViewType(name: string): RIAPP.MOD.baseElView.IViewType;
+        public addOnStartUp(fn: (sender: RIAPP.Global, args: RIAPP.IUnResolvedBindingArgs) => void, namespace?: string): void;
+        public removeOnStartUp(namespace?: string): void;
         public getExports(): {
             [name: string]: any;
         };

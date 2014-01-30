@@ -763,10 +763,11 @@ var RIAPP;
         };
         Global.prototype._addHandler = function (name, fn, namespace, prepend) {
             var self = this;
-            if (name == 'load' && self._isReady) {
+            if ((name == 'load' && self._isReady) || (name == 'initialize' && self._isInitialized)) {
+                //when already is ready, immediately raise the event
                 setTimeout(function () {
                     fn.apply(self, [self, {}]);
-                }, 0); //when already is ready, immediately raise the event
+                }, 0);
                 return;
             }
             _super.prototype._addHandler.call(this, name, fn, namespace, prepend);
@@ -1006,10 +1007,7 @@ var RIAPP;
             this._addHandler('unload', fn, namespace, false);
         };
         Global.prototype.addOnInitialize = function (fn, namespace) {
-            if (this._isInitialized) {
-                fn.apply(this, [this, {}]);
-            } else
-                this._addHandler('initialize', fn, namespace, false);
+            this._addHandler('initialize', fn, namespace, false);
         };
         Global.prototype.addOnUnResolvedBinding = function (fn, namespace) {
             this.addHandler('unresolvedBind', fn, namespace);
@@ -16810,6 +16808,9 @@ var RIAPP;
                 function GridElView() {
                     _super.apply(this, arguments);
                 }
+                GridElView.prototype.toString = function () {
+                    return 'GridElView';
+                };
                 GridElView.prototype._init = function (options) {
                     _super.prototype._init.call(this, options);
                     this._dataSource = null;
@@ -16830,6 +16831,7 @@ var RIAPP;
                 GridElView.prototype._createGrid = function () {
                     this._grid = new DataGrid(this.app, this._el, this._dataSource, this._options);
                     this._bindGridEvents();
+                    this._onGridCreated(this._grid);
                 };
                 GridElView.prototype._bindGridEvents = function () {
                     if (!this._grid)
@@ -16851,6 +16853,7 @@ var RIAPP;
                         self.invokeGridEvent('row_state_changed', args);
                     }, this.uniqueID);
                     this._grid.addOnDestroyed(function (s, args) {
+                        self._onGridDestroyed(self._grid);
                         self._grid = null;
                         self.invokePropChanged('grid');
                         self.raisePropertyChanged('grid');
@@ -16862,8 +16865,9 @@ var RIAPP;
                         self._gridEventCommand.execute(self, data);
                     }
                 };
-                GridElView.prototype.toString = function () {
-                    return 'GridElView';
+                GridElView.prototype._onGridCreated = function (grid) {
+                };
+                GridElView.prototype._onGridDestroyed = function (grid) {
                 };
                 Object.defineProperty(GridElView.prototype, "dataSource", {
                     get: function () {
@@ -17978,6 +17982,10 @@ var RIAPP;
             configurable: true
         });
 
+        Application.prototype._getEventNames = function () {
+            var base_events = _super.prototype._getEventNames.call(this);
+            return ['startup'].concat(base_events);
+        };
         Application.prototype._cleanUpObjMaps = function () {
             var self = this;
             this._objMaps.forEach(function (objMap) {
@@ -18131,8 +18139,13 @@ var RIAPP;
                     return;
                 }
 
-                //first create element view
-                elView = self.getElementView(el);
+                try  {
+                    //first create element view
+                    elView = self.getElementView(el);
+                } catch (ex) {
+                    self._onError(ex, self);
+                    global._throwDummy(ex);
+                }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
                     elView.form.isInsideTemplate = true;
@@ -18186,8 +18199,13 @@ var RIAPP;
                     return;
                 }
 
-                //first create element view
-                elView = self.getElementView(el);
+                try  {
+                    //first create element view
+                    elView = self.getElementView(el);
+                } catch (ex) {
+                    self._onError(ex, self);
+                    global._throwDummy(ex);
+                }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
                     elView.form.isInsideTemplate = isInsideTemplate;
@@ -18232,6 +18250,12 @@ var RIAPP;
                 res = global._getObject(global, name2);
             }
             return res;
+        };
+        Application.prototype.addOnStartUp = function (fn, namespace) {
+            this.addHandler('startup', fn, namespace);
+        };
+        Application.prototype.removeOnStartUp = function (namespace) {
+            this.removeHandler('startup', namespace);
         };
         Application.prototype.getExports = function () {
             return this._exports;
@@ -18309,6 +18333,8 @@ var RIAPP;
             var res = RIAPP.global._getObject(this, name2);
             return res;
         };
+
+        //can override this method in derived classes
         Application.prototype.onStartUp = function () {
         };
 
@@ -18317,6 +18343,7 @@ var RIAPP;
             var self = this, fn_init = function () {
                 try  {
                     self.onStartUp();
+                    self.raiseEvent('startup', {});
                     if (!!fn_sandbox)
                         fn_sandbox.apply(self, [self]);
                     self._setUpBindings();

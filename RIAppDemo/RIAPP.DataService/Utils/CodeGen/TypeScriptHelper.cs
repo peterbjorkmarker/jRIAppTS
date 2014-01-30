@@ -161,7 +161,7 @@ namespace RIAPP.DataService.Utils
             sb.AppendLine("{");
             this._metadata.associations.ForEach((assoc) =>
             {
-                sb.AppendFormat("\tget{0}: {1};", assoc.name, "()=>MOD.db.Association");
+                sb.AppendFormat("\tget{0}: {1};", assoc.name, "()=> RIAPP.MOD.db.Association");
                 sb.AppendLine();
             });
             sb.AppendLine("}");
@@ -211,26 +211,26 @@ namespace RIAPP.DataService.Utils
                         });
                         if (methodInfo.methodResult)
                         {
-                            sbArgs.Append("\t}) => IPromise<");
+                            sbArgs.Append("\t}) => RIAPP.IPromise<");
                             sbArgs.Append(this._dotNet2TS.GetTSTypeName(methodInfo.methodInfo.ReturnType));
                             sbArgs.Append(">");
                         }
                         else
                         {
-                            sbArgs.Append("\t}) => IVoidPromise");
+                            sbArgs.Append("\t}) => RIAPP.IVoidPromise");
                         }
                     }
                     else
                     {
                         if (methodInfo.methodResult)
                         {
-                            sbArgs.Append("() => IPromise<");
+                            sbArgs.Append("() => RIAPP.IPromise<");
                             sbArgs.Append(this._dotNet2TS.GetTSTypeName(methodInfo.methodInfo.ReturnType));
                             sbArgs.Append(">");
                         }
                         else
                         {
-                            sbArgs.Append("() => IVoidPromise");
+                            sbArgs.Append("() => RIAPP.IVoidPromise");
                         }
                     }
 

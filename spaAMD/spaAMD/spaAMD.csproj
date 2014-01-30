@@ -17,19 +17,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="thirdparty\jquery.d.ts" />
-    <Content Include="jriapp.d.ts" />
     <Content Include="thirdparty\moment.d.ts" />
-    <TypeScriptCompile Include="user_modules\gridDemo.ts" />
+    <Content Include="jriapp.d.ts" />
+    <TypeScriptCompile Include="user_modules\spaDemoApp.ts" />
+    <TypeScriptCompile Include="user_modules\gridElView.ts" />
+    <TypeScriptCompile Include="user_modules\domainModel.ts" />
+    <TypeScriptCompile Include="user_modules\spaDemoViewModels.ts" />
     <TypeScriptCompile Include="user_modules\common.ts" />
-    <TypeScriptCompile Include="user_modules\header.ts" />
     <TypeScriptCompile Include="user_modules\autocomplete.ts" />
-    <TypeScriptCompile Include="user_modules\demoDB.ts" />
-    <TypeScriptCompile Include="user_modules\masterDetDemo.ts" />
-    <TypeScriptCompile Include="user_modules\manToManDemo.ts" />
-    <TypeScriptCompile Include="user_modules\bindingsDemo.ts" />
-    <TypeScriptCompile Include="user_modules\filesDemo.ts" />
-    <TypeScriptCompile Include="user_modules\folderBrowserSvc.ts" />
-    <TypeScriptCompile Include="user_modules\collectionDemo.ts" />
   </ItemGroup>
   <ItemGroup />
   <PropertyGroup>

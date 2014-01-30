@@ -17,10 +17,7 @@
 
 @section JSImport
 {
-    <script src="@Url.Content("~/Scripts/RIAppDemo/common.js",true)" type="text/javascript"></script>
-    <script src="@Url.Content("~/Scripts/RIAppDemo/demoDB.js",true)" type="text/javascript"></script>
-    <script src="@Url.Content("~/Scripts/RIAppDemo/autocomplete.js",true)" type="text/javascript"></script>
-    <script src="@Url.Content("~/Scripts/RIAppDemo/spaDemo.js",true)" type="text/javascript"></script>
+    <script data-main="@Url.Content("~/Scripts/RIAppDemo/SPA/SPAConfig.js",true)" type="text/javascript" src="@Url.Content("~/Scripts/require.js",true)"></script>
 }
 
 <style type="text/css">
@@ -120,14 +117,13 @@
 </style>
 
 <script type="text/javascript">
-    (function(ops){
-        ops.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
-        ops.service_url = '@Url.RouteUrl("Default",new {controller="RIAppDemoService", action=""})';
-        ops.permissionInfo =  @Html.Action("PermissionsInfo", "RIAppDemoService"); 
-        ops.spa_template1_url = '@Url.Action("SPADemoTemplate1", "Templates")';
-        ops.spa_template2_url = '@Url.Action("SPADemoTemplate2", "Templates")';
-        ops.spa_template3_url = '@Url.Action("SPADemoTemplate3", "Templates")';
-    })(RIAPP.SPADEMO.mainOptions);
+    var mainOptions= {};
+    mainOptions.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
+    mainOptions.service_url = '@Url.RouteUrl("Default",new {controller="RIAppDemoService", action=""})';
+    mainOptions.permissionInfo =  @Html.Action("PermissionsInfo", "RIAppDemoService"); 
+    mainOptions.spa_template1_url = '@Url.Action("SPADemoTemplate1", "Templates")';
+    mainOptions.spa_template2_url = '@Url.Action("SPADemoTemplate2", "Templates")';
+    mainOptions.spa_template3_url = '@Url.Action("SPADemoTemplate3", "Templates")';
 </script>
 
 <h2  style="display:inline-block;">@ViewBag.Title</h2><span class="space"></span><span>is based on new element view - <span style="color:blue;">dynacontent</span></span>
