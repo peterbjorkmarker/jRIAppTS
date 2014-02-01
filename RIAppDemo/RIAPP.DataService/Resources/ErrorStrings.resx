@@ -144,6 +144,9 @@
   <data name="ERR_CODEGEN_DISABLED" xml:space="preserve">
     <value>Method {0} is disabled on the {1}</value>
   </data>
+  <data name="ERR_DBSET_HAS_NO_PK" xml:space="preserve">
+    <value>DbSet {0} has no primary key fields</value>
+  </data>
   <data name="ERR_DB_DELETE_NOT_IMPLEMENTED" xml:space="preserve">
     <value>Entity: {0} delete data method is not implemented by {1}</value>
   </data>

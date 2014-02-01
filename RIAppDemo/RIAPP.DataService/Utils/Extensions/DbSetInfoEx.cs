@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using RIAPP.DataService.Resources;
 
 
 namespace RIAPP.DataService.Utils
@@ -156,7 +157,11 @@ namespace RIAPP.DataService.Utils
                 });
             }
             SetOrdinal(fieldInfos);
-        
+            var pkFields = dbSetInfo.GetPKFields();
+            if (pkFields.Length < 1)
+            {
+                throw new DomainServiceException(string.Format(ErrorStrings.ERR_DBSET_HAS_NO_PK, dbSetInfo.dbSetName));
+            }
             var fbn = dbSetInfo.GetFieldByNames();
             dbSetInfo.InitMethods(serviceType);
         }
