@@ -19,6 +19,8 @@
     <Content Include="thirdparty\jquery.d.ts" />
     <Content Include="thirdparty\moment.d.ts" />
     <Content Include="jriapp.d.ts" />
+    <Content Include="thirdparty\require.d.ts" />
+    <TypeScriptCompile Include="user_modules\SPAConfig.ts" />
     <TypeScriptCompile Include="user_modules\spaDemoApp.ts" />
     <TypeScriptCompile Include="user_modules\gridElView.ts" />
     <TypeScriptCompile Include="user_modules\domainModel.ts" />
