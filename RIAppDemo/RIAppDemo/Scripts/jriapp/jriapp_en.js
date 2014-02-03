@@ -1,7 +1,7 @@
-/// <reference path="jriapp_strings.d.ts"/>
+/// <reference path="..\jriapp_strings.d.ts"/>
 var RIAPP;
 (function (RIAPP) {
-    RIAPP.ERRS = {
+    var _ERRS = {
         ERR_APP_NEED_JQUERY: 'The project is dependent on JQuery',
         ERR_ASSERTION_FAILED: 'Assertion "{0}" was not satisfied',
         ERR_BINDING_CONTENT_NOT_FOUND: 'BindingContent is not found',
@@ -114,6 +114,9 @@ var RIAPP;
         txtField: 'Field'
     };
 
-    RIAPP.localizable = { PAGER: PAGER, VALIDATE: VALIDATE, TEXT: TEXT };
+    var _localizable = { PAGER: PAGER, VALIDATE: VALIDATE, TEXT: TEXT };
+
+    RIAPP.ERRS = _ERRS;
+    RIAPP.localizable = _localizable;
 })(RIAPP || (RIAPP = {}));
 //# sourceMappingURL=jriapp_en.js.map

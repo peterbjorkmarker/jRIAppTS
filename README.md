@@ -43,7 +43,11 @@ In my real world applications i use an ASP.NET MVC 4 bundling feature.
 You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
-<p>2014-02-03 Split jriappTS project into two projects. jriappTS and jriappTS_langs. The langs parts contains string values which are localizable. Updated demo project.</p>
+<p>2014-02-03 jriappTS project now contains the strings used in the framework in a separate file. It contains folder langs which can include a different file for each language.
+an example of script tags to include needed files:<br/>
+ <script src="/Scripts/jriapp/jriapp_en.js" type="text/javascript"></script><br/>
+ <script src="/Scripts/jriapp/jriapp.js" type="text/javascript"></script>
+</p>
 <p>2014-01-30 Code generation was updated. RIAppDemo project was updated. The SPADemo page now uses requireJS to load user modules.<br/>
 Added a <b>spaAMD</b> typescript project which contains user modules only for the SPADemo page (single page application demo).<br/>
 The demoTS typescript project contains user modules for all other demo pages.<br/>

@@ -1,6 +1,6 @@
-/// <reference path="jriapp_strings.d.ts"/>
+/// <reference path="..\jriapp_strings.d.ts"/>
 module RIAPP {
-     export var ERRS: IErrors = {
+     var _ERRS: IErrors = {
         ERR_APP_NEED_JQUERY: 'The project is dependent on JQuery',
         ERR_ASSERTION_FAILED: 'Assertion "{0}" was not satisfied',
         ERR_BINDING_CONTENT_NOT_FOUND: 'BindingContent is not found',
@@ -113,5 +113,8 @@ module RIAPP {
         txtField: 'Field'
     };
 
-    export var localizable: ILocaleText = { PAGER: PAGER, VALIDATE: VALIDATE, TEXT: TEXT };
+    var _localizable: ILocaleText = { PAGER: PAGER, VALIDATE: VALIDATE, TEXT: TEXT };
+
+    RIAPP.ERRS = _ERRS;
+    RIAPP.localizable = _localizable;
 }
