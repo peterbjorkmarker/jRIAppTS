@@ -1,4 +1,3 @@
-'use strict';
 module RIAPP {
     export class BaseObject {
         _isDestroyed: boolean;

@@ -192,6 +192,7 @@
     <Content Include="Scripts\jriapp\img\warning.png" />
     <Content Include="Scripts\jriapp\jriapp.css" />
     <Content Include="Scripts\jriapp\jriapp.js" />
+    <Content Include="Scripts\jriapp\jriapp_en.js" />
     <Content Include="Scripts\moment\moment.min.js" />
     <Content Include="Scripts\qtip\jquery.qtip.css" />
     <Content Include="Scripts\qtip\jquery.qtip.js" />

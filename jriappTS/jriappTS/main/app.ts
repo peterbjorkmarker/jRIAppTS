@@ -1,7 +1,7 @@
 /// <reference path="..\thirdparty\jquery.d.ts" />
 /// <reference path="..\thirdparty\moment.d.ts" />
-/// <reference path="app_en.ts"/>
-/// <reference path="common.ts"/>
+/// <reference path="..\jriapp_strings.d.ts"/>
+/// <reference path="baseutils.ts"/>
 /// <reference path="baseobj.ts"/>
 /// <reference path="globalobj.ts"/>
 /// <reference path="..\modules\consts.ts"/>

@@ -1,7 +1,5 @@
-define(["require", "exports", "spaDemoApp"], function(require, exports, SPADEMO) {
+﻿define(["require", "exports", "spaDemoApp"], function(require, exports, SPADEMO) {
     'use strict';
-
-    
 
     requirejs.config({
         baseUrl: '/Scripts/RIAppDemo/SPA',

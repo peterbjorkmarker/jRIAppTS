@@ -16,7 +16,6 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="main\app_en.ts" />
     <TypeScriptCompile Include="modules\converter.ts" />
     <TypeScriptCompile Include="modules\binding.ts" />
     <TypeScriptCompile Include="modules\parser.ts" />
@@ -40,7 +39,8 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="modules\datepicker.ts" />
-    <TypeScriptCompile Include="main\common.ts" />
+    <TypeScriptCompile Include="main\baseutils.ts" />
+    <TypeScriptCompile Include="jriapp_strings.d.ts" />
     <Content Include="thirdparty\moment.d.ts" />
     <TypeScriptCompile Include="modules\utils.ts" />
     <TypeScriptCompile Include="modules\consts.ts" />

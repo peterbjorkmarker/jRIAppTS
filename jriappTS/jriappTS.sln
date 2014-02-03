@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "jriappTS", "jriappTS\jriappTS.csproj", "{4BCCAAB0-F3B9-44FE-B237-ECE697EAA6BF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "jriappTS_langs", "jriappTS_langs\jriappTS_langs.csproj", "{81B18B7F-B6C2-4997-A123-4DD97C4F8070}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,10 @@ Global
 		{4BCCAAB0-F3B9-44FE-B237-ECE697EAA6BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4BCCAAB0-F3B9-44FE-B237-ECE697EAA6BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4BCCAAB0-F3B9-44FE-B237-ECE697EAA6BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81B18B7F-B6C2-4997-A123-4DD97C4F8070}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81B18B7F-B6C2-4997-A123-4DD97C4F8070}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81B18B7F-B6C2-4997-A123-4DD97C4F8070}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81B18B7F-B6C2-4997-A123-4DD97C4F8070}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,6 +1,6 @@
-'use strict';
+/// <reference path="jriapp_strings.d.ts"/>
 module RIAPP {
-    export var ERRS = {
+     export var ERRS: IErrors = {
         ERR_APP_NEED_JQUERY: 'The project is dependent on JQuery',
         ERR_ASSERTION_FAILED: 'Assertion "{0}" was not satisfied',
         ERR_BINDING_CONTENT_NOT_FOUND: 'BindingContent is not found',
@@ -80,70 +80,38 @@ module RIAPP {
         ERR_DATAVIEW_FILTER_INVALID: 'TDataView fn_filter option must be valid function which accepts entity and returns boolean value'
     }
 
-    export interface ILocaleText {
-        PAGER: {
-            firstText: string;
-            lastText: string;
-            previousText: string;
-            nextText: string;
-            pageInfo: string;
-            firstPageTip: string;
-            prevPageTip: string;
-            nextPageTip: string;
-            lastPageTip: string;
-            showingTip: string;
-            showTip: string;
-        };
-        VALIDATE: { errorInfo: string; errorField: string; };
-        TEXT: {
-            txtEdit: string;
-            txtAddNew: string;
-            txtDelete: string;
-            txtCancel: string;
-            txtOk: string;
-            txtRefresh: string;
-            txtAskDelete: string;
-            txtSubmitting: string;
-            txtSave: string;
-            txtClose: string;
-            txtField: string;
-        };
-    }
-    export var localizable:ILocaleText = (function () {
-        var locale:any = {};
-        locale.PAGER = {
-            firstText: '<<',
-            lastText: '>>',
-            previousText: '<',
-            nextText: '>',
-            pageInfo: 'Page {0} of {1}',
-            firstPageTip: 'to first page',
-            prevPageTip: 'back to page {0}',
-            nextPageTip: 'next to page {0}',
-            lastPageTip: 'last page',
-            showingTip: 'showing result {0} to {1} of {2}',
-            showTip: 'show result {0} to {1} of {2}'
-        };
+    var PAGER: IPagerText = {
+        firstText: '<<',
+        lastText: '>>',
+        previousText: '<',
+        nextText: '>',
+        pageInfo: 'Page {0} of {1}',
+        firstPageTip: 'to first page',
+        prevPageTip: 'back to page {0}',
+        nextPageTip: 'next to page {0}',
+        lastPageTip: 'last page',
+        showingTip: 'showing result {0} to {1} of {2}',
+        showTip: 'show result {0} to {1} of {2}'
+    };
 
-        locale.VALIDATE = {
-            errorInfo: 'Validation errors:',
-            errorField: 'field:'
-        };
+    var VALIDATE: IValidateText = {
+        errorInfo: 'Validation errors:',
+        errorField: 'field:'
+    };
 
-        locale.TEXT = {
-            txtEdit: 'Edit',
-            txtAddNew: 'Add new',
-            txtDelete: 'Delete',
-            txtCancel: 'Cancel',
-            txtOk: 'Ok',
-            txtRefresh: 'Refresh',
-            txtAskDelete: 'Are you sure, you want to delete row?',
-            txtSubmitting: 'Submitting data ...',
-            txtSave: 'Save',
-            txtClose: 'Close',
-            txtField: 'Field'
-        };
+    var TEXT: IText = {
+        txtEdit: 'Edit',
+        txtAddNew: 'Add new',
+        txtDelete: 'Delete',
+        txtCancel: 'Cancel',
+        txtOk: 'Ok',
+        txtRefresh: 'Refresh',
+        txtAskDelete: 'Are you sure, you want to delete row?',
+        txtSubmitting: 'Submitting data ...',
+        txtSave: 'Save',
+        txtClose: 'Close',
+        txtField: 'Field'
+    };
 
-        return locale;
-    })();
+    export var localizable: ILocaleText = { PAGER: PAGER, VALIDATE: VALIDATE, TEXT: TEXT };
 }
