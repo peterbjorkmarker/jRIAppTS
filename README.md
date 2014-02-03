@@ -45,7 +45,7 @@ You are welcome to use it in your applications.
 <b>Latest changes:</b>
 <p>2014-02-03 jriappTS project now contains the strings used in the framework in a separate file. It contains folder langs which can include a different file for each language.
 an example of script tags to include needed files:<br/>
-```
+```html
  <script src="/Scripts/jriapp/jriapp_en.js" type="text/javascript"></script>
  <script src="/Scripts/jriapp/jriapp.js" type="text/javascript"></script>
 ```
