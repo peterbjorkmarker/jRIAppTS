@@ -44,14 +44,14 @@
             function _gridCreated(grid: DataGrid) {
                 _created_grids[grid.uniqueID] = grid;
                 _gridsCount += 1;
-                if (_gridsCount > 0) {
+                if (_gridsCount == 1) {
                     _columnWidthInterval = setInterval(_checkGridWidth, 250);
                 }
             }
             function _gridDestroyed(grid: DataGrid) {
                 delete _created_grids[grid.uniqueID];
                 _gridsCount -= 1;
-                if (_gridsCount < 1) {
+                if (_gridsCount == 0) {
                     clearInterval(_columnWidthInterval);
                 }
             }
