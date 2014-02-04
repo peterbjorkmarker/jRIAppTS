@@ -1,12 +1,12 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 /// <reference path="common.ts"/>
 /// <reference path="header.ts"/>
 /// <reference path="demoDB.ts"/>
 module RIAPP
 {
-    'use strict';
     //data grid demo module
     export module GRIDDEMO {
+        'use strict';
         var global = RIAPP.global, utils = global.utils;
         import collMod = MOD.collection;
 

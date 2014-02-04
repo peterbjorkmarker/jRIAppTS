@@ -1,8 +1,9 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 
 module RIAPP
 {
     export module HEADER {
+        'use strict';
         var global = RIAPP.global, utils = global.utils;
         export var topPanel: string;
         export var contentPanel: string;

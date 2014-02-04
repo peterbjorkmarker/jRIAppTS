@@ -1,4 +1,4 @@
-module RIAPP {
+﻿module RIAPP {
     export module MOD {
         export module template {
             import constsMOD = MOD.consts;

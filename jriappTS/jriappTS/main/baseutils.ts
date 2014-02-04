@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 module RIAPP {
     export enum DEBUG_LEVEL {
         NONE= 0, NORMAL= 1, HIGH= 2

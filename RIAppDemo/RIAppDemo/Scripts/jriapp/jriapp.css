@@ -83,6 +83,7 @@ div.ria-table-header div.ria-ex-column
     display:inline-block;
     overflow:hidden;
     vertical-align:top;
+    outline: none;
 }
 
 table.ria-data-table
@@ -127,16 +128,6 @@ table.ria-data-table th
 	overflow:hidden;
 }
 
-div.ria-table-header div.extcol div.cell-div  
-{
-    background-color:transparent;
-    margin:0px;
-    border:none;
-    padding:0px;
-    overflow:hidden;
-    vertical-align:middle;
-    height:100%;
-}
 
 div.ria-table-header div.ria-ex-column div.selected
 {
@@ -164,7 +155,7 @@ div.ria-table-header div.ria-ex-column div.row-selector
 
 div.ria-table-header div.ria-ex-column div.data-column
 {
-    padding-left: 5px;
+    padding-left: 1em;
     text-align:left;
 }
 

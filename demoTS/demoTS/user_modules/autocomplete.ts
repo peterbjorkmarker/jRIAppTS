@@ -1,7 +1,8 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 module RIAPP
 {
     export module AUTOCOMPLETE {
+        'use strict';
         import constsMOD = RIAPP.MOD.consts;
         var global = RIAPP.global, utils = global.utils;
         

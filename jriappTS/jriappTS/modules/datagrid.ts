@@ -1,4 +1,4 @@
-module RIAPP {
+﻿module RIAPP {
     export module MOD {
         export module datagrid {
             import constsMOD = MOD.consts;
@@ -37,6 +37,31 @@ module RIAPP {
                 colSortable: 'sortable',
                 colSortAsc: 'sort-asc',
                 colSortDesc: 'sort-desc'
+            };
+
+            var _columnWidthInterval, _gridsCount: number = 0;
+            var _created_grids: { [id: string]: DataGrid; } = {};
+            function _gridCreated(grid: DataGrid) {
+                _created_grids[grid.uniqueID] = grid;
+                _gridsCount += 1;
+                if (_gridsCount > 0) {
+                    _columnWidthInterval = setInterval(_checkGridWidth, 250);
+                }
+            }
+            function _gridDestroyed(grid: DataGrid) {
+                delete _created_grids[grid.uniqueID];
+                _gridsCount -= 1;
+                if (_gridsCount < 1) {
+                    clearInterval(_columnWidthInterval);
+                }
+            }
+            function _checkGridWidth() {
+                utils.forEachProp(_created_grids, (id) => {
+                    var grid = _created_grids[id];
+                    if (grid._isDestroyCalled)
+                        return;
+                    grid._columnWidthChecker();
+                });
             };
 
             export class RowSelectContent extends contentMOD.BoolContent {
@@ -1070,8 +1095,8 @@ module RIAPP {
                 private _$headerDiv: JQuery;
                 private _$wrapDiv: JQuery;
                 private _$contaner: JQuery;
-                private _chkWidthInterval: number;
                 private _app: Application;
+                _columnWidthChecker: () => void;
 
                 constructor(app:Application, el: HTMLTableElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options: IGridOptions) {
                     super();
@@ -1090,6 +1115,7 @@ module RIAPP {
                             isHandleAddNew: false
                         }, options);
                     this._app = app;
+                    this._columnWidthChecker = () => { };
                     var $t = global.$(el);
                     this._tableEl = el;
                     this._$tableEl = $t;
@@ -1112,7 +1138,6 @@ module RIAPP {
                     this._editingRow = null;
                     this._isSorting = false;
                     this._dialog = null;
-                    this._chkWidthInterval = null;
                     this._$headerDiv = null;
                     this._$wrapDiv = null;
                     this._$contaner = null;
@@ -1124,6 +1149,7 @@ module RIAPP {
                     this._updateColsDim();
                     this._onDSCurrentChanged();
                     global._trackSelectable(this);
+                    _gridCreated(this);
                 }
                 _getEventNames() {
                     var base_events = super._getEventNames();
@@ -1312,13 +1338,13 @@ module RIAPP {
                                 if (self._isDestroyCalled)
                                     return;
                                 self._onPageChanged();
-                            }, 100);
+                            }, 0);
                         }
                         setTimeout(function () {
                             if (self._isDestroyCalled)
                                 return;
                             self._updateColsDim();
-                        }, 200);
+                        }, 0);
                     }
                     else {
                         self._isDSFilling = true;
@@ -1489,13 +1515,6 @@ module RIAPP {
                     headerDiv.width(width);
                     this._columns.forEach(function (col) {
                         col.$extcol.width(col.el.offsetWidth);
-                        var posArgs = {
-                            my: "left top",
-                            at: "left top",
-                            of: headerDiv,
-                            offset: "" + col.el.offsetLeft + " 0"
-                        };
-                        (<any>col.$extcol).position(posArgs);
                     });
                 }
                 _wrapTable() {
@@ -1523,21 +1542,20 @@ module RIAPP {
                     if (this._options.headerCss) {
                         headerDiv.addClass(this._options.headerCss);
                     }
-                    var tw = { w: $t.width() };
-                    this._chkWidthInterval = setInterval(function () {
-                        var test = { w: $t.width() };
-                        if (tw.w !== test.w) {
-                            tw.w = test.w;
+                    var tw = $t.width();
+                    self._columnWidthChecker = function () {
+                        var test = $t.width();
+                        if (tw !== test) {
+                            tw = test;
                             self._updateColsDim();
                         }
-                    }, 1000);
+                    };
                 }
                 _unWrapTable() {
                     var $t = this._$tableEl;
                     if (!this._$headerDiv)
                         return;
-                    clearInterval(this._chkWidthInterval);
-                    this._chkWidthInterval = null;
+                    this._columnWidthChecker = () => { };
                     this._$headerDiv.remove();
                     this._$headerDiv = null;
                     //remove wrapDiv
@@ -1832,6 +1850,7 @@ module RIAPP {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
+                    _gridDestroyed(this);
                     global._untrackSelectable(this);
                     if (!!this._details) {
                         this._details.destroy();

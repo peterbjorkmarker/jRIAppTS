@@ -1,12 +1,12 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 /// <reference path="common.ts"/>
 /// <reference path="autocomplete.ts"/>
 /// <reference path="demoDB.ts"/>
 module RIAPP
 {
-    'use strict';
     //master-details demo module
     export module MDETDEMO {
+        'use strict';
         var global = RIAPP.global, utils = global.utils;
 
         export class CustomerVM extends MOD.mvvm.BaseViewModel {

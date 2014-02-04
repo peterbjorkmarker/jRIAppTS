@@ -1,11 +1,11 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 /// <reference path="common.ts"/>
 /// <reference path="autocomplete.ts"/>
 /// <reference path="demoDB.ts"/>
 module RIAPP
 {
-    'use strict';
     export module MTMDEMO {
+        'use strict';
         var global = RIAPP.global, utils = global.utils;
          //private helper function (used inside this module only)
         function addTextQuery(query: MOD.db.DataQuery, fldName: string, val) {

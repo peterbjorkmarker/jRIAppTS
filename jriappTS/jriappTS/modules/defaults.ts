@@ -1,4 +1,4 @@
-module RIAPP {
+﻿module RIAPP {
     export module MOD {
         export module defaults {
             export class Defaults extends RIAPP.BaseObject{

@@ -1,4 +1,4 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 
 //using AMD to load user modules
 import COMMON = require("common");

@@ -1,4 +1,4 @@
-module RIAPP {
+﻿module RIAPP {
     export module MOD {
         export module pager {
             var utils: MOD.utils.Utils;

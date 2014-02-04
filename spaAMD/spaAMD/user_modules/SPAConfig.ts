@@ -1,4 +1,4 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 /// <reference path="..\thirdparty\require.d.ts"/>
 import SPADEMO = require("spaDemoApp");
 'use strict';

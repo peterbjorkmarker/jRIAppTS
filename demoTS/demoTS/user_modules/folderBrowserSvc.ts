@@ -1,9 +1,9 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 
 module RIAPP
 {
-    'use strict';
     export module FOLDERBROWSER_SVC {
+        'use strict';
         /*
             Generated from: /FolderBrowserService/CodeGen on 2014-01-06 14:31 at 14:31
             Don't make manual changes here, because they will be lost when this db interface will be regenerated!

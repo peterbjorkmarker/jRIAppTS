@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 var RIAPP;
 (function (RIAPP) {
     (function (DEBUG_LEVEL) {
@@ -4781,30 +4781,24 @@ var RIAPP;
                 };
                 TabsElView.prototype._createTabs = function () {
                     var $el = this.$el, self = this, tabOpts = {
-                        select: function (e, tab) {
-                            self.invokeTabsEvent("select", tab);
-                        },
-                        show: function (e, tab) {
-                            self.invokeTabsEvent("show", tab);
-                        },
-                        disable: function (e, tab) {
-                            self.invokeTabsEvent("disable", tab);
-                        },
-                        enable: function (e, tab) {
-                            self.invokeTabsEvent("enable", tab);
-                        },
-                        add: function (e, tab) {
-                            self.invokeTabsEvent("add", tab);
-                        },
-                        remove: function (e, tab) {
-                            self.invokeTabsEvent("remove", tab);
+                        activate: function (e, tab) {
+                            var active = $el.tabs("option", "active");
+                            self.invokeTabsEvent("select", { index: active, el: $el });
                         },
                         load: function (e, tab) {
-                            self.invokeTabsEvent("load", tab);
+                            var active = $el.tabs("option", "active");
+                            self.invokeTabsEvent("load", { index: active, el: $el });
                         }
                     };
-                    tabOpts = utils.extend(false, tabOpts, self._tabOpts);
+                    tabOpts = RIAPP.global.utils.extend(false, tabOpts, self._tabOpts);
                     $el.tabs(tabOpts);
+                    setTimeout(function () {
+                        if (self._isDestroyCalled)
+                            return;
+                        self.invokeTabsEvent("create", { el: $el });
+                        var active = $el.tabs("option", "active");
+                        self.invokeTabsEvent("select", { index: active, el: $el });
+                    }, 200);
                 };
                 TabsElView.prototype._destroyTabs = function () {
                     var $el = this.$el;
@@ -14466,6 +14460,32 @@ var RIAPP;
                 colSortDesc: 'sort-desc'
             };
 
+            var _columnWidthInterval, _gridsCount = 0;
+            var _created_grids = {};
+            function _gridCreated(grid) {
+                _created_grids[grid.uniqueID] = grid;
+                _gridsCount += 1;
+                if (_gridsCount > 0) {
+                    _columnWidthInterval = setInterval(_checkGridWidth, 250);
+                }
+            }
+            function _gridDestroyed(grid) {
+                delete _created_grids[grid.uniqueID];
+                _gridsCount -= 1;
+                if (_gridsCount < 1) {
+                    clearInterval(_columnWidthInterval);
+                }
+            }
+            function _checkGridWidth() {
+                utils.forEachProp(_created_grids, function (id) {
+                    var grid = _created_grids[id];
+                    if (grid._isDestroyCalled)
+                        return;
+                    grid._columnWidthChecker();
+                });
+            }
+            ;
+
             var RowSelectContent = (function (_super) {
                 __extends(RowSelectContent, _super);
                 function RowSelectContent() {
@@ -15730,6 +15750,8 @@ var RIAPP;
                         isHandleAddNew: false
                     }, options);
                     this._app = app;
+                    this._columnWidthChecker = function () {
+                    };
                     var $t = RIAPP.global.$(el);
                     this._tableEl = el;
                     this._$tableEl = $t;
@@ -15752,7 +15774,6 @@ var RIAPP;
                     this._editingRow = null;
                     this._isSorting = false;
                     this._dialog = null;
-                    this._chkWidthInterval = null;
                     this._$headerDiv = null;
                     this._$wrapDiv = null;
                     this._$contaner = null;
@@ -15765,6 +15786,7 @@ var RIAPP;
                     this._updateColsDim();
                     this._onDSCurrentChanged();
                     RIAPP.global._trackSelectable(this);
+                    _gridCreated(this);
                 }
                 DataGrid.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
@@ -15954,13 +15976,13 @@ var RIAPP;
                                 if (self._isDestroyCalled)
                                     return;
                                 self._onPageChanged();
-                            }, 100);
+                            }, 0);
                         }
                         setTimeout(function () {
                             if (self._isDestroyCalled)
                                 return;
                             self._updateColsDim();
-                        }, 200);
+                        }, 0);
                     } else {
                         self._isDSFilling = true;
                         if (!self._isSorting) {
@@ -16131,13 +16153,6 @@ var RIAPP;
                     headerDiv.width(width);
                     this._columns.forEach(function (col) {
                         col.$extcol.width(col.el.offsetWidth);
-                        var posArgs = {
-                            my: "left top",
-                            at: "left top",
-                            of: headerDiv,
-                            offset: "" + col.el.offsetLeft + " 0"
-                        };
-                        col.$extcol.position(posArgs);
                     });
                 };
                 DataGrid.prototype._wrapTable = function () {
@@ -16165,21 +16180,21 @@ var RIAPP;
                     if (this._options.headerCss) {
                         headerDiv.addClass(this._options.headerCss);
                     }
-                    var tw = { w: $t.width() };
-                    this._chkWidthInterval = setInterval(function () {
-                        var test = { w: $t.width() };
-                        if (tw.w !== test.w) {
-                            tw.w = test.w;
+                    var tw = $t.width();
+                    self._columnWidthChecker = function () {
+                        var test = $t.width();
+                        if (tw !== test) {
+                            tw = test;
                             self._updateColsDim();
                         }
-                    }, 1000);
+                    };
                 };
                 DataGrid.prototype._unWrapTable = function () {
                     var $t = this._$tableEl;
                     if (!this._$headerDiv)
                         return;
-                    clearInterval(this._chkWidthInterval);
-                    this._chkWidthInterval = null;
+                    this._columnWidthChecker = function () {
+                    };
                     this._$headerDiv.remove();
                     this._$headerDiv = null;
 
@@ -16474,6 +16489,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
+                    _gridDestroyed(this);
                     RIAPP.global._untrackSelectable(this);
                     if (!!this._details) {
                         this._details.destroy();

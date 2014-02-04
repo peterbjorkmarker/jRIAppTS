@@ -1,4 +1,4 @@
-module RIAPP {
+﻿module RIAPP {
     export var global: Global = null;
     export var css_riaTemplate = 'ria-template';
 

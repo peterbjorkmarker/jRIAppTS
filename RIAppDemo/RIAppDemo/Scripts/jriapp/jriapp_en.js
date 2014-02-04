@@ -1,4 +1,4 @@
-/// <reference path="..\jriapp_strings.d.ts"/>
+﻿/// <reference path="..\jriapp_strings.d.ts"/>
 var RIAPP;
 (function (RIAPP) {
     var _ERRS = {

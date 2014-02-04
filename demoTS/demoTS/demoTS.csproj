@@ -16,10 +16,10 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="jriapp_strings.d.ts" />
-    <Content Include="thirdparty\jquery.d.ts" />
-    <Content Include="jriapp.d.ts" />
-    <Content Include="thirdparty\moment.d.ts" />
+    <TypeScriptCompile Include="jriapp_strings.d.ts" />
+    <TypeScriptCompile Include="thirdparty\jquery.d.ts" />
+    <TypeScriptCompile Include="jriapp.d.ts" />
+    <TypeScriptCompile Include="thirdparty\moment.d.ts" />
     <TypeScriptCompile Include="user_modules\gridDemo.ts" />
     <TypeScriptCompile Include="user_modules\common.ts" />
     <TypeScriptCompile Include="user_modules\header.ts" />

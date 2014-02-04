@@ -1,10 +1,10 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 /// <reference path="common.ts"/>
 /// <reference path="demoDB.ts"/>
 module RIAPP
 {
-    'use strict';
     export module COLLDEMO {
+        'use strict';
         var global = RIAPP.global, utils = global.utils;
 
         export class RadioValueConverter extends MOD.converter.BaseConverter {

@@ -1,4 +1,4 @@
-module RIAPP {
+﻿module RIAPP {
     export module MOD {
         export module baseElView {
             import constsMOD = MOD.consts;
@@ -1383,30 +1383,24 @@ module RIAPP {
                 }
                 _createTabs() {
                     var $el = this.$el, self = this, tabOpts = {
-                        select: function (e, tab) {
-                            self.invokeTabsEvent("select", tab);
-                        },
-                        show: function (e, tab) {
-                            self.invokeTabsEvent("show", tab);
-                        },
-                        disable: function (e, tab) {
-                            self.invokeTabsEvent("disable", tab);
-                        },
-                        enable: function (e, tab) {
-                            self.invokeTabsEvent("enable", tab);
-                        },
-                        add: function (e, tab) {
-                            self.invokeTabsEvent("add", tab);
-                        },
-                        remove: function (e, tab) {
-                            self.invokeTabsEvent("remove", tab);
+                        activate: function (e, tab) {
+                            var active = (<any>$el).tabs("option", "active");
+                            self.invokeTabsEvent("select", { index: active, el: $el });
                         },
                         load: function (e, tab) {
-                            self.invokeTabsEvent("load", tab);
+                            var active = (<any>$el).tabs("option", "active");
+                            self.invokeTabsEvent("load", { index: active, el: $el });
                         }
                     };
-                    tabOpts = utils.extend(false, tabOpts, self._tabOpts);
+                    tabOpts = RIAPP.global.utils.extend(false, tabOpts, self._tabOpts);
                     (<any>$el).tabs(tabOpts);
+                    setTimeout(() => {
+                        if (self._isDestroyCalled)
+                            return;
+                        self.invokeTabsEvent("create", { el: $el });
+                        var active = (<any>$el).tabs("option", "active");
+                        self.invokeTabsEvent("select", { index: active, el: $el });
+                    },200);
                 }
                 _destroyTabs() {
                     var $el = this.$el;

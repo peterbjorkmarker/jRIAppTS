@@ -85,32 +85,32 @@ module RIAPP {
         lastText: '>>',
         previousText: '<',
         nextText: '>',
-        pageInfo: 'Page {0} of {1}',
-        firstPageTip: 'to first page',
-        prevPageTip: 'back to page {0}',
-        nextPageTip: 'next to page {0}',
-        lastPageTip: 'last page',
-        showingTip: 'showing result {0} to {1} of {2}',
-        showTip: 'show result {0} to {1} of {2}'
+        pageInfo: 'Страница {0} из {1}',
+        firstPageTip: 'на 1 страницу',
+        prevPageTip: 'назад на {0}',
+        nextPageTip: 'вперед на {0}',
+        lastPageTip: 'последняя страница',
+        showingTip: 'записи от {0} до {1} из {2}',
+        showTip: 'показать записи от {0} до {1} из {2}'
     };
 
     var VALIDATE: IValidateText = {
-        errorInfo: 'Validation errors:',
-        errorField: 'field:'
+        errorInfo: 'Ошибки:',
+        errorField: 'поле:'
     };
 
     var TEXT: IText = {
-        txtEdit: 'Edit',
-        txtAddNew: 'Add new',
-        txtDelete: 'Delete',
-        txtCancel: 'Cancel',
-        txtOk: 'Ok',
-        txtRefresh: 'Refresh',
-        txtAskDelete: 'Are you sure, you want to delete row?',
-        txtSubmitting: 'Submitting data ...',
-        txtSave: 'Save',
-        txtClose: 'Close',
-        txtField: 'Field'
+        txtEdit: 'Редактировать',
+        txtAddNew: 'Добавить',
+        txtDelete: 'Удалить',
+        txtCancel: 'Отмена',
+        txtOk: 'ОК',
+        txtRefresh: 'Обновить',
+        txtAskDelete: 'Вы уверены, что хотите удалить запись?',
+        txtSubmitting: 'Сохранение данных ...',
+        txtSave: 'Сохранить',
+        txtClose: 'Закрыть',
+        txtField: 'Поле'
     };
 
     var _localizable: ILocaleText = { PAGER: PAGER, VALIDATE: VALIDATE, TEXT: TEXT };

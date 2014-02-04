@@ -1,9 +1,9 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 /// <reference path="common.ts"/>
 module RIAPP
 {
-    'use strict';
     export module BINDDEMO {
+        'use strict';
         var global = RIAPP.global, utils = global.utils;
 
         export class UppercaseConverter extends MOD.converter.BaseConverter {

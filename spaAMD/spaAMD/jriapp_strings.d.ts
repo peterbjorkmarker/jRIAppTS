@@ -1,4 +1,4 @@
-declare module RIAPP {
+﻿declare module RIAPP {
     export interface IErrors {
         ERR_APP_NEED_JQUERY: string;
         ERR_ASSERTION_FAILED: string;

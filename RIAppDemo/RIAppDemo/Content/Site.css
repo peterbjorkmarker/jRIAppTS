@@ -1,19 +1,30 @@
 body
 {
     line-height:normal;
-    font-size: 14px;
+    font-size: 10.5pt;
 }
 
-label, input, button, select, textarea {
-    line-height:normal;
-    font-size: 14px;
+select, textarea, input[type="text"], input[type="password"], input[type="datetime"],
+input[type="datetime-local"], input[type="date"], input[type="month"],
+input[type="time"], input[type="week"], input[type="number"], 
+input[type="email"], input[type="url"], input[type="search"], 
+input[type="tel"], input[type="color"], .uneditable-input {
+    font-size: 10.5pt !important;
+    line-height: normal !important;
+    margin-bottom: 3px !important;
+    height: inherit !important;
 }
 
-select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], .uneditable-input {
-    font-size: 14px;
-    height:16px;
-    line-height: normal;
-    margin-bottom: 2px;
+.btn {
+    border-radius: 4px !important;
+    font-size: 10pt !important;
+    padding: 4px 10px !important;
+}
+
+.btn-small {
+    border-radius: 4px;
+    font-size: 10pt;
+    padding: 4px 10px;
 }
 
 img {

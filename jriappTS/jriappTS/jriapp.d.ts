@@ -1,4 +1,4 @@
-/// <reference path="thirdparty/jquery.d.ts" />
+﻿/// <reference path="thirdparty/jquery.d.ts" />
 /// <reference path="thirdparty/moment.d.ts" />
 /// <reference path="jriapp_strings.d.ts" />
 declare module RIAPP {
@@ -2955,8 +2955,8 @@ declare module RIAPP {
                 private _$headerDiv;
                 private _$wrapDiv;
                 private _$contaner;
-                private _chkWidthInterval;
                 private _app;
+                public _columnWidthChecker: () => void;
                 constructor(app: RIAPP.Application, el: HTMLTableElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IGridOptions);
                 public _getEventNames(): string[];
                 public addOnRowExpanded(fn: (sender: DataGrid, args: {

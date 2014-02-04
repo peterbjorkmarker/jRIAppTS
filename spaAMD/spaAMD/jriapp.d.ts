@@ -1,4 +1,4 @@
-/// <reference path="thirdparty/jquery.d.ts" />
+﻿/// <reference path="thirdparty/jquery.d.ts" />
 /// <reference path="thirdparty/moment.d.ts" />
 /// <reference path="jriapp_strings.d.ts" />
 declare module RIAPP {

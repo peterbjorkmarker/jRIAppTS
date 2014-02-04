@@ -1,4 +1,4 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 
 module RIAPP
 {

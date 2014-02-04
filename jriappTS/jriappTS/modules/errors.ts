@@ -1,4 +1,4 @@
-module RIAPP {
+﻿module RIAPP {
     export module MOD {
         export module errors {
             export class BaseError extends RIAPP.BaseObject{

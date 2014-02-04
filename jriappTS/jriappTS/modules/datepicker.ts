@@ -1,4 +1,4 @@
-module RIAPP {
+﻿module RIAPP {
     export module MOD {
         export module datepicker {
             export class Datepicker extends RIAPP.BaseObject implements utils.IDatepicker{

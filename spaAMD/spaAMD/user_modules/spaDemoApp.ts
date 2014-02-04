@@ -1,4 +1,4 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 'use strict';
 //using static import for CORE jriapp modules (they are inside jriapp.js file)
 import MOD = RIAPP.MOD;

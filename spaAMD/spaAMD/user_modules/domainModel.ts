@@ -1,4 +1,4 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 'use strict';
 /*
     Generated from: /RIAppDemoService/CodeGen on 2014-01-30 11:41 at 11:41

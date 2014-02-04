@@ -43,6 +43,9 @@ In my real world applications i use an ASP.NET MVC 4 bundling feature.
 You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
+<p>2014-02-04 The demo updated to work with jquery 1.10.2, qtip was updated to the version 2. All typescript files were converted to utf-8.
+DataGrid was updated. TabsElView was updated. jriapp.css file was updated.
+</p>
 <p>2014-02-03 jriappTS project now contains the strings used in the framework in a separate file. It contains a folder langs, which can include a different file for each language.
 </p>
 <p>2014-01-30 Code generation was updated. RIAppDemo project was updated. The SPADemo page now uses requireJS to load user modules.<br/>

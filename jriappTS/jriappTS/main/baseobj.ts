@@ -1,4 +1,4 @@
-module RIAPP {
+﻿module RIAPP {
     export class BaseObject {
         _isDestroyed: boolean;
         _isDestroyCalled: boolean;
