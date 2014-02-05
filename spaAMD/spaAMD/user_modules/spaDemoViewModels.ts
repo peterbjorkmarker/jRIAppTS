@@ -1003,7 +1003,7 @@ export class CustomerAddressVM extends MOD.mvvm.BaseViewModel {
     get _custAdressView() { return this._customerVM.custAdressView; }
 }
 
-export class AddAddressVM extends MOD.mvvm.BaseViewModel implements MOD.utils.ISubmittable {
+export class AddAddressVM extends MOD.mvvm.BaseViewModel implements RIAPP.ISubmittable {
     _customerAddressVM: CustomerAddressVM;
     _addressInfosDb: DEMODB.AddressInfoDb;
     _currentCustomer: DEMODB.Customer;

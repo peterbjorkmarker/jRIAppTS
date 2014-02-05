@@ -1,4 +1,4 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 'use strict';
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -292,7 +292,7 @@ define(["require", "exports"], function(require, exports) {
                         self.title = "ACCESS DENIED";
                     else if (self.error instanceof MOD.db.ConcurrencyError)
                         self.title = "CONCURRENCY ERROR";
-                    else if (self.error instanceof MOD.binding.ValidationError)
+                    else if (self.error instanceof MOD.errors.ValidationError)
                         self.title = "VALIDATION ERROR";
                     else if (self.error instanceof MOD.db.SvcValidationError)
                         self.title = "VALIDATION ERROR";

@@ -1,4 +1,4 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -8,6 +8,7 @@ var __extends = this.__extends || function (d, b) {
 var RIAPP;
 (function (RIAPP) {
     (function (COMMON) {
+        'use strict';
         var global = RIAPP.global, utils = global.utils;
 
         var NotConverter = (function (_super) {
@@ -267,7 +268,7 @@ var RIAPP;
                             self.title = "ACCESS DENIED";
                         else if (self.error instanceof RIAPP.MOD.db.ConcurrencyError)
                             self.title = "CONCURRENCY ERROR";
-                        else if (self.error instanceof RIAPP.MOD.binding.ValidationError)
+                        else if (self.error instanceof RIAPP.MOD.errors.ValidationError)
                             self.title = "VALIDATION ERROR";
                         else if (self.error instanceof RIAPP.MOD.db.SvcValidationError)
                             self.title = "VALIDATION ERROR";

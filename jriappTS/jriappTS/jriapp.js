@@ -629,7 +629,7 @@ var RIAPP;
             name = 'datepicker';
             isOK = this.isModuleLoaded(name);
             if (isOK && !!self._defaults) {
-                self._defaults.datepicker = new RIAPP.MOD.datepicker.Datepicker();
+                self._defaults.datepicker = self.getType('IDatepicker');
             }
             if (!isOK)
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
@@ -1050,7 +1050,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.2.4.0';
+        Global.vesion = '2.2.5.0';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -1111,7 +1111,7 @@ var RIAPP;
                 KEYS[KEYS["del"] = 127] = "del";
             })(consts.KEYS || (consts.KEYS = {}));
             var KEYS = consts.KEYS;
-            consts.ELVIEW_NM = { DATAFORM: 'dataform', DYNACONT: 'dynacontent' };
+            consts.ELVIEW_NM = { DATAFORM: 'dataform' };
             consts.LOADER_GIF = { SMALL: 'loader2.gif', NORMAL: 'loader.gif' };
 
             RIAPP.global.onModuleLoaded('consts', consts);
@@ -1224,7 +1224,7 @@ var RIAPP;
                     return !!obj && obj instanceof RIAPP.MOD.baseElView.BaseElView;
                 };
                 Checks.isTemplateElView = function (obj) {
-                    return !!obj && obj instanceof RIAPP.MOD.baseElView.TemplateElView;
+                    return !!obj && obj instanceof RIAPP.MOD.template.TemplateElView;
                 };
                 Checks.isEditable = function (obj) {
                     return !!obj && !!obj.beginEdit && !!obj.endEdit && !!obj.cancelEdit && RIAPP.global.utils.hasProp(obj, 'isEditing');
@@ -2209,7 +2209,6 @@ var RIAPP;
                 return BaseError;
             })(RIAPP.BaseObject);
             errors.BaseError = BaseError;
-            ;
 
             var DummyError = (function (_super) {
                 __extends(DummyError, _super);
@@ -2224,7 +2223,41 @@ var RIAPP;
                 return DummyError;
             })(BaseError);
             errors.DummyError = DummyError;
-            ;
+
+            var ValidationError = (function (_super) {
+                __extends(ValidationError, _super);
+                function ValidationError(errorInfo, item) {
+                    var message = RIAPP.ERRS.ERR_VALIDATION + '\r\n', i = 0;
+                    errorInfo.forEach(function (err) {
+                        if (i > 0)
+                            message = message + '\r\n';
+                        if (!!err.fieldName)
+                            message = message + ' ' + RIAPP.localizable.TEXT.txtField + ': ' + err.fieldName + ' -> ' + err.errors.join(', ');
+                        else
+                            message = message + err.errors.join(', ');
+                        i += 1;
+                    });
+                    _super.call(this, message);
+                    this._errors = errorInfo;
+                    this._item = item;
+                }
+                Object.defineProperty(ValidationError.prototype, "item", {
+                    get: function () {
+                        return this._item;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(ValidationError.prototype, "errors", {
+                    get: function () {
+                        return this._errors;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return ValidationError;
+            })(BaseError);
+            errors.ValidationError = ValidationError;
 
             RIAPP.global.onModuleLoaded('errors', errors);
         })(MOD.errors || (MOD.errors = {}));
@@ -2261,14 +2294,20 @@ var RIAPP;
                 DateConverter.prototype.convertToSource = function (val, param, dataContext) {
                     if (!val)
                         return null;
-                    var datepicker = RIAPP.global.defaults.datepicker;
-                    return datepicker.parseDate(val);
+                    var defaults = RIAPP.global.defaults, datepicker = defaults.datepicker;
+                    if (!!datepicker)
+                        return datepicker.parseDate(val);
+                    else
+                        return dateTimeConverter.convertToSource(val, defaults.dateFormat, dataContext);
                 };
                 DateConverter.prototype.convertToTarget = function (val, param, dataContext) {
                     if (RIAPP.global.utils.check.isNt(val))
                         return '';
-                    var datepicker = RIAPP.global.defaults.datepicker;
-                    return datepicker.formatDate(val);
+                    var defaults = RIAPP.global.defaults, datepicker = defaults.datepicker;
+                    if (!!datepicker)
+                        return datepicker.formatDate(val);
+                    else
+                        return dateTimeConverter.convertToTarget(val, defaults.dateFormat, dataContext);
                 };
                 DateConverter.prototype.toString = function () {
                     return 'DateConverter';
@@ -2468,6 +2507,8 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (defaults) {
+            var utilsMOD = RIAPP.MOD.utils;
+
             var Defaults = (function (_super) {
                 __extends(Defaults, _super);
                 function Defaults() {
@@ -2889,103 +2930,6 @@ var RIAPP;
 var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
-        (function (datepicker) {
-            var Datepicker = (function (_super) {
-                __extends(Datepicker, _super);
-                function Datepicker() {
-                    _super.call(this);
-                    this._dateFormat = null;
-                    this._datepickerRegion = '';
-                    var $ = RIAPP.global.$;
-                    if (!$.datepicker) {
-                        throw new Error(RIAPP.ERRS.ERR_JQUERY_DATEPICKER_NOTFOUND);
-                    }
-                    this.dateFormat = 'dd.mm.yy';
-                }
-                Datepicker.prototype.toString = function () {
-                    return 'Datepicker';
-                };
-                Datepicker.prototype.attachTo = function ($el, options) {
-                    if (!!options)
-                        $el.datepicker(options);
-                    else
-                        $el.datepicker();
-                };
-                Datepicker.prototype.detachFrom = function ($el) {
-                    RIAPP.global.utils.destroyJQueryPlugin($el, 'datepicker');
-                };
-                Datepicker.prototype.parseDate = function (str) {
-                    return this.datePickerFn.parseDate(this.dateFormat, str);
-                };
-                Datepicker.prototype.formatDate = function (date) {
-                    return this.datePickerFn.formatDate(this.dateFormat, date);
-                };
-
-                Object.defineProperty(Datepicker.prototype, "dateFormat", {
-                    //uses jQuery datepicker format
-                    get: function () {
-                        if (!this._dateFormat) {
-                            var regional = this.datePickerFn.regional[this._datepickerRegion];
-                            return regional.dateFormat;
-                        } else
-                            return this._dateFormat;
-                    },
-                    set: function (v) {
-                        if (this.dateFormat !== v) {
-                            this._dateFormat = v;
-                            var regional = this.datePickerFn.regional[this._datepickerRegion];
-                            if (!!this._dateFormat) {
-                                regional.dateFormat = this._dateFormat;
-                                this.datePickerFn.setDefaults(regional);
-                            }
-                            this.raisePropertyChanged('dateFormat');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Datepicker.prototype, "datepickerRegion", {
-                    get: function () {
-                        return this._datepickerRegion;
-                    },
-                    set: function (v) {
-                        if (!v)
-                            v = "";
-                        var oldDateFormat = this.dateFormat;
-                        if (this._datepickerRegion !== v) {
-                            var regional = this.datePickerFn.regional[v];
-                            if (!!regional) {
-                                this._datepickerRegion = v;
-                                regional.dateFormat = oldDateFormat;
-                                this.datePickerFn.setDefaults(regional);
-                                this.raisePropertyChanged("datepickerRegion");
-                            }
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Datepicker.prototype, "datePickerFn", {
-                    get: function () {
-                        var $ = RIAPP.global.$;
-                        return $.datepicker;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return Datepicker;
-            })(RIAPP.BaseObject);
-            datepicker.Datepicker = Datepicker;
-
-            RIAPP.global.onModuleLoaded('datepicker', RIAPP.MOD.defaults);
-        })(MOD.datepicker || (MOD.datepicker = {}));
-        var datepicker = MOD.datepicker;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
-})(RIAPP || (RIAPP = {}));
-var RIAPP;
-(function (RIAPP) {
-    (function (MOD) {
         (function (mvvm) {
             var Command = (function (_super) {
                 __extends(Command, _super);
@@ -3095,6 +3039,7 @@ var RIAPP;
     (function (MOD) {
         (function (baseElView) {
             var constsMOD = RIAPP.MOD.consts;
+            var mvvmMOD = RIAPP.MOD.mvvm;
 
             //local variables for optimization
             var ERRTEXT = RIAPP.localizable.VALIDATE, utils;
@@ -3108,7 +3053,7 @@ var RIAPP;
                     _super.call(this, fn_action, thisObj, fn_canExecute);
                 }
                 return PropChangedCommand;
-            })(RIAPP.MOD.mvvm.Command);
+            })(mvvmMOD.Command);
             baseElView.PropChangedCommand = PropChangedCommand;
 
             baseElView.css = {
@@ -3293,7 +3238,7 @@ var RIAPP;
                 });
                 Object.defineProperty(BaseElView.prototype, "dataNameAttr", {
                     get: function () {
-                        return this._el.getAttribute(RIAPP.MOD.consts.DATA_ATTR.DATA_NAME);
+                        return this._el.getAttribute(constsMOD.DATA_ATTR.DATA_NAME);
                     },
                     enumerable: true,
                     configurable: true
@@ -3496,81 +3441,6 @@ var RIAPP;
             baseElView.CommandElView = CommandElView;
             ;
 
-            //typed parameters
-            var TemplateCommand = (function (_super) {
-                __extends(TemplateCommand, _super);
-                function TemplateCommand(fn_action, thisObj, fn_canExecute) {
-                    _super.call(this, fn_action, thisObj, fn_canExecute);
-                }
-                return TemplateCommand;
-            })(RIAPP.MOD.mvvm.Command);
-            baseElView.TemplateCommand = TemplateCommand;
-
-            var TemplateElView = (function (_super) {
-                __extends(TemplateElView, _super);
-                function TemplateElView(app, el, options) {
-                    this._template = null;
-                    this._isEnabled = true;
-                    _super.call(this, app, el, options);
-                }
-                TemplateElView.prototype.templateLoaded = function (template) {
-                    var self = this, p = self._commandParam;
-                    try  {
-                        self._template = template;
-                        self._template.isDisabled = !self._isEnabled;
-                        self._commandParam = { template: template, isLoaded: true };
-                        self.invokeCommand();
-                        self._commandParam = p;
-                        this.raisePropertyChanged('template');
-                    } catch (ex) {
-                        this._onError(ex, this);
-                        RIAPP.global._throwDummy(ex);
-                    }
-                };
-                TemplateElView.prototype.templateUnloading = function (template) {
-                    var self = this, p = self._commandParam;
-                    try  {
-                        self._commandParam = { template: template, isLoaded: false };
-                        self.invokeCommand();
-                    } catch (ex) {
-                        this._onError(ex, this);
-                    } finally {
-                        self._commandParam = p;
-                        self._template = null;
-                    }
-                    this.raisePropertyChanged('template');
-                };
-                TemplateElView.prototype.toString = function () {
-                    return 'TemplateElView';
-                };
-                Object.defineProperty(TemplateElView.prototype, "isEnabled", {
-                    get: function () {
-                        return this._isEnabled;
-                    },
-                    set: function (v) {
-                        if (this._isEnabled !== v) {
-                            this._isEnabled = v;
-                            if (!!this._template) {
-                                this._template.isDisabled = !this._isEnabled;
-                            }
-                            this.raisePropertyChanged('isEnabled');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(TemplateElView.prototype, "template", {
-                    get: function () {
-                        return this._template;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return TemplateElView;
-            })(CommandElView);
-            baseElView.TemplateElView = TemplateElView;
-            ;
-
             var BusyElView = (function (_super) {
                 __extends(BusyElView, _super);
                 function BusyElView(app, el, options) {
@@ -3582,7 +3452,7 @@ var RIAPP;
                     if (!!options.img)
                         img = options.img;
                     else
-                        img = RIAPP.MOD.consts.LOADER_GIF.NORMAL;
+                        img = constsMOD.LOADER_GIF.NORMAL;
                     this._delay = 400;
                     this._timeOut = null;
                     if (!utils.check.isNt(options.delay))
@@ -3664,104 +3534,6 @@ var RIAPP;
                 return BusyElView;
             })(BaseElView);
             baseElView.BusyElView = BusyElView;
-
-            var DynaContentElView = (function (_super) {
-                __extends(DynaContentElView, _super);
-                function DynaContentElView(app, el, options) {
-                    _super.call(this, app, el, options);
-                    this._dataContext = null;
-                    this._template = null;
-                }
-                DynaContentElView.prototype._templateChanged = function () {
-                    if (!this._template) {
-                        this.raisePropertyChanged('templateID');
-                        this.raisePropertyChanged('template');
-                        return;
-                    }
-                    this.$el.empty().append(this._template.el);
-                    this.raisePropertyChanged('templateID');
-                    this.raisePropertyChanged('template');
-                };
-                DynaContentElView.prototype.updateTemplate = function (name) {
-                    var self = this;
-                    try  {
-                        if (!name && !!this._template) {
-                            this._template.destroy();
-                            this._template = null;
-                            self._templateChanged();
-                            return;
-                        }
-                    } catch (ex) {
-                        this._onError(ex, this);
-                        RIAPP.global._throwDummy(ex);
-                    }
-
-                    try  {
-                        if (!this._template) {
-                            this._template = new RIAPP.MOD.template.Template(this.app, name);
-                            this._template.dataContext = this._dataContext;
-                            this._template.addOnPropertyChange('templateID', function (s, a) {
-                                self._templateChanged();
-                            }, this._objId);
-                            self._templateChanged();
-                            return;
-                        }
-
-                        this._template.templateID = name;
-                    } catch (ex) {
-                        this._onError(ex, this);
-                        RIAPP.global._throwDummy(ex);
-                    }
-                };
-                DynaContentElView.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._template) {
-                        this._template.destroy();
-                        this._template = null;
-                    }
-                    this._dataContext = null;
-                    _super.prototype.destroy.call(this);
-                };
-                Object.defineProperty(DynaContentElView.prototype, "templateID", {
-                    get: function () {
-                        if (!this._template)
-                            return null;
-                        return this._template.templateID;
-                    },
-                    set: function (v) {
-                        this.updateTemplate(v);
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DynaContentElView.prototype, "template", {
-                    get: function () {
-                        return this._template;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DynaContentElView.prototype, "dataContext", {
-                    get: function () {
-                        return this._dataContext;
-                    },
-                    set: function (v) {
-                        if (this._dataContext !== v) {
-                            this._dataContext = v;
-                            if (!!this._template) {
-                                this._template.dataContext = this._dataContext;
-                            }
-                            this.raisePropertyChanged('dataContext');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DynaContentElView;
-            })(BaseElView);
-            baseElView.DynaContentElView = DynaContentElView;
 
             var CheckBoxElView = (function (_super) {
                 __extends(CheckBoxElView, _super);
@@ -4768,109 +4540,7 @@ var RIAPP;
             })(BaseElView);
             baseElView.ImgElView = ImgElView;
 
-            var TabsElView = (function (_super) {
-                __extends(TabsElView, _super);
-                function TabsElView() {
-                    _super.apply(this, arguments);
-                }
-                TabsElView.prototype._init = function (options) {
-                    _super.prototype._init.call(this, options);
-                    this._tabsEventCommand = null;
-                    this._tabOpts = options;
-                    this._createTabs();
-                };
-                TabsElView.prototype._createTabs = function () {
-                    var $el = this.$el, self = this, tabOpts = {
-                        activate: function (e, tab) {
-                            var active = $el.tabs("option", "active");
-                            self.invokeTabsEvent("select", { index: active, el: $el });
-                        },
-                        load: function (e, tab) {
-                            var active = $el.tabs("option", "active");
-                            self.invokeTabsEvent("load", { index: active, el: $el });
-                        }
-                    };
-                    tabOpts = RIAPP.global.utils.extend(false, tabOpts, self._tabOpts);
-                    $el.tabs(tabOpts);
-                    setTimeout(function () {
-                        if (self._isDestroyCalled)
-                            return;
-                        self.invokeTabsEvent("create", { el: $el });
-                        var active = $el.tabs("option", "active");
-                        self.invokeTabsEvent("select", { index: active, el: $el });
-                    }, 200);
-                };
-                TabsElView.prototype._destroyTabs = function () {
-                    var $el = this.$el;
-                    utils.destroyJQueryPlugin($el, 'tabs');
-                };
-                TabsElView.prototype.invokeTabsEvent = function (eventName, args) {
-                    var self = this, data = { eventName: eventName, args: args };
-                    if (!!self._tabsEventCommand) {
-                        self._tabsEventCommand.execute(self, data);
-                    }
-                };
-                TabsElView.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    this._tabsEventCommand = null;
-                    this._destroyTabs();
-                    _super.prototype.destroy.call(this);
-                };
-                TabsElView.prototype.toString = function () {
-                    return 'TabsElView';
-                };
-                Object.defineProperty(TabsElView.prototype, "tabsEventCommand", {
-                    get: function () {
-                        return this._tabsEventCommand;
-                    },
-                    set: function (v) {
-                        var old = this._tabsEventCommand;
-                        if (v !== old) {
-                            if (!!old) {
-                                this._destroyTabs();
-                            }
-                            this._tabsEventCommand = v;
-                            if (!!this._tabsEventCommand)
-                                this._createTabs();
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return TabsElView;
-            })(BaseElView);
-            baseElView.TabsElView = TabsElView;
-
-            var DatePickerElView = (function (_super) {
-                __extends(DatePickerElView, _super);
-                function DatePickerElView() {
-                    _super.apply(this, arguments);
-                }
-                DatePickerElView.prototype._init = function (options) {
-                    _super.prototype._init.call(this, options);
-                    var $el = this.$el;
-                    RIAPP.global.defaults.datepicker.attachTo($el, options.datepicker);
-                };
-                DatePickerElView.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    var $el = this.$el;
-                    RIAPP.global.defaults.datepicker.detachFrom($el);
-                    _super.prototype.destroy.call(this);
-                };
-                DatePickerElView.prototype.toString = function () {
-                    return 'DatePickerElView';
-                };
-                return DatePickerElView;
-            })(TextBoxElView);
-            baseElView.DatePickerElView = DatePickerElView;
-
-            RIAPP.global.registerElView('template', TemplateElView);
             RIAPP.global.registerElView('busy_indicator', BusyElView);
-            RIAPP.global.registerElView(constsMOD.ELVIEW_NM.DYNACONT, DynaContentElView);
             RIAPP.global.registerElView('input:checkbox', CheckBoxElView);
             RIAPP.global.registerElView('threeState', CheckBoxThreeStateElView);
             RIAPP.global.registerElView('input:text', TextBoxElView);
@@ -4888,8 +4558,6 @@ var RIAPP;
             RIAPP.global.registerElView('section', BlockElView);
             RIAPP.global.registerElView('block', BlockElView);
             RIAPP.global.registerElView('img', ImgElView);
-            RIAPP.global.registerElView('tabs', TabsElView);
-            RIAPP.global.registerElView('datepicker', DatePickerElView);
 
             //signal to the global object that the module is loaded
             RIAPP.global.onModuleLoaded('baseElView', baseElView);
@@ -4902,6 +4570,9 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (binding) {
+            var converterMOD = RIAPP.MOD.converter;
+            var elviewMOD = RIAPP.MOD.baseElView;
+
             (function (BINDING_MODE) {
                 BINDING_MODE[BINDING_MODE["OneTime"] = 0] = "OneTime";
                 BINDING_MODE[BINDING_MODE["OneWay"] = 1] = "OneWay";
@@ -4925,41 +4596,6 @@ var RIAPP;
                 return !!tmp && utils.check.isFunction(tmp.getIErrorNotification);
             }
             binding._checkIsErrorNotification = _checkIsErrorNotification;
-
-            var ValidationError = (function (_super) {
-                __extends(ValidationError, _super);
-                function ValidationError(errorInfo, item) {
-                    var message = RIAPP.ERRS.ERR_VALIDATION + '\r\n', i = 0;
-                    errorInfo.forEach(function (err) {
-                        if (i > 0)
-                            message = message + '\r\n';
-                        if (!!err.fieldName)
-                            message = message + ' ' + RIAPP.localizable.TEXT.txtField + ': ' + err.fieldName + ' -> ' + err.errors.join(', ');
-                        else
-                            message = message + err.errors.join(', ');
-                        i += 1;
-                    });
-                    _super.call(this, message);
-                    this._errors = errorInfo;
-                    this._item = item;
-                }
-                Object.defineProperty(ValidationError.prototype, "item", {
-                    get: function () {
-                        return this._item;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ValidationError.prototype, "errors", {
-                    get: function () {
-                        return this._errors;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return ValidationError;
-            })(RIAPP.MOD.errors.BaseError);
-            binding.ValidationError = ValidationError;
 
             var Binding = (function (_super) {
                 __extends(Binding, _super);
@@ -5276,7 +4912,7 @@ var RIAPP;
                         if (res !== undefined)
                             this.sourceValue = res;
                     } catch (ex) {
-                        if (!(ex instanceof ValidationError) || !utils.check.isElView(this._targetObj)) {
+                        if (!(ex instanceof RIAPP.MOD.errors.ValidationError) || !utils.check.isElView(this._targetObj)) {
                             //BaseElView is notified about errors in _onSrcErrorsChanged event handler
                             //we only need to invoke _onError in other cases
                             //1) when target is not BaseElView
@@ -5514,8 +5150,11 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (collection) {
+            var constsMOD = RIAPP.MOD.consts;
+            var utilsMOD = RIAPP.MOD.utils;
+
             //local variables for optimization
-            var ValidationError = RIAPP.MOD.binding.ValidationError, DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE, valueUtils = RIAPP.MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils, utils;
+            var ValidationError = RIAPP.MOD.errors.ValidationError, DATA_TYPE = constsMOD.DATA_TYPE, valueUtils = utilsMOD.valueUtils, baseUtils = RIAPP.baseUtils, utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
@@ -6026,7 +5665,7 @@ var RIAPP;
                     this._errors = {};
                     this._ignoreChangeErrors = false;
                     this._pkInfo = null;
-                    this._waitQueue = new RIAPP.MOD.utils.WaitQueue(this);
+                    this._waitQueue = new utilsMOD.WaitQueue(this);
                 }
                 BaseCollection.getEmptyFieldInfo = function (fieldName) {
                     var fieldInfo = {
@@ -7100,7 +6739,7 @@ var RIAPP;
                     };
                 });
 
-                return RIAPP.MOD.utils.__extendType(ListItem, {}, propDescriptors);
+                return utilsMOD.__extendType(ListItem, {}, propDescriptors);
             }
             ;
             function getPropInfos(properties) {
@@ -7177,6 +6816,7 @@ var RIAPP;
             var utilsMOD = RIAPP.MOD.utils;
             var bindMOD = RIAPP.MOD.binding;
             var elviewMOD = RIAPP.MOD.baseElView;
+            var mvvmMOD = RIAPP.MOD.mvvm;
 
             template.css = {
                 templateContainer: 'ria-template-container'
@@ -7491,7 +7131,83 @@ var RIAPP;
             })(RIAPP.BaseObject);
             template.Template = Template;
 
+            //typed parameters
+            var TemplateCommand = (function (_super) {
+                __extends(TemplateCommand, _super);
+                function TemplateCommand(fn_action, thisObj, fn_canExecute) {
+                    _super.call(this, fn_action, thisObj, fn_canExecute);
+                }
+                return TemplateCommand;
+            })(mvvmMOD.Command);
+            template.TemplateCommand = TemplateCommand;
+
+            var TemplateElView = (function (_super) {
+                __extends(TemplateElView, _super);
+                function TemplateElView(app, el, options) {
+                    this._template = null;
+                    this._isEnabled = true;
+                    _super.call(this, app, el, options);
+                }
+                TemplateElView.prototype.templateLoaded = function (template) {
+                    var self = this, p = self._commandParam;
+                    try  {
+                        self._template = template;
+                        self._template.isDisabled = !self._isEnabled;
+                        self._commandParam = { template: template, isLoaded: true };
+                        self.invokeCommand();
+                        self._commandParam = p;
+                        this.raisePropertyChanged('template');
+                    } catch (ex) {
+                        this._onError(ex, this);
+                        RIAPP.global._throwDummy(ex);
+                    }
+                };
+                TemplateElView.prototype.templateUnloading = function (template) {
+                    var self = this, p = self._commandParam;
+                    try  {
+                        self._commandParam = { template: template, isLoaded: false };
+                        self.invokeCommand();
+                    } catch (ex) {
+                        this._onError(ex, this);
+                    } finally {
+                        self._commandParam = p;
+                        self._template = null;
+                    }
+                    this.raisePropertyChanged('template');
+                };
+                TemplateElView.prototype.toString = function () {
+                    return 'TemplateElView';
+                };
+                Object.defineProperty(TemplateElView.prototype, "isEnabled", {
+                    get: function () {
+                        return this._isEnabled;
+                    },
+                    set: function (v) {
+                        if (this._isEnabled !== v) {
+                            this._isEnabled = v;
+                            if (!!this._template) {
+                                this._template.isDisabled = !this._isEnabled;
+                            }
+                            this.raisePropertyChanged('isEnabled');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(TemplateElView.prototype, "template", {
+                    get: function () {
+                        return this._template;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return TemplateElView;
+            })(elviewMOD.CommandElView);
+            template.TemplateElView = TemplateElView;
+            ;
+
             RIAPP.global.registerType('Template', Template);
+            RIAPP.global.registerElView('template', TemplateElView);
             RIAPP.global.onModuleLoaded('template', template);
         })(MOD.template || (MOD.template = {}));
         var template = MOD.template;
@@ -7503,7 +7219,11 @@ var RIAPP;
     (function (MOD) {
         (function (baseContent) {
             var constsMOD = RIAPP.MOD.consts;
+            var utilsMOD = RIAPP.MOD.utils;
+            var parserMOD = RIAPP.MOD.parser;
+            var elviewMOD = RIAPP.MOD.baseElView;
             var bindMOD = RIAPP.MOD.binding;
+            var templMOD = RIAPP.MOD.template;
 
             var utils, parser;
             RIAPP.global.addOnInitialize(function (s, args) {
@@ -7757,7 +7477,7 @@ var RIAPP;
                     var bindingInfo = this._getBindingInfo();
                     if (!!bindingInfo) {
                         this._tgt = this._createTargetElement();
-                        this._lfScope = new RIAPP.MOD.utils.LifeTimeScope();
+                        this._lfScope = new utilsMOD.LifeTimeScope();
                         if (!!this._tgt)
                             this._lfScope.addObj(this._tgt);
                         var options = this._getBindingOption(bindingInfo, this._tgt, this._dctx, 'value');
@@ -7868,7 +7588,7 @@ var RIAPP;
                     if (!id)
                         throw new Error(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID);
 
-                    return new RIAPP.MOD.template.Template(this.app, id);
+                    return new templMOD.Template(this.app, id);
                 };
                 TemplateContent.prototype.update = function () {
                     this._cleanUp();
@@ -7965,7 +7685,7 @@ var RIAPP;
                     var bindingInfo = this._getBindingInfo();
                     if (!!bindingInfo) {
                         this._updateCss();
-                        this._lfScope = new RIAPP.MOD.utils.LifeTimeScope();
+                        this._lfScope = new utilsMOD.LifeTimeScope();
                         var options = this._getBindingOption(bindingInfo, this._tgt, this._dctx, 'checked');
                         options.mode = 2 /* TwoWay */;
                         this._lfScope.addObj(this.app.bind(options));
@@ -7974,7 +7694,7 @@ var RIAPP;
                 BoolContent.prototype._createCheckBoxView = function () {
                     var el = RIAPP.global.document.createElement('input');
                     el.setAttribute('type', 'checkbox');
-                    var chbxView = new RIAPP.MOD.baseElView.CheckBoxElView(this.app, el, {});
+                    var chbxView = new elviewMOD.CheckBoxElView(this.app, el, {});
                     return chbxView;
                 };
                 BoolContent.prototype._createTargetElement = function () {
@@ -8126,7 +7846,7 @@ var RIAPP;
                 NumberContent.prototype.update = function () {
                     _super.prototype.update.call(this);
                     var self = this;
-                    if (self._tgt instanceof RIAPP.MOD.baseElView.TextBoxElView) {
+                    if (self._tgt instanceof elviewMOD.TextBoxElView) {
                         self._tgt.addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(args.keyCode, args.value);
                         });
@@ -8178,7 +7898,7 @@ var RIAPP;
                 StringContent.prototype.update = function () {
                     _super.prototype.update.call(this);
                     var self = this, fieldInfo = self.getFieldInfo();
-                    if (self._tgt instanceof RIAPP.MOD.baseElView.TextBoxElView) {
+                    if (self._tgt instanceof elviewMOD.TextBoxElView) {
                         self._tgt.addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(fieldInfo, args.keyCode, args.value);
                         });
@@ -8232,7 +7952,7 @@ var RIAPP;
                     _super.prototype.update.call(this);
                     var self = this, fieldInfo = self.getFieldInfo();
 
-                    if (self._tgt instanceof RIAPP.MOD.baseElView.TextAreaElView) {
+                    if (self._tgt instanceof elviewMOD.TextAreaElView) {
                         self._tgt.addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(fieldInfo, args.keyCode, args.value);
                         });
@@ -8422,7 +8142,8 @@ var RIAPP;
                     return res;
                 };
                 DataForm.prototype._updateIsDisabled = function () {
-                    var i, len, bnd, vw, bindings = this._getBindings(), elViews = this._getElViews(), DataFormElView = this.app._getElViewType(constsMOD.ELVIEW_NM.DATAFORM);
+                    var i, len, bnd, vw, bindings = this._getBindings(), elViews = this._getElViews();
+
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         bnd = bindings[i];
                         bnd.isDisabled = this._isDisabled;
@@ -8819,12 +8540,5017 @@ var RIAPP;
 var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
-        (function (db) {
+        (function (dynacontent) {
+            var constsMOD = RIAPP.MOD.consts;
+            var elviewMOD = RIAPP.MOD.baseElView;
+            var templMOD = RIAPP.MOD.template;
+
+            var DynaContentElView = (function (_super) {
+                __extends(DynaContentElView, _super);
+                function DynaContentElView(app, el, options) {
+                    _super.call(this, app, el, options);
+                    this._dataContext = null;
+                    this._template = null;
+                }
+                DynaContentElView.prototype._templateChanged = function () {
+                    if (!this._template) {
+                        this.raisePropertyChanged('templateID');
+                        this.raisePropertyChanged('template');
+                        return;
+                    }
+                    this.$el.empty().append(this._template.el);
+                    this.raisePropertyChanged('templateID');
+                    this.raisePropertyChanged('template');
+                };
+                DynaContentElView.prototype.updateTemplate = function (name) {
+                    var self = this;
+                    try  {
+                        if (!name && !!this._template) {
+                            this._template.destroy();
+                            this._template = null;
+                            self._templateChanged();
+                            return;
+                        }
+                    } catch (ex) {
+                        this._onError(ex, this);
+                        RIAPP.global._throwDummy(ex);
+                    }
+
+                    try  {
+                        if (!this._template) {
+                            this._template = new templMOD.Template(this.app, name);
+                            this._template.dataContext = this._dataContext;
+                            this._template.addOnPropertyChange('templateID', function (s, a) {
+                                self._templateChanged();
+                            }, this._objId);
+                            self._templateChanged();
+                            return;
+                        }
+
+                        this._template.templateID = name;
+                    } catch (ex) {
+                        this._onError(ex, this);
+                        RIAPP.global._throwDummy(ex);
+                    }
+                };
+                DynaContentElView.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._template) {
+                        this._template.destroy();
+                        this._template = null;
+                    }
+                    this._dataContext = null;
+                    _super.prototype.destroy.call(this);
+                };
+                Object.defineProperty(DynaContentElView.prototype, "templateID", {
+                    get: function () {
+                        if (!this._template)
+                            return null;
+                        return this._template.templateID;
+                    },
+                    set: function (v) {
+                        this.updateTemplate(v);
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DynaContentElView.prototype, "template", {
+                    get: function () {
+                        return this._template;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DynaContentElView.prototype, "dataContext", {
+                    get: function () {
+                        return this._dataContext;
+                    },
+                    set: function (v) {
+                        if (this._dataContext !== v) {
+                            this._dataContext = v;
+                            if (!!this._template) {
+                                this._template.dataContext = this._dataContext;
+                            }
+                            this.raisePropertyChanged('dataContext');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return DynaContentElView;
+            })(elviewMOD.BaseElView);
+            dynacontent.DynaContentElView = DynaContentElView;
+
+            RIAPP.global.registerElView('dynacontent', DynaContentElView);
+            RIAPP.global.onModuleLoaded('dynacontent', dynacontent);
+        })(MOD.dynacontent || (MOD.dynacontent = {}));
+        var dynacontent = MOD.dynacontent;
+    })(RIAPP.MOD || (RIAPP.MOD = {}));
+    var MOD = RIAPP.MOD;
+})(RIAPP || (RIAPP = {}));
+var RIAPP;
+(function (RIAPP) {
+    (function (MOD) {
+        (function (datepicker) {
+            var elviewMOD = RIAPP.MOD.baseElView;
+
+            var Datepicker = (function (_super) {
+                __extends(Datepicker, _super);
+                function Datepicker() {
+                    _super.call(this);
+                    this._dateFormat = null;
+                    this._datepickerRegion = '';
+                    var $ = RIAPP.global.$;
+                    if (!$.datepicker) {
+                        throw new Error(RIAPP.ERRS.ERR_JQUERY_DATEPICKER_NOTFOUND);
+                    }
+                    this.dateFormat = 'dd.mm.yy';
+                }
+                Datepicker.prototype.toString = function () {
+                    return 'Datepicker';
+                };
+                Datepicker.prototype.attachTo = function ($el, options) {
+                    if (!!options)
+                        $el.datepicker(options);
+                    else
+                        $el.datepicker();
+                };
+                Datepicker.prototype.detachFrom = function ($el) {
+                    RIAPP.global.utils.destroyJQueryPlugin($el, 'datepicker');
+                };
+                Datepicker.prototype.parseDate = function (str) {
+                    return this.datePickerFn.parseDate(this.dateFormat, str);
+                };
+                Datepicker.prototype.formatDate = function (date) {
+                    return this.datePickerFn.formatDate(this.dateFormat, date);
+                };
+
+                Object.defineProperty(Datepicker.prototype, "dateFormat", {
+                    //uses jQuery datepicker format
+                    get: function () {
+                        if (!this._dateFormat) {
+                            var regional = this.datePickerFn.regional[this._datepickerRegion];
+                            return regional.dateFormat;
+                        } else
+                            return this._dateFormat;
+                    },
+                    set: function (v) {
+                        if (this.dateFormat !== v) {
+                            this._dateFormat = v;
+                            var regional = this.datePickerFn.regional[this._datepickerRegion];
+                            if (!!this._dateFormat) {
+                                regional.dateFormat = this._dateFormat;
+                                this.datePickerFn.setDefaults(regional);
+                            }
+                            this.raisePropertyChanged('dateFormat');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Datepicker.prototype, "datepickerRegion", {
+                    get: function () {
+                        return this._datepickerRegion;
+                    },
+                    set: function (v) {
+                        if (!v)
+                            v = "";
+                        var oldDateFormat = this.dateFormat;
+                        if (this._datepickerRegion !== v) {
+                            var regional = this.datePickerFn.regional[v];
+                            if (!!regional) {
+                                this._datepickerRegion = v;
+                                regional.dateFormat = oldDateFormat;
+                                this.datePickerFn.setDefaults(regional);
+                                this.raisePropertyChanged("datepickerRegion");
+                            }
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Datepicker.prototype, "datePickerFn", {
+                    get: function () {
+                        var $ = RIAPP.global.$;
+                        return $.datepicker;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return Datepicker;
+            })(RIAPP.BaseObject);
+            datepicker.Datepicker = Datepicker;
+
+            var DatePickerElView = (function (_super) {
+                __extends(DatePickerElView, _super);
+                function DatePickerElView() {
+                    _super.apply(this, arguments);
+                }
+                DatePickerElView.prototype._init = function (options) {
+                    _super.prototype._init.call(this, options);
+                    var $el = this.$el;
+                    RIAPP.global.defaults.datepicker.attachTo($el, options.datepicker);
+                };
+                DatePickerElView.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    var $el = this.$el;
+                    RIAPP.global.defaults.datepicker.detachFrom($el);
+                    _super.prototype.destroy.call(this);
+                };
+                DatePickerElView.prototype.toString = function () {
+                    return 'DatePickerElView';
+                };
+                return DatePickerElView;
+            })(elviewMOD.TextBoxElView);
+            datepicker.DatePickerElView = DatePickerElView;
+
+            RIAPP.global.registerType('IDatepicker', new Datepicker());
+            RIAPP.global.registerElView('datepicker', DatePickerElView);
+            RIAPP.global.onModuleLoaded('datepicker', datepicker);
+        })(MOD.datepicker || (MOD.datepicker = {}));
+        var datepicker = MOD.datepicker;
+    })(RIAPP.MOD || (RIAPP.MOD = {}));
+    var MOD = RIAPP.MOD;
+})(RIAPP || (RIAPP = {}));
+var RIAPP;
+(function (RIAPP) {
+    (function (MOD) {
+        (function (tabs) {
+            var mvvmMOD = RIAPP.MOD.mvvm;
+            var elviewMOD = RIAPP.MOD.baseElView;
+
+            var TabsElView = (function (_super) {
+                __extends(TabsElView, _super);
+                function TabsElView() {
+                    _super.apply(this, arguments);
+                }
+                TabsElView.prototype._init = function (options) {
+                    _super.prototype._init.call(this, options);
+                    this._tabsEventCommand = null;
+                    this._tabOpts = options;
+                    this._createTabs();
+                };
+                TabsElView.prototype._createTabs = function () {
+                    var $el = this.$el, self = this, tabOpts = {
+                        activate: function (e, tab) {
+                            var active = $el.tabs("option", "active");
+                            self.invokeTabsEvent("select", { index: active, el: $el });
+                            self.raisePropertyChanged('tabIndex');
+                        },
+                        load: function (e, tab) {
+                            var active = $el.tabs("option", "active");
+                            self.invokeTabsEvent("load", { index: active, el: $el });
+                            self.raisePropertyChanged('tabIndex');
+                        }
+                    };
+                    tabOpts = RIAPP.global.utils.extend(false, tabOpts, self._tabOpts);
+                    $el.tabs(tabOpts);
+                    setTimeout(function () {
+                        if (self._isDestroyCalled)
+                            return;
+                        self.invokeTabsEvent("create", { el: $el });
+                        var active = $el.tabs("option", "active");
+                        self.invokeTabsEvent("select", { index: active, el: $el });
+                        self.raisePropertyChanged('tabIndex');
+                    }, 100);
+                };
+                TabsElView.prototype._destroyTabs = function () {
+                    var $el = this.$el;
+                    RIAPP.global.utils.destroyJQueryPlugin($el, 'tabs');
+                };
+                TabsElView.prototype.invokeTabsEvent = function (eventName, args) {
+                    var self = this, data = { eventName: eventName, args: args };
+                    if (!!self._tabsEventCommand) {
+                        self._tabsEventCommand.execute(self, data);
+                    }
+                };
+                TabsElView.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this._tabsEventCommand = null;
+                    this._destroyTabs();
+                    _super.prototype.destroy.call(this);
+                };
+                TabsElView.prototype.toString = function () {
+                    return 'TabsElView';
+                };
+                Object.defineProperty(TabsElView.prototype, "tabsEventCommand", {
+                    get: function () {
+                        return this._tabsEventCommand;
+                    },
+                    set: function (v) {
+                        var old = this._tabsEventCommand;
+                        if (v !== old) {
+                            if (!!old) {
+                                this._destroyTabs();
+                            }
+                            this._tabsEventCommand = v;
+                            if (!!this._tabsEventCommand)
+                                this._createTabs();
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(TabsElView.prototype, "tabIndex", {
+                    get: function () {
+                        return this.$el.tabs("option", "active");
+                    },
+                    set: function (v) {
+                        this.$el.tabs("option", "active", v);
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return TabsElView;
+            })(elviewMOD.BaseElView);
+            tabs.TabsElView = TabsElView;
+
+            RIAPP.global.registerElView('tabs', TabsElView);
+            RIAPP.global.onModuleLoaded('tabs', tabs);
+        })(MOD.tabs || (MOD.tabs = {}));
+        var tabs = MOD.tabs;
+    })(RIAPP.MOD || (RIAPP.MOD = {}));
+    var MOD = RIAPP.MOD;
+})(RIAPP || (RIAPP = {}));
+var RIAPP;
+(function (RIAPP) {
+    (function (MOD) {
+        (function (listbox) {
+            var bindMOD = RIAPP.MOD.binding;
             var collMod = RIAPP.MOD.collection;
+            var elviewMOD = RIAPP.MOD.baseElView;
+            var contentMOD = RIAPP.MOD.baseContent;
+
+            var utils, parser;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+                parser = s.parser;
+            });
+
+            var ListBox = (function (_super) {
+                __extends(ListBox, _super);
+                function ListBox(el, dataSource, options) {
+                    _super.call(this);
+                    var self = this;
+                    this._el = el;
+                    this._$el = RIAPP.global.$(this._el);
+                    this._objId = 'lst' + utils.getNewID();
+                    if (!!dataSource && !(dataSource instanceof collMod.BaseCollection))
+                        throw new Error(RIAPP.ERRS.ERR_LISTBOX_DATASRC_INVALID);
+                    this._$el.on('change.' + this._objId, function (e) {
+                        e.stopPropagation();
+                        if (self._isRefreshing)
+                            return;
+                        self._onChanged();
+                    });
+                    this._dataSource = null;
+                    this._isDSFilling = false;
+                    this._isRefreshing = false;
+                    this._valuePath = options.valuePath;
+                    this._textPath = options.textPath;
+                    this._selectedItem = null;
+                    this._prevSelected = null;
+                    this._keyMap = {};
+                    this._valMap = {};
+                    this._savedValue = undefined;
+                    this._tempValue = undefined;
+                    this.dataSource = dataSource;
+                }
+                ListBox.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this._unbindDS();
+                    this._$el.off('.' + this._objId);
+                    this._clear(true);
+                    this._el = null;
+                    this._$el = null;
+                    this._dataSource = null;
+                    this._tempValue = undefined;
+                    this._selectedItem = null;
+                    this._prevSelected = null;
+                    this._savedValue = null;
+                    _super.prototype.destroy.call(this);
+                };
+                ListBox.prototype._onChanged = function () {
+                    var op = null, key, data;
+                    if (this._el.selectedIndex >= 0) {
+                        op = this._el.options[this._el.selectedIndex];
+                        key = op.value;
+                        data = this._keyMap[key];
+                    }
+
+                    if (!data && !!this._selectedItem) {
+                        this.selectedItem = null;
+                    } else if (data.item !== this._selectedItem) {
+                        this.selectedItem = data.item;
+                    }
+                };
+                ListBox.prototype._getStringValue = function (item) {
+                    var v = this._getValue(item);
+                    if (utils.check.isNt(v))
+                        return '';
+                    return '' + v;
+                };
+                ListBox.prototype._getValue = function (item) {
+                    if (!item)
+                        return null;
+                    if (!!this._valuePath) {
+                        return parser.resolvePath(item, this._valuePath);
+                    } else
+                        return undefined;
+                };
+                ListBox.prototype._getText = function (item) {
+                    if (!item)
+                        return '';
+                    if (!!this._textPath) {
+                        var t = RIAPP.global.parser.resolvePath(item, this._textPath);
+                        if (utils.check.isNt(t))
+                            return '';
+                        return '' + t;
+                    } else
+                        return this._getStringValue(item);
+                };
+                ListBox.prototype._onDSCollectionChanged = function (args) {
+                    var self = this, data;
+                    switch (args.change_type) {
+                        case 2 /* RESET */:
+                            if (!this._isDSFilling)
+                                this._refresh();
+                            break;
+                        case 1 /* ADDED */:
+                            if (!this._isDSFilling) {
+                                args.items.forEach(function (item) {
+                                    self._addOption(item, item._isNew);
+                                });
+                            }
+                            break;
+                        case 0 /* REMOVE */:
+                            args.items.forEach(function (item) {
+                                self._removeOption(item);
+                            });
+                            break;
+                        case 3 /* REMAP_KEY */: {
+                            data = self._keyMap[args.old_key];
+                            if (!!data) {
+                                delete self._keyMap[args.old_key];
+                                self._keyMap[args.new_key] = data;
+                                data.op.value = args.new_key;
+                            }
+                        }
+                    }
+                };
+                ListBox.prototype._onDSFill = function (args) {
+                    var isEnd = !args.isBegin;
+                    if (isEnd) {
+                        this._isDSFilling = false;
+                        this._refresh();
+                    } else {
+                        this._isDSFilling = true;
+                    }
+                };
+                ListBox.prototype._onEdit = function (item, isBegin, isCanceled) {
+                    var self = this, key, data, oldVal, val;
+                    if (isBegin) {
+                        this._savedValue = this._getStringValue(item);
+                    } else {
+                        oldVal = this._savedValue;
+                        this._savedValue = undefined;
+                        if (!isCanceled) {
+                            key = item._key;
+                            data = self._keyMap[key];
+                            if (!!data) {
+                                data.op.text = self._getText(item);
+                                val = this._getStringValue(item);
+                                if (oldVal !== val) {
+                                    if (!!oldVal) {
+                                        delete self._valMap[oldVal];
+                                    }
+                                    if (!!val) {
+                                        self._valMap[val] = data;
+                                    }
+                                }
+                            } else {
+                                if (!!oldVal) {
+                                    delete self._valMap[oldVal];
+                                }
+                            }
+                        }
+                    }
+                };
+                ListBox.prototype._onStatusChanged = function (item, oldChangeType) {
+                    var newChangeType = item._changeType;
+                    if (newChangeType === 3 /* DELETED */) {
+                        this._removeOption(item);
+                    }
+                };
+                ListBox.prototype._onCommitChanges = function (item, isBegin, isRejected, changeType) {
+                    var self = this, oldVal, val, data;
+                    if (isBegin) {
+                        if (isRejected && changeType === 1 /* ADDED */) {
+                            return;
+                        } else if (!isRejected && changeType === 3 /* DELETED */) {
+                            return;
+                        }
+
+                        this._savedValue = this._getStringValue(item);
+                    } else {
+                        oldVal = this._savedValue;
+                        this._savedValue = undefined;
+
+                        if (isRejected && changeType === 3 /* DELETED */) {
+                            this._addOption(item, true);
+                            return;
+                        }
+                        val = this._getStringValue(item);
+                        data = self._keyMap[item._key];
+                        if (oldVal !== val) {
+                            if (oldVal !== '') {
+                                delete self._valMap[oldVal];
+                            }
+                            if (!!data && val !== '') {
+                                self._valMap[val] = data;
+                            }
+                        }
+                        if (!!data) {
+                            data.op.text = self._getText(item);
+                        }
+                    }
+                };
+                ListBox.prototype._bindDS = function () {
+                    var self = this, ds = this._dataSource;
+                    if (!ds)
+                        return;
+                    ds.addOnCollChanged(function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onDSCollectionChanged(args);
+                    }, self._objId);
+                    ds.addOnFill(function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onDSFill(args);
+                    }, self._objId);
+                    ds.addOnBeginEdit(function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onEdit(args.item, true, undefined);
+                    }, self._objId);
+                    ds.addOnEndEdit(function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onEdit(args.item, false, args.isCanceled);
+                    }, self._objId);
+                    ds.addOnStatusChanged(function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onStatusChanged(args.item, args.oldChangeType);
+                    }, self._objId);
+                    ds.addOnCommitChanges(function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
+                    }, self._objId);
+                };
+                ListBox.prototype._unbindDS = function () {
+                    var self = this, ds = this._dataSource;
+                    if (!ds)
+                        return;
+                    ds.removeNSHandlers(self._objId);
+                };
+                ListBox.prototype._addOption = function (item, first) {
+                    if (this._isDestroyCalled)
+                        return null;
+                    var oOption, key = '', val, text;
+                    if (!!item) {
+                        key = item._key;
+                    }
+                    if (!!this._keyMap[key]) {
+                        return null;
+                    }
+                    text = this._getText(item);
+                    val = this._getStringValue(item);
+                    oOption = RIAPP.global.document.createElement("option");
+                    oOption.text = text;
+                    oOption.value = key;
+                    var data = { item: item, op: oOption };
+                    this._keyMap[key] = data;
+                    if (!!val)
+                        this._valMap[val] = data;
+                    if (!!first) {
+                        if (this._el.options.length < 2)
+                            this._el.add(oOption, null);
+                        else
+                            this._el.add(oOption, this._el.options[1]);
+                    } else
+                        this._el.add(oOption, null);
+                    return oOption;
+                };
+                ListBox.prototype._mapByValue = function () {
+                    var self = this;
+                    this._valMap = {};
+                    utils.forEachProp(this._keyMap, function (key) {
+                        var data = self._keyMap[key], val = self._getStringValue(data.item);
+                        if (!!val)
+                            self._valMap[val] = data;
+                    });
+                };
+                ListBox.prototype._resetText = function () {
+                    var self = this;
+                    utils.forEachProp(this._keyMap, function (key) {
+                        var data = self._keyMap[key];
+                        data.op.text = self._getText(data.item);
+                    });
+                };
+                ListBox.prototype._removeOption = function (item) {
+                    if (this._isDestroyCalled)
+                        return;
+                    var key = '', data, val;
+                    if (!!item) {
+                        key = item._key;
+                        data = this._keyMap[key];
+                        if (!data) {
+                            return;
+                        }
+                        this._el.remove(data.op.index);
+                        val = this._getStringValue(item);
+                        delete this._keyMap[key];
+                        if (!!val)
+                            delete this._valMap[val];
+                        if (this._prevSelected === item) {
+                            this._prevSelected = null;
+                        }
+                        if (this.selectedItem === item) {
+                            this.selectedItem = this._prevSelected;
+                        }
+                    }
+                };
+                ListBox.prototype._clear = function (isDestroy) {
+                    this._el.options.length = 0;
+                    this._keyMap = {};
+                    this._valMap = {};
+                    this._prevSelected = null;
+                    if (!isDestroy) {
+                        this._addOption(null, false);
+                        this.selectedItem = null;
+                    } else
+                        this.selectedItem = null;
+                };
+                ListBox.prototype._refresh = function () {
+                    var self = this, ds = this._dataSource, oldItem = this._selectedItem, tmp = self._tempValue;
+                    this._isRefreshing = true;
+                    try  {
+                        this.clear();
+                        if (!!ds) {
+                            ds.forEach(function (item) {
+                                self._addOption(item, false);
+                            });
+                            if (utils.check.isUndefined(tmp)) {
+                                self._el.selectedIndex = self._findItemIndex(oldItem);
+                            } else {
+                                oldItem = self.findItemByValue(tmp);
+                                self.selectedItem = oldItem;
+                                if (!oldItem)
+                                    self._tempValue = tmp;
+                                else
+                                    self._tempValue = undefined;
+                            }
+                        }
+                    } finally {
+                        self._isRefreshing = false;
+                    }
+                    self._onChanged();
+                };
+                ListBox.prototype._findItemIndex = function (item) {
+                    if (!item)
+                        return 0;
+                    var data = this._keyMap[item._key];
+                    if (!data)
+                        return 0;
+                    return data.op.index;
+                };
+                ListBox.prototype._setIsEnabled = function (el, v) {
+                    el.disabled = !v;
+                };
+                ListBox.prototype._getIsEnabled = function (el) {
+                    return !el.disabled;
+                };
+                ListBox.prototype.clear = function () {
+                    this._clear(false);
+                };
+                ListBox.prototype.findItemByValue = function (val) {
+                    if (utils.check.isNt(val))
+                        return null;
+                    val = '' + val;
+                    var data = this._valMap[val];
+                    if (!data)
+                        return null;
+                    return data.item;
+                };
+                ListBox.prototype.getTextByValue = function (val) {
+                    if (utils.check.isNt(val))
+                        return '';
+                    val = '' + val;
+                    var data = this._valMap[val];
+                    if (!data)
+                        return '';
+                    else
+                        return data.op.text;
+                };
+                ListBox.prototype.toString = function () {
+                    return 'ListBox';
+                };
+                Object.defineProperty(ListBox.prototype, "dataSource", {
+                    get: function () {
+                        return this._dataSource;
+                    },
+                    set: function (v) {
+                        if (this._dataSource !== v) {
+                            if (!!this._dataSource)
+                                this._tempValue = this.selectedValue;
+                            if (!!this._dataSource)
+                                this._unbindDS();
+                            this._dataSource = v;
+                            if (!!this._dataSource) {
+                                this._bindDS();
+                            }
+                            this._refresh();
+                            if (!!this._dataSource)
+                                this._tempValue = undefined;
+                            this.raisePropertyChanged('dataSource');
+                            this.raisePropertyChanged('selectedItem');
+                            this.raisePropertyChanged('selectedValue');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(ListBox.prototype, "selectedValue", {
+                    get: function () {
+                        if (!!this._dataSource)
+                            return this._getValue(this.selectedItem);
+                        else
+                            return undefined;
+                    },
+                    set: function (v) {
+                        var self = this;
+                        if (!!this._dataSource) {
+                            if (this.selectedValue !== v) {
+                                var item = self.findItemByValue(v);
+                                self.selectedItem = item;
+                                if (!utils.check.isUndefined(v) && !item)
+                                    self._tempValue = v;
+                                else
+                                    self._tempValue = undefined;
+                            }
+                        } else {
+                            if (this._tempValue !== v) {
+                                this._selectedItem = null;
+                                this._tempValue = v;
+                                this.raisePropertyChanged('selectedItem');
+                                this.raisePropertyChanged('selectedValue');
+                            }
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(ListBox.prototype, "selectedItem", {
+                    get: function () {
+                        if (!!this._dataSource)
+                            return this._selectedItem;
+                        else
+                            return undefined;
+                    },
+                    set: function (v) {
+                        if (this._selectedItem !== v) {
+                            if (!!this._selectedItem) {
+                                this._prevSelected = this._selectedItem;
+                            }
+                            this._selectedItem = v;
+                            this._el.selectedIndex = this._findItemIndex(this._selectedItem);
+                            this.raisePropertyChanged('selectedItem');
+                            this.raisePropertyChanged('selectedValue');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(ListBox.prototype, "valuePath", {
+                    get: function () {
+                        return this._valuePath;
+                    },
+                    set: function (v) {
+                        if (v !== this._valuePath) {
+                            this._valuePath = v;
+                            this._mapByValue();
+                            this.raisePropertyChanged('valuePath');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(ListBox.prototype, "textPath", {
+                    get: function () {
+                        return this._textPath;
+                    },
+                    set: function (v) {
+                        if (v !== this._textPath) {
+                            this._textPath = v;
+                            this._resetText();
+                            this.raisePropertyChanged('textPath');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(ListBox.prototype, "isEnabled", {
+                    get: function () {
+                        return this._getIsEnabled(this._el);
+                    },
+                    set: function (v) {
+                        if (v !== this.isEnabled) {
+                            this._setIsEnabled(this._el, v);
+                            this.raisePropertyChanged('isEnabled');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(ListBox.prototype, "el", {
+                    get: function () {
+                        return this._el;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return ListBox;
+            })(RIAPP.BaseObject);
+            listbox.ListBox = ListBox;
+
+            var SelectElView = (function (_super) {
+                __extends(SelectElView, _super);
+                function SelectElView(app, el, options) {
+                    var self = this;
+                    self._options = options;
+                    self._listBox = new ListBox(el, null, self._options);
+                    self._listBox.addOnDestroyed(function () {
+                        self._listBox = null;
+                        self.invokePropChanged('listBox');
+                        self.raisePropertyChanged('listBox');
+                    }, this.uniqueID);
+                    self._listBox.addOnPropertyChange('*', function (sender, args) {
+                        self.raisePropertyChanged(args.property);
+                    }, self.uniqueID);
+                    _super.call(this, app, el, options);
+                }
+                SelectElView.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._listBox && !this._listBox._isDestroyCalled) {
+                        this._listBox.destroy();
+                    }
+                    this._listBox = null;
+                    _super.prototype.destroy.call(this);
+                };
+                SelectElView.prototype.toString = function () {
+                    return 'SelectElView';
+                };
+                Object.defineProperty(SelectElView.prototype, "isEnabled", {
+                    get: function () {
+                        if (this._isDestroyCalled)
+                            return false;
+                        return !this.el.disabled;
+                    },
+                    set: function (v) {
+                        v = !!v;
+                        if (v !== this.isEnabled) {
+                            this.el.disabled = !v;
+                            this.raisePropertyChanged('isEnabled');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(SelectElView.prototype, "el", {
+                    get: function () {
+                        return this._el;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(SelectElView.prototype, "dataSource", {
+                    get: function () {
+                        if (this._isDestroyCalled)
+                            return undefined;
+                        return this._listBox.dataSource;
+                    },
+                    set: function (v) {
+                        var self = this;
+                        if (self.dataSource !== v) {
+                            self._listBox.dataSource = v;
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(SelectElView.prototype, "selectedValue", {
+                    get: function () {
+                        if (this._isDestroyCalled)
+                            return undefined;
+                        return this._listBox.selectedValue;
+                    },
+                    set: function (v) {
+                        if (this._isDestroyCalled)
+                            return;
+                        if (this._listBox.selectedValue !== v) {
+                            this._listBox.selectedValue = v;
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(SelectElView.prototype, "selectedItem", {
+                    get: function () {
+                        if (this._isDestroyCalled)
+                            return undefined;
+                        return this._listBox.selectedItem;
+                    },
+                    set: function (v) {
+                        if (this._isDestroyCalled)
+                            return;
+                        this._listBox.selectedItem = v;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(SelectElView.prototype, "listBox", {
+                    get: function () {
+                        return this._listBox;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return SelectElView;
+            })(elviewMOD.BaseElView);
+            listbox.SelectElView = SelectElView;
+
+            var LookupContent = (function (_super) {
+                __extends(LookupContent, _super);
+                function LookupContent(app, parentEl, options, dctx, isEditing) {
+                    if (options.name != 'lookup') {
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'lookup'"));
+                    }
+                    this._spanView = null;
+                    this._selectView = null;
+                    this._isListBoxCachedExternally = false;
+                    this._valBinding = null;
+                    this._listBinding = null;
+                    this._value = null;
+                    _super.call(this, app, parentEl, options, dctx, isEditing);
+                }
+                LookupContent.prototype._init = function () {
+                    if (!!this._options.initContentFn) {
+                        this._options.initContentFn(this);
+                    }
+                };
+                LookupContent.prototype._getEventNames = function () {
+                    var base_events = _super.prototype._getEventNames.call(this);
+                    return ['object_created', 'object_needed'].concat(base_events);
+                };
+                LookupContent.prototype.addOnObjectCreated = function (fn, namespace) {
+                    this.addHandler('object_created', fn, namespace);
+                };
+                LookupContent.prototype.removeOnObjectCreated = function (namespace) {
+                    this.removeHandler('object_created', namespace);
+                };
+                LookupContent.prototype.addOnObjectNeeded = function (fn, namespace) {
+                    this.addHandler('object_needed', fn, namespace);
+                };
+                LookupContent.prototype.removeOnObjectNeeded = function (namespace) {
+                    this.removeHandler('object_needed', namespace);
+                };
+                LookupContent.prototype._getSelectView = function () {
+                    if (!!this._selectView)
+                        return this._selectView;
+                    var lookUpOptions = this._options.options;
+                    var args1 = { objectKey: 'selectElView', object: null };
+
+                    //try get externally externally cached listBox
+                    this.raiseEvent('object_needed', args1);
+                    if (!!args1.object) {
+                        this._isListBoxCachedExternally = true;
+                        this._selectView = args1.object;
+                    }
+                    if (!!this._selectView)
+                        return this._selectView;
+
+                    //proceed creating new selectElView
+                    var dataSource = RIAPP.global.parser.resolvePath(this.app, lookUpOptions.dataSource), options = { valuePath: lookUpOptions.valuePath, textPath: lookUpOptions.textPath };
+                    var el = RIAPP.global.document.createElement('select');
+                    el.setAttribute('size', '1');
+                    var selectElView = this._createSelectElView(el, options);
+                    selectElView.dataSource = dataSource;
+                    var args2 = { objectKey: 'selectElView', object: selectElView, isCachedExternally: false };
+
+                    //this allows to cache listBox externally
+                    this.raiseEvent('object_created', args2);
+                    this._isListBoxCachedExternally = args2.isCachedExternally;
+                    this._selectView = selectElView;
+                    return this._selectView;
+                };
+                LookupContent.prototype._createSelectElView = function (el, options) {
+                    var elView;
+                    elView = this.app._getElView(el);
+                    if (!!elView)
+                        return elView;
+                    elView = new SelectElView(this.app, el, options);
+                    return elView;
+                };
+                LookupContent.prototype._updateTextValue = function () {
+                    var spanView = this._getSpanView();
+                    spanView.value = this._getLookupText();
+                };
+                LookupContent.prototype._getLookupText = function () {
+                    var listBoxView = this._getSelectView();
+                    return listBoxView.listBox.getTextByValue(this.value);
+                };
+                LookupContent.prototype._getSpanView = function () {
+                    if (!!this._spanView) {
+                        return this._spanView;
+                    }
+                    var el = RIAPP.global.document.createElement('span'), displayInfo = this._getDisplayInfo();
+                    var spanView = new elviewMOD.SpanElView(this.app, el, {});
+                    if (!!displayInfo) {
+                        if (!!displayInfo.displayCss) {
+                            spanView.$el.addClass(displayInfo.displayCss);
+                        }
+                    }
+                    this._spanView = spanView;
+                    return this._spanView;
+                };
+                LookupContent.prototype.update = function () {
+                    this._cleanUp();
+                    this._createTargetElement();
+                    this._parentEl.appendChild(this._el);
+                };
+                LookupContent.prototype._createTargetElement = function () {
+                    var tgt, el, selectView, spanView;
+                    if (this._isEditing && this._canBeEdited()) {
+                        selectView = this._getSelectView();
+                        this._listBinding = this._bindToList(selectView);
+                        tgt = selectView;
+                    } else {
+                        spanView = this._getSpanView();
+                        this._valBinding = this._bindToValue();
+                        tgt = spanView;
+                    }
+                    this._el = tgt.el;
+                    this._updateCss();
+                    return tgt;
+                };
+                LookupContent.prototype._cleanUp = function () {
+                    if (!!this._el) {
+                        utils.removeNode(this._el);
+                        this._el = null;
+                    }
+                    if (!!this._listBinding) {
+                        this._listBinding.destroy();
+                        this._listBinding = null;
+                    }
+                    if (!!this._valBinding) {
+                        this._valBinding.destroy();
+                        this._valBinding = null;
+                    }
+
+                    if (!!this._selectView && this._isListBoxCachedExternally) {
+                        this._selectView = null;
+                    }
+                };
+                LookupContent.prototype._updateBindingSource = function () {
+                    if (!!this._valBinding) {
+                        this._valBinding.source = this._dctx;
+                    }
+                    if (!!this._listBinding) {
+                        this._listBinding.source = this._dctx;
+                    }
+                };
+                LookupContent.prototype._bindToValue = function () {
+                    if (!this._options.fieldName)
+                        return null;
+
+                    var options = {
+                        target: this, source: this._dctx,
+                        targetPath: 'value', sourcePath: this._options.fieldName, mode: 1 /* OneWay */,
+                        converter: null, converterParam: null, isSourceFixed: false
+                    };
+                    return new bindMOD.Binding(options);
+                };
+                LookupContent.prototype._bindToList = function (selectView) {
+                    if (!this._options.fieldName)
+                        return null;
+
+                    var options = {
+                        target: selectView, source: this._dctx,
+                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: 2 /* TwoWay */,
+                        converter: null, converterParam: null, isSourceFixed: false
+                    };
+                    return new bindMOD.Binding(options);
+                };
+                LookupContent.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this._cleanUp();
+                    if (!!this._selectView && !this._isListBoxCachedExternally) {
+                        this._selectView.destroy();
+                    }
+                    this._selectView = null;
+                    if (!!this._spanView) {
+                        this._spanView.destroy();
+                    }
+                    this._spanView = null;
+                    _super.prototype.destroy.call(this);
+                };
+                LookupContent.prototype.toString = function () {
+                    return 'LookupContent';
+                };
+                Object.defineProperty(LookupContent.prototype, "value", {
+                    get: function () {
+                        return this._value;
+                    },
+                    set: function (v) {
+                        if (this._value !== v) {
+                            this._value = v;
+                            this._updateTextValue();
+                            this.raisePropertyChanged('value');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return LookupContent;
+            })(contentMOD.BindingContent);
+            listbox.LookupContent = LookupContent;
+
+            var ContentFactory = (function () {
+                function ContentFactory(app, nextFactory) {
+                    this._app = app;
+                    this._nextFactory = nextFactory;
+                }
+                ContentFactory.prototype.getContentType = function (options) {
+                    if (options.name == 'lookup') {
+                        return LookupContent;
+                    }
+                    if (!!this._nextFactory)
+                        return this._nextFactory.getContentType(options);
+                    else
+                        throw new Error(RIAPP.ERRS.ERR_BINDING_CONTENT_NOT_FOUND);
+                };
+
+                ContentFactory.prototype.createContent = function (parentEl, options, dctx, isEditing) {
+                    var contentType = this.getContentType(options);
+                    return new contentType(this._app, parentEl, options, dctx, isEditing);
+                };
+
+                ContentFactory.prototype.isExternallyCachable = function (contentType) {
+                    if (LookupContent === contentType)
+                        return true;
+                    return this._nextFactory.isExternallyCachable(contentType);
+                };
+                Object.defineProperty(ContentFactory.prototype, "app", {
+                    get: function () {
+                        return this._app;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return ContentFactory;
+            })();
+            listbox.ContentFactory = ContentFactory;
+
+            function initModule(app) {
+                app.registerContentFactory(function (nextFactory) {
+                    return new ContentFactory(app, nextFactory);
+                });
+                return listbox;
+            }
+            listbox.initModule = initModule;
+            ;
+
+            RIAPP.global.registerElView('select', SelectElView);
+            RIAPP.global.onModuleLoaded('listbox', listbox);
+        })(MOD.listbox || (MOD.listbox = {}));
+        var listbox = MOD.listbox;
+    })(RIAPP.MOD || (RIAPP.MOD = {}));
+    var MOD = RIAPP.MOD;
+})(RIAPP || (RIAPP = {}));
+var RIAPP;
+(function (RIAPP) {
+    (function (MOD) {
+        (function (datadialog) {
+            var utilsMOD = RIAPP.MOD.utils;
+            var templMOD = RIAPP.MOD.template;
+
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
+
+            (function (DIALOG_ACTION) {
+                DIALOG_ACTION[DIALOG_ACTION["Default"] = 0] = "Default";
+                DIALOG_ACTION[DIALOG_ACTION["StayOpen"] = 1] = "StayOpen";
+            })(datadialog.DIALOG_ACTION || (datadialog.DIALOG_ACTION = {}));
+            var DIALOG_ACTION = datadialog.DIALOG_ACTION;
+            ;
+
+            var DataEditDialog = (function (_super) {
+                __extends(DataEditDialog, _super);
+                function DataEditDialog(app, options) {
+                    _super.call(this);
+                    var self = this;
+                    this._app = app;
+                    this._objId = 'dlg' + utils.getNewID();
+                    var opts = utils.extend(false, {
+                        dataContext: null,
+                        templateID: null,
+                        width: 500,
+                        height: 350,
+                        title: 'data edit dialog',
+                        submitOnOK: false,
+                        canRefresh: false,
+                        canCancel: true,
+                        fn_OnClose: null,
+                        fn_OnOK: null,
+                        fn_OnShow: null,
+                        fn_OnCancel: null,
+                        fn_OnTemplateCreated: null,
+                        fn_OnTemplateDestroy: null
+                    }, options);
+                    this._dataContext = opts.dataContext;
+                    this._templateID = opts.templateID;
+                    this._submitOnOK = opts.submitOnOK;
+                    this._canRefresh = opts.canRefresh;
+                    this._canCancel = opts.canCancel;
+                    this._fn_OnClose = opts.fn_OnClose;
+                    this._fn_OnOK = opts.fn_OnOK;
+                    this._fn_OnShow = opts.fn_OnShow;
+                    this._fn_OnCancel = opts.fn_OnCancel;
+                    this._fn_OnTemplateCreated = opts.fn_OnTemplateCreated;
+                    this._fn_OnTemplateDestroy = opts.fn_OnTemplateDestroy;
+
+                    this._isEditable = false;
+                    this._template = null;
+                    this._$template = null;
+                    this._result = null;
+                    this._currentSelectable = null;
+                    this._fn_submitOnOK = function () {
+                        if (!self._dataContext._isCanSubmit) {
+                            //signals immediatly
+                            return utils.createDeferred().resolve().promise();
+                        }
+                        var dctxt = self._dataContext;
+                        return dctxt.submitChanges();
+                    };
+                    this._updateIsEditable();
+                    this._options = {
+                        width: opts.width,
+                        height: opts.height,
+                        title: opts.title,
+                        autoOpen: false,
+                        modal: true,
+                        close: function (event, ui) {
+                            self._onClose();
+                        },
+                        buttons: self._getButtons()
+                    };
+                    this._dialogCreated = false;
+                    this._createDialog();
+                }
+                DataEditDialog.prototype.addOnClose = function (fn, namespace) {
+                    this.addHandler('close', fn, namespace);
+                };
+                DataEditDialog.prototype.removeOnClose = function (namespace) {
+                    this.removeHandler('close', namespace);
+                };
+                DataEditDialog.prototype.addOnRefresh = function (fn, namespace) {
+                    this.addHandler('refresh', fn, namespace);
+                };
+                DataEditDialog.prototype.removeOnRefresh = function (namespace) {
+                    this.removeHandler('refresh', namespace);
+                };
+                DataEditDialog.prototype._updateIsEditable = function () {
+                    this._isEditable = utils.check.isEditable(this._dataContext);
+                };
+                DataEditDialog.prototype._createDialog = function () {
+                    if (this._dialogCreated)
+                        return;
+                    var dctx = this._dataContext;
+                    this._template = this._createTemplate(dctx);
+                    this._$template = RIAPP.global.$(this._template.el);
+                    RIAPP.global.document.body.appendChild(this._template.el);
+                    this._$template.dialog(this._options);
+                    this._dialogCreated = true;
+                    if (!!this._fn_OnTemplateCreated) {
+                        this._fn_OnTemplateCreated(this._template);
+                    }
+                };
+                DataEditDialog.prototype._getEventNames = function () {
+                    var base_events = _super.prototype._getEventNames.call(this);
+                    return ['close', 'refresh'].concat(base_events);
+                };
+                DataEditDialog.prototype._createTemplate = function (dcxt) {
+                    var t = new templMOD.Template(this._app, this._templateID);
+
+                    //create template in disabled state
+                    t.isDisabled = true;
+                    t.dataContext = dcxt;
+                    return t;
+                };
+                DataEditDialog.prototype._destroyTemplate = function () {
+                    if (!!this._fn_OnTemplateDestroy) {
+                        this._fn_OnTemplateDestroy(this._template);
+                    }
+                    this._$template.remove();
+                    this._template.destroy();
+                    this._$template = null;
+                    this._template = null;
+                };
+                DataEditDialog.prototype._getButtons = function () {
+                    var self = this, buttons = [
+                        {
+                            'id': self._objId + 'Refresh',
+                            'text': RIAPP.localizable.TEXT.txtRefresh,
+                            'class': 'btn btn-info',
+                            'click': function () {
+                                self._onRefresh();
+                            }
+                        },
+                        {
+                            'id': self._objId + 'Ok',
+                            'text': RIAPP.localizable.TEXT.txtOk,
+                            'class': 'btn btn-info',
+                            'click': function () {
+                                self._onOk();
+                            }
+                        },
+                        {
+                            'id': self._objId + 'Cancel',
+                            'text': RIAPP.localizable.TEXT.txtCancel,
+                            'class': 'btn btn-info',
+                            'click': function () {
+                                self._onCancel();
+                            }
+                        }
+                    ];
+                    if (!this.canRefresh) {
+                        buttons.shift();
+                    }
+                    if (!this.canCancel) {
+                        buttons.pop();
+                    }
+                    return buttons;
+                };
+                DataEditDialog.prototype._getOkButton = function () {
+                    return $("#" + this._objId + 'Ok');
+                };
+                DataEditDialog.prototype._getCancelButton = function () {
+                    return $("#" + this._objId + 'Cancel');
+                };
+                DataEditDialog.prototype._getRefreshButton = function () {
+                    return $("#" + this._objId + 'Refresh');
+                };
+                DataEditDialog.prototype._getAllButtons = function () {
+                    return [this._getOkButton(), this._getCancelButton(), this._getRefreshButton()];
+                };
+                DataEditDialog.prototype._disableButtons = function (isDisable) {
+                    var btns = this._getAllButtons();
+                    btns.forEach(function ($btn) {
+                        $btn.prop("disabled", !!isDisable);
+                    });
+                };
+                DataEditDialog.prototype._onOk = function () {
+                    var self = this, canCommit, action = 0 /* Default */;
+                    if (!!this._fn_OnOK) {
+                        action = this._fn_OnOK(this);
+                    }
+                    if (action == 1 /* StayOpen */)
+                        return;
+
+                    if (!this._dataContext) {
+                        self.hide();
+                        return;
+                    }
+
+                    if (this._isEditable)
+                        canCommit = this._dataContext.endEdit();
+                    else
+                        canCommit = true;
+
+                    if (canCommit) {
+                        if (this._submitOnOK) {
+                            this._disableButtons(true);
+                            var title = this.title;
+                            this.title = RIAPP.localizable.TEXT.txtSubmitting;
+                            var promise = this._fn_submitOnOK();
+                            promise.always(function () {
+                                self._disableButtons(false);
+                                self.title = title;
+                            });
+                            promise.done(function () {
+                                self._result = 'ok';
+                                self.hide();
+                            });
+                            promise.fail(function () {
+                                //resume editing if fn_onEndEdit callback returns false in isOk argument
+                                if (self._isEditable) {
+                                    if (!self._dataContext.beginEdit()) {
+                                        self._result = 'cancel';
+                                        self.hide();
+                                    }
+                                }
+                            });
+                        } else {
+                            self._result = 'ok';
+                            self.hide();
+                        }
+                    }
+                };
+                DataEditDialog.prototype._onCancel = function () {
+                    var action = 0 /* Default */;
+                    if (!!this._fn_OnCancel) {
+                        action = this._fn_OnCancel(this);
+                    }
+                    if (action == 1 /* StayOpen */)
+                        return;
+
+                    this._result = 'cancel';
+                    this.hide();
+                };
+                DataEditDialog.prototype._onRefresh = function () {
+                    var args = { isHandled: false };
+                    this.raiseEvent('refresh', args);
+                    if (args.isHandled)
+                        return;
+                    if (!!this._dataContext && utils.check.isFunction(this._dataContext.refresh)) {
+                        this._dataContext.refresh();
+                    }
+                };
+                DataEditDialog.prototype._onClose = function () {
+                    try  {
+                        if (this._result != 'ok' && !!this._dataContext) {
+                            if (this._isEditable)
+                                this._dataContext.cancelEdit();
+                            if (this._submitOnOK && utils.check.isFunction(this._dataContext.rejectChanges)) {
+                                this._dataContext.rejectChanges();
+                            }
+                        }
+                        if (!!this._fn_OnClose)
+                            this._fn_OnClose(this);
+                        this.raiseEvent('close', {});
+                    } finally {
+                        this._template.isDisabled = true;
+                    }
+                    var csel = this._currentSelectable;
+                    this._currentSelectable = null;
+                    setTimeout(function () {
+                        RIAPP.global.currentSelectable = csel;
+                        csel = null;
+                    }, 50);
+                };
+                DataEditDialog.prototype._onShow = function () {
+                    this._currentSelectable = RIAPP.global.currentSelectable;
+                    if (!!this._fn_OnShow) {
+                        this._fn_OnShow(this);
+                    }
+                };
+                DataEditDialog.prototype.show = function () {
+                    this._result = null;
+                    this._$template.dialog("option", "buttons", this._getButtons());
+                    this._template.isDisabled = false;
+                    this._onShow();
+                    this._$template.dialog("open");
+                };
+                DataEditDialog.prototype.hide = function () {
+                    this._$template.dialog("close");
+                };
+                DataEditDialog.prototype.getOption = function (name) {
+                    return this._$template.dialog('option', name);
+                };
+                DataEditDialog.prototype.setOption = function (name, value) {
+                    this._$template.dialog('option', name, value);
+                };
+                DataEditDialog.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (this._dialogCreated) {
+                        this.hide();
+                        this._destroyTemplate();
+                        this._dialogCreated = false;
+                    }
+                    this._dataContext = null;
+                    this._fn_submitOnOK = null;
+                    this._app = null;
+                    _super.prototype.destroy.call(this);
+                };
+                Object.defineProperty(DataEditDialog.prototype, "dataContext", {
+                    get: function () {
+                        return this._dataContext;
+                    },
+                    set: function (v) {
+                        if (v !== this._dataContext) {
+                            this._dataContext = v;
+                            if (!!this._template)
+                                this._template.dataContext = this._dataContext;
+                            this._updateIsEditable();
+                            this.raisePropertyChanged('dataContext');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataEditDialog.prototype, "result", {
+                    get: function () {
+                        return this._result;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataEditDialog.prototype, "template", {
+                    get: function () {
+                        return this._template;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataEditDialog.prototype, "isSubmitOnOK", {
+                    get: function () {
+                        return this._submitOnOK;
+                    },
+                    set: function (v) {
+                        if (this._submitOnOK !== v) {
+                            this._submitOnOK = v;
+                            this.raisePropertyChanged('isSubmitOnOK');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataEditDialog.prototype, "width", {
+                    get: function () {
+                        return this.getOption('width');
+                    },
+                    set: function (v) {
+                        var x = this.getOption('width');
+                        if (v !== x) {
+                            this.setOption('width', v);
+                            this.raisePropertyChanged('width');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataEditDialog.prototype, "height", {
+                    get: function () {
+                        return this.getOption('height');
+                    },
+                    set: function (v) {
+                        var x = this.getOption('height');
+                        if (v !== x) {
+                            this.setOption('height', v);
+                            this.raisePropertyChanged('height');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataEditDialog.prototype, "title", {
+                    get: function () {
+                        return this.getOption('title');
+                    },
+                    set: function (v) {
+                        var x = this.getOption('title');
+                        if (v !== x) {
+                            this.setOption('title', v);
+                            this.raisePropertyChanged('title');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataEditDialog.prototype, "canRefresh", {
+                    get: function () {
+                        return this._canRefresh;
+                    },
+                    set: function (v) {
+                        var x = this._canRefresh;
+                        if (v !== x) {
+                            this._canRefresh = v;
+                            this.raisePropertyChanged('canRefresh');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataEditDialog.prototype, "canCancel", {
+                    get: function () {
+                        return this._canCancel;
+                    },
+                    set: function (v) {
+                        var x = this._canCancel;
+                        if (v !== x) {
+                            this._canCancel = v;
+                            this.raisePropertyChanged('canCancel');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return DataEditDialog;
+            })(RIAPP.BaseObject);
+            datadialog.DataEditDialog = DataEditDialog;
+
+            RIAPP.global.onModuleLoaded('datadialog', datadialog);
+        })(MOD.datadialog || (MOD.datadialog = {}));
+        var datadialog = MOD.datadialog;
+    })(RIAPP.MOD || (RIAPP.MOD = {}));
+    var MOD = RIAPP.MOD;
+})(RIAPP || (RIAPP = {}));
+var RIAPP;
+(function (RIAPP) {
+    (function (MOD) {
+        (function (datagrid) {
+            var constsMOD = RIAPP.MOD.consts;
+            var utilsMOD = RIAPP.MOD.utils;
+            var bindMOD = RIAPP.MOD.binding;
+            var contentMOD = RIAPP.MOD.baseContent;
+            var collMOD = RIAPP.MOD.collection;
+
+            var COLUMN_TYPE = { DATA: 'data', ROW_EXPANDER: 'row_expander', ROW_ACTIONS: 'row_actions', ROW_SELECTOR: 'row_selector' };
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
+
+            datagrid.css = {
+                container: 'ria-table-container',
+                dataTable: 'ria-data-table',
+                columnInfo: 'ria-col-info',
+                column: 'ria-ex-column',
+                cellDiv: 'cell-div',
+                headerDiv: 'ria-table-header',
+                wrapDiv: 'ria-table-wrap',
+                dataColumn: 'data-column',
+                rowCollapsed: 'row-collapsed',
+                rowExpanded: 'row-expanded',
+                rowExpander: 'row-expander',
+                columnSelected: 'selected',
+                rowSelected: 'selected',
+                rowActions: 'row-actions',
+                rowDetails: 'row-details',
+                rowSelector: 'row-selector',
+                rowHighlight: 'row-highlight',
+                rowDeleted: 'row-deleted',
+                rowError: 'row-error',
+                nobr: 'ria-nobr',
+                colSortable: 'sortable',
+                colSortAsc: 'sort-asc',
+                colSortDesc: 'sort-desc'
+            };
+
+            var _columnWidthInterval, _gridsCount = 0;
+            var _created_grids = {};
+            function _gridCreated(grid) {
+                _created_grids[grid.uniqueID] = grid;
+                _gridsCount += 1;
+                if (_gridsCount == 1) {
+                    _columnWidthInterval = setInterval(_checkGridWidth, 250);
+                }
+            }
+            function _gridDestroyed(grid) {
+                delete _created_grids[grid.uniqueID];
+                _gridsCount -= 1;
+                if (_gridsCount == 0) {
+                    clearInterval(_columnWidthInterval);
+                }
+            }
+            function _checkGridWidth() {
+                utils.forEachProp(_created_grids, function (id) {
+                    var grid = _created_grids[id];
+                    if (grid._isDestroyCalled)
+                        return;
+                    grid._columnWidthChecker();
+                });
+            }
+            ;
+
+            var RowSelectContent = (function (_super) {
+                __extends(RowSelectContent, _super);
+                function RowSelectContent() {
+                    _super.apply(this, arguments);
+                }
+                RowSelectContent.prototype._canBeEdited = function () {
+                    return true;
+                };
+                RowSelectContent.prototype.toString = function () {
+                    return 'RowSelectContent';
+                };
+                return RowSelectContent;
+            })(contentMOD.BoolContent);
+            datagrid.RowSelectContent = RowSelectContent;
+
+            var BaseCell = (function (_super) {
+                __extends(BaseCell, _super);
+                function BaseCell(row, options) {
+                    _super.call(this);
+                    this._row = row;
+                    this._el = options.td;
+                    this._column = options.column;
+                    this._div = RIAPP.global.document.createElement("div");
+                    var $div = RIAPP.global.$(this._div);
+                    this._clickTimeOut = null;
+                    $div.addClass(datagrid.css.cellDiv).attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, this._column.uniqueID);
+                    $div.data('cell', this);
+                    if (this._column.options.width) {
+                        this._el.style.width = this._column.options.width;
+                    }
+                    this._init();
+                    if (this.column.options.rowCellCss) {
+                        $div.addClass(this.column.options.rowCellCss);
+                    }
+                    this._el.appendChild(this._div);
+                    this._row.el.appendChild(this._el);
+                }
+                BaseCell.prototype._init = function () {
+                };
+                BaseCell.prototype._onCellClicked = function () {
+                    this.grid.currentRow = this._row;
+                };
+                BaseCell.prototype._onDblClicked = function () {
+                    this.grid.currentRow = this._row;
+                    this.grid._onCellDblClicked(this);
+                };
+                BaseCell.prototype._onError = function (error, source) {
+                    var isHandled = _super.prototype._onError.call(this, error, source);
+                    if (!isHandled) {
+                        return this.row._onError(error, source);
+                    }
+                    return isHandled;
+                };
+                BaseCell.prototype.scrollIntoView = function (isUp) {
+                    var div = this._div;
+                    div.scrollIntoView(!!isUp);
+                };
+                BaseCell.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._clickTimeOut) {
+                        clearTimeout(this._clickTimeOut);
+                        this._clickTimeOut = null;
+                    }
+                    var $div = RIAPP.global.$(this._div);
+                    $div.removeData();
+                    $div.remove();
+                    this._div = null;
+                    this._row = null;
+                    this._el = null;
+                    this._column = null;
+                    _super.prototype.destroy.call(this);
+                };
+                BaseCell.prototype.toString = function () {
+                    return 'BaseCell';
+                };
+                Object.defineProperty(BaseCell.prototype, "el", {
+                    get: function () {
+                        return this._el;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseCell.prototype, "row", {
+                    get: function () {
+                        return this._row;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseCell.prototype, "column", {
+                    get: function () {
+                        return this._column;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseCell.prototype, "grid", {
+                    get: function () {
+                        return this._row.grid;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseCell.prototype, "item", {
+                    get: function () {
+                        return this._row.item;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return BaseCell;
+            })(RIAPP.BaseObject);
+            datagrid.BaseCell = BaseCell;
+
+            var DataCell = (function (_super) {
+                __extends(DataCell, _super);
+                function DataCell(row, options) {
+                    this._content = null;
+                    this._stateCss = null;
+                    _super.call(this, row, options);
+                }
+                DataCell.prototype._init = function () {
+                    var options = this.column.options.content;
+                    if (!options.fieldInfo && !!options.fieldName) {
+                        options.fieldInfo = this.item.getFieldInfo(options.fieldName);
+                        if (!options.fieldInfo) {
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, '', options.fieldName));
+                        }
+                    }
+                    var app = this.grid.app;
+                    options.initContentFn = null;
+                    try  {
+                        var contentType = app._getContentType(options);
+                        if (app.contentFactory.isExternallyCachable(contentType)) {
+                            options.initContentFn = this._getInitContentFn();
+                        }
+                        this._content = app._getContent(contentType, options, this._div, this.item, this.item.isEditing);
+                    } finally {
+                        delete options.initContentFn;
+                    }
+                };
+                DataCell.prototype._getInitContentFn = function () {
+                    var self = this;
+                    return function (content) {
+                        content.addOnObjectCreated(function (sender, args) {
+                            self.column._cacheObject(args.objectKey, args.object);
+                            args.isCachedExternally = !!self.column._getCachedObject(args.objectKey);
+                        });
+                        content.addOnObjectNeeded(function (sender, args) {
+                            args.object = self.column._getCachedObject(args.objectKey);
+                        });
+                    };
+                };
+                DataCell.prototype._beginEdit = function () {
+                    if (!this._content.isEditing) {
+                        this._content.isEditing = true;
+                    }
+                };
+                DataCell.prototype._endEdit = function (isCanceled) {
+                    if (this._content.isEditing) {
+                        this._content.isEditing = false;
+                    }
+                };
+                DataCell.prototype._setState = function (css) {
+                    var $div;
+                    if (this._stateCss !== css) {
+                        $div = RIAPP.global.$(this._div);
+                        if (!!this._stateCss)
+                            $div.removeClass(this._stateCss);
+                        this._stateCss = css;
+                        if (!!this._stateCss)
+                            $div.addClass(this._stateCss);
+                    }
+                };
+                DataCell.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._content) {
+                        this._content.destroy();
+                        this._content = null;
+                    }
+                    _super.prototype.destroy.call(this);
+                };
+                DataCell.prototype.toString = function () {
+                    return 'DataCell';
+                };
+                Object.defineProperty(DataCell.prototype, "column", {
+                    get: function () {
+                        return this._column;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return DataCell;
+            })(BaseCell);
+            datagrid.DataCell = DataCell;
+
+            var ExpanderCell = (function (_super) {
+                __extends(ExpanderCell, _super);
+                function ExpanderCell() {
+                    _super.apply(this, arguments);
+                }
+                ExpanderCell.prototype._init = function () {
+                    var $el = RIAPP.global.$(this.el);
+                    $el.addClass(datagrid.css.rowCollapsed);
+                    $el.addClass(datagrid.css.rowExpander);
+                };
+                ExpanderCell.prototype._onCellClicked = function () {
+                    if (!this._row)
+                        return;
+                    _super.prototype._onCellClicked.call(this);
+                    this._row.isExpanded = !this._row.isExpanded;
+                };
+                ExpanderCell.prototype._toggleImage = function () {
+                    var $el = RIAPP.global.$(this.el);
+                    if (this._row.isExpanded) {
+                        $el.removeClass(datagrid.css.rowCollapsed);
+                        $el.addClass(datagrid.css.rowExpanded);
+                    } else {
+                        $el.removeClass(datagrid.css.rowExpanded);
+                        $el.addClass(datagrid.css.rowCollapsed);
+                    }
+                };
+                ExpanderCell.prototype.toString = function () {
+                    return 'ExpanderCell';
+                };
+                return ExpanderCell;
+            })(BaseCell);
+            datagrid.ExpanderCell = ExpanderCell;
+
+            var ActionsCell = (function (_super) {
+                __extends(ActionsCell, _super);
+                function ActionsCell(row, options) {
+                    this._isEditing = false;
+                    _super.call(this, row, options);
+                }
+                ActionsCell.prototype._init = function () {
+                    var $el = RIAPP.global.$(this.el), $div = RIAPP.global.$(this._div);
+                    $el.addClass([datagrid.css.rowActions, datagrid.css.cellDiv, datagrid.css.nobr].join(' '));
+                    $div.on("mouseenter", "img", function (e) {
+                        e.stopPropagation();
+                        $(this).css("opacity", 0.5);
+                    });
+                    $div.on("mouseout", "img", function (e) {
+                        e.stopPropagation();
+                        $(this).css("opacity", 1.0);
+                    });
+                    this._createButtons(false);
+                };
+                ActionsCell.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    var $div = RIAPP.global.$(this._div), $imgs = $div.find('img');
+                    $imgs.each(function (index, img) {
+                        var $img = RIAPP.global.$(img);
+                        $img.removeData();
+                    });
+                    _super.prototype.destroy.call(this);
+                };
+                ActionsCell.prototype._createButtons = function (editing) {
+                    if (!this._el)
+                        return;
+                    var self = this, $ = RIAPP.global.$, $div = RIAPP.global.$(this._div), $newElems;
+                    var txtMap = {
+                        img_ok: 'txtOk',
+                        img_cancel: 'txtCancel',
+                        img_edit: 'txtEdit',
+                        img_delete: 'txtDelete'
+                    };
+                    $div.empty();
+                    var opts = self._column.options, fn_setUpImages = function ($images) {
+                        $images.each(function (index, img) {
+                            var $img = RIAPP.global.$(img);
+                            img.style.cursor = 'pointer';
+                            img.src = opts[img.name];
+                            $img.data('cell', self);
+                            utils.addToolTip($img, RIAPP.localizable.TEXT[txtMap[img.name]]);
+                            $img.attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, self._column.uniqueID);
+                        });
+                    };
+
+                    if (editing) {
+                        this._isEditing = true;
+                        $newElems = RIAPP.global.$('<img name="img_ok" alt="ok"/>&nbsp;<img name="img_cancel" alt="cancel"/>');
+                        fn_setUpImages($newElems.filter('img'));
+                    } else {
+                        this._isEditing = false;
+                        $newElems = $('<img name="img_edit" alt="edit"/>&nbsp;<img name="img_delete" alt="delete"/>');
+                        if (!self.isCanEdit) {
+                            $newElems = $newElems.not('img[name="img_edit"]');
+                        }
+                        if (!self.isCanDelete) {
+                            $newElems = $newElems.not('img[name="img_delete"]');
+                        }
+                        fn_setUpImages($newElems.filter('img'));
+                    }
+                    $div.append($newElems);
+                };
+                ActionsCell.prototype.update = function () {
+                    if (!this._row)
+                        return;
+                    if (this._isEditing != this._row.isEditing) {
+                        this._createButtons(this._row.isEditing);
+                    }
+                };
+                ActionsCell.prototype.toString = function () {
+                    return 'ActionsCell';
+                };
+                Object.defineProperty(ActionsCell.prototype, "isCanEdit", {
+                    get: function () {
+                        return this.grid.isCanEdit;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(ActionsCell.prototype, "isCanDelete", {
+                    get: function () {
+                        return this.grid.isCanDelete;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return ActionsCell;
+            })(BaseCell);
+            datagrid.ActionsCell = ActionsCell;
+
+            var RowSelectorCell = (function (_super) {
+                __extends(RowSelectorCell, _super);
+                function RowSelectorCell() {
+                    _super.apply(this, arguments);
+                }
+                RowSelectorCell.prototype._init = function () {
+                    var $el = RIAPP.global.$(this.el);
+                    $el.addClass(datagrid.css.rowSelector);
+                    var bindInfo = {
+                        target: null, source: null,
+                        targetPath: null, sourcePath: 'isSelected',
+                        mode: bindMOD.BINDING_MODE[2 /* TwoWay */],
+                        converter: null, converterParam: null
+                    }, contentOpts = {
+                        fieldName: 'isSelected',
+                        bindingInfo: bindInfo, displayInfo: null
+                    };
+                    this._content = new RowSelectContent(this.grid.app, this._div, contentOpts, this.row, true);
+                };
+                RowSelectorCell.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._content) {
+                        this._content.destroy();
+                        this._content = null;
+                    }
+                    _super.prototype.destroy.call(this);
+                };
+                RowSelectorCell.prototype.toString = function () {
+                    return 'RowSelectorCell';
+                };
+                return RowSelectorCell;
+            })(BaseCell);
+            datagrid.RowSelectorCell = RowSelectorCell;
+
+            var DetailsCell = (function (_super) {
+                __extends(DetailsCell, _super);
+                function DetailsCell(row, options) {
+                    _super.call(this);
+                    this._row = row;
+                    this._el = options.td;
+                    this._init(options);
+                }
+                DetailsCell.prototype._init = function (options) {
+                    var details_id = options.details_id;
+                    if (!details_id)
+                        return;
+                    this._template = new RIAPP.MOD.template.Template(this.grid.app, details_id);
+                    this._el.colSpan = this.grid.columns.length;
+                    this._el.appendChild(this._template.el);
+                    this._row.el.appendChild(this._el);
+                };
+                DetailsCell.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._template) {
+                        this._template.destroy();
+                        this._template = null;
+                    }
+                    this._row = null;
+                    this._el = null;
+                    _super.prototype.destroy.call(this);
+                };
+                DetailsCell.prototype.toString = function () {
+                    return 'DetailsCell';
+                };
+                Object.defineProperty(DetailsCell.prototype, "el", {
+                    get: function () {
+                        return this._el;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DetailsCell.prototype, "row", {
+                    get: function () {
+                        return this._row;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DetailsCell.prototype, "grid", {
+                    get: function () {
+                        return this._row.grid;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DetailsCell.prototype, "item", {
+                    get: function () {
+                        return this._template.dataContext;
+                    },
+                    set: function (v) {
+                        this._template.dataContext = v;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DetailsCell.prototype, "template", {
+                    get: function () {
+                        return this._template;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return DetailsCell;
+            })(RIAPP.BaseObject);
+            datagrid.DetailsCell = DetailsCell;
+
+            var Row = (function (_super) {
+                __extends(Row, _super);
+                function Row(grid, options) {
+                    var self = this;
+                    _super.call(this);
+                    this._grid = grid;
+                    this._el = options.tr;
+                    this._item = options.item;
+                    this._cells = null;
+                    this._objId = this._grid.uniqueID + '_' + this._item._key;
+                    this._expanderCell = null;
+                    this._actionsCell = null;
+                    this._rowSelectorCell = null;
+                    this._isCurrent = false;
+                    this._isDeleted = false;
+                    this._isSelected = false;
+                    this._createCells();
+                    this.isDeleted = this._item._isDeleted;
+                    var fn_state = function () {
+                        var css = self._grid._onRowStateChanged(self, self._item[self._grid._options.rowStateField]);
+                        self._setState(css);
+                    };
+                    if (!!this._grid._options.rowStateField) {
+                        this._item.addOnPropertyChange(this._grid._options.rowStateField, function (s, a) {
+                            fn_state();
+                        }, this._objId);
+                        fn_state();
+                    }
+                }
+                Row.prototype._onError = function (error, source) {
+                    var isHandled = _super.prototype._onError.call(this, error, source);
+                    if (!isHandled) {
+                        return this.grid._onError(error, source);
+                    }
+                    return isHandled;
+                };
+                Row.prototype._createCells = function () {
+                    var self = this, i = 0;
+                    self._cells = new Array(this.columns.length);
+                    this.columns.forEach(function (col) {
+                        self._cells[i] = self._createCell(col);
+                        i += 1;
+                    });
+                };
+                Row.prototype._createCell = function (col) {
+                    var self = this, td = RIAPP.global.document.createElement('td'), cell;
+                    if (col instanceof ExpanderColumn) {
+                        cell = new ExpanderCell(self, { td: td, column: col });
+                        this._expanderCell = cell;
+                    } else if (col instanceof ActionsColumn) {
+                        cell = new ActionsCell(self, { td: td, column: col });
+                        this._actionsCell = cell;
+                    } else if (col instanceof RowSelectorColumn) {
+                        cell = new RowSelectorCell(self, { td: td, column: col });
+                        this._rowSelectorCell = cell;
+                    } else
+                        cell = new DataCell(self, { td: td, column: col });
+                    return cell;
+                };
+                Row.prototype._onBeginEdit = function () {
+                    var self = this;
+                    self._cells.forEach(function (cell) {
+                        if (cell instanceof DataCell) {
+                            cell._beginEdit();
+                        }
+                    });
+                    if (!!this._actionsCell)
+                        this._actionsCell.update();
+                };
+                Row.prototype._onEndEdit = function (isCanceled) {
+                    var self = this;
+                    self._cells.forEach(function (cell) {
+                        if (cell instanceof DataCell) {
+                            cell._endEdit(isCanceled);
+                        }
+                    });
+                    if (!!this._actionsCell)
+                        this._actionsCell.update();
+                };
+                Row.prototype.beginEdit = function () {
+                    return this._item.beginEdit();
+                };
+                Row.prototype.endEdit = function () {
+                    return this._item.endEdit();
+                };
+                Row.prototype.cancelEdit = function () {
+                    return this._item.cancelEdit();
+                };
+                Row.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    var grid = this._grid;
+                    if (!!grid) {
+                        if (this.isExpanded)
+                            grid.collapseDetails();
+                        this._cells.forEach(function (cell) {
+                            cell.destroy();
+                        });
+                        this._cells = null;
+                        if (!grid._isClearing) {
+                            grid._removeRow(this);
+                            if (!!this._el) {
+                                RIAPP.global.$(this._el).remove();
+                            }
+                        }
+                    }
+                    if (!!this._item)
+                        this._item.removeNSHandlers(this._objId);
+                    this._item = null;
+                    this._expanderCell = null;
+                    this._el = null;
+                    this._grid = null;
+                    _super.prototype.destroy.call(this);
+                };
+                Row.prototype.deleteRow = function () {
+                    this._item.deleteItem();
+                };
+                Row.prototype.updateErrorState = function () {
+                    //TODO: add implementation to show explanation of error
+                    var hasErrors = this._item.getIsHasErrors();
+                    var $el = RIAPP.global.$(this._el);
+                    if (hasErrors) {
+                        $el.addClass(datagrid.css.rowError);
+                    } else
+                        $el.removeClass(datagrid.css.rowError);
+                };
+                Row.prototype.scrollIntoView = function (isUp) {
+                    if (!!this._cells && this._cells.length > 0) {
+                        this._cells[0].scrollIntoView(isUp);
+                    }
+                };
+                Row.prototype._setState = function (css) {
+                    this.cells.forEach(function (cell) {
+                        if (cell instanceof DataCell) {
+                            cell._setState(css);
+                        }
+                    });
+                };
+                Row.prototype.toString = function () {
+                    return 'Row';
+                };
+                Object.defineProperty(Row.prototype, "el", {
+                    get: function () {
+                        return this._el;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "grid", {
+                    get: function () {
+                        return this._grid;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "item", {
+                    get: function () {
+                        return this._item;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "cells", {
+                    get: function () {
+                        return this._cells;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "columns", {
+                    get: function () {
+                        return this._grid.columns;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "uniqueID", {
+                    get: function () {
+                        return this._objId;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "itemKey", {
+                    get: function () {
+                        if (!this._item)
+                            return null;
+                        return this._item._key;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "isCurrent", {
+                    get: function () {
+                        return this._isCurrent;
+                    },
+                    set: function (v) {
+                        var curr = this._isCurrent;
+                        if (v !== curr) {
+                            var $el = RIAPP.global.$(this._el);
+                            this._isCurrent = v;
+                            if (v) {
+                                $el.addClass(datagrid.css.rowHighlight);
+                            } else {
+                                $el.removeClass(datagrid.css.rowHighlight);
+                            }
+                            this.raisePropertyChanged('isCurrent');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "isSelected", {
+                    get: function () {
+                        return this._isSelected;
+                    },
+                    set: function (v) {
+                        if (this._isSelected != v) {
+                            this._isSelected = v;
+                            this.raisePropertyChanged('isSelected');
+                            this.grid._onRowSelectionChanged(this);
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "isExpanded", {
+                    get: function () {
+                        return this.grid._isRowExpanded(this);
+                    },
+                    set: function (v) {
+                        if (v !== this.isExpanded) {
+                            if (!v && this.isExpanded) {
+                                this.grid._expandDetails(this, false);
+                            } else if (v) {
+                                this.grid._expandDetails(this, true);
+                            }
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "expanderCell", {
+                    get: function () {
+                        return this._expanderCell;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "actionsCell", {
+                    get: function () {
+                        return this._actionsCell;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "isDeleted", {
+                    get: function () {
+                        if (!this._el)
+                            return true;
+                        return this._isDeleted;
+                    },
+                    set: function (v) {
+                        if (!this._el)
+                            return;
+                        if (this._isDeleted !== v) {
+                            this._isDeleted = v;
+                            if (this._isDeleted) {
+                                this.isExpanded = false;
+                                RIAPP.global.$(this._el).addClass(datagrid.css.rowDeleted);
+                            } else
+                                RIAPP.global.$(this._el).removeClass(datagrid.css.rowDeleted);
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "isEditing", {
+                    get: function () {
+                        return !!this._item && this._item._isEditing;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return Row;
+            })(RIAPP.BaseObject);
+            datagrid.Row = Row;
+
+            var DetailsRow = (function (_super) {
+                __extends(DetailsRow, _super);
+                function DetailsRow(grid, options) {
+                    _super.call(this);
+                    this._grid = grid;
+                    this._el = options.tr;
+                    this._item = null;
+                    this._cell = null;
+                    this._parentRow = null;
+                    this._objId = 'drow' + utils.getNewID();
+                    this._createCell(options.details_id);
+                    this._$el = RIAPP.global.$(this._el);
+                    this._$el.addClass(datagrid.css.rowDetails);
+                }
+                DetailsRow.prototype._createCell = function (details_id) {
+                    var td = RIAPP.global.document.createElement('td');
+                    this._cell = new DetailsCell(this, { td: td, details_id: details_id });
+                };
+                DetailsRow.prototype._setParentRow = function (row) {
+                    var self = this;
+                    this._item = null;
+                    this._cell.item = null;
+
+                    //don't use global.$(this._el).remove() here - or it will remove all jQuery plugins!
+                    utils.removeNode(this._el);
+                    if (!row || row._isDestroyCalled) {
+                        this._parentRow = null;
+                        return;
+                    }
+                    this._parentRow = row;
+                    this._item = row.item;
+                    this._cell.item = this._item;
+                    utils.insertAfter(row.el, this._el);
+                    var $cell = RIAPP.global.$(this._cell.template.el);
+
+                    //var isLast = this.grid._getLastRow() === this._parentRow;
+                    $cell.slideDown('fast', function () {
+                        var row = self._parentRow;
+                        if (!row || row._isDestroyCalled)
+                            return;
+                        if (self.grid._options.isUseScrollIntoDetails)
+                            row.scrollIntoView(true);
+                    });
+                };
+                DetailsRow.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._cell) {
+                        this._cell.destroy();
+                        this._cell = null;
+                    }
+                    this._$el.remove();
+                    this._$el = null;
+                    this._item = null;
+                    this._el = null;
+                    this._grid = null;
+                    _super.prototype.destroy.call(this);
+                };
+                DetailsRow.prototype.toString = function () {
+                    return 'DetailsRow';
+                };
+                Object.defineProperty(DetailsRow.prototype, "el", {
+                    get: function () {
+                        return this._el;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DetailsRow.prototype, "$el", {
+                    get: function () {
+                        return this._$el;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DetailsRow.prototype, "grid", {
+                    get: function () {
+                        return this._grid;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DetailsRow.prototype, "item", {
+                    get: function () {
+                        return this._item;
+                    },
+                    set: function (v) {
+                        if (this._item !== v) {
+                            this._item = v;
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DetailsRow.prototype, "cell", {
+                    get: function () {
+                        return this._cell;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DetailsRow.prototype, "uniqueID", {
+                    get: function () {
+                        return this._objId;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DetailsRow.prototype, "itemKey", {
+                    get: function () {
+                        if (!this._item)
+                            return null;
+                        return this._item._key;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DetailsRow.prototype, "parentRow", {
+                    get: function () {
+                        return this._parentRow;
+                    },
+                    set: function (v) {
+                        var self = this;
+                        if (v !== this._parentRow) {
+                            var $cell = RIAPP.global.$(this._cell.template.el);
+                            if (!!self._parentRow) {
+                                $cell.slideUp('fast', function () {
+                                    self._setParentRow(v);
+                                });
+                            } else {
+                                self._setParentRow(v);
+                            }
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return DetailsRow;
+            })(RIAPP.BaseObject);
+            datagrid.DetailsRow = DetailsRow;
+
+            var BaseColumn = (function (_super) {
+                __extends(BaseColumn, _super);
+                function BaseColumn(grid, options) {
+                    _super.call(this);
+                    var self = this;
+                    this._grid = grid;
+                    this._el = options.th;
+                    this._options = options.colinfo;
+                    this._isSelected = false;
+                    this._objId = 'col' + utils.getNewID();
+
+                    var extcolDiv = RIAPP.global.document.createElement('div');
+                    this._$extcol = RIAPP.global.$(extcolDiv);
+                    this._$extcol.addClass(datagrid.css.column);
+                    this._grid._appendToHeader(extcolDiv);
+
+                    var div = RIAPP.global.document.createElement('div');
+                    this._$div = RIAPP.global.$(div);
+                    this._$div.addClass(datagrid.css.cellDiv).click(function (e) {
+                        e.stopPropagation();
+                        RIAPP.global.currentSelectable = grid;
+                        grid._setCurrentColumn(self);
+                        self._onColumnClicked();
+                    });
+
+                    extcolDiv.appendChild(div);
+
+                    this.grid._$tableEl.on('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''), function (e) {
+                        e.stopPropagation();
+                        var $div = RIAPP.global.$(this), cell = $div.data('cell');
+                        if (!!cell) {
+                            RIAPP.global.currentSelectable = grid;
+                            grid._setCurrentColumn(self);
+                            if (cell instanceof DataCell) {
+                                if (!!cell._clickTimeOut) {
+                                    clearTimeout(cell._clickTimeOut);
+                                    cell._clickTimeOut = null;
+                                    cell._onDblClicked();
+                                } else {
+                                    cell._onCellClicked();
+                                    cell._clickTimeOut = setTimeout(function () {
+                                        cell._clickTimeOut = null;
+                                    }, 350);
+                                }
+                            } else {
+                                cell._onCellClicked();
+                            }
+                        }
+                    });
+
+                    if (this._options.width) {
+                        this._el.style.width = this._options.width;
+                    }
+                    this._init();
+
+                    if (this._options.colCellCss) {
+                        self._$div.addClass(this._options.colCellCss);
+                    }
+                }
+                BaseColumn.prototype._init = function () {
+                    if (!!this.title)
+                        this._$div.html(this.title);
+                };
+                BaseColumn.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this._$extcol.remove();
+                    this._$extcol = null;
+                    this._$div = null;
+                    this._el = null;
+                    this._grid = null;
+                    _super.prototype.destroy.call(this);
+                };
+                BaseColumn.prototype.scrollIntoView = function (isUp) {
+                    if (!this._$div)
+                        return;
+                    var div = this._$div.get(0);
+                    div.scrollIntoView(!!isUp);
+                };
+                BaseColumn.prototype._onColumnClicked = function () {
+                };
+                BaseColumn.prototype.toString = function () {
+                    return 'BaseColumn';
+                };
+                Object.defineProperty(BaseColumn.prototype, "uniqueID", {
+                    get: function () {
+                        return this._objId;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseColumn.prototype, "el", {
+                    get: function () {
+                        return this._el;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseColumn.prototype, "$div", {
+                    get: function () {
+                        return this._$div;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseColumn.prototype, "$extcol", {
+                    get: function () {
+                        return this._$extcol;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseColumn.prototype, "grid", {
+                    get: function () {
+                        return this._grid;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseColumn.prototype, "options", {
+                    get: function () {
+                        return this._options;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseColumn.prototype, "title", {
+                    get: function () {
+                        return this._options.title;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseColumn.prototype, "isSelected", {
+                    get: function () {
+                        return this._isSelected;
+                    },
+                    set: function (v) {
+                        if (this._isSelected !== v) {
+                            this._isSelected = v;
+                            if (this._isSelected) {
+                                this._$div.addClass(datagrid.css.columnSelected);
+                            } else
+                                this._$div.removeClass(datagrid.css.columnSelected);
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return BaseColumn;
+            })(RIAPP.BaseObject);
+            datagrid.BaseColumn = BaseColumn;
+
+            var DataColumn = (function (_super) {
+                __extends(DataColumn, _super);
+                function DataColumn(grid, options) {
+                    _super.call(this, grid, options);
+
+                    //the DataCell caches here listbox (for the LookupContent)
+                    //so not to create it for every cell
+                    this._objCache = {};
+                    this.$div.addClass(datagrid.css.dataColumn);
+                }
+                DataColumn.prototype._init = function () {
+                    _super.prototype._init.call(this);
+                    this._sortOrder = null;
+                    if (this.isSortable) {
+                        this.$div.addClass(datagrid.css.colSortable);
+                    }
+                };
+                DataColumn.prototype._onColumnClicked = function () {
+                    if (this.isSortable && !!this.sortMemberName) {
+                        var sortOrd = this._sortOrder;
+                        this.grid._resetColumnsSort();
+
+                        if (sortOrd == 0 /* ASC */) {
+                            this.sortOrder = 1 /* DESC */;
+                        } else if (sortOrd == 1 /* DESC */) {
+                            this.sortOrder = 0 /* ASC */;
+                        } else
+                            this.sortOrder = 0 /* ASC */;
+                        this.grid.sortByColumn(this);
+                    }
+                };
+                DataColumn.prototype._cacheObject = function (key, obj) {
+                    this._objCache[key] = obj;
+                };
+                DataColumn.prototype._getCachedObject = function (key) {
+                    return this._objCache[key];
+                };
+                DataColumn.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    var self = this;
+                    utils.forEachProp(self._objCache, function (key) {
+                        self._objCache[key].destroy();
+                    });
+                    self._objCache = null;
+                    _super.prototype.destroy.call(this);
+                };
+                DataColumn.prototype.toString = function () {
+                    return 'DataColumn';
+                };
+                Object.defineProperty(DataColumn.prototype, "isSortable", {
+                    get: function () {
+                        return !!(this.options.sortable);
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataColumn.prototype, "sortMemberName", {
+                    get: function () {
+                        return this.options.sortMemberName;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataColumn.prototype, "sortOrder", {
+                    get: function () {
+                        return this._sortOrder;
+                    },
+                    set: function (v) {
+                        this.$div.removeClass([datagrid.css.colSortable, datagrid.css.colSortAsc, datagrid.css.colSortDesc].join(' '));
+                        switch (v) {
+                            case 0 /* ASC */:
+                                this.$div.addClass(datagrid.css.colSortAsc);
+                                break;
+                            case 1 /* DESC */:
+                                this.$div.addClass(datagrid.css.colSortDesc);
+                                break;
+                            default:
+                                if (this.isSortable)
+                                    this.$div.addClass(datagrid.css.colSortable);
+                        }
+                        this._sortOrder = v;
+                        this.raisePropertyChanged('sortOrder');
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return DataColumn;
+            })(BaseColumn);
+            datagrid.DataColumn = DataColumn;
+
+            var ExpanderColumn = (function (_super) {
+                __extends(ExpanderColumn, _super);
+                function ExpanderColumn() {
+                    _super.apply(this, arguments);
+                }
+                ExpanderColumn.prototype._init = function () {
+                    _super.prototype._init.call(this);
+                    this.$div.addClass(datagrid.css.rowExpander);
+                };
+                ExpanderColumn.prototype.toString = function () {
+                    return 'ExpanderColumn';
+                };
+                return ExpanderColumn;
+            })(BaseColumn);
+            datagrid.ExpanderColumn = ExpanderColumn;
+
+            var RowSelectorColumn = (function (_super) {
+                __extends(RowSelectorColumn, _super);
+                function RowSelectorColumn() {
+                    _super.apply(this, arguments);
+                }
+                RowSelectorColumn.prototype._init = function () {
+                    _super.prototype._init.call(this);
+                    var self = this;
+                    this._val = false;
+                    this.$div.addClass(datagrid.css.rowSelector);
+                    var $chk = RIAPP.global.$('<input type="checkbox"/>');
+                    this.$div.append($chk);
+                    this._$chk = $chk;
+                    $chk.click(function (e) {
+                        e.stopPropagation();
+                        self._onCheckBoxClicked(this.checked);
+                    });
+                    $chk.on('change', function (e) {
+                        e.stopPropagation();
+                        self.checked = this.checked;
+                    });
+                };
+                RowSelectorColumn.prototype._onCheckBoxClicked = function (isChecked) {
+                    this.grid.selectRows(isChecked);
+                };
+                RowSelectorColumn.prototype.toString = function () {
+                    return 'RowSelectorColumn';
+                };
+                Object.defineProperty(RowSelectorColumn.prototype, "checked", {
+                    get: function () {
+                        return this._val;
+                    },
+                    set: function (v) {
+                        var $el = this._$chk;
+                        if (v !== null)
+                            v = !!v;
+                        if (v !== this._val) {
+                            this._val = v;
+                            if (!!$el)
+                                $el.prop('checked', !!this._val);
+                            this.raisePropertyChanged('checked');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return RowSelectorColumn;
+            })(BaseColumn);
+            datagrid.RowSelectorColumn = RowSelectorColumn;
+
+            var ActionsColumn = (function (_super) {
+                __extends(ActionsColumn, _super);
+                function ActionsColumn() {
+                    _super.apply(this, arguments);
+                }
+                ActionsColumn.prototype._init = function () {
+                    _super.prototype._init.call(this);
+                    var self = this, opts = this.options;
+                    this.$div.addClass(datagrid.css.rowActions);
+                    opts.img_ok = RIAPP.global.getImagePath(opts.img_ok || 'ok.png');
+                    opts.img_cancel = RIAPP.global.getImagePath(opts.img_cancel || 'cancel.png');
+                    opts.img_edit = RIAPP.global.getImagePath(opts.img_edit || 'edit.png');
+                    opts.img_delete = RIAPP.global.getImagePath(opts.img_delete || 'delete.png');
+                    this.grid._$tableEl.on("click", 'img[' + constsMOD.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]', function (e) {
+                        e.stopPropagation();
+                        var $img = RIAPP.global.$(this), name = this.name, cell = $img.data('cell');
+                        switch (name) {
+                            case 'img_ok':
+                                self._onOk(cell);
+                                break;
+                            case 'img_cancel':
+                                self._onCancel(cell);
+                                break;
+                            case 'img_edit':
+                                self._onEdit(cell);
+                                break;
+                            case 'img_delete':
+                                self._onDelete(cell);
+                                break;
+                        }
+                    });
+                };
+                ActionsColumn.prototype._onOk = function (cell) {
+                    if (!cell._row)
+                        return;
+                    cell._row.endEdit();
+                    cell.update();
+                };
+                ActionsColumn.prototype._onCancel = function (cell) {
+                    if (!cell._row)
+                        return;
+                    cell._row.cancelEdit();
+                    cell.update();
+                };
+                ActionsColumn.prototype._onDelete = function (cell) {
+                    if (!cell._row)
+                        return;
+                    cell._row.deleteRow();
+                };
+                ActionsColumn.prototype._onEdit = function (cell) {
+                    if (!cell._row)
+                        return;
+                    cell._row.beginEdit();
+                    cell.update();
+                    this.grid.showEditDialog();
+                };
+                ActionsColumn.prototype.toString = function () {
+                    return 'ActionsColumn';
+                };
+                return ActionsColumn;
+            })(BaseColumn);
+            datagrid.ActionsColumn = ActionsColumn;
+
+            var DataGrid = (function (_super) {
+                __extends(DataGrid, _super);
+                function DataGrid(app, el, dataSource, options) {
+                    _super.call(this);
+                    if (!!dataSource && !(dataSource instanceof collMOD.BaseCollection))
+                        throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
+                    this._options = utils.extend(false, {
+                        isUseScrollInto: true,
+                        isUseScrollIntoDetails: true,
+                        containerCss: null,
+                        wrapCss: null,
+                        headerCss: null,
+                        rowStateField: null,
+                        isCanEdit: null,
+                        isCanDelete: null,
+                        isHandleAddNew: false
+                    }, options);
+                    this._app = app;
+                    this._columnWidthChecker = function () {
+                    };
+                    var $t = RIAPP.global.$(el);
+                    this._tableEl = el;
+                    this._$tableEl = $t;
+                    $t.addClass(datagrid.css.dataTable);
+                    this._name = $t.attr(constsMOD.DATA_ATTR.DATA_NAME);
+                    this._objId = 'grd' + utils.getNewID();
+                    this._dataSource = dataSource;
+                    this._rowMap = {};
+                    this._rows = [];
+                    this._columns = [];
+                    this._isClearing = false;
+                    this._isDSFilling = false;
+                    this._currentRow = null;
+                    this._expandedRow = null;
+                    this._details = null;
+                    this._expanderCol = null;
+                    this._actionsCol = null;
+                    this._rowSelectorCol = null;
+                    this._currentColumn = null;
+                    this._editingRow = null;
+                    this._isSorting = false;
+                    this._dialog = null;
+                    this._$headerDiv = null;
+                    this._$wrapDiv = null;
+                    this._$contaner = null;
+                    this._wrapTable();
+                    this._createColumns();
+                    this._bindDS();
+
+                    //fills all rows
+                    this._refreshGrid();
+                    this._updateColsDim();
+                    this._onDSCurrentChanged();
+                    RIAPP.global._trackSelectable(this);
+                    _gridCreated(this);
+                }
+                DataGrid.prototype._getEventNames = function () {
+                    var base_events = _super.prototype._getEventNames.call(this);
+                    return [
+                        'row_expanded', 'row_selected', 'page_changed', 'row_state_changed',
+                        'cell_dblclicked'].concat(base_events);
+                };
+                DataGrid.prototype.addOnRowExpanded = function (fn, namespace) {
+                    this.addHandler('row_expanded', fn, namespace);
+                };
+                DataGrid.prototype.removeOnRowExpanded = function (namespace) {
+                    this.removeHandler('row_expanded', namespace);
+                };
+                DataGrid.prototype.addOnRowSelected = function (fn, namespace) {
+                    this.addHandler('row_selected', fn, namespace);
+                };
+                DataGrid.prototype.removeOnRowSelected = function (namespace) {
+                    this.removeHandler('row_selected', namespace);
+                };
+                DataGrid.prototype.addOnPageChanged = function (fn, namespace) {
+                    this.addHandler('page_changed', fn, namespace);
+                };
+                DataGrid.prototype.removeOnPageChanged = function (namespace) {
+                    this.removeHandler('page_changed', namespace);
+                };
+                DataGrid.prototype.addOnRowStateChanged = function (fn, namespace) {
+                    this.addHandler('row_state_changed', fn, namespace);
+                };
+                DataGrid.prototype.removeOnRowStateChanged = function (namespace) {
+                    this.removeHandler('row_state_changed', namespace);
+                };
+                DataGrid.prototype.addOnCellDblClicked = function (fn, namespace) {
+                    this.addHandler('cell_dblclicked', fn, namespace);
+                };
+                DataGrid.prototype.removeOnCellDblClicked = function (namespace) {
+                    this.removeHandler('cell_dblclicked', namespace);
+                };
+                DataGrid.prototype._isRowExpanded = function (row) {
+                    return this._expandedRow === row;
+                };
+                DataGrid.prototype._appendToHeader = function (el) {
+                    this._$headerDiv.append(el);
+                };
+                DataGrid.prototype._setCurrentColumn = function (column) {
+                    if (!!this._currentColumn)
+                        this._currentColumn.isSelected = false;
+                    this._currentColumn = column;
+                    if (!!this._currentColumn)
+                        this._currentColumn.isSelected = true;
+                };
+                DataGrid.prototype._parseColumnAttr = function (column_attr, content_attr) {
+                    var defaultOp = {
+                        type: COLUMN_TYPE.DATA,
+                        title: null,
+                        sortable: false,
+                        sortMemberName: null,
+                        content: null
+                    }, options;
+
+                    var temp_opts = RIAPP.global.parser.parseOptions(column_attr);
+                    if (temp_opts.length > 0)
+                        options = utils.extend(false, defaultOp, temp_opts[0]);
+                    else
+                        options = defaultOp;
+
+                    if (!!content_attr) {
+                        options.content = contentMOD.parseContentAttr(content_attr);
+                        if (!options.sortMemberName && !!options.content.fieldName)
+                            options.sortMemberName = options.content.fieldName;
+                    }
+
+                    return options;
+                };
+                DataGrid.prototype._findUndeleted = function (row, isUp) {
+                    if (!row)
+                        return null;
+                    if (!row.isDeleted)
+                        return row;
+
+                    //find nearest nondeleted row (search up and down)
+                    var delIndex = this.rows.indexOf(row), i = delIndex, len = this.rows.length;
+                    if (!isUp) {
+                        i -= 1;
+                        if (i >= 0)
+                            row = this.rows[i];
+                        while (i >= 0 && row.isDeleted) {
+                            i -= 1;
+                            if (i >= 0)
+                                row = this.rows[i];
+                        }
+                        if (row.isDeleted)
+                            row = null;
+                    } else {
+                        i += 1;
+                        if (i < len)
+                            row = this.rows[i];
+                        while (i < len && row.isDeleted) {
+                            i += 1;
+                            if (i < len)
+                                row = this.rows[i];
+                        }
+                        if (row.isDeleted)
+                            row = null;
+                    }
+                    return row;
+                };
+                DataGrid.prototype._updateCurrent = function (row, withScroll) {
+                    this.currentRow = row;
+                    if (withScroll && !!row && !row.isDeleted)
+                        this._scrollToCurrent(true);
+                };
+                DataGrid.prototype._scrollToCurrent = function (isUp) {
+                    var row = this.currentRow;
+                    if (!!row) {
+                        row.scrollIntoView(isUp);
+                    }
+                };
+                DataGrid.prototype._onRowStateChanged = function (row, val) {
+                    var args = { row: row, val: val, css: null };
+                    this.raiseEvent('row_state_changed', args);
+                    return args.css;
+                };
+                DataGrid.prototype._onCellDblClicked = function (cell) {
+                    var args = { cell: cell };
+                    this.raiseEvent('cell_dblclicked', args);
+                };
+                DataGrid.prototype._onError = function (error, source) {
+                    var isHandled = _super.prototype._onError.call(this, error, source);
+                    if (!isHandled) {
+                        return RIAPP.global._onError(error, source);
+                    }
+                    return isHandled;
+                };
+                DataGrid.prototype._onDSCurrentChanged = function () {
+                    var ds = this._dataSource, cur;
+                    if (!!ds)
+                        cur = ds.currentItem;
+                    if (!cur)
+                        this._updateCurrent(null, false);
+                    else {
+                        this._updateCurrent(this._rowMap[cur._key], false);
+                    }
+                };
+                DataGrid.prototype._onDSCollectionChanged = function (args) {
+                    var self = this, row, items = args.items;
+                    switch (args.change_type) {
+                        case 2 /* RESET */:
+                            if (!this._isDSFilling)
+                                this._refreshGrid();
+                            break;
+                        case 1 /* ADDED */:
+                            if (!this._isDSFilling)
+                                self._appendItems(args.items);
+                            break;
+                        case 0 /* REMOVE */:
+                            items.forEach(function (item) {
+                                var row = self._rowMap[item._key];
+                                if (!!row) {
+                                    self._removeRow(row);
+                                }
+                            });
+                            break;
+                        case 3 /* REMAP_KEY */:
+                             {
+                                row = self._rowMap[args.old_key];
+                                if (!!row) {
+                                    delete self._rowMap[args.old_key];
+                                    self._rowMap[args.new_key] = row;
+                                }
+                            }
+                            break;
+                        default:
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                    }
+                };
+                DataGrid.prototype._onDSFill = function (args) {
+                    var isEnd = !args.isBegin, self = this;
+                    if (isEnd) {
+                        self._isDSFilling = false;
+                        if (args.resetUI)
+                            self._refreshGrid();
+                        else
+                            self._appendItems(args.newItems);
+
+                        if (!!args.isPageChanged) {
+                            setTimeout(function () {
+                                if (self._isDestroyCalled)
+                                    return;
+                                self._onPageChanged();
+                            }, 0);
+                        }
+                        setTimeout(function () {
+                            if (self._isDestroyCalled)
+                                return;
+                            self._updateColsDim();
+                        }, 0);
+                    } else {
+                        self._isDSFilling = true;
+                        if (!self._isSorting) {
+                            if (!args.isPageChanged)
+                                self._resetColumnsSort();
+                        }
+                    }
+                };
+                DataGrid.prototype._onPageChanged = function () {
+                    if (!!this._rowSelectorCol) {
+                        this._rowSelectorCol.checked = false;
+                    }
+                    this._scrollToCurrent(false);
+                    this.raiseEvent('page_changed', {});
+                };
+                DataGrid.prototype._onItemEdit = function (item, isBegin, isCanceled) {
+                    var row = this._rowMap[item._key];
+                    if (!row)
+                        return;
+                    if (isBegin) {
+                        row._onBeginEdit();
+                        this._editingRow = row;
+                    } else {
+                        row._onEndEdit(isCanceled);
+                        this._editingRow = null;
+                    }
+                    this.raisePropertyChanged('editingRow');
+                };
+                DataGrid.prototype._onItemAdded = function (args) {
+                    var item = args.item, row = this._rowMap[item._key];
+                    if (!row)
+                        return;
+                    this._updateCurrent(row, true);
+
+                    //row.isExpanded = true;
+                    if (this._options.isHandleAddNew && !args.isAddNewHandled) {
+                        args.isAddNewHandled = this.showEditDialog();
+                    }
+                };
+                DataGrid.prototype._onItemStatusChanged = function (item, oldChangeType) {
+                    var newChangeType = item._changeType, ds = this._dataSource;
+                    var row = this._rowMap[item._key];
+                    if (!row)
+                        return;
+                    if (newChangeType === 3 /* DELETED */) {
+                        row.isDeleted = true;
+                        var row2 = this._findUndeleted(row, true);
+                        if (!row2) {
+                            row2 = this._findUndeleted(row, false);
+                        }
+                        if (!!row2) {
+                            ds.currentItem = row2.item;
+                        }
+                    } else if (oldChangeType === 3 /* DELETED */ && newChangeType !== 3 /* DELETED */) {
+                        row.isDeleted = false;
+                    }
+                };
+                DataGrid.prototype._onRowSelectionChanged = function (row) {
+                    this.raiseEvent('row_selected', { row: row });
+                };
+                DataGrid.prototype._onDSErrorsChanged = function (item) {
+                    var row = this._rowMap[item._key];
+                    if (!row)
+                        return;
+                    row.updateErrorState();
+                };
+                DataGrid.prototype._resetColumnsSort = function () {
+                    this.columns.forEach(function (col) {
+                        if (col instanceof DataColumn) {
+                            col.sortOrder = null;
+                        }
+                    });
+                };
+                DataGrid.prototype._bindDS = function () {
+                    var self = this, ds = this._dataSource;
+                    if (!ds)
+                        return;
+                    ds.addOnCollChanged(function (sender, args) {
+                        self._onDSCollectionChanged(args);
+                    }, self._objId);
+                    ds.addOnFill(function (sender, args) {
+                        self._onDSFill(args);
+                    }, self._objId);
+                    ds.addOnPropertyChange('currentItem', function (sender, args) {
+                        self._onDSCurrentChanged();
+                    }, self._objId);
+                    ds.addOnBeginEdit(function (sender, args) {
+                        self._onItemEdit(args.item, true, undefined);
+                    }, self._objId);
+                    ds.addOnEndEdit(function (sender, args) {
+                        self._onItemEdit(args.item, false, args.isCanceled);
+                    }, self._objId);
+                    ds.addOnErrorsChanged(function (sender, args) {
+                        self._onDSErrorsChanged(args.item);
+                    }, self._objId);
+                    ds.addOnStatusChanged(function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onItemStatusChanged(args.item, args.oldChangeType);
+                    }, self._objId);
+                    ds.addOnItemAdded(function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onItemAdded(args);
+                    }, self._objId);
+                };
+                DataGrid.prototype._unbindDS = function () {
+                    var self = this, ds = this._dataSource;
+                    if (!ds)
+                        return;
+                    ds.removeNSHandlers(self._objId);
+                };
+                DataGrid.prototype._getLastRow = function () {
+                    if (this._rows.length === 0)
+                        return null;
+                    var i = this._rows.length - 1, row = this._rows[i];
+                    while (row.isDeleted && i > 0) {
+                        i -= 1;
+                        row = this._rows[i];
+                    }
+                    if (row.isDeleted)
+                        return null;
+                    else
+                        return row;
+                };
+                DataGrid.prototype._removeRow = function (row) {
+                    if (this._expandedRow === row) {
+                        this.collapseDetails();
+                    }
+                    if (this._rows.length === 0)
+                        return;
+                    var rowkey = row.itemKey, i = utils.removeFromArray(this._rows, row), oldRow;
+                    try  {
+                        if (i > -1) {
+                            oldRow = row;
+                            if (!oldRow._isDestroyCalled)
+                                oldRow.destroy();
+                        }
+                    } finally {
+                        if (!!this._rowMap[rowkey])
+                            delete this._rowMap[rowkey];
+                    }
+                };
+                DataGrid.prototype._clearGrid = function () {
+                    if (this._rows.length === 0)
+                        return;
+                    this._isClearing = true;
+                    try  {
+                        this.collapseDetails();
+                        var self = this, tbody = self._tBodyEl, newTbody = RIAPP.global.document.createElement('tbody');
+                        this._tableEl.replaceChild(newTbody, tbody);
+                        var rows = this._rows;
+                        this._rows = [];
+                        this._rowMap = {};
+                        rows.forEach(function (row) {
+                            row.destroy();
+                        });
+                    } finally {
+                        this._isClearing = false;
+                    }
+                    this._currentRow = null;
+                };
+                DataGrid.prototype._updateColsDim = function () {
+                    var width = 0, headerDiv = this._$headerDiv;
+                    this._columns.forEach(function (col) {
+                        width += col.el.offsetWidth;
+                    });
+                    headerDiv.width(width);
+                    this._columns.forEach(function (col) {
+                        col.$extcol.width(col.el.offsetWidth);
+                    });
+                };
+                DataGrid.prototype._wrapTable = function () {
+                    var $t = this._$tableEl, headerDiv, wrapDiv, container, self = this;
+
+                    $t.wrap(RIAPP.global.$('<div></div>').addClass(datagrid.css.wrapDiv));
+                    wrapDiv = $t.parent();
+                    wrapDiv.wrap(RIAPP.global.$('<div></div>').addClass(datagrid.css.container));
+                    container = wrapDiv.parent();
+
+                    headerDiv = RIAPP.global.$('<div></div>').addClass(datagrid.css.headerDiv).insertBefore(wrapDiv);
+                    RIAPP.global.$(this._tHeadRow).addClass(datagrid.css.columnInfo);
+                    this._$wrapDiv = wrapDiv;
+                    this._$headerDiv = headerDiv;
+
+                    this._$contaner = container;
+
+                    if (this._options.containerCss) {
+                        container.addClass(this._options.containerCss);
+                    }
+
+                    if (this._options.wrapCss) {
+                        wrapDiv.addClass(this._options.wrapCss);
+                    }
+                    if (this._options.headerCss) {
+                        headerDiv.addClass(this._options.headerCss);
+                    }
+                    var tw = $t.width();
+                    self._columnWidthChecker = function () {
+                        var test = $t.width();
+                        if (tw !== test) {
+                            tw = test;
+                            self._updateColsDim();
+                        }
+                    };
+                };
+                DataGrid.prototype._unWrapTable = function () {
+                    var $t = this._$tableEl;
+                    if (!this._$headerDiv)
+                        return;
+                    this._columnWidthChecker = function () {
+                    };
+                    this._$headerDiv.remove();
+                    this._$headerDiv = null;
+
+                    //remove wrapDiv
+                    $t.unwrap();
+                    this._$wrapDiv = null;
+
+                    //remove container
+                    $t.unwrap();
+                    this._$contaner = null;
+                };
+                DataGrid.prototype._createColumns = function () {
+                    var self = this, headCells = this._tHeadCells, cnt = headCells.length, cellInfo = [];
+                    var th, attr;
+                    for (var i = 0; i < cnt; i += 1) {
+                        th = headCells[i];
+                        attr = this._parseColumnAttr(th.getAttribute(constsMOD.DATA_ATTR.DATA_COLUMN), th.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT));
+                        cellInfo.push({ th: th, colinfo: attr });
+                    }
+
+                    cellInfo.forEach(function (inf) {
+                        var col = self._createColumn(inf);
+                        if (!!col)
+                            self._columns.push(col);
+                    });
+                };
+                DataGrid.prototype._createColumn = function (options) {
+                    var col;
+                    switch (options.colinfo.type) {
+                        case COLUMN_TYPE.ROW_EXPANDER:
+                            if (!this._expanderCol) {
+                                col = new ExpanderColumn(this, options);
+                                this._expanderCol = col;
+                            }
+                            break;
+                        case COLUMN_TYPE.ROW_ACTIONS:
+                            if (!this._actionsCol) {
+                                col = new ActionsColumn(this, options);
+                                this._actionsCol = col;
+                            }
+                            break;
+                        case COLUMN_TYPE.ROW_SELECTOR:
+                            if (!this._rowSelectorCol) {
+                                col = new RowSelectorColumn(this, options);
+                                this._rowSelectorCol = col;
+                            }
+                            break;
+                        case COLUMN_TYPE.DATA:
+                            col = new DataColumn(this, options);
+                            break;
+                        default:
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_GRID_COLTYPE_INVALID, options.colinfo.type));
+                    }
+                    return col;
+                };
+                DataGrid.prototype._appendItems = function (newItems) {
+                    if (this._isDestroyCalled)
+                        return;
+                    var self = this, item, tbody = this._tBodyEl;
+                    for (var i = 0, k = newItems.length; i < k; i += 1) {
+                        item = newItems[i];
+                        if (!self._rowMap[item._key])
+                            self._createRowForItem(tbody, item);
+                    }
+                };
+                DataGrid.prototype._onKeyDown = function (key, event) {
+                    var ds = this._dataSource, Keys = constsMOD.KEYS, self = this;
+                    if (!ds)
+                        return;
+                    switch (key) {
+                        case 38 /* up */:
+                            event.preventDefault();
+                            if (ds.movePrev(true)) {
+                                if (self.isUseScrollInto) {
+                                    self._scrollToCurrent(false);
+                                }
+                            }
+                            break;
+                        case 40 /* down */:
+                            event.preventDefault();
+                            if (ds.moveNext(true)) {
+                                if (self.isUseScrollInto) {
+                                    self._scrollToCurrent(false);
+                                }
+                            }
+                            break;
+                        case 34 /* pageDown */:
+                            /*
+                            if (!!this._currentRow && !!this._currentRow.expanderCell && !this._currentRow.isExpanded) {
+                            this._currentRow.expanderCell._onCellClicked();
+                            event.preventDefault();
+                            }
+                            */
+                            if (ds.pageIndex > 0)
+                                ds.pageIndex = ds.pageIndex - 1;
+                            break;
+                        case 33 /* pageUp */:
+                            /*
+                            if (!!this._currentRow && !!this._currentRow.expanderCell && !!this._currentRow.isExpanded) {
+                            this._currentRow.expanderCell._onCellClicked();
+                            event.preventDefault();
+                            }
+                            */
+                            ds.pageIndex = ds.pageIndex + 1;
+                            break;
+                        case 13 /* enter */:
+                            if (!!this._currentRow && !!this._actionsCol) {
+                                if (this._currentRow.isEditing) {
+                                    event.preventDefault();
+                                } else {
+                                    event.preventDefault();
+                                }
+                            }
+                            break;
+                        case 27 /* esc */:
+                            if (!!this._currentRow && !!this._actionsCol) {
+                                if (this._currentRow.isEditing) {
+                                    event.preventDefault();
+                                }
+                            }
+                            break;
+                        case 32 /* space */:
+                            if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
+                                event.preventDefault();
+                            }
+                            break;
+                    }
+                };
+                DataGrid.prototype._onKeyUp = function (key, event) {
+                    var ds = this._dataSource, Keys = constsMOD.KEYS;
+                    if (!ds)
+                        return;
+                    switch (key) {
+                        case 13 /* enter */:
+                            if (!!this._currentRow && !!this._actionsCol) {
+                                if (this._currentRow.isEditing) {
+                                    this._actionsCol._onOk(this._currentRow.actionsCell);
+                                    event.preventDefault();
+                                } else {
+                                    this._actionsCol._onEdit(this._currentRow.actionsCell);
+                                    event.preventDefault();
+                                }
+                            }
+                            break;
+                        case 27 /* esc */:
+                            if (!!this._currentRow && !!this._actionsCol) {
+                                if (this._currentRow.isEditing) {
+                                    this._actionsCol._onCancel(this._currentRow.actionsCell);
+                                    event.preventDefault();
+                                }
+                            }
+                            break;
+                        case 32 /* space */:
+                            if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
+                                event.preventDefault();
+                                this._currentRow.isSelected = !this._currentRow.isSelected;
+                            }
+                            break;
+                    }
+                };
+
+                //Full grid refresh
+                DataGrid.prototype._refreshGrid = function () {
+                    var self = this, ds = this._dataSource;
+                    self._clearGrid();
+                    if (!ds)
+                        return;
+                    var docFr = RIAPP.global.document.createDocumentFragment(), oldTbody = this._tBodyEl, newTbody = RIAPP.global.document.createElement('tbody');
+                    ds.items.forEach(function (item, pos) {
+                        self._createRowForItem(docFr, item, pos);
+                    });
+                    newTbody.appendChild(docFr);
+                    self._tableEl.replaceChild(newTbody, oldTbody);
+                };
+                DataGrid.prototype._createRowForItem = function (parent, item, pos) {
+                    var self = this, tr = RIAPP.global.document.createElement('tr');
+                    var gridRow = new Row(self, { tr: tr, item: item });
+                    self._rowMap[item._key] = gridRow;
+                    self._rows.push(gridRow);
+                    parent.appendChild(gridRow.el);
+                    return gridRow;
+                };
+                DataGrid.prototype._createDetails = function () {
+                    var details_id = this._options.details.templateID;
+                    var tr = RIAPP.global.document.createElement('tr');
+                    return new DetailsRow(this, { tr: tr, details_id: details_id });
+                };
+                DataGrid.prototype._expandDetails = function (parentRow, expanded) {
+                    if (!this._options.details)
+                        return;
+                    if (!this._details) {
+                        this._details = this._createDetails();
+                    }
+                    var old = this._expandedRow;
+                    if (old === parentRow) {
+                        if (!!old && expanded)
+                            return;
+                    }
+                    this._expandedRow = null;
+                    this._details.parentRow = null;
+
+                    if (expanded) {
+                        this._expandedRow = parentRow;
+                        this._details.parentRow = parentRow;
+                        this._expandedRow.expanderCell._toggleImage();
+                    } else {
+                        this._expandedRow = null;
+                        this._details.parentRow = null;
+                        if (!!old) {
+                            old.expanderCell._toggleImage();
+                        }
+                    }
+                    if (old !== parentRow) {
+                        if (!!old)
+                            old.expanderCell._toggleImage();
+                    }
+                    this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: parentRow, isExpanded: expanded });
+                };
+                DataGrid.prototype.sortByColumn = function (column) {
+                    var self = this, ds = this._dataSource;
+                    var sorts = column.sortMemberName.split(';');
+                    self._isSorting = true;
+                    var promise = ds.sort(sorts, column.sortOrder);
+                    promise.always(function () {
+                        self._isSorting = false;
+                    });
+                };
+                DataGrid.prototype.selectRows = function (isSelect) {
+                    this._rows.forEach(function (row) {
+                        if (row.isDeleted)
+                            return;
+                        row.isSelected = isSelect;
+                    });
+                };
+                DataGrid.prototype.findRowByItem = function (item) {
+                    var row = this._rowMap[item._key];
+                    if (!row)
+                        return null;
+                    return row;
+                };
+                DataGrid.prototype.collapseDetails = function () {
+                    if (!this._details)
+                        return;
+                    var old = this._expandedRow;
+                    if (!!old) {
+                        this._expandedRow = null;
+                        this._details._setParentRow(null);
+                        this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: null, isExpanded: false });
+                    }
+                };
+                DataGrid.prototype.getSelectedRows = function () {
+                    var res = [];
+                    this._rows.forEach(function (row) {
+                        if (row.isDeleted)
+                            return;
+                        if (row.isSelected) {
+                            res.push(row);
+                        }
+                    });
+                    return res;
+                };
+                DataGrid.prototype.showEditDialog = function () {
+                    if (!this._options.editor || !this._options.editor.templateID || !this._editingRow)
+                        return false;
+                    var editorOptions, item = this._editingRow.item;
+                    if (!item.isEditing)
+                        item.beginEdit();
+                    if (!this._dialog) {
+                        editorOptions = utils.extend(false, {
+                            dataContext: item
+                        }, this._options.editor);
+                        this._dialog = new RIAPP.MOD.datadialog.DataEditDialog(this.app, editorOptions);
+                    } else
+                        this._dialog.dataContext = item;
+                    this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._isNew;
+                    this._dialog.show();
+                    return true;
+                };
+                DataGrid.prototype.scrollToCurrent = function (isUp) {
+                    this._scrollToCurrent(isUp);
+                };
+                DataGrid.prototype.addNew = function () {
+                    var ds = this._dataSource;
+                    try  {
+                        ds.addNew();
+                        this.showEditDialog();
+                    } catch (ex) {
+                        RIAPP.global.reThrow(ex, this._onError(ex, this));
+                    }
+                };
+                DataGrid.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    _gridDestroyed(this);
+                    RIAPP.global._untrackSelectable(this);
+                    if (!!this._details) {
+                        this._details.destroy();
+                        this._details = null;
+                    }
+                    if (!!this._dialog) {
+                        this._dialog.destroy();
+                        this._dialog = null;
+                    }
+                    this._clearGrid();
+                    this._unbindDS();
+                    this._dataSource = null;
+                    this._unWrapTable();
+                    this._$tableEl.removeClass(datagrid.css.dataTable);
+                    RIAPP.global.$(this._tHeadRow).removeClass(datagrid.css.columnInfo);
+                    this._tableEl = null;
+                    this._$tableEl = null;
+                    this._app = null;
+                    _super.prototype.destroy.call(this);
+                };
+                Object.defineProperty(DataGrid.prototype, "app", {
+                    get: function () {
+                        return this._app;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "$container", {
+                    get: function () {
+                        return this._$contaner;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "_tBodyEl", {
+                    get: function () {
+                        return this._tableEl.tBodies[0];
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "_tHeadEl", {
+                    get: function () {
+                        return this._tableEl.tHead;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "_tFootEl", {
+                    get: function () {
+                        return this._tableEl.tFoot;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "_tHeadRow", {
+                    get: function () {
+                        if (!this._tHeadEl)
+                            return null;
+                        var trs = this._tHeadEl.rows;
+                        if (trs.length === 0)
+                            return null;
+                        return trs[0];
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "_tHeadCells", {
+                    get: function () {
+                        var row = this._tHeadRow;
+                        if (!row)
+                            return [];
+                        return RIAPP.ArrayHelper.fromCollection(row.cells);
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "containerEl", {
+                    get: function () {
+                        return this._$contaner.get(0);
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "uniqueID", {
+                    get: function () {
+                        return this._objId;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "name", {
+                    get: function () {
+                        return this._name;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "dataSource", {
+                    get: function () {
+                        return this._dataSource;
+                    },
+                    set: function (v) {
+                        if (v === this._dataSource)
+                            return;
+                        if (this._dataSource !== null) {
+                            this._unbindDS();
+                        }
+                        this._clearGrid();
+                        this._dataSource = v;
+                        if (this._dataSource !== null)
+                            this._bindDS();
+                        this.raisePropertyChanged('dataSource');
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "rows", {
+                    get: function () {
+                        return this._rows;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "columns", {
+                    get: function () {
+                        return this._columns;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "currentRow", {
+                    get: function () {
+                        return this._currentRow;
+                    },
+                    set: function (row) {
+                        var ds = this._dataSource, old = this._currentRow, isChanged = false;
+                        if (!ds)
+                            return;
+                        if (old !== row) {
+                            this._currentRow = row;
+                            if (!!old) {
+                                old.isCurrent = false;
+                            }
+                            if (!!row)
+                                row.isCurrent = true;
+                            isChanged = true;
+                        }
+                        if (!!row) {
+                            if (row.item !== ds.currentItem)
+                                ds.currentItem = row.item;
+                        } else
+                            ds.currentItem = null;
+                        if (isChanged)
+                            this.raisePropertyChanged('currentRow');
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "editingRow", {
+                    get: function () {
+                        return this._editingRow;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "isCanEdit", {
+                    get: function () {
+                        if (this._options.isCanEdit !== null)
+                            return this._options.isCanEdit;
+                        var ds = this._dataSource;
+                        return !!ds && ds.permissions.canEditRow;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "isCanDelete", {
+                    get: function () {
+                        if (this._options.isCanDelete !== null)
+                            return this._options.isCanDelete;
+                        var ds = this._dataSource;
+                        return !!ds && ds.permissions.canDeleteRow;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "isCanAddNew", {
+                    get: function () {
+                        var ds = this._dataSource;
+                        return !!ds && ds.permissions.canAddRow;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "isUseScrollInto", {
+                    get: function () {
+                        return this._options.isUseScrollInto;
+                    },
+                    set: function (v) {
+                        this._options.isUseScrollInto = v;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return DataGrid;
+            })(RIAPP.BaseObject);
+            datagrid.DataGrid = DataGrid;
+
+            var GridElView = (function (_super) {
+                __extends(GridElView, _super);
+                function GridElView() {
+                    _super.apply(this, arguments);
+                }
+                GridElView.prototype.toString = function () {
+                    return 'GridElView';
+                };
+                GridElView.prototype._init = function (options) {
+                    _super.prototype._init.call(this, options);
+                    this._dataSource = null;
+                    this._grid = null;
+                    this._gridEventCommand = null;
+                    this._options = options;
+                };
+                GridElView.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._dataSource) {
+                        this.dataSource = null;
+                    }
+                    this._gridEventCommand = null;
+                    _super.prototype.destroy.call(this);
+                };
+                GridElView.prototype._createGrid = function () {
+                    this._grid = new DataGrid(this.app, this._el, this._dataSource, this._options);
+                    this._bindGridEvents();
+                    this._onGridCreated(this._grid);
+                };
+                GridElView.prototype._bindGridEvents = function () {
+                    if (!this._grid)
+                        return;
+                    var self = this;
+                    this._grid.addOnRowExpanded(function (s, args) {
+                        self.invokeGridEvent('row_expanded', args);
+                    }, this.uniqueID);
+                    this._grid.addOnRowSelected(function (s, args) {
+                        self.invokeGridEvent('row_selected', args);
+                    }, this.uniqueID);
+                    this._grid.addOnPageChanged(function (s, args) {
+                        self.invokeGridEvent('page_changed', args);
+                    }, this.uniqueID);
+                    this._grid.addOnCellDblClicked(function (s, args) {
+                        self.invokeGridEvent('cell_dblclicked', args);
+                    }, this.uniqueID);
+                    this._grid.addOnRowStateChanged(function (s, args) {
+                        self.invokeGridEvent('row_state_changed', args);
+                    }, this.uniqueID);
+                    this._grid.addOnDestroyed(function (s, args) {
+                        self._onGridDestroyed(self._grid);
+                        self._grid = null;
+                        self.invokePropChanged('grid');
+                        self.raisePropertyChanged('grid');
+                    }, this.uniqueID);
+                };
+                GridElView.prototype.invokeGridEvent = function (eventName, args) {
+                    var self = this, data = { eventName: eventName, args: args };
+                    if (!!self._gridEventCommand) {
+                        self._gridEventCommand.execute(self, data);
+                    }
+                };
+                GridElView.prototype._onGridCreated = function (grid) {
+                };
+                GridElView.prototype._onGridDestroyed = function (grid) {
+                };
+                Object.defineProperty(GridElView.prototype, "dataSource", {
+                    get: function () {
+                        return this._dataSource;
+                    },
+                    set: function (v) {
+                        var self = this;
+                        if (this._dataSource !== v) {
+                            this._dataSource = v;
+                            if (!!this._grid && !this._grid._isDestroyCalled) {
+                                this._grid.destroy();
+                            }
+                            this._grid = null;
+                            if (!!this._dataSource) {
+                                this._createGrid();
+                            }
+                            self.invokePropChanged('grid');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(GridElView.prototype, "grid", {
+                    get: function () {
+                        return this._grid;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(GridElView.prototype, "gridEventCommand", {
+                    get: function () {
+                        return this._gridEventCommand;
+                    },
+                    set: function (v) {
+                        var old = this._gridEventCommand;
+                        if (v !== old) {
+                            if (!!this._gridEventCommand)
+                                this.invokeGridEvent('command_disconnected', {});
+                            this._gridEventCommand = v;
+                            if (!!this._gridEventCommand)
+                                this.invokeGridEvent('command_connected', {});
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return GridElView;
+            })(RIAPP.MOD.baseElView.BaseElView);
+            datagrid.GridElView = GridElView;
+
+            RIAPP.global.registerElView('table', GridElView);
+            RIAPP.global.registerElView('datagrid', GridElView);
+            RIAPP.global.onModuleLoaded('datagrid', datagrid);
+        })(MOD.datagrid || (MOD.datagrid = {}));
+        var datagrid = MOD.datagrid;
+    })(RIAPP.MOD || (RIAPP.MOD = {}));
+    var MOD = RIAPP.MOD;
+})(RIAPP || (RIAPP = {}));
+var RIAPP;
+(function (RIAPP) {
+    (function (MOD) {
+        (function (pager) {
+            var utilsMOD = RIAPP.MOD.utils;
+            var collMod = RIAPP.MOD.collection;
+
+            var utils;
+            RIAPP.global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
+            pager.css = {
+                pager: 'ria-data-pager',
+                info: 'pager-info',
+                currentPage: 'pager-current-page',
+                otherPage: 'pager-other-page'
+            };
+            var PAGER_TXT = RIAPP.localizable.PAGER;
+
+            var Pager = (function (_super) {
+                __extends(Pager, _super);
+                function Pager(el, dataSource, options) {
+                    _super.call(this);
+                    this._el = el;
+                    this._$el = RIAPP.global.$(this._el);
+                    this._objId = 'pgr' + utils.getNewID();
+                    if (!!dataSource && !(dataSource instanceof collMod.BaseCollection))
+                        throw new Error(RIAPP.ERRS.ERR_PAGER_DATASRC_INVALID);
+                    this._dataSource = dataSource;
+                    this._showTip = utils.check.isNt(options.showTip) ? true : !!options.showTip;
+                    this._showInfo = utils.check.isNt(options.showInfo) ? false : !!options.showInfo;
+                    this._showFirstAndLast = utils.check.isNt(options.showFirstAndLast) ? true : !!options.showFirstAndLast;
+                    this._showPreviousAndNext = utils.check.isNt(options.showPreviousAndNext) ? false : !!options.showPreviousAndNext;
+                    this._showNumbers = utils.check.isNt(options.showNumbers) ? true : !!options.showNumbers;
+                    this._rowsPerPage = 0;
+                    this._rowCount = 0;
+                    this._currentPage = 1;
+                    this._useSlider = utils.check.isNt(options.useSlider) ? true : !!options.useSlider;
+                    this._sliderSize = utils.check.isNt(options.sliderSize) ? 25 : options.sliderSize;
+                    this._hideOnSinglePage = utils.check.isNt(options.hideOnSinglePage) ? true : !!options.hideOnSinglePage;
+                    this._$el.addClass(pager.css.pager);
+                    if (!!this._dataSource) {
+                        this._bindDS();
+                    }
+                }
+                Pager.prototype._createElement = function (tag) {
+                    return RIAPP.global.$(RIAPP.global.document.createElement(tag));
+                };
+                Pager.prototype._render = function () {
+                    var $el = this._$el, rowCount, currentPage, pageCount;
+                    this._clearContent();
+
+                    if (this.rowsPerPage <= 0) {
+                        return;
+                    }
+
+                    rowCount = this.rowCount;
+                    if (rowCount == 0) {
+                        return;
+                    }
+                    currentPage = this.currentPage;
+                    if (currentPage == 0) {
+                        return;
+                    }
+
+                    pageCount = this.pageCount;
+
+                    if (this.hideOnSinglePage && (pageCount == 1)) {
+                        $el.hide();
+                    } else {
+                        $el.show();
+
+                        if (this.showInfo) {
+                            var $span = this._createElement('span');
+                            var info = utils.format(PAGER_TXT.pageInfo, currentPage, pageCount);
+                            $span.addClass(pager.css.info).text(info).appendTo($el);
+                        }
+
+                        if (this.showFirstAndLast && (currentPage != 1)) {
+                            $el.append(this._createFirst());
+                        }
+
+                        if (this.showPreviousAndNext && (currentPage != 1)) {
+                            $el.append(this._createPrevious());
+                        }
+
+                        if (this.showNumbers) {
+                            var start = 1, end = pageCount, sliderSize = this.sliderSize, half, above, below;
+
+                            if (this.useSlider && (sliderSize > 0)) {
+                                half = Math.floor(((sliderSize - 1) / 2));
+                                above = (currentPage + half) + ((sliderSize - 1) % 2);
+                                below = (currentPage - half);
+
+                                if (below < 1) {
+                                    above += (1 - below);
+                                    below = 1;
+                                }
+
+                                if (above > pageCount) {
+                                    below -= (above - pageCount);
+
+                                    if (below < 1) {
+                                        below = 1;
+                                    }
+
+                                    above = pageCount;
+                                }
+
+                                start = below;
+                                end = above;
+                            }
+
+                            for (var i = start; i <= end; i++) {
+                                if (i === currentPage) {
+                                    $el.append(this._createCurrent());
+                                } else {
+                                    $el.append(this._createOther(i));
+                                }
+                            }
+                        }
+
+                        if (this.showPreviousAndNext && (currentPage != pageCount)) {
+                            $el.append(this._createNext());
+                        }
+
+                        if (this.showFirstAndLast && (currentPage != pageCount)) {
+                            $el.append(this._createLast());
+                        }
+                    }
+                };
+                Pager.prototype._setDSPageIndex = function (page) {
+                    this.dataSource.pageIndex = page - 1;
+                };
+                Pager.prototype._onPageSizeChanged = function (ds) {
+                    this.rowsPerPage = ds.pageSize;
+                };
+                Pager.prototype._onPageIndexChanged = function (ds) {
+                    this.currentPage = ds.pageIndex + 1;
+                };
+                Pager.prototype._onTotalCountChanged = function (ds) {
+                    this.rowCount = ds.totalCount;
+                };
+                Pager.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this._unbindDS();
+                    this._clearContent();
+                    this._$el.removeClass(pager.css.pager);
+                    this._el = null;
+                    this._$el = null;
+                    _super.prototype.destroy.call(this);
+                };
+                Pager.prototype._bindDS = function () {
+                    var self = this, ds = this._dataSource;
+                    if (!ds)
+                        return;
+
+                    ds.addOnPropertyChange('pageIndex', function (sender, args) {
+                        self._onPageIndexChanged(ds);
+                    }, self._objId);
+                    ds.addOnPropertyChange('pageSize', function (sender, args) {
+                        self._onPageSizeChanged(ds);
+                    }, self._objId);
+                    ds.addOnPropertyChange('totalCount', function (sender, args) {
+                        self._onTotalCountChanged(ds);
+                    }, self._objId);
+                    this._currentPage = ds.pageIndex + 1;
+                    this._rowsPerPage = ds.pageSize;
+                    this._rowCount = ds.totalCount;
+                    this._render();
+                };
+                Pager.prototype._unbindDS = function () {
+                    var self = this, ds = this._dataSource;
+                    if (!ds)
+                        return;
+                    ds.removeNSHandlers(self._objId);
+                };
+                Pager.prototype._clearContent = function () {
+                    this._$el.empty();
+                };
+                Pager.prototype._createLink = function (page, text, tip) {
+                    var a = this._createElement('a'), self = this;
+                    a.text('' + text);
+                    a.attr('href', 'javascript:void(0)');
+
+                    if (!!tip) {
+                        utils.addToolTip(a, tip);
+                    }
+                    a.click(function (e) {
+                        e.preventDefault();
+                        self._setDSPageIndex(page);
+                        self.currentPage = page;
+                    });
+
+                    return a;
+                };
+                Pager.prototype._createFirst = function () {
+                    var $span = this._createElement('span'), tip, a;
+
+                    if (this.showTip) {
+                        tip = PAGER_TXT.firstPageTip;
+                    }
+                    a = this._createLink(1, PAGER_TXT.firstText, tip);
+                    $span.addClass(pager.css.otherPage).append(a);
+                    return $span;
+                };
+                Pager.prototype._createPrevious = function () {
+                    var span = this._createElement('span'), previousPage = this.currentPage - 1, tip, a;
+
+                    if (this.showTip) {
+                        tip = utils.format(PAGER_TXT.prevPageTip, previousPage);
+                    }
+
+                    a = this._createLink(previousPage, PAGER_TXT.previousText, tip);
+                    span.addClass(pager.css.otherPage).append(a);
+                    return span;
+                };
+                Pager.prototype._createCurrent = function () {
+                    var span = this._createElement('span'), currentPage = this.currentPage;
+
+                    span.text('' + currentPage);
+
+                    if (this.showTip) {
+                        utils.addToolTip(span, this._buildTip(currentPage));
+                    }
+
+                    span.addClass(pager.css.currentPage);
+                    return span;
+                };
+                Pager.prototype._createOther = function (page) {
+                    var span = this._createElement('span'), tip, a;
+
+                    if (this.showTip) {
+                        tip = this._buildTip(page);
+                    }
+
+                    a = this._createLink(page, '' + page, tip);
+                    span.addClass(pager.css.otherPage);
+                    span.append(a);
+                    return span;
+                };
+                Pager.prototype._createNext = function () {
+                    var span = this._createElement('span'), nextPage = this.currentPage + 1, tip, a;
+
+                    if (this.showTip) {
+                        tip = utils.format(PAGER_TXT.nextPageTip, nextPage);
+                    }
+                    a = this._createLink(nextPage, PAGER_TXT.nextText, tip);
+                    span.addClass(pager.css.otherPage).append(a);
+                    return span;
+                };
+                Pager.prototype._createLast = function () {
+                    var span = this._createElement('span'), tip, a;
+
+                    if (this.showTip) {
+                        tip = PAGER_TXT.lastPageTip;
+                    }
+                    a = this._createLink(this.pageCount, PAGER_TXT.lastText, tip);
+                    span.addClass(pager.css.otherPage).append(a);
+                    return span;
+                };
+                Pager.prototype._buildTip = function (page) {
+                    var rowsPerPage = this.rowsPerPage, rowCount = this.rowCount, start = (((page - 1) * rowsPerPage) + 1), end = (page == this.pageCount) ? rowCount : (page * rowsPerPage), tip = '';
+
+                    if (page == this.currentPage) {
+                        tip = utils.format(PAGER_TXT.showingTip, start, end, rowCount);
+                    } else {
+                        tip = utils.format(PAGER_TXT.showTip, start, end, rowCount);
+                    }
+                    return tip;
+                };
+                Pager.prototype.toString = function () {
+                    return 'Pager';
+                };
+                Object.defineProperty(Pager.prototype, "el", {
+                    get: function () {
+                        return this._el;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "dataSource", {
+                    get: function () {
+                        return this._dataSource;
+                    },
+                    set: function (v) {
+                        if (v === this._dataSource)
+                            return;
+                        if (this._dataSource !== null) {
+                            this._unbindDS();
+                        }
+                        this._dataSource = v;
+                        if (this._dataSource !== null)
+                            this._bindDS();
+                        this.raisePropertyChanged('dataSource');
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "pageCount", {
+                    get: function () {
+                        var rowCount = this.rowCount, rowsPerPage = this.rowsPerPage, result;
+
+                        if ((rowCount === 0) || (rowsPerPage === 0)) {
+                            return 0;
+                        }
+
+                        if ((rowCount % rowsPerPage) === 0) {
+                            return (rowCount / rowsPerPage);
+                        } else {
+                            result = (rowCount / rowsPerPage);
+                            result = Math.floor(result) + 1;
+                            return result;
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "rowCount", {
+                    get: function () {
+                        return this._rowCount;
+                    },
+                    set: function (v) {
+                        if (this._rowCount != v) {
+                            this._rowCount = v;
+                            this._render();
+                            this.raisePropertyChanged('rowCount');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "rowsPerPage", {
+                    get: function () {
+                        return this._rowsPerPage;
+                    },
+                    set: function (v) {
+                        if (this._rowsPerPage != v) {
+                            this._rowsPerPage = v;
+                            this._render();
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "currentPage", {
+                    get: function () {
+                        return this._currentPage;
+                    },
+                    set: function (v) {
+                        if (this._currentPage != v) {
+                            this._currentPage = v;
+                            this._render();
+                            this.raisePropertyChanged('currentPage');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "useSlider", {
+                    get: function () {
+                        return this._useSlider;
+                    },
+                    set: function (v) {
+                        if (this._useSlider != v) {
+                            this._useSlider = v;
+                            this._render();
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "sliderSize", {
+                    get: function () {
+                        return this._sliderSize;
+                    },
+                    set: function (v) {
+                        if (this._sliderSize != v) {
+                            this._sliderSize = v;
+                            this._render();
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "hideOnSinglePage", {
+                    get: function () {
+                        return this._hideOnSinglePage;
+                    },
+                    set: function (v) {
+                        if (this._hideOnSinglePage != v) {
+                            this._hideOnSinglePage = v;
+                            this._render();
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "showTip", {
+                    get: function () {
+                        return this._showTip;
+                    },
+                    set: function (v) {
+                        if (this._showTip !== v) {
+                            this._showTip = v;
+                            this._render();
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "showInfo", {
+                    get: function () {
+                        return this._showInfo;
+                    },
+                    set: function (v) {
+                        if (this._showInfo !== v) {
+                            this._showInfo = v;
+                            this._render();
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "showFirstAndLast", {
+                    get: function () {
+                        return this._showFirstAndLast;
+                    },
+                    set: function (v) {
+                        if (this._showFirstAndLast !== v) {
+                            this._showFirstAndLast = v;
+                            this._render();
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "showPreviousAndNext", {
+                    get: function () {
+                        return this._showPreviousAndNext;
+                    },
+                    set: function (v) {
+                        if (this._showPreviousAndNext !== v) {
+                            this._showPreviousAndNext = v;
+                            this._render();
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Pager.prototype, "showNumbers", {
+                    get: function () {
+                        return this._showNumbers;
+                    },
+                    set: function (v) {
+                        if (this._showNumbers !== v) {
+                            this._showNumbers = v;
+                            this._render();
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return Pager;
+            })(RIAPP.BaseObject);
+            pager.Pager = Pager;
+
+            var PagerElView = (function (_super) {
+                __extends(PagerElView, _super);
+                function PagerElView(app, el, options) {
+                    var self = this;
+                    this._pager = null;
+                    this._options = options;
+                    this._pager = new Pager(el, null, this._options);
+                    this._pager.addOnDestroyed(function () {
+                        self._pager = null;
+                        self.invokePropChanged('pager');
+                        self.raisePropertyChanged('pager');
+                    });
+                    _super.call(this, app, el, options);
+                }
+                PagerElView.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._pager && !this._pager._isDestroyCalled) {
+                        this._pager.destroy();
+                    }
+                    this._pager = null;
+                    _super.prototype.destroy.call(this);
+                };
+                PagerElView.prototype.toString = function () {
+                    return 'PagerElView';
+                };
+                Object.defineProperty(PagerElView.prototype, "dataSource", {
+                    get: function () {
+                        if (this._isDestroyCalled)
+                            return undefined;
+                        return this._pager.dataSource;
+                    },
+                    set: function (v) {
+                        if (this._isDestroyCalled)
+                            return;
+                        if (this.dataSource !== v) {
+                            this._pager.dataSource = v;
+                            this.raisePropertyChanged('dataSource');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(PagerElView.prototype, "pager", {
+                    get: function () {
+                        return this._pager;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return PagerElView;
+            })(RIAPP.MOD.baseElView.BaseElView);
+            pager.PagerElView = PagerElView;
+
+            RIAPP.global.registerElView('pager', PagerElView);
+            RIAPP.global.onModuleLoaded('pager', pager);
+        })(MOD.pager || (MOD.pager = {}));
+        var pager = MOD.pager;
+    })(RIAPP.MOD || (RIAPP.MOD = {}));
+    var MOD = RIAPP.MOD;
+})(RIAPP || (RIAPP = {}));
+var RIAPP;
+(function (RIAPP) {
+    (function (MOD) {
+        (function (stackpanel) {
+            stackpanel.css = {
+                stackpanel: 'ria-stackpanel',
+                item: 'stackpanel-item',
+                currentItem: 'current-item'
+            };
+
+            var StackPanel = (function (_super) {
+                __extends(StackPanel, _super);
+                function StackPanel(app, el, dataSource, options) {
+                    _super.call(this);
+                    this._app = app;
+                    this._el = el;
+                    this._$el = RIAPP.global.$(this._el);
+                    this._objId = 'pnl' + RIAPP.global.utils.getNewID();
+                    if (!!dataSource && !(dataSource instanceof RIAPP.MOD.collection.BaseCollection))
+                        throw new Error(RIAPP.ERRS.ERR_STACKPNL_DATASRC_INVALID);
+                    this._dataSource = dataSource;
+                    this._isDSFilling = false;
+                    this._orientation = options.orientation || 'horizontal';
+                    this._templateID = options.templateID;
+                    this._currentItem = null;
+                    this._$el.addClass(stackpanel.css.stackpanel);
+                    this._itemMap = {};
+                    if (!this._templateID)
+                        throw new Error(RIAPP.ERRS.ERR_STACKPNL_TEMPLATE_INVALID);
+                    if (!!this._dataSource) {
+                        this._bindDS();
+                    }
+                    RIAPP.global._trackSelectable(this);
+                }
+                StackPanel.prototype._getEventNames = function () {
+                    var base_events = _super.prototype._getEventNames.call(this);
+                    return ['item_clicked'].concat(base_events);
+                };
+                StackPanel.prototype.addOnItemClicked = function (fn, namespace) {
+                    this.addHandler('item_clicked', fn, namespace);
+                };
+                StackPanel.prototype.removeOnItemClicked = function (namespace) {
+                    this.removeHandler('item_clicked', namespace);
+                };
+                StackPanel.prototype._onKeyDown = function (key, event) {
+                    var ds = this._dataSource, Keys = RIAPP.MOD.consts.KEYS, self = this;
+                    if (!ds)
+                        return;
+                    if (this._orientation == 'horizontal') {
+                        switch (key) {
+                            case 37 /* left */:
+                                event.preventDefault();
+                                if (ds.movePrev(true)) {
+                                    self.scrollIntoView(ds.currentItem);
+                                }
+                                break;
+                            case 39 /* right */:
+                                event.preventDefault();
+                                if (ds.moveNext(true)) {
+                                    self.scrollIntoView(ds.currentItem);
+                                }
+                                break;
+                        }
+                    } else {
+                        switch (key) {
+                            case 38 /* up */:
+                                event.preventDefault();
+                                if (ds.movePrev(true)) {
+                                    self.scrollIntoView(ds.currentItem);
+                                }
+                                break;
+                            case 40 /* down */:
+                                event.preventDefault();
+                                if (ds.moveNext(true)) {
+                                    self.scrollIntoView(ds.currentItem);
+                                }
+                                break;
+                        }
+                    }
+                };
+                StackPanel.prototype._onKeyUp = function (key, event) {
+                };
+                StackPanel.prototype._updateCurrent = function (item, withScroll) {
+                    var self = this, old = self._currentItem, obj;
+                    if (old !== item) {
+                        this._currentItem = item;
+                        if (!!old) {
+                            obj = self._itemMap[old._key];
+                            if (!!obj) {
+                                RIAPP.global.$(obj.div).removeClass(stackpanel.css.currentItem);
+                            }
+                        }
+                        if (!!item) {
+                            obj = self._itemMap[item._key];
+                            if (!!obj) {
+                                RIAPP.global.$(obj.div).addClass(stackpanel.css.currentItem);
+                                if (withScroll)
+                                    obj.div.scrollIntoView(false);
+                            }
+                        }
+                        this.raisePropertyChanged('currentItem');
+                    }
+                };
+                StackPanel.prototype._onDSCurrentChanged = function (args) {
+                    var ds = this._dataSource, cur = ds.currentItem;
+                    if (!cur)
+                        this._updateCurrent(null, false);
+                    else {
+                        this._updateCurrent(cur, true);
+                    }
+                };
+                StackPanel.prototype._onDSCollectionChanged = function (args) {
+                    var self = this, items = args.items;
+                    switch (args.change_type) {
+                        case 2 /* RESET */:
+                            if (!this._isDSFilling)
+                                this._refresh();
+                            break;
+                        case 1 /* ADDED */:
+                            if (!this._isDSFilling)
+                                self._appendItems(items);
+                            break;
+                        case 0 /* REMOVE */:
+                            items.forEach(function (item) {
+                                self._removeItem(item);
+                            });
+                            break;
+                        case 3 /* REMAP_KEY */:
+                             {
+                                var obj = self._itemMap[args.old_key];
+                                if (!!obj) {
+                                    delete self._itemMap[args.old_key];
+                                    self._itemMap[args.new_key] = obj;
+                                    obj.div.setAttribute(RIAPP.MOD.consts.DATA_ATTR.DATA_ITEM_KEY, args.new_key);
+                                }
+                            }
+                            break;
+                        default:
+                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                    }
+                };
+                StackPanel.prototype._onDSFill = function (args) {
+                    var isEnd = !args.isBegin;
+                    if (isEnd) {
+                        this._isDSFilling = false;
+                        if (args.resetUI)
+                            this._refresh();
+                        else
+                            this._appendItems(args.newItems);
+                    } else {
+                        this._isDSFilling = true;
+                    }
+                };
+                StackPanel.prototype._onItemStatusChanged = function (item, oldChangeType) {
+                    var newChangeType = item._changeType;
+                    var obj = this._itemMap[item._key];
+                    if (!obj)
+                        return;
+                    if (newChangeType === 3 /* DELETED */) {
+                        RIAPP.global.$(obj.div).hide();
+                    } else if (oldChangeType === 3 /* DELETED */ && newChangeType !== 3 /* DELETED */) {
+                        RIAPP.global.$(obj.div).show();
+                    }
+                };
+                StackPanel.prototype._createTemplate = function (dcxt) {
+                    var t = new RIAPP.MOD.template.Template(this.app, this._templateID);
+                    t.dataContext = dcxt;
+                    return t;
+                };
+                StackPanel.prototype._appendItems = function (newItems) {
+                    if (this._isDestroyCalled)
+                        return;
+                    var self = this;
+                    newItems.forEach(function (item) {
+                        if (!!self._itemMap[item._key])
+                            return;
+                        self._appendItem(item);
+                    });
+                };
+                StackPanel.prototype._appendItem = function (item) {
+                    if (!item._key)
+                        return;
+                    var self = this, $div = self._createElement('div'), div = $div.get(0), template = self._createTemplate(item);
+                    $div.addClass(stackpanel.css.item);
+                    $div.append(template.el);
+                    if (this._orientation == 'horizontal') {
+                        $div.css('display', 'inline-block');
+                    }
+                    self._$el.append($div);
+                    $div.attr(RIAPP.MOD.consts.DATA_ATTR.DATA_ITEM_KEY, item._key);
+                    $div.click(function (e) {
+                        var key = this.getAttribute(RIAPP.MOD.consts.DATA_ATTR.DATA_ITEM_KEY);
+                        var obj = self._itemMap[key];
+                        if (!!obj)
+                            self._onItemClicked(obj.div, obj.item);
+                    });
+                    self._itemMap[item._key] = { div: div, template: template, item: item };
+                };
+                StackPanel.prototype._bindDS = function () {
+                    var self = this, ds = this._dataSource;
+                    if (!ds)
+                        return;
+                    ds.addOnCollChanged(function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onDSCollectionChanged(args);
+                    }, self._objId);
+                    ds.addOnFill(function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onDSFill(args);
+                    }, self._objId);
+                    ds.addOnPropertyChange('currentItem', function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onDSCurrentChanged(args);
+                    }, self._objId);
+                    ds.addOnStatusChanged(function (sender, args) {
+                        if (ds !== sender)
+                            return;
+                        self._onItemStatusChanged(args.item, args.oldChangeType);
+                    }, self._objId);
+
+                    this._refresh();
+                };
+                StackPanel.prototype._unbindDS = function () {
+                    var self = this, ds = this._dataSource;
+                    if (!ds)
+                        return;
+                    ds.removeNSHandlers(self._objId);
+                };
+                StackPanel.prototype._createElement = function (tag) {
+                    return RIAPP.global.$(RIAPP.global.document.createElement(tag));
+                };
+                StackPanel.prototype._onItemClicked = function (div, item) {
+                    this._updateCurrent(item, false);
+                    this._dataSource.currentItem = item;
+                    this.raiseEvent('item_clicked', { item: item });
+                };
+                StackPanel.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    RIAPP.global._untrackSelectable(this);
+                    this._unbindDS();
+                    this._clearContent();
+                    this._$el.removeClass(stackpanel.css.stackpanel);
+                    this._el = null;
+                    this._$el = null;
+                    this._currentItem = null;
+                    this._itemMap = {};
+                    this._app = null;
+                    _super.prototype.destroy.call(this);
+                };
+                StackPanel.prototype._clearContent = function () {
+                    var self = this;
+                    self._$el.empty();
+                    RIAPP.global.utils.forEachProp(self._itemMap, function (key) {
+                        self._removeItemByKey(key);
+                    });
+                };
+                StackPanel.prototype._removeItemByKey = function (key) {
+                    var self = this, obj = self._itemMap[key];
+                    if (!obj)
+                        return;
+                    delete self._itemMap[key];
+                    obj.template.destroy();
+                };
+                StackPanel.prototype._removeItem = function (item) {
+                    var self = this, key = item._key, obj = self._itemMap[key];
+                    if (!obj)
+                        return;
+                    delete self._itemMap[key];
+                    obj.template.destroy();
+                    RIAPP.global.$(obj.div).remove();
+                };
+                StackPanel.prototype._refresh = function () {
+                    var ds = this._dataSource, self = this;
+                    this._clearContent();
+                    if (!ds)
+                        return;
+                    ds.forEach(function (item) {
+                        self._appendItem(item);
+                    });
+                };
+                StackPanel.prototype.scrollIntoView = function (item) {
+                    if (!item)
+                        return;
+                    var obj = this._itemMap[item._key];
+                    if (!!obj) {
+                        obj.div.scrollIntoView(false);
+                    }
+                };
+                StackPanel.prototype.getDivElementByItem = function (item) {
+                    var obj = this._itemMap[item._key];
+                    if (!obj)
+                        return null;
+                    return obj.div;
+                };
+                StackPanel.prototype.toString = function () {
+                    return 'StackPanel';
+                };
+                Object.defineProperty(StackPanel.prototype, "app", {
+                    get: function () {
+                        return this._app;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(StackPanel.prototype, "el", {
+                    get: function () {
+                        return this._el;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(StackPanel.prototype, "containerEl", {
+                    get: function () {
+                        return this._el;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(StackPanel.prototype, "uniqueID", {
+                    get: function () {
+                        return this._objId;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(StackPanel.prototype, "dataSource", {
+                    get: function () {
+                        return this._dataSource;
+                    },
+                    set: function (v) {
+                        if (v === this._dataSource)
+                            return;
+                        if (this._dataSource !== null) {
+                            this._unbindDS();
+                        }
+                        this._dataSource = v;
+                        if (this._dataSource !== null)
+                            this._bindDS();
+                        this.raisePropertyChanged('dataSource');
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(StackPanel.prototype, "currentItem", {
+                    get: function () {
+                        return this._currentItem;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return StackPanel;
+            })(RIAPP.BaseObject);
+            stackpanel.StackPanel = StackPanel;
+
+            var StackPanelElView = (function (_super) {
+                __extends(StackPanelElView, _super);
+                function StackPanelElView(app, el, options) {
+                    var self = this;
+                    this._panel = null;
+                    this._options = options;
+                    this._panel = new StackPanel(app, el, null, this._options);
+                    this._panel.addOnDestroyed(function () {
+                        self._panel = null;
+                        self.invokePropChanged('panel');
+                        self.raisePropertyChanged('panel');
+                    });
+                    _super.call(this, app, el, options);
+                }
+                StackPanelElView.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._panel && !this._panel._isDestroyCalled) {
+                        this._panel.destroy();
+                    }
+                    this._panel = null;
+                    _super.prototype.destroy.call(this);
+                };
+                StackPanelElView.prototype.toString = function () {
+                    return 'StackPanelElView';
+                };
+                Object.defineProperty(StackPanelElView.prototype, "dataSource", {
+                    get: function () {
+                        if (this._isDestroyCalled)
+                            return undefined;
+                        return this._panel.dataSource;
+                    },
+                    set: function (v) {
+                        if (this._isDestroyCalled)
+                            return;
+                        if (this.dataSource !== v) {
+                            this._panel.dataSource = v;
+                            this.raisePropertyChanged('dataSource');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(StackPanelElView.prototype, "panel", {
+                    get: function () {
+                        return this._panel;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                return StackPanelElView;
+            })(RIAPP.MOD.baseElView.BaseElView);
+            stackpanel.StackPanelElView = StackPanelElView;
+
+            RIAPP.global.registerElView('stackpanel', StackPanelElView);
+            RIAPP.global.onModuleLoaded('stackpanel', stackpanel);
+        })(MOD.stackpanel || (MOD.stackpanel = {}));
+        var stackpanel = MOD.stackpanel;
+    })(RIAPP.MOD || (RIAPP.MOD = {}));
+    var MOD = RIAPP.MOD;
+})(RIAPP || (RIAPP = {}));
+var RIAPP;
+(function (RIAPP) {
+    (function (MOD) {
+        (function (db) {
+            var constsMOD = RIAPP.MOD.consts;
+            var utilsMOD = RIAPP.MOD.utils;
+            var collMod = RIAPP.MOD.collection;
+
             var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
 
             //local variables for optimization
-            var ValidationError = RIAPP.MOD.binding.ValidationError, valueUtils = RIAPP.MOD.utils.valueUtils, baseUtils = RIAPP.baseUtils, utils;
+            var ValidationError = RIAPP.MOD.errors.ValidationError, valueUtils = utilsMOD.valueUtils, baseUtils = RIAPP.baseUtils, utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
@@ -10845,7 +15571,7 @@ var RIAPP;
                     this._hasChanges = false;
                     this._pendingSubmit = null;
                     this._serverTimezone = utils.get_timeZoneOffset();
-                    this._waitQueue = new RIAPP.MOD.utils.WaitQueue(this);
+                    this._waitQueue = new utilsMOD.WaitQueue(this);
                 }
                 DbContext.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
@@ -13125,4651 +17851,6 @@ var RIAPP;
     })(RIAPP.MOD || (RIAPP.MOD = {}));
     var MOD = RIAPP.MOD;
 })(RIAPP || (RIAPP = {}));
-var RIAPP;
-(function (RIAPP) {
-    (function (MOD) {
-        (function (listbox) {
-            var collMod = RIAPP.MOD.collection;
-            var utils, parser;
-            RIAPP.global.addOnInitialize(function (s, args) {
-                utils = s.utils;
-                parser = s.parser;
-            });
-
-            var ListBox = (function (_super) {
-                __extends(ListBox, _super);
-                function ListBox(el, dataSource, options) {
-                    _super.call(this);
-                    var self = this;
-                    this._el = el;
-                    this._$el = RIAPP.global.$(this._el);
-                    this._objId = 'lst' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof collMod.BaseCollection))
-                        throw new Error(RIAPP.ERRS.ERR_LISTBOX_DATASRC_INVALID);
-                    this._$el.on('change.' + this._objId, function (e) {
-                        e.stopPropagation();
-                        if (self._isRefreshing)
-                            return;
-                        self._onChanged();
-                    });
-                    this._dataSource = null;
-                    this._isDSFilling = false;
-                    this._isRefreshing = false;
-                    this._valuePath = options.valuePath;
-                    this._textPath = options.textPath;
-                    this._selectedItem = null;
-                    this._prevSelected = null;
-                    this._keyMap = {};
-                    this._valMap = {};
-                    this._savedValue = undefined;
-                    this._tempValue = undefined;
-                    this.dataSource = dataSource;
-                }
-                ListBox.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    this._unbindDS();
-                    this._$el.off('.' + this._objId);
-                    this._clear(true);
-                    this._el = null;
-                    this._$el = null;
-                    this._dataSource = null;
-                    this._tempValue = undefined;
-                    this._selectedItem = null;
-                    this._prevSelected = null;
-                    this._savedValue = null;
-                    _super.prototype.destroy.call(this);
-                };
-                ListBox.prototype._onChanged = function () {
-                    var op = null, key, data;
-                    if (this._el.selectedIndex >= 0) {
-                        op = this._el.options[this._el.selectedIndex];
-                        key = op.value;
-                        data = this._keyMap[key];
-                    }
-
-                    if (!data && !!this._selectedItem) {
-                        this.selectedItem = null;
-                    } else if (data.item !== this._selectedItem) {
-                        this.selectedItem = data.item;
-                    }
-                };
-                ListBox.prototype._getStringValue = function (item) {
-                    var v = this._getValue(item);
-                    if (utils.check.isNt(v))
-                        return '';
-                    return '' + v;
-                };
-                ListBox.prototype._getValue = function (item) {
-                    if (!item)
-                        return null;
-                    if (!!this._valuePath) {
-                        return parser.resolvePath(item, this._valuePath);
-                    } else
-                        return undefined;
-                };
-                ListBox.prototype._getText = function (item) {
-                    if (!item)
-                        return '';
-                    if (!!this._textPath) {
-                        var t = RIAPP.global.parser.resolvePath(item, this._textPath);
-                        if (utils.check.isNt(t))
-                            return '';
-                        return '' + t;
-                    } else
-                        return this._getStringValue(item);
-                };
-                ListBox.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, data;
-                    switch (args.change_type) {
-                        case 2 /* RESET */:
-                            if (!this._isDSFilling)
-                                this._refresh();
-                            break;
-                        case 1 /* ADDED */:
-                            if (!this._isDSFilling) {
-                                args.items.forEach(function (item) {
-                                    self._addOption(item, item._isNew);
-                                });
-                            }
-                            break;
-                        case 0 /* REMOVE */:
-                            args.items.forEach(function (item) {
-                                self._removeOption(item);
-                            });
-                            break;
-                        case 3 /* REMAP_KEY */: {
-                            data = self._keyMap[args.old_key];
-                            if (!!data) {
-                                delete self._keyMap[args.old_key];
-                                self._keyMap[args.new_key] = data;
-                                data.op.value = args.new_key;
-                            }
-                        }
-                    }
-                };
-                ListBox.prototype._onDSFill = function (args) {
-                    var isEnd = !args.isBegin;
-                    if (isEnd) {
-                        this._isDSFilling = false;
-                        this._refresh();
-                    } else {
-                        this._isDSFilling = true;
-                    }
-                };
-                ListBox.prototype._onEdit = function (item, isBegin, isCanceled) {
-                    var self = this, key, data, oldVal, val;
-                    if (isBegin) {
-                        this._savedValue = this._getStringValue(item);
-                    } else {
-                        oldVal = this._savedValue;
-                        this._savedValue = undefined;
-                        if (!isCanceled) {
-                            key = item._key;
-                            data = self._keyMap[key];
-                            if (!!data) {
-                                data.op.text = self._getText(item);
-                                val = this._getStringValue(item);
-                                if (oldVal !== val) {
-                                    if (!!oldVal) {
-                                        delete self._valMap[oldVal];
-                                    }
-                                    if (!!val) {
-                                        self._valMap[val] = data;
-                                    }
-                                }
-                            } else {
-                                if (!!oldVal) {
-                                    delete self._valMap[oldVal];
-                                }
-                            }
-                        }
-                    }
-                };
-                ListBox.prototype._onStatusChanged = function (item, oldChangeType) {
-                    var newChangeType = item._changeType;
-                    if (newChangeType === 3 /* DELETED */) {
-                        this._removeOption(item);
-                    }
-                };
-                ListBox.prototype._onCommitChanges = function (item, isBegin, isRejected, changeType) {
-                    var self = this, oldVal, val, data;
-                    if (isBegin) {
-                        if (isRejected && changeType === 1 /* ADDED */) {
-                            return;
-                        } else if (!isRejected && changeType === 3 /* DELETED */) {
-                            return;
-                        }
-
-                        this._savedValue = this._getStringValue(item);
-                    } else {
-                        oldVal = this._savedValue;
-                        this._savedValue = undefined;
-
-                        if (isRejected && changeType === 3 /* DELETED */) {
-                            this._addOption(item, true);
-                            return;
-                        }
-                        val = this._getStringValue(item);
-                        data = self._keyMap[item._key];
-                        if (oldVal !== val) {
-                            if (oldVal !== '') {
-                                delete self._valMap[oldVal];
-                            }
-                            if (!!data && val !== '') {
-                                self._valMap[val] = data;
-                            }
-                        }
-                        if (!!data) {
-                            data.op.text = self._getText(item);
-                        }
-                    }
-                };
-                ListBox.prototype._bindDS = function () {
-                    var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
-                    ds.addOnCollChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addOnFill(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSFill(args);
-                    }, self._objId);
-                    ds.addOnBeginEdit(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onEdit(args.item, true, undefined);
-                    }, self._objId);
-                    ds.addOnEndEdit(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onEdit(args.item, false, args.isCanceled);
-                    }, self._objId);
-                    ds.addOnStatusChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onStatusChanged(args.item, args.oldChangeType);
-                    }, self._objId);
-                    ds.addOnCommitChanges(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
-                    }, self._objId);
-                };
-                ListBox.prototype._unbindDS = function () {
-                    var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
-                    ds.removeNSHandlers(self._objId);
-                };
-                ListBox.prototype._addOption = function (item, first) {
-                    if (this._isDestroyCalled)
-                        return null;
-                    var oOption, key = '', val, text;
-                    if (!!item) {
-                        key = item._key;
-                    }
-                    if (!!this._keyMap[key]) {
-                        return null;
-                    }
-                    text = this._getText(item);
-                    val = this._getStringValue(item);
-                    oOption = RIAPP.global.document.createElement("option");
-                    oOption.text = text;
-                    oOption.value = key;
-                    var data = { item: item, op: oOption };
-                    this._keyMap[key] = data;
-                    if (!!val)
-                        this._valMap[val] = data;
-                    if (!!first) {
-                        if (this._el.options.length < 2)
-                            this._el.add(oOption, null);
-                        else
-                            this._el.add(oOption, this._el.options[1]);
-                    } else
-                        this._el.add(oOption, null);
-                    return oOption;
-                };
-                ListBox.prototype._mapByValue = function () {
-                    var self = this;
-                    this._valMap = {};
-                    utils.forEachProp(this._keyMap, function (key) {
-                        var data = self._keyMap[key], val = self._getStringValue(data.item);
-                        if (!!val)
-                            self._valMap[val] = data;
-                    });
-                };
-                ListBox.prototype._resetText = function () {
-                    var self = this;
-                    utils.forEachProp(this._keyMap, function (key) {
-                        var data = self._keyMap[key];
-                        data.op.text = self._getText(data.item);
-                    });
-                };
-                ListBox.prototype._removeOption = function (item) {
-                    if (this._isDestroyCalled)
-                        return;
-                    var key = '', data, val;
-                    if (!!item) {
-                        key = item._key;
-                        data = this._keyMap[key];
-                        if (!data) {
-                            return;
-                        }
-                        this._el.remove(data.op.index);
-                        val = this._getStringValue(item);
-                        delete this._keyMap[key];
-                        if (!!val)
-                            delete this._valMap[val];
-                        if (this._prevSelected === item) {
-                            this._prevSelected = null;
-                        }
-                        if (this.selectedItem === item) {
-                            this.selectedItem = this._prevSelected;
-                        }
-                    }
-                };
-                ListBox.prototype._clear = function (isDestroy) {
-                    this._el.options.length = 0;
-                    this._keyMap = {};
-                    this._valMap = {};
-                    this._prevSelected = null;
-                    if (!isDestroy) {
-                        this._addOption(null, false);
-                        this.selectedItem = null;
-                    } else
-                        this.selectedItem = null;
-                };
-                ListBox.prototype._refresh = function () {
-                    var self = this, ds = this._dataSource, oldItem = this._selectedItem, tmp = self._tempValue;
-                    this._isRefreshing = true;
-                    try  {
-                        this.clear();
-                        if (!!ds) {
-                            ds.forEach(function (item) {
-                                self._addOption(item, false);
-                            });
-
-                            if (tmp === undefined) {
-                                self._el.selectedIndex = self._findItemIndex(oldItem);
-                            } else {
-                                oldItem = self.findItemByValue(tmp);
-                                self.selectedItem = oldItem;
-                                self._tempValue = undefined;
-                            }
-                        }
-                    } finally {
-                        self._isRefreshing = false;
-                    }
-                    self._onChanged();
-                };
-                ListBox.prototype._findItemIndex = function (item) {
-                    if (!item)
-                        return 0;
-                    var data = this._keyMap[item._key];
-                    if (!data)
-                        return 0;
-                    return data.op.index;
-                };
-                ListBox.prototype._setIsEnabled = function (el, v) {
-                    el.disabled = !v;
-                };
-                ListBox.prototype._getIsEnabled = function (el) {
-                    return !el.disabled;
-                };
-                ListBox.prototype.clear = function () {
-                    this._clear(false);
-                };
-                ListBox.prototype.findItemByValue = function (val) {
-                    if (utils.check.isNt(val))
-                        return null;
-                    val = '' + val;
-                    var data = this._valMap[val];
-                    if (!data)
-                        return null;
-                    return data.item;
-                };
-                ListBox.prototype.getTextByValue = function (val) {
-                    if (utils.check.isNt(val))
-                        return '';
-                    val = '' + val;
-                    var data = this._valMap[val];
-                    if (!data)
-                        return '';
-                    else
-                        return data.op.text;
-                };
-                ListBox.prototype.toString = function () {
-                    return 'ListBox';
-                };
-                Object.defineProperty(ListBox.prototype, "dataSource", {
-                    get: function () {
-                        return this._dataSource;
-                    },
-                    set: function (v) {
-                        if (this._dataSource !== v) {
-                            if (!!this._dataSource)
-                                this._tempValue = this.selectedValue;
-                            if (!!this._dataSource)
-                                this._unbindDS();
-                            this._dataSource = v;
-                            if (!!this._dataSource) {
-                                this._bindDS();
-                            }
-                            this._refresh();
-                            if (!!this._dataSource)
-                                this._tempValue = undefined;
-                            this.raisePropertyChanged('dataSource');
-                            this.raisePropertyChanged('selectedItem');
-                            this.raisePropertyChanged('selectedValue');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "selectedValue", {
-                    get: function () {
-                        if (!!this._dataSource)
-                            return this._getValue(this.selectedItem);
-                        else
-                            return undefined;
-                    },
-                    set: function (v) {
-                        var self = this;
-                        if (!!this._dataSource) {
-                            if (this.selectedValue !== v) {
-                                var item = self.findItemByValue(v);
-                                self.selectedItem = item;
-                                self._tempValue = undefined;
-                            }
-                        } else {
-                            if (this._tempValue !== v) {
-                                this._selectedItem = null;
-                                this._tempValue = v;
-                                this.raisePropertyChanged('selectedItem');
-                                this.raisePropertyChanged('selectedValue');
-                            }
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "selectedItem", {
-                    get: function () {
-                        if (!!this._dataSource)
-                            return this._selectedItem;
-                        else
-                            return undefined;
-                    },
-                    set: function (v) {
-                        if (this._selectedItem !== v) {
-                            if (!!this._selectedItem) {
-                                this._prevSelected = this._selectedItem;
-                            }
-                            this._selectedItem = v;
-                            this._el.selectedIndex = this._findItemIndex(this._selectedItem);
-                            this.raisePropertyChanged('selectedItem');
-                            this.raisePropertyChanged('selectedValue');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "valuePath", {
-                    get: function () {
-                        return this._valuePath;
-                    },
-                    set: function (v) {
-                        if (v !== this._valuePath) {
-                            this._valuePath = v;
-                            this._mapByValue();
-                            this.raisePropertyChanged('valuePath');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "textPath", {
-                    get: function () {
-                        return this._textPath;
-                    },
-                    set: function (v) {
-                        if (v !== this._textPath) {
-                            this._textPath = v;
-                            this._resetText();
-                            this.raisePropertyChanged('textPath');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "isEnabled", {
-                    get: function () {
-                        return this._getIsEnabled(this._el);
-                    },
-                    set: function (v) {
-                        if (v !== this.isEnabled) {
-                            this._setIsEnabled(this._el, v);
-                            this.raisePropertyChanged('isEnabled');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ListBox.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return ListBox;
-            })(RIAPP.BaseObject);
-            listbox.ListBox = ListBox;
-
-            var SelectElView = (function (_super) {
-                __extends(SelectElView, _super);
-                function SelectElView(app, el, options) {
-                    var self = this;
-                    self._options = options;
-                    self._listBox = new ListBox(el, null, self._options);
-                    self._listBox.addOnDestroyed(function () {
-                        self._listBox = null;
-                        self.invokePropChanged('listBox');
-                        self.raisePropertyChanged('listBox');
-                    }, this.uniqueID);
-                    self._listBox.addOnPropertyChange('*', function (sender, args) {
-                        self.raisePropertyChanged(args.property);
-                    }, self.uniqueID);
-                    _super.call(this, app, el, options);
-                }
-                SelectElView.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._listBox && !this._listBox._isDestroyCalled) {
-                        this._listBox.destroy();
-                    }
-                    this._listBox = null;
-                    _super.prototype.destroy.call(this);
-                };
-                SelectElView.prototype.toString = function () {
-                    return 'SelectElView';
-                };
-                Object.defineProperty(SelectElView.prototype, "isEnabled", {
-                    get: function () {
-                        if (this._isDestroyCalled)
-                            return false;
-                        return !this.el.disabled;
-                    },
-                    set: function (v) {
-                        v = !!v;
-                        if (v !== this.isEnabled) {
-                            this.el.disabled = !v;
-                            this.raisePropertyChanged('isEnabled');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(SelectElView.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(SelectElView.prototype, "dataSource", {
-                    get: function () {
-                        if (this._isDestroyCalled)
-                            return undefined;
-                        return this._listBox.dataSource;
-                    },
-                    set: function (v) {
-                        var self = this;
-                        if (self.dataSource !== v) {
-                            self._listBox.dataSource = v;
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(SelectElView.prototype, "selectedValue", {
-                    get: function () {
-                        if (this._isDestroyCalled)
-                            return undefined;
-                        return this._listBox.selectedValue;
-                    },
-                    set: function (v) {
-                        if (this._isDestroyCalled)
-                            return;
-                        if (this._listBox.selectedValue !== v) {
-                            this._listBox.selectedValue = v;
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(SelectElView.prototype, "selectedItem", {
-                    get: function () {
-                        if (this._isDestroyCalled)
-                            return undefined;
-                        return this._listBox.selectedItem;
-                    },
-                    set: function (v) {
-                        if (this._isDestroyCalled)
-                            return;
-                        this._listBox.selectedItem = v;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(SelectElView.prototype, "listBox", {
-                    get: function () {
-                        return this._listBox;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return SelectElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
-            listbox.SelectElView = SelectElView;
-
-            var LookupContent = (function (_super) {
-                __extends(LookupContent, _super);
-                function LookupContent(app, parentEl, options, dctx, isEditing) {
-                    if (options.name != 'lookup') {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'lookup'"));
-                    }
-                    this._spanView = null;
-                    this._selectView = null;
-                    this._isListBoxCachedExternally = false;
-                    this._valBinding = null;
-                    this._listBinding = null;
-                    this._value = null;
-                    _super.call(this, app, parentEl, options, dctx, isEditing);
-                }
-                LookupContent.prototype._init = function () {
-                    if (!!this._options.initContentFn) {
-                        this._options.initContentFn(this);
-                    }
-                };
-                LookupContent.prototype._getEventNames = function () {
-                    var base_events = _super.prototype._getEventNames.call(this);
-                    return ['object_created', 'object_needed'].concat(base_events);
-                };
-                LookupContent.prototype.addOnObjectCreated = function (fn, namespace) {
-                    this.addHandler('object_created', fn, namespace);
-                };
-                LookupContent.prototype.removeOnObjectCreated = function (namespace) {
-                    this.removeHandler('object_created', namespace);
-                };
-                LookupContent.prototype.addOnObjectNeeded = function (fn, namespace) {
-                    this.addHandler('object_needed', fn, namespace);
-                };
-                LookupContent.prototype.removeOnObjectNeeded = function (namespace) {
-                    this.removeHandler('object_needed', namespace);
-                };
-                LookupContent.prototype._getSelectView = function () {
-                    if (!!this._selectView)
-                        return this._selectView;
-                    var lookUpOptions = this._options.options;
-                    var args1 = { objectKey: 'selectElView', object: null };
-
-                    //try get externally externally cached listBox
-                    this.raiseEvent('object_needed', args1);
-                    if (!!args1.object) {
-                        this._isListBoxCachedExternally = true;
-                        this._selectView = args1.object;
-                    }
-                    if (!!this._selectView)
-                        return this._selectView;
-
-                    //proceed creating new selectElView
-                    var dataSource = RIAPP.global.parser.resolvePath(this.app, lookUpOptions.dataSource), options = { valuePath: lookUpOptions.valuePath, textPath: lookUpOptions.textPath };
-                    var el = RIAPP.global.document.createElement('select');
-                    el.setAttribute('size', '1');
-                    var selectElView = this._createSelectElView(el, options);
-                    selectElView.dataSource = dataSource;
-                    var args2 = { objectKey: 'selectElView', object: selectElView, isCachedExternally: false };
-
-                    //this allows to cache listBox externally
-                    this.raiseEvent('object_created', args2);
-                    this._isListBoxCachedExternally = args2.isCachedExternally;
-                    this._selectView = selectElView;
-                    return this._selectView;
-                };
-                LookupContent.prototype._createSelectElView = function (el, options) {
-                    var elView;
-                    elView = this.app._getElView(el);
-                    if (!!elView)
-                        return elView;
-                    elView = new SelectElView(this.app, el, options);
-                    return elView;
-                };
-                LookupContent.prototype._updateTextValue = function () {
-                    var spanView = this._getSpanView();
-                    spanView.value = this._getLookupText();
-                };
-                LookupContent.prototype._getLookupText = function () {
-                    var listBoxView = this._getSelectView();
-                    return listBoxView.listBox.getTextByValue(this.value);
-                };
-                LookupContent.prototype._getSpanView = function () {
-                    if (!!this._spanView) {
-                        return this._spanView;
-                    }
-                    var el = RIAPP.global.document.createElement('span'), displayInfo = this._getDisplayInfo();
-                    var spanView = new RIAPP.MOD.baseElView.SpanElView(this.app, el, {});
-                    if (!!displayInfo) {
-                        if (!!displayInfo.displayCss) {
-                            spanView.$el.addClass(displayInfo.displayCss);
-                        }
-                    }
-                    this._spanView = spanView;
-                    return this._spanView;
-                };
-                LookupContent.prototype.update = function () {
-                    this._cleanUp();
-                    this._createTargetElement();
-                    this._parentEl.appendChild(this._el);
-                };
-                LookupContent.prototype._createTargetElement = function () {
-                    var tgt, el, selectView, spanView;
-                    if (this._isEditing && this._canBeEdited()) {
-                        selectView = this._getSelectView();
-                        this._listBinding = this._bindToList(selectView);
-                        tgt = selectView;
-                    } else {
-                        spanView = this._getSpanView();
-                        this._valBinding = this._bindToValue();
-                        tgt = spanView;
-                    }
-                    this._el = tgt.el;
-                    this._updateCss();
-                    return tgt;
-                };
-                LookupContent.prototype._cleanUp = function () {
-                    if (!!this._el) {
-                        utils.removeNode(this._el);
-                        this._el = null;
-                    }
-                    if (!!this._listBinding) {
-                        this._listBinding.destroy();
-                        this._listBinding = null;
-                    }
-                    if (!!this._valBinding) {
-                        this._valBinding.destroy();
-                        this._valBinding = null;
-                    }
-
-                    if (!!this._selectView && this._isListBoxCachedExternally) {
-                        this._selectView = null;
-                    }
-                };
-                LookupContent.prototype._updateBindingSource = function () {
-                    if (!!this._valBinding) {
-                        this._valBinding.source = this._dctx;
-                    }
-                    if (!!this._listBinding) {
-                        this._listBinding.source = this._dctx;
-                    }
-                };
-                LookupContent.prototype._bindToValue = function () {
-                    if (!this._options.fieldName)
-                        return null;
-
-                    var options = {
-                        target: this, source: this._dctx,
-                        targetPath: 'value', sourcePath: this._options.fieldName, mode: 1 /* OneWay */,
-                        converter: null, converterParam: null, isSourceFixed: false
-                    };
-                    return new RIAPP.MOD.binding.Binding(options);
-                };
-                LookupContent.prototype._bindToList = function (selectView) {
-                    if (!this._options.fieldName)
-                        return null;
-
-                    var options = {
-                        target: selectView, source: this._dctx,
-                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: 2 /* TwoWay */,
-                        converter: null, converterParam: null, isSourceFixed: false
-                    };
-                    return new RIAPP.MOD.binding.Binding(options);
-                };
-                LookupContent.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    this._cleanUp();
-                    if (!!this._selectView && !this._isListBoxCachedExternally) {
-                        this._selectView.destroy();
-                    }
-                    this._selectView = null;
-                    if (!!this._spanView) {
-                        this._spanView.destroy();
-                    }
-                    this._spanView = null;
-                    _super.prototype.destroy.call(this);
-                };
-                LookupContent.prototype.toString = function () {
-                    return 'LookupContent';
-                };
-                Object.defineProperty(LookupContent.prototype, "value", {
-                    get: function () {
-                        return this._value;
-                    },
-                    set: function (v) {
-                        if (this._value !== v) {
-                            this._value = v;
-                            this._updateTextValue();
-                            this.raisePropertyChanged('value');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return LookupContent;
-            })(RIAPP.MOD.baseContent.BindingContent);
-            listbox.LookupContent = LookupContent;
-
-            var ContentFactory = (function () {
-                function ContentFactory(app, nextFactory) {
-                    this._app = app;
-                    this._nextFactory = nextFactory;
-                }
-                ContentFactory.prototype.getContentType = function (options) {
-                    if (options.name == 'lookup') {
-                        return LookupContent;
-                    }
-                    if (!!this._nextFactory)
-                        return this._nextFactory.getContentType(options);
-                    else
-                        throw new Error(RIAPP.ERRS.ERR_BINDING_CONTENT_NOT_FOUND);
-                };
-
-                ContentFactory.prototype.createContent = function (parentEl, options, dctx, isEditing) {
-                    var contentType = this.getContentType(options);
-                    return new contentType(this._app, parentEl, options, dctx, isEditing);
-                };
-
-                ContentFactory.prototype.isExternallyCachable = function (contentType) {
-                    if (LookupContent === contentType)
-                        return true;
-                    return this._nextFactory.isExternallyCachable(contentType);
-                };
-                Object.defineProperty(ContentFactory.prototype, "app", {
-                    get: function () {
-                        return this._app;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return ContentFactory;
-            })();
-            listbox.ContentFactory = ContentFactory;
-
-            function initModule(app) {
-                app.registerContentFactory(function (nextFactory) {
-                    return new ContentFactory(app, nextFactory);
-                });
-                return listbox;
-            }
-            listbox.initModule = initModule;
-            ;
-
-            RIAPP.global.registerElView('select', SelectElView);
-            RIAPP.global.onModuleLoaded('listbox', listbox);
-        })(MOD.listbox || (MOD.listbox = {}));
-        var listbox = MOD.listbox;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
-})(RIAPP || (RIAPP = {}));
-var RIAPP;
-(function (RIAPP) {
-    (function (MOD) {
-        (function (datadialog) {
-            var utils;
-            RIAPP.global.addOnInitialize(function (s, args) {
-                utils = s.utils;
-            });
-            (function (DIALOG_ACTION) {
-                DIALOG_ACTION[DIALOG_ACTION["Default"] = 0] = "Default";
-                DIALOG_ACTION[DIALOG_ACTION["StayOpen"] = 1] = "StayOpen";
-            })(datadialog.DIALOG_ACTION || (datadialog.DIALOG_ACTION = {}));
-            var DIALOG_ACTION = datadialog.DIALOG_ACTION;
-            ;
-
-            var DataEditDialog = (function (_super) {
-                __extends(DataEditDialog, _super);
-                function DataEditDialog(app, options) {
-                    _super.call(this);
-                    var self = this;
-                    this._app = app;
-                    this._objId = 'dlg' + utils.getNewID();
-                    var opts = utils.extend(false, {
-                        dataContext: null,
-                        templateID: null,
-                        width: 500,
-                        height: 350,
-                        title: 'data edit dialog',
-                        submitOnOK: false,
-                        canRefresh: false,
-                        canCancel: true,
-                        fn_OnClose: null,
-                        fn_OnOK: null,
-                        fn_OnShow: null,
-                        fn_OnCancel: null,
-                        fn_OnTemplateCreated: null,
-                        fn_OnTemplateDestroy: null
-                    }, options);
-                    this._dataContext = opts.dataContext;
-                    this._templateID = opts.templateID;
-                    this._submitOnOK = opts.submitOnOK;
-                    this._canRefresh = opts.canRefresh;
-                    this._canCancel = opts.canCancel;
-                    this._fn_OnClose = opts.fn_OnClose;
-                    this._fn_OnOK = opts.fn_OnOK;
-                    this._fn_OnShow = opts.fn_OnShow;
-                    this._fn_OnCancel = opts.fn_OnCancel;
-                    this._fn_OnTemplateCreated = opts.fn_OnTemplateCreated;
-                    this._fn_OnTemplateDestroy = opts.fn_OnTemplateDestroy;
-
-                    this._isEditable = false;
-                    this._template = null;
-                    this._$template = null;
-                    this._result = null;
-                    this._currentSelectable = null;
-                    this._fn_submitOnOK = function () {
-                        if (!self._dataContext._isCanSubmit) {
-                            //signals immediatly
-                            return utils.createDeferred().resolve().promise();
-                        }
-                        var dctxt = self._dataContext;
-                        return dctxt.submitChanges();
-                    };
-                    this._updateIsEditable();
-                    this._options = {
-                        width: opts.width,
-                        height: opts.height,
-                        title: opts.title,
-                        autoOpen: false,
-                        modal: true,
-                        close: function (event, ui) {
-                            self._onClose();
-                        },
-                        buttons: self._getButtons()
-                    };
-                    this._dialogCreated = false;
-                    this._createDialog();
-                }
-                DataEditDialog.prototype.addOnClose = function (fn, namespace) {
-                    this.addHandler('close', fn, namespace);
-                };
-                DataEditDialog.prototype.removeOnClose = function (namespace) {
-                    this.removeHandler('close', namespace);
-                };
-                DataEditDialog.prototype.addOnRefresh = function (fn, namespace) {
-                    this.addHandler('refresh', fn, namespace);
-                };
-                DataEditDialog.prototype.removeOnRefresh = function (namespace) {
-                    this.removeHandler('refresh', namespace);
-                };
-                DataEditDialog.prototype._updateIsEditable = function () {
-                    this._isEditable = utils.check.isEditable(this._dataContext);
-                };
-                DataEditDialog.prototype._createDialog = function () {
-                    if (this._dialogCreated)
-                        return;
-                    var dctx = this._dataContext;
-                    this._template = this._createTemplate(dctx);
-                    this._$template = RIAPP.global.$(this._template.el);
-                    RIAPP.global.document.body.appendChild(this._template.el);
-                    this._$template.dialog(this._options);
-                    this._dialogCreated = true;
-                    if (!!this._fn_OnTemplateCreated) {
-                        this._fn_OnTemplateCreated(this._template);
-                    }
-                };
-                DataEditDialog.prototype._getEventNames = function () {
-                    var base_events = _super.prototype._getEventNames.call(this);
-                    return ['close', 'refresh'].concat(base_events);
-                };
-                DataEditDialog.prototype._createTemplate = function (dcxt) {
-                    var t = new RIAPP.MOD.template.Template(this._app, this._templateID);
-
-                    //create template in disabled state
-                    t.isDisabled = true;
-                    t.dataContext = dcxt;
-                    return t;
-                };
-                DataEditDialog.prototype._destroyTemplate = function () {
-                    if (!!this._fn_OnTemplateDestroy) {
-                        this._fn_OnTemplateDestroy(this._template);
-                    }
-                    this._$template.remove();
-                    this._template.destroy();
-                    this._$template = null;
-                    this._template = null;
-                };
-                DataEditDialog.prototype._getButtons = function () {
-                    var self = this, buttons = [
-                        {
-                            'id': self._objId + 'Refresh',
-                            'text': RIAPP.localizable.TEXT.txtRefresh,
-                            'class': 'btn btn-info',
-                            'click': function () {
-                                self._onRefresh();
-                            }
-                        },
-                        {
-                            'id': self._objId + 'Ok',
-                            'text': RIAPP.localizable.TEXT.txtOk,
-                            'class': 'btn btn-info',
-                            'click': function () {
-                                self._onOk();
-                            }
-                        },
-                        {
-                            'id': self._objId + 'Cancel',
-                            'text': RIAPP.localizable.TEXT.txtCancel,
-                            'class': 'btn btn-info',
-                            'click': function () {
-                                self._onCancel();
-                            }
-                        }
-                    ];
-                    if (!this.canRefresh) {
-                        buttons.shift();
-                    }
-                    if (!this.canCancel) {
-                        buttons.pop();
-                    }
-                    return buttons;
-                };
-                DataEditDialog.prototype._getOkButton = function () {
-                    return $("#" + this._objId + 'Ok');
-                };
-                DataEditDialog.prototype._getCancelButton = function () {
-                    return $("#" + this._objId + 'Cancel');
-                };
-                DataEditDialog.prototype._getRefreshButton = function () {
-                    return $("#" + this._objId + 'Refresh');
-                };
-                DataEditDialog.prototype._getAllButtons = function () {
-                    return [this._getOkButton(), this._getCancelButton(), this._getRefreshButton()];
-                };
-                DataEditDialog.prototype._disableButtons = function (isDisable) {
-                    var btns = this._getAllButtons();
-                    btns.forEach(function ($btn) {
-                        $btn.prop("disabled", !!isDisable);
-                    });
-                };
-                DataEditDialog.prototype._onOk = function () {
-                    var self = this, canCommit, action = 0 /* Default */;
-                    if (!!this._fn_OnOK) {
-                        action = this._fn_OnOK(this);
-                    }
-                    if (action == 1 /* StayOpen */)
-                        return;
-
-                    if (!this._dataContext) {
-                        self.hide();
-                        return;
-                    }
-
-                    if (this._isEditable)
-                        canCommit = this._dataContext.endEdit();
-                    else
-                        canCommit = true;
-
-                    if (canCommit) {
-                        if (this._submitOnOK) {
-                            this._disableButtons(true);
-                            var title = this.title;
-                            this.title = RIAPP.localizable.TEXT.txtSubmitting;
-                            var promise = this._fn_submitOnOK();
-                            promise.always(function () {
-                                self._disableButtons(false);
-                                self.title = title;
-                            });
-                            promise.done(function () {
-                                self._result = 'ok';
-                                self.hide();
-                            });
-                            promise.fail(function () {
-                                //resume editing if fn_onEndEdit callback returns false in isOk argument
-                                if (self._isEditable) {
-                                    if (!self._dataContext.beginEdit()) {
-                                        self._result = 'cancel';
-                                        self.hide();
-                                    }
-                                }
-                            });
-                        } else {
-                            self._result = 'ok';
-                            self.hide();
-                        }
-                    }
-                };
-                DataEditDialog.prototype._onCancel = function () {
-                    var action = 0 /* Default */;
-                    if (!!this._fn_OnCancel) {
-                        action = this._fn_OnCancel(this);
-                    }
-                    if (action == 1 /* StayOpen */)
-                        return;
-
-                    this._result = 'cancel';
-                    this.hide();
-                };
-                DataEditDialog.prototype._onRefresh = function () {
-                    var args = { isHandled: false };
-                    this.raiseEvent('refresh', args);
-                    if (args.isHandled)
-                        return;
-                    if (!!this._dataContext && utils.check.isFunction(this._dataContext.refresh)) {
-                        this._dataContext.refresh();
-                    }
-                };
-                DataEditDialog.prototype._onClose = function () {
-                    try  {
-                        if (this._result != 'ok' && !!this._dataContext) {
-                            if (this._isEditable)
-                                this._dataContext.cancelEdit();
-                            if (this._submitOnOK && utils.check.isFunction(this._dataContext.rejectChanges)) {
-                                this._dataContext.rejectChanges();
-                            }
-                        }
-                        if (!!this._fn_OnClose)
-                            this._fn_OnClose(this);
-                        this.raiseEvent('close', {});
-                    } finally {
-                        this._template.isDisabled = true;
-                    }
-                    var csel = this._currentSelectable;
-                    this._currentSelectable = null;
-                    setTimeout(function () {
-                        RIAPP.global.currentSelectable = csel;
-                        csel = null;
-                    }, 50);
-                };
-                DataEditDialog.prototype._onShow = function () {
-                    this._currentSelectable = RIAPP.global.currentSelectable;
-                    if (!!this._fn_OnShow) {
-                        this._fn_OnShow(this);
-                    }
-                };
-                DataEditDialog.prototype.show = function () {
-                    this._result = null;
-                    this._$template.dialog("option", "buttons", this._getButtons());
-                    this._template.isDisabled = false;
-                    this._onShow();
-                    this._$template.dialog("open");
-                };
-                DataEditDialog.prototype.hide = function () {
-                    this._$template.dialog("close");
-                };
-                DataEditDialog.prototype.getOption = function (name) {
-                    return this._$template.dialog('option', name);
-                };
-                DataEditDialog.prototype.setOption = function (name, value) {
-                    this._$template.dialog('option', name, value);
-                };
-                DataEditDialog.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (this._dialogCreated) {
-                        this.hide();
-                        this._destroyTemplate();
-                        this._dialogCreated = false;
-                    }
-                    this._dataContext = null;
-                    this._fn_submitOnOK = null;
-                    this._app = null;
-                    _super.prototype.destroy.call(this);
-                };
-                Object.defineProperty(DataEditDialog.prototype, "dataContext", {
-                    get: function () {
-                        return this._dataContext;
-                    },
-                    set: function (v) {
-                        if (v !== this._dataContext) {
-                            this._dataContext = v;
-                            if (!!this._template)
-                                this._template.dataContext = this._dataContext;
-                            this._updateIsEditable();
-                            this.raisePropertyChanged('dataContext');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataEditDialog.prototype, "result", {
-                    get: function () {
-                        return this._result;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataEditDialog.prototype, "template", {
-                    get: function () {
-                        return this._template;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataEditDialog.prototype, "isSubmitOnOK", {
-                    get: function () {
-                        return this._submitOnOK;
-                    },
-                    set: function (v) {
-                        if (this._submitOnOK !== v) {
-                            this._submitOnOK = v;
-                            this.raisePropertyChanged('isSubmitOnOK');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataEditDialog.prototype, "width", {
-                    get: function () {
-                        return this.getOption('width');
-                    },
-                    set: function (v) {
-                        var x = this.getOption('width');
-                        if (v !== x) {
-                            this.setOption('width', v);
-                            this.raisePropertyChanged('width');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataEditDialog.prototype, "height", {
-                    get: function () {
-                        return this.getOption('height');
-                    },
-                    set: function (v) {
-                        var x = this.getOption('height');
-                        if (v !== x) {
-                            this.setOption('height', v);
-                            this.raisePropertyChanged('height');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataEditDialog.prototype, "title", {
-                    get: function () {
-                        return this.getOption('title');
-                    },
-                    set: function (v) {
-                        var x = this.getOption('title');
-                        if (v !== x) {
-                            this.setOption('title', v);
-                            this.raisePropertyChanged('title');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataEditDialog.prototype, "canRefresh", {
-                    get: function () {
-                        return this._canRefresh;
-                    },
-                    set: function (v) {
-                        var x = this._canRefresh;
-                        if (v !== x) {
-                            this._canRefresh = v;
-                            this.raisePropertyChanged('canRefresh');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataEditDialog.prototype, "canCancel", {
-                    get: function () {
-                        return this._canCancel;
-                    },
-                    set: function (v) {
-                        var x = this._canCancel;
-                        if (v !== x) {
-                            this._canCancel = v;
-                            this.raisePropertyChanged('canCancel');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DataEditDialog;
-            })(RIAPP.BaseObject);
-            datadialog.DataEditDialog = DataEditDialog;
-
-            RIAPP.global.onModuleLoaded('datadialog', datadialog);
-        })(MOD.datadialog || (MOD.datadialog = {}));
-        var datadialog = MOD.datadialog;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
-})(RIAPP || (RIAPP = {}));
-var RIAPP;
-(function (RIAPP) {
-    (function (MOD) {
-        (function (datagrid) {
-            var constsMOD = RIAPP.MOD.consts;
-            var utilsMOD = RIAPP.MOD.utils;
-            var bindMOD = RIAPP.MOD.binding;
-            var contentMOD = RIAPP.MOD.baseContent;
-            var collMOD = RIAPP.MOD.collection;
-
-            var COLUMN_TYPE = { DATA: 'data', ROW_EXPANDER: 'row_expander', ROW_ACTIONS: 'row_actions', ROW_SELECTOR: 'row_selector' };
-            var utils;
-            RIAPP.global.addOnInitialize(function (s, args) {
-                utils = s.utils;
-            });
-
-            datagrid.css = {
-                container: 'ria-table-container',
-                dataTable: 'ria-data-table',
-                columnInfo: 'ria-col-info',
-                column: 'ria-ex-column',
-                cellDiv: 'cell-div',
-                headerDiv: 'ria-table-header',
-                wrapDiv: 'ria-table-wrap',
-                dataColumn: 'data-column',
-                rowCollapsed: 'row-collapsed',
-                rowExpanded: 'row-expanded',
-                rowExpander: 'row-expander',
-                columnSelected: 'selected',
-                rowSelected: 'selected',
-                rowActions: 'row-actions',
-                rowDetails: 'row-details',
-                rowSelector: 'row-selector',
-                rowHighlight: 'row-highlight',
-                rowDeleted: 'row-deleted',
-                rowError: 'row-error',
-                nobr: 'ria-nobr',
-                colSortable: 'sortable',
-                colSortAsc: 'sort-asc',
-                colSortDesc: 'sort-desc'
-            };
-
-            var _columnWidthInterval, _gridsCount = 0;
-            var _created_grids = {};
-            function _gridCreated(grid) {
-                _created_grids[grid.uniqueID] = grid;
-                _gridsCount += 1;
-                if (_gridsCount == 1) {
-                    _columnWidthInterval = setInterval(_checkGridWidth, 250);
-                }
-            }
-            function _gridDestroyed(grid) {
-                delete _created_grids[grid.uniqueID];
-                _gridsCount -= 1;
-                if (_gridsCount == 0) {
-                    clearInterval(_columnWidthInterval);
-                }
-            }
-            function _checkGridWidth() {
-                utils.forEachProp(_created_grids, function (id) {
-                    var grid = _created_grids[id];
-                    if (grid._isDestroyCalled)
-                        return;
-                    grid._columnWidthChecker();
-                });
-            }
-            ;
-
-            var RowSelectContent = (function (_super) {
-                __extends(RowSelectContent, _super);
-                function RowSelectContent() {
-                    _super.apply(this, arguments);
-                }
-                RowSelectContent.prototype._canBeEdited = function () {
-                    return true;
-                };
-                RowSelectContent.prototype.toString = function () {
-                    return 'RowSelectContent';
-                };
-                return RowSelectContent;
-            })(contentMOD.BoolContent);
-            datagrid.RowSelectContent = RowSelectContent;
-
-            var BaseCell = (function (_super) {
-                __extends(BaseCell, _super);
-                function BaseCell(row, options) {
-                    _super.call(this);
-                    this._row = row;
-                    this._el = options.td;
-                    this._column = options.column;
-                    this._div = RIAPP.global.document.createElement("div");
-                    var $div = RIAPP.global.$(this._div);
-                    this._clickTimeOut = null;
-                    $div.addClass(datagrid.css.cellDiv).attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, this._column.uniqueID);
-                    $div.data('cell', this);
-                    if (this._column.options.width) {
-                        this._el.style.width = this._column.options.width;
-                    }
-                    this._init();
-                    if (this.column.options.rowCellCss) {
-                        $div.addClass(this.column.options.rowCellCss);
-                    }
-                    this._el.appendChild(this._div);
-                    this._row.el.appendChild(this._el);
-                }
-                BaseCell.prototype._init = function () {
-                };
-                BaseCell.prototype._onCellClicked = function () {
-                    this.grid.currentRow = this._row;
-                };
-                BaseCell.prototype._onDblClicked = function () {
-                    this.grid.currentRow = this._row;
-                    this.grid._onCellDblClicked(this);
-                };
-                BaseCell.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
-                    if (!isHandled) {
-                        return this.row._onError(error, source);
-                    }
-                    return isHandled;
-                };
-                BaseCell.prototype.scrollIntoView = function (isUp) {
-                    var div = this._div;
-                    div.scrollIntoView(!!isUp);
-                };
-                BaseCell.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._clickTimeOut) {
-                        clearTimeout(this._clickTimeOut);
-                        this._clickTimeOut = null;
-                    }
-                    var $div = RIAPP.global.$(this._div);
-                    $div.removeData();
-                    $div.remove();
-                    this._div = null;
-                    this._row = null;
-                    this._el = null;
-                    this._column = null;
-                    _super.prototype.destroy.call(this);
-                };
-                BaseCell.prototype.toString = function () {
-                    return 'BaseCell';
-                };
-                Object.defineProperty(BaseCell.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(BaseCell.prototype, "row", {
-                    get: function () {
-                        return this._row;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(BaseCell.prototype, "column", {
-                    get: function () {
-                        return this._column;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(BaseCell.prototype, "grid", {
-                    get: function () {
-                        return this._row.grid;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(BaseCell.prototype, "item", {
-                    get: function () {
-                        return this._row.item;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return BaseCell;
-            })(RIAPP.BaseObject);
-            datagrid.BaseCell = BaseCell;
-
-            var DataCell = (function (_super) {
-                __extends(DataCell, _super);
-                function DataCell(row, options) {
-                    this._content = null;
-                    this._stateCss = null;
-                    _super.call(this, row, options);
-                }
-                DataCell.prototype._init = function () {
-                    var options = this.column.options.content;
-                    if (!options.fieldInfo && !!options.fieldName) {
-                        options.fieldInfo = this.item.getFieldInfo(options.fieldName);
-                        if (!options.fieldInfo) {
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, '', options.fieldName));
-                        }
-                    }
-                    var app = this.grid.app;
-                    options.initContentFn = null;
-                    try  {
-                        var contentType = app._getContentType(options);
-                        if (app.contentFactory.isExternallyCachable(contentType)) {
-                            options.initContentFn = this._getInitContentFn();
-                        }
-                        this._content = app._getContent(contentType, options, this._div, this.item, this.item.isEditing);
-                    } finally {
-                        delete options.initContentFn;
-                    }
-                };
-                DataCell.prototype._getInitContentFn = function () {
-                    var self = this;
-                    return function (content) {
-                        content.addOnObjectCreated(function (sender, args) {
-                            self.column._cacheObject(args.objectKey, args.object);
-                            args.isCachedExternally = !!self.column._getCachedObject(args.objectKey);
-                        });
-                        content.addOnObjectNeeded(function (sender, args) {
-                            args.object = self.column._getCachedObject(args.objectKey);
-                        });
-                    };
-                };
-                DataCell.prototype._beginEdit = function () {
-                    if (!this._content.isEditing) {
-                        this._content.isEditing = true;
-                    }
-                };
-                DataCell.prototype._endEdit = function (isCanceled) {
-                    if (this._content.isEditing) {
-                        this._content.isEditing = false;
-                    }
-                };
-                DataCell.prototype._setState = function (css) {
-                    var $div;
-                    if (this._stateCss !== css) {
-                        $div = RIAPP.global.$(this._div);
-                        if (!!this._stateCss)
-                            $div.removeClass(this._stateCss);
-                        this._stateCss = css;
-                        if (!!this._stateCss)
-                            $div.addClass(this._stateCss);
-                    }
-                };
-                DataCell.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._content) {
-                        this._content.destroy();
-                        this._content = null;
-                    }
-                    _super.prototype.destroy.call(this);
-                };
-                DataCell.prototype.toString = function () {
-                    return 'DataCell';
-                };
-                Object.defineProperty(DataCell.prototype, "column", {
-                    get: function () {
-                        return this._column;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DataCell;
-            })(BaseCell);
-            datagrid.DataCell = DataCell;
-
-            var ExpanderCell = (function (_super) {
-                __extends(ExpanderCell, _super);
-                function ExpanderCell() {
-                    _super.apply(this, arguments);
-                }
-                ExpanderCell.prototype._init = function () {
-                    var $el = RIAPP.global.$(this.el);
-                    $el.addClass(datagrid.css.rowCollapsed);
-                    $el.addClass(datagrid.css.rowExpander);
-                };
-                ExpanderCell.prototype._onCellClicked = function () {
-                    if (!this._row)
-                        return;
-                    _super.prototype._onCellClicked.call(this);
-                    this._row.isExpanded = !this._row.isExpanded;
-                };
-                ExpanderCell.prototype._toggleImage = function () {
-                    var $el = RIAPP.global.$(this.el);
-                    if (this._row.isExpanded) {
-                        $el.removeClass(datagrid.css.rowCollapsed);
-                        $el.addClass(datagrid.css.rowExpanded);
-                    } else {
-                        $el.removeClass(datagrid.css.rowExpanded);
-                        $el.addClass(datagrid.css.rowCollapsed);
-                    }
-                };
-                ExpanderCell.prototype.toString = function () {
-                    return 'ExpanderCell';
-                };
-                return ExpanderCell;
-            })(BaseCell);
-            datagrid.ExpanderCell = ExpanderCell;
-
-            var ActionsCell = (function (_super) {
-                __extends(ActionsCell, _super);
-                function ActionsCell(row, options) {
-                    this._isEditing = false;
-                    _super.call(this, row, options);
-                }
-                ActionsCell.prototype._init = function () {
-                    var $el = RIAPP.global.$(this.el), $div = RIAPP.global.$(this._div);
-                    $el.addClass([datagrid.css.rowActions, datagrid.css.cellDiv, datagrid.css.nobr].join(' '));
-                    $div.on("mouseenter", "img", function (e) {
-                        e.stopPropagation();
-                        $(this).css("opacity", 0.5);
-                    });
-                    $div.on("mouseout", "img", function (e) {
-                        e.stopPropagation();
-                        $(this).css("opacity", 1.0);
-                    });
-                    this._createButtons(false);
-                };
-                ActionsCell.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    var $div = RIAPP.global.$(this._div), $imgs = $div.find('img');
-                    $imgs.each(function (index, img) {
-                        var $img = RIAPP.global.$(img);
-                        $img.removeData();
-                    });
-                    _super.prototype.destroy.call(this);
-                };
-                ActionsCell.prototype._createButtons = function (editing) {
-                    if (!this._el)
-                        return;
-                    var self = this, $ = RIAPP.global.$, $div = RIAPP.global.$(this._div), $newElems;
-                    var txtMap = {
-                        img_ok: 'txtOk',
-                        img_cancel: 'txtCancel',
-                        img_edit: 'txtEdit',
-                        img_delete: 'txtDelete'
-                    };
-                    $div.empty();
-                    var opts = self._column.options, fn_setUpImages = function ($images) {
-                        $images.each(function (index, img) {
-                            var $img = RIAPP.global.$(img);
-                            img.style.cursor = 'pointer';
-                            img.src = opts[img.name];
-                            $img.data('cell', self);
-                            utils.addToolTip($img, RIAPP.localizable.TEXT[txtMap[img.name]]);
-                            $img.attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, self._column.uniqueID);
-                        });
-                    };
-
-                    if (editing) {
-                        this._isEditing = true;
-                        $newElems = RIAPP.global.$('<img name="img_ok" alt="ok"/>&nbsp;<img name="img_cancel" alt="cancel"/>');
-                        fn_setUpImages($newElems.filter('img'));
-                    } else {
-                        this._isEditing = false;
-                        $newElems = $('<img name="img_edit" alt="edit"/>&nbsp;<img name="img_delete" alt="delete"/>');
-                        if (!self.isCanEdit) {
-                            $newElems = $newElems.not('img[name="img_edit"]');
-                        }
-                        if (!self.isCanDelete) {
-                            $newElems = $newElems.not('img[name="img_delete"]');
-                        }
-                        fn_setUpImages($newElems.filter('img'));
-                    }
-                    $div.append($newElems);
-                };
-                ActionsCell.prototype.update = function () {
-                    if (!this._row)
-                        return;
-                    if (this._isEditing != this._row.isEditing) {
-                        this._createButtons(this._row.isEditing);
-                    }
-                };
-                ActionsCell.prototype.toString = function () {
-                    return 'ActionsCell';
-                };
-                Object.defineProperty(ActionsCell.prototype, "isCanEdit", {
-                    get: function () {
-                        return this.grid.isCanEdit;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(ActionsCell.prototype, "isCanDelete", {
-                    get: function () {
-                        return this.grid.isCanDelete;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return ActionsCell;
-            })(BaseCell);
-            datagrid.ActionsCell = ActionsCell;
-
-            var RowSelectorCell = (function (_super) {
-                __extends(RowSelectorCell, _super);
-                function RowSelectorCell() {
-                    _super.apply(this, arguments);
-                }
-                RowSelectorCell.prototype._init = function () {
-                    var $el = RIAPP.global.$(this.el);
-                    $el.addClass(datagrid.css.rowSelector);
-                    var bindInfo = {
-                        target: null, source: null,
-                        targetPath: null, sourcePath: 'isSelected',
-                        mode: bindMOD.BINDING_MODE[2 /* TwoWay */],
-                        converter: null, converterParam: null
-                    }, contentOpts = {
-                        fieldName: 'isSelected',
-                        bindingInfo: bindInfo, displayInfo: null
-                    };
-                    this._content = new RowSelectContent(this.grid.app, this._div, contentOpts, this.row, true);
-                };
-                RowSelectorCell.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._content) {
-                        this._content.destroy();
-                        this._content = null;
-                    }
-                    _super.prototype.destroy.call(this);
-                };
-                RowSelectorCell.prototype.toString = function () {
-                    return 'RowSelectorCell';
-                };
-                return RowSelectorCell;
-            })(BaseCell);
-            datagrid.RowSelectorCell = RowSelectorCell;
-
-            var DetailsCell = (function (_super) {
-                __extends(DetailsCell, _super);
-                function DetailsCell(row, options) {
-                    _super.call(this);
-                    this._row = row;
-                    this._el = options.td;
-                    this._init(options);
-                }
-                DetailsCell.prototype._init = function (options) {
-                    var details_id = options.details_id;
-                    if (!details_id)
-                        return;
-                    this._template = new RIAPP.MOD.template.Template(this.grid.app, details_id);
-                    this._el.colSpan = this.grid.columns.length;
-                    this._el.appendChild(this._template.el);
-                    this._row.el.appendChild(this._el);
-                };
-                DetailsCell.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._template) {
-                        this._template.destroy();
-                        this._template = null;
-                    }
-                    this._row = null;
-                    this._el = null;
-                    _super.prototype.destroy.call(this);
-                };
-                DetailsCell.prototype.toString = function () {
-                    return 'DetailsCell';
-                };
-                Object.defineProperty(DetailsCell.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DetailsCell.prototype, "row", {
-                    get: function () {
-                        return this._row;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DetailsCell.prototype, "grid", {
-                    get: function () {
-                        return this._row.grid;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DetailsCell.prototype, "item", {
-                    get: function () {
-                        return this._template.dataContext;
-                    },
-                    set: function (v) {
-                        this._template.dataContext = v;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DetailsCell.prototype, "template", {
-                    get: function () {
-                        return this._template;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DetailsCell;
-            })(RIAPP.BaseObject);
-            datagrid.DetailsCell = DetailsCell;
-
-            var Row = (function (_super) {
-                __extends(Row, _super);
-                function Row(grid, options) {
-                    var self = this;
-                    _super.call(this);
-                    this._grid = grid;
-                    this._el = options.tr;
-                    this._item = options.item;
-                    this._cells = null;
-                    this._objId = this._grid.uniqueID + '_' + this._item._key;
-                    this._expanderCell = null;
-                    this._actionsCell = null;
-                    this._rowSelectorCell = null;
-                    this._isCurrent = false;
-                    this._isDeleted = false;
-                    this._isSelected = false;
-                    this._createCells();
-                    this.isDeleted = this._item._isDeleted;
-                    var fn_state = function () {
-                        var css = self._grid._onRowStateChanged(self, self._item[self._grid._options.rowStateField]);
-                        self._setState(css);
-                    };
-                    if (!!this._grid._options.rowStateField) {
-                        this._item.addOnPropertyChange(this._grid._options.rowStateField, function (s, a) {
-                            fn_state();
-                        }, this._objId);
-                        fn_state();
-                    }
-                }
-                Row.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
-                    if (!isHandled) {
-                        return this.grid._onError(error, source);
-                    }
-                    return isHandled;
-                };
-                Row.prototype._createCells = function () {
-                    var self = this, i = 0;
-                    self._cells = new Array(this.columns.length);
-                    this.columns.forEach(function (col) {
-                        self._cells[i] = self._createCell(col);
-                        i += 1;
-                    });
-                };
-                Row.prototype._createCell = function (col) {
-                    var self = this, td = RIAPP.global.document.createElement('td'), cell;
-                    if (col instanceof ExpanderColumn) {
-                        cell = new ExpanderCell(self, { td: td, column: col });
-                        this._expanderCell = cell;
-                    } else if (col instanceof ActionsColumn) {
-                        cell = new ActionsCell(self, { td: td, column: col });
-                        this._actionsCell = cell;
-                    } else if (col instanceof RowSelectorColumn) {
-                        cell = new RowSelectorCell(self, { td: td, column: col });
-                        this._rowSelectorCell = cell;
-                    } else
-                        cell = new DataCell(self, { td: td, column: col });
-                    return cell;
-                };
-                Row.prototype._onBeginEdit = function () {
-                    var self = this;
-                    self._cells.forEach(function (cell) {
-                        if (cell instanceof DataCell) {
-                            cell._beginEdit();
-                        }
-                    });
-                    if (!!this._actionsCell)
-                        this._actionsCell.update();
-                };
-                Row.prototype._onEndEdit = function (isCanceled) {
-                    var self = this;
-                    self._cells.forEach(function (cell) {
-                        if (cell instanceof DataCell) {
-                            cell._endEdit(isCanceled);
-                        }
-                    });
-                    if (!!this._actionsCell)
-                        this._actionsCell.update();
-                };
-                Row.prototype.beginEdit = function () {
-                    return this._item.beginEdit();
-                };
-                Row.prototype.endEdit = function () {
-                    return this._item.endEdit();
-                };
-                Row.prototype.cancelEdit = function () {
-                    return this._item.cancelEdit();
-                };
-                Row.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    var grid = this._grid;
-                    if (!!grid) {
-                        if (this.isExpanded)
-                            grid.collapseDetails();
-                        this._cells.forEach(function (cell) {
-                            cell.destroy();
-                        });
-                        this._cells = null;
-                        if (!grid._isClearing) {
-                            grid._removeRow(this);
-                            if (!!this._el) {
-                                RIAPP.global.$(this._el).remove();
-                            }
-                        }
-                    }
-                    if (!!this._item)
-                        this._item.removeNSHandlers(this._objId);
-                    this._item = null;
-                    this._expanderCell = null;
-                    this._el = null;
-                    this._grid = null;
-                    _super.prototype.destroy.call(this);
-                };
-                Row.prototype.deleteRow = function () {
-                    this._item.deleteItem();
-                };
-                Row.prototype.updateErrorState = function () {
-                    //TODO: add implementation to show explanation of error
-                    var hasErrors = this._item.getIsHasErrors();
-                    var $el = RIAPP.global.$(this._el);
-                    if (hasErrors) {
-                        $el.addClass(datagrid.css.rowError);
-                    } else
-                        $el.removeClass(datagrid.css.rowError);
-                };
-                Row.prototype.scrollIntoView = function (isUp) {
-                    if (!!this._cells && this._cells.length > 0) {
-                        this._cells[0].scrollIntoView(isUp);
-                    }
-                };
-                Row.prototype._setState = function (css) {
-                    this.cells.forEach(function (cell) {
-                        if (cell instanceof DataCell) {
-                            cell._setState(css);
-                        }
-                    });
-                };
-                Row.prototype.toString = function () {
-                    return 'Row';
-                };
-                Object.defineProperty(Row.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "grid", {
-                    get: function () {
-                        return this._grid;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "item", {
-                    get: function () {
-                        return this._item;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "cells", {
-                    get: function () {
-                        return this._cells;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "columns", {
-                    get: function () {
-                        return this._grid.columns;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "uniqueID", {
-                    get: function () {
-                        return this._objId;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "itemKey", {
-                    get: function () {
-                        if (!this._item)
-                            return null;
-                        return this._item._key;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "isCurrent", {
-                    get: function () {
-                        return this._isCurrent;
-                    },
-                    set: function (v) {
-                        var curr = this._isCurrent;
-                        if (v !== curr) {
-                            var $el = RIAPP.global.$(this._el);
-                            this._isCurrent = v;
-                            if (v) {
-                                $el.addClass(datagrid.css.rowHighlight);
-                            } else {
-                                $el.removeClass(datagrid.css.rowHighlight);
-                            }
-                            this.raisePropertyChanged('isCurrent');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "isSelected", {
-                    get: function () {
-                        return this._isSelected;
-                    },
-                    set: function (v) {
-                        if (this._isSelected != v) {
-                            this._isSelected = v;
-                            this.raisePropertyChanged('isSelected');
-                            this.grid._onRowSelectionChanged(this);
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "isExpanded", {
-                    get: function () {
-                        return this.grid._isRowExpanded(this);
-                    },
-                    set: function (v) {
-                        if (v !== this.isExpanded) {
-                            if (!v && this.isExpanded) {
-                                this.grid._expandDetails(this, false);
-                            } else if (v) {
-                                this.grid._expandDetails(this, true);
-                            }
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "expanderCell", {
-                    get: function () {
-                        return this._expanderCell;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "actionsCell", {
-                    get: function () {
-                        return this._actionsCell;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "isDeleted", {
-                    get: function () {
-                        if (!this._el)
-                            return true;
-                        return this._isDeleted;
-                    },
-                    set: function (v) {
-                        if (!this._el)
-                            return;
-                        if (this._isDeleted !== v) {
-                            this._isDeleted = v;
-                            if (this._isDeleted) {
-                                this.isExpanded = false;
-                                RIAPP.global.$(this._el).addClass(datagrid.css.rowDeleted);
-                            } else
-                                RIAPP.global.$(this._el).removeClass(datagrid.css.rowDeleted);
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Row.prototype, "isEditing", {
-                    get: function () {
-                        return !!this._item && this._item._isEditing;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return Row;
-            })(RIAPP.BaseObject);
-            datagrid.Row = Row;
-
-            var DetailsRow = (function (_super) {
-                __extends(DetailsRow, _super);
-                function DetailsRow(grid, options) {
-                    _super.call(this);
-                    this._grid = grid;
-                    this._el = options.tr;
-                    this._item = null;
-                    this._cell = null;
-                    this._parentRow = null;
-                    this._objId = 'drow' + utils.getNewID();
-                    this._createCell(options.details_id);
-                    this._$el = RIAPP.global.$(this._el);
-                    this._$el.addClass(datagrid.css.rowDetails);
-                }
-                DetailsRow.prototype._createCell = function (details_id) {
-                    var td = RIAPP.global.document.createElement('td');
-                    this._cell = new DetailsCell(this, { td: td, details_id: details_id });
-                };
-                DetailsRow.prototype._setParentRow = function (row) {
-                    var self = this;
-                    this._item = null;
-                    this._cell.item = null;
-
-                    //don't use global.$(this._el).remove() here - or it will remove all jQuery plugins!
-                    utils.removeNode(this._el);
-                    if (!row || row._isDestroyCalled) {
-                        this._parentRow = null;
-                        return;
-                    }
-                    this._parentRow = row;
-                    this._item = row.item;
-                    this._cell.item = this._item;
-                    utils.insertAfter(row.el, this._el);
-                    var $cell = RIAPP.global.$(this._cell.template.el);
-
-                    //var isLast = this.grid._getLastRow() === this._parentRow;
-                    $cell.slideDown('fast', function () {
-                        var row = self._parentRow;
-                        if (!row || row._isDestroyCalled)
-                            return;
-                        if (self.grid._options.isUseScrollIntoDetails)
-                            row.scrollIntoView(true);
-                    });
-                };
-                DetailsRow.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._cell) {
-                        this._cell.destroy();
-                        this._cell = null;
-                    }
-                    this._$el.remove();
-                    this._$el = null;
-                    this._item = null;
-                    this._el = null;
-                    this._grid = null;
-                    _super.prototype.destroy.call(this);
-                };
-                DetailsRow.prototype.toString = function () {
-                    return 'DetailsRow';
-                };
-                Object.defineProperty(DetailsRow.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DetailsRow.prototype, "$el", {
-                    get: function () {
-                        return this._$el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DetailsRow.prototype, "grid", {
-                    get: function () {
-                        return this._grid;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DetailsRow.prototype, "item", {
-                    get: function () {
-                        return this._item;
-                    },
-                    set: function (v) {
-                        if (this._item !== v) {
-                            this._item = v;
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DetailsRow.prototype, "cell", {
-                    get: function () {
-                        return this._cell;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DetailsRow.prototype, "uniqueID", {
-                    get: function () {
-                        return this._objId;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DetailsRow.prototype, "itemKey", {
-                    get: function () {
-                        if (!this._item)
-                            return null;
-                        return this._item._key;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DetailsRow.prototype, "parentRow", {
-                    get: function () {
-                        return this._parentRow;
-                    },
-                    set: function (v) {
-                        var self = this;
-                        if (v !== this._parentRow) {
-                            var $cell = RIAPP.global.$(this._cell.template.el);
-                            if (!!self._parentRow) {
-                                $cell.slideUp('fast', function () {
-                                    self._setParentRow(v);
-                                });
-                            } else {
-                                self._setParentRow(v);
-                            }
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DetailsRow;
-            })(RIAPP.BaseObject);
-            datagrid.DetailsRow = DetailsRow;
-
-            var BaseColumn = (function (_super) {
-                __extends(BaseColumn, _super);
-                function BaseColumn(grid, options) {
-                    _super.call(this);
-                    var self = this;
-                    this._grid = grid;
-                    this._el = options.th;
-                    this._options = options.colinfo;
-                    this._isSelected = false;
-                    this._objId = 'col' + utils.getNewID();
-
-                    var extcolDiv = RIAPP.global.document.createElement('div');
-                    this._$extcol = RIAPP.global.$(extcolDiv);
-                    this._$extcol.addClass(datagrid.css.column);
-                    this._grid._appendToHeader(extcolDiv);
-
-                    var div = RIAPP.global.document.createElement('div');
-                    this._$div = RIAPP.global.$(div);
-                    this._$div.addClass(datagrid.css.cellDiv).click(function (e) {
-                        e.stopPropagation();
-                        RIAPP.global.currentSelectable = grid;
-                        grid._setCurrentColumn(self);
-                        self._onColumnClicked();
-                    });
-
-                    extcolDiv.appendChild(div);
-
-                    this.grid._$tableEl.on('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''), function (e) {
-                        e.stopPropagation();
-                        var $div = RIAPP.global.$(this), cell = $div.data('cell');
-                        if (!!cell) {
-                            RIAPP.global.currentSelectable = grid;
-                            grid._setCurrentColumn(self);
-                            if (cell instanceof DataCell) {
-                                if (!!cell._clickTimeOut) {
-                                    clearTimeout(cell._clickTimeOut);
-                                    cell._clickTimeOut = null;
-                                    cell._onDblClicked();
-                                } else {
-                                    cell._onCellClicked();
-                                    cell._clickTimeOut = setTimeout(function () {
-                                        cell._clickTimeOut = null;
-                                    }, 350);
-                                }
-                            } else {
-                                cell._onCellClicked();
-                            }
-                        }
-                    });
-
-                    if (this._options.width) {
-                        this._el.style.width = this._options.width;
-                    }
-                    this._init();
-
-                    if (this._options.colCellCss) {
-                        self._$div.addClass(this._options.colCellCss);
-                    }
-                }
-                BaseColumn.prototype._init = function () {
-                    if (!!this.title)
-                        this._$div.html(this.title);
-                };
-                BaseColumn.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    this._$extcol.remove();
-                    this._$extcol = null;
-                    this._$div = null;
-                    this._el = null;
-                    this._grid = null;
-                    _super.prototype.destroy.call(this);
-                };
-                BaseColumn.prototype.scrollIntoView = function (isUp) {
-                    if (!this._$div)
-                        return;
-                    var div = this._$div.get(0);
-                    div.scrollIntoView(!!isUp);
-                };
-                BaseColumn.prototype._onColumnClicked = function () {
-                };
-                BaseColumn.prototype.toString = function () {
-                    return 'BaseColumn';
-                };
-                Object.defineProperty(BaseColumn.prototype, "uniqueID", {
-                    get: function () {
-                        return this._objId;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(BaseColumn.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(BaseColumn.prototype, "$div", {
-                    get: function () {
-                        return this._$div;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(BaseColumn.prototype, "$extcol", {
-                    get: function () {
-                        return this._$extcol;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(BaseColumn.prototype, "grid", {
-                    get: function () {
-                        return this._grid;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(BaseColumn.prototype, "options", {
-                    get: function () {
-                        return this._options;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(BaseColumn.prototype, "title", {
-                    get: function () {
-                        return this._options.title;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(BaseColumn.prototype, "isSelected", {
-                    get: function () {
-                        return this._isSelected;
-                    },
-                    set: function (v) {
-                        if (this._isSelected !== v) {
-                            this._isSelected = v;
-                            if (this._isSelected) {
-                                this._$div.addClass(datagrid.css.columnSelected);
-                            } else
-                                this._$div.removeClass(datagrid.css.columnSelected);
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return BaseColumn;
-            })(RIAPP.BaseObject);
-            datagrid.BaseColumn = BaseColumn;
-
-            var DataColumn = (function (_super) {
-                __extends(DataColumn, _super);
-                function DataColumn(grid, options) {
-                    _super.call(this, grid, options);
-
-                    //the DataCell caches here listbox (for the LookupContent)
-                    //so not to create it for every cell
-                    this._objCache = {};
-                    this.$div.addClass(datagrid.css.dataColumn);
-                }
-                DataColumn.prototype._init = function () {
-                    _super.prototype._init.call(this);
-                    this._sortOrder = null;
-                    if (this.isSortable) {
-                        this.$div.addClass(datagrid.css.colSortable);
-                    }
-                };
-                DataColumn.prototype._onColumnClicked = function () {
-                    if (this.isSortable && !!this.sortMemberName) {
-                        var sortOrd = this._sortOrder;
-                        this.grid._resetColumnsSort();
-
-                        if (sortOrd == 0 /* ASC */) {
-                            this.sortOrder = 1 /* DESC */;
-                        } else if (sortOrd == 1 /* DESC */) {
-                            this.sortOrder = 0 /* ASC */;
-                        } else
-                            this.sortOrder = 0 /* ASC */;
-                        this.grid.sortByColumn(this);
-                    }
-                };
-                DataColumn.prototype._cacheObject = function (key, obj) {
-                    this._objCache[key] = obj;
-                };
-                DataColumn.prototype._getCachedObject = function (key) {
-                    return this._objCache[key];
-                };
-                DataColumn.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    var self = this;
-                    utils.forEachProp(self._objCache, function (key) {
-                        self._objCache[key].destroy();
-                    });
-                    self._objCache = null;
-                    _super.prototype.destroy.call(this);
-                };
-                DataColumn.prototype.toString = function () {
-                    return 'DataColumn';
-                };
-                Object.defineProperty(DataColumn.prototype, "isSortable", {
-                    get: function () {
-                        return !!(this.options.sortable);
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataColumn.prototype, "sortMemberName", {
-                    get: function () {
-                        return this.options.sortMemberName;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataColumn.prototype, "sortOrder", {
-                    get: function () {
-                        return this._sortOrder;
-                    },
-                    set: function (v) {
-                        this.$div.removeClass([datagrid.css.colSortable, datagrid.css.colSortAsc, datagrid.css.colSortDesc].join(' '));
-                        switch (v) {
-                            case 0 /* ASC */:
-                                this.$div.addClass(datagrid.css.colSortAsc);
-                                break;
-                            case 1 /* DESC */:
-                                this.$div.addClass(datagrid.css.colSortDesc);
-                                break;
-                            default:
-                                if (this.isSortable)
-                                    this.$div.addClass(datagrid.css.colSortable);
-                        }
-                        this._sortOrder = v;
-                        this.raisePropertyChanged('sortOrder');
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DataColumn;
-            })(BaseColumn);
-            datagrid.DataColumn = DataColumn;
-
-            var ExpanderColumn = (function (_super) {
-                __extends(ExpanderColumn, _super);
-                function ExpanderColumn() {
-                    _super.apply(this, arguments);
-                }
-                ExpanderColumn.prototype._init = function () {
-                    _super.prototype._init.call(this);
-                    this.$div.addClass(datagrid.css.rowExpander);
-                };
-                ExpanderColumn.prototype.toString = function () {
-                    return 'ExpanderColumn';
-                };
-                return ExpanderColumn;
-            })(BaseColumn);
-            datagrid.ExpanderColumn = ExpanderColumn;
-
-            var RowSelectorColumn = (function (_super) {
-                __extends(RowSelectorColumn, _super);
-                function RowSelectorColumn() {
-                    _super.apply(this, arguments);
-                }
-                RowSelectorColumn.prototype._init = function () {
-                    _super.prototype._init.call(this);
-                    var self = this;
-                    this._val = false;
-                    this.$div.addClass(datagrid.css.rowSelector);
-                    var $chk = RIAPP.global.$('<input type="checkbox"/>');
-                    this.$div.append($chk);
-                    this._$chk = $chk;
-                    $chk.click(function (e) {
-                        e.stopPropagation();
-                        self._onCheckBoxClicked(this.checked);
-                    });
-                    $chk.on('change', function (e) {
-                        e.stopPropagation();
-                        self.checked = this.checked;
-                    });
-                };
-                RowSelectorColumn.prototype._onCheckBoxClicked = function (isChecked) {
-                    this.grid.selectRows(isChecked);
-                };
-                RowSelectorColumn.prototype.toString = function () {
-                    return 'RowSelectorColumn';
-                };
-                Object.defineProperty(RowSelectorColumn.prototype, "checked", {
-                    get: function () {
-                        return this._val;
-                    },
-                    set: function (v) {
-                        var $el = this._$chk;
-                        if (v !== null)
-                            v = !!v;
-                        if (v !== this._val) {
-                            this._val = v;
-                            if (!!$el)
-                                $el.prop('checked', !!this._val);
-                            this.raisePropertyChanged('checked');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return RowSelectorColumn;
-            })(BaseColumn);
-            datagrid.RowSelectorColumn = RowSelectorColumn;
-
-            var ActionsColumn = (function (_super) {
-                __extends(ActionsColumn, _super);
-                function ActionsColumn() {
-                    _super.apply(this, arguments);
-                }
-                ActionsColumn.prototype._init = function () {
-                    _super.prototype._init.call(this);
-                    var self = this, opts = this.options;
-                    this.$div.addClass(datagrid.css.rowActions);
-                    opts.img_ok = RIAPP.global.getImagePath(opts.img_ok || 'ok.png');
-                    opts.img_cancel = RIAPP.global.getImagePath(opts.img_cancel || 'cancel.png');
-                    opts.img_edit = RIAPP.global.getImagePath(opts.img_edit || 'edit.png');
-                    opts.img_delete = RIAPP.global.getImagePath(opts.img_delete || 'delete.png');
-                    this.grid._$tableEl.on("click", 'img[' + constsMOD.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]', function (e) {
-                        e.stopPropagation();
-                        var $img = RIAPP.global.$(this), name = this.name, cell = $img.data('cell');
-                        switch (name) {
-                            case 'img_ok':
-                                self._onOk(cell);
-                                break;
-                            case 'img_cancel':
-                                self._onCancel(cell);
-                                break;
-                            case 'img_edit':
-                                self._onEdit(cell);
-                                break;
-                            case 'img_delete':
-                                self._onDelete(cell);
-                                break;
-                        }
-                    });
-                };
-                ActionsColumn.prototype._onOk = function (cell) {
-                    if (!cell._row)
-                        return;
-                    cell._row.endEdit();
-                    cell.update();
-                };
-                ActionsColumn.prototype._onCancel = function (cell) {
-                    if (!cell._row)
-                        return;
-                    cell._row.cancelEdit();
-                    cell.update();
-                };
-                ActionsColumn.prototype._onDelete = function (cell) {
-                    if (!cell._row)
-                        return;
-                    cell._row.deleteRow();
-                };
-                ActionsColumn.prototype._onEdit = function (cell) {
-                    if (!cell._row)
-                        return;
-                    cell._row.beginEdit();
-                    cell.update();
-                    this.grid.showEditDialog();
-                };
-                ActionsColumn.prototype.toString = function () {
-                    return 'ActionsColumn';
-                };
-                return ActionsColumn;
-            })(BaseColumn);
-            datagrid.ActionsColumn = ActionsColumn;
-
-            var DataGrid = (function (_super) {
-                __extends(DataGrid, _super);
-                function DataGrid(app, el, dataSource, options) {
-                    _super.call(this);
-                    if (!!dataSource && !(dataSource instanceof RIAPP.MOD.collection.BaseCollection))
-                        throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
-                    this._options = utils.extend(false, {
-                        isUseScrollInto: true,
-                        isUseScrollIntoDetails: true,
-                        containerCss: null,
-                        wrapCss: null,
-                        headerCss: null,
-                        rowStateField: null,
-                        isCanEdit: null,
-                        isCanDelete: null,
-                        isHandleAddNew: false
-                    }, options);
-                    this._app = app;
-                    this._columnWidthChecker = function () {
-                    };
-                    var $t = RIAPP.global.$(el);
-                    this._tableEl = el;
-                    this._$tableEl = $t;
-                    $t.addClass(datagrid.css.dataTable);
-                    this._name = $t.attr(constsMOD.DATA_ATTR.DATA_NAME);
-                    this._objId = 'grd' + utils.getNewID();
-                    this._dataSource = dataSource;
-                    this._rowMap = {};
-                    this._rows = [];
-                    this._columns = [];
-                    this._isClearing = false;
-                    this._isDSFilling = false;
-                    this._currentRow = null;
-                    this._expandedRow = null;
-                    this._details = null;
-                    this._expanderCol = null;
-                    this._actionsCol = null;
-                    this._rowSelectorCol = null;
-                    this._currentColumn = null;
-                    this._editingRow = null;
-                    this._isSorting = false;
-                    this._dialog = null;
-                    this._$headerDiv = null;
-                    this._$wrapDiv = null;
-                    this._$contaner = null;
-                    this._wrapTable();
-                    this._createColumns();
-                    this._bindDS();
-
-                    //fills all rows
-                    this._refreshGrid();
-                    this._updateColsDim();
-                    this._onDSCurrentChanged();
-                    RIAPP.global._trackSelectable(this);
-                    _gridCreated(this);
-                }
-                DataGrid.prototype._getEventNames = function () {
-                    var base_events = _super.prototype._getEventNames.call(this);
-                    return [
-                        'row_expanded', 'row_selected', 'page_changed', 'row_state_changed',
-                        'cell_dblclicked'].concat(base_events);
-                };
-                DataGrid.prototype.addOnRowExpanded = function (fn, namespace) {
-                    this.addHandler('row_expanded', fn, namespace);
-                };
-                DataGrid.prototype.removeOnRowExpanded = function (namespace) {
-                    this.removeHandler('row_expanded', namespace);
-                };
-                DataGrid.prototype.addOnRowSelected = function (fn, namespace) {
-                    this.addHandler('row_selected', fn, namespace);
-                };
-                DataGrid.prototype.removeOnRowSelected = function (namespace) {
-                    this.removeHandler('row_selected', namespace);
-                };
-                DataGrid.prototype.addOnPageChanged = function (fn, namespace) {
-                    this.addHandler('page_changed', fn, namespace);
-                };
-                DataGrid.prototype.removeOnPageChanged = function (namespace) {
-                    this.removeHandler('page_changed', namespace);
-                };
-                DataGrid.prototype.addOnRowStateChanged = function (fn, namespace) {
-                    this.addHandler('row_state_changed', fn, namespace);
-                };
-                DataGrid.prototype.removeOnRowStateChanged = function (namespace) {
-                    this.removeHandler('row_state_changed', namespace);
-                };
-                DataGrid.prototype.addOnCellDblClicked = function (fn, namespace) {
-                    this.addHandler('cell_dblclicked', fn, namespace);
-                };
-                DataGrid.prototype.removeOnCellDblClicked = function (namespace) {
-                    this.removeHandler('cell_dblclicked', namespace);
-                };
-                DataGrid.prototype._isRowExpanded = function (row) {
-                    return this._expandedRow === row;
-                };
-                DataGrid.prototype._appendToHeader = function (el) {
-                    this._$headerDiv.append(el);
-                };
-                DataGrid.prototype._setCurrentColumn = function (column) {
-                    if (!!this._currentColumn)
-                        this._currentColumn.isSelected = false;
-                    this._currentColumn = column;
-                    if (!!this._currentColumn)
-                        this._currentColumn.isSelected = true;
-                };
-                DataGrid.prototype._parseColumnAttr = function (column_attr, content_attr) {
-                    var defaultOp = {
-                        type: COLUMN_TYPE.DATA,
-                        title: null,
-                        sortable: false,
-                        sortMemberName: null,
-                        content: null
-                    }, options;
-
-                    var temp_opts = RIAPP.global.parser.parseOptions(column_attr);
-                    if (temp_opts.length > 0)
-                        options = utils.extend(false, defaultOp, temp_opts[0]);
-                    else
-                        options = defaultOp;
-
-                    if (!!content_attr) {
-                        options.content = contentMOD.parseContentAttr(content_attr);
-                        if (!options.sortMemberName && !!options.content.fieldName)
-                            options.sortMemberName = options.content.fieldName;
-                    }
-
-                    return options;
-                };
-                DataGrid.prototype._findUndeleted = function (row, isUp) {
-                    if (!row)
-                        return null;
-                    if (!row.isDeleted)
-                        return row;
-
-                    //find nearest nondeleted row (search up and down)
-                    var delIndex = this.rows.indexOf(row), i = delIndex, len = this.rows.length;
-                    if (!isUp) {
-                        i -= 1;
-                        if (i >= 0)
-                            row = this.rows[i];
-                        while (i >= 0 && row.isDeleted) {
-                            i -= 1;
-                            if (i >= 0)
-                                row = this.rows[i];
-                        }
-                        if (row.isDeleted)
-                            row = null;
-                    } else {
-                        i += 1;
-                        if (i < len)
-                            row = this.rows[i];
-                        while (i < len && row.isDeleted) {
-                            i += 1;
-                            if (i < len)
-                                row = this.rows[i];
-                        }
-                        if (row.isDeleted)
-                            row = null;
-                    }
-                    return row;
-                };
-                DataGrid.prototype._updateCurrent = function (row, withScroll) {
-                    this.currentRow = row;
-                    if (withScroll && !!row && !row.isDeleted)
-                        this._scrollToCurrent(true);
-                };
-                DataGrid.prototype._scrollToCurrent = function (isUp) {
-                    var row = this.currentRow;
-                    if (!!row) {
-                        row.scrollIntoView(isUp);
-                    }
-                };
-                DataGrid.prototype._onRowStateChanged = function (row, val) {
-                    var args = { row: row, val: val, css: null };
-                    this.raiseEvent('row_state_changed', args);
-                    return args.css;
-                };
-                DataGrid.prototype._onCellDblClicked = function (cell) {
-                    var args = { cell: cell };
-                    this.raiseEvent('cell_dblclicked', args);
-                };
-                DataGrid.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
-                    if (!isHandled) {
-                        return RIAPP.global._onError(error, source);
-                    }
-                    return isHandled;
-                };
-                DataGrid.prototype._onDSCurrentChanged = function () {
-                    var ds = this._dataSource, cur;
-                    if (!!ds)
-                        cur = ds.currentItem;
-                    if (!cur)
-                        this._updateCurrent(null, false);
-                    else {
-                        this._updateCurrent(this._rowMap[cur._key], false);
-                    }
-                };
-                DataGrid.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, row, items = args.items;
-                    switch (args.change_type) {
-                        case 2 /* RESET */:
-                            if (!this._isDSFilling)
-                                this._refreshGrid();
-                            break;
-                        case 1 /* ADDED */:
-                            if (!this._isDSFilling)
-                                self._appendItems(args.items);
-                            break;
-                        case 0 /* REMOVE */:
-                            items.forEach(function (item) {
-                                var row = self._rowMap[item._key];
-                                if (!!row) {
-                                    self._removeRow(row);
-                                }
-                            });
-                            break;
-                        case 3 /* REMAP_KEY */:
-                             {
-                                row = self._rowMap[args.old_key];
-                                if (!!row) {
-                                    delete self._rowMap[args.old_key];
-                                    self._rowMap[args.new_key] = row;
-                                }
-                            }
-                            break;
-                        default:
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
-                    }
-                };
-                DataGrid.prototype._onDSFill = function (args) {
-                    var isEnd = !args.isBegin, self = this;
-                    if (isEnd) {
-                        self._isDSFilling = false;
-                        if (args.resetUI)
-                            self._refreshGrid();
-                        else
-                            self._appendItems(args.newItems);
-
-                        if (!!args.isPageChanged) {
-                            setTimeout(function () {
-                                if (self._isDestroyCalled)
-                                    return;
-                                self._onPageChanged();
-                            }, 0);
-                        }
-                        setTimeout(function () {
-                            if (self._isDestroyCalled)
-                                return;
-                            self._updateColsDim();
-                        }, 0);
-                    } else {
-                        self._isDSFilling = true;
-                        if (!self._isSorting) {
-                            if (!args.isPageChanged)
-                                self._resetColumnsSort();
-                        }
-                    }
-                };
-                DataGrid.prototype._onPageChanged = function () {
-                    if (!!this._rowSelectorCol) {
-                        this._rowSelectorCol.checked = false;
-                    }
-                    this._scrollToCurrent(false);
-                    this.raiseEvent('page_changed', {});
-                };
-                DataGrid.prototype._onItemEdit = function (item, isBegin, isCanceled) {
-                    var row = this._rowMap[item._key];
-                    if (!row)
-                        return;
-                    if (isBegin) {
-                        row._onBeginEdit();
-                        this._editingRow = row;
-                    } else {
-                        row._onEndEdit(isCanceled);
-                        this._editingRow = null;
-                    }
-                    this.raisePropertyChanged('editingRow');
-                };
-                DataGrid.prototype._onItemAdded = function (args) {
-                    var item = args.item, row = this._rowMap[item._key];
-                    if (!row)
-                        return;
-                    this._updateCurrent(row, true);
-
-                    //row.isExpanded = true;
-                    if (this._options.isHandleAddNew && !args.isAddNewHandled) {
-                        args.isAddNewHandled = this.showEditDialog();
-                    }
-                };
-                DataGrid.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    var DEL_STATUS = 3 /* DELETED */, newChangeType = item._changeType, ds = this._dataSource;
-                    var row = this._rowMap[item._key];
-                    if (!row)
-                        return;
-                    if (newChangeType === DEL_STATUS) {
-                        row.isDeleted = true;
-                        var row2 = this._findUndeleted(row, true);
-                        if (!row2) {
-                            row2 = this._findUndeleted(row, false);
-                        }
-                        if (!!row2) {
-                            ds.currentItem = row2.item;
-                        }
-                    } else if (oldChangeType === DEL_STATUS && newChangeType !== DEL_STATUS) {
-                        row.isDeleted = false;
-                    }
-                };
-                DataGrid.prototype._onRowSelectionChanged = function (row) {
-                    this.raiseEvent('row_selected', { row: row });
-                };
-                DataGrid.prototype._onDSErrorsChanged = function (item) {
-                    var row = this._rowMap[item._key];
-                    if (!row)
-                        return;
-                    row.updateErrorState();
-                };
-                DataGrid.prototype._resetColumnsSort = function () {
-                    this.columns.forEach(function (col) {
-                        if (col instanceof DataColumn) {
-                            col.sortOrder = null;
-                        }
-                    });
-                };
-                DataGrid.prototype._bindDS = function () {
-                    var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
-                    ds.addOnCollChanged(function (sender, args) {
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addOnFill(function (sender, args) {
-                        self._onDSFill(args);
-                    }, self._objId);
-                    ds.addOnPropertyChange('currentItem', function (sender, args) {
-                        self._onDSCurrentChanged();
-                    }, self._objId);
-                    ds.addOnBeginEdit(function (sender, args) {
-                        self._onItemEdit(args.item, true, undefined);
-                    }, self._objId);
-                    ds.addOnEndEdit(function (sender, args) {
-                        self._onItemEdit(args.item, false, args.isCanceled);
-                    }, self._objId);
-                    ds.addOnErrorsChanged(function (sender, args) {
-                        self._onDSErrorsChanged(args.item);
-                    }, self._objId);
-                    ds.addOnStatusChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onItemStatusChanged(args.item, args.oldChangeType);
-                    }, self._objId);
-                    ds.addOnItemAdded(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onItemAdded(args);
-                    }, self._objId);
-                };
-                DataGrid.prototype._unbindDS = function () {
-                    var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
-                    ds.removeNSHandlers(self._objId);
-                };
-                DataGrid.prototype._getLastRow = function () {
-                    if (this._rows.length === 0)
-                        return null;
-                    var i = this._rows.length - 1, row = this._rows[i];
-                    while (row.isDeleted && i > 0) {
-                        i -= 1;
-                        row = this._rows[i];
-                    }
-                    if (row.isDeleted)
-                        return null;
-                    else
-                        return row;
-                };
-                DataGrid.prototype._removeRow = function (row) {
-                    if (this._expandedRow === row) {
-                        this.collapseDetails();
-                    }
-                    if (this._rows.length === 0)
-                        return;
-                    var rowkey = row.itemKey, i = utils.removeFromArray(this._rows, row), oldRow;
-                    try  {
-                        if (i > -1) {
-                            oldRow = row;
-                            if (!oldRow._isDestroyCalled)
-                                oldRow.destroy();
-                        }
-                    } finally {
-                        if (!!this._rowMap[rowkey])
-                            delete this._rowMap[rowkey];
-                    }
-                };
-                DataGrid.prototype._clearGrid = function () {
-                    if (this._rows.length === 0)
-                        return;
-                    this._isClearing = true;
-                    try  {
-                        this.collapseDetails();
-                        var self = this, tbody = self._tBodyEl, newTbody = RIAPP.global.document.createElement('tbody');
-                        this._tableEl.replaceChild(newTbody, tbody);
-                        var rows = this._rows;
-                        this._rows = [];
-                        this._rowMap = {};
-                        rows.forEach(function (row) {
-                            row.destroy();
-                        });
-                    } finally {
-                        this._isClearing = false;
-                    }
-                    this._currentRow = null;
-                };
-                DataGrid.prototype._updateColsDim = function () {
-                    var width = 0, headerDiv = this._$headerDiv;
-                    this._columns.forEach(function (col) {
-                        width += col.el.offsetWidth;
-                    });
-                    headerDiv.width(width);
-                    this._columns.forEach(function (col) {
-                        col.$extcol.width(col.el.offsetWidth);
-                    });
-                };
-                DataGrid.prototype._wrapTable = function () {
-                    var $t = this._$tableEl, headerDiv, wrapDiv, container, self = this;
-
-                    $t.wrap(RIAPP.global.$('<div></div>').addClass(datagrid.css.wrapDiv));
-                    wrapDiv = $t.parent();
-                    wrapDiv.wrap(RIAPP.global.$('<div></div>').addClass(datagrid.css.container));
-                    container = wrapDiv.parent();
-
-                    headerDiv = RIAPP.global.$('<div></div>').addClass(datagrid.css.headerDiv).insertBefore(wrapDiv);
-                    RIAPP.global.$(this._tHeadRow).addClass(datagrid.css.columnInfo);
-                    this._$wrapDiv = wrapDiv;
-                    this._$headerDiv = headerDiv;
-
-                    this._$contaner = container;
-
-                    if (this._options.containerCss) {
-                        container.addClass(this._options.containerCss);
-                    }
-
-                    if (this._options.wrapCss) {
-                        wrapDiv.addClass(this._options.wrapCss);
-                    }
-                    if (this._options.headerCss) {
-                        headerDiv.addClass(this._options.headerCss);
-                    }
-                    var tw = $t.width();
-                    self._columnWidthChecker = function () {
-                        var test = $t.width();
-                        if (tw !== test) {
-                            tw = test;
-                            self._updateColsDim();
-                        }
-                    };
-                };
-                DataGrid.prototype._unWrapTable = function () {
-                    var $t = this._$tableEl;
-                    if (!this._$headerDiv)
-                        return;
-                    this._columnWidthChecker = function () {
-                    };
-                    this._$headerDiv.remove();
-                    this._$headerDiv = null;
-
-                    //remove wrapDiv
-                    $t.unwrap();
-                    this._$wrapDiv = null;
-
-                    //remove container
-                    $t.unwrap();
-                    this._$contaner = null;
-                };
-                DataGrid.prototype._createColumns = function () {
-                    var self = this, headCells = this._tHeadCells, cnt = headCells.length, cellInfo = [];
-                    var th, attr;
-                    for (var i = 0; i < cnt; i += 1) {
-                        th = headCells[i];
-                        attr = this._parseColumnAttr(th.getAttribute(constsMOD.DATA_ATTR.DATA_COLUMN), th.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT));
-                        cellInfo.push({ th: th, colinfo: attr });
-                    }
-
-                    cellInfo.forEach(function (inf) {
-                        var col = self._createColumn(inf);
-                        if (!!col)
-                            self._columns.push(col);
-                    });
-                };
-                DataGrid.prototype._createColumn = function (options) {
-                    var col;
-                    switch (options.colinfo.type) {
-                        case COLUMN_TYPE.ROW_EXPANDER:
-                            if (!this._expanderCol) {
-                                col = new ExpanderColumn(this, options);
-                                this._expanderCol = col;
-                            }
-                            break;
-                        case COLUMN_TYPE.ROW_ACTIONS:
-                            if (!this._actionsCol) {
-                                col = new ActionsColumn(this, options);
-                                this._actionsCol = col;
-                            }
-                            break;
-                        case COLUMN_TYPE.ROW_SELECTOR:
-                            if (!this._rowSelectorCol) {
-                                col = new RowSelectorColumn(this, options);
-                                this._rowSelectorCol = col;
-                            }
-                            break;
-                        case COLUMN_TYPE.DATA:
-                            col = new DataColumn(this, options);
-                            break;
-                        default:
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_GRID_COLTYPE_INVALID, options.colinfo.type));
-                    }
-                    return col;
-                };
-                DataGrid.prototype._appendItems = function (newItems) {
-                    if (this._isDestroyCalled)
-                        return;
-                    var self = this, item, tbody = this._tBodyEl;
-                    for (var i = 0, k = newItems.length; i < k; i += 1) {
-                        item = newItems[i];
-                        if (!self._rowMap[item._key])
-                            self._createRowForItem(tbody, item);
-                    }
-                };
-                DataGrid.prototype._onKeyDown = function (key, event) {
-                    var ds = this._dataSource, Keys = constsMOD.KEYS, self = this;
-                    if (!ds)
-                        return;
-                    switch (key) {
-                        case 38 /* up */:
-                            event.preventDefault();
-                            if (ds.movePrev(true)) {
-                                if (self.isUseScrollInto) {
-                                    self._scrollToCurrent(false);
-                                }
-                            }
-                            break;
-                        case 40 /* down */:
-                            event.preventDefault();
-                            if (ds.moveNext(true)) {
-                                if (self.isUseScrollInto) {
-                                    self._scrollToCurrent(false);
-                                }
-                            }
-                            break;
-                        case 34 /* pageDown */:
-                            /*
-                            if (!!this._currentRow && !!this._currentRow.expanderCell && !this._currentRow.isExpanded) {
-                            this._currentRow.expanderCell._onCellClicked();
-                            event.preventDefault();
-                            }
-                            */
-                            if (ds.pageIndex > 0)
-                                ds.pageIndex = ds.pageIndex - 1;
-                            break;
-                        case 33 /* pageUp */:
-                            /*
-                            if (!!this._currentRow && !!this._currentRow.expanderCell && !!this._currentRow.isExpanded) {
-                            this._currentRow.expanderCell._onCellClicked();
-                            event.preventDefault();
-                            }
-                            */
-                            ds.pageIndex = ds.pageIndex + 1;
-                            break;
-                        case 13 /* enter */:
-                            if (!!this._currentRow && !!this._actionsCol) {
-                                if (this._currentRow.isEditing) {
-                                    event.preventDefault();
-                                } else {
-                                    event.preventDefault();
-                                }
-                            }
-                            break;
-                        case 27 /* esc */:
-                            if (!!this._currentRow && !!this._actionsCol) {
-                                if (this._currentRow.isEditing) {
-                                    event.preventDefault();
-                                }
-                            }
-                            break;
-                        case 32 /* space */:
-                            if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
-                                event.preventDefault();
-                            }
-                            break;
-                    }
-                };
-                DataGrid.prototype._onKeyUp = function (key, event) {
-                    var ds = this._dataSource, Keys = constsMOD.KEYS;
-                    if (!ds)
-                        return;
-                    switch (key) {
-                        case 13 /* enter */:
-                            if (!!this._currentRow && !!this._actionsCol) {
-                                if (this._currentRow.isEditing) {
-                                    this._actionsCol._onOk(this._currentRow.actionsCell);
-                                    event.preventDefault();
-                                } else {
-                                    this._actionsCol._onEdit(this._currentRow.actionsCell);
-                                    event.preventDefault();
-                                }
-                            }
-                            break;
-                        case 27 /* esc */:
-                            if (!!this._currentRow && !!this._actionsCol) {
-                                if (this._currentRow.isEditing) {
-                                    this._actionsCol._onCancel(this._currentRow.actionsCell);
-                                    event.preventDefault();
-                                }
-                            }
-                            break;
-                        case 32 /* space */:
-                            if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
-                                event.preventDefault();
-                                this._currentRow.isSelected = !this._currentRow.isSelected;
-                            }
-                            break;
-                    }
-                };
-
-                //Full grid refresh
-                DataGrid.prototype._refreshGrid = function () {
-                    var self = this, ds = this._dataSource;
-                    self._clearGrid();
-                    if (!ds)
-                        return;
-                    var docFr = RIAPP.global.document.createDocumentFragment(), oldTbody = this._tBodyEl, newTbody = RIAPP.global.document.createElement('tbody');
-                    ds.items.forEach(function (item, pos) {
-                        self._createRowForItem(docFr, item, pos);
-                    });
-                    newTbody.appendChild(docFr);
-                    self._tableEl.replaceChild(newTbody, oldTbody);
-                };
-                DataGrid.prototype._createRowForItem = function (parent, item, pos) {
-                    var self = this, tr = RIAPP.global.document.createElement('tr');
-                    var gridRow = new Row(self, { tr: tr, item: item });
-                    self._rowMap[item._key] = gridRow;
-                    self._rows.push(gridRow);
-                    parent.appendChild(gridRow.el);
-                    return gridRow;
-                };
-                DataGrid.prototype._createDetails = function () {
-                    var details_id = this._options.details.templateID;
-                    var tr = RIAPP.global.document.createElement('tr');
-                    return new DetailsRow(this, { tr: tr, details_id: details_id });
-                };
-                DataGrid.prototype._expandDetails = function (parentRow, expanded) {
-                    if (!this._options.details)
-                        return;
-                    if (!this._details) {
-                        this._details = this._createDetails();
-                    }
-                    var old = this._expandedRow;
-                    if (old === parentRow) {
-                        if (!!old && expanded)
-                            return;
-                    }
-                    this._expandedRow = null;
-                    this._details.parentRow = null;
-
-                    if (expanded) {
-                        this._expandedRow = parentRow;
-                        this._details.parentRow = parentRow;
-                        this._expandedRow.expanderCell._toggleImage();
-                    } else {
-                        this._expandedRow = null;
-                        this._details.parentRow = null;
-                        if (!!old) {
-                            old.expanderCell._toggleImage();
-                        }
-                    }
-                    if (old !== parentRow) {
-                        if (!!old)
-                            old.expanderCell._toggleImage();
-                    }
-                    this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: parentRow, isExpanded: expanded });
-                };
-                DataGrid.prototype.sortByColumn = function (column) {
-                    var self = this, ds = this._dataSource;
-                    var sorts = column.sortMemberName.split(';');
-                    self._isSorting = true;
-                    var promise = ds.sort(sorts, column.sortOrder);
-                    promise.always(function () {
-                        self._isSorting = false;
-                    });
-                };
-                DataGrid.prototype.selectRows = function (isSelect) {
-                    this._rows.forEach(function (row) {
-                        if (row.isDeleted)
-                            return;
-                        row.isSelected = isSelect;
-                    });
-                };
-                DataGrid.prototype.findRowByItem = function (item) {
-                    var row = this._rowMap[item._key];
-                    if (!row)
-                        return null;
-                    return row;
-                };
-                DataGrid.prototype.collapseDetails = function () {
-                    if (!this._details)
-                        return;
-                    var old = this._expandedRow;
-                    if (!!old) {
-                        this._expandedRow = null;
-                        this._details._setParentRow(null);
-                        this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: null, isExpanded: false });
-                    }
-                };
-                DataGrid.prototype.getSelectedRows = function () {
-                    var res = [];
-                    this._rows.forEach(function (row) {
-                        if (row.isDeleted)
-                            return;
-                        if (row.isSelected) {
-                            res.push(row);
-                        }
-                    });
-                    return res;
-                };
-                DataGrid.prototype.showEditDialog = function () {
-                    if (!this._options.editor || !this._options.editor.templateID || !this._editingRow)
-                        return false;
-                    var editorOptions, item = this._editingRow.item;
-                    if (!item.isEditing)
-                        item.beginEdit();
-                    if (!this._dialog) {
-                        editorOptions = utils.extend(false, {
-                            dataContext: item
-                        }, this._options.editor);
-                        this._dialog = new RIAPP.MOD.datadialog.DataEditDialog(this.app, editorOptions);
-                    } else
-                        this._dialog.dataContext = item;
-                    this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._isNew;
-                    this._dialog.show();
-                    return true;
-                };
-                DataGrid.prototype.scrollToCurrent = function (isUp) {
-                    this._scrollToCurrent(isUp);
-                };
-                DataGrid.prototype.addNew = function () {
-                    var ds = this._dataSource;
-                    try  {
-                        ds.addNew();
-                        this.showEditDialog();
-                    } catch (ex) {
-                        RIAPP.global.reThrow(ex, this._onError(ex, this));
-                    }
-                };
-                DataGrid.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    _gridDestroyed(this);
-                    RIAPP.global._untrackSelectable(this);
-                    if (!!this._details) {
-                        this._details.destroy();
-                        this._details = null;
-                    }
-                    if (!!this._dialog) {
-                        this._dialog.destroy();
-                        this._dialog = null;
-                    }
-                    this._clearGrid();
-                    this._unbindDS();
-                    this._dataSource = null;
-                    this._unWrapTable();
-                    this._$tableEl.removeClass(datagrid.css.dataTable);
-                    RIAPP.global.$(this._tHeadRow).removeClass(datagrid.css.columnInfo);
-                    this._tableEl = null;
-                    this._$tableEl = null;
-                    this._app = null;
-                    _super.prototype.destroy.call(this);
-                };
-                Object.defineProperty(DataGrid.prototype, "app", {
-                    get: function () {
-                        return this._app;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "$container", {
-                    get: function () {
-                        return this._$contaner;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "_tBodyEl", {
-                    get: function () {
-                        return this._tableEl.tBodies[0];
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "_tHeadEl", {
-                    get: function () {
-                        return this._tableEl.tHead;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "_tFootEl", {
-                    get: function () {
-                        return this._tableEl.tFoot;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "_tHeadRow", {
-                    get: function () {
-                        if (!this._tHeadEl)
-                            return null;
-                        var trs = this._tHeadEl.rows;
-                        if (trs.length === 0)
-                            return null;
-                        return trs[0];
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "_tHeadCells", {
-                    get: function () {
-                        var row = this._tHeadRow;
-                        if (!row)
-                            return [];
-                        return RIAPP.ArrayHelper.fromCollection(row.cells);
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "containerEl", {
-                    get: function () {
-                        return this._$contaner.get(0);
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "uniqueID", {
-                    get: function () {
-                        return this._objId;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "name", {
-                    get: function () {
-                        return this._name;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "dataSource", {
-                    get: function () {
-                        return this._dataSource;
-                    },
-                    set: function (v) {
-                        if (v === this._dataSource)
-                            return;
-                        if (this._dataSource !== null) {
-                            this._unbindDS();
-                        }
-                        this._clearGrid();
-                        this._dataSource = v;
-                        if (this._dataSource !== null)
-                            this._bindDS();
-                        this.raisePropertyChanged('dataSource');
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "rows", {
-                    get: function () {
-                        return this._rows;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "columns", {
-                    get: function () {
-                        return this._columns;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "currentRow", {
-                    get: function () {
-                        return this._currentRow;
-                    },
-                    set: function (row) {
-                        var ds = this._dataSource, old = this._currentRow, isChanged = false;
-                        if (!ds)
-                            return;
-                        if (old !== row) {
-                            this._currentRow = row;
-                            if (!!old) {
-                                old.isCurrent = false;
-                            }
-                            if (!!row)
-                                row.isCurrent = true;
-                            isChanged = true;
-                        }
-                        if (!!row) {
-                            if (row.item !== ds.currentItem)
-                                ds.currentItem = row.item;
-                        } else
-                            ds.currentItem = null;
-                        if (isChanged)
-                            this.raisePropertyChanged('currentRow');
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "editingRow", {
-                    get: function () {
-                        return this._editingRow;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "isCanEdit", {
-                    get: function () {
-                        if (this._options.isCanEdit !== null)
-                            return this._options.isCanEdit;
-                        var ds = this._dataSource;
-                        return !!ds && ds.permissions.canEditRow;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "isCanDelete", {
-                    get: function () {
-                        if (this._options.isCanDelete !== null)
-                            return this._options.isCanDelete;
-                        var ds = this._dataSource;
-                        return !!ds && ds.permissions.canDeleteRow;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "isCanAddNew", {
-                    get: function () {
-                        var ds = this._dataSource;
-                        return !!ds && ds.permissions.canAddRow;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(DataGrid.prototype, "isUseScrollInto", {
-                    get: function () {
-                        return this._options.isUseScrollInto;
-                    },
-                    set: function (v) {
-                        this._options.isUseScrollInto = v;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return DataGrid;
-            })(RIAPP.BaseObject);
-            datagrid.DataGrid = DataGrid;
-
-            var GridElView = (function (_super) {
-                __extends(GridElView, _super);
-                function GridElView() {
-                    _super.apply(this, arguments);
-                }
-                GridElView.prototype.toString = function () {
-                    return 'GridElView';
-                };
-                GridElView.prototype._init = function (options) {
-                    _super.prototype._init.call(this, options);
-                    this._dataSource = null;
-                    this._grid = null;
-                    this._gridEventCommand = null;
-                    this._options = options;
-                };
-                GridElView.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._dataSource) {
-                        this.dataSource = null;
-                    }
-                    this._gridEventCommand = null;
-                    _super.prototype.destroy.call(this);
-                };
-                GridElView.prototype._createGrid = function () {
-                    this._grid = new DataGrid(this.app, this._el, this._dataSource, this._options);
-                    this._bindGridEvents();
-                    this._onGridCreated(this._grid);
-                };
-                GridElView.prototype._bindGridEvents = function () {
-                    if (!this._grid)
-                        return;
-                    var self = this;
-                    this._grid.addOnRowExpanded(function (s, args) {
-                        self.invokeGridEvent('row_expanded', args);
-                    }, this.uniqueID);
-                    this._grid.addOnRowSelected(function (s, args) {
-                        self.invokeGridEvent('row_selected', args);
-                    }, this.uniqueID);
-                    this._grid.addOnPageChanged(function (s, args) {
-                        self.invokeGridEvent('page_changed', args);
-                    }, this.uniqueID);
-                    this._grid.addOnCellDblClicked(function (s, args) {
-                        self.invokeGridEvent('cell_dblclicked', args);
-                    }, this.uniqueID);
-                    this._grid.addOnRowStateChanged(function (s, args) {
-                        self.invokeGridEvent('row_state_changed', args);
-                    }, this.uniqueID);
-                    this._grid.addOnDestroyed(function (s, args) {
-                        self._onGridDestroyed(self._grid);
-                        self._grid = null;
-                        self.invokePropChanged('grid');
-                        self.raisePropertyChanged('grid');
-                    }, this.uniqueID);
-                };
-                GridElView.prototype.invokeGridEvent = function (eventName, args) {
-                    var self = this, data = { eventName: eventName, args: args };
-                    if (!!self._gridEventCommand) {
-                        self._gridEventCommand.execute(self, data);
-                    }
-                };
-                GridElView.prototype._onGridCreated = function (grid) {
-                };
-                GridElView.prototype._onGridDestroyed = function (grid) {
-                };
-                Object.defineProperty(GridElView.prototype, "dataSource", {
-                    get: function () {
-                        return this._dataSource;
-                    },
-                    set: function (v) {
-                        var self = this;
-                        if (this._dataSource !== v) {
-                            this._dataSource = v;
-                            if (!!this._grid && !this._grid._isDestroyCalled) {
-                                this._grid.destroy();
-                            }
-                            this._grid = null;
-                            if (!!this._dataSource) {
-                                this._createGrid();
-                            }
-                            self.invokePropChanged('grid');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(GridElView.prototype, "grid", {
-                    get: function () {
-                        return this._grid;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(GridElView.prototype, "gridEventCommand", {
-                    get: function () {
-                        return this._gridEventCommand;
-                    },
-                    set: function (v) {
-                        var old = this._gridEventCommand;
-                        if (v !== old) {
-                            if (!!this._gridEventCommand)
-                                this.invokeGridEvent('command_disconnected', {});
-                            this._gridEventCommand = v;
-                            if (!!this._gridEventCommand)
-                                this.invokeGridEvent('command_connected', {});
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return GridElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
-            datagrid.GridElView = GridElView;
-
-            RIAPP.global.registerElView('table', GridElView);
-            RIAPP.global.registerElView('datagrid', GridElView);
-            RIAPP.global.onModuleLoaded('datagrid', datagrid);
-        })(MOD.datagrid || (MOD.datagrid = {}));
-        var datagrid = MOD.datagrid;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
-})(RIAPP || (RIAPP = {}));
-var RIAPP;
-(function (RIAPP) {
-    (function (MOD) {
-        (function (pager) {
-            var utils;
-            RIAPP.global.addOnInitialize(function (s, args) {
-                utils = s.utils;
-            });
-            pager.css = {
-                pager: 'ria-data-pager',
-                info: 'pager-info',
-                currentPage: 'pager-current-page',
-                otherPage: 'pager-other-page'
-            };
-            var PAGER_TXT = RIAPP.localizable.PAGER;
-
-            var Pager = (function (_super) {
-                __extends(Pager, _super);
-                function Pager(el, dataSource, options) {
-                    _super.call(this);
-                    this._el = el;
-                    this._$el = RIAPP.global.$(this._el);
-                    this._objId = 'pgr' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof RIAPP.MOD.collection.BaseCollection))
-                        throw new Error(RIAPP.ERRS.ERR_PAGER_DATASRC_INVALID);
-                    this._dataSource = dataSource;
-                    this._showTip = utils.check.isNt(options.showTip) ? true : !!options.showTip;
-                    this._showInfo = utils.check.isNt(options.showInfo) ? false : !!options.showInfo;
-                    this._showFirstAndLast = utils.check.isNt(options.showFirstAndLast) ? true : !!options.showFirstAndLast;
-                    this._showPreviousAndNext = utils.check.isNt(options.showPreviousAndNext) ? false : !!options.showPreviousAndNext;
-                    this._showNumbers = utils.check.isNt(options.showNumbers) ? true : !!options.showNumbers;
-                    this._rowsPerPage = 0;
-                    this._rowCount = 0;
-                    this._currentPage = 1;
-                    this._useSlider = utils.check.isNt(options.useSlider) ? true : !!options.useSlider;
-                    this._sliderSize = utils.check.isNt(options.sliderSize) ? 25 : options.sliderSize;
-                    this._hideOnSinglePage = utils.check.isNt(options.hideOnSinglePage) ? true : !!options.hideOnSinglePage;
-                    this._$el.addClass(pager.css.pager);
-                    if (!!this._dataSource) {
-                        this._bindDS();
-                    }
-                }
-                Pager.prototype._createElement = function (tag) {
-                    return RIAPP.global.$(RIAPP.global.document.createElement(tag));
-                };
-                Pager.prototype._render = function () {
-                    var $el = this._$el, rowCount, currentPage, pageCount;
-                    this._clearContent();
-
-                    if (this.rowsPerPage <= 0) {
-                        return;
-                    }
-
-                    rowCount = this.rowCount;
-                    if (rowCount == 0) {
-                        return;
-                    }
-                    currentPage = this.currentPage;
-                    if (currentPage == 0) {
-                        return;
-                    }
-
-                    pageCount = this.pageCount;
-
-                    if (this.hideOnSinglePage && (pageCount == 1)) {
-                        $el.hide();
-                    } else {
-                        $el.show();
-
-                        if (this.showInfo) {
-                            var $span = this._createElement('span');
-                            var info = utils.format(PAGER_TXT.pageInfo, currentPage, pageCount);
-                            $span.addClass(pager.css.info).text(info).appendTo($el);
-                        }
-
-                        if (this.showFirstAndLast && (currentPage != 1)) {
-                            $el.append(this._createFirst());
-                        }
-
-                        if (this.showPreviousAndNext && (currentPage != 1)) {
-                            $el.append(this._createPrevious());
-                        }
-
-                        if (this.showNumbers) {
-                            var start = 1, end = pageCount, sliderSize = this.sliderSize, half, above, below;
-
-                            if (this.useSlider && (sliderSize > 0)) {
-                                half = Math.floor(((sliderSize - 1) / 2));
-                                above = (currentPage + half) + ((sliderSize - 1) % 2);
-                                below = (currentPage - half);
-
-                                if (below < 1) {
-                                    above += (1 - below);
-                                    below = 1;
-                                }
-
-                                if (above > pageCount) {
-                                    below -= (above - pageCount);
-
-                                    if (below < 1) {
-                                        below = 1;
-                                    }
-
-                                    above = pageCount;
-                                }
-
-                                start = below;
-                                end = above;
-                            }
-
-                            for (var i = start; i <= end; i++) {
-                                if (i === currentPage) {
-                                    $el.append(this._createCurrent());
-                                } else {
-                                    $el.append(this._createOther(i));
-                                }
-                            }
-                        }
-
-                        if (this.showPreviousAndNext && (currentPage != pageCount)) {
-                            $el.append(this._createNext());
-                        }
-
-                        if (this.showFirstAndLast && (currentPage != pageCount)) {
-                            $el.append(this._createLast());
-                        }
-                    }
-                };
-                Pager.prototype._setDSPageIndex = function (page) {
-                    this.dataSource.pageIndex = page - 1;
-                };
-                Pager.prototype._onPageSizeChanged = function (ds) {
-                    this.rowsPerPage = ds.pageSize;
-                };
-                Pager.prototype._onPageIndexChanged = function (ds) {
-                    this.currentPage = ds.pageIndex + 1;
-                };
-                Pager.prototype._onTotalCountChanged = function (ds) {
-                    this.rowCount = ds.totalCount;
-                };
-                Pager.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    this._unbindDS();
-                    this._clearContent();
-                    this._$el.removeClass(pager.css.pager);
-                    this._el = null;
-                    this._$el = null;
-                    _super.prototype.destroy.call(this);
-                };
-                Pager.prototype._bindDS = function () {
-                    var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
-
-                    ds.addOnPropertyChange('pageIndex', function (sender, args) {
-                        self._onPageIndexChanged(ds);
-                    }, self._objId);
-                    ds.addOnPropertyChange('pageSize', function (sender, args) {
-                        self._onPageSizeChanged(ds);
-                    }, self._objId);
-                    ds.addOnPropertyChange('totalCount', function (sender, args) {
-                        self._onTotalCountChanged(ds);
-                    }, self._objId);
-                    this._currentPage = ds.pageIndex + 1;
-                    this._rowsPerPage = ds.pageSize;
-                    this._rowCount = ds.totalCount;
-                    this._render();
-                };
-                Pager.prototype._unbindDS = function () {
-                    var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
-                    ds.removeNSHandlers(self._objId);
-                };
-                Pager.prototype._clearContent = function () {
-                    this._$el.empty();
-                };
-                Pager.prototype._createLink = function (page, text, tip) {
-                    var a = this._createElement('a'), self = this;
-                    a.text('' + text);
-                    a.attr('href', 'javascript:void(0)');
-
-                    if (!!tip) {
-                        utils.addToolTip(a, tip);
-                    }
-                    a.click(function (e) {
-                        e.preventDefault();
-                        self._setDSPageIndex(page);
-                        self.currentPage = page;
-                    });
-
-                    return a;
-                };
-                Pager.prototype._createFirst = function () {
-                    var $span = this._createElement('span'), tip, a;
-
-                    if (this.showTip) {
-                        tip = PAGER_TXT.firstPageTip;
-                    }
-                    a = this._createLink(1, PAGER_TXT.firstText, tip);
-                    $span.addClass(pager.css.otherPage).append(a);
-                    return $span;
-                };
-                Pager.prototype._createPrevious = function () {
-                    var span = this._createElement('span'), previousPage = this.currentPage - 1, tip, a;
-
-                    if (this.showTip) {
-                        tip = utils.format(PAGER_TXT.prevPageTip, previousPage);
-                    }
-
-                    a = this._createLink(previousPage, PAGER_TXT.previousText, tip);
-                    span.addClass(pager.css.otherPage).append(a);
-                    return span;
-                };
-                Pager.prototype._createCurrent = function () {
-                    var span = this._createElement('span'), currentPage = this.currentPage;
-
-                    span.text('' + currentPage);
-
-                    if (this.showTip) {
-                        utils.addToolTip(span, this._buildTip(currentPage));
-                    }
-
-                    span.addClass(pager.css.currentPage);
-                    return span;
-                };
-                Pager.prototype._createOther = function (page) {
-                    var span = this._createElement('span'), tip, a;
-
-                    if (this.showTip) {
-                        tip = this._buildTip(page);
-                    }
-
-                    a = this._createLink(page, '' + page, tip);
-                    span.addClass(pager.css.otherPage);
-                    span.append(a);
-                    return span;
-                };
-                Pager.prototype._createNext = function () {
-                    var span = this._createElement('span'), nextPage = this.currentPage + 1, tip, a;
-
-                    if (this.showTip) {
-                        tip = utils.format(PAGER_TXT.nextPageTip, nextPage);
-                    }
-                    a = this._createLink(nextPage, PAGER_TXT.nextText, tip);
-                    span.addClass(pager.css.otherPage).append(a);
-                    return span;
-                };
-                Pager.prototype._createLast = function () {
-                    var span = this._createElement('span'), tip, a;
-
-                    if (this.showTip) {
-                        tip = PAGER_TXT.lastPageTip;
-                    }
-                    a = this._createLink(this.pageCount, PAGER_TXT.lastText, tip);
-                    span.addClass(pager.css.otherPage).append(a);
-                    return span;
-                };
-                Pager.prototype._buildTip = function (page) {
-                    var rowsPerPage = this.rowsPerPage, rowCount = this.rowCount, start = (((page - 1) * rowsPerPage) + 1), end = (page == this.pageCount) ? rowCount : (page * rowsPerPage), tip = '';
-
-                    if (page == this.currentPage) {
-                        tip = utils.format(PAGER_TXT.showingTip, start, end, rowCount);
-                    } else {
-                        tip = utils.format(PAGER_TXT.showTip, start, end, rowCount);
-                    }
-                    return tip;
-                };
-                Pager.prototype.toString = function () {
-                    return 'Pager';
-                };
-                Object.defineProperty(Pager.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "dataSource", {
-                    get: function () {
-                        return this._dataSource;
-                    },
-                    set: function (v) {
-                        if (v === this._dataSource)
-                            return;
-                        if (this._dataSource !== null) {
-                            this._unbindDS();
-                        }
-                        this._dataSource = v;
-                        if (this._dataSource !== null)
-                            this._bindDS();
-                        this.raisePropertyChanged('dataSource');
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "pageCount", {
-                    get: function () {
-                        var rowCount = this.rowCount, rowsPerPage = this.rowsPerPage, result;
-
-                        if ((rowCount === 0) || (rowsPerPage === 0)) {
-                            return 0;
-                        }
-
-                        if ((rowCount % rowsPerPage) === 0) {
-                            return (rowCount / rowsPerPage);
-                        } else {
-                            result = (rowCount / rowsPerPage);
-                            result = Math.floor(result) + 1;
-                            return result;
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "rowCount", {
-                    get: function () {
-                        return this._rowCount;
-                    },
-                    set: function (v) {
-                        if (this._rowCount != v) {
-                            this._rowCount = v;
-                            this._render();
-                            this.raisePropertyChanged('rowCount');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "rowsPerPage", {
-                    get: function () {
-                        return this._rowsPerPage;
-                    },
-                    set: function (v) {
-                        if (this._rowsPerPage != v) {
-                            this._rowsPerPage = v;
-                            this._render();
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "currentPage", {
-                    get: function () {
-                        return this._currentPage;
-                    },
-                    set: function (v) {
-                        if (this._currentPage != v) {
-                            this._currentPage = v;
-                            this._render();
-                            this.raisePropertyChanged('currentPage');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "useSlider", {
-                    get: function () {
-                        return this._useSlider;
-                    },
-                    set: function (v) {
-                        if (this._useSlider != v) {
-                            this._useSlider = v;
-                            this._render();
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "sliderSize", {
-                    get: function () {
-                        return this._sliderSize;
-                    },
-                    set: function (v) {
-                        if (this._sliderSize != v) {
-                            this._sliderSize = v;
-                            this._render();
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "hideOnSinglePage", {
-                    get: function () {
-                        return this._hideOnSinglePage;
-                    },
-                    set: function (v) {
-                        if (this._hideOnSinglePage != v) {
-                            this._hideOnSinglePage = v;
-                            this._render();
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "showTip", {
-                    get: function () {
-                        return this._showTip;
-                    },
-                    set: function (v) {
-                        if (this._showTip !== v) {
-                            this._showTip = v;
-                            this._render();
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "showInfo", {
-                    get: function () {
-                        return this._showInfo;
-                    },
-                    set: function (v) {
-                        if (this._showInfo !== v) {
-                            this._showInfo = v;
-                            this._render();
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "showFirstAndLast", {
-                    get: function () {
-                        return this._showFirstAndLast;
-                    },
-                    set: function (v) {
-                        if (this._showFirstAndLast !== v) {
-                            this._showFirstAndLast = v;
-                            this._render();
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "showPreviousAndNext", {
-                    get: function () {
-                        return this._showPreviousAndNext;
-                    },
-                    set: function (v) {
-                        if (this._showPreviousAndNext !== v) {
-                            this._showPreviousAndNext = v;
-                            this._render();
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(Pager.prototype, "showNumbers", {
-                    get: function () {
-                        return this._showNumbers;
-                    },
-                    set: function (v) {
-                        if (this._showNumbers !== v) {
-                            this._showNumbers = v;
-                            this._render();
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return Pager;
-            })(RIAPP.BaseObject);
-            pager.Pager = Pager;
-
-            var PagerElView = (function (_super) {
-                __extends(PagerElView, _super);
-                function PagerElView(app, el, options) {
-                    var self = this;
-                    this._pager = null;
-                    this._options = options;
-                    this._pager = new Pager(el, null, this._options);
-                    this._pager.addOnDestroyed(function () {
-                        self._pager = null;
-                        self.invokePropChanged('pager');
-                        self.raisePropertyChanged('pager');
-                    });
-                    _super.call(this, app, el, options);
-                }
-                PagerElView.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._pager && !this._pager._isDestroyCalled) {
-                        this._pager.destroy();
-                    }
-                    this._pager = null;
-                    _super.prototype.destroy.call(this);
-                };
-                PagerElView.prototype.toString = function () {
-                    return 'PagerElView';
-                };
-                Object.defineProperty(PagerElView.prototype, "dataSource", {
-                    get: function () {
-                        if (this._isDestroyCalled)
-                            return undefined;
-                        return this._pager.dataSource;
-                    },
-                    set: function (v) {
-                        if (this._isDestroyCalled)
-                            return;
-                        if (this.dataSource !== v) {
-                            this._pager.dataSource = v;
-                            this.raisePropertyChanged('dataSource');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(PagerElView.prototype, "pager", {
-                    get: function () {
-                        return this._pager;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return PagerElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
-            pager.PagerElView = PagerElView;
-
-            RIAPP.global.registerElView('pager', PagerElView);
-            RIAPP.global.onModuleLoaded('pager', pager);
-        })(MOD.pager || (MOD.pager = {}));
-        var pager = MOD.pager;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
-})(RIAPP || (RIAPP = {}));
-var RIAPP;
-(function (RIAPP) {
-    (function (MOD) {
-        (function (stackpanel) {
-            stackpanel.css = {
-                stackpanel: 'ria-stackpanel',
-                item: 'stackpanel-item',
-                currentItem: 'current-item'
-            };
-
-            var StackPanel = (function (_super) {
-                __extends(StackPanel, _super);
-                function StackPanel(app, el, dataSource, options) {
-                    _super.call(this);
-                    this._app = app;
-                    this._el = el;
-                    this._$el = RIAPP.global.$(this._el);
-                    this._objId = 'pnl' + RIAPP.global.utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof RIAPP.MOD.collection.BaseCollection))
-                        throw new Error(RIAPP.ERRS.ERR_STACKPNL_DATASRC_INVALID);
-                    this._dataSource = dataSource;
-                    this._isDSFilling = false;
-                    this._orientation = options.orientation || 'horizontal';
-                    this._templateID = options.templateID;
-                    this._currentItem = null;
-                    this._$el.addClass(stackpanel.css.stackpanel);
-                    this._itemMap = {};
-                    if (!this._templateID)
-                        throw new Error(RIAPP.ERRS.ERR_STACKPNL_TEMPLATE_INVALID);
-                    if (!!this._dataSource) {
-                        this._bindDS();
-                    }
-                    RIAPP.global._trackSelectable(this);
-                }
-                StackPanel.prototype._getEventNames = function () {
-                    var base_events = _super.prototype._getEventNames.call(this);
-                    return ['item_clicked'].concat(base_events);
-                };
-                StackPanel.prototype.addOnItemClicked = function (fn, namespace) {
-                    this.addHandler('item_clicked', fn, namespace);
-                };
-                StackPanel.prototype.removeOnItemClicked = function (namespace) {
-                    this.removeHandler('item_clicked', namespace);
-                };
-                StackPanel.prototype._onKeyDown = function (key, event) {
-                    var ds = this._dataSource, Keys = RIAPP.MOD.consts.KEYS, self = this;
-                    if (!ds)
-                        return;
-                    if (this._orientation == 'horizontal') {
-                        switch (key) {
-                            case 37 /* left */:
-                                event.preventDefault();
-                                if (ds.movePrev(true)) {
-                                    self.scrollIntoView(ds.currentItem);
-                                }
-                                break;
-                            case 39 /* right */:
-                                event.preventDefault();
-                                if (ds.moveNext(true)) {
-                                    self.scrollIntoView(ds.currentItem);
-                                }
-                                break;
-                        }
-                    } else {
-                        switch (key) {
-                            case 38 /* up */:
-                                event.preventDefault();
-                                if (ds.movePrev(true)) {
-                                    self.scrollIntoView(ds.currentItem);
-                                }
-                                break;
-                            case 40 /* down */:
-                                event.preventDefault();
-                                if (ds.moveNext(true)) {
-                                    self.scrollIntoView(ds.currentItem);
-                                }
-                                break;
-                        }
-                    }
-                };
-                StackPanel.prototype._onKeyUp = function (key, event) {
-                };
-                StackPanel.prototype._updateCurrent = function (item, withScroll) {
-                    var self = this, old = self._currentItem, obj;
-                    if (old !== item) {
-                        this._currentItem = item;
-                        if (!!old) {
-                            obj = self._itemMap[old._key];
-                            if (!!obj) {
-                                RIAPP.global.$(obj.div).removeClass(stackpanel.css.currentItem);
-                            }
-                        }
-                        if (!!item) {
-                            obj = self._itemMap[item._key];
-                            if (!!obj) {
-                                RIAPP.global.$(obj.div).addClass(stackpanel.css.currentItem);
-                                if (withScroll)
-                                    obj.div.scrollIntoView(false);
-                            }
-                        }
-                        this.raisePropertyChanged('currentItem');
-                    }
-                };
-                StackPanel.prototype._onDSCurrentChanged = function (args) {
-                    var ds = this._dataSource, cur = ds.currentItem;
-                    if (!cur)
-                        this._updateCurrent(null, false);
-                    else {
-                        this._updateCurrent(cur, true);
-                    }
-                };
-                StackPanel.prototype._onDSCollectionChanged = function (args) {
-                    var self = this, items = args.items;
-                    switch (args.change_type) {
-                        case 2 /* RESET */:
-                            if (!this._isDSFilling)
-                                this._refresh();
-                            break;
-                        case 1 /* ADDED */:
-                            if (!this._isDSFilling)
-                                self._appendItems(items);
-                            break;
-                        case 0 /* REMOVE */:
-                            items.forEach(function (item) {
-                                self._removeItem(item);
-                            });
-                            break;
-                        case 3 /* REMAP_KEY */:
-                             {
-                                var obj = self._itemMap[args.old_key];
-                                if (!!obj) {
-                                    delete self._itemMap[args.old_key];
-                                    self._itemMap[args.new_key] = obj;
-                                    obj.div.setAttribute(RIAPP.MOD.consts.DATA_ATTR.DATA_ITEM_KEY, args.new_key);
-                                }
-                            }
-                            break;
-                        default:
-                            throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
-                    }
-                };
-                StackPanel.prototype._onDSFill = function (args) {
-                    var isEnd = !args.isBegin;
-                    if (isEnd) {
-                        this._isDSFilling = false;
-                        if (args.resetUI)
-                            this._refresh();
-                        else
-                            this._appendItems(args.newItems);
-                    } else {
-                        this._isDSFilling = true;
-                    }
-                };
-                StackPanel.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    var newChangeType = item._changeType;
-                    var obj = this._itemMap[item._key];
-                    if (!obj)
-                        return;
-                    if (newChangeType === 3 /* DELETED */) {
-                        RIAPP.global.$(obj.div).hide();
-                    } else if (oldChangeType === 3 /* DELETED */ && newChangeType !== 3 /* DELETED */) {
-                        RIAPP.global.$(obj.div).show();
-                    }
-                };
-                StackPanel.prototype._createTemplate = function (dcxt) {
-                    var t = new RIAPP.MOD.template.Template(this.app, this._templateID);
-                    t.dataContext = dcxt;
-                    return t;
-                };
-                StackPanel.prototype._appendItems = function (newItems) {
-                    if (this._isDestroyCalled)
-                        return;
-                    var self = this;
-                    newItems.forEach(function (item) {
-                        if (!!self._itemMap[item._key])
-                            return;
-                        self._appendItem(item);
-                    });
-                };
-                StackPanel.prototype._appendItem = function (item) {
-                    if (!item._key)
-                        return;
-                    var self = this, $div = self._createElement('div'), div = $div.get(0), template = self._createTemplate(item);
-                    $div.addClass(stackpanel.css.item);
-                    $div.append(template.el);
-                    if (this._orientation == 'horizontal') {
-                        $div.css('display', 'inline-block');
-                    }
-                    self._$el.append($div);
-                    $div.attr(RIAPP.MOD.consts.DATA_ATTR.DATA_ITEM_KEY, item._key);
-                    $div.click(function (e) {
-                        var key = this.getAttribute(RIAPP.MOD.consts.DATA_ATTR.DATA_ITEM_KEY);
-                        var obj = self._itemMap[key];
-                        if (!!obj)
-                            self._onItemClicked(obj.div, obj.item);
-                    });
-                    self._itemMap[item._key] = { div: div, template: template, item: item };
-                };
-                StackPanel.prototype._bindDS = function () {
-                    var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
-                    ds.addOnCollChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addOnFill(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSFill(args);
-                    }, self._objId);
-                    ds.addOnPropertyChange('currentItem', function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSCurrentChanged(args);
-                    }, self._objId);
-                    ds.addOnStatusChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onItemStatusChanged(args.item, args.oldChangeType);
-                    }, self._objId);
-
-                    this._refresh();
-                };
-                StackPanel.prototype._unbindDS = function () {
-                    var self = this, ds = this._dataSource;
-                    if (!ds)
-                        return;
-                    ds.removeNSHandlers(self._objId);
-                };
-                StackPanel.prototype._createElement = function (tag) {
-                    return RIAPP.global.$(RIAPP.global.document.createElement(tag));
-                };
-                StackPanel.prototype._onItemClicked = function (div, item) {
-                    this._updateCurrent(item, false);
-                    this._dataSource.currentItem = item;
-                    this.raiseEvent('item_clicked', { item: item });
-                };
-                StackPanel.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    RIAPP.global._untrackSelectable(this);
-                    this._unbindDS();
-                    this._clearContent();
-                    this._$el.removeClass(stackpanel.css.stackpanel);
-                    this._el = null;
-                    this._$el = null;
-                    this._currentItem = null;
-                    this._itemMap = {};
-                    this._app = null;
-                    _super.prototype.destroy.call(this);
-                };
-                StackPanel.prototype._clearContent = function () {
-                    var self = this;
-                    self._$el.empty();
-                    RIAPP.global.utils.forEachProp(self._itemMap, function (key) {
-                        self._removeItemByKey(key);
-                    });
-                };
-                StackPanel.prototype._removeItemByKey = function (key) {
-                    var self = this, obj = self._itemMap[key];
-                    if (!obj)
-                        return;
-                    delete self._itemMap[key];
-                    obj.template.destroy();
-                };
-                StackPanel.prototype._removeItem = function (item) {
-                    var self = this, key = item._key, obj = self._itemMap[key];
-                    if (!obj)
-                        return;
-                    delete self._itemMap[key];
-                    obj.template.destroy();
-                    RIAPP.global.$(obj.div).remove();
-                };
-                StackPanel.prototype._refresh = function () {
-                    var ds = this._dataSource, self = this;
-                    this._clearContent();
-                    if (!ds)
-                        return;
-                    ds.forEach(function (item) {
-                        self._appendItem(item);
-                    });
-                };
-                StackPanel.prototype.scrollIntoView = function (item) {
-                    if (!item)
-                        return;
-                    var obj = this._itemMap[item._key];
-                    if (!!obj) {
-                        obj.div.scrollIntoView(false);
-                    }
-                };
-                StackPanel.prototype.getDivElementByItem = function (item) {
-                    var obj = this._itemMap[item._key];
-                    if (!obj)
-                        return null;
-                    return obj.div;
-                };
-                StackPanel.prototype.toString = function () {
-                    return 'StackPanel';
-                };
-                Object.defineProperty(StackPanel.prototype, "app", {
-                    get: function () {
-                        return this._app;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(StackPanel.prototype, "el", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(StackPanel.prototype, "containerEl", {
-                    get: function () {
-                        return this._el;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(StackPanel.prototype, "uniqueID", {
-                    get: function () {
-                        return this._objId;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(StackPanel.prototype, "dataSource", {
-                    get: function () {
-                        return this._dataSource;
-                    },
-                    set: function (v) {
-                        if (v === this._dataSource)
-                            return;
-                        if (this._dataSource !== null) {
-                            this._unbindDS();
-                        }
-                        this._dataSource = v;
-                        if (this._dataSource !== null)
-                            this._bindDS();
-                        this.raisePropertyChanged('dataSource');
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(StackPanel.prototype, "currentItem", {
-                    get: function () {
-                        return this._currentItem;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return StackPanel;
-            })(RIAPP.BaseObject);
-            stackpanel.StackPanel = StackPanel;
-
-            var StackPanelElView = (function (_super) {
-                __extends(StackPanelElView, _super);
-                function StackPanelElView(app, el, options) {
-                    var self = this;
-                    this._panel = null;
-                    this._options = options;
-                    this._panel = new StackPanel(app, el, null, this._options);
-                    this._panel.addOnDestroyed(function () {
-                        self._panel = null;
-                        self.invokePropChanged('panel');
-                        self.raisePropertyChanged('panel');
-                    });
-                    _super.call(this, app, el, options);
-                }
-                StackPanelElView.prototype.destroy = function () {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    if (!!this._panel && !this._panel._isDestroyCalled) {
-                        this._panel.destroy();
-                    }
-                    this._panel = null;
-                    _super.prototype.destroy.call(this);
-                };
-                StackPanelElView.prototype.toString = function () {
-                    return 'StackPanelElView';
-                };
-                Object.defineProperty(StackPanelElView.prototype, "dataSource", {
-                    get: function () {
-                        if (this._isDestroyCalled)
-                            return undefined;
-                        return this._panel.dataSource;
-                    },
-                    set: function (v) {
-                        if (this._isDestroyCalled)
-                            return;
-                        if (this.dataSource !== v) {
-                            this._panel.dataSource = v;
-                            this.raisePropertyChanged('dataSource');
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(StackPanelElView.prototype, "panel", {
-                    get: function () {
-                        return this._panel;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                return StackPanelElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
-            stackpanel.StackPanelElView = StackPanelElView;
-
-            RIAPP.global.registerElView('stackpanel', StackPanelElView);
-            RIAPP.global.onModuleLoaded('stackpanel', stackpanel);
-        })(MOD.stackpanel || (MOD.stackpanel = {}));
-        var stackpanel = MOD.stackpanel;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
-})(RIAPP || (RIAPP = {}));
 /// <reference path="..\thirdparty\jquery.d.ts" />
 /// <reference path="..\thirdparty\moment.d.ts" />
 /// <reference path="..\jriapp_strings.d.ts"/>
@@ -17782,7 +17863,6 @@ var RIAPP;
 /// <reference path="..\modules\converter.ts"/>
 /// <reference path="..\modules\defaults.ts"/>
 /// <reference path="..\modules\parser.ts"/>
-/// <reference path="..\modules\datepicker.ts"/>
 /// <reference path="..\modules\mvvm.ts"/>
 /// <reference path="..\modules\baseElView.ts"/>
 /// <reference path="..\modules\binding.ts"/>
@@ -17791,12 +17871,15 @@ var RIAPP;
 /// <reference path="..\modules\baseContent.ts"/>
 /// <reference path="..\modules\dataform.ts"/>
 //*** the rest are optional modules, which can be removed if not needed ***
-/// <reference path="..\modules\db.ts"/>
+/// <reference path="..\modules\dynacontent.ts"/>
+/// <reference path="..\modules\datepicker.ts"/>
+/// <reference path="..\modules\tabs.ts"/>
 /// <reference path="..\modules\listbox.ts"/>
 /// <reference path="..\modules\datadialog.ts"/>
 /// <reference path="..\modules\datagrid.ts"/>
 /// <reference path="..\modules\pager.ts"/>
 /// <reference path="..\modules\stackpanel.ts"/>
+/// <reference path="..\modules\db.ts"/>
 var RIAPP;
 (function (RIAPP) {
     var constsMOD = RIAPP.MOD.consts;

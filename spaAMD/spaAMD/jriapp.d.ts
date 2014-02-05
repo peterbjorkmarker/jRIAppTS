@@ -48,6 +48,36 @@ declare module RIAPP {
         promise(): IPromise<T>;
         state(): string;
     }
+    interface IEditable {
+        beginEdit(): boolean;
+        endEdit(): boolean;
+        cancelEdit(): boolean;
+        isEditing: boolean;
+    }
+    interface ISubmittable {
+        submitChanges(): IVoidPromise;
+        _isCanSubmit: boolean;
+    }
+    interface IValidationInfo {
+        fieldName: string;
+        errors: string[];
+    }
+    interface IErrorNotification {
+        getIsHasErrors(): boolean;
+        addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
+        removeOnErrorsChanged(namespace?: string): void;
+        getFieldErrors(fieldName: any): IValidationInfo[];
+        getAllErrors(): IValidationInfo[];
+        getIErrorNotification(): IErrorNotification;
+    }
+    interface IDatepicker {
+        datepickerRegion: string;
+        dateFormat: string;
+        attachTo($el: any, options?: any): any;
+        detachFrom($el: any): any;
+        parseDate(str: string): Date;
+        formatDate(date: Date): string;
+    }
     class ArrayHelper {
         static clone(arr: any[]): any[];
         static fromList(list: {
@@ -279,7 +309,6 @@ declare module RIAPP {
             }
             var ELVIEW_NM: {
                 DATAFORM: string;
-                DYNACONT: string;
             };
             var LOADER_GIF: {
                 SMALL: string;
@@ -293,24 +322,6 @@ declare module RIAPP {
         module utils {
             function defineProps(proto: any, props?: any, propertyDescriptors?: any): any;
             function __extendType(_super: any, pds: any, props: any): () => void;
-            interface IEditable {
-                beginEdit(): boolean;
-                endEdit(): boolean;
-                cancelEdit(): boolean;
-                isEditing: boolean;
-            }
-            interface ISubmittable {
-                submitChanges(): RIAPP.IVoidPromise;
-                _isCanSubmit: boolean;
-            }
-            interface IDatepicker {
-                datepickerRegion: string;
-                dateFormat: string;
-                attachTo($el: any, options?: any): any;
-                detachFrom($el: any): any;
-                parseDate(str: string): Date;
-                formatDate(date: Date): string;
-            }
             class Checks {
                 static isNull: (a: any) => boolean;
                 static isUndefined: (a: any) => boolean;
@@ -448,6 +459,13 @@ declare module RIAPP {
                 constructor(ex: any);
                 static create(ex: any): DummyError;
             }
+            class ValidationError extends BaseError {
+                public _errors: RIAPP.IValidationInfo[];
+                public _item: any;
+                constructor(errorInfo: RIAPP.IValidationInfo[], item: any);
+                public item : any;
+                public errors : RIAPP.IValidationInfo[];
+            }
         }
     }
 }
@@ -512,7 +530,7 @@ declare module RIAPP {
         module defaults {
             class Defaults extends RIAPP.BaseObject {
                 public _imagesPath: string;
-                public _datepicker: MOD.utils.IDatepicker;
+                public _datepicker: RIAPP.IDatepicker;
                 public _dateFormat: string;
                 public _dateTimeFormat: string;
                 public _timeFormat: string;
@@ -526,7 +544,7 @@ declare module RIAPP {
                 public dateFormat : string;
                 public timeFormat : string;
                 public dateTimeFormat : string;
-                public datepicker : MOD.utils.IDatepicker;
+                public datepicker : RIAPP.IDatepicker;
                 public imagesPath : string;
                 public decimalPoint : string;
                 public thousandSep : string;
@@ -564,27 +582,6 @@ declare module RIAPP {
                 public parseOption(part: string): any;
                 public parseOptions(str: string): any[];
                 public toString(): string;
-            }
-        }
-    }
-}
-declare module RIAPP {
-    module MOD {
-        module datepicker {
-            class Datepicker extends RIAPP.BaseObject implements MOD.utils.IDatepicker {
-                private _datepickerRegion;
-                private _dateFormat;
-                constructor();
-                public toString(): string;
-                public attachTo($el: any, options?: {
-                    dateFormat?: string;
-                }): void;
-                public detachFrom($el: any): void;
-                public parseDate(str: string): Date;
-                public formatDate(date: Date): string;
-                public dateFormat : string;
-                public datepickerRegion : string;
-                public datePickerFn : any;
             }
         }
     }
@@ -654,7 +651,7 @@ declare module RIAPP {
                 public _oldDisplay: string;
                 public _objId: string;
                 public _propChangedCommand: MOD.mvvm.ICommand;
-                public _errors: MOD.binding.IValidationInfo[];
+                public _errors: RIAPP.IValidationInfo[];
                 public _toolTip: string;
                 public _css: string;
                 public _app: RIAPP.Application;
@@ -663,9 +660,9 @@ declare module RIAPP {
                 public _init(options: IViewOptions): void;
                 public destroy(): void;
                 public invokePropChanged(property: string): void;
-                public _getErrorTipInfo(errors: MOD.binding.IValidationInfo[]): string;
+                public _getErrorTipInfo(errors: RIAPP.IValidationInfo[]): string;
                 public _setFieldError(isError: boolean): void;
-                public _updateErrorUI(el: HTMLElement, errors: MOD.binding.IValidationInfo[]): void;
+                public _updateErrorUI(el: HTMLElement, errors: RIAPP.IValidationInfo[]): void;
                 public _onError(error: any, source: any): boolean;
                 public _setToolTip($el: JQuery, tip: string, className?: string): void;
                 public toString(): string;
@@ -674,7 +671,7 @@ declare module RIAPP {
                 public uniqueID : string;
                 public isVisible : boolean;
                 public propChangedCommand : MOD.mvvm.ICommand;
-                public validationErrors : MOD.binding.IValidationInfo[];
+                public validationErrors : RIAPP.IValidationInfo[];
                 public dataNameAttr : string;
                 public toolTip : string;
                 public css : string;
@@ -700,25 +697,6 @@ declare module RIAPP {
                 public command : MOD.mvvm.Command;
                 public commandParam : any;
             }
-            class TemplateCommand extends MOD.mvvm.Command {
-                constructor(fn_action: (sender: TemplateElView, param: {
-                    template: MOD.template.Template;
-                    isLoaded: boolean;
-                }) => void, thisObj: any, fn_canExecute: (sender: TemplateElView, param: {
-                    template: MOD.template.Template;
-                    isLoaded: boolean;
-                }) => boolean);
-            }
-            class TemplateElView extends CommandElView {
-                private _template;
-                private _isEnabled;
-                constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions);
-                public templateLoaded(template: MOD.template.Template): void;
-                public templateUnloading(template: MOD.template.Template): void;
-                public toString(): string;
-                public isEnabled : boolean;
-                public template : MOD.template.Template;
-            }
             class BusyElView extends BaseElView {
                 private _delay;
                 private _timeOut;
@@ -731,17 +709,6 @@ declare module RIAPP {
                 public toString(): string;
                 public isBusy : boolean;
                 public delay : number;
-            }
-            class DynaContentElView extends BaseElView {
-                private _dataContext;
-                private _template;
-                constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions);
-                private _templateChanged();
-                public updateTemplate(name: string): void;
-                public destroy(): void;
-                public templateID : string;
-                public template : MOD.template.Template;
-                public dataContext : any;
             }
             class CheckBoxElView extends InputElView {
                 private _val;
@@ -883,25 +850,6 @@ declare module RIAPP {
                 public el : HTMLImageElement;
                 public src : string;
             }
-            class TabsElView extends BaseElView {
-                private _tabsEventCommand;
-                private _tabOpts;
-                public _init(options: any): void;
-                public _createTabs(): void;
-                public _destroyTabs(): void;
-                public invokeTabsEvent(eventName: string, args: any): void;
-                public destroy(): void;
-                public toString(): string;
-                public tabsEventCommand : MOD.mvvm.ICommand;
-            }
-            interface IDatePickerOptions extends ITextBoxOptions {
-                datepicker?: any;
-            }
-            class DatePickerElView extends TextBoxElView {
-                public _init(options: IDatePickerOptions): void;
-                public destroy(): void;
-                public toString(): string;
-            }
         }
     }
 }
@@ -933,26 +881,7 @@ declare module RIAPP {
                 source?: any;
                 isSourceFixed?: boolean;
             }
-            interface IValidationInfo {
-                fieldName: string;
-                errors: string[];
-            }
-            interface IErrorNotification {
-                getIsHasErrors(): boolean;
-                addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
-                removeOnErrorsChanged(namespace?: string): void;
-                getFieldErrors(fieldName: any): IValidationInfo[];
-                getAllErrors(): IValidationInfo[];
-                getIErrorNotification(): IErrorNotification;
-            }
             function _checkIsErrorNotification(obj: any): boolean;
-            class ValidationError extends MOD.errors.BaseError {
-                public _errors: IValidationInfo[];
-                public _item: any;
-                constructor(errorInfo: IValidationInfo[], item: any);
-                public item : any;
-                public errors : IValidationInfo[];
-            }
             class Binding extends RIAPP.BaseObject {
                 private _state;
                 private _mode;
@@ -1077,7 +1006,7 @@ declare module RIAPP {
             }
             function fn_getPropertyByName(name: string, props: IFieldInfo[]): IFieldInfo;
             function fn_traverseField(fld: IFieldInfo, fn: (name: string, fld: IFieldInfo) => void): void;
-            class CollectionItem extends RIAPP.BaseObject implements MOD.binding.IErrorNotification, MOD.utils.IEditable, MOD.utils.ISubmittable {
+            class CollectionItem extends RIAPP.BaseObject implements RIAPP.IErrorNotification, RIAPP.IEditable, RIAPP.ISubmittable {
                 public _fkey: string;
                 public _isEditing: boolean;
                 public _saveVals: {
@@ -1095,18 +1024,18 @@ declare module RIAPP {
                 public _onError(error: any, source: any): boolean;
                 public _beginEdit(): boolean;
                 public _endEdit(): boolean;
-                public _validate(): MOD.binding.IValidationInfo;
+                public _validate(): RIAPP.IValidationInfo;
                 public _skipValidate(fieldInfo: IFieldInfo, val: any): boolean;
-                public _validateField(fieldName: any): MOD.binding.IValidationInfo;
-                public _validateAll(): MOD.binding.IValidationInfo[];
+                public _validateField(fieldName: any): RIAPP.IValidationInfo;
+                public _validateAll(): RIAPP.IValidationInfo[];
                 public _checkVal(fieldInfo: IFieldInfo, val: any): any;
                 public _resetIsNew(): void;
                 public _onAttaching(): void;
                 public _onAttach(): void;
                 public getFieldInfo(fieldName: string): IFieldInfo;
                 public getFieldNames(): string[];
-                public getFieldErrors(fieldName: any): MOD.binding.IValidationInfo[];
-                public getAllErrors(): MOD.binding.IValidationInfo[];
+                public getFieldErrors(fieldName: any): RIAPP.IValidationInfo[];
+                public getAllErrors(): RIAPP.IValidationInfo[];
                 public getErrorString(): string;
                 public submitChanges(): RIAPP.IVoidPromise;
                 public beginEdit(): boolean;
@@ -1119,7 +1048,7 @@ declare module RIAPP {
                 public getCollection(): Collection;
                 public getIsEditing(): boolean;
                 public getIsHasErrors(): boolean;
-                public getIErrorNotification(): MOD.binding.IErrorNotification;
+                public getIErrorNotification(): RIAPP.IErrorNotification;
                 public destroy(): void;
                 public toString(): string;
                 public _isCanSubmit : boolean;
@@ -1259,9 +1188,9 @@ declare module RIAPP {
                 public _onEditing(item: TItem, isBegin: boolean, isCanceled: boolean): void;
                 public _onCommitChanges(item: TItem, isBegin: boolean, isRejected: boolean, changeType: number): void;
                 public _onItemStatusChanged(item: TItem, oldChangeType: number): void;
-                public _validateItem(item: TItem): MOD.binding.IValidationInfo;
-                public _validateItemField(item: TItem, fieldName: string): MOD.binding.IValidationInfo;
-                public _addErrors(item: TItem, errors: MOD.binding.IValidationInfo[]): void;
+                public _validateItem(item: TItem): RIAPP.IValidationInfo;
+                public _validateItemField(item: TItem, fieldName: string): RIAPP.IValidationInfo;
+                public _addErrors(item: TItem, errors: RIAPP.IValidationInfo[]): void;
                 public _addError(item: TItem, fieldName: string, errors: string[]): void;
                 public _removeError(item: TItem, fieldName: string): void;
                 public _removeAllErrors(item: TItem): void;
@@ -1429,6 +1358,25 @@ declare module RIAPP {
                 public el : HTMLElement;
                 public isDisabled : boolean;
                 public app : RIAPP.Application;
+            }
+            class TemplateCommand extends MOD.mvvm.Command {
+                constructor(fn_action: (sender: TemplateElView, param: {
+                    template: Template;
+                    isLoaded: boolean;
+                }) => void, thisObj: any, fn_canExecute: (sender: TemplateElView, param: {
+                    template: Template;
+                    isLoaded: boolean;
+                }) => boolean);
+            }
+            class TemplateElView extends MOD.baseElView.CommandElView {
+                private _template;
+                private _isEnabled;
+                constructor(app: RIAPP.Application, el: HTMLElement, options: MOD.baseElView.IViewOptions);
+                public templateLoaded(template: Template): void;
+                public templateUnloading(template: Template): void;
+                public toString(): string;
+                public isEnabled : boolean;
+                public template : Template;
             }
         }
     }
@@ -1649,7 +1597,7 @@ declare module RIAPP {
                 public el : HTMLElement;
                 public dataContext : RIAPP.BaseObject;
                 public isEditing : boolean;
-                public validationErrors : MOD.binding.IValidationInfo[];
+                public validationErrors : RIAPP.IValidationInfo[];
                 public isDisabled : boolean;
                 public isInsideTemplate : boolean;
             }
@@ -1657,13 +1605,880 @@ declare module RIAPP {
                 private _form;
                 private _options;
                 constructor(app: RIAPP.Application, el: HTMLSelectElement, options: MOD.baseElView.IViewOptions);
-                public _getErrorTipInfo(errors: MOD.binding.IValidationInfo[]): string;
-                public _updateErrorUI(el: HTMLElement, errors: MOD.binding.IValidationInfo[]): void;
+                public _getErrorTipInfo(errors: RIAPP.IValidationInfo[]): string;
+                public _updateErrorUI(el: HTMLElement, errors: RIAPP.IValidationInfo[]): void;
                 public destroy(): void;
                 public toString(): string;
                 public dataContext : RIAPP.BaseObject;
                 public isDisabled : boolean;
                 public form : DataForm;
+            }
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module dynacontent {
+            class DynaContentElView extends MOD.baseElView.BaseElView {
+                private _dataContext;
+                private _template;
+                constructor(app: RIAPP.Application, el: HTMLElement, options: MOD.baseElView.IViewOptions);
+                private _templateChanged();
+                public updateTemplate(name: string): void;
+                public destroy(): void;
+                public templateID : string;
+                public template : MOD.template.Template;
+                public dataContext : any;
+            }
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module datepicker {
+            class Datepicker extends RIAPP.BaseObject implements RIAPP.IDatepicker {
+                private _datepickerRegion;
+                private _dateFormat;
+                constructor();
+                public toString(): string;
+                public attachTo($el: any, options?: {
+                    dateFormat?: string;
+                }): void;
+                public detachFrom($el: any): void;
+                public parseDate(str: string): Date;
+                public formatDate(date: Date): string;
+                public dateFormat : string;
+                public datepickerRegion : string;
+                public datePickerFn : any;
+            }
+            interface IDatePickerOptions extends MOD.baseElView.ITextBoxOptions {
+                datepicker?: any;
+            }
+            class DatePickerElView extends MOD.baseElView.TextBoxElView {
+                public _init(options: IDatePickerOptions): void;
+                public destroy(): void;
+                public toString(): string;
+            }
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module tabs {
+            class TabsElView extends MOD.baseElView.BaseElView {
+                private _tabsEventCommand;
+                private _tabOpts;
+                public _init(options: any): void;
+                public _createTabs(): void;
+                public _destroyTabs(): void;
+                public invokeTabsEvent(eventName: string, args: any): void;
+                public destroy(): void;
+                public toString(): string;
+                public tabsEventCommand : MOD.mvvm.ICommand;
+                public tabIndex : number;
+            }
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module listbox {
+            interface IListBoxOptions {
+                valuePath: string;
+                textPath: string;
+            }
+            interface IMappedItem {
+                item: MOD.collection.CollectionItem;
+                op: {
+                    text: string;
+                    value: any;
+                    index: number;
+                };
+            }
+            class ListBox extends RIAPP.BaseObject {
+                private _el;
+                private _$el;
+                private _objId;
+                private _dataSource;
+                private _isRefreshing;
+                private _isDSFilling;
+                private _valuePath;
+                private _textPath;
+                private _selectedItem;
+                private _prevSelected;
+                private _keyMap;
+                private _valMap;
+                private _savedValue;
+                private _tempValue;
+                constructor(el: HTMLSelectElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IListBoxOptions);
+                public destroy(): void;
+                public _onChanged(): void;
+                public _getStringValue(item: MOD.collection.CollectionItem): string;
+                public _getValue(item: MOD.collection.CollectionItem): any;
+                public _getText(item: MOD.collection.CollectionItem): string;
+                public _onDSCollectionChanged(args: MOD.collection.ICollChangedArgs<MOD.collection.CollectionItem>): void;
+                public _onDSFill(args: MOD.collection.ICollFillArgs<MOD.collection.CollectionItem>): void;
+                public _onEdit(item: MOD.collection.CollectionItem, isBegin: boolean, isCanceled: boolean): void;
+                public _onStatusChanged(item: MOD.collection.CollectionItem, oldChangeType: number): void;
+                public _onCommitChanges(item: MOD.collection.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: MOD.collection.STATUS): void;
+                private _bindDS();
+                private _unbindDS();
+                private _addOption(item, first);
+                private _mapByValue();
+                private _resetText();
+                private _removeOption(item);
+                private _clear(isDestroy);
+                private _refresh();
+                private _findItemIndex(item);
+                public _setIsEnabled(el: HTMLSelectElement, v: boolean): void;
+                public _getIsEnabled(el: HTMLSelectElement): boolean;
+                public clear(): void;
+                public findItemByValue(val: any): MOD.collection.CollectionItem;
+                public getTextByValue(val: any): string;
+                public toString(): string;
+                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+                public selectedValue : any;
+                public selectedItem : MOD.collection.CollectionItem;
+                public valuePath : string;
+                public textPath : string;
+                public isEnabled : boolean;
+                public el : HTMLSelectElement;
+            }
+            interface ISelectViewOptions extends IListBoxOptions, MOD.baseElView.IViewOptions {
+            }
+            class SelectElView extends MOD.baseElView.BaseElView {
+                private _listBox;
+                private _options;
+                constructor(app: RIAPP.Application, el: HTMLSelectElement, options: ISelectViewOptions);
+                public destroy(): void;
+                public toString(): string;
+                public isEnabled : boolean;
+                public el : HTMLSelectElement;
+                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+                public selectedValue : any;
+                public selectedItem : MOD.collection.CollectionItem;
+                public listBox : ListBox;
+            }
+            interface ILookupOptions {
+                dataSource: string;
+                valuePath: string;
+                textPath: string;
+            }
+            class LookupContent extends MOD.baseContent.BindingContent implements MOD.baseContent.IExternallyCachable {
+                private _spanView;
+                private _valBinding;
+                private _listBinding;
+                private _selectView;
+                private _isListBoxCachedExternally;
+                private _value;
+                constructor(app: RIAPP.Application, parentEl: HTMLElement, options: MOD.baseContent.IContentOptions, dctx: any, isEditing: boolean);
+                public _init(): void;
+                public _getEventNames(): string[];
+                public addOnObjectCreated(fn: (sender: any, args: {
+                    objectKey: string;
+                    object: RIAPP.BaseObject;
+                    isCachedExternally: boolean;
+                }) => void, namespace?: string): void;
+                public removeOnObjectCreated(namespace?: string): void;
+                public addOnObjectNeeded(fn: (sender: any, args: {
+                    objectKey: string;
+                    object: RIAPP.BaseObject;
+                }) => void, namespace?: string): void;
+                public removeOnObjectNeeded(namespace?: string): void;
+                public _getSelectView(): SelectElView;
+                public _createSelectElView(el: HTMLSelectElement, options: ISelectViewOptions): SelectElView;
+                public _updateTextValue(): void;
+                public _getLookupText(): string;
+                public _getSpanView(): MOD.baseElView.SpanElView;
+                public update(): void;
+                public _createTargetElement(): MOD.baseElView.BaseElView;
+                public _cleanUp(): void;
+                public _updateBindingSource(): void;
+                public _bindToValue(): MOD.binding.Binding;
+                public _bindToList(selectView: SelectElView): MOD.binding.Binding;
+                public destroy(): void;
+                public toString(): string;
+                public value : any;
+            }
+            class ContentFactory implements MOD.baseContent.IContentFactory {
+                private _app;
+                private _nextFactory;
+                constructor(app: RIAPP.Application, nextFactory?: MOD.baseContent.IContentFactory);
+                public getContentType(options: MOD.baseContent.IContentOptions): MOD.baseContent.IContentType;
+                public createContent(parentEl: HTMLElement, options: MOD.baseContent.IContentOptions, dctx: any, isEditing: boolean): MOD.baseContent.IContent;
+                public isExternallyCachable(contentType: any): boolean;
+                public app : RIAPP.Application;
+            }
+            function initModule(app: RIAPP.Application): typeof listbox;
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module datadialog {
+            enum DIALOG_ACTION {
+                Default = 0,
+                StayOpen = 1,
+            }
+            interface IDialogConstructorOptions {
+                dataContext?: any;
+                templateID: string;
+                width?: any;
+                height?: any;
+                title?: string;
+                submitOnOK?: boolean;
+                canRefresh?: boolean;
+                canCancel?: boolean;
+                fn_OnClose?: (dialog: DataEditDialog) => void;
+                fn_OnOK?: (dialog: DataEditDialog) => number;
+                fn_OnShow?: (dialog: DataEditDialog) => void;
+                fn_OnCancel?: (dialog: DataEditDialog) => number;
+                fn_OnTemplateCreated?: (template: MOD.template.Template) => void;
+                fn_OnTemplateDestroy?: (template: MOD.template.Template) => void;
+            }
+            class DataEditDialog extends RIAPP.BaseObject {
+                private _objId;
+                private _dataContext;
+                private _templateID;
+                private _submitOnOK;
+                private _canRefresh;
+                private _canCancel;
+                private _fn_OnClose;
+                private _fn_OnOK;
+                private _fn_OnShow;
+                private _fn_OnCancel;
+                private _fn_OnTemplateCreated;
+                private _fn_OnTemplateDestroy;
+                private _isEditable;
+                private _template;
+                private _$template;
+                private _result;
+                private _options;
+                private _dialogCreated;
+                private _fn_submitOnOK;
+                private _app;
+                private _currentSelectable;
+                constructor(app: RIAPP.Application, options: IDialogConstructorOptions);
+                public addOnClose(fn: (sender: any, args: {}) => void, namespace?: string): void;
+                public removeOnClose(namespace?: string): void;
+                public addOnRefresh(fn: (sender: any, args: {
+                    isHandled: boolean;
+                }) => void, namespace?: string): void;
+                public removeOnRefresh(namespace?: string): void;
+                public _updateIsEditable(): void;
+                public _createDialog(): void;
+                public _getEventNames(): string[];
+                public _createTemplate(dcxt: any): MOD.template.Template;
+                public _destroyTemplate(): void;
+                public _getButtons(): {
+                    'id': string;
+                    'text': string;
+                    'class': string;
+                    'click': () => void;
+                }[];
+                public _getOkButton(): JQuery;
+                public _getCancelButton(): JQuery;
+                public _getRefreshButton(): JQuery;
+                public _getAllButtons(): JQuery[];
+                public _disableButtons(isDisable: boolean): void;
+                public _onOk(): void;
+                public _onCancel(): void;
+                public _onRefresh(): void;
+                public _onClose(): void;
+                public _onShow(): void;
+                public show(): void;
+                public hide(): void;
+                public getOption(name: string): any;
+                public setOption(name: string, value: any): void;
+                public destroy(): void;
+                public dataContext : any;
+                public result : string;
+                public template : MOD.template.Template;
+                public isSubmitOnOK : boolean;
+                public width : any;
+                public height : any;
+                public title : any;
+                public canRefresh : boolean;
+                public canCancel : boolean;
+            }
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module datagrid {
+            var css: {
+                container: string;
+                dataTable: string;
+                columnInfo: string;
+                column: string;
+                cellDiv: string;
+                headerDiv: string;
+                wrapDiv: string;
+                dataColumn: string;
+                rowCollapsed: string;
+                rowExpanded: string;
+                rowExpander: string;
+                columnSelected: string;
+                rowSelected: string;
+                rowActions: string;
+                rowDetails: string;
+                rowSelector: string;
+                rowHighlight: string;
+                rowDeleted: string;
+                rowError: string;
+                nobr: string;
+                colSortable: string;
+                colSortAsc: string;
+                colSortDesc: string;
+            };
+            class RowSelectContent extends MOD.baseContent.BoolContent {
+                public _canBeEdited(): boolean;
+                public toString(): string;
+            }
+            class BaseCell extends RIAPP.BaseObject {
+                public _row: Row;
+                public _el: HTMLTableCellElement;
+                public _column: BaseColumn;
+                public _div: HTMLElement;
+                public _clickTimeOut: number;
+                constructor(row: Row, options: {
+                    td: HTMLTableCellElement;
+                    column: any;
+                });
+                public _init(): void;
+                public _onCellClicked(): void;
+                public _onDblClicked(): void;
+                public _onError(error: any, source: any): boolean;
+                public scrollIntoView(isUp: boolean): void;
+                public destroy(): void;
+                public toString(): string;
+                public el : HTMLTableCellElement;
+                public row : Row;
+                public column : BaseColumn;
+                public grid : DataGrid;
+                public item : MOD.collection.CollectionItem;
+            }
+            class DataCell extends BaseCell {
+                private _content;
+                private _stateCss;
+                constructor(row: Row, options: {
+                    td: HTMLTableCellElement;
+                    column: DataColumn;
+                });
+                public _init(): void;
+                public _getInitContentFn(): (content: MOD.baseContent.IExternallyCachable) => void;
+                public _beginEdit(): void;
+                public _endEdit(isCanceled: any): void;
+                public _setState(css: string): void;
+                public destroy(): void;
+                public toString(): string;
+                public column : DataColumn;
+            }
+            class ExpanderCell extends BaseCell {
+                public _init(): void;
+                public _onCellClicked(): void;
+                public _toggleImage(): void;
+                public toString(): string;
+            }
+            class ActionsCell extends BaseCell {
+                private _isEditing;
+                constructor(row: Row, options: {
+                    td: HTMLTableCellElement;
+                    column: any;
+                });
+                public _init(): void;
+                public destroy(): void;
+                public _createButtons(editing: boolean): void;
+                public update(): void;
+                public toString(): string;
+                public isCanEdit : boolean;
+                public isCanDelete : boolean;
+            }
+            class RowSelectorCell extends BaseCell {
+                private _content;
+                public _init(): void;
+                public destroy(): void;
+                public toString(): string;
+            }
+            class DetailsCell extends RIAPP.BaseObject {
+                private _row;
+                private _el;
+                private _template;
+                constructor(row: DetailsRow, options: {
+                    td: HTMLTableCellElement;
+                    details_id: string;
+                });
+                public _init(options: {
+                    td: HTMLElement;
+                    details_id: string;
+                }): void;
+                public destroy(): void;
+                public toString(): string;
+                public el : HTMLTableCellElement;
+                public row : DetailsRow;
+                public grid : DataGrid;
+                public item : any;
+                public template : MOD.template.Template;
+            }
+            class Row extends RIAPP.BaseObject {
+                public _grid: DataGrid;
+                public _el: HTMLElement;
+                public _item: MOD.collection.CollectionItem;
+                public _cells: BaseCell[];
+                public _objId: string;
+                public _expanderCell: any;
+                public _actionsCell: any;
+                public _rowSelectorCell: any;
+                public _isCurrent: boolean;
+                public _isDeleted: boolean;
+                public _isSelected: boolean;
+                constructor(grid: DataGrid, options: {
+                    tr: HTMLElement;
+                    item: MOD.collection.CollectionItem;
+                });
+                public _onError(error: any, source: any): boolean;
+                public _createCells(): void;
+                public _createCell(col: any): any;
+                public _onBeginEdit(): void;
+                public _onEndEdit(isCanceled: boolean): void;
+                public beginEdit(): boolean;
+                public endEdit(): boolean;
+                public cancelEdit(): boolean;
+                public destroy(): void;
+                public deleteRow(): void;
+                public updateErrorState(): void;
+                public scrollIntoView(isUp: boolean): void;
+                public _setState(css: string): void;
+                public toString(): string;
+                public el : HTMLElement;
+                public grid : DataGrid;
+                public item : MOD.collection.CollectionItem;
+                public cells : BaseCell[];
+                public columns : BaseColumn[];
+                public uniqueID : string;
+                public itemKey : string;
+                public isCurrent : boolean;
+                public isSelected : boolean;
+                public isExpanded : boolean;
+                public expanderCell : any;
+                public actionsCell : any;
+                public isDeleted : boolean;
+                public isEditing : boolean;
+            }
+            class DetailsRow extends RIAPP.BaseObject {
+                private _grid;
+                private _el;
+                private _item;
+                private _cell;
+                private _parentRow;
+                private _objId;
+                private _$el;
+                constructor(grid: DataGrid, options: {
+                    tr: HTMLTableRowElement;
+                    details_id: string;
+                });
+                private _createCell(details_id);
+                public _setParentRow(row: Row): void;
+                public destroy(): void;
+                public toString(): string;
+                public el : HTMLTableRowElement;
+                public $el : JQuery;
+                public grid : DataGrid;
+                public item : any;
+                public cell : DetailsCell;
+                public uniqueID : string;
+                public itemKey : any;
+                public parentRow : Row;
+            }
+            interface IColumnInfo {
+                type?: string;
+                title?: string;
+                sortable?: boolean;
+                sortMemberName?: string;
+                colCellCss?: string;
+                rowCellCss?: string;
+                width?: any;
+                content?: MOD.baseContent.IContentOptions;
+            }
+            class BaseColumn extends RIAPP.BaseObject {
+                private _grid;
+                private _el;
+                private _options;
+                private _isSelected;
+                private _objId;
+                private _$extcol;
+                private _$div;
+                constructor(grid: DataGrid, options: {
+                    th: HTMLTableHeaderCellElement;
+                    colinfo: IColumnInfo;
+                });
+                public _init(): void;
+                public destroy(): void;
+                public scrollIntoView(isUp: boolean): void;
+                public _onColumnClicked(): void;
+                public toString(): string;
+                public uniqueID : string;
+                public el : HTMLTableHeaderCellElement;
+                public $div : JQuery;
+                public $extcol : JQuery;
+                public grid : DataGrid;
+                public options : IColumnInfo;
+                public title : string;
+                public isSelected : boolean;
+            }
+            class DataColumn extends BaseColumn {
+                private _sortOrder;
+                private _objCache;
+                constructor(grid: DataGrid, options: {
+                    th: HTMLTableHeaderCellElement;
+                    colinfo: IColumnInfo;
+                });
+                public _init(): void;
+                public _onColumnClicked(): void;
+                public _cacheObject(key: string, obj: RIAPP.BaseObject): void;
+                public _getCachedObject(key: string): RIAPP.BaseObject;
+                public destroy(): void;
+                public toString(): string;
+                public isSortable : boolean;
+                public sortMemberName : string;
+                public sortOrder : MOD.collection.SORT_ORDER;
+            }
+            class ExpanderColumn extends BaseColumn {
+                public _init(): void;
+                public toString(): string;
+            }
+            class RowSelectorColumn extends BaseColumn {
+                private _val;
+                private _$chk;
+                public _init(): void;
+                public _onCheckBoxClicked(isChecked: boolean): void;
+                public toString(): string;
+                public checked : boolean;
+            }
+            interface IActionsColumnInfo extends IColumnInfo {
+                img_ok?: string;
+                img_cancel?: string;
+                img_edit?: string;
+                img_delete?: string;
+            }
+            class ActionsColumn extends BaseColumn {
+                public _init(): void;
+                public _onOk(cell: ActionsCell): void;
+                public _onCancel(cell: ActionsCell): void;
+                public _onDelete(cell: ActionsCell): void;
+                public _onEdit(cell: ActionsCell): void;
+                public toString(): string;
+            }
+            interface IGridOptions {
+                isUseScrollInto: boolean;
+                isUseScrollIntoDetails: boolean;
+                containerCss: string;
+                wrapCss: string;
+                headerCss: string;
+                rowStateField: string;
+                isCanEdit: boolean;
+                isCanDelete: boolean;
+                isHandleAddNew: boolean;
+                details?: {
+                    templateID: string;
+                };
+                editor?: MOD.datadialog.IDialogConstructorOptions;
+            }
+            class DataGrid extends RIAPP.BaseObject implements RIAPP.ISelectable {
+                public _options: IGridOptions;
+                public _$tableEl: JQuery;
+                public _isClearing: boolean;
+                private _tableEl;
+                private _name;
+                private _objId;
+                private _dataSource;
+                private _rowMap;
+                private _rows;
+                private _columns;
+                private _isDSFilling;
+                private _currentRow;
+                private _expandedRow;
+                private _details;
+                private _expanderCol;
+                private _actionsCol;
+                private _rowSelectorCol;
+                private _currentColumn;
+                private _editingRow;
+                private _isSorting;
+                private _dialog;
+                private _$headerDiv;
+                private _$wrapDiv;
+                private _$contaner;
+                private _app;
+                public _columnWidthChecker: () => void;
+                constructor(app: RIAPP.Application, el: HTMLTableElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IGridOptions);
+                public _getEventNames(): string[];
+                public addOnRowExpanded(fn: (sender: DataGrid, args: {
+                    old_expandedRow: Row;
+                    expandedRow: Row;
+                    isExpanded: boolean;
+                }) => void, namespace?: string): void;
+                public removeOnRowExpanded(namespace?: string): void;
+                public addOnRowSelected(fn: (sender: DataGrid, args: {
+                    row: Row;
+                }) => void, namespace?: string): void;
+                public removeOnRowSelected(namespace?: string): void;
+                public addOnPageChanged(fn: (sender: DataGrid, args: {}) => void, namespace?: string): void;
+                public removeOnPageChanged(namespace?: string): void;
+                public addOnRowStateChanged(fn: (sender: DataGrid, args: {
+                    row: Row;
+                    val: any;
+                    css: string;
+                }) => void, namespace?: string): void;
+                public removeOnRowStateChanged(namespace?: string): void;
+                public addOnCellDblClicked(fn: (sender: DataGrid, args: {
+                    cell: BaseCell;
+                }) => void, namespace?: string): void;
+                public removeOnCellDblClicked(namespace?: string): void;
+                public _isRowExpanded(row: Row): boolean;
+                public _appendToHeader(el: HTMLElement): void;
+                public _setCurrentColumn(column: BaseColumn): void;
+                public _parseColumnAttr(column_attr: string, content_attr: string): IColumnInfo;
+                public _findUndeleted(row: Row, isUp: boolean): Row;
+                public _updateCurrent(row: Row, withScroll: boolean): void;
+                public _scrollToCurrent(isUp: boolean): void;
+                public _onRowStateChanged(row: Row, val: any): any;
+                public _onCellDblClicked(cell: BaseCell): void;
+                public _onError(error: any, source: any): boolean;
+                public _onDSCurrentChanged(): void;
+                public _onDSCollectionChanged(args: MOD.collection.ICollChangedArgs<MOD.collection.CollectionItem>): void;
+                public _onDSFill(args: MOD.collection.ICollFillArgs<MOD.collection.CollectionItem>): void;
+                public _onPageChanged(): void;
+                public _onItemEdit(item: any, isBegin: any, isCanceled: any): void;
+                public _onItemAdded(args: MOD.collection.ICollItemAddedArgs<MOD.collection.CollectionItem>): void;
+                public _onItemStatusChanged(item: MOD.collection.CollectionItem, oldChangeType: MOD.collection.STATUS): void;
+                public _onRowSelectionChanged(row: Row): void;
+                public _onDSErrorsChanged(item: MOD.collection.CollectionItem): void;
+                public _resetColumnsSort(): void;
+                public _bindDS(): void;
+                public _unbindDS(): void;
+                public _getLastRow(): Row;
+                public _removeRow(row: Row): void;
+                public _clearGrid(): void;
+                public _updateColsDim(): void;
+                public _wrapTable(): void;
+                public _unWrapTable(): void;
+                public _createColumns(): void;
+                public _createColumn(options: {
+                    th: HTMLTableHeaderCellElement;
+                    colinfo: IColumnInfo;
+                }): BaseColumn;
+                public _appendItems(newItems: MOD.collection.CollectionItem[]): void;
+                public _onKeyDown(key: number, event: Event): void;
+                public _onKeyUp(key: number, event: Event): void;
+                public _refreshGrid(): void;
+                public _createRowForItem(parent: any, item: any, pos?: number): Row;
+                public _createDetails(): DetailsRow;
+                public _expandDetails(parentRow: Row, expanded: boolean): void;
+                public sortByColumn(column: DataColumn): void;
+                public selectRows(isSelect: boolean): void;
+                public findRowByItem(item: MOD.collection.CollectionItem): Row;
+                public collapseDetails(): void;
+                public getSelectedRows(): any[];
+                public showEditDialog(): boolean;
+                public scrollToCurrent(isUp: boolean): void;
+                public addNew(): void;
+                public destroy(): void;
+                public app : RIAPP.Application;
+                public $container : JQuery;
+                public _tBodyEl : Element;
+                public _tHeadEl : HTMLTableSectionElement;
+                public _tFootEl : HTMLTableSectionElement;
+                public _tHeadRow : HTMLTableRowElement;
+                public _tHeadCells : any[];
+                public containerEl : HTMLElement;
+                public uniqueID : string;
+                public name : string;
+                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+                public rows : Row[];
+                public columns : BaseColumn[];
+                public currentRow : Row;
+                public editingRow : Row;
+                public isCanEdit : boolean;
+                public isCanDelete : boolean;
+                public isCanAddNew : boolean;
+                public isUseScrollInto : boolean;
+            }
+            interface IGridViewOptions extends IGridOptions, MOD.baseElView.IViewOptions {
+            }
+            class GridElView extends MOD.baseElView.BaseElView {
+                private _dataSource;
+                private _grid;
+                private _gridEventCommand;
+                private _options;
+                public toString(): string;
+                public _init(options: IGridViewOptions): void;
+                public destroy(): void;
+                private _createGrid();
+                private _bindGridEvents();
+                public invokeGridEvent(eventName: any, args: any): void;
+                public _onGridCreated(grid: DataGrid): void;
+                public _onGridDestroyed(grid: DataGrid): void;
+                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+                public grid : DataGrid;
+                public gridEventCommand : MOD.mvvm.ICommand;
+            }
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module pager {
+            var css: {
+                pager: string;
+                info: string;
+                currentPage: string;
+                otherPage: string;
+            };
+            interface IPagerOptions {
+                showTip?: boolean;
+                showInfo?: boolean;
+                showNumbers?: boolean;
+                showFirstAndLast?: boolean;
+                showPreviousAndNext?: boolean;
+                useSlider?: boolean;
+                hideOnSinglePage?: boolean;
+                sliderSize?: number;
+            }
+            class Pager extends RIAPP.BaseObject {
+                private _el;
+                private _$el;
+                private _objId;
+                private _dataSource;
+                private _showTip;
+                private _showInfo;
+                private _showFirstAndLast;
+                private _showPreviousAndNext;
+                private _showNumbers;
+                private _rowsPerPage;
+                private _rowCount;
+                private _currentPage;
+                private _useSlider;
+                private _sliderSize;
+                private _hideOnSinglePage;
+                constructor(el: HTMLElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IPagerOptions);
+                public _createElement(tag: string): JQuery;
+                public _render(): void;
+                public _setDSPageIndex(page: number): void;
+                public _onPageSizeChanged(ds: MOD.collection.BaseCollection<MOD.collection.CollectionItem>): void;
+                public _onPageIndexChanged(ds: MOD.collection.BaseCollection<MOD.collection.CollectionItem>): void;
+                public _onTotalCountChanged(ds: MOD.collection.BaseCollection<MOD.collection.CollectionItem>): void;
+                public destroy(): void;
+                public _bindDS(): void;
+                public _unbindDS(): void;
+                public _clearContent(): void;
+                public _createLink(page: number, text: string, tip?: string): JQuery;
+                public _createFirst(): JQuery;
+                public _createPrevious(): JQuery;
+                public _createCurrent(): JQuery;
+                public _createOther(page: number): JQuery;
+                public _createNext(): JQuery;
+                public _createLast(): JQuery;
+                public _buildTip(page: number): string;
+                public toString(): string;
+                public el : HTMLElement;
+                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+                public pageCount : any;
+                public rowCount : number;
+                public rowsPerPage : number;
+                public currentPage : number;
+                public useSlider : boolean;
+                public sliderSize : number;
+                public hideOnSinglePage : boolean;
+                public showTip : boolean;
+                public showInfo : boolean;
+                public showFirstAndLast : boolean;
+                public showPreviousAndNext : boolean;
+                public showNumbers : boolean;
+            }
+            interface IPagerViewOptions extends IPagerOptions, MOD.baseElView.IViewOptions {
+            }
+            class PagerElView extends MOD.baseElView.BaseElView {
+                private _options;
+                private _pager;
+                constructor(app: RIAPP.Application, el: HTMLElement, options: IPagerViewOptions);
+                public destroy(): void;
+                public toString(): string;
+                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+                public pager : Pager;
+            }
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module stackpanel {
+            var css: {
+                stackpanel: string;
+                item: string;
+                currentItem: string;
+            };
+            interface IStackPanelOptions {
+                orientation?: string;
+                templateID: string;
+            }
+            class StackPanel extends RIAPP.BaseObject implements RIAPP.ISelectable {
+                private _el;
+                private _$el;
+                private _objId;
+                private _dataSource;
+                private _isDSFilling;
+                private _orientation;
+                private _templateID;
+                private _currentItem;
+                private _itemMap;
+                private _app;
+                constructor(app: RIAPP.Application, el: HTMLElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IStackPanelOptions);
+                public _getEventNames(): string[];
+                public addOnItemClicked(fn: (sender: StackPanel, args: {
+                    item: MOD.collection.CollectionItem;
+                }) => void, namespace?: string): void;
+                public removeOnItemClicked(namespace?: string): void;
+                public _onKeyDown(key: number, event: Event): void;
+                public _onKeyUp(key: number, event: Event): void;
+                public _updateCurrent(item: MOD.collection.CollectionItem, withScroll: boolean): void;
+                public _onDSCurrentChanged(args: any): void;
+                public _onDSCollectionChanged(args: any): void;
+                public _onDSFill(args: any): void;
+                public _onItemStatusChanged(item: MOD.collection.CollectionItem, oldChangeType: number): void;
+                public _createTemplate(dcxt: any): MOD.template.Template;
+                public _appendItems(newItems: MOD.collection.CollectionItem[]): void;
+                public _appendItem(item: MOD.collection.CollectionItem): void;
+                public _bindDS(): void;
+                public _unbindDS(): void;
+                public _createElement(tag: string): JQuery;
+                public _onItemClicked(div: HTMLElement, item: MOD.collection.CollectionItem): void;
+                public destroy(): void;
+                public _clearContent(): void;
+                public _removeItemByKey(key: string): void;
+                public _removeItem(item: MOD.collection.CollectionItem): void;
+                public _refresh(): void;
+                public scrollIntoView(item: MOD.collection.CollectionItem): void;
+                public getDivElementByItem(item: MOD.collection.CollectionItem): HTMLElement;
+                public toString(): string;
+                public app : RIAPP.Application;
+                public el : HTMLElement;
+                public containerEl : HTMLElement;
+                public uniqueID : string;
+                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+                public currentItem : MOD.collection.CollectionItem;
+            }
+            interface IStackPanelViewOptions extends IStackPanelOptions, MOD.baseElView.IViewOptions {
+            }
+            class StackPanelElView extends MOD.baseElView.BaseElView {
+                private _panel;
+                private _options;
+                constructor(app: RIAPP.Application, el: HTMLSelectElement, options: IStackPanelViewOptions);
+                public destroy(): void;
+                public toString(): string;
+                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+                public panel : StackPanel;
             }
         }
     }
@@ -2379,7 +3194,7 @@ declare module RIAPP {
             }
             class TChildDataView extends ChildDataView<Entity> {
             }
-            class BaseComplexProperty extends RIAPP.BaseObject implements MOD.binding.IErrorNotification {
+            class BaseComplexProperty extends RIAPP.BaseObject implements RIAPP.IErrorNotification {
                 public _name: string;
                 constructor(name: string);
                 public _getFullPath(path: any): string;
@@ -2394,9 +3209,9 @@ declare module RIAPP {
                 public getIsHasErrors(): boolean;
                 public addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
                 public removeOnErrorsChanged(namespace?: string): void;
-                public getFieldErrors(fieldName: any): MOD.binding.IValidationInfo[];
-                public getAllErrors(): MOD.binding.IValidationInfo[];
-                public getIErrorNotification(): MOD.binding.IErrorNotification;
+                public getFieldErrors(fieldName: any): RIAPP.IValidationInfo[];
+                public getAllErrors(): RIAPP.IValidationInfo[];
+                public getIErrorNotification(): RIAPP.IErrorNotification;
             }
             class RootComplexProperty extends BaseComplexProperty {
                 private _entity;
@@ -2421,809 +3236,6 @@ declare module RIAPP {
                 public getRootProperty(): RootComplexProperty;
                 public getFullPath(name: string): string;
                 public getEntity(): Entity;
-            }
-        }
-    }
-}
-declare module RIAPP {
-    module MOD {
-        module listbox {
-            interface IListBoxOptions {
-                valuePath: string;
-                textPath: string;
-            }
-            interface IMappedItem {
-                item: MOD.collection.CollectionItem;
-                op: {
-                    text: string;
-                    value: any;
-                    index: number;
-                };
-            }
-            class ListBox extends RIAPP.BaseObject {
-                private _el;
-                private _$el;
-                private _objId;
-                private _dataSource;
-                private _isRefreshing;
-                private _isDSFilling;
-                private _valuePath;
-                private _textPath;
-                private _selectedItem;
-                private _prevSelected;
-                private _keyMap;
-                private _valMap;
-                private _savedValue;
-                private _tempValue;
-                constructor(el: HTMLSelectElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IListBoxOptions);
-                public destroy(): void;
-                public _onChanged(): void;
-                public _getStringValue(item: MOD.collection.CollectionItem): string;
-                public _getValue(item: MOD.collection.CollectionItem): any;
-                public _getText(item: MOD.collection.CollectionItem): string;
-                public _onDSCollectionChanged(args: MOD.collection.ICollChangedArgs<MOD.collection.CollectionItem>): void;
-                public _onDSFill(args: MOD.collection.ICollFillArgs<MOD.collection.CollectionItem>): void;
-                public _onEdit(item: MOD.collection.CollectionItem, isBegin: boolean, isCanceled: boolean): void;
-                public _onStatusChanged(item: MOD.collection.CollectionItem, oldChangeType: number): void;
-                public _onCommitChanges(item: MOD.collection.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: MOD.collection.STATUS): void;
-                private _bindDS();
-                private _unbindDS();
-                private _addOption(item, first);
-                private _mapByValue();
-                private _resetText();
-                private _removeOption(item);
-                private _clear(isDestroy);
-                private _refresh();
-                private _findItemIndex(item);
-                public _setIsEnabled(el: HTMLSelectElement, v: boolean): void;
-                public _getIsEnabled(el: HTMLSelectElement): boolean;
-                public clear(): void;
-                public findItemByValue(val: any): MOD.collection.CollectionItem;
-                public getTextByValue(val: any): string;
-                public toString(): string;
-                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public selectedValue : any;
-                public selectedItem : MOD.collection.CollectionItem;
-                public valuePath : string;
-                public textPath : string;
-                public isEnabled : boolean;
-                public el : HTMLSelectElement;
-            }
-            interface ISelectViewOptions extends IListBoxOptions, MOD.baseElView.IViewOptions {
-            }
-            class SelectElView extends MOD.baseElView.BaseElView {
-                private _listBox;
-                private _options;
-                constructor(app: RIAPP.Application, el: HTMLSelectElement, options: ISelectViewOptions);
-                public destroy(): void;
-                public toString(): string;
-                public isEnabled : boolean;
-                public el : HTMLSelectElement;
-                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public selectedValue : any;
-                public selectedItem : MOD.collection.CollectionItem;
-                public listBox : ListBox;
-            }
-            interface ILookupOptions {
-                dataSource: string;
-                valuePath: string;
-                textPath: string;
-            }
-            class LookupContent extends MOD.baseContent.BindingContent implements MOD.baseContent.IExternallyCachable {
-                private _spanView;
-                private _valBinding;
-                private _listBinding;
-                private _selectView;
-                private _isListBoxCachedExternally;
-                private _value;
-                constructor(app: RIAPP.Application, parentEl: HTMLElement, options: MOD.baseContent.IContentOptions, dctx: any, isEditing: boolean);
-                public _init(): void;
-                public _getEventNames(): string[];
-                public addOnObjectCreated(fn: (sender: any, args: {
-                    objectKey: string;
-                    object: RIAPP.BaseObject;
-                    isCachedExternally: boolean;
-                }) => void, namespace?: string): void;
-                public removeOnObjectCreated(namespace?: string): void;
-                public addOnObjectNeeded(fn: (sender: any, args: {
-                    objectKey: string;
-                    object: RIAPP.BaseObject;
-                }) => void, namespace?: string): void;
-                public removeOnObjectNeeded(namespace?: string): void;
-                public _getSelectView(): SelectElView;
-                public _createSelectElView(el: HTMLSelectElement, options: ISelectViewOptions): SelectElView;
-                public _updateTextValue(): void;
-                public _getLookupText(): string;
-                public _getSpanView(): MOD.baseElView.SpanElView;
-                public update(): void;
-                public _createTargetElement(): MOD.baseElView.BaseElView;
-                public _cleanUp(): void;
-                public _updateBindingSource(): void;
-                public _bindToValue(): MOD.binding.Binding;
-                public _bindToList(selectView: SelectElView): MOD.binding.Binding;
-                public destroy(): void;
-                public toString(): string;
-                public value : any;
-            }
-            class ContentFactory implements MOD.baseContent.IContentFactory {
-                private _app;
-                private _nextFactory;
-                constructor(app: RIAPP.Application, nextFactory?: MOD.baseContent.IContentFactory);
-                public getContentType(options: MOD.baseContent.IContentOptions): MOD.baseContent.IContentType;
-                public createContent(parentEl: HTMLElement, options: MOD.baseContent.IContentOptions, dctx: any, isEditing: boolean): MOD.baseContent.IContent;
-                public isExternallyCachable(contentType: any): boolean;
-                public app : RIAPP.Application;
-            }
-            function initModule(app: RIAPP.Application): typeof listbox;
-        }
-    }
-}
-declare module RIAPP {
-    module MOD {
-        module datadialog {
-            enum DIALOG_ACTION {
-                Default = 0,
-                StayOpen = 1,
-            }
-            interface IDialogConstructorOptions {
-                dataContext?: any;
-                templateID: string;
-                width?: any;
-                height?: any;
-                title?: string;
-                submitOnOK?: boolean;
-                canRefresh?: boolean;
-                canCancel?: boolean;
-                fn_OnClose?: (dialog: DataEditDialog) => void;
-                fn_OnOK?: (dialog: DataEditDialog) => number;
-                fn_OnShow?: (dialog: DataEditDialog) => void;
-                fn_OnCancel?: (dialog: DataEditDialog) => number;
-                fn_OnTemplateCreated?: (template: MOD.template.Template) => void;
-                fn_OnTemplateDestroy?: (template: MOD.template.Template) => void;
-            }
-            class DataEditDialog extends RIAPP.BaseObject {
-                private _objId;
-                private _dataContext;
-                private _templateID;
-                private _submitOnOK;
-                private _canRefresh;
-                private _canCancel;
-                private _fn_OnClose;
-                private _fn_OnOK;
-                private _fn_OnShow;
-                private _fn_OnCancel;
-                private _fn_OnTemplateCreated;
-                private _fn_OnTemplateDestroy;
-                private _isEditable;
-                private _template;
-                private _$template;
-                private _result;
-                private _options;
-                private _dialogCreated;
-                private _fn_submitOnOK;
-                private _app;
-                private _currentSelectable;
-                constructor(app: RIAPP.Application, options: IDialogConstructorOptions);
-                public addOnClose(fn: (sender: any, args: {}) => void, namespace?: string): void;
-                public removeOnClose(namespace?: string): void;
-                public addOnRefresh(fn: (sender: any, args: {
-                    isHandled: boolean;
-                }) => void, namespace?: string): void;
-                public removeOnRefresh(namespace?: string): void;
-                public _updateIsEditable(): void;
-                public _createDialog(): void;
-                public _getEventNames(): string[];
-                public _createTemplate(dcxt: any): MOD.template.Template;
-                public _destroyTemplate(): void;
-                public _getButtons(): {
-                    'id': string;
-                    'text': string;
-                    'class': string;
-                    'click': () => void;
-                }[];
-                public _getOkButton(): JQuery;
-                public _getCancelButton(): JQuery;
-                public _getRefreshButton(): JQuery;
-                public _getAllButtons(): JQuery[];
-                public _disableButtons(isDisable: boolean): void;
-                public _onOk(): void;
-                public _onCancel(): void;
-                public _onRefresh(): void;
-                public _onClose(): void;
-                public _onShow(): void;
-                public show(): void;
-                public hide(): void;
-                public getOption(name: string): any;
-                public setOption(name: string, value: any): void;
-                public destroy(): void;
-                public dataContext : any;
-                public result : string;
-                public template : MOD.template.Template;
-                public isSubmitOnOK : boolean;
-                public width : any;
-                public height : any;
-                public title : any;
-                public canRefresh : boolean;
-                public canCancel : boolean;
-            }
-        }
-    }
-}
-declare module RIAPP {
-    module MOD {
-        module datagrid {
-            var css: {
-                container: string;
-                dataTable: string;
-                columnInfo: string;
-                column: string;
-                cellDiv: string;
-                headerDiv: string;
-                wrapDiv: string;
-                dataColumn: string;
-                rowCollapsed: string;
-                rowExpanded: string;
-                rowExpander: string;
-                columnSelected: string;
-                rowSelected: string;
-                rowActions: string;
-                rowDetails: string;
-                rowSelector: string;
-                rowHighlight: string;
-                rowDeleted: string;
-                rowError: string;
-                nobr: string;
-                colSortable: string;
-                colSortAsc: string;
-                colSortDesc: string;
-            };
-            class RowSelectContent extends MOD.baseContent.BoolContent {
-                public _canBeEdited(): boolean;
-                public toString(): string;
-            }
-            class BaseCell extends RIAPP.BaseObject {
-                public _row: Row;
-                public _el: HTMLTableCellElement;
-                public _column: BaseColumn;
-                public _div: HTMLElement;
-                public _clickTimeOut: number;
-                constructor(row: Row, options: {
-                    td: HTMLTableCellElement;
-                    column: any;
-                });
-                public _init(): void;
-                public _onCellClicked(): void;
-                public _onDblClicked(): void;
-                public _onError(error: any, source: any): boolean;
-                public scrollIntoView(isUp: boolean): void;
-                public destroy(): void;
-                public toString(): string;
-                public el : HTMLTableCellElement;
-                public row : Row;
-                public column : BaseColumn;
-                public grid : DataGrid;
-                public item : MOD.collection.CollectionItem;
-            }
-            class DataCell extends BaseCell {
-                private _content;
-                private _stateCss;
-                constructor(row: Row, options: {
-                    td: HTMLTableCellElement;
-                    column: DataColumn;
-                });
-                public _init(): void;
-                public _getInitContentFn(): (content: MOD.baseContent.IExternallyCachable) => void;
-                public _beginEdit(): void;
-                public _endEdit(isCanceled: any): void;
-                public _setState(css: string): void;
-                public destroy(): void;
-                public toString(): string;
-                public column : DataColumn;
-            }
-            class ExpanderCell extends BaseCell {
-                public _init(): void;
-                public _onCellClicked(): void;
-                public _toggleImage(): void;
-                public toString(): string;
-            }
-            class ActionsCell extends BaseCell {
-                private _isEditing;
-                constructor(row: Row, options: {
-                    td: HTMLTableCellElement;
-                    column: any;
-                });
-                public _init(): void;
-                public destroy(): void;
-                public _createButtons(editing: boolean): void;
-                public update(): void;
-                public toString(): string;
-                public isCanEdit : boolean;
-                public isCanDelete : boolean;
-            }
-            class RowSelectorCell extends BaseCell {
-                private _content;
-                public _init(): void;
-                public destroy(): void;
-                public toString(): string;
-            }
-            class DetailsCell extends RIAPP.BaseObject {
-                private _row;
-                private _el;
-                private _template;
-                constructor(row: DetailsRow, options: {
-                    td: HTMLTableCellElement;
-                    details_id: string;
-                });
-                public _init(options: {
-                    td: HTMLElement;
-                    details_id: string;
-                }): void;
-                public destroy(): void;
-                public toString(): string;
-                public el : HTMLTableCellElement;
-                public row : DetailsRow;
-                public grid : DataGrid;
-                public item : any;
-                public template : MOD.template.Template;
-            }
-            class Row extends RIAPP.BaseObject {
-                public _grid: DataGrid;
-                public _el: HTMLElement;
-                public _item: MOD.collection.CollectionItem;
-                public _cells: BaseCell[];
-                public _objId: string;
-                public _expanderCell: any;
-                public _actionsCell: any;
-                public _rowSelectorCell: any;
-                public _isCurrent: boolean;
-                public _isDeleted: boolean;
-                public _isSelected: boolean;
-                constructor(grid: DataGrid, options: {
-                    tr: HTMLElement;
-                    item: MOD.collection.CollectionItem;
-                });
-                public _onError(error: any, source: any): boolean;
-                public _createCells(): void;
-                public _createCell(col: any): any;
-                public _onBeginEdit(): void;
-                public _onEndEdit(isCanceled: boolean): void;
-                public beginEdit(): boolean;
-                public endEdit(): boolean;
-                public cancelEdit(): boolean;
-                public destroy(): void;
-                public deleteRow(): void;
-                public updateErrorState(): void;
-                public scrollIntoView(isUp: boolean): void;
-                public _setState(css: string): void;
-                public toString(): string;
-                public el : HTMLElement;
-                public grid : DataGrid;
-                public item : MOD.collection.CollectionItem;
-                public cells : BaseCell[];
-                public columns : BaseColumn[];
-                public uniqueID : string;
-                public itemKey : string;
-                public isCurrent : boolean;
-                public isSelected : boolean;
-                public isExpanded : boolean;
-                public expanderCell : any;
-                public actionsCell : any;
-                public isDeleted : boolean;
-                public isEditing : boolean;
-            }
-            class DetailsRow extends RIAPP.BaseObject {
-                private _grid;
-                private _el;
-                private _item;
-                private _cell;
-                private _parentRow;
-                private _objId;
-                private _$el;
-                constructor(grid: DataGrid, options: {
-                    tr: HTMLTableRowElement;
-                    details_id: string;
-                });
-                private _createCell(details_id);
-                public _setParentRow(row: Row): void;
-                public destroy(): void;
-                public toString(): string;
-                public el : HTMLTableRowElement;
-                public $el : JQuery;
-                public grid : DataGrid;
-                public item : any;
-                public cell : DetailsCell;
-                public uniqueID : string;
-                public itemKey : any;
-                public parentRow : Row;
-            }
-            interface IColumnInfo {
-                type?: string;
-                title?: string;
-                sortable?: boolean;
-                sortMemberName?: string;
-                colCellCss?: string;
-                rowCellCss?: string;
-                width?: any;
-                content?: MOD.baseContent.IContentOptions;
-            }
-            class BaseColumn extends RIAPP.BaseObject {
-                private _grid;
-                private _el;
-                private _options;
-                private _isSelected;
-                private _objId;
-                private _$extcol;
-                private _$div;
-                constructor(grid: DataGrid, options: {
-                    th: HTMLTableHeaderCellElement;
-                    colinfo: IColumnInfo;
-                });
-                public _init(): void;
-                public destroy(): void;
-                public scrollIntoView(isUp: boolean): void;
-                public _onColumnClicked(): void;
-                public toString(): string;
-                public uniqueID : string;
-                public el : HTMLTableHeaderCellElement;
-                public $div : JQuery;
-                public $extcol : JQuery;
-                public grid : DataGrid;
-                public options : IColumnInfo;
-                public title : string;
-                public isSelected : boolean;
-            }
-            class DataColumn extends BaseColumn {
-                private _sortOrder;
-                private _objCache;
-                constructor(grid: DataGrid, options: {
-                    th: HTMLTableHeaderCellElement;
-                    colinfo: IColumnInfo;
-                });
-                public _init(): void;
-                public _onColumnClicked(): void;
-                public _cacheObject(key: string, obj: RIAPP.BaseObject): void;
-                public _getCachedObject(key: string): RIAPP.BaseObject;
-                public destroy(): void;
-                public toString(): string;
-                public isSortable : boolean;
-                public sortMemberName : string;
-                public sortOrder : MOD.collection.SORT_ORDER;
-            }
-            class ExpanderColumn extends BaseColumn {
-                public _init(): void;
-                public toString(): string;
-            }
-            class RowSelectorColumn extends BaseColumn {
-                private _val;
-                private _$chk;
-                public _init(): void;
-                public _onCheckBoxClicked(isChecked: boolean): void;
-                public toString(): string;
-                public checked : boolean;
-            }
-            interface IActionsColumnInfo extends IColumnInfo {
-                img_ok?: string;
-                img_cancel?: string;
-                img_edit?: string;
-                img_delete?: string;
-            }
-            class ActionsColumn extends BaseColumn {
-                public _init(): void;
-                public _onOk(cell: ActionsCell): void;
-                public _onCancel(cell: ActionsCell): void;
-                public _onDelete(cell: ActionsCell): void;
-                public _onEdit(cell: ActionsCell): void;
-                public toString(): string;
-            }
-            interface IGridOptions {
-                isUseScrollInto: boolean;
-                isUseScrollIntoDetails: boolean;
-                containerCss: string;
-                wrapCss: string;
-                headerCss: string;
-                rowStateField: string;
-                isCanEdit: boolean;
-                isCanDelete: boolean;
-                isHandleAddNew: boolean;
-                details?: {
-                    templateID: string;
-                };
-                editor?: MOD.datadialog.IDialogConstructorOptions;
-            }
-            class DataGrid extends RIAPP.BaseObject implements RIAPP.ISelectable {
-                public _options: IGridOptions;
-                public _$tableEl: JQuery;
-                public _isClearing: boolean;
-                private _tableEl;
-                private _name;
-                private _objId;
-                private _dataSource;
-                private _rowMap;
-                private _rows;
-                private _columns;
-                private _isDSFilling;
-                private _currentRow;
-                private _expandedRow;
-                private _details;
-                private _expanderCol;
-                private _actionsCol;
-                private _rowSelectorCol;
-                private _currentColumn;
-                private _editingRow;
-                private _isSorting;
-                private _dialog;
-                private _$headerDiv;
-                private _$wrapDiv;
-                private _$contaner;
-                private _chkWidthInterval;
-                private _app;
-                constructor(app: RIAPP.Application, el: HTMLTableElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IGridOptions);
-                public _getEventNames(): string[];
-                public addOnRowExpanded(fn: (sender: DataGrid, args: {
-                    old_expandedRow: Row;
-                    expandedRow: Row;
-                    isExpanded: boolean;
-                }) => void, namespace?: string): void;
-                public removeOnRowExpanded(namespace?: string): void;
-                public addOnRowSelected(fn: (sender: DataGrid, args: {
-                    row: Row;
-                }) => void, namespace?: string): void;
-                public removeOnRowSelected(namespace?: string): void;
-                public addOnPageChanged(fn: (sender: DataGrid, args: {}) => void, namespace?: string): void;
-                public removeOnPageChanged(namespace?: string): void;
-                public addOnRowStateChanged(fn: (sender: DataGrid, args: {
-                    row: Row;
-                    val: any;
-                    css: string;
-                }) => void, namespace?: string): void;
-                public removeOnRowStateChanged(namespace?: string): void;
-                public addOnCellDblClicked(fn: (sender: DataGrid, args: {
-                    cell: BaseCell;
-                }) => void, namespace?: string): void;
-                public removeOnCellDblClicked(namespace?: string): void;
-                public _isRowExpanded(row: Row): boolean;
-                public _appendToHeader(el: HTMLElement): void;
-                public _setCurrentColumn(column: BaseColumn): void;
-                public _parseColumnAttr(column_attr: string, content_attr: string): IColumnInfo;
-                public _findUndeleted(row: Row, isUp: boolean): Row;
-                public _updateCurrent(row: Row, withScroll: boolean): void;
-                public _scrollToCurrent(isUp: boolean): void;
-                public _onRowStateChanged(row: Row, val: any): any;
-                public _onCellDblClicked(cell: BaseCell): void;
-                public _onError(error: any, source: any): boolean;
-                public _onDSCurrentChanged(): void;
-                public _onDSCollectionChanged(args: MOD.collection.ICollChangedArgs<MOD.collection.CollectionItem>): void;
-                public _onDSFill(args: MOD.collection.ICollFillArgs<MOD.collection.CollectionItem>): void;
-                public _onPageChanged(): void;
-                public _onItemEdit(item: any, isBegin: any, isCanceled: any): void;
-                public _onItemAdded(args: MOD.collection.ICollItemAddedArgs<MOD.collection.CollectionItem>): void;
-                public _onItemStatusChanged(item: MOD.collection.CollectionItem, oldChangeType: MOD.collection.STATUS): void;
-                public _onRowSelectionChanged(row: Row): void;
-                public _onDSErrorsChanged(item: MOD.collection.CollectionItem): void;
-                public _resetColumnsSort(): void;
-                public _bindDS(): void;
-                public _unbindDS(): void;
-                public _getLastRow(): Row;
-                public _removeRow(row: Row): void;
-                public _clearGrid(): void;
-                public _updateColsDim(): void;
-                public _wrapTable(): void;
-                public _unWrapTable(): void;
-                public _createColumns(): void;
-                public _createColumn(options: {
-                    th: HTMLTableHeaderCellElement;
-                    colinfo: IColumnInfo;
-                }): BaseColumn;
-                public _appendItems(newItems: MOD.collection.CollectionItem[]): void;
-                public _onKeyDown(key: number, event: Event): void;
-                public _onKeyUp(key: number, event: Event): void;
-                public _refreshGrid(): void;
-                public _createRowForItem(parent: any, item: any, pos?: number): Row;
-                public _createDetails(): DetailsRow;
-                public _expandDetails(parentRow: Row, expanded: boolean): void;
-                public sortByColumn(column: DataColumn): void;
-                public selectRows(isSelect: boolean): void;
-                public findRowByItem(item: MOD.collection.CollectionItem): Row;
-                public collapseDetails(): void;
-                public getSelectedRows(): any[];
-                public showEditDialog(): boolean;
-                public scrollToCurrent(isUp: boolean): void;
-                public addNew(): void;
-                public destroy(): void;
-                public app : RIAPP.Application;
-                public $container : JQuery;
-                public _tBodyEl : Element;
-                public _tHeadEl : HTMLTableSectionElement;
-                public _tFootEl : HTMLTableSectionElement;
-                public _tHeadRow : HTMLTableRowElement;
-                public _tHeadCells : any[];
-                public containerEl : HTMLElement;
-                public uniqueID : string;
-                public name : string;
-                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public rows : Row[];
-                public columns : BaseColumn[];
-                public currentRow : Row;
-                public editingRow : Row;
-                public isCanEdit : boolean;
-                public isCanDelete : boolean;
-                public isCanAddNew : boolean;
-                public isUseScrollInto : boolean;
-            }
-            interface IGridViewOptions extends IGridOptions, MOD.baseElView.IViewOptions {
-            }
-            class GridElView extends MOD.baseElView.BaseElView {
-                private _dataSource;
-                private _grid;
-                private _gridEventCommand;
-                private _options;
-                public toString(): string;
-                public _init(options: IGridViewOptions): void;
-                public destroy(): void;
-                private _createGrid();
-                private _bindGridEvents();
-                public invokeGridEvent(eventName: any, args: any): void;
-                public _onGridCreated(grid: DataGrid): void;
-                public _onGridDestroyed(grid: DataGrid): void;
-                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public grid : DataGrid;
-                public gridEventCommand : MOD.mvvm.ICommand;
-            }
-        }
-    }
-}
-declare module RIAPP {
-    module MOD {
-        module pager {
-            var css: {
-                pager: string;
-                info: string;
-                currentPage: string;
-                otherPage: string;
-            };
-            interface IPagerOptions {
-                showTip?: boolean;
-                showInfo?: boolean;
-                showNumbers?: boolean;
-                showFirstAndLast?: boolean;
-                showPreviousAndNext?: boolean;
-                useSlider?: boolean;
-                hideOnSinglePage?: boolean;
-                sliderSize?: number;
-            }
-            class Pager extends RIAPP.BaseObject {
-                private _el;
-                private _$el;
-                private _objId;
-                private _dataSource;
-                private _showTip;
-                private _showInfo;
-                private _showFirstAndLast;
-                private _showPreviousAndNext;
-                private _showNumbers;
-                private _rowsPerPage;
-                private _rowCount;
-                private _currentPage;
-                private _useSlider;
-                private _sliderSize;
-                private _hideOnSinglePage;
-                constructor(el: HTMLElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IPagerOptions);
-                public _createElement(tag: string): JQuery;
-                public _render(): void;
-                public _setDSPageIndex(page: number): void;
-                public _onPageSizeChanged(ds: MOD.collection.BaseCollection<MOD.collection.CollectionItem>): void;
-                public _onPageIndexChanged(ds: MOD.collection.BaseCollection<MOD.collection.CollectionItem>): void;
-                public _onTotalCountChanged(ds: MOD.collection.BaseCollection<MOD.collection.CollectionItem>): void;
-                public destroy(): void;
-                public _bindDS(): void;
-                public _unbindDS(): void;
-                public _clearContent(): void;
-                public _createLink(page: number, text: string, tip?: string): JQuery;
-                public _createFirst(): JQuery;
-                public _createPrevious(): JQuery;
-                public _createCurrent(): JQuery;
-                public _createOther(page: number): JQuery;
-                public _createNext(): JQuery;
-                public _createLast(): JQuery;
-                public _buildTip(page: number): string;
-                public toString(): string;
-                public el : HTMLElement;
-                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public pageCount : any;
-                public rowCount : number;
-                public rowsPerPage : number;
-                public currentPage : number;
-                public useSlider : boolean;
-                public sliderSize : number;
-                public hideOnSinglePage : boolean;
-                public showTip : boolean;
-                public showInfo : boolean;
-                public showFirstAndLast : boolean;
-                public showPreviousAndNext : boolean;
-                public showNumbers : boolean;
-            }
-            interface IPagerViewOptions extends IPagerOptions, MOD.baseElView.IViewOptions {
-            }
-            class PagerElView extends MOD.baseElView.BaseElView {
-                private _options;
-                private _pager;
-                constructor(app: RIAPP.Application, el: HTMLElement, options: IPagerViewOptions);
-                public destroy(): void;
-                public toString(): string;
-                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public pager : Pager;
-            }
-        }
-    }
-}
-declare module RIAPP {
-    module MOD {
-        module stackpanel {
-            var css: {
-                stackpanel: string;
-                item: string;
-                currentItem: string;
-            };
-            interface IStackPanelOptions {
-                orientation?: string;
-                templateID: string;
-            }
-            class StackPanel extends RIAPP.BaseObject implements RIAPP.ISelectable {
-                private _el;
-                private _$el;
-                private _objId;
-                private _dataSource;
-                private _isDSFilling;
-                private _orientation;
-                private _templateID;
-                private _currentItem;
-                private _itemMap;
-                private _app;
-                constructor(app: RIAPP.Application, el: HTMLElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IStackPanelOptions);
-                public _getEventNames(): string[];
-                public addOnItemClicked(fn: (sender: StackPanel, args: {
-                    item: MOD.collection.CollectionItem;
-                }) => void, namespace?: string): void;
-                public removeOnItemClicked(namespace?: string): void;
-                public _onKeyDown(key: number, event: Event): void;
-                public _onKeyUp(key: number, event: Event): void;
-                public _updateCurrent(item: MOD.collection.CollectionItem, withScroll: boolean): void;
-                public _onDSCurrentChanged(args: any): void;
-                public _onDSCollectionChanged(args: any): void;
-                public _onDSFill(args: any): void;
-                public _onItemStatusChanged(item: MOD.collection.CollectionItem, oldChangeType: number): void;
-                public _createTemplate(dcxt: any): MOD.template.Template;
-                public _appendItems(newItems: MOD.collection.CollectionItem[]): void;
-                public _appendItem(item: MOD.collection.CollectionItem): void;
-                public _bindDS(): void;
-                public _unbindDS(): void;
-                public _createElement(tag: string): JQuery;
-                public _onItemClicked(div: HTMLElement, item: MOD.collection.CollectionItem): void;
-                public destroy(): void;
-                public _clearContent(): void;
-                public _removeItemByKey(key: string): void;
-                public _removeItem(item: MOD.collection.CollectionItem): void;
-                public _refresh(): void;
-                public scrollIntoView(item: MOD.collection.CollectionItem): void;
-                public getDivElementByItem(item: MOD.collection.CollectionItem): HTMLElement;
-                public toString(): string;
-                public app : RIAPP.Application;
-                public el : HTMLElement;
-                public containerEl : HTMLElement;
-                public uniqueID : string;
-                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public currentItem : MOD.collection.CollectionItem;
-            }
-            interface IStackPanelViewOptions extends IStackPanelOptions, MOD.baseElView.IViewOptions {
-            }
-            class StackPanelElView extends MOD.baseElView.BaseElView {
-                private _panel;
-                private _options;
-                constructor(app: RIAPP.Application, el: HTMLSelectElement, options: IStackPanelViewOptions);
-                public destroy(): void;
-                public toString(): string;
-                public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
-                public panel : StackPanel;
             }
         }
     }

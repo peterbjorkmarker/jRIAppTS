@@ -1,7 +1,7 @@
 ﻿module RIAPP {
     export module MOD {
         export module datagrid {
-            import constsMOD = MOD.consts;
+            import constsMOD = RIAPP.MOD.consts;
             import utilsMOD = RIAPP.MOD.utils;
             import bindMOD = RIAPP.MOD.binding;
             import contentMOD = RIAPP.MOD.baseContent;
@@ -416,7 +416,7 @@
             export class Row extends RIAPP.BaseObject {
                 _grid: DataGrid;
                 _el: HTMLElement;
-                _item: collection.CollectionItem;
+                _item: collMOD.CollectionItem;
                 _cells: BaseCell[];
                 _objId: string;
                 _expanderCell: any;
@@ -426,7 +426,7 @@
                 _isDeleted: boolean;
                 _isSelected: boolean;
 
-                constructor(grid: DataGrid, options: { tr: HTMLElement; item: collection.CollectionItem; }) {
+                constructor(grid: DataGrid, options: { tr: HTMLElement; item: collMOD.CollectionItem; }) {
                     var self = this;
                     super();
                     this._grid = grid;
@@ -1077,7 +1077,7 @@
                 private _tableEl: HTMLTableElement;
                 private _name: string;
                 private _objId: string;
-                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
                 private _rowMap: { [key: string]: Row; };
                 private _rows: Row[];
                 private _columns: BaseColumn[];
@@ -1098,9 +1098,9 @@
                 private _app: Application;
                 _columnWidthChecker: () => void;
 
-                constructor(app:Application, el: HTMLTableElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options: IGridOptions) {
+                constructor(app: Application, el: HTMLTableElement, dataSource: collMOD.BaseCollection<collMOD.CollectionItem>, options: IGridOptions) {
                     super();
-                    if (!!dataSource && !(dataSource instanceof collection.BaseCollection))
+                    if (!!dataSource && !(dataSource instanceof collMOD.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
                     this._options = utils.extend(false,
                         {
@@ -1283,7 +1283,7 @@
                     return isHandled;
                 }
                 _onDSCurrentChanged() {
-                    var ds = this._dataSource, cur: collection.CollectionItem;
+                    var ds = this._dataSource, cur: collMOD.CollectionItem;
                     if (!!ds)
                         cur = ds.currentItem;
                     if (!cur)
@@ -1292,18 +1292,18 @@
                         this._updateCurrent(this._rowMap[cur._key], false);
                     }
                 }
-                _onDSCollectionChanged(args: collection.ICollChangedArgs<collection.CollectionItem>) {
+                _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>) {
                     var self = this, row: Row, items = args.items;
                     switch (args.change_type) {
-                        case collection.COLL_CHANGE_TYPE.RESET:
+                        case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refreshGrid();
                             break;
-                        case collection.COLL_CHANGE_TYPE.ADDED:
+                        case collMOD.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isDSFilling) //if items are filling then it will be appended when it ends
                                 self._appendItems(args.items);
                             break;
-                        case collection.COLL_CHANGE_TYPE.REMOVE:
+                        case collMOD.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 var row = self._rowMap[item._key];
                                 if (!!row) {
@@ -1311,7 +1311,7 @@
                                 }
                             });
                             break;
-                        case collection.COLL_CHANGE_TYPE.REMAP_KEY:
+                        case collMOD.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 row = self._rowMap[args.old_key];
                                 if (!!row) {
@@ -1324,7 +1324,7 @@
                             throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
-                _onDSFill(args: collection.ICollFillArgs<collection.CollectionItem>) {
+                _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>) {
                     var isEnd = !args.isBegin, self = this;
                     if (isEnd) {
                         self._isDSFilling = false;
@@ -1375,7 +1375,7 @@
                     }
                     this.raisePropertyChanged('editingRow');
                 }
-                _onItemAdded(args: collection.ICollItemAddedArgs<collection.CollectionItem>) {
+                _onItemAdded(args: collMOD.ICollItemAddedArgs<collMOD.CollectionItem>) {
                     var item = args.item, row = this._rowMap[item._key];
                     if (!row)
                         return;
@@ -1385,12 +1385,12 @@
                         args.isAddNewHandled = this.showEditDialog();
                     }
                 }
-                _onItemStatusChanged(item: collection.CollectionItem, oldChangeType: collection.STATUS) {
-                    var DEL_STATUS = collection.STATUS.DELETED, newChangeType = item._changeType, ds = this._dataSource;
+                _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType: collMOD.STATUS) {
+                    var newChangeType = item._changeType, ds = this._dataSource;
                     var row = this._rowMap[item._key];
                     if (!row)
                         return;
-                    if (newChangeType === DEL_STATUS) {
+                    if (newChangeType === collMOD.STATUS.DELETED) {
                         row.isDeleted = true;
                         var row2 = this._findUndeleted(row, true);
                         if (!row2) {
@@ -1400,14 +1400,14 @@
                             ds.currentItem = row2.item;
                         }
                     }
-                    else if (oldChangeType === DEL_STATUS && newChangeType !== DEL_STATUS) {
+                    else if (oldChangeType === collMOD.STATUS.DELETED && newChangeType !== collMOD.STATUS.DELETED) {
                         row.isDeleted = false;
                     }
                 }
                 _onRowSelectionChanged(row:Row) {
                     this.raiseEvent('row_selected', { row: row });
                 }
-                _onDSErrorsChanged(item:collection.CollectionItem) {
+                _onDSErrorsChanged(item: collMOD.CollectionItem) {
                     var row = this._rowMap[item._key];
                     if (!row)
                         return;
@@ -1609,7 +1609,7 @@
                     }
                     return col;
                 }
-                _appendItems(newItems:collection.CollectionItem[]) {
+                _appendItems(newItems: collMOD.CollectionItem[]) {
                     if (this._isDestroyCalled)
                         return;
                     var self = this, item, tbody = this._tBodyEl;
@@ -1789,7 +1789,7 @@
                         row.isSelected = isSelect;
                     });
                 }
-                findRowByItem(item:collection.CollectionItem) {
+                findRowByItem(item: collMOD.CollectionItem) {
                     var row = this._rowMap[item._key];
                     if (!row)
                         return null;
@@ -1894,7 +1894,7 @@
                 get uniqueID() { return this._objId; }
                 get name() { return this._name; }
                 get dataSource() { return this._dataSource; }
-                set dataSource(v: collection.BaseCollection<collection.CollectionItem>) {
+                set dataSource(v: collMOD.BaseCollection<collMOD.CollectionItem>) {
                     if (v === this._dataSource)
                         return;
                     if (this._dataSource !== null) {
@@ -1956,7 +1956,7 @@
             }
 
             export class GridElView extends baseElView.BaseElView {
-                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
                 private _grid: DataGrid;
                 private _gridEventCommand: mvvm.ICommand;
                 private _options: IGridViewOptions;

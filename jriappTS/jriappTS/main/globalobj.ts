@@ -38,7 +38,7 @@
     }
 
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.2.4.0';
+        public static vesion = '2.2.5.0';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;
@@ -167,7 +167,7 @@
             }
             name = 'datepicker'; isOK = this.isModuleLoaded(name);
             if (isOK && !!self._defaults) {
-                self._defaults.datepicker = new MOD.datepicker.Datepicker();
+                self._defaults.datepicker = self.getType('IDatepicker');
             }
             if (!isOK)
                 throw new Error(baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));

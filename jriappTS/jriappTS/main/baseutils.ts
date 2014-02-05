@@ -33,6 +33,41 @@ module RIAPP {
         state(): string;
     }
 
+    export interface IEditable {
+        beginEdit(): boolean;
+        endEdit(): boolean;
+        cancelEdit(): boolean;
+        isEditing: boolean;
+    }
+
+    export interface ISubmittable {
+        submitChanges(): IVoidPromise;
+        _isCanSubmit: boolean;
+    }
+
+    export interface IValidationInfo {
+        fieldName: string;
+        errors: string[];
+    }
+
+    export interface IErrorNotification {
+        getIsHasErrors(): boolean;
+        addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
+        removeOnErrorsChanged(namespace?: string): void;
+        getFieldErrors(fieldName): IValidationInfo[];
+        getAllErrors(): IValidationInfo[];
+        getIErrorNotification(): IErrorNotification;
+    }
+
+    export interface IDatepicker {
+        datepickerRegion: string;
+        dateFormat: string;
+        attachTo($el: any, options?: any);
+        detachFrom($el: any);
+        parseDate(str: string): Date;
+        formatDate(date: Date): string;
+    } 
+
     export class ArrayHelper {
         public static clone(arr: any[]): any[] {
             if (arr.length === 1) {

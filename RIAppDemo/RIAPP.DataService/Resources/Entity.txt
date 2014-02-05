@@ -1,4 +1,4 @@
-﻿export interface {{ENTITY_INTERFACE}} extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable
+﻿export interface {{ENTITY_INTERFACE}} extends RIAPP.IEditable, RIAPP.ISubmittable
 {
 {{INTERFACE_FIELDS}}
 	getDbContext():DbContext;

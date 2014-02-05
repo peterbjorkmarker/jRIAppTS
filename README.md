@@ -43,6 +43,13 @@ In my real world applications i use an ASP.NET MVC 4 bundling feature.
 You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
+<p>2014-02-05<br/>
+1) core modules restructuring to remove mutual dependencies between modules - dynacontent, tabs are new modules. The datepicker and template modules now contain respective element views.<br/>
+2) IEditable and ISubmittable interfaces moved from RIAPP.MOD.utils namespace to RIAPP namespace. So, client side db interfaces needs to be regenerated, because entities use these interfaces.<br/>
+3) Update of the listbox control to correctly handle the situation when the datasource was assinged, and selectedValue was also assigned but the datasource is not filled with data. Now, the lisbox correctly updates it UI in the situation, when the datasource is filled with a data some time later.<br/>
+4) The demo was updated.<br/>
+5) The docs were updated.
+</p>
 <p>2014-02-04 The demo updated to work with jquery 1.10.2, qtip was updated to the version 2. All typescript files were converted to utf-8.
 DataGrid was updated. TabsElView was updated. jriapp.css file was updated.
 </p>
@@ -59,32 +66,6 @@ The demoTS typescript project contains user modules for all other demo pages.<br
 <p>2014-01-23 Added the <b>ability to test databindings</b> on the page. For this purpose the global object has a new event handler adding method addOnUnResolvedBinding.
 It registers an event handler which will be triggered when the path is not resolved. See the UserGuide.pdf for more info.<br/>
 Updated the docs and the demo. 
-</p>
-<p>2014-01-21 Documentation update.</p>
-<p>2014-01-20 Added ServerCalculated field type.</p>
-<p>2014-01-18 Docs update</p>
-<p>2014-01-17 Internal code optimization (Improved databindings processing, DataForm improvements). Added dataservice PK values checks for nulls when getting the data.</p>
-<p>2014-01-15 Docs update. Internal code optimization.</p>
-<p>2014-01-14 Docs update. Demo app update.</p>
-<p>2014-01-13 <b>Docs update!</b>  Added capabilities to add explicit additional dataset results to the main query result. Added new RC Version.</p>
-<p>2014-01-08 Added a specific Model Binder for dataservice's method arguments. The serializer was changed to NewtonSoft's serializer. Performance of AJAX requests was improved by an order of magnitude.</p>
-<p>2014-01-07 DataService's code refactoring. Types and namespaces renaming. Performance improvements.</p>
-<p>2014-01-06 Code refactoring. Code generation changes. Demo update.</p>
-<p>2014-01-04 <br/>1) <b>Entities- Complex type property support. Code refactoring.</b><br/>
-2) Breaking changes. Wire format is changed. Instead of isNavigation, isCalculated, isClientOnly props on FieldInfo i added one enum property fieldType. It is needed to update dataservice's metadata to reflect this changes. (I used text replace in the demo)<br/>
-3) In the demo project i added complex type property to Customer entity, in order to test the complex types on the entities feature.<br/>
-4) In master detail demo page i databound ComplexProp.ComplexProp.Phone to a Phone textbox.<br/>
-5) Tested- updates, inserts, deletes of entities with complex types<br/>
-6) Also tested - change tracking, validation, validation error display for complex type properties.<br/>
-P.S. The docs to be updated soon. This version will be probably a RC version.<br/>
-<b>Once again thanks to typescript. Without it so much refactoring was impossible.</b><br/>
-</p>
-<p>2013-12-29 <b>Changed wire dateformat!</b> Internal DataService's code refactoring.</p>
-<p>2013-12-28 Code generation enhancement. Now strongly typed DbSets have findEntity method, and strongly typed dictionaries have findItem method. Which have strongly typed arguments.</p>
-<p>2013-12-25   The DataService enhancements for performance reason. Also changed getting typescript code generation to a new syntax, like http://YOURSERVER/RIAppDemoService/CodeGen?type=ts<br/>
- And also for XAML and for C# code generation use it like -<br/>
- http://YOURSERVER/RIAppDemoService//CodeGen?type=xaml<br/>
- http://YOURSERVER/RIAppDemoService/CodeGen?type=csharp
 </p>
 --
 Maxim V. Tsapov<br/> 

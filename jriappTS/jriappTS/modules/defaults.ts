@@ -1,9 +1,11 @@
 ﻿module RIAPP {
     export module MOD {
         export module defaults {
+            import utilsMOD = RIAPP.MOD.utils;
+
             export class Defaults extends RIAPP.BaseObject{
                 _imagesPath: string;
-                _datepicker: utils.IDatepicker;
+                _datepicker: RIAPP.IDatepicker;
                 _dateFormat: string;
                 _dateTimeFormat: string;
                 _timeFormat: string;

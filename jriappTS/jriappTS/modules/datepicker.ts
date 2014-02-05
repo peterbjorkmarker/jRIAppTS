@@ -1,7 +1,9 @@
 ﻿module RIAPP {
     export module MOD {
         export module datepicker {
-            export class Datepicker extends RIAPP.BaseObject implements utils.IDatepicker{
+            import elviewMOD = RIAPP.MOD.baseElView;
+
+            export class Datepicker extends RIAPP.BaseObject implements RIAPP.IDatepicker{
                 private _datepickerRegion: string;
                 private _dateFormat: string;
                 
@@ -74,7 +76,33 @@
                 }
             }
 
-            global.onModuleLoaded('datepicker', defaults);
+            export interface IDatePickerOptions extends elviewMOD.ITextBoxOptions {
+                datepicker?: any;
+            }
+
+            export class DatePickerElView extends elviewMOD.TextBoxElView {
+                _init(options: IDatePickerOptions) {
+                    super._init(options);
+                    var $el = this.$el;
+                    global.defaults.datepicker.attachTo($el, options.datepicker);
+                }
+                destroy() {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    var $el = this.$el;
+                    global.defaults.datepicker.detachFrom($el);
+                    super.destroy();
+                }
+                toString() {
+                    return 'DatePickerElView';
+                }
+            }
+
+
+            global.registerType('IDatepicker', new Datepicker());
+            global.registerElView('datepicker', DatePickerElView);
+            global.onModuleLoaded('datepicker', datepicker);
         }
     }
 }

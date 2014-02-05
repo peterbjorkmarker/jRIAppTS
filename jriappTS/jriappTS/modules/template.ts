@@ -1,10 +1,11 @@
 ﻿module RIAPP {
     export module MOD {
         export module template {
-            import constsMOD = MOD.consts;
+            import constsMOD = RIAPP.MOD.consts;
             import utilsMOD = RIAPP.MOD.utils;
             import bindMOD = RIAPP.MOD.binding;
-            import elviewMOD = MOD.baseElView;
+            import elviewMOD = RIAPP.MOD.baseElView;
+            import mvvmMOD = RIAPP.MOD.mvvm;
 
             export var css = {
                 templateContainer: 'ria-template-container'
@@ -20,7 +21,7 @@
                 private _isDisabled: boolean;
                 private _lfTime: utilsMOD.LifeTimeScope;
                 private _templateID: string;
-                private _templElView: elviewMOD.TemplateElView;
+                private _templElView: TemplateElView;
                 private _promise: RIAPP.IDeferred<any>;
                 private _busyTimeOut: number;
                 private _app: RIAPP.Application;
@@ -59,7 +60,7 @@
                     }
                     return res;
                 }
-                private _getTemplateElView(): elviewMOD.TemplateElView {
+                private _getTemplateElView(): TemplateElView {
                     if (!this._lfTime || this._templElView === null)
                         return null;
                     if (!!this._templElView)
@@ -300,7 +301,71 @@
                 get app() { return this._app; }
             }
 
+            //typed parameters
+            export class TemplateCommand extends mvvmMOD.Command {
+                constructor(fn_action: (sender: TemplateElView, param: { template: Template; isLoaded: boolean; }) => void, thisObj, fn_canExecute: (sender: TemplateElView, param: { template: template.Template; isLoaded: boolean; }) => boolean) {
+                    super(fn_action, thisObj, fn_canExecute);
+                }
+            }
+
+            export class TemplateElView extends elviewMOD.CommandElView {
+                private _template: Template;
+                private _isEnabled: boolean;
+                constructor(app: RIAPP.Application, el: HTMLElement, options: elviewMOD.IViewOptions) {
+                    this._template = null;
+                    this._isEnabled = true;
+                    super(app, el, options);
+                }
+                templateLoaded(template: Template) {
+                    var self = this, p = self._commandParam;
+                    try {
+                        self._template = template;
+                        self._template.isDisabled = !self._isEnabled;
+                        self._commandParam = { template: template, isLoaded: true };
+                        self.invokeCommand();
+                        self._commandParam = p;
+                        this.raisePropertyChanged('template');
+                    }
+                    catch (ex) {
+                        this._onError(ex, this);
+                        global._throwDummy(ex);
+                    }
+                }
+                templateUnloading(template: Template) {
+                    var self = this, p = self._commandParam;
+                    try {
+                        self._commandParam = { template: template, isLoaded: false };
+                        self.invokeCommand();
+                    }
+                    catch (ex) {
+                        this._onError(ex, this);
+                    }
+                    finally {
+                        self._commandParam = p;
+                        self._template = null;
+                    }
+                    this.raisePropertyChanged('template');
+                }
+                toString() {
+                    return 'TemplateElView';
+                }
+                get isEnabled() { return this._isEnabled; }
+                set isEnabled(v: boolean) {
+                    if (this._isEnabled !== v) {
+                        this._isEnabled = v;
+                        if (!!this._template) {
+                            this._template.isDisabled = !this._isEnabled;
+                        }
+                        this.raisePropertyChanged('isEnabled');
+                    }
+                }
+                get template() {
+                    return this._template;
+                }
+            };
+
             global.registerType('Template', Template);
+            global.registerElView('template', TemplateElView);
             global.onModuleLoaded('template', template);
         }
     }

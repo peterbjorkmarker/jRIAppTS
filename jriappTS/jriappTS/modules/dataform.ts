@@ -1,10 +1,10 @@
 ﻿module RIAPP {
     export module MOD {
         export module dataform {
-            import constsMOD = MOD.consts;
+            import constsMOD = RIAPP.MOD.consts;
             import utilsMOD = RIAPP.MOD.utils;
             import bindMOD = RIAPP.MOD.binding;
-            import elviewMOD = MOD.baseElView;
+            import elviewMOD = RIAPP.MOD.baseElView;
             import contentMOD = RIAPP.MOD.baseContent;
             export var css = {
                 dataform: 'ria-dataform'
@@ -19,7 +19,7 @@
                 private _el: HTMLElement;
                 private _$el: JQuery;
                 private _objId: string;
-                private _dataContext: BaseObject;
+                private _dataContext: RIAPP.BaseObject;
                 private _isEditing: boolean;
                 private _isDisabled: boolean;
                 private _content: contentMOD.IContent[];
@@ -28,11 +28,11 @@
                 private _supportEdit: boolean;
                 private _supportErrNotify: boolean;
                 private _parentDataForm: elviewMOD.BaseElView;
-                private _errors: bindMOD.IValidationInfo[];
-                private _app: Application;
+                private _errors: RIAPP.IValidationInfo[];
+                private _app: RIAPP.Application;
                 private _isInsideTemplate: boolean;
 
-                constructor(app:Application, el:HTMLElement) {
+                constructor(app: RIAPP.Application, el:HTMLElement) {
                     super();
                     var self = this, parent: HTMLElement;
                     this._app = app;
@@ -84,8 +84,8 @@
                 }
                 private _updateIsDisabled() {
                     var i: number, len: number, bnd: bindMOD.Binding, vw: elviewMOD.BaseElView,
-                        bindings = this._getBindings(), elViews = this._getElViews(),
-                        DataFormElView = this.app._getElViewType(constsMOD.ELVIEW_NM.DATAFORM);
+                        bindings = this._getBindings(), elViews = this._getElViews();
+
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         bnd = bindings[i];
                         bnd.isDisabled = this._isDisabled;
@@ -157,7 +157,7 @@
                     this._createContent();
                 }
                 private _onDSErrorsChanged() {
-                    var dataContext: bindMOD.IErrorNotification = <any>this._dataContext;
+                    var dataContext: IErrorNotification = <any>this._dataContext;
                     this.validationErrors = dataContext.getAllErrors();
                 }
                 private _bindDS() {
@@ -175,7 +175,7 @@
                     }
 
                     if (this._supportErrNotify) {
-                        (<bindMOD.IErrorNotification>dataContext).addOnErrorsChanged(function (sender, args) {
+                        (<IErrorNotification>dataContext).addOnErrorsChanged(function (sender, args) {
                             self._onDSErrorsChanged();
                         }, self._objId);
                     }
@@ -223,7 +223,7 @@
                 get app() { return this._app; }
                 get el() { return this._el; }
                 get dataContext() { return this._dataContext; }
-                set dataContext(v: BaseObject) {
+                set dataContext(v: RIAPP.BaseObject) {
                     var dataContext:any;
                     try {
                         if (v === this._dataContext)
@@ -245,8 +245,8 @@
                         this._updateContent();
                         this.raisePropertyChanged('dataContext');
                         if (!!dataContext) {
-                            if (this._supportEdit && this._isEditing !== (<utilsMOD.IEditable>dataContext).isEditing) {
-                                this.isEditing = (<utilsMOD.IEditable>dataContext).isEditing;
+                            if (this._supportEdit && this._isEditing !== (<RIAPP.IEditable>dataContext).isEditing) {
+                                this.isEditing = (<RIAPP.IEditable>dataContext).isEditing;
                             }
                             if (this._supportErrNotify) {
                                 this._onDSErrorsChanged();
@@ -261,7 +261,7 @@
                     var dataContext: any = this._dataContext;
                     if (!dataContext)
                         return;
-                    var isEditing = this._isEditing, editable: utilsMOD.IEditable;
+                    var isEditing = this._isEditing, editable: RIAPP.IEditable;
 
                     if (!this._supportEdit && v !== isEditing) {
                         this._isEditing = v;
@@ -271,7 +271,7 @@
                     }
 
                     if (this._supportEdit)
-                        editable = <utilsMOD.IEditable>dataContext;
+                        editable = <RIAPP.IEditable>dataContext;
 
                     if (v !== isEditing) {
                         try {
@@ -340,7 +340,7 @@
                         }
                     }, this._objId);
                 }
-                _getErrorTipInfo(errors: bindMOD.IValidationInfo[]) {
+                _getErrorTipInfo(errors: RIAPP.IValidationInfo[]) {
                     var tip = ['<b>', ERRTEXT.errorInfo, '</b>', '<ul>'];
                     errors.forEach(function (info) {
                         var fieldName = info.fieldName, res = '';
@@ -359,7 +359,7 @@
                     tip.push('</ul>');
                     return tip.join('');
                 }
-                _updateErrorUI(el: HTMLElement, errors: bindMOD.IValidationInfo[]) {
+                _updateErrorUI(el: HTMLElement, errors: RIAPP.IValidationInfo[]) {
                     if (!el) {
                         return;
                     }

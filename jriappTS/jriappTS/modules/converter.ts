@@ -24,14 +24,20 @@
                 convertToSource(val, param, dataContext) {
                     if (!val)
                         return null;
-                    var datepicker = global.defaults.datepicker;
-                    return datepicker.parseDate(val);
+                    var defaults = RIAPP.global.defaults, datepicker = defaults.datepicker;
+                    if (!!datepicker)
+                        return datepicker.parseDate(val);
+                    else
+                        return dateTimeConverter.convertToSource(val, defaults.dateFormat, dataContext);
                 }
                 convertToTarget(val, param, dataContext) {
                     if (RIAPP.global.utils.check.isNt(val))
                         return '';
-                    var datepicker = global.defaults.datepicker;
-                    return datepicker.formatDate(val);
+                    var defaults = RIAPP.global.defaults, datepicker = defaults.datepicker;
+                    if (!!datepicker)
+                        return datepicker.formatDate(val);
+                    else
+                        return dateTimeConverter.convertToTarget(val, defaults.dateFormat, dataContext);
                 }
                 toString() {
                     return 'DateConverter';

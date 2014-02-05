@@ -49,27 +49,6 @@
                 return fn;
             };
 
-            export interface IEditable {
-                beginEdit(): boolean;
-                endEdit(): boolean;
-                cancelEdit(): boolean;
-                isEditing: boolean;
-            }
-
-            export interface ISubmittable {
-                submitChanges(): IVoidPromise;
-                _isCanSubmit: boolean;
-            }
-
-            export interface IDatepicker {
-                datepickerRegion: string;
-                dateFormat: string;
-                attachTo($el:any, options?:any);
-                detachFrom($el: any);
-                parseDate(str: string): Date;
-                formatDate(date: Date): string;
-            } 
-
             export class Checks {
                 static isNull = base_utils.isNull;
                 static isUndefined = base_utils.isUndefined;
@@ -116,7 +95,7 @@
                     return !!obj && obj instanceof MOD.baseElView.BaseElView;
                 }
                 static isTemplateElView(obj) {
-                    return !!obj && obj instanceof MOD.baseElView.TemplateElView;
+                    return !!obj && obj instanceof MOD.template.TemplateElView;
                 }
                 static isEditable(obj) {
                     return !!obj && !!obj.beginEdit && !!obj.endEdit && !!obj.cancelEdit && global.utils.hasProp(obj,'isEditing');

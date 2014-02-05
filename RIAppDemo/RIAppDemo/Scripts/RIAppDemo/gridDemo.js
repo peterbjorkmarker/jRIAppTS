@@ -1,4 +1,4 @@
-var __extends = this.__extends || function (d, b) {
+﻿var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -10,10 +10,9 @@ var __extends = this.__extends || function (d, b) {
 /// <reference path="demoDB.ts"/>
 var RIAPP;
 (function (RIAPP) {
-    'use strict';
-
     //data grid demo module
     (function (GRIDDEMO) {
+        'use strict';
         var global = RIAPP.global, utils = global.utils;
         var collMod = RIAPP.MOD.collection;
 
@@ -925,7 +924,7 @@ var RIAPP;
                 });
 
                 //executed when template is loaded or unloading
-                this._templateCommand = new RIAPP.MOD.baseElView.TemplateCommand(function (sender, param) {
+                this._templateCommand = new RIAPP.MOD.template.TemplateCommand(function (sender, param) {
                     try  {
                         var template = param.template, $ = global.$, fileEl = $('input[data-name="files-to-upload"]', template.el);
                         if (fileEl.length == 0)

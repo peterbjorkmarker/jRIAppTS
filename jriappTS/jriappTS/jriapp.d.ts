@@ -48,6 +48,36 @@ declare module RIAPP {
         promise(): IPromise<T>;
         state(): string;
     }
+    interface IEditable {
+        beginEdit(): boolean;
+        endEdit(): boolean;
+        cancelEdit(): boolean;
+        isEditing: boolean;
+    }
+    interface ISubmittable {
+        submitChanges(): IVoidPromise;
+        _isCanSubmit: boolean;
+    }
+    interface IValidationInfo {
+        fieldName: string;
+        errors: string[];
+    }
+    interface IErrorNotification {
+        getIsHasErrors(): boolean;
+        addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
+        removeOnErrorsChanged(namespace?: string): void;
+        getFieldErrors(fieldName: any): IValidationInfo[];
+        getAllErrors(): IValidationInfo[];
+        getIErrorNotification(): IErrorNotification;
+    }
+    interface IDatepicker {
+        datepickerRegion: string;
+        dateFormat: string;
+        attachTo($el: any, options?: any): any;
+        detachFrom($el: any): any;
+        parseDate(str: string): Date;
+        formatDate(date: Date): string;
+    }
     class ArrayHelper {
         static clone(arr: any[]): any[];
         static fromList(list: {
@@ -279,7 +309,6 @@ declare module RIAPP {
             }
             var ELVIEW_NM: {
                 DATAFORM: string;
-                DYNACONT: string;
             };
             var LOADER_GIF: {
                 SMALL: string;
@@ -293,24 +322,6 @@ declare module RIAPP {
         module utils {
             function defineProps(proto: any, props?: any, propertyDescriptors?: any): any;
             function __extendType(_super: any, pds: any, props: any): () => void;
-            interface IEditable {
-                beginEdit(): boolean;
-                endEdit(): boolean;
-                cancelEdit(): boolean;
-                isEditing: boolean;
-            }
-            interface ISubmittable {
-                submitChanges(): RIAPP.IVoidPromise;
-                _isCanSubmit: boolean;
-            }
-            interface IDatepicker {
-                datepickerRegion: string;
-                dateFormat: string;
-                attachTo($el: any, options?: any): any;
-                detachFrom($el: any): any;
-                parseDate(str: string): Date;
-                formatDate(date: Date): string;
-            }
             class Checks {
                 static isNull: (a: any) => boolean;
                 static isUndefined: (a: any) => boolean;
@@ -448,6 +459,13 @@ declare module RIAPP {
                 constructor(ex: any);
                 static create(ex: any): DummyError;
             }
+            class ValidationError extends BaseError {
+                public _errors: RIAPP.IValidationInfo[];
+                public _item: any;
+                constructor(errorInfo: RIAPP.IValidationInfo[], item: any);
+                public item : any;
+                public errors : RIAPP.IValidationInfo[];
+            }
         }
     }
 }
@@ -512,7 +530,7 @@ declare module RIAPP {
         module defaults {
             class Defaults extends RIAPP.BaseObject {
                 public _imagesPath: string;
-                public _datepicker: MOD.utils.IDatepicker;
+                public _datepicker: RIAPP.IDatepicker;
                 public _dateFormat: string;
                 public _dateTimeFormat: string;
                 public _timeFormat: string;
@@ -526,7 +544,7 @@ declare module RIAPP {
                 public dateFormat : string;
                 public timeFormat : string;
                 public dateTimeFormat : string;
-                public datepicker : MOD.utils.IDatepicker;
+                public datepicker : RIAPP.IDatepicker;
                 public imagesPath : string;
                 public decimalPoint : string;
                 public thousandSep : string;
@@ -564,27 +582,6 @@ declare module RIAPP {
                 public parseOption(part: string): any;
                 public parseOptions(str: string): any[];
                 public toString(): string;
-            }
-        }
-    }
-}
-declare module RIAPP {
-    module MOD {
-        module datepicker {
-            class Datepicker extends RIAPP.BaseObject implements MOD.utils.IDatepicker {
-                private _datepickerRegion;
-                private _dateFormat;
-                constructor();
-                public toString(): string;
-                public attachTo($el: any, options?: {
-                    dateFormat?: string;
-                }): void;
-                public detachFrom($el: any): void;
-                public parseDate(str: string): Date;
-                public formatDate(date: Date): string;
-                public dateFormat : string;
-                public datepickerRegion : string;
-                public datePickerFn : any;
             }
         }
     }
@@ -654,7 +651,7 @@ declare module RIAPP {
                 public _oldDisplay: string;
                 public _objId: string;
                 public _propChangedCommand: MOD.mvvm.ICommand;
-                public _errors: MOD.binding.IValidationInfo[];
+                public _errors: RIAPP.IValidationInfo[];
                 public _toolTip: string;
                 public _css: string;
                 public _app: RIAPP.Application;
@@ -663,9 +660,9 @@ declare module RIAPP {
                 public _init(options: IViewOptions): void;
                 public destroy(): void;
                 public invokePropChanged(property: string): void;
-                public _getErrorTipInfo(errors: MOD.binding.IValidationInfo[]): string;
+                public _getErrorTipInfo(errors: RIAPP.IValidationInfo[]): string;
                 public _setFieldError(isError: boolean): void;
-                public _updateErrorUI(el: HTMLElement, errors: MOD.binding.IValidationInfo[]): void;
+                public _updateErrorUI(el: HTMLElement, errors: RIAPP.IValidationInfo[]): void;
                 public _onError(error: any, source: any): boolean;
                 public _setToolTip($el: JQuery, tip: string, className?: string): void;
                 public toString(): string;
@@ -674,7 +671,7 @@ declare module RIAPP {
                 public uniqueID : string;
                 public isVisible : boolean;
                 public propChangedCommand : MOD.mvvm.ICommand;
-                public validationErrors : MOD.binding.IValidationInfo[];
+                public validationErrors : RIAPP.IValidationInfo[];
                 public dataNameAttr : string;
                 public toolTip : string;
                 public css : string;
@@ -700,25 +697,6 @@ declare module RIAPP {
                 public command : MOD.mvvm.Command;
                 public commandParam : any;
             }
-            class TemplateCommand extends MOD.mvvm.Command {
-                constructor(fn_action: (sender: TemplateElView, param: {
-                    template: MOD.template.Template;
-                    isLoaded: boolean;
-                }) => void, thisObj: any, fn_canExecute: (sender: TemplateElView, param: {
-                    template: MOD.template.Template;
-                    isLoaded: boolean;
-                }) => boolean);
-            }
-            class TemplateElView extends CommandElView {
-                private _template;
-                private _isEnabled;
-                constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions);
-                public templateLoaded(template: MOD.template.Template): void;
-                public templateUnloading(template: MOD.template.Template): void;
-                public toString(): string;
-                public isEnabled : boolean;
-                public template : MOD.template.Template;
-            }
             class BusyElView extends BaseElView {
                 private _delay;
                 private _timeOut;
@@ -731,17 +709,6 @@ declare module RIAPP {
                 public toString(): string;
                 public isBusy : boolean;
                 public delay : number;
-            }
-            class DynaContentElView extends BaseElView {
-                private _dataContext;
-                private _template;
-                constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions);
-                private _templateChanged();
-                public updateTemplate(name: string): void;
-                public destroy(): void;
-                public templateID : string;
-                public template : MOD.template.Template;
-                public dataContext : any;
             }
             class CheckBoxElView extends InputElView {
                 private _val;
@@ -883,25 +850,6 @@ declare module RIAPP {
                 public el : HTMLImageElement;
                 public src : string;
             }
-            class TabsElView extends BaseElView {
-                private _tabsEventCommand;
-                private _tabOpts;
-                public _init(options: any): void;
-                public _createTabs(): void;
-                public _destroyTabs(): void;
-                public invokeTabsEvent(eventName: string, args: any): void;
-                public destroy(): void;
-                public toString(): string;
-                public tabsEventCommand : MOD.mvvm.ICommand;
-            }
-            interface IDatePickerOptions extends ITextBoxOptions {
-                datepicker?: any;
-            }
-            class DatePickerElView extends TextBoxElView {
-                public _init(options: IDatePickerOptions): void;
-                public destroy(): void;
-                public toString(): string;
-            }
         }
     }
 }
@@ -933,26 +881,7 @@ declare module RIAPP {
                 source?: any;
                 isSourceFixed?: boolean;
             }
-            interface IValidationInfo {
-                fieldName: string;
-                errors: string[];
-            }
-            interface IErrorNotification {
-                getIsHasErrors(): boolean;
-                addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
-                removeOnErrorsChanged(namespace?: string): void;
-                getFieldErrors(fieldName: any): IValidationInfo[];
-                getAllErrors(): IValidationInfo[];
-                getIErrorNotification(): IErrorNotification;
-            }
             function _checkIsErrorNotification(obj: any): boolean;
-            class ValidationError extends MOD.errors.BaseError {
-                public _errors: IValidationInfo[];
-                public _item: any;
-                constructor(errorInfo: IValidationInfo[], item: any);
-                public item : any;
-                public errors : IValidationInfo[];
-            }
             class Binding extends RIAPP.BaseObject {
                 private _state;
                 private _mode;
@@ -1077,7 +1006,7 @@ declare module RIAPP {
             }
             function fn_getPropertyByName(name: string, props: IFieldInfo[]): IFieldInfo;
             function fn_traverseField(fld: IFieldInfo, fn: (name: string, fld: IFieldInfo) => void): void;
-            class CollectionItem extends RIAPP.BaseObject implements MOD.binding.IErrorNotification, MOD.utils.IEditable, MOD.utils.ISubmittable {
+            class CollectionItem extends RIAPP.BaseObject implements RIAPP.IErrorNotification, RIAPP.IEditable, RIAPP.ISubmittable {
                 public _fkey: string;
                 public _isEditing: boolean;
                 public _saveVals: {
@@ -1095,18 +1024,18 @@ declare module RIAPP {
                 public _onError(error: any, source: any): boolean;
                 public _beginEdit(): boolean;
                 public _endEdit(): boolean;
-                public _validate(): MOD.binding.IValidationInfo;
+                public _validate(): RIAPP.IValidationInfo;
                 public _skipValidate(fieldInfo: IFieldInfo, val: any): boolean;
-                public _validateField(fieldName: any): MOD.binding.IValidationInfo;
-                public _validateAll(): MOD.binding.IValidationInfo[];
+                public _validateField(fieldName: any): RIAPP.IValidationInfo;
+                public _validateAll(): RIAPP.IValidationInfo[];
                 public _checkVal(fieldInfo: IFieldInfo, val: any): any;
                 public _resetIsNew(): void;
                 public _onAttaching(): void;
                 public _onAttach(): void;
                 public getFieldInfo(fieldName: string): IFieldInfo;
                 public getFieldNames(): string[];
-                public getFieldErrors(fieldName: any): MOD.binding.IValidationInfo[];
-                public getAllErrors(): MOD.binding.IValidationInfo[];
+                public getFieldErrors(fieldName: any): RIAPP.IValidationInfo[];
+                public getAllErrors(): RIAPP.IValidationInfo[];
                 public getErrorString(): string;
                 public submitChanges(): RIAPP.IVoidPromise;
                 public beginEdit(): boolean;
@@ -1119,7 +1048,7 @@ declare module RIAPP {
                 public getCollection(): Collection;
                 public getIsEditing(): boolean;
                 public getIsHasErrors(): boolean;
-                public getIErrorNotification(): MOD.binding.IErrorNotification;
+                public getIErrorNotification(): RIAPP.IErrorNotification;
                 public destroy(): void;
                 public toString(): string;
                 public _isCanSubmit : boolean;
@@ -1259,9 +1188,9 @@ declare module RIAPP {
                 public _onEditing(item: TItem, isBegin: boolean, isCanceled: boolean): void;
                 public _onCommitChanges(item: TItem, isBegin: boolean, isRejected: boolean, changeType: number): void;
                 public _onItemStatusChanged(item: TItem, oldChangeType: number): void;
-                public _validateItem(item: TItem): MOD.binding.IValidationInfo;
-                public _validateItemField(item: TItem, fieldName: string): MOD.binding.IValidationInfo;
-                public _addErrors(item: TItem, errors: MOD.binding.IValidationInfo[]): void;
+                public _validateItem(item: TItem): RIAPP.IValidationInfo;
+                public _validateItemField(item: TItem, fieldName: string): RIAPP.IValidationInfo;
+                public _addErrors(item: TItem, errors: RIAPP.IValidationInfo[]): void;
                 public _addError(item: TItem, fieldName: string, errors: string[]): void;
                 public _removeError(item: TItem, fieldName: string): void;
                 public _removeAllErrors(item: TItem): void;
@@ -1429,6 +1358,25 @@ declare module RIAPP {
                 public el : HTMLElement;
                 public isDisabled : boolean;
                 public app : RIAPP.Application;
+            }
+            class TemplateCommand extends MOD.mvvm.Command {
+                constructor(fn_action: (sender: TemplateElView, param: {
+                    template: Template;
+                    isLoaded: boolean;
+                }) => void, thisObj: any, fn_canExecute: (sender: TemplateElView, param: {
+                    template: Template;
+                    isLoaded: boolean;
+                }) => boolean);
+            }
+            class TemplateElView extends MOD.baseElView.CommandElView {
+                private _template;
+                private _isEnabled;
+                constructor(app: RIAPP.Application, el: HTMLElement, options: MOD.baseElView.IViewOptions);
+                public templateLoaded(template: Template): void;
+                public templateUnloading(template: Template): void;
+                public toString(): string;
+                public isEnabled : boolean;
+                public template : Template;
             }
         }
     }
@@ -1649,7 +1597,7 @@ declare module RIAPP {
                 public el : HTMLElement;
                 public dataContext : RIAPP.BaseObject;
                 public isEditing : boolean;
-                public validationErrors : MOD.binding.IValidationInfo[];
+                public validationErrors : RIAPP.IValidationInfo[];
                 public isDisabled : boolean;
                 public isInsideTemplate : boolean;
             }
@@ -1657,8 +1605,8 @@ declare module RIAPP {
                 private _form;
                 private _options;
                 constructor(app: RIAPP.Application, el: HTMLSelectElement, options: MOD.baseElView.IViewOptions);
-                public _getErrorTipInfo(errors: MOD.binding.IValidationInfo[]): string;
-                public _updateErrorUI(el: HTMLElement, errors: MOD.binding.IValidationInfo[]): void;
+                public _getErrorTipInfo(errors: RIAPP.IValidationInfo[]): string;
+                public _updateErrorUI(el: HTMLElement, errors: RIAPP.IValidationInfo[]): void;
                 public destroy(): void;
                 public toString(): string;
                 public dataContext : RIAPP.BaseObject;
@@ -1670,757 +1618,64 @@ declare module RIAPP {
 }
 declare module RIAPP {
     module MOD {
-        module db {
-            enum FLAGS {
-                None = 0,
-                Changed = 1,
-                Setted = 2,
-                Refreshed = 4,
-            }
-            enum REFRESH_MODE {
-                NONE = 0,
-                RefreshCurrent = 1,
-                MergeIntoCurrent = 2,
-                CommitChanges = 3,
-            }
-            enum DELETE_ACTION {
-                NoAction = 0,
-                Cascade = 1,
-                SetNulls = 2,
-            }
-            enum DATA_OPER {
-                SUBMIT = 0,
-                LOAD = 1,
-                INVOKE = 2,
-                REFRESH = 3,
-                INIT = 4,
-            }
-            class DataOperationError extends MOD.errors.BaseError {
-                public _operationName: DATA_OPER;
-                constructor(ex: any, operationName: DATA_OPER);
-                public operationName : DATA_OPER;
-            }
-            class AccessDeniedError extends DataOperationError {
-            }
-            class ConcurrencyError extends DataOperationError {
-            }
-            class SvcValidationError extends DataOperationError {
-            }
-            class SubmitError extends DataOperationError {
-                public _allSubmitted: Entity[];
-                public _notValidated: Entity[];
-                constructor(origError: any, allSubmitted: Entity[], notValidated: Entity[]);
-                public allSubmitted : Entity[];
-                public notValidated : Entity[];
-            }
-            interface IFieldName {
-                n: string;
-                p: IFieldName[];
-            }
-            interface ICachedPage {
-                items: Entity[];
-                pageIndex: number;
-            }
-            interface IQueryParamInfo {
-                dataType: MOD.consts.DATA_TYPE;
-                dateConversion: MOD.consts.DATE_CONVERSION;
-                isArray: boolean;
-                isNullable: boolean;
-                name: string;
-                ordinal: number;
-            }
-            interface IQueryInfo {
-                isQuery: boolean;
-                methodName: string;
-                methodResult: boolean;
-                parameters: IQueryParamInfo[];
-            }
-            interface IFilterInfo {
-                filterItems: {
-                    fieldName: string;
-                    kind: MOD.collection.FILTER_TYPE;
-                    values: any[];
-                }[];
-            }
-            interface ISortInfo {
-                sortItems: {
-                    fieldName: string;
-                    sortOrder: MOD.collection.SORT_ORDER;
-                }[];
-            }
-            interface IEntityConstructor {
-                new(dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]): Entity;
-            }
-            interface IValueChange {
-                val: any;
-                orig: any;
-                fieldName: string;
-                flags: number;
-                nested: IValueChange[];
-            }
-            interface IValidationErrorInfo {
-                fieldName: string;
-                message: string;
-            }
-            interface IRowInfo {
-                values: IValueChange[];
-                changeType: number;
-                serverKey: string;
-                clientKey: string;
-                error: string;
-                invalid?: IValidationErrorInfo[];
-            }
-            interface IPermissions extends MOD.collection.IPermissions {
-                dbSetName: string;
-            }
-            interface IPermissionsInfo {
-                serverTimezone: number;
-                permissions: IPermissions[];
-            }
-            interface IParamInfo {
-                parameters: {
-                    name: string;
-                    value: any;
-                }[];
-            }
-            interface IErrorInfo {
-                name: string;
-                message: string;
-            }
-            interface IInvokeRequest {
-                methodName: string;
-                paramInfo: IParamInfo;
-            }
-            interface IInvokeResponse {
-                result: any;
-                error: IErrorInfo;
-            }
-            interface IDbSetInfo {
-                dbSetName: string;
-                enablePaging: boolean;
-                pageSize: number;
-                fieldInfos: MOD.collection.IFieldInfo[];
-            }
-            interface IRefreshRowInfo {
-                dbSetName: string;
-                rowInfo: IRowInfo;
-                error: {
-                    name: string;
-                    message: string;
-                };
-            }
-            interface IDbSetConstuctorOptions {
-                dbContext: DbContext;
-                dbSetInfo: IDbSetInfo;
-                childAssoc: IAssociationInfo[];
-                parentAssoc: IAssociationInfo[];
-            }
-            interface IAssocConstructorOptions {
-                dbContext: DbContext;
-                parentName: string;
-                childName: string;
-                onDeleteAction: DELETE_ACTION;
-                parentKeyFields: string[];
-                childKeyFields: string[];
-                parentToChildrenName: string;
-                childToParentName: string;
-                name: string;
-            }
-            interface IAssociationInfo {
-                childDbSetName: string;
-                childToParentName: string;
-                name: string;
-                onDeleteAction: number;
-                parentDbSetName: string;
-                parentToChildrenName: string;
-                fieldRels: {
-                    childField: string;
-                    parentField: string;
-                }[];
-            }
-            interface IDbSetOptions extends MOD.collection.ICollectionOptions {
-                dbSetName: string;
-            }
-            interface IMetadata {
-                associations: IAssociationInfo[];
-                dbSets: IDbSetInfo[];
-                methods: IQueryInfo[];
-                serverTimezone: number;
-            }
-            interface ITrackAssoc {
-                assocName: string;
-                parentKey: string;
-                childKey: string;
-            }
-            interface IChangeSet {
-                dbSets: {
-                    dbSetName: string;
-                    rows: IRowInfo[];
-                }[];
-                error: {
-                    name: string;
-                    message: string;
-                };
-                trackAssocs: ITrackAssoc[];
-            }
-            interface IQueryRequest {
-                dbSetName: string;
-                pageIndex: number;
-                pageSize: number;
-                pageCount: number;
-                isIncludeTotalCount: boolean;
-                filterInfo: IFilterInfo;
-                sortInfo: ISortInfo;
-                paramInfo: IParamInfo;
-                queryName: string;
-            }
-            interface IRowData {
-                k: string;
-                v: any[];
-            }
-            interface IQueryResult<TEntity extends Entity> {
-                fetchedItems: TEntity[];
-                newItems: TEntity[];
-                isPageChanged: boolean;
-                outOfBandData: any;
-            }
-            interface IIncludedResult {
-                names: IFieldName[];
-                rows: IRowData[];
-                rowCount: number;
-                dbSetName: string;
-            }
-            interface IQueryResponse {
-                names: IFieldName[];
-                rows: IRowData[];
-                rowCount: number;
-                dbSetName: string;
-                pageIndex: number;
-                pageCount: number;
-                totalCount: number;
-                extraInfo: any;
-                error: IErrorInfo;
-                included: IIncludedResult[];
-            }
-            interface IDbSetConstructor {
-                new(dbContext: DbContext): DbSet<Entity>;
-            }
-            class DataCache extends RIAPP.BaseObject {
-                public _query: TDataQuery<Entity>;
-                public _cache: ICachedPage[];
-                public _totalCount: number;
-                public _itemsByKey: {
-                    [key: string]: Entity;
-                };
-                constructor(query: TDataQuery<Entity>);
-                public getCachedPage(pageIndex: number): ICachedPage;
-                public reindexCache(): void;
-                public getPrevCachedPageIndex(currentPageIndex: number): number;
-                public getNextRange(pageIndex: number): {
-                    start: number;
-                    end: number;
-                    cnt: number;
-                };
-                public fillCache(start: number, items: Entity[]): void;
-                public clear(): void;
-                public clearCacheForPage(pageIndex: number): void;
-                public hasPage(pageIndex: number): boolean;
-                public getItemByKey(key: string): Entity;
-                public getPageByItem(item: Entity): number;
+        module dynacontent {
+            class DynaContentElView extends MOD.baseElView.BaseElView {
+                private _dataContext;
+                private _template;
+                constructor(app: RIAPP.Application, el: HTMLElement, options: MOD.baseElView.IViewOptions);
+                private _templateChanged();
+                public updateTemplate(name: string): void;
                 public destroy(): void;
-                public toString(): string;
-                public _pageCount : number;
-                public pageSize : any;
-                public loadPageCount : any;
-                public totalCount : number;
-                public cacheSize : number;
+                public templateID : string;
+                public template : MOD.template.Template;
+                public dataContext : any;
             }
-            class TDataQuery<TEntity extends Entity> extends RIAPP.BaseObject {
-                public _dbSet: DbSet<TEntity>;
-                public __queryInfo: IQueryInfo;
-                public _filterInfo: IFilterInfo;
-                public _sortInfo: ISortInfo;
-                public _isIncludeTotalCount: boolean;
-                public _isClearPrevData: boolean;
-                public _pageSize: number;
-                public _pageIndex: number;
-                public _params: any;
-                public _loadPageCount: number;
-                public _isClearCacheOnEveryLoad: boolean;
-                public _dataCache: DataCache;
-                public _cacheInvalidated: boolean;
-                constructor(dbSet: DbSet<TEntity>, queryInfo: IQueryInfo);
-                public getFieldInfo(fieldName: string): MOD.collection.IFieldInfo;
-                public getFieldNames(): string[];
-                private _addSort(fieldName, sortOrder);
-                private _addFilterItem(fieldName, operand, value);
-                public where(fieldName: string, operand: MOD.collection.FILTER_TYPE, value: any): TDataQuery<TEntity>;
-                public and(fieldName: string, operand: MOD.collection.FILTER_TYPE, value: any): TDataQuery<TEntity>;
-                public orderBy(fieldName: string, sortOrder?: MOD.collection.SORT_ORDER): TDataQuery<TEntity>;
-                public thenBy(fieldName: string, sortOrder?: MOD.collection.SORT_ORDER): TDataQuery<TEntity>;
-                public clearSort(): TDataQuery<TEntity>;
-                public clearFilter(): TDataQuery<TEntity>;
-                public clearParams(): TDataQuery<TEntity>;
-                public _clearCache(): void;
-                public _getCache(): DataCache;
-                public _reindexCache(): void;
-                public _isPageCached(pageIndex: number): boolean;
-                public _resetCacheInvalidated(): void;
-                public load(): RIAPP.IPromise<IQueryResult<TEntity>>;
-                public destroy(): void;
-                public toString(): string;
-                public _queryInfo : IQueryInfo;
-                public _serverTimezone : number;
-                public entityType : IEntityConstructor;
-                public dbSet : DbSet<TEntity>;
-                public dbSetName : string;
-                public queryName : string;
-                public filterInfo : IFilterInfo;
-                public sortInfo : ISortInfo;
-                public isIncludeTotalCount : boolean;
-                public isClearPrevData : boolean;
-                public pageSize : number;
-                public pageIndex : number;
-                public params : any;
-                public isPagingEnabled : boolean;
-                public loadPageCount : number;
-                public isClearCacheOnEveryLoad : boolean;
-                public isCacheValid : boolean;
-            }
-            class DataQuery extends TDataQuery<Entity> {
-            }
-            class Entity extends MOD.collection.CollectionItem {
-                private __changeType;
-                private __isRefreshing;
-                private __isCached;
-                private __dbSet;
-                private _srvRowKey;
-                private _origVals;
-                private _saveChangeType;
-                constructor(dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]);
-                public _updateKeys(srvKey: string): void;
-                public _initRowInfo(row: IRowData, names: IFieldName[]): void;
-                public _processValues(path: string, values: any[], names: IFieldName[]): void;
-                public _checkCanRefresh(): void;
-                public _refreshValue(val: any, fullName: string, refreshMode: REFRESH_MODE): void;
-                public _refreshValues(rowInfo: IRowInfo, refreshMode: REFRESH_MODE): void;
-                public _onFieldChanged(fieldName: string, fieldInfo: MOD.collection.IFieldInfo): void;
-                public _getValueChange(fullName: string, fld: MOD.collection.IFieldInfo, changedOnly: boolean): IValueChange;
-                public _getValueChanges(changedOnly: boolean): IValueChange[];
-                public _getRowInfo(): IRowInfo;
-                public _fldChanging(fieldName: string, fieldInfo: MOD.collection.IFieldInfo, oldV: any, newV: any): boolean;
-                public _fldChanged(fieldName: string, fieldInfo: MOD.collection.IFieldInfo, oldV: any, newV: any): boolean;
-                public _clearFieldVal(fieldName: string): void;
-                public _skipValidate(fieldInfo: MOD.collection.IFieldInfo, val: any): boolean;
-                public _getFieldVal(fieldName: string): any;
-                public _setFieldVal(fieldName: string, val: any): boolean;
-                public _getCalcFieldVal(fieldName: string): any;
-                public _getNavFieldVal(fieldName: string): any;
-                public _setNavFieldVal(fieldName: string, value: any): void;
-                public _onAttaching(): void;
-                public _onAttach(): void;
-                public _beginEdit(): boolean;
-                public _endEdit(): boolean;
-                public deleteItem(): boolean;
-                public deleteOnSubmit(): boolean;
-                public acceptChanges(rowInfo?: IRowInfo): void;
-                public rejectChanges(): void;
-                public submitChanges(): RIAPP.IVoidPromise;
-                public refresh(): RIAPP.IPromise<Entity>;
-                public cancelEdit(): boolean;
-                public getDbContext(): DbContext;
-                public getDbSet(): DbSet<Entity>;
-                public toString(): string;
-                public destroy(): void;
-                public _isCanSubmit : boolean;
-                public _changeType : MOD.collection.STATUS;
-                public _isNew : boolean;
-                public _isDeleted : boolean;
-                public _entityType : IEntityConstructor;
-                public _srvKey : string;
-                public _dbSetName : string;
-                public _serverTimezone : number;
-                public _collection : MOD.collection.BaseCollection<Entity>;
-                public _dbSet : DbSet<Entity>;
-                public _isRefreshing : boolean;
-                public _isCached : boolean;
-                public isHasChanges : boolean;
-            }
-            class DbSet<TEntity extends Entity> extends MOD.collection.BaseCollection<TEntity> {
-                private _dbContext;
-                private _isSubmitOnDelete;
-                private _trackAssoc;
-                private _trackAssocMap;
-                private _childAssocMap;
-                private _parentAssocMap;
-                private _changeCount;
-                private _changeCache;
-                public _options: IDbSetOptions;
-                public _navfldMap: {
-                    [fieldName: string]: {
-                        getFunc: () => any;
-                        setFunc: (v: any) => void;
-                    };
-                };
-                public _calcfldMap: {
-                    [fieldName: string]: {
-                        getFunc: () => any;
-                    };
-                };
-                public _itemsByKey: {
-                    [key: string]: TEntity;
-                };
-                public _entityType: IEntityConstructor;
-                public _ignorePageChanged: boolean;
-                public _query: TDataQuery<TEntity>;
-                constructor(opts: IDbSetConstuctorOptions, entityType: IEntityConstructor);
-                public getFieldInfo(fieldName: string): MOD.collection.IFieldInfo;
-                public _onError(error: any, source: any): boolean;
-                public _mapAssocFields(): void;
-                public _updatePermissions(perms: IPermissions): void;
-                public _getChildToParentNames(childFieldName: string): string[];
-                public _getStrValue(val: any, fieldInfo: MOD.collection.IFieldInfo): string;
-                public _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: MOD.collection.IFieldInfo): {
-                    getFunc: () => any;
-                    setFunc: (v: any) => void;
-                };
-                public _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: MOD.collection.IFieldInfo): {
-                    getFunc: () => any;
-                };
-                public _refreshValues(path: string, item: Entity, values: any[], names: IFieldName[], rm: REFRESH_MODE): void;
-                public _fillFromService(data: {
-                    res: IQueryResponse;
-                    isPageChanged: boolean;
-                    fn_beforeFillEnd: () => void;
-                }): IQueryResult<TEntity>;
-                public _fillFromCache(data: {
-                    isPageChanged: boolean;
-                    fn_beforeFillEnd: () => void;
-                }): IQueryResult<TEntity>;
-                public _commitChanges(rows: IRowInfo[]): void;
-                public _setItemInvalid(row: IRowInfo): TEntity;
-                public _setCurrentItem(v: TEntity): void;
-                public _getChanges(): IRowInfo[];
-                public _getTrackAssocInfo(): ITrackAssoc[];
-                public _getNewKey(item: TEntity): string;
-                public _createNew(): TEntity;
-                public _addToChanged(item: TEntity): void;
-                public _removeFromChanged(key: string): void;
-                public _clearChangeCache(): void;
-                public _onItemStatusChanged(item: TEntity, oldChangeType: number): void;
-                public _onRemoved(item: TEntity, pos: number): void;
-                public _onPageChanging(): boolean;
-                public _onPageChanged(): void;
-                public _onPageSizeChanged(): void;
-                public _destroyItems(): void;
-                public _defineCalculatedField(fullName: string, getFunc: () => any): void;
-                public sort(fieldNames: string[], sortOrder: MOD.collection.SORT_ORDER): RIAPP.IPromise<IQueryResult<Entity>>;
-                public fillItems(data: {
-                    names: IFieldName[];
-                    rows: IRowData[];
-                }): void;
-                public acceptChanges(): void;
-                public rejectChanges(): void;
-                public deleteOnSubmit(item: TEntity): void;
-                public clear(): void;
-                public createQuery(name: string): TDataQuery<TEntity>;
-                public clearCache(): void;
-                public destroy(): void;
-                public toString(): string;
-                public items : TEntity[];
-                public dbContext : DbContext;
-                public dbSetName : string;
-                public entityType : IEntityConstructor;
-                public query : TDataQuery<TEntity>;
-                public hasChanges : boolean;
-                public cacheSize : number;
-                public isSubmitOnDelete : boolean;
-            }
-            class DbSets extends RIAPP.BaseObject {
-                public _dbSetNames: string[];
-                private _dbContext;
-                private _dbSets;
-                private _arrDbSets;
-                constructor(dbContext: DbContext);
-                public _dbSetCreated(dbSet: DbSet<Entity>): void;
-                public _createDbSet(name: string, dbSetType: IDbSetConstructor): void;
-                public dbSetNames : string[];
-                public arrDbSets : DbSet<Entity>[];
-                public getDbSet(name: string): DbSet<Entity>;
-                public destroy(): void;
-            }
-            class DbContext extends RIAPP.BaseObject {
-                public _isInitialized: boolean;
-                public _dbSets: DbSets;
-                public _svcMethods: any;
-                public _assoc: any;
-                public _arrAssoc: Association[];
-                public _queryInf: {
-                    [queryName: string]: IQueryInfo;
-                };
-                public _serviceUrl: string;
-                public _isBusy: number;
-                public _isSubmiting: boolean;
-                public _hasChanges: boolean;
-                public _pendingSubmit: {
-                    deferred: RIAPP.IDeferred<any>;
-                };
-                public _serverTimezone: number;
-                public _waitQueue: MOD.utils.WaitQueue;
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module datepicker {
+            class Datepicker extends RIAPP.BaseObject implements RIAPP.IDatepicker {
+                private _datepickerRegion;
+                private _dateFormat;
                 constructor();
-                public _getEventNames(): string[];
-                public addOnSubmitError(fn: (sender: DbContext, args: {
-                    error: any;
-                    isHandled: boolean;
-                }) => void, namespace?: string): void;
-                public removeOnSubmitError(namespace?: string): void;
-                public _onGetCalcField(args: {
-                    dbSetName: string;
-                    fieldName: string;
-                    getFunc: () => any;
+                public toString(): string;
+                public attachTo($el: any, options?: {
+                    dateFormat?: string;
                 }): void;
-                public _getQueryInfo(name: string): IQueryInfo;
-                public _initDbSets(): void;
-                public _initAssociations(associations: IAssociationInfo[]): void;
-                public _initMethods(methods: IQueryInfo[]): void;
-                public _updatePermissions(info: IPermissionsInfo): void;
-                public _onDbSetHasChangesChanged(eSet: DbSet<Entity>): void;
-                public _initAssociation(assoc: IAssociationInfo): void;
-                public _initMethod(methodInfo: IQueryInfo): void;
-                public _getMethodParams(methodInfo: IQueryInfo, args: {
-                    [paramName: string]: any;
-                }): IInvokeRequest;
-                public _invokeMethod(methodInfo: IQueryInfo, data: IInvokeRequest, callback: (res: {
-                    result: any;
-                    error: any;
-                }) => void): void;
-                public _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): IQueryResult<Entity>;
-                public _loadIncluded(res: IQueryResponse): void;
-                public _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<Entity>;
-                public _dataSaved(res: IChangeSet): void;
-                public _getChanges(): IChangeSet;
-                public _getUrl(action: any): string;
-                public _onItemRefreshed(res: IRefreshRowInfo, item: Entity): void;
-                public _refreshItem(item: Entity): RIAPP.IPromise<Entity>;
-                public _onError(error: any, source: any): boolean;
-                public _onDataOperError(ex: any, oper: any): boolean;
-                public _onSubmitError(error: any): void;
-                public _beforeLoad(query: TDataQuery<Entity>, oldQuery: TDataQuery<Entity>, dbSet: DbSet<Entity>): void;
-                public _load(query: TDataQuery<Entity>, isPageChanged: boolean): RIAPP.IPromise<IQueryResult<Entity>>;
-                public getDbSet(name: string): DbSet<Entity>;
-                public getAssociation(name: string): Association;
-                public submitChanges(): RIAPP.IVoidPromise;
-                public load(query: TDataQuery<Entity>): RIAPP.IPromise<IQueryResult<Entity>>;
-                public acceptChanges(): void;
-                public rejectChanges(): void;
-                public initialize(options: {
-                    serviceUrl: string;
-                    permissions?: IPermissionsInfo;
-                }): void;
-                public waitForNotBusy(callback: any, callbackArgs: any): void;
-                public waitForNotSubmiting(callback: any, callbackArgs: any, groupName: any): void;
-                public waitForInitialized(callback: any, callbackArgs: any): void;
-                public destroy(): void;
-                public service_url : string;
-                public isInitialized : boolean;
-                public isBusy : boolean;
-                public isSubmiting : boolean;
-                public serverTimezone : number;
-                public dbSets : DbSets;
-                public serviceMethods : any;
-                public hasChanges : boolean;
+                public detachFrom($el: any): void;
+                public parseDate(str: string): Date;
+                public formatDate(date: Date): string;
+                public dateFormat : string;
+                public datepickerRegion : string;
+                public datePickerFn : any;
             }
-            class Association extends RIAPP.BaseObject {
-                public _objId: string;
-                public _name: string;
-                public _dbContext: DbContext;
-                public _onDeleteAction: DELETE_ACTION;
-                public _parentDS: DbSet<Entity>;
-                public _childDS: DbSet<Entity>;
-                public _parentFldInfos: MOD.collection.IFieldInfo[];
-                public _childFldInfos: MOD.collection.IFieldInfo[];
-                public _parentToChildrenName: string;
-                public _childToParentName: string;
-                public _parentMap: {
-                    [key: string]: Entity;
-                };
-                public _childMap: {
-                    [key: string]: Entity[];
-                };
-                public _isParentFilling: boolean;
-                public _isChildFilling: boolean;
-                public _saveParentFKey: string;
-                public _saveChildFKey: string;
-                public _changedTimeout: number;
-                public _changed: {
-                    [key: string]: number;
-                };
-                constructor(options: IAssocConstructorOptions);
-                public _onError(error: any, source: any): boolean;
-                public _bindParentDS(): void;
-                public _bindChildDS(): void;
-                public _onParentCollChanged(args: MOD.collection.ICollChangedArgs<Entity>): void;
-                public _onParentFill(args: MOD.collection.ICollFillArgs<Entity>): void;
-                public _onParentEdit(item: Entity, isBegin: boolean, isCanceled: boolean): void;
-                public _onParentCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: MOD.collection.STATUS): void;
-                public _storeParentFKey(item: Entity): void;
-                public _checkParentFKey(item: Entity): void;
-                public _onParentStatusChanged(item: Entity, oldChangeType: MOD.collection.STATUS): void;
-                public _onChildCollChanged(args: MOD.collection.ICollChangedArgs<Entity>): void;
-                public _notifyChildrenChanged(changed: string[]): void;
-                public _notifyParentChanged(changed: string[]): void;
-                public _notifyChanged(changed_pkeys: string[], changed_ckeys: string[]): void;
-                public _onChildFill(args: MOD.collection.ICollFillArgs<Entity>): void;
-                public _onChildEdit(item: Entity, isBegin: boolean, isCanceled: boolean): void;
-                public _onChildCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: MOD.collection.STATUS): void;
-                public _storeChildFKey(item: Entity): void;
-                public _checkChildFKey(item: Entity): void;
-                public _onChildStatusChanged(item: Entity, oldChangeType: MOD.collection.STATUS): void;
-                public _getItemKey(finf: MOD.collection.IFieldInfo[], ds: DbSet<Entity>, item: Entity): string;
-                public _resetChildMap(): void;
-                public _resetParentMap(): void;
-                public _unMapChildItem(item: Entity): any;
-                public _unMapParentItem(item: Entity): any;
-                public _mapParentItems(items: Entity[]): string[];
-                public _onChildrenChanged(fkey: string): void;
-                public _onParentChanged(fkey: string): void;
-                public _mapChildren(items: Entity[]): string[];
-                public _unbindParentDS(): void;
-                public _unbindChildDS(): void;
-                public getParentFKey(item: Entity): string;
-                public getChildFKey(item: Entity): any;
-                public getChildItems(item: Entity): Entity[];
-                public getParentItem(item: Entity): Entity;
-                public refreshParentMap(): string[];
-                public refreshChildMap(): string[];
+            interface IDatePickerOptions extends MOD.baseElView.ITextBoxOptions {
+                datepicker?: any;
+            }
+            class DatePickerElView extends MOD.baseElView.TextBoxElView {
+                public _init(options: IDatePickerOptions): void;
                 public destroy(): void;
                 public toString(): string;
-                public name : string;
-                public parentToChildrenName : string;
-                public childToParentName : string;
-                public parentDS : DbSet<Entity>;
-                public childDS : DbSet<Entity>;
-                public parentFldInfos : MOD.collection.IFieldInfo[];
-                public childFldInfos : MOD.collection.IFieldInfo[];
-                public onDeleteAction : DELETE_ACTION;
             }
-            class DataView<TItem extends MOD.collection.CollectionItem> extends MOD.collection.BaseCollection<TItem> {
-                public _dataSource: MOD.collection.BaseCollection<TItem>;
-                public _fn_filter: (item: TItem) => boolean;
-                public _fn_sort: (item1: TItem, item2: TItem) => number;
-                public _fn_itemsProvider: (ds: MOD.collection.BaseCollection<TItem>) => TItem[];
-                public _isDSFilling: boolean;
-                public _isAddingNew: boolean;
-                public _objId: string;
-                constructor(options: {
-                    dataSource: MOD.collection.BaseCollection<TItem>;
-                    fn_filter?: (item: TItem) => boolean;
-                    fn_sort?: (item1: TItem, item2: TItem) => number;
-                    fn_itemsProvider?: (ds: MOD.collection.BaseCollection<TItem>) => TItem[];
-                });
-                public _getEventNames(): string[];
-                public addOnViewRefreshed(fn: (sender: DataView<TItem>, args: {}) => void, namespace?: string): void;
-                public removeOnViewRefreshed(namespace?: string): void;
-                public _filterForPaging(items: TItem[]): TItem[];
-                public _onViewRefreshed(args: {}): void;
-                public _clear(isPageChanged: boolean): void;
-                public _refresh(isPageChanged: boolean): void;
-                public _fillItems(data: {
-                    items: TItem[];
-                    isPageChanged: boolean;
-                    clear: boolean;
-                    isAppend: boolean;
-                }): TItem[];
-                public _onDSCollectionChanged(args: MOD.collection.ICollChangedArgs<TItem>): void;
-                public _onDSFill(args: MOD.collection.ICollFillArgs<TItem>): void;
-                public _onDSStatusChanged(args: MOD.collection.ICollItemStatusArgs<TItem>): void;
-                public _bindDS(): void;
-                public _unbindDS(): void;
-                public _getStrValue(val: any, fieldInfo: any): string;
-                public _onCurrentChanging(newCurrent: TItem): void;
-                public _getErrors(item: TItem): {
-                    [fieldName: string]: string[];
-                };
-                public _onPageChanged(): void;
-                public getItemsWithErrors(): TItem[];
-                public appendItems(items: TItem[]): TItem[];
-                public addNew(): TItem;
-                public removeItem(item: TItem): void;
-                public sortLocal(fieldNames: string[], sortOrder: MOD.collection.SORT_ORDER): RIAPP.IPromise<any>;
-                public getIsHasErrors(): boolean;
-                public clear(): void;
-                public refresh(): void;
-                public destroy(): void;
-                public dataSource : MOD.collection.BaseCollection<TItem>;
-                public isPagingEnabled : boolean;
-                public permissions : MOD.collection.IPermissions;
-                public fn_filter : (item: TItem) => boolean;
-                public fn_sort : (item1: TItem, item2: TItem) => number;
-                public fn_itemsProvider : (ds: MOD.collection.BaseCollection<TItem>) => TItem[];
-            }
-            class ChildDataView<TEntity extends Entity> extends DataView<TEntity> {
-                private _parentItem;
-                private _refreshTimeout;
-                private _association;
-                constructor(options: {
-                    association: Association;
-                    fn_filter?: (item: TEntity) => boolean;
-                    fn_sort?: (item1: TEntity, item2: TEntity) => number;
-                });
-                public _refresh(isPageChanged: boolean): void;
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module tabs {
+            class TabsElView extends MOD.baseElView.BaseElView {
+                private _tabsEventCommand;
+                private _tabOpts;
+                public _init(options: any): void;
+                public _createTabs(): void;
+                public _destroyTabs(): void;
+                public invokeTabsEvent(eventName: string, args: any): void;
                 public destroy(): void;
                 public toString(): string;
-                public parentItem : Entity;
-                public association : Association;
-            }
-            class TDbSet extends DbSet<Entity> {
-            }
-            class TDataView extends DataView<Entity> {
-            }
-            class TChildDataView extends ChildDataView<Entity> {
-            }
-            class BaseComplexProperty extends RIAPP.BaseObject implements MOD.binding.IErrorNotification {
-                public _name: string;
-                constructor(name: string);
-                public _getFullPath(path: any): string;
-                public getName(): string;
-                public setValue(fullName: string, value: any): void;
-                public getValue(fullName: string): any;
-                public getFieldInfo(): MOD.collection.IFieldInfo;
-                public getProperties(): MOD.collection.IFieldInfo[];
-                public getFullPath(name: string): string;
-                public getEntity(): Entity;
-                public getPropertyByName(name: string): MOD.collection.IFieldInfo;
-                public getIsHasErrors(): boolean;
-                public addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
-                public removeOnErrorsChanged(namespace?: string): void;
-                public getFieldErrors(fieldName: any): MOD.binding.IValidationInfo[];
-                public getAllErrors(): MOD.binding.IValidationInfo[];
-                public getIErrorNotification(): MOD.binding.IErrorNotification;
-            }
-            class RootComplexProperty extends BaseComplexProperty {
-                private _entity;
-                constructor(name: string, owner: Entity);
-                public _getFullPath(path: any): string;
-                public setValue(fullName: string, value: any): void;
-                public getValue(fullName: string): any;
-                public getFieldInfo(): MOD.collection.IFieldInfo;
-                public getProperties(): MOD.collection.IFieldInfo[];
-                public getEntity(): Entity;
-                public getFullPath(name: string): string;
-            }
-            class ChildComplexProperty extends BaseComplexProperty {
-                private _parent;
-                constructor(name: string, parent: BaseComplexProperty);
-                public _getFullPath(path: string): string;
-                public setValue(fullName: string, value: any): void;
-                public getValue(fullName: string): any;
-                public getFieldInfo(): MOD.collection.IFieldInfo;
-                public getProperties(): MOD.collection.IFieldInfo[];
-                public getParent(): BaseComplexProperty;
-                public getRootProperty(): RootComplexProperty;
-                public getFullPath(name: string): string;
-                public getEntity(): Entity;
+                public tabsEventCommand : MOD.mvvm.ICommand;
+                public tabIndex : number;
             }
         }
     }
@@ -3224,6 +2479,763 @@ declare module RIAPP {
                 public toString(): string;
                 public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
                 public panel : StackPanel;
+            }
+        }
+    }
+}
+declare module RIAPP {
+    module MOD {
+        module db {
+            enum FLAGS {
+                None = 0,
+                Changed = 1,
+                Setted = 2,
+                Refreshed = 4,
+            }
+            enum REFRESH_MODE {
+                NONE = 0,
+                RefreshCurrent = 1,
+                MergeIntoCurrent = 2,
+                CommitChanges = 3,
+            }
+            enum DELETE_ACTION {
+                NoAction = 0,
+                Cascade = 1,
+                SetNulls = 2,
+            }
+            enum DATA_OPER {
+                SUBMIT = 0,
+                LOAD = 1,
+                INVOKE = 2,
+                REFRESH = 3,
+                INIT = 4,
+            }
+            class DataOperationError extends MOD.errors.BaseError {
+                public _operationName: DATA_OPER;
+                constructor(ex: any, operationName: DATA_OPER);
+                public operationName : DATA_OPER;
+            }
+            class AccessDeniedError extends DataOperationError {
+            }
+            class ConcurrencyError extends DataOperationError {
+            }
+            class SvcValidationError extends DataOperationError {
+            }
+            class SubmitError extends DataOperationError {
+                public _allSubmitted: Entity[];
+                public _notValidated: Entity[];
+                constructor(origError: any, allSubmitted: Entity[], notValidated: Entity[]);
+                public allSubmitted : Entity[];
+                public notValidated : Entity[];
+            }
+            interface IFieldName {
+                n: string;
+                p: IFieldName[];
+            }
+            interface ICachedPage {
+                items: Entity[];
+                pageIndex: number;
+            }
+            interface IQueryParamInfo {
+                dataType: MOD.consts.DATA_TYPE;
+                dateConversion: MOD.consts.DATE_CONVERSION;
+                isArray: boolean;
+                isNullable: boolean;
+                name: string;
+                ordinal: number;
+            }
+            interface IQueryInfo {
+                isQuery: boolean;
+                methodName: string;
+                methodResult: boolean;
+                parameters: IQueryParamInfo[];
+            }
+            interface IFilterInfo {
+                filterItems: {
+                    fieldName: string;
+                    kind: MOD.collection.FILTER_TYPE;
+                    values: any[];
+                }[];
+            }
+            interface ISortInfo {
+                sortItems: {
+                    fieldName: string;
+                    sortOrder: MOD.collection.SORT_ORDER;
+                }[];
+            }
+            interface IEntityConstructor {
+                new(dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]): Entity;
+            }
+            interface IValueChange {
+                val: any;
+                orig: any;
+                fieldName: string;
+                flags: number;
+                nested: IValueChange[];
+            }
+            interface IValidationErrorInfo {
+                fieldName: string;
+                message: string;
+            }
+            interface IRowInfo {
+                values: IValueChange[];
+                changeType: number;
+                serverKey: string;
+                clientKey: string;
+                error: string;
+                invalid?: IValidationErrorInfo[];
+            }
+            interface IPermissions extends MOD.collection.IPermissions {
+                dbSetName: string;
+            }
+            interface IPermissionsInfo {
+                serverTimezone: number;
+                permissions: IPermissions[];
+            }
+            interface IParamInfo {
+                parameters: {
+                    name: string;
+                    value: any;
+                }[];
+            }
+            interface IErrorInfo {
+                name: string;
+                message: string;
+            }
+            interface IInvokeRequest {
+                methodName: string;
+                paramInfo: IParamInfo;
+            }
+            interface IInvokeResponse {
+                result: any;
+                error: IErrorInfo;
+            }
+            interface IDbSetInfo {
+                dbSetName: string;
+                enablePaging: boolean;
+                pageSize: number;
+                fieldInfos: MOD.collection.IFieldInfo[];
+            }
+            interface IRefreshRowInfo {
+                dbSetName: string;
+                rowInfo: IRowInfo;
+                error: {
+                    name: string;
+                    message: string;
+                };
+            }
+            interface IDbSetConstuctorOptions {
+                dbContext: DbContext;
+                dbSetInfo: IDbSetInfo;
+                childAssoc: IAssociationInfo[];
+                parentAssoc: IAssociationInfo[];
+            }
+            interface IAssocConstructorOptions {
+                dbContext: DbContext;
+                parentName: string;
+                childName: string;
+                onDeleteAction: DELETE_ACTION;
+                parentKeyFields: string[];
+                childKeyFields: string[];
+                parentToChildrenName: string;
+                childToParentName: string;
+                name: string;
+            }
+            interface IAssociationInfo {
+                childDbSetName: string;
+                childToParentName: string;
+                name: string;
+                onDeleteAction: number;
+                parentDbSetName: string;
+                parentToChildrenName: string;
+                fieldRels: {
+                    childField: string;
+                    parentField: string;
+                }[];
+            }
+            interface IDbSetOptions extends MOD.collection.ICollectionOptions {
+                dbSetName: string;
+            }
+            interface IMetadata {
+                associations: IAssociationInfo[];
+                dbSets: IDbSetInfo[];
+                methods: IQueryInfo[];
+                serverTimezone: number;
+            }
+            interface ITrackAssoc {
+                assocName: string;
+                parentKey: string;
+                childKey: string;
+            }
+            interface IChangeSet {
+                dbSets: {
+                    dbSetName: string;
+                    rows: IRowInfo[];
+                }[];
+                error: {
+                    name: string;
+                    message: string;
+                };
+                trackAssocs: ITrackAssoc[];
+            }
+            interface IQueryRequest {
+                dbSetName: string;
+                pageIndex: number;
+                pageSize: number;
+                pageCount: number;
+                isIncludeTotalCount: boolean;
+                filterInfo: IFilterInfo;
+                sortInfo: ISortInfo;
+                paramInfo: IParamInfo;
+                queryName: string;
+            }
+            interface IRowData {
+                k: string;
+                v: any[];
+            }
+            interface IQueryResult<TEntity extends Entity> {
+                fetchedItems: TEntity[];
+                newItems: TEntity[];
+                isPageChanged: boolean;
+                outOfBandData: any;
+            }
+            interface IIncludedResult {
+                names: IFieldName[];
+                rows: IRowData[];
+                rowCount: number;
+                dbSetName: string;
+            }
+            interface IQueryResponse {
+                names: IFieldName[];
+                rows: IRowData[];
+                rowCount: number;
+                dbSetName: string;
+                pageIndex: number;
+                pageCount: number;
+                totalCount: number;
+                extraInfo: any;
+                error: IErrorInfo;
+                included: IIncludedResult[];
+            }
+            interface IDbSetConstructor {
+                new(dbContext: DbContext): DbSet<Entity>;
+            }
+            class DataCache extends RIAPP.BaseObject {
+                public _query: TDataQuery<Entity>;
+                public _cache: ICachedPage[];
+                public _totalCount: number;
+                public _itemsByKey: {
+                    [key: string]: Entity;
+                };
+                constructor(query: TDataQuery<Entity>);
+                public getCachedPage(pageIndex: number): ICachedPage;
+                public reindexCache(): void;
+                public getPrevCachedPageIndex(currentPageIndex: number): number;
+                public getNextRange(pageIndex: number): {
+                    start: number;
+                    end: number;
+                    cnt: number;
+                };
+                public fillCache(start: number, items: Entity[]): void;
+                public clear(): void;
+                public clearCacheForPage(pageIndex: number): void;
+                public hasPage(pageIndex: number): boolean;
+                public getItemByKey(key: string): Entity;
+                public getPageByItem(item: Entity): number;
+                public destroy(): void;
+                public toString(): string;
+                public _pageCount : number;
+                public pageSize : any;
+                public loadPageCount : any;
+                public totalCount : number;
+                public cacheSize : number;
+            }
+            class TDataQuery<TEntity extends Entity> extends RIAPP.BaseObject {
+                public _dbSet: DbSet<TEntity>;
+                public __queryInfo: IQueryInfo;
+                public _filterInfo: IFilterInfo;
+                public _sortInfo: ISortInfo;
+                public _isIncludeTotalCount: boolean;
+                public _isClearPrevData: boolean;
+                public _pageSize: number;
+                public _pageIndex: number;
+                public _params: any;
+                public _loadPageCount: number;
+                public _isClearCacheOnEveryLoad: boolean;
+                public _dataCache: DataCache;
+                public _cacheInvalidated: boolean;
+                constructor(dbSet: DbSet<TEntity>, queryInfo: IQueryInfo);
+                public getFieldInfo(fieldName: string): MOD.collection.IFieldInfo;
+                public getFieldNames(): string[];
+                private _addSort(fieldName, sortOrder);
+                private _addFilterItem(fieldName, operand, value);
+                public where(fieldName: string, operand: MOD.collection.FILTER_TYPE, value: any): TDataQuery<TEntity>;
+                public and(fieldName: string, operand: MOD.collection.FILTER_TYPE, value: any): TDataQuery<TEntity>;
+                public orderBy(fieldName: string, sortOrder?: MOD.collection.SORT_ORDER): TDataQuery<TEntity>;
+                public thenBy(fieldName: string, sortOrder?: MOD.collection.SORT_ORDER): TDataQuery<TEntity>;
+                public clearSort(): TDataQuery<TEntity>;
+                public clearFilter(): TDataQuery<TEntity>;
+                public clearParams(): TDataQuery<TEntity>;
+                public _clearCache(): void;
+                public _getCache(): DataCache;
+                public _reindexCache(): void;
+                public _isPageCached(pageIndex: number): boolean;
+                public _resetCacheInvalidated(): void;
+                public load(): RIAPP.IPromise<IQueryResult<TEntity>>;
+                public destroy(): void;
+                public toString(): string;
+                public _queryInfo : IQueryInfo;
+                public _serverTimezone : number;
+                public entityType : IEntityConstructor;
+                public dbSet : DbSet<TEntity>;
+                public dbSetName : string;
+                public queryName : string;
+                public filterInfo : IFilterInfo;
+                public sortInfo : ISortInfo;
+                public isIncludeTotalCount : boolean;
+                public isClearPrevData : boolean;
+                public pageSize : number;
+                public pageIndex : number;
+                public params : any;
+                public isPagingEnabled : boolean;
+                public loadPageCount : number;
+                public isClearCacheOnEveryLoad : boolean;
+                public isCacheValid : boolean;
+            }
+            class DataQuery extends TDataQuery<Entity> {
+            }
+            class Entity extends MOD.collection.CollectionItem {
+                private __changeType;
+                private __isRefreshing;
+                private __isCached;
+                private __dbSet;
+                private _srvRowKey;
+                private _origVals;
+                private _saveChangeType;
+                constructor(dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]);
+                public _updateKeys(srvKey: string): void;
+                public _initRowInfo(row: IRowData, names: IFieldName[]): void;
+                public _processValues(path: string, values: any[], names: IFieldName[]): void;
+                public _checkCanRefresh(): void;
+                public _refreshValue(val: any, fullName: string, refreshMode: REFRESH_MODE): void;
+                public _refreshValues(rowInfo: IRowInfo, refreshMode: REFRESH_MODE): void;
+                public _onFieldChanged(fieldName: string, fieldInfo: MOD.collection.IFieldInfo): void;
+                public _getValueChange(fullName: string, fld: MOD.collection.IFieldInfo, changedOnly: boolean): IValueChange;
+                public _getValueChanges(changedOnly: boolean): IValueChange[];
+                public _getRowInfo(): IRowInfo;
+                public _fldChanging(fieldName: string, fieldInfo: MOD.collection.IFieldInfo, oldV: any, newV: any): boolean;
+                public _fldChanged(fieldName: string, fieldInfo: MOD.collection.IFieldInfo, oldV: any, newV: any): boolean;
+                public _clearFieldVal(fieldName: string): void;
+                public _skipValidate(fieldInfo: MOD.collection.IFieldInfo, val: any): boolean;
+                public _getFieldVal(fieldName: string): any;
+                public _setFieldVal(fieldName: string, val: any): boolean;
+                public _getCalcFieldVal(fieldName: string): any;
+                public _getNavFieldVal(fieldName: string): any;
+                public _setNavFieldVal(fieldName: string, value: any): void;
+                public _onAttaching(): void;
+                public _onAttach(): void;
+                public _beginEdit(): boolean;
+                public _endEdit(): boolean;
+                public deleteItem(): boolean;
+                public deleteOnSubmit(): boolean;
+                public acceptChanges(rowInfo?: IRowInfo): void;
+                public rejectChanges(): void;
+                public submitChanges(): RIAPP.IVoidPromise;
+                public refresh(): RIAPP.IPromise<Entity>;
+                public cancelEdit(): boolean;
+                public getDbContext(): DbContext;
+                public getDbSet(): DbSet<Entity>;
+                public toString(): string;
+                public destroy(): void;
+                public _isCanSubmit : boolean;
+                public _changeType : MOD.collection.STATUS;
+                public _isNew : boolean;
+                public _isDeleted : boolean;
+                public _entityType : IEntityConstructor;
+                public _srvKey : string;
+                public _dbSetName : string;
+                public _serverTimezone : number;
+                public _collection : MOD.collection.BaseCollection<Entity>;
+                public _dbSet : DbSet<Entity>;
+                public _isRefreshing : boolean;
+                public _isCached : boolean;
+                public isHasChanges : boolean;
+            }
+            class DbSet<TEntity extends Entity> extends MOD.collection.BaseCollection<TEntity> {
+                private _dbContext;
+                private _isSubmitOnDelete;
+                private _trackAssoc;
+                private _trackAssocMap;
+                private _childAssocMap;
+                private _parentAssocMap;
+                private _changeCount;
+                private _changeCache;
+                public _options: IDbSetOptions;
+                public _navfldMap: {
+                    [fieldName: string]: {
+                        getFunc: () => any;
+                        setFunc: (v: any) => void;
+                    };
+                };
+                public _calcfldMap: {
+                    [fieldName: string]: {
+                        getFunc: () => any;
+                    };
+                };
+                public _itemsByKey: {
+                    [key: string]: TEntity;
+                };
+                public _entityType: IEntityConstructor;
+                public _ignorePageChanged: boolean;
+                public _query: TDataQuery<TEntity>;
+                constructor(opts: IDbSetConstuctorOptions, entityType: IEntityConstructor);
+                public getFieldInfo(fieldName: string): MOD.collection.IFieldInfo;
+                public _onError(error: any, source: any): boolean;
+                public _mapAssocFields(): void;
+                public _updatePermissions(perms: IPermissions): void;
+                public _getChildToParentNames(childFieldName: string): string[];
+                public _getStrValue(val: any, fieldInfo: MOD.collection.IFieldInfo): string;
+                public _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: MOD.collection.IFieldInfo): {
+                    getFunc: () => any;
+                    setFunc: (v: any) => void;
+                };
+                public _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: MOD.collection.IFieldInfo): {
+                    getFunc: () => any;
+                };
+                public _refreshValues(path: string, item: Entity, values: any[], names: IFieldName[], rm: REFRESH_MODE): void;
+                public _fillFromService(data: {
+                    res: IQueryResponse;
+                    isPageChanged: boolean;
+                    fn_beforeFillEnd: () => void;
+                }): IQueryResult<TEntity>;
+                public _fillFromCache(data: {
+                    isPageChanged: boolean;
+                    fn_beforeFillEnd: () => void;
+                }): IQueryResult<TEntity>;
+                public _commitChanges(rows: IRowInfo[]): void;
+                public _setItemInvalid(row: IRowInfo): TEntity;
+                public _setCurrentItem(v: TEntity): void;
+                public _getChanges(): IRowInfo[];
+                public _getTrackAssocInfo(): ITrackAssoc[];
+                public _getNewKey(item: TEntity): string;
+                public _createNew(): TEntity;
+                public _addToChanged(item: TEntity): void;
+                public _removeFromChanged(key: string): void;
+                public _clearChangeCache(): void;
+                public _onItemStatusChanged(item: TEntity, oldChangeType: number): void;
+                public _onRemoved(item: TEntity, pos: number): void;
+                public _onPageChanging(): boolean;
+                public _onPageChanged(): void;
+                public _onPageSizeChanged(): void;
+                public _destroyItems(): void;
+                public _defineCalculatedField(fullName: string, getFunc: () => any): void;
+                public sort(fieldNames: string[], sortOrder: MOD.collection.SORT_ORDER): RIAPP.IPromise<IQueryResult<Entity>>;
+                public fillItems(data: {
+                    names: IFieldName[];
+                    rows: IRowData[];
+                }): void;
+                public acceptChanges(): void;
+                public rejectChanges(): void;
+                public deleteOnSubmit(item: TEntity): void;
+                public clear(): void;
+                public createQuery(name: string): TDataQuery<TEntity>;
+                public clearCache(): void;
+                public destroy(): void;
+                public toString(): string;
+                public items : TEntity[];
+                public dbContext : DbContext;
+                public dbSetName : string;
+                public entityType : IEntityConstructor;
+                public query : TDataQuery<TEntity>;
+                public hasChanges : boolean;
+                public cacheSize : number;
+                public isSubmitOnDelete : boolean;
+            }
+            class DbSets extends RIAPP.BaseObject {
+                public _dbSetNames: string[];
+                private _dbContext;
+                private _dbSets;
+                private _arrDbSets;
+                constructor(dbContext: DbContext);
+                public _dbSetCreated(dbSet: DbSet<Entity>): void;
+                public _createDbSet(name: string, dbSetType: IDbSetConstructor): void;
+                public dbSetNames : string[];
+                public arrDbSets : DbSet<Entity>[];
+                public getDbSet(name: string): DbSet<Entity>;
+                public destroy(): void;
+            }
+            class DbContext extends RIAPP.BaseObject {
+                public _isInitialized: boolean;
+                public _dbSets: DbSets;
+                public _svcMethods: any;
+                public _assoc: any;
+                public _arrAssoc: Association[];
+                public _queryInf: {
+                    [queryName: string]: IQueryInfo;
+                };
+                public _serviceUrl: string;
+                public _isBusy: number;
+                public _isSubmiting: boolean;
+                public _hasChanges: boolean;
+                public _pendingSubmit: {
+                    deferred: RIAPP.IDeferred<any>;
+                };
+                public _serverTimezone: number;
+                public _waitQueue: MOD.utils.WaitQueue;
+                constructor();
+                public _getEventNames(): string[];
+                public addOnSubmitError(fn: (sender: DbContext, args: {
+                    error: any;
+                    isHandled: boolean;
+                }) => void, namespace?: string): void;
+                public removeOnSubmitError(namespace?: string): void;
+                public _onGetCalcField(args: {
+                    dbSetName: string;
+                    fieldName: string;
+                    getFunc: () => any;
+                }): void;
+                public _getQueryInfo(name: string): IQueryInfo;
+                public _initDbSets(): void;
+                public _initAssociations(associations: IAssociationInfo[]): void;
+                public _initMethods(methods: IQueryInfo[]): void;
+                public _updatePermissions(info: IPermissionsInfo): void;
+                public _onDbSetHasChangesChanged(eSet: DbSet<Entity>): void;
+                public _initAssociation(assoc: IAssociationInfo): void;
+                public _initMethod(methodInfo: IQueryInfo): void;
+                public _getMethodParams(methodInfo: IQueryInfo, args: {
+                    [paramName: string]: any;
+                }): IInvokeRequest;
+                public _invokeMethod(methodInfo: IQueryInfo, data: IInvokeRequest, callback: (res: {
+                    result: any;
+                    error: any;
+                }) => void): void;
+                public _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): IQueryResult<Entity>;
+                public _loadIncluded(res: IQueryResponse): void;
+                public _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<Entity>;
+                public _dataSaved(res: IChangeSet): void;
+                public _getChanges(): IChangeSet;
+                public _getUrl(action: any): string;
+                public _onItemRefreshed(res: IRefreshRowInfo, item: Entity): void;
+                public _refreshItem(item: Entity): RIAPP.IPromise<Entity>;
+                public _onError(error: any, source: any): boolean;
+                public _onDataOperError(ex: any, oper: any): boolean;
+                public _onSubmitError(error: any): void;
+                public _beforeLoad(query: TDataQuery<Entity>, oldQuery: TDataQuery<Entity>, dbSet: DbSet<Entity>): void;
+                public _load(query: TDataQuery<Entity>, isPageChanged: boolean): RIAPP.IPromise<IQueryResult<Entity>>;
+                public getDbSet(name: string): DbSet<Entity>;
+                public getAssociation(name: string): Association;
+                public submitChanges(): RIAPP.IVoidPromise;
+                public load(query: TDataQuery<Entity>): RIAPP.IPromise<IQueryResult<Entity>>;
+                public acceptChanges(): void;
+                public rejectChanges(): void;
+                public initialize(options: {
+                    serviceUrl: string;
+                    permissions?: IPermissionsInfo;
+                }): void;
+                public waitForNotBusy(callback: any, callbackArgs: any): void;
+                public waitForNotSubmiting(callback: any, callbackArgs: any, groupName: any): void;
+                public waitForInitialized(callback: any, callbackArgs: any): void;
+                public destroy(): void;
+                public service_url : string;
+                public isInitialized : boolean;
+                public isBusy : boolean;
+                public isSubmiting : boolean;
+                public serverTimezone : number;
+                public dbSets : DbSets;
+                public serviceMethods : any;
+                public hasChanges : boolean;
+            }
+            class Association extends RIAPP.BaseObject {
+                public _objId: string;
+                public _name: string;
+                public _dbContext: DbContext;
+                public _onDeleteAction: DELETE_ACTION;
+                public _parentDS: DbSet<Entity>;
+                public _childDS: DbSet<Entity>;
+                public _parentFldInfos: MOD.collection.IFieldInfo[];
+                public _childFldInfos: MOD.collection.IFieldInfo[];
+                public _parentToChildrenName: string;
+                public _childToParentName: string;
+                public _parentMap: {
+                    [key: string]: Entity;
+                };
+                public _childMap: {
+                    [key: string]: Entity[];
+                };
+                public _isParentFilling: boolean;
+                public _isChildFilling: boolean;
+                public _saveParentFKey: string;
+                public _saveChildFKey: string;
+                public _changedTimeout: number;
+                public _changed: {
+                    [key: string]: number;
+                };
+                constructor(options: IAssocConstructorOptions);
+                public _onError(error: any, source: any): boolean;
+                public _bindParentDS(): void;
+                public _bindChildDS(): void;
+                public _onParentCollChanged(args: MOD.collection.ICollChangedArgs<Entity>): void;
+                public _onParentFill(args: MOD.collection.ICollFillArgs<Entity>): void;
+                public _onParentEdit(item: Entity, isBegin: boolean, isCanceled: boolean): void;
+                public _onParentCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: MOD.collection.STATUS): void;
+                public _storeParentFKey(item: Entity): void;
+                public _checkParentFKey(item: Entity): void;
+                public _onParentStatusChanged(item: Entity, oldChangeType: MOD.collection.STATUS): void;
+                public _onChildCollChanged(args: MOD.collection.ICollChangedArgs<Entity>): void;
+                public _notifyChildrenChanged(changed: string[]): void;
+                public _notifyParentChanged(changed: string[]): void;
+                public _notifyChanged(changed_pkeys: string[], changed_ckeys: string[]): void;
+                public _onChildFill(args: MOD.collection.ICollFillArgs<Entity>): void;
+                public _onChildEdit(item: Entity, isBegin: boolean, isCanceled: boolean): void;
+                public _onChildCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: MOD.collection.STATUS): void;
+                public _storeChildFKey(item: Entity): void;
+                public _checkChildFKey(item: Entity): void;
+                public _onChildStatusChanged(item: Entity, oldChangeType: MOD.collection.STATUS): void;
+                public _getItemKey(finf: MOD.collection.IFieldInfo[], ds: DbSet<Entity>, item: Entity): string;
+                public _resetChildMap(): void;
+                public _resetParentMap(): void;
+                public _unMapChildItem(item: Entity): any;
+                public _unMapParentItem(item: Entity): any;
+                public _mapParentItems(items: Entity[]): string[];
+                public _onChildrenChanged(fkey: string): void;
+                public _onParentChanged(fkey: string): void;
+                public _mapChildren(items: Entity[]): string[];
+                public _unbindParentDS(): void;
+                public _unbindChildDS(): void;
+                public getParentFKey(item: Entity): string;
+                public getChildFKey(item: Entity): any;
+                public getChildItems(item: Entity): Entity[];
+                public getParentItem(item: Entity): Entity;
+                public refreshParentMap(): string[];
+                public refreshChildMap(): string[];
+                public destroy(): void;
+                public toString(): string;
+                public name : string;
+                public parentToChildrenName : string;
+                public childToParentName : string;
+                public parentDS : DbSet<Entity>;
+                public childDS : DbSet<Entity>;
+                public parentFldInfos : MOD.collection.IFieldInfo[];
+                public childFldInfos : MOD.collection.IFieldInfo[];
+                public onDeleteAction : DELETE_ACTION;
+            }
+            class DataView<TItem extends MOD.collection.CollectionItem> extends MOD.collection.BaseCollection<TItem> {
+                public _dataSource: MOD.collection.BaseCollection<TItem>;
+                public _fn_filter: (item: TItem) => boolean;
+                public _fn_sort: (item1: TItem, item2: TItem) => number;
+                public _fn_itemsProvider: (ds: MOD.collection.BaseCollection<TItem>) => TItem[];
+                public _isDSFilling: boolean;
+                public _isAddingNew: boolean;
+                public _objId: string;
+                constructor(options: {
+                    dataSource: MOD.collection.BaseCollection<TItem>;
+                    fn_filter?: (item: TItem) => boolean;
+                    fn_sort?: (item1: TItem, item2: TItem) => number;
+                    fn_itemsProvider?: (ds: MOD.collection.BaseCollection<TItem>) => TItem[];
+                });
+                public _getEventNames(): string[];
+                public addOnViewRefreshed(fn: (sender: DataView<TItem>, args: {}) => void, namespace?: string): void;
+                public removeOnViewRefreshed(namespace?: string): void;
+                public _filterForPaging(items: TItem[]): TItem[];
+                public _onViewRefreshed(args: {}): void;
+                public _clear(isPageChanged: boolean): void;
+                public _refresh(isPageChanged: boolean): void;
+                public _fillItems(data: {
+                    items: TItem[];
+                    isPageChanged: boolean;
+                    clear: boolean;
+                    isAppend: boolean;
+                }): TItem[];
+                public _onDSCollectionChanged(args: MOD.collection.ICollChangedArgs<TItem>): void;
+                public _onDSFill(args: MOD.collection.ICollFillArgs<TItem>): void;
+                public _onDSStatusChanged(args: MOD.collection.ICollItemStatusArgs<TItem>): void;
+                public _bindDS(): void;
+                public _unbindDS(): void;
+                public _getStrValue(val: any, fieldInfo: any): string;
+                public _onCurrentChanging(newCurrent: TItem): void;
+                public _getErrors(item: TItem): {
+                    [fieldName: string]: string[];
+                };
+                public _onPageChanged(): void;
+                public getItemsWithErrors(): TItem[];
+                public appendItems(items: TItem[]): TItem[];
+                public addNew(): TItem;
+                public removeItem(item: TItem): void;
+                public sortLocal(fieldNames: string[], sortOrder: MOD.collection.SORT_ORDER): RIAPP.IPromise<any>;
+                public getIsHasErrors(): boolean;
+                public clear(): void;
+                public refresh(): void;
+                public destroy(): void;
+                public dataSource : MOD.collection.BaseCollection<TItem>;
+                public isPagingEnabled : boolean;
+                public permissions : MOD.collection.IPermissions;
+                public fn_filter : (item: TItem) => boolean;
+                public fn_sort : (item1: TItem, item2: TItem) => number;
+                public fn_itemsProvider : (ds: MOD.collection.BaseCollection<TItem>) => TItem[];
+            }
+            class ChildDataView<TEntity extends Entity> extends DataView<TEntity> {
+                private _parentItem;
+                private _refreshTimeout;
+                private _association;
+                constructor(options: {
+                    association: Association;
+                    fn_filter?: (item: TEntity) => boolean;
+                    fn_sort?: (item1: TEntity, item2: TEntity) => number;
+                });
+                public _refresh(isPageChanged: boolean): void;
+                public destroy(): void;
+                public toString(): string;
+                public parentItem : Entity;
+                public association : Association;
+            }
+            class TDbSet extends DbSet<Entity> {
+            }
+            class TDataView extends DataView<Entity> {
+            }
+            class TChildDataView extends ChildDataView<Entity> {
+            }
+            class BaseComplexProperty extends RIAPP.BaseObject implements RIAPP.IErrorNotification {
+                public _name: string;
+                constructor(name: string);
+                public _getFullPath(path: any): string;
+                public getName(): string;
+                public setValue(fullName: string, value: any): void;
+                public getValue(fullName: string): any;
+                public getFieldInfo(): MOD.collection.IFieldInfo;
+                public getProperties(): MOD.collection.IFieldInfo[];
+                public getFullPath(name: string): string;
+                public getEntity(): Entity;
+                public getPropertyByName(name: string): MOD.collection.IFieldInfo;
+                public getIsHasErrors(): boolean;
+                public addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
+                public removeOnErrorsChanged(namespace?: string): void;
+                public getFieldErrors(fieldName: any): RIAPP.IValidationInfo[];
+                public getAllErrors(): RIAPP.IValidationInfo[];
+                public getIErrorNotification(): RIAPP.IErrorNotification;
+            }
+            class RootComplexProperty extends BaseComplexProperty {
+                private _entity;
+                constructor(name: string, owner: Entity);
+                public _getFullPath(path: any): string;
+                public setValue(fullName: string, value: any): void;
+                public getValue(fullName: string): any;
+                public getFieldInfo(): MOD.collection.IFieldInfo;
+                public getProperties(): MOD.collection.IFieldInfo[];
+                public getEntity(): Entity;
+                public getFullPath(name: string): string;
+            }
+            class ChildComplexProperty extends BaseComplexProperty {
+                private _parent;
+                constructor(name: string, parent: BaseComplexProperty);
+                public _getFullPath(path: string): string;
+                public setValue(fullName: string, value: any): void;
+                public getValue(fullName: string): any;
+                public getFieldInfo(): MOD.collection.IFieldInfo;
+                public getProperties(): MOD.collection.IFieldInfo[];
+                public getParent(): BaseComplexProperty;
+                public getRootProperty(): RootComplexProperty;
+                public getFullPath(name: string): string;
+                public getEntity(): Entity;
             }
         }
     }

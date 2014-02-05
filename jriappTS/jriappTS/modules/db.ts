@@ -1,13 +1,16 @@
 ﻿module RIAPP {
     export module MOD {
         export module db {
-            import collMod = MOD.collection;
+            import constsMOD = RIAPP.MOD.consts;
+            import utilsMOD = RIAPP.MOD.utils;
+            import collMod = RIAPP.MOD.collection;
+
             var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
             //local variables for optimization
-            var ValidationError = binding.ValidationError,
-                valueUtils = MOD.utils.valueUtils,
+            var ValidationError = RIAPP.MOD.errors.ValidationError,
+                valueUtils = utilsMOD.valueUtils,
                 baseUtils = RIAPP.baseUtils,
-                utils: MOD.utils.Utils;
+                utils: utilsMOD.Utils;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
@@ -90,8 +93,8 @@
             }
             export interface ICachedPage { items: Entity[]; pageIndex: number; }
             export interface IQueryParamInfo {
-                dataType: consts.DATA_TYPE;
-                dateConversion: consts.DATE_CONVERSION;
+                dataType: constsMOD.DATA_TYPE;
+                dateConversion: constsMOD.DATE_CONVERSION;
                 isArray: boolean;
                 isNullable: boolean;
                 name: string;
@@ -1580,7 +1583,7 @@
                         else
                             errors[err.fieldName] = [err.message];
                     });
-                    var res: binding.IValidationInfo[] = [];
+                    var res: RIAPP.IValidationInfo[] = [];
                     utils.forEachProp(errors, function (fieldName) {
                         res.push({ fieldName: fieldName, errors: errors[fieldName] });
                     });
@@ -1898,7 +1901,7 @@
                 _hasChanges: boolean;
                 _pendingSubmit: { deferred: IDeferred<any>; };
                 _serverTimezone: number;
-                _waitQueue: MOD.utils.WaitQueue;
+                _waitQueue: utilsMOD.WaitQueue;
 
                 constructor() {
                     super();
@@ -1914,7 +1917,7 @@
                     this._hasChanges = false;
                     this._pendingSubmit = null;
                     this._serverTimezone = utils.get_timeZoneOffset();
-                    this._waitQueue = new MOD.utils.WaitQueue(this);
+                    this._waitQueue = new utilsMOD.WaitQueue(this);
                 }
                 _getEventNames() {
                     var base_events = super._getEventNames();
@@ -2045,7 +2048,7 @@
                     for (i = 0; i < len; i += 1) {
                         pinfo = parameterInfos[i];
                         val = args[pinfo.name];
-                        if (!pinfo.isNullable && !pinfo.isArray && !(pinfo.dataType == consts.DATA_TYPE.String || pinfo.dataType == consts.DATA_TYPE.Binary) && utils.check.isNt(val)) {
+                        if (!pinfo.isNullable && !pinfo.isArray && !(pinfo.dataType == constsMOD.DATA_TYPE.String || pinfo.dataType == constsMOD.DATA_TYPE.Binary) && utils.check.isNt(val)) {
                             throw new Error(utils.format(RIAPP.ERRS.ERR_SVC_METH_PARAM_INVALID, pinfo.name, val, methodInfo.methodName));
                         }
                         if (utils.check.isFunction(val)) {
@@ -2056,7 +2059,7 @@
                         }
                         value = null;
                         //byte arrays are optimized for serialization
-                        if (pinfo.dataType == consts.DATA_TYPE.Binary && utils.check.isArray(val)) {
+                        if (pinfo.dataType == constsMOD.DATA_TYPE.Binary && utils.check.isArray(val)) {
                             value = JSON.stringify(val);
                         }
                         else if (utils.check.isArray(val)) {
@@ -3978,7 +3981,7 @@
             export class TChildDataView extends ChildDataView<Entity>{
             }
             
-            export class BaseComplexProperty extends RIAPP.BaseObject implements MOD.binding.IErrorNotification {
+            export class BaseComplexProperty extends RIAPP.BaseObject implements RIAPP.IErrorNotification {
                 _name: string;
 
                 constructor(name: string) {
@@ -3997,19 +4000,19 @@
                 getValue(fullName: string): any {
                     throw new Error('Not Implemented');
                 }
-                getFieldInfo(): MOD.collection.IFieldInfo {
+                getFieldInfo(): collMod.IFieldInfo {
                     throw new Error('Not Implemented');
                 }
-                getProperties(): MOD.collection.IFieldInfo[] {
+                getProperties(): collMod.IFieldInfo[] {
                     throw new Error('Not Implemented');
                 }
                 getFullPath(name: string): string {
                     throw new Error('Not Implemented');
                 }
-                getEntity(): RIAPP.MOD.db.Entity {
+                getEntity(): Entity {
                     throw new Error('Not Implemented');
                 }
-                getPropertyByName(name: string): MOD.collection.IFieldInfo {
+                getPropertyByName(name: string): collMod.IFieldInfo {
                     var arrProps = this.getProperties().filter((f) => { return f.fieldName == name; });
                     if (!arrProps || arrProps.length != 1)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "arrProps.length == 1"));
@@ -4024,22 +4027,22 @@
                 removeOnErrorsChanged(namespace?: string): void {
                     this.getEntity().removeOnErrorsChanged(namespace)
                 }
-                getFieldErrors(fieldName): MOD.binding.IValidationInfo[] {
+                getFieldErrors(fieldName): RIAPP.IValidationInfo[] {
                     var fullName = this.getFullPath(fieldName);
                     return this.getEntity().getFieldErrors(fullName);
                 }
-                getAllErrors(): MOD.binding.IValidationInfo[] {
+                getAllErrors(): RIAPP.IValidationInfo[] {
                     return this.getEntity().getAllErrors();
                 }
-                getIErrorNotification(): MOD.binding.IErrorNotification {
+                getIErrorNotification(): RIAPP.IErrorNotification {
                     return this;
                 }
             }
 
             export class RootComplexProperty extends BaseComplexProperty {
-                private _entity: RIAPP.MOD.db.Entity;
+                private _entity: Entity;
 
-                constructor(name: string, owner: RIAPP.MOD.db.Entity) {
+                constructor(name: string, owner: Entity) {
                     super(name);
                     this._entity = owner;
                 }
@@ -4052,10 +4055,10 @@
                 getValue(fullName: string): any {
                     return this._entity._getFieldVal(fullName);
                 }
-                getFieldInfo(): MOD.collection.IFieldInfo {
+                getFieldInfo(): collMod.IFieldInfo {
                     return this._entity.getFieldInfo(this.getName());
                 }
-                getProperties(): MOD.collection.IFieldInfo[] {
+                getProperties(): collMod.IFieldInfo[] {
                     return this.getFieldInfo().nested;
                 }
                 getEntity() {
@@ -4082,11 +4085,11 @@
                 getValue(fullName: string) {
                     return this.getEntity()._getFieldVal(fullName);
                 }
-                getFieldInfo(): MOD.collection.IFieldInfo {
+                getFieldInfo(): collMod.IFieldInfo {
                     var name = this.getName();
                     return this._parent.getPropertyByName(name);
                 }
-                getProperties(): MOD.collection.IFieldInfo[] {
+                getProperties(): collMod.IFieldInfo[] {
                     return this.getFieldInfo().nested;
                 }
                 getParent(): BaseComplexProperty {

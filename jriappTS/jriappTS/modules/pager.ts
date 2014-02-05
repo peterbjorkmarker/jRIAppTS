@@ -1,7 +1,10 @@
 ﻿module RIAPP {
     export module MOD {
         export module pager {
-            var utils: MOD.utils.Utils;
+            import utilsMOD = RIAPP.MOD.utils;
+            import collMod = RIAPP.MOD.collection;
+
+            var utils: utilsMOD.Utils;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
@@ -28,7 +31,7 @@
                 private _el: HTMLElement;
                 private _$el: JQuery;
                 private _objId: string;
-                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _dataSource: collMod.BaseCollection<collMod.CollectionItem>;
                 private _showTip: boolean;
                 private _showInfo: boolean;
                 private _showFirstAndLast: boolean;
@@ -41,12 +44,12 @@
                 private _sliderSize: number;
                 private _hideOnSinglePage: boolean;
 
-                constructor(el:HTMLElement, dataSource: collection.BaseCollection<collection.CollectionItem>, options:IPagerOptions) {
+                constructor(el: HTMLElement, dataSource: collMod.BaseCollection<collMod.CollectionItem>, options:IPagerOptions) {
                     super();
                     this._el = el;
                     this._$el = global.$(this._el);
                     this._objId = 'pgr' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof collection.BaseCollection))
+                    if (!!dataSource && !(dataSource instanceof collMod.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_PAGER_DATASRC_INVALID);
                     this._dataSource = dataSource;
                     this._showTip = utils.check.isNt(options.showTip) ? true : !!options.showTip;
@@ -156,13 +159,13 @@
                 _setDSPageIndex(page:number) {
                     this.dataSource.pageIndex = page - 1;
                 }
-                _onPageSizeChanged(ds: collection.BaseCollection<collection.CollectionItem>) {
+                _onPageSizeChanged(ds: collMod.BaseCollection<collMod.CollectionItem>) {
                     this.rowsPerPage = ds.pageSize;
                 }
-                _onPageIndexChanged(ds: collection.BaseCollection<collection.CollectionItem>) {
+                _onPageIndexChanged(ds: collMod.BaseCollection<collMod.CollectionItem>) {
                     this.currentPage = ds.pageIndex + 1;
                 }
-                _onTotalCountChanged(ds: collection.BaseCollection<collection.CollectionItem>) {
+                _onTotalCountChanged(ds: collMod.BaseCollection<collMod.CollectionItem>) {
                     this.rowCount = ds.totalCount;
                 }
                 destroy() {
@@ -301,7 +304,7 @@
                 }
                 get el() { return this._el; }
                 get dataSource() { return this._dataSource; }
-                set dataSource(v: collection.BaseCollection<collection.CollectionItem>) {
+                set dataSource(v: collMod.BaseCollection<collMod.CollectionItem>) {
                     if (v === this._dataSource)
                         return;
                     if (this._dataSource !== null) {

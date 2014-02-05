@@ -36,7 +36,7 @@
                 set origError(v) {
                     this._origError = v;
                 }
-            };
+            }
 
             export class DummyError extends BaseError{
                 constructor(ex) {
@@ -47,7 +47,33 @@
                 static create(ex) {
                     return new DummyError(ex);
                 }
-            };
+            }
+
+            export class ValidationError extends BaseError {
+                _errors: RIAPP.IValidationInfo[];
+                _item: any;
+                constructor(errorInfo: RIAPP.IValidationInfo[], item) {
+                    var message = RIAPP.ERRS.ERR_VALIDATION + '\r\n', i = 0;
+                    errorInfo.forEach(function (err) {
+                        if (i > 0)
+                            message = message + '\r\n';
+                        if (!!err.fieldName)
+                            message = message + ' ' + RIAPP.localizable.TEXT.txtField + ': ' + err.fieldName + ' -> ' + err.errors.join(', ');
+                        else
+                            message = message + err.errors.join(', ');
+                        i += 1;
+                    });
+                    super(message);
+                    this._errors = errorInfo;
+                    this._item = item;
+                }
+                get item() {
+                    return this._item;
+                }
+                get errors() {
+                    return this._errors;
+                }
+            }
 
             global.onModuleLoaded('errors', errors);
         }

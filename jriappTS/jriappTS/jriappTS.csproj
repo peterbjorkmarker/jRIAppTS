@@ -43,6 +43,8 @@
     <TypeScriptCompile Include="jriapp_strings.d.ts" />
     <TypeScriptCompile Include="langs\jriapp_en.ts" />
     <TypeScriptCompile Include="langs\jriapp_ru.ts" />
+    <TypeScriptCompile Include="modules\tabs.ts" />
+    <TypeScriptCompile Include="modules\dynacontent.ts" />
     <Content Include="thirdparty\moment.d.ts" />
     <TypeScriptCompile Include="modules\utils.ts" />
     <TypeScriptCompile Include="modules\consts.ts" />

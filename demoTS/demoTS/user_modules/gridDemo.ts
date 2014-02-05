@@ -723,7 +723,7 @@ module RIAPP
                     return true;
                 });
                 //executed when template is loaded or unloading
-                this._templateCommand = new MOD.baseElView.TemplateCommand(function (sender, param) {
+                this._templateCommand = new MOD.template.TemplateCommand(function (sender, param) {
                     try {
                         var template = param.template, $ = global.$, fileEl = $('input[data-name="files-to-upload"]', template.el);
                         if (fileEl.length == 0)

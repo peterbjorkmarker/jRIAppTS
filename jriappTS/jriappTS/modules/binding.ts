@@ -1,6 +1,9 @@
 ﻿module RIAPP {
     export module MOD {
         export module binding {
+            import converterMOD = RIAPP.MOD.converter;
+            import elviewMOD = RIAPP.MOD.baseElView;
+
             export enum BINDING_MODE {
                 OneTime = 0,
                 OneWay = 1,
@@ -27,26 +30,12 @@
             export interface IBindingOptions {
                 mode?: BINDING_MODE;
                 converterParam?: any;
-                converter?: MOD.converter.IConverter;
+                converter?: converterMOD.IConverter;
                 targetPath: string;
                 sourcePath?: string;
-                target?: BaseObject;
+                target?: RIAPP.BaseObject;
                 source?: any;
                 isSourceFixed?: boolean;
-            }
-
-            export interface IValidationInfo {
-                fieldName: string;
-                errors: string[];
-            }
-
-            export interface IErrorNotification {
-                getIsHasErrors(): boolean;
-                addOnErrorsChanged(fn: (sender: any, args: {}) => void , namespace?: string): void;
-                removeOnErrorsChanged(namespace?: string): void;
-                getFieldErrors(fieldName): IValidationInfo[];
-                getAllErrors(): IValidationInfo[];
-                getIErrorNotification(): IErrorNotification;
             }
 
             export function _checkIsErrorNotification(obj) {
@@ -58,36 +47,11 @@
                 return !!tmp && utils.check.isFunction(tmp.getIErrorNotification);
             }
 
-            export class ValidationError extends MOD.errors.BaseError{
-                _errors: IValidationInfo[];
-                _item: any;
-                constructor(errorInfo: IValidationInfo[], item) {
-                    var message = RIAPP.ERRS.ERR_VALIDATION + '\r\n', i = 0;
-                    errorInfo.forEach(function (err) {
-                        if (i > 0)
-                            message = message + '\r\n';
-                        if (!!err.fieldName)
-                            message = message + ' ' + RIAPP.localizable.TEXT.txtField + ': ' + err.fieldName + ' -> ' + err.errors.join(', ');
-                        else
-                            message = message + err.errors.join(', ');
-                        i += 1;
-                    });
-                    super(message);
-                    this._errors = errorInfo;
-                    this._item = item;
-                }
-                get item() {
-                    return this._item;
-                }
-                get errors() {
-                    return this._errors;
-                }
-            }
-
+         
             export class Binding extends RIAPP.BaseObject{
                 private _state:any;
                 private _mode: BINDING_MODE;
-                private _converter: MOD.converter.IConverter;
+                private _converter: converterMOD.IConverter;
                 private _converterParam: any;
                 private _srcPath:string[];
                 private _tgtPath:string[];
@@ -99,7 +63,7 @@
                 private _sourceObj: any;
                 private _targetObj: any;
                 private _source: any;
-                private _target: BaseObject;
+                private _target: RIAPP.BaseObject;
                 private _appName: string;
 
                 constructor (options: IBindingOptions, appName?: string) {
@@ -198,7 +162,7 @@
                             var prop = srcPath[srcPath.length - 1];
                             errors = (<IErrorNotification>src).getFieldErrors(prop);
                         }
-                        (<baseElView.BaseElView>tgt).validationErrors = errors;
+                        (<elviewMOD.BaseElView>tgt).validationErrors = errors;
                     }
                 }
                 private _getTgtChangedFn(self: Binding, obj, prop:string, restPath:string[], lvl:number) {
@@ -422,7 +386,7 @@
                             this.sourceValue = res;
                     }
                     catch (ex) {
-                        if (!(ex instanceof ValidationError) || !utils.check.isElView(this._targetObj)) {
+                        if (!(ex instanceof RIAPP.MOD.errors.ValidationError) || !utils.check.isElView(this._targetObj)) {
                             //BaseElView is notified about errors in _onSrcErrorsChanged event handler
                             //we only need to invoke _onError in other cases
                             //1) when target is not BaseElView
@@ -546,7 +510,7 @@
                 }
                 get mode() { return this._mode; }
                 get converter() { return this._converter; }
-                set converter(v: MOD.converter.IConverter) { this._converter = v; }
+                set converter(v: converterMOD.IConverter) { this._converter = v; }
                 get converterParam() { return this._converterParam; }
                 set converterParam(v) { this._converterParam = v; }
                 get isSourceFixed() { return this._isSourceFixed; }

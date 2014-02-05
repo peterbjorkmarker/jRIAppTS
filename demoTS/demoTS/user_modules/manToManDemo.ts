@@ -351,7 +351,7 @@ module RIAPP
         }
 
         //MOD.utils.ISubmittable allows for the edit dialog to submit changes automatically
-        export class AddAddressVM extends MOD.mvvm.BaseViewModel implements MOD.utils.ISubmittable  {
+        export class AddAddressVM extends MOD.mvvm.BaseViewModel implements RIAPP.ISubmittable  {
             _customerAddressVM: CustomerAddressVM;
             _addressInfosDb: DEMODB.AddressInfoDb;
             _currentCustomer: DEMODB.Customer;

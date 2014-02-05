@@ -1,14 +1,16 @@
 ﻿module RIAPP {
     export module MOD {
         export module baseElView {
-            import constsMOD = MOD.consts;
+            import constsMOD = RIAPP.MOD.consts;
+            import mvvmMOD = RIAPP.MOD.mvvm;
+
            //local variables for optimization
             var ERRTEXT = RIAPP.localizable.VALIDATE, utils: MOD.utils.Utils;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
 
-            export class PropChangedCommand extends MOD.mvvm.Command {
+            export class PropChangedCommand extends mvvmMOD.Command {
                 constructor(fn_action: (sender:any, param: { property: string; }) => void , thisObj, fn_canExecute: (sender: any, param: { property: string; }) => boolean) {
                     super(fn_action, thisObj, fn_canExecute);
                 }
@@ -26,21 +28,21 @@
             }
 
             export interface IViewType {
-                new (app: Application, el: HTMLElement, options: IViewOptions): BaseElView;
+                new (app: RIAPP.Application, el: HTMLElement, options: IViewOptions): BaseElView;
             }
 
-            export class BaseElView extends BaseObject{
+            export class BaseElView extends RIAPP.BaseObject{
                 _el: HTMLElement;
                 _$el: JQuery;
                 _oldDisplay: string;
                 _objId: string;
-                _propChangedCommand: MOD.mvvm.ICommand;
-                _errors: MOD.binding.IValidationInfo[];
+                _propChangedCommand: mvvmMOD.ICommand;
+                _errors: RIAPP.IValidationInfo[];
                 _toolTip: string;
                 _css: string;
-                _app: Application;
+                _app: RIAPP.Application;
 
-                constructor(app:Application, el: HTMLElement, options: IViewOptions) {
+                constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions) {
                     super();
                     this._app = app;
                     this._el = el;
@@ -92,7 +94,7 @@
                         self._propChangedCommand.execute(self, data);
                     }
                 }
-                _getErrorTipInfo(errors: MOD.binding.IValidationInfo[]) {
+                _getErrorTipInfo(errors: RIAPP.IValidationInfo[]) {
                     var tip = ['<b>', ERRTEXT.errorInfo, '</b>', '<br/>'];
                     errors.forEach(function (info) {
                         var res = '';
@@ -113,7 +115,7 @@
                         $el.removeClass(css.fieldError);
                     }
                 }
-                _updateErrorUI(el: HTMLElement, errors: MOD.binding.IValidationInfo[]) {
+                _updateErrorUI(el: HTMLElement, errors: RIAPP.IValidationInfo[]) {
                     if (!el) {
                         return;
                     }
@@ -168,7 +170,7 @@
                     }
                 }
                 get propChangedCommand() { return this._propChangedCommand; }
-                set propChangedCommand(v: MOD.mvvm.ICommand) {
+                set propChangedCommand(v: mvvmMOD.ICommand) {
                     var old = this._propChangedCommand;
                     if (v !== old) {
                         this._propChangedCommand = v;
@@ -176,14 +178,14 @@
                     }
                 }
                 get validationErrors() { return this._errors; }
-                set validationErrors(v: MOD.binding.IValidationInfo[]) {
+                set validationErrors(v: RIAPP.IValidationInfo[]) {
                     if (v !== this._errors) {
                         this._errors = v;
                         this.raisePropertyChanged('validationErrors');
                         this._updateErrorUI(this._el, this._errors);
                     }
                 }
-                get dataNameAttr() { return this._el.getAttribute(consts.DATA_ATTR.DATA_NAME); }
+                get dataNameAttr() { return this._el.getAttribute(constsMOD.DATA_ATTR.DATA_NAME); }
                 get toolTip() { return this._toolTip; }
                 set toolTip(v:string) {
                     if (this._toolTip != v) {
@@ -208,7 +210,7 @@
             };
 
             export class InputElView extends BaseElView {
-                constructor(app: Application, el: HTMLInputElement, options: IViewOptions) {
+                constructor(app: RIAPP.Application, el: HTMLInputElement, options: IViewOptions) {
                     super(app, el, options);
                 }
                 toString() {
@@ -244,9 +246,9 @@
             };
 
             export class CommandElView extends BaseElView {
-                private _command: MOD.mvvm.Command;
+                private _command: mvvmMOD.Command;
                 _commandParam: any;
-                constructor(app: Application, el: HTMLElement, options: IViewOptions) {
+                constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions) {
                     super(app, el, options);
                     this._command = null;
                     this._commandParam = null;
@@ -277,7 +279,7 @@
                 _onCommandChanged() {
                     this.raisePropertyChanged('command');
                 }
-                _setCommand(v: MOD.mvvm.Command) {
+                _setCommand(v: mvvmMOD.Command) {
                     var self = this;
                     if (v !== this._command) {
                         if (!!this._command) {
@@ -310,7 +312,7 @@
                     }
                 }
                 get command() { return this._command; }
-                set command(v: MOD.mvvm.Command) { this._setCommand(v); }
+                set command(v: mvvmMOD.Command) { this._setCommand(v); }
                 get commandParam() { return this._commandParam; }
                 set commandParam(v) {
                     if (v !== this._commandParam) {
@@ -320,76 +322,14 @@
                 }
             };
 
-            //typed parameters
-            export class TemplateCommand extends MOD.mvvm.Command {
-                constructor(fn_action: (sender: TemplateElView, param: { template: template.Template; isLoaded: boolean; }) => void , thisObj, fn_canExecute: (sender: TemplateElView, param: { template: template.Template; isLoaded: boolean; }) => boolean) {
-                    super(fn_action, thisObj, fn_canExecute);
-                }
-            }
-
-            export class TemplateElView extends CommandElView {
-                private _template: MOD.template.Template;
-                private _isEnabled: boolean;
-                constructor(app: Application, el: HTMLElement, options: IViewOptions) {
-                    this._template = null;
-                    this._isEnabled = true;
-                    super(app, el, options);
-                }
-                templateLoaded(template: MOD.template.Template) {
-                    var self = this, p = self._commandParam;
-                    try {
-                        self._template = template;
-                        self._template.isDisabled = !self._isEnabled;
-                        self._commandParam = { template: template, isLoaded: true };
-                        self.invokeCommand();
-                        self._commandParam = p;
-                        this.raisePropertyChanged('template');
-                    }
-                    catch (ex) {
-                        this._onError(ex, this);
-                        global._throwDummy(ex);
-                    }
-                }
-                templateUnloading(template:MOD.template.Template) {
-                    var self = this, p = self._commandParam;
-                    try {
-                        self._commandParam = { template: template, isLoaded: false };
-                        self.invokeCommand();
-                    }
-                    catch (ex) {
-                        this._onError(ex, this);
-                    }
-                    finally {
-                        self._commandParam = p;
-                        self._template = null;
-                    }
-                    this.raisePropertyChanged('template');
-                }
-                toString() {
-                    return 'TemplateElView';
-                }
-                get isEnabled() { return this._isEnabled; }
-                set isEnabled(v:boolean) {
-                    if (this._isEnabled !== v) {
-                        this._isEnabled = v;
-                        if (!!this._template) {
-                            this._template.isDisabled = !this._isEnabled;
-                        }
-                        this.raisePropertyChanged('isEnabled');
-                    }
-                }
-                get template() {
-                    return this._template;
-                }
-            };
-
+         
             export class BusyElView extends BaseElView {
                 private _delay: number;
                 private _timeOut: number;
                 private _loaderPath: string;
                 private _$loader: any;
                 private _isBusy: boolean;
-                constructor(app: Application, el: HTMLElement, options: IViewOptions) {
+                constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions) {
                     super(app, el, options);
                 }
                 _init(options) {
@@ -398,7 +338,7 @@
                     if (!!options.img)
                         img = options.img;
                     else
-                        img = consts.LOADER_GIF.NORMAL;
+                        img = constsMOD.LOADER_GIF.NORMAL;
                     this._delay = 400;
                     this._timeOut = null;
                     if (!utils.check.isNt(options.delay))
@@ -466,85 +406,6 @@
                     if (v !== this._delay) {
                         this._delay = v;
                         this.raisePropertyChanged('delay');
-                    }
-                }
-            }
-
-            export class DynaContentElView extends BaseElView {
-                private _dataContext: any;
-                private _template: MOD.template.Template;
-                constructor(app: Application, el: HTMLElement, options: IViewOptions) {
-                    super(app, el, options);
-                    this._dataContext = null;
-                    this._template = null;
-                }
-                private _templateChanged() {
-                    if (!this._template) {
-                        this.raisePropertyChanged('templateID');
-                        this.raisePropertyChanged('template');
-                        return;
-                    }
-                    this.$el.empty().append(this._template.el);
-                    this.raisePropertyChanged('templateID');
-                    this.raisePropertyChanged('template');
-                }
-                updateTemplate(name:string) {
-                    var self = this;
-                    try {
-                        if (!name && !!this._template) {
-                            this._template.destroy();
-                            this._template = null;
-                            self._templateChanged();
-                            return;
-                        }
-                    } catch (ex) {
-                        this._onError(ex, this);
-                        global._throwDummy(ex);
-                    }
-
-                    try {
-                        if (!this._template) {
-                            this._template = new MOD.template.Template(this.app, name);
-                            this._template.dataContext = this._dataContext;
-                            this._template.addOnPropertyChange('templateID', function (s, a) {
-                                self._templateChanged();
-                            }, this._objId);
-                            self._templateChanged();
-                            return;
-                        }
-
-                        this._template.templateID = name;
-                    } catch (ex) {
-                        this._onError(ex, this);
-                        global._throwDummy(ex);
-                    }
-                }
-                destroy() {
-                    if (this._isDestroyed)
-                        return
-                    this._isDestroyCalled = true;
-                    if (!!this._template) {
-                        this._template.destroy();
-                        this._template = null;
-                    }
-                    this._dataContext = null;
-                    super.destroy();
-                }
-                get templateID() {
-                    if (!this._template)
-                        return null;
-                    return this._template.templateID;
-                }
-                set templateID(v:string) { this.updateTemplate(v); }
-                get template() { return this._template; }
-                get dataContext() { return this._dataContext; }
-                set dataContext(v) {
-                    if (this._dataContext !== v) {
-                        this._dataContext = v;
-                        if (!!this._template) {
-                            this._template.dataContext = this._dataContext;
-                        }
-                        this.raisePropertyChanged('dataContext');
                     }
                 }
             }
@@ -742,7 +603,7 @@
             }
 
             export class TextAreaElView extends BaseElView {
-                constructor(app: Application, el: HTMLTextAreaElement, options: ITextAreaOptions) {
+                constructor(app: RIAPP.Application, el: HTMLTextAreaElement, options: ITextAreaOptions) {
                     super(app, el, options);
                 }
                 _init(options: ITextAreaOptions) {
@@ -954,7 +815,7 @@
 
             export class ButtonElView extends CommandElView {
                 private _preventDefault: boolean;
-                constructor(app: Application, el: HTMLElement, options: IAncorOptions) {
+                constructor(app: RIAPP.Application, el: HTMLElement, options: IAncorOptions) {
                     this._preventDefault = false;
                     super(app, el, options);
                 }
@@ -1052,7 +913,7 @@
                 private _imageSrc: string;
                 private _image: HTMLImageElement;
                 private _preventDefault: boolean;
-                constructor(app: Application, el: HTMLAnchorElement, options: IAncorOptions) {
+                constructor(app: RIAPP.Application, el: HTMLAnchorElement, options: IAncorOptions) {
                     this._imageSrc = null;
                     this._image = null;
                     this._preventDefault = false;
@@ -1354,7 +1215,7 @@
             }
 
             export class ImgElView extends BaseElView {
-                constructor(app: Application, el: HTMLImageElement, options: IViewOptions) {
+                constructor(app: RIAPP.Application, el: HTMLImageElement, options: IViewOptions) {
                     super(app, el, options);
                 }
                 toString() {
@@ -1370,99 +1231,8 @@
                     }
                 }
             }
-
-            export class TabsElView extends BaseElView {
-                private _tabsEventCommand: mvvm.ICommand;
-                private _tabOpts: any;
-
-                _init(options) {
-                    super._init(options);
-                    this._tabsEventCommand = null;
-                    this._tabOpts = options;
-                    this._createTabs();
-                }
-                _createTabs() {
-                    var $el = this.$el, self = this, tabOpts = {
-                        activate: function (e, tab) {
-                            var active = (<any>$el).tabs("option", "active");
-                            self.invokeTabsEvent("select", { index: active, el: $el });
-                        },
-                        load: function (e, tab) {
-                            var active = (<any>$el).tabs("option", "active");
-                            self.invokeTabsEvent("load", { index: active, el: $el });
-                        }
-                    };
-                    tabOpts = RIAPP.global.utils.extend(false, tabOpts, self._tabOpts);
-                    (<any>$el).tabs(tabOpts);
-                    setTimeout(() => {
-                        if (self._isDestroyCalled)
-                            return;
-                        self.invokeTabsEvent("create", { el: $el });
-                        var active = (<any>$el).tabs("option", "active");
-                        self.invokeTabsEvent("select", { index: active, el: $el });
-                    },200);
-                }
-                _destroyTabs() {
-                    var $el = this.$el;
-                    utils.destroyJQueryPlugin($el, 'tabs');
-                }
-                invokeTabsEvent(eventName:string, args) {
-                    var self = this, data = { eventName: eventName, args: args };
-                    if (!!self._tabsEventCommand) {
-                        self._tabsEventCommand.execute(self, data);
-                    }
-                }
-                destroy() {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    this._tabsEventCommand = null;
-                    this._destroyTabs();
-                    super.destroy();
-                }
-                toString() {
-                    return 'TabsElView';
-                }
-                get tabsEventCommand() { return this._tabsEventCommand; }
-                set tabsEventCommand(v) {
-                    var old = this._tabsEventCommand;
-                    if (v !== old) {
-                        if (!!old) {
-                            this._destroyTabs();
-                        }
-                        this._tabsEventCommand = v;
-                        if (!!this._tabsEventCommand)
-                            this._createTabs();
-                    }
-                }
-            }
-
-            export interface IDatePickerOptions extends ITextBoxOptions {
-                datepicker?:any;
-            }
-
-            export class DatePickerElView extends TextBoxElView {
-                _init(options: IDatePickerOptions) {
-                    super._init(options);
-                    var $el = this.$el;
-                    global.defaults.datepicker.attachTo($el, options.datepicker);
-                }
-                destroy() {
-                    if (this._isDestroyed)
-                        return;
-                    this._isDestroyCalled = true;
-                    var $el = this.$el;
-                    global.defaults.datepicker.detachFrom($el);
-                    super.destroy();
-                }
-                toString() {
-                    return 'DatePickerElView';
-                }
-            }
-
-            global.registerElView('template', TemplateElView);
+         
             global.registerElView('busy_indicator', BusyElView);
-            global.registerElView(constsMOD.ELVIEW_NM.DYNACONT, DynaContentElView);
             global.registerElView('input:checkbox', CheckBoxElView);
             global.registerElView('threeState', CheckBoxThreeStateElView);
             global.registerElView('input:text', TextBoxElView);
@@ -1480,8 +1250,6 @@
             global.registerElView('section', BlockElView);
             global.registerElView('block', BlockElView);
             global.registerElView('img', ImgElView);
-            global.registerElView('tabs', TabsElView);
-            global.registerElView('datepicker', DatePickerElView);
 
             //signal to the global object that the module is loaded
             global.onModuleLoaded('baseElView', baseElView);

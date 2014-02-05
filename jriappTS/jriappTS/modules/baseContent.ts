@@ -1,10 +1,14 @@
 ﻿module RIAPP {
     export module MOD {
         export module baseContent {
-            import constsMOD = MOD.consts;
+            import constsMOD = RIAPP.MOD.consts;
+            import utilsMOD = RIAPP.MOD.utils;
+            import parserMOD = RIAPP.MOD.parser;
+            import elviewMOD = RIAPP.MOD.baseElView;
             import bindMOD = RIAPP.MOD.binding;
+            import templMOD = RIAPP.MOD.template;
 
-            var utils: MOD.utils.Utils, parser: MOD.parser.Parser;
+            var utils: utilsMOD.Utils, parser: parserMOD.Parser;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
                 parser = s.parser;
@@ -33,8 +37,8 @@
 
 
             export interface IExternallyCachable {
-                addOnObjectCreated(fn: (sender: any, args: { objectKey: string; object: BaseObject; isCachedExternally: boolean; }) => void , namespace?: string): void;
-                addOnObjectNeeded(fn: (sender: any, args: { objectKey: string; object: BaseObject; }) => void , namespace?: string): void;
+                addOnObjectCreated(fn: (sender: any, args: { objectKey: string; object: RIAPP.BaseObject; isCachedExternally: boolean; }) => void , namespace?: string): void;
+                addOnObjectNeeded(fn: (sender: any, args: { objectKey: string; object: RIAPP.BaseObject; }) => void , namespace?: string): void;
             }
 
             export interface IContentOptions {
@@ -50,7 +54,7 @@
             }
 
             export interface IContentType {
-                new (app: Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean): IContent;
+                new (app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean): IContent;
             }
 
             export interface IContentFactory {
@@ -98,7 +102,7 @@
                 return contentOptions;
             };
 
-            export function getBindingOptions(app: Application, bindInfo: bindMOD.IBindingInfo, defaultTarget: BaseObject, defaultSource:any) {
+            export function getBindingOptions(app: RIAPP.Application, bindInfo: bindMOD.IBindingInfo, defaultTarget: RIAPP.BaseObject, defaultSource:any) {
                 var bindingOpts: bindMOD.IBindingOptions = {
                     mode: bindMOD.BINDING_MODE.OneWay,
                     converterParam: null,
@@ -181,12 +185,12 @@
                 _isReadOnly: boolean;
                 _isEditing: boolean;
                 _dctx: any;
-                _lfScope: MOD.utils.LifeTimeScope;
+                _lfScope: utilsMOD.LifeTimeScope;
                 //the target of dataBinding
-                _tgt: baseElView.BaseElView;
-                _app: Application;
+                _tgt: elviewMOD.BaseElView;
+                _app: RIAPP.Application;
 
-                constructor(app: Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean) {
+                constructor(app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean) {
                     super();
                     this._app = app;
                     this._parentEl = parentEl;
@@ -241,7 +245,7 @@
                     var editable = !!this._dctx && !!this._dctx.beginEdit;
                     return editable && !finf.isReadOnly && finf.fieldType != collection.FIELD_TYPE.Calculated;
                 }
-                _createTargetElement(): MOD.baseElView.BaseElView {
+                _createTargetElement(): elviewMOD.BaseElView {
                     var el: HTMLElement, doc = global.document, info: { name: string; options: any; } = { name: null, options: null };
                     if (this._isEditing && this._canBeEdited()) {
                         el = doc.createElement('input');
@@ -255,7 +259,7 @@
                     this._el = el;
                     return this._getElementView(this._el, info);
                 }
-                _getBindingOption(bindingInfo:bindMOD.IBindingInfo, tgt:BaseObject, dctx:any, targetPath:string) {
+                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx:any, targetPath:string) {
                     var options = getBindingOptions(this.app,bindingInfo, tgt, dctx);
                     if (this.isEditing && this._canBeEdited())
                         options.mode = bindMOD.BINDING_MODE.TwoWay;
@@ -303,7 +307,7 @@
                 _getDisplayInfo() {
                     return this._options.displayInfo;
                 }
-                _getElementView(el: HTMLElement, view_info: { name: string; options: any; }): baseElView.BaseElView {
+                _getElementView(el: HTMLElement, view_info: { name: string; options: any; }): elviewMOD.BaseElView {
                     var elView = this.app._getElView(el);
                     if (!!elView)
                         return elView;
@@ -314,7 +318,7 @@
                     var bindingInfo = this._getBindingInfo();
                     if (!!bindingInfo) {
                         this._tgt =  this._createTargetElement();
-                        this._lfScope = new MOD.utils.LifeTimeScope();
+                        this._lfScope = new utilsMOD.LifeTimeScope();
                         if (!!this._tgt)
                             this._lfScope.addObj(this._tgt);
                         var options = this._getBindingOption(bindingInfo, this._tgt, this._dctx, 'value');
@@ -366,13 +370,13 @@
 
             export class TemplateContent extends RIAPP.BaseObject implements IContent {
                 _parentEl: HTMLElement;
-                _template: template.Template;
+                _template: templMOD.Template;
                 _templateInfo: ITemplateInfo;
                 _isEditing: boolean;
                 _dctx: any;
-                _app: Application;
+                _app: RIAPP.Application;
                 
-                constructor(app: Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean) {
+                constructor(app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean) {
                     super();
                     var templateInfo: ITemplateInfo = options.templateInfo;
                     this._app = app;
@@ -385,7 +389,7 @@
                     $p.addClass(css.content);
                     this.update();
                 }
-                _createTemplate() {
+                _createTemplate(): templMOD.Template {
                     var inf = this._templateInfo, id = inf.displayID;
                     if (this._isEditing) {
                         if (!!inf.editID) {
@@ -400,11 +404,11 @@
                     if (!id)
                         throw new Error(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID);
 
-                    return new MOD.template.Template(this.app, id);
+                    return new templMOD.Template(this.app, id);
                 }
                 update() {
                     this._cleanUp();
-                    var template;
+                    var template: templMOD.Template;
                     if (!!this._templateInfo) {
                         template = this._createTemplate();
                         this._template = template;
@@ -461,7 +465,7 @@
                     var bindingInfo = this._getBindingInfo();
                     if (!!bindingInfo) {
                         this._updateCss();
-                        this._lfScope = new MOD.utils.LifeTimeScope();
+                        this._lfScope = new utilsMOD.LifeTimeScope();
                         var options = this._getBindingOption(bindingInfo, this._tgt, this._dctx, 'checked');
                         options.mode = bindMOD.BINDING_MODE.TwoWay;
                         this._lfScope.addObj(this.app.bind(options));
@@ -470,10 +474,10 @@
                 _createCheckBoxView() {
                     var el = global.document.createElement('input');
                     el.setAttribute('type', 'checkbox');
-                    var chbxView = new baseElView.CheckBoxElView(this.app, el, {});
+                    var chbxView = new elviewMOD.CheckBoxElView(this.app, el, {});
                     return chbxView;
                 }
-                _createTargetElement(): MOD.baseElView.BaseElView {
+                _createTargetElement(): elviewMOD.BaseElView {
                     var tgt = this._tgt;
                     if (!tgt) {
                         tgt = this._createCheckBoxView();
@@ -521,19 +525,19 @@
 
             export class DateContent extends BindingContent {
                 _fn_cleanup: () => void;
-                constructor(app: Application, parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean) {
+                constructor(app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean) {
                     if (options.name != 'datepicker') {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'datepicker'"));
                     }
                     super(app, parentEl, options, dctx, isEditing);
                     this._fn_cleanup = null;
                 }
-                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: BaseObject, dctx:any, targetPath:string) {
+                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx:any, targetPath:string) {
                     var options =super._getBindingOption(bindingInfo, tgt, dctx, targetPath);
                     options.converter = this.app.getConverter('dateConverter');
                     return options;
                 }
-                _createTargetElement(): MOD.baseElView.BaseElView {
+                _createTargetElement(): elviewMOD.BaseElView {
                     var el: HTMLElement, doc = global.document, info: { name: string; options: any; } = { name: null, options: null };
                     if (this._isEditing && this._canBeEdited()) {
                         el = doc.createElement('input');
@@ -554,7 +558,7 @@
             }
 
             export class DateTimeContent extends BindingContent {
-                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: BaseObject, dctx, targetPath: string) {
+                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx, targetPath: string) {
                     var options = super._getBindingOption(bindingInfo, tgt, dctx, targetPath);
                     options.converter = this.app.getConverter('dateTimeConverter');
                     var finf = this.getFieldInfo(), defaults = global.defaults;
@@ -588,7 +592,7 @@
                     }
                     return NumberContent.__allowedKeys;
                 }
-                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: BaseObject, dctx, targetPath: string) {
+                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx, targetPath: string) {
                     var options = super._getBindingOption(bindingInfo, tgt, dctx, targetPath);
                     var finf = this.getFieldInfo();
                     switch (finf.dataType) {
@@ -607,8 +611,8 @@
                 update() {
                     super.update();
                     var self = this;
-                    if (self._tgt instanceof baseElView.TextBoxElView) {
-                        (<baseElView.TextBoxElView>self._tgt).addOnKeyPress(function (sender, args) {
+                    if (self._tgt instanceof elviewMOD.TextBoxElView) {
+                        (<elviewMOD.TextBoxElView>self._tgt).addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(args.keyCode, args.value);
                         });
                     }
@@ -649,8 +653,8 @@
                 update() {
                     super.update();
                     var self = this, fieldInfo = self.getFieldInfo();
-                    if (self._tgt instanceof baseElView.TextBoxElView) {
-                        (<baseElView.TextBoxElView>self._tgt).addOnKeyPress(function (sender, args) {
+                    if (self._tgt instanceof elviewMOD.TextBoxElView) {
+                        (<elviewMOD.TextBoxElView>self._tgt).addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(fieldInfo, args.keyCode, args.value);
                         });
                     }
@@ -673,13 +677,13 @@
                     }
                     return MultyLineContent.__allowedKeys;
                 }
-                constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean) {
+                constructor(app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean) {
                     if (options.name != 'multyline') {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'multyline'"));
                     }
                     super(app, parentEl, options, dctx, isEditing);
                 }
-                _createTargetElement(): MOD.baseElView.BaseElView {
+                _createTargetElement(): elviewMOD.BaseElView {
                     var el: HTMLElement, info: { name: string; options: any; } = { name: null, options: null };
                     if (this._isEditing && this._canBeEdited()) {
                         el = global.document.createElement('textarea');
@@ -697,8 +701,8 @@
                     super.update();
                     var self = this, fieldInfo = self.getFieldInfo();
 
-                    if (self._tgt instanceof baseElView.TextAreaElView) {
-                        (<baseElView.TextAreaElView>self._tgt).addOnKeyPress(function (sender, args) {
+                    if (self._tgt instanceof elviewMOD.TextAreaElView) {
+                        (<elviewMOD.TextAreaElView>self._tgt).addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(fieldInfo, args.keyCode, args.value);
                         });
                     }
@@ -713,10 +717,10 @@
 
             //base content factory
             export class ContentFactory implements IContentFactory {
-                _app: Application;
-                _nextFactory: baseContent.IContentFactory;
+                _app: RIAPP.Application;
+                _nextFactory: IContentFactory;
 
-                constructor(app: Application, nextFactory?: IContentFactory) {
+                constructor(app: RIAPP.Application, nextFactory?: IContentFactory) {
                     this._app = app;
                     this._nextFactory = nextFactory;
                 }
@@ -786,7 +790,7 @@
 
             //this function (if present) is executed by the application
             //it allows to init resources specific to an application
-            export function initModule(app: Application) {
+            export function initModule(app: RIAPP.Application) {
                 app.registerContentFactory((nextFactory?: IContentFactory) => {
                     return new ContentFactory(app, nextFactory);
                 });

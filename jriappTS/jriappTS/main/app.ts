@@ -10,7 +10,6 @@
 /// <reference path="..\modules\converter.ts"/>
 /// <reference path="..\modules\defaults.ts"/>
 /// <reference path="..\modules\parser.ts"/>
-/// <reference path="..\modules\datepicker.ts"/>
 /// <reference path="..\modules\mvvm.ts"/>
 /// <reference path="..\modules\baseElView.ts"/>
 /// <reference path="..\modules\binding.ts"/>
@@ -19,12 +18,15 @@
 /// <reference path="..\modules\baseContent.ts"/>
 /// <reference path="..\modules\dataform.ts"/>
 //*** the rest are optional modules, which can be removed if not needed ***
-/// <reference path="..\modules\db.ts"/>
+/// <reference path="..\modules\dynacontent.ts"/>
+/// <reference path="..\modules\datepicker.ts"/>
+/// <reference path="..\modules\tabs.ts"/>
 /// <reference path="..\modules\listbox.ts"/>
 /// <reference path="..\modules\datadialog.ts"/>
 /// <reference path="..\modules\datagrid.ts"/>
 /// <reference path="..\modules\pager.ts"/>
 /// <reference path="..\modules\stackpanel.ts"/>
+/// <reference path="..\modules\db.ts"/>
 
 module RIAPP {
     import constsMOD = MOD.consts;

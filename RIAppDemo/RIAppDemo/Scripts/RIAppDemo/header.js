@@ -1,4 +1,4 @@
-/// <reference path="..\jriapp.d.ts"/>
+﻿/// <reference path="..\jriapp.d.ts"/>
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -8,6 +8,7 @@ var __extends = this.__extends || function (d, b) {
 var RIAPP;
 (function (RIAPP) {
     (function (HEADER) {
+        'use strict';
         var global = RIAPP.global, utils = global.utils;
         HEADER.topPanel;
         HEADER.contentPanel;

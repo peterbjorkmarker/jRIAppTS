@@ -1,10 +1,14 @@
 ﻿module RIAPP {
     export module MOD {
         export module datadialog {
-            var utils: MOD.utils.Utils;
+            import utilsMOD = RIAPP.MOD.utils;
+            import templMOD = RIAPP.MOD.template;
+
+            var utils: utilsMOD.Utils;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
+
            export enum DIALOG_ACTION { Default = 0, StayOpen = 1 };
            
             
@@ -21,8 +25,8 @@
                 fn_OnOK?: (dialog: DataEditDialog) => number;
                 fn_OnShow?: (dialog: DataEditDialog) => void;
                 fn_OnCancel?: (dialog: DataEditDialog) => number;
-                fn_OnTemplateCreated?: (template: template.Template) => void;
-                fn_OnTemplateDestroy?: (template: template.Template) => void;
+                fn_OnTemplateCreated?: (template: templMOD.Template) => void;
+                fn_OnTemplateDestroy?: (template: templMOD.Template) => void;
             }
 
             export class DataEditDialog extends BaseObject {
@@ -36,18 +40,18 @@
                 private _fn_OnOK: (dialog: DataEditDialog) => number;
                 private _fn_OnShow: (dialog: DataEditDialog) => void;
                 private _fn_OnCancel: (dialog: DataEditDialog) => number;
-                private _fn_OnTemplateCreated: (template: template.Template) => void;
-                private _fn_OnTemplateDestroy: (template: template.Template) => void;
+                private _fn_OnTemplateCreated: (template: templMOD.Template) => void;
+                private _fn_OnTemplateDestroy: (template: templMOD.Template) => void;
                 private _isEditable: boolean;
-                private _template: template.Template;
+                private _template: templMOD.Template;
                 private _$template: JQuery;
                 private _result: string;
                 private _options: any;
                 private _dialogCreated: boolean;
-                private _fn_submitOnOK: () => IVoidPromise;
+                private _fn_submitOnOK: () => RIAPP.IVoidPromise;
                 private _app: Application;
                 //save global's currentSelectable  before showing and restore it on dialog's closing
-                private _currentSelectable: ISelectable;
+                private _currentSelectable: RIAPP.ISelectable;
 
                 constructor(app:Application, options: IDialogConstructorOptions) {
                     super();
@@ -92,7 +96,7 @@
                           //signals immediatly
                            return utils.createDeferred().resolve().promise();
                        }
-                       var dctxt: MOD.utils.ISubmittable = self._dataContext;
+                       var dctxt: RIAPP.ISubmittable = self._dataContext;
                        return dctxt.submitChanges();
                     };
                     this._updateIsEditable();
@@ -143,7 +147,7 @@
                     return ['close', 'refresh'].concat(base_events);
                 }
                 _createTemplate(dcxt) {
-                    var t = new template.Template(this._app, this._templateID);
+                    var t = new templMOD.Template(this._app, this._templateID);
                     //create template in disabled state
                     t.isDisabled = true; 
                     t.dataContext = dcxt;

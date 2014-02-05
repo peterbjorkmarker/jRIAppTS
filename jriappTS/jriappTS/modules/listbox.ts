@@ -1,7 +1,11 @@
 ﻿module RIAPP {
     export module MOD {
         export module listbox{
+            import bindMOD = RIAPP.MOD.binding;
             import collMod = MOD.collection;
+            import elviewMOD = MOD.baseElView;
+            import contentMOD = RIAPP.MOD.baseContent;
+
             var utils: MOD.utils.Utils, parser: MOD.parser.Parser;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
@@ -354,14 +358,16 @@
                             ds.forEach(function (item) {
                                 self._addOption(item, false);
                             });
-
-                            if (tmp === undefined) {
+                            if (utils.check.isUndefined(tmp)) {
                                 self._el.selectedIndex = self._findItemIndex(oldItem);
                             }
                             else {
                                 oldItem = self.findItemByValue(tmp);
                                 self.selectedItem = oldItem;
-                                self._tempValue = undefined;
+                                if (!oldItem)
+                                    self._tempValue = tmp;
+                                else
+                                    self._tempValue = undefined;
                             }
                         }
                     
@@ -440,7 +446,10 @@
                         if (this.selectedValue !== v) {
                             var item = self.findItemByValue(v);
                             self.selectedItem = item;
-                            self._tempValue = undefined;
+                            if (!utils.check.isUndefined(v) && !item)
+                                self._tempValue = v;
+                            else
+                                self._tempValue = undefined;
                         }
                     }
                     else {
@@ -495,10 +504,10 @@
                 get el() { return this._el; }
             }
      
-            export interface ISelectViewOptions extends IListBoxOptions, baseElView.IViewOptions {
+            export interface ISelectViewOptions extends IListBoxOptions, elviewMOD.IViewOptions {
             }
 
-            export class SelectElView extends baseElView.BaseElView {
+            export class SelectElView extends elviewMOD.BaseElView {
                 private _listBox: ListBox;
                 private _options: ISelectViewOptions;
                 constructor(app: Application, el: HTMLSelectElement, options: ISelectViewOptions) {
@@ -582,15 +591,15 @@
                 dataSource: string; valuePath: string; textPath: string;
             }
 
-            export class LookupContent extends baseContent.BindingContent implements baseContent.IExternallyCachable {
-                private _spanView: baseElView.SpanElView;
-                private _valBinding: binding.Binding;
-                private _listBinding: binding.Binding;
+            export class LookupContent extends contentMOD.BindingContent implements contentMOD.IExternallyCachable {
+                private _spanView: elviewMOD.SpanElView;
+                private _valBinding: bindMOD.Binding;
+                private _listBinding: bindMOD.Binding;
                 private _selectView: SelectElView;
                 private _isListBoxCachedExternally: boolean;
                 private _value: any;
 
-                constructor(app: Application, parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean) {
+                constructor(app: Application, parentEl: HTMLElement, options: contentMOD.IContentOptions, dctx, isEditing: boolean) {
                     if (options.name != 'lookup') {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'lookup'"));
                     }
@@ -671,7 +680,7 @@
                         return this._spanView;
                     }
                     var el = global.document.createElement('span'), displayInfo = this._getDisplayInfo();
-                    var spanView = new baseElView.SpanElView(this.app, el, {});
+                    var spanView = new elviewMOD.SpanElView(this.app, el, {});
                     if (!!displayInfo) {
                         if (!!displayInfo.displayCss) {
                             spanView.$el.addClass(displayInfo.displayCss);
@@ -685,8 +694,8 @@
                     this._createTargetElement();
                     this._parentEl.appendChild(this._el);
                 }
-                _createTargetElement(): MOD.baseElView.BaseElView {
-                    var tgt: MOD.baseElView.BaseElView, el: HTMLElement, selectView: SelectElView, spanView: baseElView.SpanElView;
+                _createTargetElement(): elviewMOD.BaseElView {
+                    var tgt: elviewMOD.BaseElView, el: HTMLElement, selectView: SelectElView, spanView: elviewMOD.SpanElView;
                     if (this._isEditing && this._canBeEdited()) {
                         selectView = this._getSelectView();
                         this._listBinding = this._bindToList(selectView);
@@ -731,23 +740,23 @@
                     if (!this._options.fieldName)
                         return null;
 
-                    var options: RIAPP.MOD.binding.IBindingOptions = {
+                    var options: bindMOD.IBindingOptions = {
                         target: this, source: this._dctx,
-                        targetPath: 'value', sourcePath: this._options.fieldName, mode: RIAPP.MOD.binding.BINDING_MODE.OneWay,
+                        targetPath: 'value', sourcePath: this._options.fieldName, mode: bindMOD.BINDING_MODE.OneWay,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
-                    return new binding.Binding(options);
+                    return new bindMOD.Binding(options);
                 }
                 _bindToList(selectView: SelectElView) {
                     if (!this._options.fieldName)
                         return null;
 
-                    var options: RIAPP.MOD.binding.IBindingOptions = {
+                    var options: bindMOD.IBindingOptions = {
                         target: selectView, source: this._dctx,
-                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: RIAPP.MOD.binding.BINDING_MODE.TwoWay,
+                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: bindMOD.BINDING_MODE.TwoWay,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
-                    return new binding.Binding(options);
+                    return new bindMOD.Binding(options);
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -777,16 +786,16 @@
                 }
             }
 
-            export class ContentFactory implements baseContent.IContentFactory  {
+            export class ContentFactory implements contentMOD.IContentFactory  {
                 private _app: Application;
-                private _nextFactory: baseContent.IContentFactory;
+                private _nextFactory: contentMOD.IContentFactory;
 
-                constructor(app: Application, nextFactory?: baseContent.IContentFactory) {
+                constructor(app: Application, nextFactory?: contentMOD.IContentFactory) {
                     this._app = app;
                     this._nextFactory = nextFactory;
                 }
 
-                getContentType(options: baseContent.IContentOptions): baseContent.IContentType {
+                getContentType(options: contentMOD.IContentOptions): contentMOD.IContentType {
                     if (options.name == 'lookup') {
                         return LookupContent;
                     }
@@ -796,7 +805,7 @@
                         throw new Error(RIAPP.ERRS.ERR_BINDING_CONTENT_NOT_FOUND);
                 }
 
-                createContent(parentEl: HTMLElement, options: baseContent.IContentOptions, dctx, isEditing: boolean): baseContent.IContent {
+                createContent(parentEl: HTMLElement, options: contentMOD.IContentOptions, dctx, isEditing: boolean): contentMOD.IContent {
                     var contentType = this.getContentType(options);
                     return new contentType(this._app, parentEl, options, dctx, isEditing);
                 }
@@ -810,7 +819,7 @@
             }
 
             export function initModule(app: Application) {
-                app.registerContentFactory((nextFactory?: baseContent.IContentFactory) => {
+                app.registerContentFactory((nextFactory?: contentMOD.IContentFactory) => {
                     return new ContentFactory(app, nextFactory);
                 });
                 return listbox;

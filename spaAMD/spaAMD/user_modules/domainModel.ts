@@ -1,7 +1,7 @@
 ﻿/// <reference path="..\jriapp.d.ts"/>
 'use strict';
 /*
-    Generated from: /RIAppDemoService/CodeGen on 2014-01-30 11:41 at 11:41
+    Generated from: /RIAppDemoService/CodeGen?type=ts on 2014-02-05 13:49 at 13:49
     Don't make manual changes here, because they will be lost when this db interface will be regenerated!
 */
 
@@ -49,7 +49,7 @@ export interface IClientTestModel {
 /*
     Generated from C# HistoryItem model
 */
-export interface IHistoryItem extends RIAPP.MOD.utils.IEditable {
+export interface IHistoryItem extends RIAPP.IEditable {
     radioValue: string;
     time: Date;
 }
@@ -197,7 +197,7 @@ export class Customer_ComplexProp extends RIAPP.MOD.db.RootComplexProperty {
 }
 //******END COMPLEX TYPES REGION******
 
-export interface ICustomerEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+export interface ICustomerEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
     CustomerID: number;
     NameStyle: boolean;
     Title: string;
@@ -287,7 +287,7 @@ export class CustomerDb extends RIAPP.MOD.db.DbSet<Customer>
     get items2() { return <ICustomerEntity[]>this.items; }
 }
 
-export interface ICustomerAddressEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+export interface ICustomerAddressEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
     CustomerID: number;
     AddressID: number;
     AddressType: string;
@@ -367,7 +367,7 @@ export class CustomerAddressDb extends RIAPP.MOD.db.DbSet<CustomerAddress>
     get items2() { return <ICustomerAddressEntity[]>this.items; }
 }
 
-export interface IAddressEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+export interface IAddressEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
     AddressID: number;
     AddressLine1: string;
     AddressLine2: string;
@@ -451,7 +451,7 @@ export class AddressDb extends RIAPP.MOD.db.DbSet<Address>
     get items2() { return <IAddressEntity[]>this.items; }
 }
 
-export interface IProductEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+export interface IProductEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
     ProductID: number;
     Name: string;
     ProductNumber: string;
@@ -564,7 +564,7 @@ export class ProductDb extends RIAPP.MOD.db.DbSet<Product>
     get items2() { return <IProductEntity[]>this.items; }
 }
 
-export interface IProductModelEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+export interface IProductModelEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
     ProductModelID: number;
     Name: string;
 
@@ -620,7 +620,7 @@ export class ProductModelDb extends RIAPP.MOD.db.DbSet<ProductModel>
     get items2() { return <IProductModelEntity[]>this.items; }
 }
 
-export interface ISalesOrderHeaderEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+export interface ISalesOrderHeaderEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
     SalesOrderID: number;
     RevisionNumber: number;
     OrderDate: Date;
@@ -737,7 +737,7 @@ export class SalesOrderHeaderDb extends RIAPP.MOD.db.DbSet<SalesOrderHeader>
     get items2() { return <ISalesOrderHeaderEntity[]>this.items; }
 }
 
-export interface ISalesOrderDetailEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+export interface ISalesOrderDetailEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
     SalesOrderID: number;
     SalesOrderDetailID: number;
     OrderQty: number;
@@ -815,7 +815,7 @@ export class SalesOrderDetailDb extends RIAPP.MOD.db.DbSet<SalesOrderDetail>
     get items2() { return <ISalesOrderDetailEntity[]>this.items; }
 }
 
-export interface IProductCategoryEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+export interface IProductCategoryEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
     ProductCategoryID: number;
     ParentProductCategoryID: number;
     Name: string;
@@ -880,7 +880,7 @@ export class ProductCategoryDb extends RIAPP.MOD.db.DbSet<ProductCategory>
     get items2() { return <IProductCategoryEntity[]>this.items; }
 }
 
-export interface ISalesInfoEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+export interface ISalesInfoEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
     SalesPerson: string;
 
     getDbContext(): DbContext;
@@ -934,7 +934,7 @@ export class SalesInfoDb extends RIAPP.MOD.db.DbSet<SalesInfo>
     get items2() { return <ISalesInfoEntity[]>this.items; }
 }
 
-export interface ILookUpProductEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+export interface ILookUpProductEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
     ProductID: number;
     Name: string;
 
@@ -991,7 +991,7 @@ export class LookUpProductDb extends RIAPP.MOD.db.DbSet<LookUpProduct>
     get items2() { return <ILookUpProductEntity[]>this.items; }
 }
 
-export interface IAddressInfoEntity extends RIAPP.MOD.utils.IEditable, RIAPP.MOD.utils.ISubmittable {
+export interface IAddressInfoEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
     AddressID: number;
     AddressLine1: string;
     City: string;

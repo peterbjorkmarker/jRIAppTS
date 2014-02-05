@@ -258,7 +258,7 @@ export class ErrorViewModel extends MOD.mvvm.BaseViewModel {
                     self.title = "ACCESS DENIED";
                 else if (self.error instanceof MOD.db.ConcurrencyError)
                     self.title = "CONCURRENCY ERROR";
-                else if (self.error instanceof MOD.binding.ValidationError)
+                else if (self.error instanceof MOD.errors.ValidationError)
                     self.title = "VALIDATION ERROR";
                 else if (self.error instanceof MOD.db.SvcValidationError)
                     self.title = "VALIDATION ERROR";

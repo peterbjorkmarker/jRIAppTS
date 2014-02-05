@@ -33,7 +33,7 @@
                 down=40,
                 del=127
             }
-            export var ELVIEW_NM = { DATAFORM: 'dataform', DYNACONT: 'dynacontent' };
+            export var ELVIEW_NM = { DATAFORM: 'dataform' };
             export var LOADER_GIF = { SMALL: 'loader2.gif', NORMAL: 'loader.gif' };
            
             global.onModuleLoaded('consts', consts);
