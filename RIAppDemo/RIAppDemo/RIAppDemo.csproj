@@ -213,6 +213,7 @@
     <Content Include="Scripts\RIAppDemo\header.js" />
     <Content Include="Scripts\RIAppDemo\manToManDemo.js" />
     <Content Include="Scripts\RIAppDemo\masterDetDemo.js" />
+    <Content Include="Scripts\RIAppDemo\SPA\animation.js" />
     <Content Include="Scripts\RIAppDemo\SPA\autocomplete.js" />
     <Content Include="Scripts\RIAppDemo\SPA\common.js" />
     <Content Include="Scripts\RIAppDemo\SPA\domainModel.js" />

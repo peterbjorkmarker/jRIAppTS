@@ -45,6 +45,7 @@ You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
 <p>2014-02-07 Implemented views transition animations. The demo was also updated.
+P.S. don't forget to clear a browser cache. SPA uses AMD loading and this is a bitch. The browser caches old files.
 </p>
 <p>2014-02-05<br/>
 1) core modules restructuring to remove mutual dependencies between modules - dynacontent, tabs are new modules. 
