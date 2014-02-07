@@ -132,7 +132,7 @@
                 _onError(error, source):boolean {
                     var isHandled = super._onError(error, source);
                     if (!isHandled) {
-                        return global._onError(error, source);
+                        return this._app._onError(error, source);
                     }
                     return isHandled;
                 }

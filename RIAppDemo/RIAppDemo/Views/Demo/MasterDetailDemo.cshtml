@@ -259,7 +259,7 @@
     @*Grid details template for customer's orders*@
     <div id="customerDetailsTemplate" style="width:100%; margin:0px;" data-role="template">
         <div data-name="tabs" style="margin: 5px; padding: 5px; width: 95%;" data-bind="this.tabsEventCommand,to=tabsEventCommand,source=customerVM"
-            data-view="name='tabs'">
+            data-view="name='tabs',options:{hide:{effect:clip,duration:500},show:{effect:clip,duration:500}}">
             <div id="detailsTabs">
                 <ul>
                     <li><a href="#custDetails">Details on&nbsp;<span data-bind="{this.value,to=ComplexProp.Name}"></span></a></li>
@@ -548,7 +548,7 @@
 
     @*Grid details template for order Details*@
     <div id="orderDetailsTemplate" style="width:100%; margin:0px;" data-role="template">
-        <div data-name="tabs" style="margin: 5px; padding: 5px; width: 95%;" data-bind="this.tabsEventCommand,to=tabsEventCommand,source=customerVM.ordersVM"  data-view="name='tabs'">
+        <div data-name="tabs" style="margin: 5px; padding: 5px; width: 95%;" data-bind="this.tabsEventCommand,to=tabsEventCommand,source=customerVM.ordersVM"  data-view="name=tabs,options:{hide:{effect:clip,duration:500},show:{effect:clip,duration:500}}">
                <div id="odeTabs">
                 <ul>
                     <li><a href="#sta">ShipToAddress</a></li>

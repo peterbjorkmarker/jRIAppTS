@@ -44,6 +44,8 @@ In my real world applications i use an ASP.NET MVC 4 bundling feature.
 You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
+<p>2014-02-07 Implemented views transition animations. The demo was also updated.
+</p>
 <p>2014-02-05<br/>
 1) core modules restructuring to remove mutual dependencies between modules - dynacontent, tabs are new modules. 
 The datepicker and template modules now contain respective element views.<br/>

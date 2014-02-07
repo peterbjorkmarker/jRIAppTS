@@ -3152,7 +3152,7 @@ var RIAPP;
                 BaseElView.prototype._onError = function (error, source) {
                     var isHandled = _super.prototype._onError.call(this, error, source);
                     if (!isHandled) {
-                        return RIAPP.global._onError(error, source);
+                        return this._app._onError(error, source);
                     }
                     return isHandled;
                 };
@@ -6821,21 +6821,30 @@ var RIAPP;
             template.css = {
                 templateContainer: 'ria-template-container'
             };
-            var utils;
-            RIAPP.global.addOnInitialize(function (s, args) {
+            var utils, global = RIAPP.global;
+            global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
 
             var Template = (function (_super) {
                 __extends(Template, _super);
-                function Template(app, templateID) {
+                function Template(app, options) {
                     _super.call(this);
                     this._app = app;
-                    this._dctxt = null;
+                    options = utils.extend(false, {
+                        templateID: null,
+                        dataContext: null,
+                        templEvents: null,
+                        isDisabled: false
+                    }, options);
+
+                    this._templateID = options.templateID;
+                    this._templEvents = options.templEvents;
+                    this._dctxt = options.dataContext;
+                    this._isDisabled = !!options.isDisabled;
+                    this._loadedElem = null;
                     this._el = null;
-                    this._isDisabled = false;
                     this._lfTime = null;
-                    this._templateID = templateID;
                     this._templElView = undefined;
                     this._promise = null;
                     this._busyTimeOut = null;
@@ -6877,13 +6886,24 @@ var RIAPP;
                     this._templElView = res;
                     return res;
                 };
+                Template.prototype._getTemplateEvents = function () {
+                    var tel_vw = this._getTemplateElView(), ev = this._templEvents;
+                    if (!!tel_vw && !!ev)
+                        return [tel_vw, ev];
+                    else if (!!tel_vw)
+                        return [tel_vw];
+                    else if (!!ev)
+                        return [ev];
+                    else
+                        return [];
+                };
 
                 //returns a deferred which resolves with loaded template DOM element
                 Template.prototype._loadTemplateElAsync = function (name) {
                     var self = this, fn_loader = this.app.getTemplateLoader(name), deferred = utils.createDeferred();
                     if (!!fn_loader) {
                         fn_loader().then(function (html) {
-                            var tmpDiv = RIAPP.global.document.createElement('div');
+                            var tmpDiv = global.document.createElement('div');
                             tmpDiv.innerHTML = html;
                             var el = tmpDiv.firstElementChild;
                             deferred.resolve(el);
@@ -6917,7 +6937,8 @@ var RIAPP;
                     }
                 };
                 Template.prototype._loadTemplate = function () {
-                    var self = this, tid = self._templateID, promise, deffered, tmpDiv, asyncLoad = false;
+                    var self = this, tid = self._templateID, promise;
+
                     if (!!self._promise) {
                         self._promise.reject('cancel'); //cancel previous load
                         self._promise = null;
@@ -6925,68 +6946,85 @@ var RIAPP;
                     self._unloadTemplate();
                     if (!!tid) {
                         promise = self._loadTemplateElAsync(tid);
-                        asyncLoad = promise.state() == "pending";
-                        self._promise = deffered = utils.createDeferred();
-                        promise.done(function (data) {
-                            if (deffered.state() == "pending")
-                                deffered.resolve(data);
-                        });
-                        promise.fail(function (err) {
-                            if (deffered.state() == "pending")
-                                deffered.reject(err);
-                        });
+                        self._processTemplate(promise, !!(promise.state() == "pending"));
+                    }
+                };
+                Template.prototype._processTemplate = function (promise, asyncLoad) {
+                    var self = this, deffered, tmpDiv;
+                    self._promise = deffered = utils.createDeferred();
+                    promise.done(function (loadedEl) {
+                        if (deffered.state() == "pending")
+                            deffered.resolve(loadedEl);
+                    });
+                    promise.fail(function (err) {
+                        if (deffered.state() == "pending")
+                            deffered.reject(err);
+                    });
 
-                        self._el = tmpDiv = RIAPP.global.document.createElement("div");
+                    if (!self._el) {
+                        self._el = tmpDiv = global.document.createElement("div");
                         tmpDiv.className = template.css.templateContainer;
-                        if (asyncLoad) {
-                            self._appendIsBusy(tmpDiv);
-                            deffered.done(function () {
-                                self._removeIsBusy(tmpDiv);
-                            });
-                            deffered.fail(function (arg) {
-                                if (arg == 'cancel') {
-                                    self._removeIsBusy(tmpDiv);
-                                }
-                            });
-                        }
+                    } else
+                        tmpDiv = self.el;
 
-                        deffered.then(function (tel) {
-                            if (self._isDestroyCalled)
-                                return;
+                    if (asyncLoad) {
+                        self._appendIsBusy(tmpDiv);
+                        deffered.done(function () {
+                            self._removeIsBusy(tmpDiv);
+                        });
+                        deffered.fail(function (arg) {
+                            if (arg == 'cancel') {
+                                self._removeIsBusy(tmpDiv);
+                            }
+                        });
+                    }
+
+                    deffered.then(function (loadedEl) {
+                        var i, tevents = self._getTemplateEvents(), len = tevents.length;
+
+                        if (self._isDestroyCalled)
+                            return;
+                        try  {
                             self._promise = null;
-                            if (!tel) {
+                            if (!loadedEl) {
                                 self._unloadTemplate();
                                 return;
                             }
-                            self._el.appendChild(tel);
-                            self._lfTime = self.app._bindTemplateElements(tel);
-                            var telv = self._getTemplateElView();
-                            if (!!telv) {
-                                telv.templateLoaded(self);
+                            self._loadedElem = loadedEl;
+                            for (i = 0; i < len; i += 1) {
+                                tevents[i].templateLoading(self);
                             }
+                            tmpDiv.appendChild(loadedEl);
+                            self._lfTime = self.app._bindTemplateElements(loadedEl);
                             self._updateBindingSource();
-                        }, function (arg) {
-                            if (self._isDestroyCalled)
-                                return;
-                            self._promise = null;
-                            if (arg == 'cancel') {
-                                return;
+                            for (i = 0; i < len; i += 1) {
+                                tevents[i].templateLoaded(self);
                             }
-                            var ex;
-                            if (!!arg) {
-                                if (!!arg.message)
-                                    ex = arg;
-                                else if (!!arg.statusText) {
-                                    ex = new Error(arg.statusText);
-                                } else if (utils.check.isString(arg)) {
-                                    ex = new Error(arg);
-                                }
+                        } catch (ex) {
+                            self._onError(ex, self);
+                            global._throwDummy(ex);
+                        }
+                    }, function (arg) {
+                        if (self._isDestroyCalled)
+                            return;
+                        self._promise = null;
+                        if (arg == 'cancel') {
+                            return;
+                        }
+                        var ex;
+                        if (!!arg) {
+                            if (!!arg.message)
+                                ex = arg;
+                            else if (!!arg.statusText) {
+                                ex = new Error(arg.statusText);
+                            } else if (utils.check.isString(arg)) {
+                                ex = new Error(arg);
                             }
-                            if (!ex)
-                                ex = new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID));
-                            RIAPP.global._onError(ex, self);
-                        });
-                    }
+                        }
+                        if (!ex)
+                            ex = new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID));
+                        self._onError(ex, self);
+                    });
                 };
                 Template.prototype._updateBindingSource = function () {
                     var i, len, obj, bindings = this._getBindings();
@@ -7011,26 +7049,41 @@ var RIAPP;
                     }
                 };
                 Template.prototype._unloadTemplate = function () {
+                    var i, tevents = this._getTemplateEvents(), len = tevents.length;
                     try  {
                         if (!!this._el) {
-                            var telv = this._templElView;
-                            this._templElView = undefined;
-                            if (!!telv) {
-                                telv.templateUnloading(this);
+                            for (i = 0; i < len; i += 1) {
+                                tevents[i].templateUnLoading(this);
                             }
                         }
                     } finally {
-                        if (!!this._lfTime) {
-                            this._lfTime.destroy();
-                            this._lfTime = null;
-                        }
+                        this._cleanUp();
+                    }
+                };
+                Template.prototype._cleanUp = function () {
+                    if (!!this._lfTime) {
+                        this._lfTime.destroy();
+                        this._lfTime = null;
+                    }
+                    this._templElView = null;
 
-                        if (!!this._el) {
-                            //remove with jQuery method to ensure proper cleanUp
-                            RIAPP.global.$(this._el).remove();
-                        }
+                    if (!!this._loadedElem) {
+                        //remove with jQuery method to ensure proper cleanUp
+                        global.$(this._loadedElem).remove();
+                    }
+                    this._loadedElem == null;
+                    if (this._isDestroyCalled && !!this._el) {
+                        //remove with jQuery method to ensure proper cleanUp
+                        global.$(this._el).remove();
                         this._el = null;
                     }
+                };
+                Template.prototype._onError = function (error, source) {
+                    var isHandled = _super.prototype._onError.call(this, error, source);
+                    if (!isHandled) {
+                        return this.app._onError(error, source);
+                    }
+                    return isHandled;
                 };
                 Template.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -7046,8 +7099,8 @@ var RIAPP;
                     }
                     this._dctxt = null;
                     this._unloadTemplate();
+                    this._templEvents = null;
                     this._templateID = null;
-                    this._templElView = undefined;
                     this._app = null;
                     _super.prototype.destroy.call(this);
                 };
@@ -7055,7 +7108,7 @@ var RIAPP;
                 //find elements which has specific data-name attribute value
                 //returns plain array of elements, or empty array
                 Template.prototype.findElByDataName = function (name) {
-                    var $foundEl = RIAPP.global.$(this._el).find(['*[', constsMOD.DATA_ATTR.DATA_NAME, '="', name, '"]'].join(''));
+                    var $foundEl = global.$(this._el).find(['*[', constsMOD.DATA_ATTR.DATA_NAME, '="', name, '"]'].join(''));
                     return $foundEl.toArray();
                 };
                 Template.prototype.findElViewsByDataName = function (name) {
@@ -7071,6 +7124,13 @@ var RIAPP;
                 Template.prototype.toString = function () {
                     return 'Template';
                 };
+                Object.defineProperty(Template.prototype, "loadedElem", {
+                    get: function () {
+                        return this._loadedElem;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
                 Object.defineProperty(Template.prototype, "dataContext", {
                     get: function () {
                         return this._dctxt;
@@ -7131,7 +7191,7 @@ var RIAPP;
             })(RIAPP.BaseObject);
             template.Template = Template;
 
-            //typed parameters
+            //for strongly typed parameters
             var TemplateCommand = (function (_super) {
                 __extends(TemplateCommand, _super);
                 function TemplateCommand(fn_action, thisObj, fn_canExecute) {
@@ -7148,21 +7208,24 @@ var RIAPP;
                     this._isEnabled = true;
                     _super.call(this, app, el, options);
                 }
+                TemplateElView.prototype.templateLoading = function (template) {
+                    //noop
+                };
                 TemplateElView.prototype.templateLoaded = function (template) {
                     var self = this, p = self._commandParam;
                     try  {
                         self._template = template;
-                        self._template.isDisabled = !self._isEnabled;
+                        self._template.isDisabled = !this._isEnabled;
                         self._commandParam = { template: template, isLoaded: true };
                         self.invokeCommand();
                         self._commandParam = p;
                         this.raisePropertyChanged('template');
                     } catch (ex) {
                         this._onError(ex, this);
-                        RIAPP.global._throwDummy(ex);
+                        global._throwDummy(ex);
                     }
                 };
-                TemplateElView.prototype.templateUnloading = function (template) {
+                TemplateElView.prototype.templateUnLoading = function (template) {
                     var self = this, p = self._commandParam;
                     try  {
                         self._commandParam = { template: template, isLoaded: false };
@@ -7206,9 +7269,9 @@ var RIAPP;
             template.TemplateElView = TemplateElView;
             ;
 
-            RIAPP.global.registerType('Template', Template);
-            RIAPP.global.registerElView('template', TemplateElView);
-            RIAPP.global.onModuleLoaded('template', template);
+            global.registerType('Template', Template);
+            global.registerElView('template', TemplateElView);
+            global.onModuleLoaded('template', template);
         })(MOD.template || (MOD.template = {}));
         var template = MOD.template;
     })(RIAPP.MOD || (RIAPP.MOD = {}));
@@ -7588,7 +7651,10 @@ var RIAPP;
                     if (!id)
                         throw new Error(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID);
 
-                    return new templMOD.Template(this.app, id);
+                    return new templMOD.Template(this.app, {
+                        templateID: id,
+                        dataContext: this._dctx
+                    });
                 };
                 TemplateContent.prototype.update = function () {
                     this._cleanUp();
@@ -7597,7 +7663,6 @@ var RIAPP;
                         template = this._createTemplate();
                         this._template = template;
                         this._parentEl.appendChild(template.el);
-                        template.dataContext = this._dctx;
                     }
                 };
                 TemplateContent.prototype._cleanUp = function () {
@@ -8542,61 +8607,109 @@ var RIAPP;
     (function (MOD) {
         (function (dynacontent) {
             var constsMOD = RIAPP.MOD.consts;
+            var utilsMOD = RIAPP.MOD.utils;
             var elviewMOD = RIAPP.MOD.baseElView;
             var templMOD = RIAPP.MOD.template;
+
+            var utils, global = RIAPP.global;
+            global.addOnInitialize(function (s, args) {
+                utils = s.utils;
+            });
 
             var DynaContentElView = (function (_super) {
                 __extends(DynaContentElView, _super);
                 function DynaContentElView(app, el, options) {
                     _super.call(this, app, el, options);
                     this._dataContext = null;
+                    this._prevTemplateID = null;
+                    this._templateID = null;
                     this._template = null;
+                    this._animate = (!!options.animate) ? app.getAnimation(options.animate) : null;
                 }
-                DynaContentElView.prototype._templateChanged = function () {
-                    if (!this._template) {
-                        this.raisePropertyChanged('templateID');
-                        this.raisePropertyChanged('template');
+                DynaContentElView.prototype.templateLoading = function (template) {
+                    if (this._isDestroyCalled)
                         return;
+                    var isFirstShow = !this._prevTemplateID, canShow = !!this._animate && (this._animate.isAnimateFirstPage || (!this._animate.isAnimateFirstPage && !isFirstShow));
+                    if (canShow) {
+                        this._animate.beforeShow(template, isFirstShow);
                     }
-                    this.$el.empty().append(this._template.el);
-                    this.raisePropertyChanged('templateID');
-                    this.raisePropertyChanged('template');
                 };
-                DynaContentElView.prototype.updateTemplate = function (name) {
+                DynaContentElView.prototype.templateLoaded = function (template) {
+                    if (this._isDestroyCalled)
+                        return;
+                    if (!utils.isContained(template.el, this.el)) {
+                        this.el.appendChild(template.el);
+                    }
+
+                    var isFirstShow = !this._prevTemplateID, canShow = !!this._animate && (this._animate.isAnimateFirstPage || (!this._animate.isAnimateFirstPage && !isFirstShow));
+                    if (canShow) {
+                        this._animate.show(template, isFirstShow);
+                    }
+                };
+                DynaContentElView.prototype.templateUnLoading = function (template) {
+                    //noop
+                };
+                DynaContentElView.prototype._templateChanging = function (oldName, newName) {
                     var self = this;
                     try  {
-                        if (!name && !!this._template) {
-                            this._template.destroy();
-                            this._template = null;
-                            self._templateChanged();
+                        if (!newName && !!this._template) {
+                            if (!!this._animate && !!this._template.loadedElem) {
+                                this._animate.stop();
+                                this._animate.beforeHide(this._template);
+                                this._animate.hide(this._template).always(function () {
+                                    if (self._isDestroyCalled)
+                                        return;
+                                    self._template.destroy();
+                                    self._template = null;
+                                    self.raisePropertyChanged('template');
+                                });
+                            } else {
+                                self._template.destroy();
+                                self._template = null;
+                                self.raisePropertyChanged('template');
+                            }
                             return;
                         }
                     } catch (ex) {
                         this._onError(ex, this);
-                        RIAPP.global._throwDummy(ex);
+                        global._throwDummy(ex);
                     }
 
                     try  {
                         if (!this._template) {
-                            this._template = new templMOD.Template(this.app, name);
-                            this._template.dataContext = this._dataContext;
-                            this._template.addOnPropertyChange('templateID', function (s, a) {
-                                self._templateChanged();
-                            }, this._objId);
-                            self._templateChanged();
+                            this._template = new templMOD.Template(this.app, {
+                                templateID: newName,
+                                dataContext: this._dataContext,
+                                templEvents: this
+                            });
+                            self.raisePropertyChanged('template');
                             return;
                         }
-
-                        this._template.templateID = name;
+                        if (!!this._animate && !!this._template.loadedElem) {
+                            this._animate.stop();
+                            this._animate.beforeHide(this._template);
+                            this._animate.hide(this._template).always(function () {
+                                if (self._isDestroyCalled)
+                                    return;
+                                self._template.templateID = newName;
+                            });
+                        } else
+                            self._template.templateID = newName;
                     } catch (ex) {
                         this._onError(ex, this);
-                        RIAPP.global._throwDummy(ex);
+                        global._throwDummy(ex);
                     }
                 };
                 DynaContentElView.prototype.destroy = function () {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
+                    if (!!this._animate) {
+                        if (utils.check.isBaseObj(this._animate)) {
+                            this._animate.destroy();
+                        }
+                        this._animate = null;
+                    }
                     if (!!this._template) {
                         this._template.destroy();
                         this._template = null;
@@ -8604,21 +8717,26 @@ var RIAPP;
                     this._dataContext = null;
                     _super.prototype.destroy.call(this);
                 };
-                Object.defineProperty(DynaContentElView.prototype, "templateID", {
+                Object.defineProperty(DynaContentElView.prototype, "template", {
                     get: function () {
-                        if (!this._template)
-                            return null;
-                        return this._template.templateID;
-                    },
-                    set: function (v) {
-                        this.updateTemplate(v);
+                        return this._template;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DynaContentElView.prototype, "template", {
+
+                Object.defineProperty(DynaContentElView.prototype, "templateID", {
                     get: function () {
-                        return this._template;
+                        return this._templateID;
+                    },
+                    set: function (v) {
+                        var old = this._templateID;
+                        if (old !== v) {
+                            this._prevTemplateID = this._templateID;
+                            this._templateID = v;
+                            this._templateChanging(old, v);
+                            this.raisePropertyChanged('templateID');
+                        }
                     },
                     enumerable: true,
                     configurable: true
@@ -8643,8 +8761,8 @@ var RIAPP;
             })(elviewMOD.BaseElView);
             dynacontent.DynaContentElView = DynaContentElView;
 
-            RIAPP.global.registerElView('dynacontent', DynaContentElView);
-            RIAPP.global.onModuleLoaded('dynacontent', dynacontent);
+            global.registerElView('dynacontent', DynaContentElView);
+            global.onModuleLoaded('dynacontent', dynacontent);
         })(MOD.dynacontent || (MOD.dynacontent = {}));
         var dynacontent = MOD.dynacontent;
     })(RIAPP.MOD || (RIAPP.MOD = {}));
@@ -9778,7 +9896,7 @@ var RIAPP;
                     var self = this;
                     this._app = app;
                     this._objId = 'dlg' + utils.getNewID();
-                    var opts = utils.extend(false, {
+                    options = utils.extend(false, {
                         dataContext: null,
                         templateID: null,
                         width: 500,
@@ -9794,17 +9912,17 @@ var RIAPP;
                         fn_OnTemplateCreated: null,
                         fn_OnTemplateDestroy: null
                     }, options);
-                    this._dataContext = opts.dataContext;
-                    this._templateID = opts.templateID;
-                    this._submitOnOK = opts.submitOnOK;
-                    this._canRefresh = opts.canRefresh;
-                    this._canCancel = opts.canCancel;
-                    this._fn_OnClose = opts.fn_OnClose;
-                    this._fn_OnOK = opts.fn_OnOK;
-                    this._fn_OnShow = opts.fn_OnShow;
-                    this._fn_OnCancel = opts.fn_OnCancel;
-                    this._fn_OnTemplateCreated = opts.fn_OnTemplateCreated;
-                    this._fn_OnTemplateDestroy = opts.fn_OnTemplateDestroy;
+                    this._dataContext = options.dataContext;
+                    this._templateID = options.templateID;
+                    this._submitOnOK = options.submitOnOK;
+                    this._canRefresh = options.canRefresh;
+                    this._canCancel = options.canCancel;
+                    this._fn_OnClose = options.fn_OnClose;
+                    this._fn_OnOK = options.fn_OnOK;
+                    this._fn_OnShow = options.fn_OnShow;
+                    this._fn_OnCancel = options.fn_OnCancel;
+                    this._fn_OnTemplateCreated = options.fn_OnTemplateCreated;
+                    this._fn_OnTemplateDestroy = options.fn_OnTemplateDestroy;
 
                     this._isEditable = false;
                     this._template = null;
@@ -9821,9 +9939,9 @@ var RIAPP;
                     };
                     this._updateIsEditable();
                     this._options = {
-                        width: opts.width,
-                        height: opts.height,
-                        title: opts.title,
+                        width: options.width,
+                        height: options.height,
+                        title: options.title,
                         autoOpen: false,
                         modal: true,
                         close: function (event, ui) {
@@ -9852,36 +9970,44 @@ var RIAPP;
                 DataEditDialog.prototype._createDialog = function () {
                     if (this._dialogCreated)
                         return;
-                    var dctx = this._dataContext;
-                    this._template = this._createTemplate(dctx);
+                    this._template = this._createTemplate();
                     this._$template = RIAPP.global.$(this._template.el);
                     RIAPP.global.document.body.appendChild(this._template.el);
                     this._$template.dialog(this._options);
                     this._dialogCreated = true;
-                    if (!!this._fn_OnTemplateCreated) {
-                        this._fn_OnTemplateCreated(this._template);
-                    }
                 };
                 DataEditDialog.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
                     return ['close', 'refresh'].concat(base_events);
                 };
-                DataEditDialog.prototype._createTemplate = function (dcxt) {
-                    var t = new templMOD.Template(this._app, this._templateID);
-
+                DataEditDialog.prototype.templateLoading = function (template) {
+                };
+                DataEditDialog.prototype.templateLoaded = function (template) {
+                    if (this._isDestroyCalled)
+                        return;
+                    if (!!this._fn_OnTemplateCreated) {
+                        this._fn_OnTemplateCreated(template);
+                    }
+                };
+                DataEditDialog.prototype.templateUnLoading = function (template) {
+                    if (!!this._fn_OnTemplateDestroy) {
+                        this._fn_OnTemplateDestroy(template);
+                    }
+                    this._$template = null;
+                    this._template = null;
+                };
+                DataEditDialog.prototype._createTemplate = function () {
                     //create template in disabled state
-                    t.isDisabled = true;
-                    t.dataContext = dcxt;
+                    var t = new templMOD.Template(this._app, {
+                        templateID: this._templateID,
+                        dataContext: this._dataContext,
+                        isDisabled: true,
+                        templEvents: this
+                    });
                     return t;
                 };
                 DataEditDialog.prototype._destroyTemplate = function () {
-                    if (!!this._fn_OnTemplateDestroy) {
-                        this._fn_OnTemplateDestroy(this._template);
-                    }
-                    this._$template.remove();
                     this._template.destroy();
-                    this._$template = null;
-                    this._template = null;
                 };
                 DataEditDialog.prototype._getButtons = function () {
                     var self = this, buttons = [
@@ -10195,8 +10321,8 @@ var RIAPP;
             var collMOD = RIAPP.MOD.collection;
 
             var COLUMN_TYPE = { DATA: 'data', ROW_EXPANDER: 'row_expander', ROW_ACTIONS: 'row_actions', ROW_SELECTOR: 'row_selector' };
-            var utils;
-            RIAPP.global.addOnInitialize(function (s, args) {
+            var utils, global = RIAPP.global;
+            global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
 
@@ -10274,8 +10400,8 @@ var RIAPP;
                     this._row = row;
                     this._el = options.td;
                     this._column = options.column;
-                    this._div = RIAPP.global.document.createElement("div");
-                    var $div = RIAPP.global.$(this._div);
+                    this._div = global.document.createElement("div");
+                    var $div = global.$(this._div);
                     this._clickTimeOut = null;
                     $div.addClass(datagrid.css.cellDiv).attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, this._column.uniqueID);
                     $div.data('cell', this);
@@ -10317,7 +10443,7 @@ var RIAPP;
                         clearTimeout(this._clickTimeOut);
                         this._clickTimeOut = null;
                     }
-                    var $div = RIAPP.global.$(this._div);
+                    var $div = global.$(this._div);
                     $div.removeData();
                     $div.remove();
                     this._div = null;
@@ -10420,7 +10546,7 @@ var RIAPP;
                 DataCell.prototype._setState = function (css) {
                     var $div;
                     if (this._stateCss !== css) {
-                        $div = RIAPP.global.$(this._div);
+                        $div = global.$(this._div);
                         if (!!this._stateCss)
                             $div.removeClass(this._stateCss);
                         this._stateCss = css;
@@ -10458,7 +10584,7 @@ var RIAPP;
                     _super.apply(this, arguments);
                 }
                 ExpanderCell.prototype._init = function () {
-                    var $el = RIAPP.global.$(this.el);
+                    var $el = global.$(this.el);
                     $el.addClass(datagrid.css.rowCollapsed);
                     $el.addClass(datagrid.css.rowExpander);
                 };
@@ -10469,7 +10595,7 @@ var RIAPP;
                     this._row.isExpanded = !this._row.isExpanded;
                 };
                 ExpanderCell.prototype._toggleImage = function () {
-                    var $el = RIAPP.global.$(this.el);
+                    var $el = global.$(this.el);
                     if (this._row.isExpanded) {
                         $el.removeClass(datagrid.css.rowCollapsed);
                         $el.addClass(datagrid.css.rowExpanded);
@@ -10492,7 +10618,7 @@ var RIAPP;
                     _super.call(this, row, options);
                 }
                 ActionsCell.prototype._init = function () {
-                    var $el = RIAPP.global.$(this.el), $div = RIAPP.global.$(this._div);
+                    var $el = global.$(this.el), $div = global.$(this._div);
                     $el.addClass([datagrid.css.rowActions, datagrid.css.cellDiv, datagrid.css.nobr].join(' '));
                     $div.on("mouseenter", "img", function (e) {
                         e.stopPropagation();
@@ -10508,9 +10634,9 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    var $div = RIAPP.global.$(this._div), $imgs = $div.find('img');
+                    var $div = global.$(this._div), $imgs = $div.find('img');
                     $imgs.each(function (index, img) {
-                        var $img = RIAPP.global.$(img);
+                        var $img = global.$(img);
                         $img.removeData();
                     });
                     _super.prototype.destroy.call(this);
@@ -10518,7 +10644,7 @@ var RIAPP;
                 ActionsCell.prototype._createButtons = function (editing) {
                     if (!this._el)
                         return;
-                    var self = this, $ = RIAPP.global.$, $div = RIAPP.global.$(this._div), $newElems;
+                    var self = this, $ = global.$, $div = global.$(this._div), $newElems;
                     var txtMap = {
                         img_ok: 'txtOk',
                         img_cancel: 'txtCancel',
@@ -10528,7 +10654,7 @@ var RIAPP;
                     $div.empty();
                     var opts = self._column.options, fn_setUpImages = function ($images) {
                         $images.each(function (index, img) {
-                            var $img = RIAPP.global.$(img);
+                            var $img = global.$(img);
                             img.style.cursor = 'pointer';
                             img.src = opts[img.name];
                             $img.data('cell', self);
@@ -10539,7 +10665,7 @@ var RIAPP;
 
                     if (editing) {
                         this._isEditing = true;
-                        $newElems = RIAPP.global.$('<img name="img_ok" alt="ok"/>&nbsp;<img name="img_cancel" alt="cancel"/>');
+                        $newElems = global.$('<img name="img_ok" alt="ok"/>&nbsp;<img name="img_cancel" alt="cancel"/>');
                         fn_setUpImages($newElems.filter('img'));
                     } else {
                         this._isEditing = false;
@@ -10588,7 +10714,7 @@ var RIAPP;
                     _super.apply(this, arguments);
                 }
                 RowSelectorCell.prototype._init = function () {
-                    var $el = RIAPP.global.$(this.el);
+                    var $el = global.$(this.el);
                     $el.addClass(datagrid.css.rowSelector);
                     var bindInfo = {
                         target: null, source: null,
@@ -10620,9 +10746,9 @@ var RIAPP;
 
             var DetailsCell = (function (_super) {
                 __extends(DetailsCell, _super);
-                function DetailsCell(row, options) {
+                function DetailsCell(options) {
                     _super.call(this);
-                    this._row = row;
+                    this._row = options.row;
                     this._el = options.td;
                     this._init(options);
                 }
@@ -10630,7 +10756,9 @@ var RIAPP;
                     var details_id = options.details_id;
                     if (!details_id)
                         return;
-                    this._template = new RIAPP.MOD.template.Template(this.grid.app, details_id);
+                    this._template = new RIAPP.MOD.template.Template(this.grid.app, {
+                        templateID: details_id
+                    });
                     this._el.colSpan = this.grid.columns.length;
                     this._el.appendChild(this._template.el);
                     this._row.el.appendChild(this._el);
@@ -10737,7 +10865,7 @@ var RIAPP;
                     });
                 };
                 Row.prototype._createCell = function (col) {
-                    var self = this, td = RIAPP.global.document.createElement('td'), cell;
+                    var self = this, td = global.document.createElement('td'), cell;
                     if (col instanceof ExpanderColumn) {
                         cell = new ExpanderCell(self, { td: td, column: col });
                         this._expanderCell = cell;
@@ -10795,7 +10923,7 @@ var RIAPP;
                         if (!grid._isClearing) {
                             grid._removeRow(this);
                             if (!!this._el) {
-                                RIAPP.global.$(this._el).remove();
+                                global.$(this._el).remove();
                             }
                         }
                     }
@@ -10813,7 +10941,7 @@ var RIAPP;
                 Row.prototype.updateErrorState = function () {
                     //TODO: add implementation to show explanation of error
                     var hasErrors = this._item.getIsHasErrors();
-                    var $el = RIAPP.global.$(this._el);
+                    var $el = global.$(this._el);
                     if (hasErrors) {
                         $el.addClass(datagrid.css.rowError);
                     } else
@@ -10892,7 +11020,7 @@ var RIAPP;
                     set: function (v) {
                         var curr = this._isCurrent;
                         if (v !== curr) {
-                            var $el = RIAPP.global.$(this._el);
+                            var $el = global.$(this._el);
                             this._isCurrent = v;
                             if (v) {
                                 $el.addClass(datagrid.css.rowHighlight);
@@ -10962,9 +11090,9 @@ var RIAPP;
                             this._isDeleted = v;
                             if (this._isDeleted) {
                                 this.isExpanded = false;
-                                RIAPP.global.$(this._el).addClass(datagrid.css.rowDeleted);
+                                global.$(this._el).addClass(datagrid.css.rowDeleted);
                             } else
-                                RIAPP.global.$(this._el).removeClass(datagrid.css.rowDeleted);
+                                global.$(this._el).removeClass(datagrid.css.rowDeleted);
                         }
                     },
                     enumerable: true,
@@ -10992,12 +11120,12 @@ var RIAPP;
                     this._parentRow = null;
                     this._objId = 'drow' + utils.getNewID();
                     this._createCell(options.details_id);
-                    this._$el = RIAPP.global.$(this._el);
+                    this._$el = global.$(this._el);
                     this._$el.addClass(datagrid.css.rowDetails);
                 }
                 DetailsRow.prototype._createCell = function (details_id) {
-                    var td = RIAPP.global.document.createElement('td');
-                    this._cell = new DetailsCell(this, { td: td, details_id: details_id });
+                    var td = global.document.createElement('td');
+                    this._cell = new DetailsCell({ row: this, td: td, details_id: details_id });
                 };
                 DetailsRow.prototype._setParentRow = function (row) {
                     var self = this;
@@ -11014,7 +11142,7 @@ var RIAPP;
                     this._item = row.item;
                     this._cell.item = this._item;
                     utils.insertAfter(row.el, this._el);
-                    var $cell = RIAPP.global.$(this._cell.template.el);
+                    var $cell = global.$(this._cell.template.el);
 
                     //var isLast = this.grid._getLastRow() === this._parentRow;
                     $cell.slideDown('fast', function () {
@@ -11106,7 +11234,7 @@ var RIAPP;
                     set: function (v) {
                         var self = this;
                         if (v !== this._parentRow) {
-                            var $cell = RIAPP.global.$(this._cell.template.el);
+                            var $cell = global.$(this._cell.template.el);
                             if (!!self._parentRow) {
                                 $cell.slideUp('fast', function () {
                                     self._setParentRow(v);
@@ -11134,16 +11262,16 @@ var RIAPP;
                     this._isSelected = false;
                     this._objId = 'col' + utils.getNewID();
 
-                    var extcolDiv = RIAPP.global.document.createElement('div');
-                    this._$extcol = RIAPP.global.$(extcolDiv);
+                    var extcolDiv = global.document.createElement('div');
+                    this._$extcol = global.$(extcolDiv);
                     this._$extcol.addClass(datagrid.css.column);
                     this._grid._appendToHeader(extcolDiv);
 
-                    var div = RIAPP.global.document.createElement('div');
-                    this._$div = RIAPP.global.$(div);
+                    var div = global.document.createElement('div');
+                    this._$div = global.$(div);
                     this._$div.addClass(datagrid.css.cellDiv).click(function (e) {
                         e.stopPropagation();
-                        RIAPP.global.currentSelectable = grid;
+                        global.currentSelectable = grid;
                         grid._setCurrentColumn(self);
                         self._onColumnClicked();
                     });
@@ -11152,9 +11280,9 @@ var RIAPP;
 
                     this.grid._$tableEl.on('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''), function (e) {
                         e.stopPropagation();
-                        var $div = RIAPP.global.$(this), cell = $div.data('cell');
+                        var $div = global.$(this), cell = $div.data('cell');
                         if (!!cell) {
-                            RIAPP.global.currentSelectable = grid;
+                            global.currentSelectable = grid;
                             grid._setCurrentColumn(self);
                             if (cell instanceof DataCell) {
                                 if (!!cell._clickTimeOut) {
@@ -11395,7 +11523,7 @@ var RIAPP;
                     var self = this;
                     this._val = false;
                     this.$div.addClass(datagrid.css.rowSelector);
-                    var $chk = RIAPP.global.$('<input type="checkbox"/>');
+                    var $chk = global.$('<input type="checkbox"/>');
                     this.$div.append($chk);
                     this._$chk = $chk;
                     $chk.click(function (e) {
@@ -11444,13 +11572,13 @@ var RIAPP;
                     _super.prototype._init.call(this);
                     var self = this, opts = this.options;
                     this.$div.addClass(datagrid.css.rowActions);
-                    opts.img_ok = RIAPP.global.getImagePath(opts.img_ok || 'ok.png');
-                    opts.img_cancel = RIAPP.global.getImagePath(opts.img_cancel || 'cancel.png');
-                    opts.img_edit = RIAPP.global.getImagePath(opts.img_edit || 'edit.png');
-                    opts.img_delete = RIAPP.global.getImagePath(opts.img_delete || 'delete.png');
+                    opts.img_ok = global.getImagePath(opts.img_ok || 'ok.png');
+                    opts.img_cancel = global.getImagePath(opts.img_cancel || 'cancel.png');
+                    opts.img_edit = global.getImagePath(opts.img_edit || 'edit.png');
+                    opts.img_delete = global.getImagePath(opts.img_delete || 'delete.png');
                     this.grid._$tableEl.on("click", 'img[' + constsMOD.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]', function (e) {
                         e.stopPropagation();
-                        var $img = RIAPP.global.$(this), name = this.name, cell = $img.data('cell');
+                        var $img = global.$(this), name = this.name, cell = $img.data('cell');
                         switch (name) {
                             case 'img_ok':
                                 self._onOk(cell);
@@ -11500,11 +11628,11 @@ var RIAPP;
 
             var DataGrid = (function (_super) {
                 __extends(DataGrid, _super);
-                function DataGrid(app, el, dataSource, options) {
+                function DataGrid(app, options) {
                     _super.call(this);
-                    if (!!dataSource && !(dataSource instanceof collMOD.BaseCollection))
-                        throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
                     this._options = utils.extend(false, {
+                        el: null,
+                        dataSource: null,
                         isUseScrollInto: true,
                         isUseScrollIntoDetails: true,
                         containerCss: null,
@@ -11515,16 +11643,18 @@ var RIAPP;
                         isCanDelete: null,
                         isHandleAddNew: false
                     }, options);
+                    if (!!this._options.dataSource && !(this._options.dataSource instanceof collMOD.BaseCollection))
+                        throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
+
                     this._app = app;
                     this._columnWidthChecker = function () {
                     };
-                    var $t = RIAPP.global.$(el);
-                    this._tableEl = el;
+                    var $t = global.$(this._options.el);
+                    this._tableEl = this._options.el;
                     this._$tableEl = $t;
                     $t.addClass(datagrid.css.dataTable);
                     this._name = $t.attr(constsMOD.DATA_ATTR.DATA_NAME);
                     this._objId = 'grd' + utils.getNewID();
-                    this._dataSource = dataSource;
                     this._rowMap = {};
                     this._rows = [];
                     this._columns = [];
@@ -11551,7 +11681,7 @@ var RIAPP;
                     this._refreshGrid();
                     this._updateColsDim();
                     this._onDSCurrentChanged();
-                    RIAPP.global._trackSelectable(this);
+                    global._trackSelectable(this);
                     _gridCreated(this);
                 }
                 DataGrid.prototype._getEventNames = function () {
@@ -11612,7 +11742,7 @@ var RIAPP;
                         content: null
                     }, options;
 
-                    var temp_opts = RIAPP.global.parser.parseOptions(column_attr);
+                    var temp_opts = global.parser.parseOptions(column_attr);
                     if (temp_opts.length > 0)
                         options = utils.extend(false, defaultOp, temp_opts[0]);
                     else
@@ -11682,12 +11812,12 @@ var RIAPP;
                 DataGrid.prototype._onError = function (error, source) {
                     var isHandled = _super.prototype._onError.call(this, error, source);
                     if (!isHandled) {
-                        return RIAPP.global._onError(error, source);
+                        return global._onError(error, source);
                     }
                     return isHandled;
                 };
                 DataGrid.prototype._onDSCurrentChanged = function () {
-                    var ds = this._dataSource, cur;
+                    var ds = this.dataSource, cur;
                     if (!!ds)
                         cur = ds.currentItem;
                     if (!cur)
@@ -11789,7 +11919,7 @@ var RIAPP;
                     }
                 };
                 DataGrid.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    var newChangeType = item._changeType, ds = this._dataSource;
+                    var newChangeType = item._changeType, ds = this.dataSource;
                     var row = this._rowMap[item._key];
                     if (!row)
                         return;
@@ -11823,7 +11953,7 @@ var RIAPP;
                     });
                 };
                 DataGrid.prototype._bindDS = function () {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     if (!ds)
                         return;
                     ds.addOnCollChanged(function (sender, args) {
@@ -11856,7 +11986,7 @@ var RIAPP;
                     }, self._objId);
                 };
                 DataGrid.prototype._unbindDS = function () {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     if (!ds)
                         return;
                     ds.removeNSHandlers(self._objId);
@@ -11898,7 +12028,7 @@ var RIAPP;
                     this._isClearing = true;
                     try  {
                         this.collapseDetails();
-                        var self = this, tbody = self._tBodyEl, newTbody = RIAPP.global.document.createElement('tbody');
+                        var self = this, tbody = self._tBodyEl, newTbody = global.document.createElement('tbody');
                         this._tableEl.replaceChild(newTbody, tbody);
                         var rows = this._rows;
                         this._rows = [];
@@ -11924,13 +12054,13 @@ var RIAPP;
                 DataGrid.prototype._wrapTable = function () {
                     var $t = this._$tableEl, headerDiv, wrapDiv, container, self = this;
 
-                    $t.wrap(RIAPP.global.$('<div></div>').addClass(datagrid.css.wrapDiv));
+                    $t.wrap(global.$('<div></div>').addClass(datagrid.css.wrapDiv));
                     wrapDiv = $t.parent();
-                    wrapDiv.wrap(RIAPP.global.$('<div></div>').addClass(datagrid.css.container));
+                    wrapDiv.wrap(global.$('<div></div>').addClass(datagrid.css.container));
                     container = wrapDiv.parent();
 
-                    headerDiv = RIAPP.global.$('<div></div>').addClass(datagrid.css.headerDiv).insertBefore(wrapDiv);
-                    RIAPP.global.$(this._tHeadRow).addClass(datagrid.css.columnInfo);
+                    headerDiv = global.$('<div></div>').addClass(datagrid.css.headerDiv).insertBefore(wrapDiv);
+                    global.$(this._tHeadRow).addClass(datagrid.css.columnInfo);
                     this._$wrapDiv = wrapDiv;
                     this._$headerDiv = headerDiv;
 
@@ -12027,7 +12157,7 @@ var RIAPP;
                     }
                 };
                 DataGrid.prototype._onKeyDown = function (key, event) {
-                    var ds = this._dataSource, Keys = constsMOD.KEYS, self = this;
+                    var ds = this.dataSource, Keys = constsMOD.KEYS, self = this;
                     if (!ds)
                         return;
                     switch (key) {
@@ -12090,7 +12220,7 @@ var RIAPP;
                     }
                 };
                 DataGrid.prototype._onKeyUp = function (key, event) {
-                    var ds = this._dataSource, Keys = constsMOD.KEYS;
+                    var ds = this.dataSource, Keys = constsMOD.KEYS;
                     if (!ds)
                         return;
                     switch (key) {
@@ -12124,11 +12254,11 @@ var RIAPP;
 
                 //Full grid refresh
                 DataGrid.prototype._refreshGrid = function () {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     self._clearGrid();
                     if (!ds)
                         return;
-                    var docFr = RIAPP.global.document.createDocumentFragment(), oldTbody = this._tBodyEl, newTbody = RIAPP.global.document.createElement('tbody');
+                    var docFr = global.document.createDocumentFragment(), oldTbody = this._tBodyEl, newTbody = global.document.createElement('tbody');
                     ds.items.forEach(function (item, pos) {
                         self._createRowForItem(docFr, item, pos);
                     });
@@ -12136,7 +12266,7 @@ var RIAPP;
                     self._tableEl.replaceChild(newTbody, oldTbody);
                 };
                 DataGrid.prototype._createRowForItem = function (parent, item, pos) {
-                    var self = this, tr = RIAPP.global.document.createElement('tr');
+                    var self = this, tr = global.document.createElement('tr');
                     var gridRow = new Row(self, { tr: tr, item: item });
                     self._rowMap[item._key] = gridRow;
                     self._rows.push(gridRow);
@@ -12145,7 +12275,7 @@ var RIAPP;
                 };
                 DataGrid.prototype._createDetails = function () {
                     var details_id = this._options.details.templateID;
-                    var tr = RIAPP.global.document.createElement('tr');
+                    var tr = global.document.createElement('tr');
                     return new DetailsRow(this, { tr: tr, details_id: details_id });
                 };
                 DataGrid.prototype._expandDetails = function (parentRow, expanded) {
@@ -12180,7 +12310,7 @@ var RIAPP;
                     this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: parentRow, isExpanded: expanded });
                 };
                 DataGrid.prototype.sortByColumn = function (column) {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     var sorts = column.sortMemberName.split(';');
                     self._isSorting = true;
                     var promise = ds.sort(sorts, column.sortOrder);
@@ -12243,12 +12373,12 @@ var RIAPP;
                     this._scrollToCurrent(isUp);
                 };
                 DataGrid.prototype.addNew = function () {
-                    var ds = this._dataSource;
+                    var ds = this.dataSource;
                     try  {
                         ds.addNew();
                         this.showEditDialog();
                     } catch (ex) {
-                        RIAPP.global.reThrow(ex, this._onError(ex, this));
+                        global.reThrow(ex, this._onError(ex, this));
                     }
                 };
                 DataGrid.prototype.destroy = function () {
@@ -12256,7 +12386,7 @@ var RIAPP;
                         return;
                     this._isDestroyCalled = true;
                     _gridDestroyed(this);
-                    RIAPP.global._untrackSelectable(this);
+                    global._untrackSelectable(this);
                     if (!!this._details) {
                         this._details.destroy();
                         this._details = null;
@@ -12265,12 +12395,10 @@ var RIAPP;
                         this._dialog.destroy();
                         this._dialog = null;
                     }
-                    this._clearGrid();
-                    this._unbindDS();
-                    this._dataSource = null;
+                    this.dataSource = null;
                     this._unWrapTable();
                     this._$tableEl.removeClass(datagrid.css.dataTable);
-                    RIAPP.global.$(this._tHeadRow).removeClass(datagrid.css.columnInfo);
+                    global.$(this._tHeadRow).removeClass(datagrid.css.columnInfo);
                     this._tableEl = null;
                     this._$tableEl = null;
                     this._app = null;
@@ -12356,17 +12484,17 @@ var RIAPP;
                 });
                 Object.defineProperty(DataGrid.prototype, "dataSource", {
                     get: function () {
-                        return this._dataSource;
+                        return this._options.dataSource;
                     },
                     set: function (v) {
-                        if (v === this._dataSource)
+                        if (v === this.dataSource)
                             return;
-                        if (this._dataSource !== null) {
+                        if (this.dataSource !== null) {
                             this._unbindDS();
                         }
                         this._clearGrid();
-                        this._dataSource = v;
-                        if (this._dataSource !== null)
+                        this._options.dataSource = v;
+                        if (this.dataSource !== null)
                             this._bindDS();
                         this.raisePropertyChanged('dataSource');
                     },
@@ -12392,7 +12520,7 @@ var RIAPP;
                         return this._currentRow;
                     },
                     set: function (row) {
-                        var ds = this._dataSource, old = this._currentRow, isChanged = false;
+                        var ds = this.dataSource, old = this._currentRow, isChanged = false;
                         if (!ds)
                             return;
                         if (old !== row) {
@@ -12426,7 +12554,7 @@ var RIAPP;
                     get: function () {
                         if (this._options.isCanEdit !== null)
                             return this._options.isCanEdit;
-                        var ds = this._dataSource;
+                        var ds = this.dataSource;
                         return !!ds && ds.permissions.canEditRow;
                     },
                     enumerable: true,
@@ -12436,7 +12564,7 @@ var RIAPP;
                     get: function () {
                         if (this._options.isCanDelete !== null)
                             return this._options.isCanDelete;
-                        var ds = this._dataSource;
+                        var ds = this.dataSource;
                         return !!ds && ds.permissions.canDeleteRow;
                     },
                     enumerable: true,
@@ -12444,7 +12572,7 @@ var RIAPP;
                 });
                 Object.defineProperty(DataGrid.prototype, "isCanAddNew", {
                     get: function () {
-                        var ds = this._dataSource;
+                        var ds = this.dataSource;
                         return !!ds && ds.permissions.canAddRow;
                     },
                     enumerable: true,
@@ -12490,7 +12618,11 @@ var RIAPP;
                     _super.prototype.destroy.call(this);
                 };
                 GridElView.prototype._createGrid = function () {
-                    this._grid = new DataGrid(this.app, this._el, this._dataSource, this._options);
+                    var options = utils.extend(false, {
+                        el: this._el,
+                        dataSource: this._dataSource
+                    }, this._options);
+                    this._grid = new DataGrid(this.app, options);
                     this._bindGridEvents();
                     this._onGridCreated(this._grid);
                 };
@@ -12579,9 +12711,9 @@ var RIAPP;
             })(RIAPP.MOD.baseElView.BaseElView);
             datagrid.GridElView = GridElView;
 
-            RIAPP.global.registerElView('table', GridElView);
-            RIAPP.global.registerElView('datagrid', GridElView);
-            RIAPP.global.onModuleLoaded('datagrid', datagrid);
+            global.registerElView('table', GridElView);
+            global.registerElView('datagrid', GridElView);
+            global.onModuleLoaded('datagrid', datagrid);
         })(MOD.datagrid || (MOD.datagrid = {}));
         var datagrid = MOD.datagrid;
     })(RIAPP.MOD || (RIAPP.MOD = {}));
@@ -13283,8 +13415,10 @@ var RIAPP;
                     }
                 };
                 StackPanel.prototype._createTemplate = function (dcxt) {
-                    var t = new RIAPP.MOD.template.Template(this.app, this._templateID);
-                    t.dataContext = dcxt;
+                    var t = new RIAPP.MOD.template.Template(this.app, {
+                        templateID: this._templateID,
+                        dataContext: dcxt
+                    });
                     return t;
                 };
                 StackPanel.prototype._appendItems = function (newItems) {
@@ -17889,6 +18023,7 @@ var RIAPP;
     var contentMOD = RIAPP.MOD.baseContent;
     var formMOD = RIAPP.MOD.dataform;
     var convertMOD = RIAPP.MOD.converter;
+    var templMOD = RIAPP.MOD.template;
 
     //ALL CORE MODULES are LOADED, INITIALIZE THE Global
     RIAPP.global._initialize();
@@ -18277,6 +18412,23 @@ var RIAPP;
             }
             if (!res)
                 throw new Error(utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
+            return res;
+        };
+        Application.prototype.registerAnimation = function (name, obj) {
+            var name2 = 'anim.' + name;
+            if (!RIAPP.global._getObject(this, name2)) {
+                RIAPP.global._registerObject(this, name2, obj);
+            } else
+                throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
+        };
+        Application.prototype.getAnimation = function (name) {
+            var name2 = 'anim.' + name;
+            var res = RIAPP.global._getObject(this, name2);
+            if (!res) {
+                res = RIAPP.global._getObject(RIAPP.global, name2);
+            }
+            if (!res)
+                throw new Error(utils.format(RIAPP.ERRS.ERR_ANIMATION_NOT_REGISTERED, name));
             return res;
         };
         Application.prototype.registerType = function (name, obj) {

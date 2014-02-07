@@ -8,6 +8,7 @@ import DEMODB = require("domainModel");
 import COMMON = require("common");
 import AUTOCOMPLETE = require("autocomplete");
 import GRIDELVIEW = require("gridElView");
+import ANIMATE = require("animation");
 
 //local variables for optimization
 var global = RIAPP.global, utils = global.utils;
@@ -123,6 +124,7 @@ export var mainOptions: IMainOptions = {
     user_modules: [{ name: "COMMON", initFn: COMMON.initModule },
         { name: "AUTOCOMPLETE", initFn: AUTOCOMPLETE.initModule },
         { name: "GRIDELVIEW", initFn: GRIDELVIEW.initModule },
-        { name: "SPADEMO", initFn: VIEWMODELS.initModule }
+        { name: "SPADEMO", initFn: VIEWMODELS.initModule },
+        { name: "ANIMATE", initFn: ANIMATE.initModule }
     ]
 };

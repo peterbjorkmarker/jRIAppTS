@@ -8,8 +8,8 @@
             import collMOD = RIAPP.MOD.collection;
 
             var COLUMN_TYPE = { DATA: 'data', ROW_EXPANDER: 'row_expander', ROW_ACTIONS: 'row_actions', ROW_SELECTOR: 'row_selector' };
-            var utils: utilsMOD.Utils;
-            RIAPP.global.addOnInitialize((s, args) => {
+            var utils: utilsMOD.Utils, global = RIAPP.global;
+            global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
 
@@ -375,9 +375,9 @@
                 private _row: DetailsRow;
                 private _el: HTMLTableCellElement;
                 private _template: template.Template;
-                constructor(row: DetailsRow , options: { td: HTMLTableCellElement; details_id: string; }) {
+                constructor(options: { row: DetailsRow; td: HTMLTableCellElement; details_id: string; }) {
                     super();
-                    this._row = row;
+                    this._row = options.row;
                     this._el = options.td;
                     this._init(options);
                 }
@@ -385,7 +385,9 @@
                     var details_id = options.details_id;
                     if (!details_id)
                         return;
-                    this._template = new template.Template(this.grid.app, details_id);
+                    this._template = new template.Template(this.grid.app, {
+                        templateID: details_id
+                    });
                     this._el.colSpan = this.grid.columns.length;
                     this._el.appendChild(this._template.el);
                     this._row.el.appendChild(this._el);
@@ -661,7 +663,7 @@
                 }
                 private _createCell(details_id: string) {
                     var td: HTMLTableCellElement = <HTMLTableCellElement>global.document.createElement('td');
-                    this._cell = new DetailsCell(this, { td: td, details_id: details_id });
+                    this._cell = new DetailsCell({ row: this, td: td, details_id: details_id });
                 }
                 _setParentRow(row:Row) {
                     var self = this;
@@ -1070,14 +1072,18 @@
                 editor?: datadialog.IDialogConstructorOptions;
             }
 
+            export interface IGridConstructorOptions extends IGridOptions {
+                el: HTMLTableElement;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+            }
+
             export class DataGrid extends RIAPP.BaseObject implements RIAPP.ISelectable {
-                _options: IGridOptions;
+                _options: IGridConstructorOptions;
                 _$tableEl: JQuery;
                 _isClearing: boolean;
                 private _tableEl: HTMLTableElement;
                 private _name: string;
                 private _objId: string;
-                private _dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
                 private _rowMap: { [key: string]: Row; };
                 private _rows: Row[];
                 private _columns: BaseColumn[];
@@ -1098,12 +1104,12 @@
                 private _app: Application;
                 _columnWidthChecker: () => void;
 
-                constructor(app: Application, el: HTMLTableElement, dataSource: collMOD.BaseCollection<collMOD.CollectionItem>, options: IGridOptions) {
+                constructor(app: Application, options: IGridConstructorOptions) {
                     super();
-                    if (!!dataSource && !(dataSource instanceof collMOD.BaseCollection))
-                        throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
                     this._options = utils.extend(false,
                         {
+                            el: null,
+                            dataSource: null,
                             isUseScrollInto: true,
                             isUseScrollIntoDetails: true,
                             containerCss: null, //div that wraps all table and header
@@ -1114,15 +1120,17 @@
                             isCanDelete: null,
                             isHandleAddNew: false
                         }, options);
+                    if (!!this._options.dataSource && !(this._options.dataSource instanceof collMOD.BaseCollection))
+                        throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
+                   
                     this._app = app;
                     this._columnWidthChecker = () => { };
-                    var $t = global.$(el);
-                    this._tableEl = el;
+                    var $t = global.$(this._options.el);
+                    this._tableEl = this._options.el;
                     this._$tableEl = $t;
                     $t.addClass(css.dataTable);
                     this._name = $t.attr(constsMOD.DATA_ATTR.DATA_NAME);
                     this._objId = 'grd' + utils.getNewID();
-                    this._dataSource = dataSource;
                     this._rowMap = {};
                     this._rows = [];
                     this._columns = [];
@@ -1283,7 +1291,7 @@
                     return isHandled;
                 }
                 _onDSCurrentChanged() {
-                    var ds = this._dataSource, cur: collMOD.CollectionItem;
+                    var ds = this.dataSource, cur: collMOD.CollectionItem;
                     if (!!ds)
                         cur = ds.currentItem;
                     if (!cur)
@@ -1386,7 +1394,7 @@
                     }
                 }
                 _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType: collMOD.STATUS) {
-                    var newChangeType = item._changeType, ds = this._dataSource;
+                    var newChangeType = item._changeType, ds = this.dataSource;
                     var row = this._rowMap[item._key];
                     if (!row)
                         return;
@@ -1421,7 +1429,7 @@
                     });
                 }
                 _bindDS() {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     if (!ds) return;
                     ds.addOnCollChanged(function (sender, args) {
                         self._onDSCollectionChanged(args);
@@ -1451,7 +1459,7 @@
                     }, self._objId);
                 }
                 _unbindDS() {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
@@ -1620,7 +1628,7 @@
                     }
                 }
                 _onKeyDown(key:number, event: Event) {
-                    var ds = this._dataSource, Keys = constsMOD.KEYS, self = this;
+                    var ds = this.dataSource, Keys = constsMOD.KEYS, self = this;
                     if (!ds)
                         return;
                     switch (key) {
@@ -1684,7 +1692,7 @@
                     }
                 }
                 _onKeyUp(key:number, event:Event) {
-                    var ds = this._dataSource, Keys = constsMOD.KEYS;
+                    var ds = this.dataSource, Keys = constsMOD.KEYS;
                     if (!ds)
                         return;
                     switch (key) {
@@ -1718,7 +1726,7 @@
                 }
                 //Full grid refresh
                 _refreshGrid() {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     self._clearGrid();
                     if (!ds) return;
                     var docFr = global.document.createDocumentFragment(), oldTbody = this._tBodyEl, newTbody = global.document.createElement('tbody');
@@ -1774,7 +1782,7 @@
                     this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: parentRow, isExpanded: expanded });
                 }
                 sortByColumn(column: DataColumn) {
-                    var self=this, ds = this._dataSource;
+                    var self=this, ds = this.dataSource;
                     var sorts = column.sortMemberName.split(';');
                     self._isSorting = true;
                     var promise = ds.sort(sorts, column.sortOrder);
@@ -1838,7 +1846,7 @@
                     this._scrollToCurrent(isUp);
                 }
                 addNew() {
-                    var ds = this._dataSource;
+                    var ds = this.dataSource;
                     try {
                         ds.addNew();
                         this.showEditDialog();
@@ -1860,9 +1868,7 @@
                         this._dialog.destroy();
                         this._dialog = null;
                     }
-                    this._clearGrid();
-                    this._unbindDS();
-                    this._dataSource = null;
+                    this.dataSource = null;
                     this._unWrapTable();
                     this._$tableEl.removeClass(css.dataTable);
                     global.$(this._tHeadRow).removeClass(css.columnInfo);
@@ -1893,16 +1899,16 @@
                 get containerEl() { return <HTMLElement>this._$contaner.get(0); }
                 get uniqueID() { return this._objId; }
                 get name() { return this._name; }
-                get dataSource() { return this._dataSource; }
+                get dataSource() { return this._options.dataSource; }
                 set dataSource(v: collMOD.BaseCollection<collMOD.CollectionItem>) {
-                    if (v === this._dataSource)
+                    if (v === this.dataSource)
                         return;
-                    if (this._dataSource !== null) {
+                    if (this.dataSource !== null) {
                         this._unbindDS();
                     }
                     this._clearGrid();
-                    this._dataSource = v;
-                    if (this._dataSource !== null)
+                    this._options.dataSource = v;
+                    if (this.dataSource !== null)
                         this._bindDS();
                     this.raisePropertyChanged('dataSource');
                 }
@@ -1910,7 +1916,7 @@
                 get columns() { return this._columns; }
                 get currentRow() { return this._currentRow; }
                 set currentRow(row) {
-                    var ds = this._dataSource, old = this._currentRow, isChanged = false;
+                    var ds = this.dataSource, old = this._currentRow, isChanged = false;
                     if (!ds)
                         return;
                     if (old !== row) {
@@ -1935,17 +1941,17 @@
                 get isCanEdit() {
                     if (this._options.isCanEdit !== null)
                         return this._options.isCanEdit;
-                    var ds = this._dataSource;
+                    var ds = this.dataSource;
                     return !!ds && ds.permissions.canEditRow;
                 }
                 get isCanDelete() {
                     if (this._options.isCanDelete !== null)
                         return this._options.isCanDelete;
-                    var ds = this._dataSource;
+                    var ds = this.dataSource;
                     return !!ds && ds.permissions.canDeleteRow;
                 }
                 get isCanAddNew() {
-                    var ds = this._dataSource;
+                    var ds = this.dataSource;
                     return !!ds && ds.permissions.canAddRow;
                 }
                 get isUseScrollInto() { return this._options.isUseScrollInto; }
@@ -1981,7 +1987,12 @@
                     super.destroy();
                 }
                 private _createGrid() {
-                    this._grid = new DataGrid(this.app, <HTMLTableElement>this._el, this._dataSource, this._options);
+                    var options = utils.extend(false,
+                        {
+                            el: <HTMLTableElement>this._el,
+                            dataSource: this._dataSource
+                        }, this._options);
+                    this._grid = new DataGrid(this.app, options);
                     this._bindGridEvents();
                     this._onGridCreated(this._grid);
                 }

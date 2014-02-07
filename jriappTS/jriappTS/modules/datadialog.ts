@@ -29,7 +29,26 @@
                 fn_OnTemplateDestroy?: (template: templMOD.Template) => void;
             }
 
-            export class DataEditDialog extends BaseObject {
+            export interface IButton
+            {
+                id: string;
+                text: string;
+                class: string;
+                click: () => void;
+            }
+
+            interface IDialogOptions {
+                width: any;
+                height: any;
+                title: string;
+                autoOpen: boolean;
+                modal: boolean;
+                close: (event, ui) => void;
+                buttons: IButton[];
+              }
+
+
+            export class DataEditDialog extends BaseObject implements templMOD.ITemplateEvents  {
                 private _objId: string;
                 private _dataContext: any;
                 private _templateID: string;
@@ -46,7 +65,7 @@
                 private _template: templMOD.Template;
                 private _$template: JQuery;
                 private _result: string;
-                private _options: any;
+                private _options: IDialogOptions;
                 private _dialogCreated: boolean;
                 private _fn_submitOnOK: () => RIAPP.IVoidPromise;
                 private _app: Application;
@@ -58,7 +77,7 @@
                     var self = this;
                     this._app = app;
                     this._objId = 'dlg' + utils.getNewID();
-                    var opts: IDialogConstructorOptions = utils.extend(false, {
+                    options = utils.extend(false, {
                         dataContext: null,
                         templateID: null,
                         width: 500,
@@ -74,17 +93,17 @@
                         fn_OnTemplateCreated: null,
                         fn_OnTemplateDestroy: null
                     }, options);
-                    this._dataContext = opts.dataContext;
-                    this._templateID = opts.templateID;
-                    this._submitOnOK = opts.submitOnOK;
-                    this._canRefresh = opts.canRefresh;
-                    this._canCancel = opts.canCancel;
-                    this._fn_OnClose = opts.fn_OnClose;
-                    this._fn_OnOK = opts.fn_OnOK;
-                    this._fn_OnShow = opts.fn_OnShow;
-                    this._fn_OnCancel = opts.fn_OnCancel;
-                    this._fn_OnTemplateCreated = opts.fn_OnTemplateCreated;
-                    this._fn_OnTemplateDestroy = opts.fn_OnTemplateDestroy;
+                    this._dataContext = options.dataContext;
+                    this._templateID = options.templateID;
+                    this._submitOnOK = options.submitOnOK;
+                    this._canRefresh = options.canRefresh;
+                    this._canCancel = options.canCancel;
+                    this._fn_OnClose = options.fn_OnClose;
+                    this._fn_OnOK = options.fn_OnOK;
+                    this._fn_OnShow = options.fn_OnShow;
+                    this._fn_OnCancel = options.fn_OnCancel;
+                    this._fn_OnTemplateCreated = options.fn_OnTemplateCreated;
+                    this._fn_OnTemplateDestroy = options.fn_OnTemplateDestroy;
 
                     this._isEditable = false;
                     this._template = null;
@@ -101,9 +120,9 @@
                     };
                     this._updateIsEditable();
                     this._options = {
-                        width: opts.width,
-                        height: opts.height,
-                        title: opts.title,
+                        width: options.width,
+                        height: options.height,
+                        title: options.title,
                         autoOpen: false,
                         modal: true,
                         close: function (event, ui) {
@@ -132,37 +151,46 @@
                 _createDialog() {
                     if (this._dialogCreated)
                         return;
-                    var dctx = this._dataContext;
-                    this._template = this._createTemplate(dctx);
+                    this._template = this._createTemplate();
                     this._$template = global.$(this._template.el);
                     global.document.body.appendChild(this._template.el);
                     (<any>this._$template).dialog(this._options);
                     this._dialogCreated = true;
-                    if (!!this._fn_OnTemplateCreated) {
-                        this._fn_OnTemplateCreated(this._template);
-                    }
                 }
                 _getEventNames() {
                     var base_events = super._getEventNames();
                     return ['close', 'refresh'].concat(base_events);
                 }
-                _createTemplate(dcxt) {
-                    var t = new templMOD.Template(this._app, this._templateID);
-                    //create template in disabled state
-                    t.isDisabled = true; 
-                    t.dataContext = dcxt;
-                    return t;
+                templateLoading(template: templMOD.Template): void {
                 }
-                _destroyTemplate() {
-                    if (!!this._fn_OnTemplateDestroy) {
-                        this._fn_OnTemplateDestroy(this._template);
+                templateLoaded(template: templMOD.Template): void {
+                    if (this._isDestroyCalled)
+                        return;
+                    if (!!this._fn_OnTemplateCreated) {
+                        this._fn_OnTemplateCreated(template);
                     }
-                    this._$template.remove();
-                    this._template.destroy();
+                }
+                templateUnLoading(template: templMOD.Template): void {
+                    if (!!this._fn_OnTemplateDestroy) {
+                        this._fn_OnTemplateDestroy(template);
+                    }
                     this._$template = null;
                     this._template = null;
                 }
-                _getButtons() {
+                _createTemplate() {
+                    //create template in disabled state
+                    var t = new templMOD.Template(this._app, {
+                        templateID: this._templateID,
+                        dataContext: this._dataContext,
+                        isDisabled: true,
+                        templEvents: this
+                    });
+                    return t;
+                }
+                _destroyTemplate() {
+                    this._template.destroy();
+                }
+                _getButtons(): IButton[] {
                     var self = this, buttons = [
                         {
                             'id': self._objId + 'Refresh',

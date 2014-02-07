@@ -167,8 +167,7 @@ module RIAPP
                 return ['hide', 'show'].concat(base_events);
             }
             _createTemplate() {
-                var t = new MOD.template.Template(this.app, this._templateId);
-                t.dataContext = this;
+                var t = new MOD.template.Template(this.app, { templateID: this._templateId, dataContext: this } );
                 return t;
             }
             _onTextChange() {

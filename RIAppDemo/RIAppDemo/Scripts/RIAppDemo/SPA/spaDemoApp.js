@@ -6,7 +6,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports", "spaDemoViewModels", "domainModel", "common", "autocomplete", "gridElView"], function(require, exports, VIEWMODELS, DEMODB, COMMON, AUTOCOMPLETE, GRIDELVIEW) {
+define(["require", "exports", "spaDemoViewModels", "domainModel", "common", "autocomplete", "gridElView", "animation"], function(require, exports, VIEWMODELS, DEMODB, COMMON, AUTOCOMPLETE, GRIDELVIEW, ANIMATE) {
     //using static import for CORE jriapp modules (they are inside jriapp.js file)
     var MOD = RIAPP.MOD;
 
@@ -148,7 +148,8 @@ define(["require", "exports", "spaDemoViewModels", "domainModel", "common", "aut
             { name: "COMMON", initFn: COMMON.initModule },
             { name: "AUTOCOMPLETE", initFn: AUTOCOMPLETE.initModule },
             { name: "GRIDELVIEW", initFn: GRIDELVIEW.initModule },
-            { name: "SPADEMO", initFn: VIEWMODELS.initModule }
+            { name: "SPADEMO", initFn: VIEWMODELS.initModule },
+            { name: "ANIMATE", initFn: ANIMATE.initModule }
         ]
     };
 });

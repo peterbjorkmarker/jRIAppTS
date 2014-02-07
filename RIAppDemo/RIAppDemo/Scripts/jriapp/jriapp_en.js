@@ -18,6 +18,7 @@ var RIAPP;
         ERR_EVENT_INVALID_FUNC: 'Invalid event function value',
         ERR_MODULE_NOT_REGISTERED: 'Module: {0} is not registered',
         ERR_MODULE_ALREDY_REGISTERED: 'Module: {0} is already registered',
+        ERR_ANIMATION_NOT_REGISTERED: 'Animation: {0} is not registered',
         ERR_PROP_NAME_EMPTY: 'Empty property name parameter',
         ERR_PROP_NAME_INVALID: 'The object does not have a property with a name: "{0}"',
         ERR_GLOBAL_SINGLTON: 'There must be only one instance of Global object',

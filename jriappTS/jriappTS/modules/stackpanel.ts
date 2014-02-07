@@ -180,8 +180,10 @@
                     }
                 }
                 _createTemplate(dcxt) {
-                    var t = new template.Template(this.app, this._templateID);
-                    t.dataContext = dcxt;
+                    var t = new template.Template(this.app, {
+                        templateID: this._templateID,
+                        dataContext: dcxt
+                    });
                     return t;
                 }
                 _appendItems(newItems: collection.CollectionItem[]) {

@@ -403,8 +403,11 @@
                     }
                     if (!id)
                         throw new Error(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID);
-
-                    return new templMOD.Template(this.app, id);
+                  
+                    return new templMOD.Template(this.app, {
+                        templateID: id,
+                        dataContext: this._dctx
+                    });
                 }
                 update() {
                     this._cleanUp();
@@ -413,7 +416,6 @@
                         template = this._createTemplate();
                         this._template = template;
                         this._parentEl.appendChild(template.el);
-                        template.dataContext = this._dctx;
                     }
                 }
                 _cleanUp() {

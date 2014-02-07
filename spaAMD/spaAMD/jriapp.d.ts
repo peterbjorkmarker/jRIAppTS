@@ -1328,6 +1328,17 @@ declare module RIAPP {
             var css: {
                 templateContainer: string;
             };
+            interface ITemplateEvents {
+                templateLoading(template: Template): void;
+                templateLoaded(template: Template): void;
+                templateUnLoading(template: Template): void;
+            }
+            interface ITemplateOptions {
+                templateID: string;
+                dataContext?: any;
+                templEvents?: ITemplateEvents;
+                isDisabled?: boolean;
+            }
             class Template extends RIAPP.BaseObject {
                 private _dctxt;
                 private _el;
@@ -1338,21 +1349,28 @@ declare module RIAPP {
                 private _promise;
                 private _busyTimeOut;
                 private _app;
-                constructor(app: RIAPP.Application, templateID: string);
+                private _templEvents;
+                private _loadedElem;
+                constructor(app: RIAPP.Application, options: ITemplateOptions);
                 private _getBindings();
                 private _getElViews();
                 private _getTemplateElView();
+                private _getTemplateEvents();
                 private _loadTemplateElAsync(name);
                 private _appendIsBusy(el);
                 private _removeIsBusy(el);
-                public _loadTemplate(): void;
-                public _updateBindingSource(): void;
-                public _updateIsDisabled(): void;
-                public _unloadTemplate(): void;
+                private _loadTemplate();
+                private _processTemplate(promise, asyncLoad);
+                private _updateBindingSource();
+                private _updateIsDisabled();
+                private _unloadTemplate();
+                private _cleanUp();
+                public _onError(error: any, source: any): boolean;
                 public destroy(): void;
                 public findElByDataName(name: string): HTMLElement[];
                 public findElViewsByDataName(name: string): MOD.baseElView.BaseElView[];
                 public toString(): string;
+                public loadedElem : HTMLElement;
                 public dataContext : any;
                 public templateID : string;
                 public el : HTMLElement;
@@ -1368,12 +1386,13 @@ declare module RIAPP {
                     isLoaded: boolean;
                 }) => boolean);
             }
-            class TemplateElView extends MOD.baseElView.CommandElView {
+            class TemplateElView extends MOD.baseElView.CommandElView implements ITemplateEvents {
                 private _template;
                 private _isEnabled;
                 constructor(app: RIAPP.Application, el: HTMLElement, options: MOD.baseElView.IViewOptions);
+                public templateLoading(template: Template): void;
                 public templateLoaded(template: Template): void;
-                public templateUnloading(template: Template): void;
+                public templateUnLoading(template: Template): void;
                 public toString(): string;
                 public isEnabled : boolean;
                 public template : Template;
@@ -1619,15 +1638,23 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module dynacontent {
-            class DynaContentElView extends MOD.baseElView.BaseElView {
+            interface IDynaContentOptions extends MOD.baseElView.IViewOptions {
+                animate?: string;
+            }
+            class DynaContentElView extends MOD.baseElView.BaseElView implements MOD.template.ITemplateEvents {
                 private _dataContext;
+                private _prevTemplateID;
+                private _templateID;
                 private _template;
-                constructor(app: RIAPP.Application, el: HTMLElement, options: MOD.baseElView.IViewOptions);
-                private _templateChanged();
-                public updateTemplate(name: string): void;
+                private _animate;
+                constructor(app: RIAPP.Application, el: HTMLElement, options: IDynaContentOptions);
+                public templateLoading(template: MOD.template.Template): void;
+                public templateLoaded(template: MOD.template.Template): void;
+                public templateUnLoading(template: MOD.template.Template): void;
+                private _templateChanging(oldName, newName);
                 public destroy(): void;
-                public templateID : string;
                 public template : MOD.template.Template;
+                public templateID : string;
                 public dataContext : any;
             }
         }
@@ -1836,7 +1863,13 @@ declare module RIAPP {
                 fn_OnTemplateCreated?: (template: MOD.template.Template) => void;
                 fn_OnTemplateDestroy?: (template: MOD.template.Template) => void;
             }
-            class DataEditDialog extends RIAPP.BaseObject {
+            interface IButton {
+                id: string;
+                text: string;
+                class: string;
+                click: () => void;
+            }
+            class DataEditDialog extends RIAPP.BaseObject implements MOD.template.ITemplateEvents {
                 private _objId;
                 private _dataContext;
                 private _templateID;
@@ -1868,14 +1901,12 @@ declare module RIAPP {
                 public _updateIsEditable(): void;
                 public _createDialog(): void;
                 public _getEventNames(): string[];
-                public _createTemplate(dcxt: any): MOD.template.Template;
+                public templateLoading(template: MOD.template.Template): void;
+                public templateLoaded(template: MOD.template.Template): void;
+                public templateUnLoading(template: MOD.template.Template): void;
+                public _createTemplate(): MOD.template.Template;
                 public _destroyTemplate(): void;
-                public _getButtons(): {
-                    'id': string;
-                    'text': string;
-                    'class': string;
-                    'click': () => void;
-                }[];
+                public _getButtons(): IButton[];
                 public _getOkButton(): JQuery;
                 public _getCancelButton(): JQuery;
                 public _getRefreshButton(): JQuery;
@@ -2005,7 +2036,8 @@ declare module RIAPP {
                 private _row;
                 private _el;
                 private _template;
-                constructor(row: DetailsRow, options: {
+                constructor(options: {
+                    row: DetailsRow;
                     td: HTMLTableCellElement;
                     details_id: string;
                 });
@@ -2185,14 +2217,17 @@ declare module RIAPP {
                 };
                 editor?: MOD.datadialog.IDialogConstructorOptions;
             }
+            interface IGridConstructorOptions extends IGridOptions {
+                el: HTMLTableElement;
+                dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+            }
             class DataGrid extends RIAPP.BaseObject implements RIAPP.ISelectable {
-                public _options: IGridOptions;
+                public _options: IGridConstructorOptions;
                 public _$tableEl: JQuery;
                 public _isClearing: boolean;
                 private _tableEl;
                 private _name;
                 private _objId;
-                private _dataSource;
                 private _rowMap;
                 private _rows;
                 private _columns;
@@ -2212,7 +2247,7 @@ declare module RIAPP {
                 private _$contaner;
                 private _app;
                 public _columnWidthChecker: () => void;
-                constructor(app: RIAPP.Application, el: HTMLTableElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IGridOptions);
+                constructor(app: RIAPP.Application, options: IGridConstructorOptions);
                 public _getEventNames(): string[];
                 public addOnRowExpanded(fn: (sender: DataGrid, args: {
                     old_expandedRow: Row;
@@ -3241,6 +3276,14 @@ declare module RIAPP {
     }
 }
 declare module RIAPP {
+    interface IAnimate {
+        beforeShow(template: RIAPP.MOD.template.Template, isFirstShow: boolean): void;
+        show(template: RIAPP.MOD.template.Template, isFirstShow: boolean): RIAPP.IVoidPromise;
+        beforeHide(template: RIAPP.MOD.template.Template): void;
+        hide(template: RIAPP.MOD.template.Template): RIAPP.IVoidPromise;
+        stop(): void;
+        isAnimateFirstPage: boolean;
+    }
     interface IAppOptions {
         application_name?: string;
         user_modules?: {
@@ -3302,6 +3345,8 @@ declare module RIAPP {
         public registerContentFactory(fn: (nextFactory?: RIAPP.MOD.baseContent.IContentFactory) => RIAPP.MOD.baseContent.IContentFactory): void;
         public registerConverter(name: string, obj: RIAPP.MOD.converter.IConverter): void;
         public getConverter(name: string): RIAPP.MOD.converter.IConverter;
+        public registerAnimation(name: string, obj: IAnimate): void;
+        public getAnimation(name: string): IAnimate;
         public registerType(name: string, obj: any): void;
         public getType(name: string): any;
         public registerObject(name: string, obj: any): void;

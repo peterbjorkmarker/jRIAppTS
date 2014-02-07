@@ -36,10 +36,21 @@ module RIAPP {
     import contentMOD = RIAPP.MOD.baseContent;
     import formMOD = RIAPP.MOD.dataform;
     import convertMOD = RIAPP.MOD.converter;
+    import templMOD = RIAPP.MOD.template;
+
     //ALL CORE MODULES are LOADED, INITIALIZE THE Global
     global._initialize();
     //local variable for optimization
     var utils = global.utils, parser = global.parser;
+
+    export interface IAnimate {
+        beforeShow(template: templMOD.Template, isFirstShow: boolean): void;
+        show(template: templMOD.Template, isFirstShow: boolean): RIAPP.IVoidPromise;
+        beforeHide(template: templMOD.Template): void;
+        hide(template: templMOD.Template): RIAPP.IVoidPromise;
+        stop(): void;
+        isAnimateFirstPage: boolean;
+    }
 
     export interface IAppOptions {
         application_name?: string;
@@ -246,6 +257,7 @@ module RIAPP {
                 DATA_BIND = constsMOD.DATA_ATTR.DATA_BIND,
                 DATA_VIEW = constsMOD.DATA_ATTR.DATA_VIEW;
 
+
             if (templateEl.hasAttribute(DATA_BIND) || templateEl.hasAttribute(DATA_VIEW)) {
                 selectedElem.push(templateEl);
             }
@@ -261,7 +273,7 @@ module RIAPP {
                 forms = ArrayHelper.fromList(templateEl.querySelectorAll(formSelector));
 
             if (checks.isDataForm(templateEl)) {
-               //in this case process only this element
+                //in this case process only this element
                 selectedElem = [templateEl];
             }
 
@@ -272,10 +284,9 @@ module RIAPP {
                     temp_opts: any[],
                     elView: elviewMOD.BaseElView,
                     j: number, len: number;
-
                 //if element inside a dataform return
                 if (checks.isInNestedForm(templateEl, forms, el)) {
-                   return;
+                    return;
                 }
 
                 try {
@@ -294,7 +305,8 @@ module RIAPP {
                 if (el.hasAttribute(DATA_VIEW)) {
                     el.removeAttribute(DATA_VIEW);
                 }
-              
+
+
                 //then create databinding if element has data-bind attribute
                 bind_attr = el.getAttribute(DATA_BIND);
                 if (!!bind_attr) {
@@ -446,6 +458,24 @@ module RIAPP {
             }
             if (!res)
                 throw new Error(utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
+            return res;
+        }
+        registerAnimation(name: string, obj: IAnimate) {
+            var name2 = 'anim.' + name;
+            if (!global._getObject(this, name2)) {
+                global._registerObject(this, name2, obj);
+            }
+            else
+                throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
+        }
+        getAnimation(name: string): IAnimate {
+            var name2 = 'anim.' + name;
+            var res = global._getObject(this, name2);
+            if (!res) {
+                res = global._getObject(global, name2);
+            }
+            if (!res)
+                throw new Error(utils.format(RIAPP.ERRS.ERR_ANIMATION_NOT_REGISTERED, name));
             return res;
         }
         registerType(name: string, obj) {
