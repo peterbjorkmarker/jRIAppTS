@@ -15,73 +15,123 @@ define(["require", "exports"], function(require, exports) {
     //local variables for optimization
     var global = RIAPP.global, utils = global.utils;
 
-    var FlipAnimation = (function (_super) {
-        __extends(FlipAnimation, _super);
-        function FlipAnimation() {
+    var FadeAnimation = (function (_super) {
+        __extends(FadeAnimation, _super);
+        function FadeAnimation(isAnimateFirstShow, duration) {
             _super.call(this);
-            this._$templateOwner = null;
+            this._$animatedEl = null;
+            this._effect = 'fade';
+            this._duration = !!duration ? duration : 1000;
+            this._isAnimateFirstShow = !!isAnimateFirstShow;
         }
-        FlipAnimation.prototype.beforeShow = function (template, isFirstShow) {
-            //noop
+        FadeAnimation.prototype.beforeShow = function (template, isFirstShow) {
         };
-        FlipAnimation.prototype.show = function (template, isFirstShow) {
-            var deffered = utils.createDeferred(), self = this, templEl = template.el;
-            this._$templateOwner = global.$(templEl).parent();
+        FadeAnimation.prototype.show = function (template, isFirstShow) {
             this.stop();
-            var color = global.$(template.loadedElem).css("background-color");
-            this._$templateOwner.css("opacity", 1);
-            var el = this._$templateOwner.get(0);
-            this._$templateOwner.flip({
-                direction: 'tb',
-                color: color,
-                onBefore: function () {
-                    el.removeChild(templEl);
-                },
-                onEnd: function () {
-                    el.appendChild(templEl);
-                    deffered.resolve();
-                }
+            this._$animatedEl = global.$(template.el.parentElement);
+            this._$animatedEl.hide();
+            var deffered = utils.createDeferred();
+            this._$animatedEl.show(this._effect, this._duration, function () {
+                deffered.resolve();
             });
             return deffered.promise();
         };
-        FlipAnimation.prototype.beforeHide = function (template) {
-        };
-        FlipAnimation.prototype.hide = function (template) {
-            var deffered = utils.createDeferred();
+        FadeAnimation.prototype.beforeHide = function (template) {
             this.stop();
-            deffered.resolve();
+            this._$animatedEl = global.$(template.el.parentElement);
+        };
+        FadeAnimation.prototype.hide = function (template) {
+            var deffered = utils.createDeferred();
+            this._$animatedEl.hide(this._effect, this._duration, function () {
+                deffered.resolve();
+            });
             return deffered.promise();
         };
-        FlipAnimation.prototype.stop = function () {
-            if (!!this._$templateOwner)
-                this._$templateOwner.finish();
+        FadeAnimation.prototype.stop = function () {
+            if (!!this._$animatedEl)
+                this._$animatedEl.finish();
         };
-        Object.defineProperty(FlipAnimation.prototype, "isAnimateFirstPage", {
+        Object.defineProperty(FadeAnimation.prototype, "isAnimateFirstShow", {
             get: function () {
-                return false;
+                return true;
             },
             enumerable: true,
             configurable: true
         });
-        FlipAnimation.prototype.destroy = function () {
+        FadeAnimation.prototype.destroy = function () {
             if (this._isDestroyed)
                 return;
             this._isDestroyCalled = true;
             try  {
                 this.stop();
-                this._$templateOwner = null;
+                this._$animatedEl = null;
             } finally {
                 _super.prototype.destroy.call(this);
             }
         };
-        return FlipAnimation;
+        return FadeAnimation;
     })(RIAPP.BaseObject);
-    exports.FlipAnimation = FlipAnimation;
+    exports.FadeAnimation = FadeAnimation;
+
+    var SlideAnimation = (function (_super) {
+        __extends(SlideAnimation, _super);
+        function SlideAnimation(isAnimateFirstShow, duration) {
+            _super.call(this);
+            this._$animatedEl = null;
+            this._effect = 'slide';
+            this._duration = !!duration ? duration : 1000;
+            this._isAnimateFirstShow = !!isAnimateFirstShow;
+        }
+        SlideAnimation.prototype.beforeShow = function (template, isFirstShow) {
+        };
+        SlideAnimation.prototype.show = function (template, isFirstShow) {
+            this.stop();
+            this._$animatedEl = global.$(template.el.parentElement);
+            var deffered = utils.createDeferred();
+            this._$animatedEl.show(this._effect, this._duration, function () {
+                deffered.resolve();
+            });
+            return deffered.promise();
+        };
+        SlideAnimation.prototype.beforeHide = function (template) {
+            this.stop();
+            this._$animatedEl = global.$(template.el.parentElement);
+        };
+        SlideAnimation.prototype.hide = function (template) {
+            var deffered = utils.createDeferred();
+            this._$animatedEl.hide(this._effect, this._duration, function () {
+                deffered.resolve();
+            });
+            return deffered.promise();
+        };
+        SlideAnimation.prototype.stop = function () {
+            if (!!this._$animatedEl)
+                this._$animatedEl.finish();
+        };
+        Object.defineProperty(SlideAnimation.prototype, "isAnimateFirstShow", {
+            get: function () {
+                return true;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        SlideAnimation.prototype.destroy = function () {
+            if (this._isDestroyed)
+                return;
+            this._isDestroyCalled = true;
+            try  {
+                this.stop();
+                this._$animatedEl = null;
+            } finally {
+                _super.prototype.destroy.call(this);
+            }
+        };
+        return SlideAnimation;
+    })(RIAPP.BaseObject);
+    exports.SlideAnimation = SlideAnimation;
 
     //this function is executed when an application which uses this module is created
     function initModule(app) {
-        app.registerAnimation('flip', new FlipAnimation());
-
         //return something, even null is OK
         return {};
     }

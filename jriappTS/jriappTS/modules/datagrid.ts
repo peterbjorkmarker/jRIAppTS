@@ -416,17 +416,17 @@
             }
 
             export class Row extends RIAPP.BaseObject {
-                _grid: DataGrid;
-                _el: HTMLElement;
-                _item: collMOD.CollectionItem;
-                _cells: BaseCell[];
-                _objId: string;
-                _expanderCell: any;
-                _actionsCell: any;
-                _rowSelectorCell: any;
-                _isCurrent: boolean;
-                _isDeleted: boolean;
-                _isSelected: boolean;
+                private _grid: DataGrid;
+                private _el: HTMLElement;
+                private _item: collMOD.CollectionItem;
+                private _cells: BaseCell[];
+                private _objId: string;
+                private _expanderCell: ExpanderCell;
+                private _actionsCell: ActionsCell;
+                private _rowSelectorCell: RowSelectorCell;
+                private _isCurrent: boolean;
+                private _isDeleted: boolean;
+                private _isSelected: boolean;
 
                 constructor(grid: DataGrid, options: { tr: HTMLElement; item: collMOD.CollectionItem; }) {
                     var self = this;
@@ -445,11 +445,11 @@
                     this._createCells();
                     this.isDeleted = this._item._isDeleted;
                     var fn_state = function () {
-                        var css = self._grid._onRowStateChanged(self, self._item[self._grid._options.rowStateField]);
+                        var css = self._grid._onRowStateChanged(self, self._item[self._grid.options.rowStateField]);
                         self._setState(css);
                     };
-                    if (!!this._grid._options.rowStateField) {
-                        this._item.addOnPropertyChange(this._grid._options.rowStateField, function (s, a) {
+                    if (!!this._grid.options.rowStateField) {
+                        this._item.addOnPropertyChange(this._grid.options.rowStateField, function (s, a) {
                             fn_state();
                         }, this._objId);
                         fn_state();
@@ -462,7 +462,7 @@
                     }
                     return isHandled;
                 }
-                _createCells() {
+                private _createCells() {
                     var self = this, i = 0;
                     self._cells = new Array(this.columns.length);
                     this.columns.forEach(function (col) {
@@ -470,19 +470,19 @@
                         i += 1;
                     });
                 }
-                _createCell(col) {
-                    var self = this, td: HTMLTableCellElement = <HTMLTableCellElement>global.document.createElement('td'), cell;
+                private _createCell(col) {
+                    var self = this, td: HTMLTableCellElement = <HTMLTableCellElement>global.document.createElement('td'), cell: BaseCell;
                     if (col instanceof ExpanderColumn) {
-                        cell = new ExpanderCell(self, { td: td, column: col });
-                        this._expanderCell = cell;
+                        this._expanderCell = new ExpanderCell(self, { td: td, column: col });
+                        cell = this._expanderCell;
                     }
                     else if (col instanceof ActionsColumn) {
-                        cell = new ActionsCell(self, { td: td, column: col });
-                        this._actionsCell = cell;
+                        this._actionsCell = new ActionsCell(self, { td: td, column: col });
+                        cell = this._actionsCell;
                     }
                     else if (col instanceof RowSelectorColumn) {
-                        cell = new RowSelectorCell(self, { td: td, column: col });
-                        this._rowSelectorCell = cell;
+                        this._rowSelectorCell = new RowSelectorCell(self, { td: td, column: col });
+                        cell = this._rowSelectorCell;
                     }
                     else
                         cell = new DataCell(self, { td: td, column: col });
@@ -648,6 +648,7 @@
                 private _parentRow: Row;
                 private _objId: string;
                 private _$el: JQuery;
+                private _isFirstShow: boolean;
 
                 constructor(grid: DataGrid, options: { tr: HTMLTableRowElement; details_id: string; }) {
                     super();
@@ -656,6 +657,7 @@
                     this._item = null;
                     this._cell = null;
                     this._parentRow = null;
+                    this._isFirstShow = true;
                     this._objId = 'drow' + utils.getNewID();
                     this._createCell(options.details_id);
                     this._$el = global.$(this._el);
@@ -678,16 +680,41 @@
                     this._parentRow = row;
                     this._item = row.item;
                     this._cell.item = this._item;
+                    if (this._isFirstShow)
+                        this._initShow();
                     utils.insertAfter(row.el, this._el);
-                    var $cell = global.$(this._cell.template.el);
                     //var isLast = this.grid._getLastRow() === this._parentRow;
-                    $cell.slideDown('fast', function () {
+                    this._show(() => {
                         var row = self._parentRow;
                         if (!row || row._isDestroyCalled)
                             return;
-                        if (self.grid._options.isUseScrollIntoDetails)
+                        if (self.grid.options.isUseScrollIntoDetails)
                             row.scrollIntoView(true);
                     });
+                }
+                private _initShow() {
+                    var animation = this._grid.options.animation;
+                    if (!animation) {
+                        animation = this._grid.app.getAnimation('default');
+                    }
+                    animation.beforeShow(this._cell.template.el);
+                }
+                private _show(onEnd: () => void) {
+                    var animation = this._grid.options.animation;
+                    this._isFirstShow = false;
+                    if (!animation) {
+                        animation = this._grid.app.getAnimation('default');
+                    }
+                    animation.beforeShow(this._cell.template.el);
+                    animation.show(onEnd);
+                }
+                private _hide(onEnd: () => void) {
+                    var animation = this._grid.options.animation;
+                    if (!animation) {
+                        animation = this._grid.app.getAnimation('default');
+                    }
+                    animation.beforeHide(this._cell.template.el);
+                    animation.hide(onEnd);
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -724,12 +751,11 @@
                     return this._item._key;
                 }
                 get parentRow() { return this._parentRow; }
-                set parentRow(v:Row) {
+                set parentRow(v) {
                     var self = this;
                     if (v !== this._parentRow) {
-                        var $cell = global.$(this._cell.template.el);
                         if (!!self._parentRow) {
-                            $cell.slideUp('fast', function () {
+                            self._hide(() => {
                                 self._setParentRow(v);
                             });
                         }
@@ -1075,10 +1101,11 @@
             export interface IGridConstructorOptions extends IGridOptions {
                 el: HTMLTableElement;
                 dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                animation: RIAPP.IAnimation;
             }
 
             export class DataGrid extends RIAPP.BaseObject implements RIAPP.ISelectable {
-                _options: IGridConstructorOptions;
+                private _options: IGridConstructorOptions;
                 _$tableEl: JQuery;
                 _isClearing: boolean;
                 private _tableEl: HTMLTableElement;
@@ -1110,6 +1137,7 @@
                         {
                             el: null,
                             dataSource: null,
+                            animation: null,
                             isUseScrollInto: true,
                             isUseScrollIntoDetails: true,
                             containerCss: null, //div that wraps all table and header
@@ -1879,6 +1907,7 @@
                 }
                 get app() { return this._app; }
                 get $container() { return this._$contaner; }
+                get options() { return this._options; }
                 get _tBodyEl() { return this._tableEl.tBodies[0]; }
                 get _tHeadEl() { return this._tableEl.tHead; }
                 get _tFootEl() { return this._tableEl.tFoot; }
@@ -1966,12 +1995,14 @@
                 private _grid: DataGrid;
                 private _gridEventCommand: mvvm.ICommand;
                 private _options: IGridViewOptions;
+                private _animation: RIAPP.IAnimation;
                 toString() {
                     return 'GridElView';
                 }
                 _init(options: IGridViewOptions) {
                     super._init(options);
                     this._dataSource = null;
+                    this._animation = null;
                     this._grid = null;
                     this._gridEventCommand = null;
                     this._options = options;
@@ -1987,10 +2018,11 @@
                     super.destroy();
                 }
                 private _createGrid() {
-                    var options = utils.extend(false,
+                    var options: IGridConstructorOptions = utils.extend(false,
                         {
                             el: <HTMLTableElement>this._el,
-                            dataSource: this._dataSource
+                            dataSource: this._dataSource,
+                            animation: this._animation
                         }, this._options);
                     this._grid = new DataGrid(this.app, options);
                     this._bindGridEvents();
@@ -2058,6 +2090,16 @@
                         this._gridEventCommand = v;
                         if (!!this._gridEventCommand)
                             this.invokeGridEvent('command_connected', {});
+                    }
+                }
+                get animation() { return this._animation; }
+                set animation(v) {
+                    if (this._animation !== v) {
+                        this._animation = v;
+                        if (!!this._grid) {
+                            this._grid.options.animation = v;
+                        }
+                        this.raisePropertyChanged('animation');
                     }
                 }
             }

@@ -11,6 +11,14 @@
                 utils = s.utils;
             });
 
+            export interface IAnimation {
+                beforeShow(template: templMOD.Template, isFirstShow: boolean): void;
+                show(template: templMOD.Template, isFirstShow: boolean): RIAPP.IVoidPromise;
+                beforeHide(template: templMOD.Template): void;
+                hide(template: templMOD.Template): RIAPP.IVoidPromise;
+                stop(): void;
+                isAnimateFirstShow: boolean;
+            }
 
             export interface IDynaContentOptions extends elviewMOD.IViewOptions {
                 animate?: string;
@@ -21,7 +29,7 @@
                 private _prevTemplateID: string;
                 private _templateID: string;
                 private _template: templMOD.Template;
-                private _animate: RIAPP.IAnimate;
+                private _animation: IAnimation;
 
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IDynaContentOptions) {
                     super(app, el, options);
@@ -29,15 +37,15 @@
                     this._prevTemplateID = null;
                     this._templateID = null;
                     this._template = null;
-                    this._animate = (!!options.animate) ? app.getAnimation(options.animate) : null;
+                    this._animation = null;
                 }
                 templateLoading(template: templMOD.Template): void {
                     if (this._isDestroyCalled)
                         return;
                     var isFirstShow = !this._prevTemplateID,
-                        canShow = !!this._animate && (this._animate.isAnimateFirstPage || (!this._animate.isAnimateFirstPage && !isFirstShow));
+                        canShow = !!this._animation && (this._animation.isAnimateFirstShow || (!this._animation.isAnimateFirstShow && !isFirstShow));
                     if (canShow) {
-                        this._animate.beforeShow(template, isFirstShow);
+                        this._animation.beforeShow(template, isFirstShow);
                     }
                 }
                 templateLoaded(template: templMOD.Template): void {
@@ -48,9 +56,9 @@
                     }
                    
                     var isFirstShow = !this._prevTemplateID,
-                        canShow = !!this._animate && (this._animate.isAnimateFirstPage || (!this._animate.isAnimateFirstPage && !isFirstShow));
+                        canShow = !!this._animation && (this._animation.isAnimateFirstShow || (!this._animation.isAnimateFirstShow && !isFirstShow));
                     if (canShow) {
-                        this._animate.show(template, isFirstShow);
+                        this._animation.show(template, isFirstShow);
                     }
                 }
                 templateUnLoading(template: templMOD.Template): void {
@@ -60,10 +68,10 @@
                     var self = this;
                     try {
                         if (!newName && !!this._template) {
-                            if (!!this._animate && !!this._template.loadedElem) {
-                                this._animate.stop();
-                                this._animate.beforeHide(this._template);
-                                this._animate.hide(this._template).always(() => {
+                            if (!!this._animation && !!this._template.loadedElem) {
+                                this._animation.stop();
+                                this._animation.beforeHide(this._template);
+                                this._animation.hide(this._template).always(() => {
                                     if (self._isDestroyCalled)
                                         return;
                                     self._template.destroy();
@@ -95,10 +103,10 @@
                             self.raisePropertyChanged('template');
                             return;
                         }
-                        if (!!this._animate && !!this._template.loadedElem) {
-                            this._animate.stop();
-                            this._animate.beforeHide(this._template);
-                            this._animate.hide(this._template).always(() => {
+                        if (!!this._animation && !!this._template.loadedElem) {
+                            this._animation.stop();
+                            this._animation.beforeHide(this._template);
+                            this._animation.hide(this._template).always(() => {
                                 if (self._isDestroyCalled)
                                     return;
                                 self._template.templateID = newName;
@@ -115,11 +123,11 @@
                     if (this._isDestroyed)
                         return
                     this._isDestroyCalled = true;
-                    if (!!this._animate) {
-                        if (utils.check.isBaseObj(this._animate)) {
-                            (<RIAPP.BaseObject><any>this._animate).destroy();
+                    if (!!this._animation) {
+                        if (utils.check.isBaseObj(this._animation)) {
+                            (<RIAPP.BaseObject><any>this._animation).destroy();
                         }
-                        this._animate = null;
+                        this._animation = null;
                     }
                     if (!!this._template) {
                         this._template.destroy();
@@ -150,6 +158,13 @@
                             this._template.dataContext = this._dataContext;
                         }
                         this.raisePropertyChanged('dataContext');
+                    }
+                }
+                get animation() { return this._animation; }
+                set animation(v) {
+                    if (this._animation !== v) {
+                        this._animation = v;
+                        this.raisePropertyChanged('animation');
                     }
                 }
             }

@@ -48,6 +48,13 @@ declare module RIAPP {
         promise(): IPromise<T>;
         state(): string;
     }
+    interface IAnimation {
+        beforeShow(el: HTMLElement): void;
+        show(onEnd: () => void): void;
+        beforeHide(el: HTMLElement): void;
+        hide(onEnd: () => void): void;
+        stop(): void;
+    }
     interface IEditable {
         beginEdit(): boolean;
         endEdit(): boolean;
@@ -1638,6 +1645,14 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module dynacontent {
+            interface IAnimation {
+                beforeShow(template: MOD.template.Template, isFirstShow: boolean): void;
+                show(template: MOD.template.Template, isFirstShow: boolean): RIAPP.IVoidPromise;
+                beforeHide(template: MOD.template.Template): void;
+                hide(template: MOD.template.Template): RIAPP.IVoidPromise;
+                stop(): void;
+                isAnimateFirstShow: boolean;
+            }
             interface IDynaContentOptions extends MOD.baseElView.IViewOptions {
                 animate?: string;
             }
@@ -1646,7 +1661,7 @@ declare module RIAPP {
                 private _prevTemplateID;
                 private _templateID;
                 private _template;
-                private _animate;
+                private _animation;
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IDynaContentOptions);
                 public templateLoading(template: MOD.template.Template): void;
                 public templateLoaded(template: MOD.template.Template): void;
@@ -1656,6 +1671,7 @@ declare module RIAPP {
                 public template : MOD.template.Template;
                 public templateID : string;
                 public dataContext : any;
+                public animation : IAnimation;
             }
         }
     }
@@ -2054,24 +2070,24 @@ declare module RIAPP {
                 public template : MOD.template.Template;
             }
             class Row extends RIAPP.BaseObject {
-                public _grid: DataGrid;
-                public _el: HTMLElement;
-                public _item: MOD.collection.CollectionItem;
-                public _cells: BaseCell[];
-                public _objId: string;
-                public _expanderCell: any;
-                public _actionsCell: any;
-                public _rowSelectorCell: any;
-                public _isCurrent: boolean;
-                public _isDeleted: boolean;
-                public _isSelected: boolean;
+                private _grid;
+                private _el;
+                private _item;
+                private _cells;
+                private _objId;
+                private _expanderCell;
+                private _actionsCell;
+                private _rowSelectorCell;
+                private _isCurrent;
+                private _isDeleted;
+                private _isSelected;
                 constructor(grid: DataGrid, options: {
                     tr: HTMLElement;
                     item: MOD.collection.CollectionItem;
                 });
                 public _onError(error: any, source: any): boolean;
-                public _createCells(): void;
-                public _createCell(col: any): any;
+                private _createCells();
+                private _createCell(col);
                 public _onBeginEdit(): void;
                 public _onEndEdit(isCanceled: boolean): void;
                 public beginEdit(): boolean;
@@ -2093,8 +2109,8 @@ declare module RIAPP {
                 public isCurrent : boolean;
                 public isSelected : boolean;
                 public isExpanded : boolean;
-                public expanderCell : any;
-                public actionsCell : any;
+                public expanderCell : ExpanderCell;
+                public actionsCell : ActionsCell;
                 public isDeleted : boolean;
                 public isEditing : boolean;
             }
@@ -2106,12 +2122,16 @@ declare module RIAPP {
                 private _parentRow;
                 private _objId;
                 private _$el;
+                private _isFirstShow;
                 constructor(grid: DataGrid, options: {
                     tr: HTMLTableRowElement;
                     details_id: string;
                 });
                 private _createCell(details_id);
                 public _setParentRow(row: Row): void;
+                private _initShow();
+                private _show(onEnd);
+                private _hide(onEnd);
                 public destroy(): void;
                 public toString(): string;
                 public el : HTMLTableRowElement;
@@ -2220,9 +2240,10 @@ declare module RIAPP {
             interface IGridConstructorOptions extends IGridOptions {
                 el: HTMLTableElement;
                 dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+                animation: RIAPP.IAnimation;
             }
             class DataGrid extends RIAPP.BaseObject implements RIAPP.ISelectable {
-                public _options: IGridConstructorOptions;
+                private _options;
                 public _$tableEl: JQuery;
                 public _isClearing: boolean;
                 private _tableEl;
@@ -2322,6 +2343,7 @@ declare module RIAPP {
                 public destroy(): void;
                 public app : RIAPP.Application;
                 public $container : JQuery;
+                public options : IGridConstructorOptions;
                 public _tBodyEl : Element;
                 public _tHeadEl : HTMLTableSectionElement;
                 public _tFootEl : HTMLTableSectionElement;
@@ -2347,6 +2369,7 @@ declare module RIAPP {
                 private _grid;
                 private _gridEventCommand;
                 private _options;
+                private _animation;
                 public toString(): string;
                 public _init(options: IGridViewOptions): void;
                 public destroy(): void;
@@ -2358,6 +2381,7 @@ declare module RIAPP {
                 public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
                 public grid : DataGrid;
                 public gridEventCommand : MOD.mvvm.ICommand;
+                public animation : RIAPP.IAnimation;
             }
         }
     }
@@ -3276,13 +3300,15 @@ declare module RIAPP {
     }
 }
 declare module RIAPP {
-    interface IAnimate {
-        beforeShow(template: RIAPP.MOD.template.Template, isFirstShow: boolean): void;
-        show(template: RIAPP.MOD.template.Template, isFirstShow: boolean): RIAPP.IVoidPromise;
-        beforeHide(template: RIAPP.MOD.template.Template): void;
-        hide(template: RIAPP.MOD.template.Template): RIAPP.IVoidPromise;
-        stop(): void;
-        isAnimateFirstPage: boolean;
+    class DefaultAnimation extends RIAPP.BaseObject implements RIAPP.IAnimation {
+        private _$el;
+        constructor();
+        public beforeShow(el: HTMLElement): void;
+        public show(onEnd: () => void): void;
+        public beforeHide(el: HTMLElement): void;
+        public hide(onEnd: () => void): void;
+        public stop(): void;
+        public destroy(): void;
     }
     interface IAppOptions {
         application_name?: string;
@@ -3345,8 +3371,8 @@ declare module RIAPP {
         public registerContentFactory(fn: (nextFactory?: RIAPP.MOD.baseContent.IContentFactory) => RIAPP.MOD.baseContent.IContentFactory): void;
         public registerConverter(name: string, obj: RIAPP.MOD.converter.IConverter): void;
         public getConverter(name: string): RIAPP.MOD.converter.IConverter;
-        public registerAnimation(name: string, obj: IAnimate): void;
-        public getAnimation(name: string): IAnimate;
+        public registerAnimation(name: string, obj: RIAPP.IAnimation): void;
+        public getAnimation(name: string): RIAPP.IAnimation;
         public registerType(name: string, obj: any): void;
         public getType(name: string): any;
         public registerObject(name: string, obj: any): void;

@@ -1,10 +1,13 @@
 ﻿/// <reference path="..\jriapp.d.ts"/>
+import dynMOD = RIAPP.MOD.dynacontent;
 //using AMD to load user modules
 import DEMO = require("spaDemoApp");
 import DEMODB = require("domainModel");
 import COMMON = require("common");
 import AUTOCOMPLETE = require("autocomplete");
+import ANIMATION = require("animation");
 'use strict';
+
 //using static import for CORE jriapp modules (they are inside jriapp.js file)
 import MOD = RIAPP.MOD;
 //local variables for optimization
@@ -14,12 +17,14 @@ export class MainViewVM extends RIAPP.BaseObject {
     private _custTemplName: string;
     private _custDetTemplName: string;
     private _viewName: string;
+    private _animation: dynMOD.IAnimation;
 
     constructor() {
         super();
         this._custTemplName = 'SPAcustTemplate';
         this._custDetTemplName = 'SPAcustDetailTemplate';
         this._viewName = this._custTemplName;
+        this._animation = new ANIMATION.FadeAnimation(true);
     }
     goToAllCust() {
         this.viewName = this.custTemplName;
@@ -29,6 +34,13 @@ export class MainViewVM extends RIAPP.BaseObject {
     }
     reset() {
         this.viewName = this._custTemplName;
+    }
+    get animation() { return this._animation; }
+    set animation(v) {
+        if (v !== this._animation) {
+            this._animation = v;
+            this.raisePropertyChanged('animation');
+        }
     }
     get viewName() { return this._viewName; }
     set viewName(v) {
@@ -45,12 +57,14 @@ export class CustDetViewVM extends RIAPP.BaseObject {
     private _infoTemplName: string;
     private _adrTemplName: string;
     private _viewName: string;
+    private _animation: dynMOD.IAnimation;
 
     constructor() {
         super();
         this._infoTemplName = 'customerInfo';
         this._adrTemplName = 'customerAddr';
         this._viewName = this._infoTemplName;
+        this._animation = new ANIMATION.SlideAnimation(false);
     }
     goToCustInfo() {
         this.viewName = this.infoTemplName;
@@ -60,6 +74,13 @@ export class CustDetViewVM extends RIAPP.BaseObject {
     }
     reset() {
         this.viewName = this._infoTemplName;
+    }
+    get animation() { return this._animation; }
+    set animation(v) {
+        if (v !== this._animation) {
+            this._animation = v;
+            this.raisePropertyChanged('animation');
+        }
     }
     get viewName() { return this._viewName; }
     set viewName(v) {

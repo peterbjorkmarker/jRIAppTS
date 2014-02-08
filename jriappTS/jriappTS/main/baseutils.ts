@@ -33,6 +33,14 @@ module RIAPP {
         state(): string;
     }
 
+    export interface IAnimation {
+        beforeShow(el: HTMLElement): void;
+        show(onEnd: () => void): void;
+        beforeHide(el: HTMLElement): void;
+        hide(onEnd: () => void): void;
+        stop(): void;
+    }
+
     export interface IEditable {
         beginEdit(): boolean;
         endEdit(): boolean;

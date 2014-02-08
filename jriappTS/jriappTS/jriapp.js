@@ -8624,14 +8624,14 @@ var RIAPP;
                     this._prevTemplateID = null;
                     this._templateID = null;
                     this._template = null;
-                    this._animate = (!!options.animate) ? app.getAnimation(options.animate) : null;
+                    this._animation = null;
                 }
                 DynaContentElView.prototype.templateLoading = function (template) {
                     if (this._isDestroyCalled)
                         return;
-                    var isFirstShow = !this._prevTemplateID, canShow = !!this._animate && (this._animate.isAnimateFirstPage || (!this._animate.isAnimateFirstPage && !isFirstShow));
+                    var isFirstShow = !this._prevTemplateID, canShow = !!this._animation && (this._animation.isAnimateFirstShow || (!this._animation.isAnimateFirstShow && !isFirstShow));
                     if (canShow) {
-                        this._animate.beforeShow(template, isFirstShow);
+                        this._animation.beforeShow(template, isFirstShow);
                     }
                 };
                 DynaContentElView.prototype.templateLoaded = function (template) {
@@ -8641,9 +8641,9 @@ var RIAPP;
                         this.el.appendChild(template.el);
                     }
 
-                    var isFirstShow = !this._prevTemplateID, canShow = !!this._animate && (this._animate.isAnimateFirstPage || (!this._animate.isAnimateFirstPage && !isFirstShow));
+                    var isFirstShow = !this._prevTemplateID, canShow = !!this._animation && (this._animation.isAnimateFirstShow || (!this._animation.isAnimateFirstShow && !isFirstShow));
                     if (canShow) {
-                        this._animate.show(template, isFirstShow);
+                        this._animation.show(template, isFirstShow);
                     }
                 };
                 DynaContentElView.prototype.templateUnLoading = function (template) {
@@ -8653,10 +8653,10 @@ var RIAPP;
                     var self = this;
                     try  {
                         if (!newName && !!this._template) {
-                            if (!!this._animate && !!this._template.loadedElem) {
-                                this._animate.stop();
-                                this._animate.beforeHide(this._template);
-                                this._animate.hide(this._template).always(function () {
+                            if (!!this._animation && !!this._template.loadedElem) {
+                                this._animation.stop();
+                                this._animation.beforeHide(this._template);
+                                this._animation.hide(this._template).always(function () {
                                     if (self._isDestroyCalled)
                                         return;
                                     self._template.destroy();
@@ -8685,10 +8685,10 @@ var RIAPP;
                             self.raisePropertyChanged('template');
                             return;
                         }
-                        if (!!this._animate && !!this._template.loadedElem) {
-                            this._animate.stop();
-                            this._animate.beforeHide(this._template);
-                            this._animate.hide(this._template).always(function () {
+                        if (!!this._animation && !!this._template.loadedElem) {
+                            this._animation.stop();
+                            this._animation.beforeHide(this._template);
+                            this._animation.hide(this._template).always(function () {
                                 if (self._isDestroyCalled)
                                     return;
                                 self._template.templateID = newName;
@@ -8704,11 +8704,11 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._animate) {
-                        if (utils.check.isBaseObj(this._animate)) {
-                            this._animate.destroy();
+                    if (!!this._animation) {
+                        if (utils.check.isBaseObj(this._animation)) {
+                            this._animation.destroy();
                         }
-                        this._animate = null;
+                        this._animation = null;
                     }
                     if (!!this._template) {
                         this._template.destroy();
@@ -8752,6 +8752,19 @@ var RIAPP;
                                 this._template.dataContext = this._dataContext;
                             }
                             this.raisePropertyChanged('dataContext');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DynaContentElView.prototype, "animation", {
+                    get: function () {
+                        return this._animation;
+                    },
+                    set: function (v) {
+                        if (this._animation !== v) {
+                            this._animation = v;
+                            this.raisePropertyChanged('animation');
                         }
                     },
                     enumerable: true,
@@ -10839,11 +10852,11 @@ var RIAPP;
                     this._createCells();
                     this.isDeleted = this._item._isDeleted;
                     var fn_state = function () {
-                        var css = self._grid._onRowStateChanged(self, self._item[self._grid._options.rowStateField]);
+                        var css = self._grid._onRowStateChanged(self, self._item[self._grid.options.rowStateField]);
                         self._setState(css);
                     };
-                    if (!!this._grid._options.rowStateField) {
-                        this._item.addOnPropertyChange(this._grid._options.rowStateField, function (s, a) {
+                    if (!!this._grid.options.rowStateField) {
+                        this._item.addOnPropertyChange(this._grid.options.rowStateField, function (s, a) {
                             fn_state();
                         }, this._objId);
                         fn_state();
@@ -10867,14 +10880,14 @@ var RIAPP;
                 Row.prototype._createCell = function (col) {
                     var self = this, td = global.document.createElement('td'), cell;
                     if (col instanceof ExpanderColumn) {
-                        cell = new ExpanderCell(self, { td: td, column: col });
-                        this._expanderCell = cell;
+                        this._expanderCell = new ExpanderCell(self, { td: td, column: col });
+                        cell = this._expanderCell;
                     } else if (col instanceof ActionsColumn) {
-                        cell = new ActionsCell(self, { td: td, column: col });
-                        this._actionsCell = cell;
+                        this._actionsCell = new ActionsCell(self, { td: td, column: col });
+                        cell = this._actionsCell;
                     } else if (col instanceof RowSelectorColumn) {
-                        cell = new RowSelectorCell(self, { td: td, column: col });
-                        this._rowSelectorCell = cell;
+                        this._rowSelectorCell = new RowSelectorCell(self, { td: td, column: col });
+                        cell = this._rowSelectorCell;
                     } else
                         cell = new DataCell(self, { td: td, column: col });
                     return cell;
@@ -11118,6 +11131,7 @@ var RIAPP;
                     this._item = null;
                     this._cell = null;
                     this._parentRow = null;
+                    this._isFirstShow = true;
                     this._objId = 'drow' + utils.getNewID();
                     this._createCell(options.details_id);
                     this._$el = global.$(this._el);
@@ -11141,17 +11155,42 @@ var RIAPP;
                     this._parentRow = row;
                     this._item = row.item;
                     this._cell.item = this._item;
+                    if (this._isFirstShow)
+                        this._initShow();
                     utils.insertAfter(row.el, this._el);
-                    var $cell = global.$(this._cell.template.el);
 
                     //var isLast = this.grid._getLastRow() === this._parentRow;
-                    $cell.slideDown('fast', function () {
+                    this._show(function () {
                         var row = self._parentRow;
                         if (!row || row._isDestroyCalled)
                             return;
-                        if (self.grid._options.isUseScrollIntoDetails)
+                        if (self.grid.options.isUseScrollIntoDetails)
                             row.scrollIntoView(true);
                     });
+                };
+                DetailsRow.prototype._initShow = function () {
+                    var animation = this._grid.options.animation;
+                    if (!animation) {
+                        animation = this._grid.app.getAnimation('default');
+                    }
+                    animation.beforeShow(this._cell.template.el);
+                };
+                DetailsRow.prototype._show = function (onEnd) {
+                    var animation = this._grid.options.animation;
+                    this._isFirstShow = false;
+                    if (!animation) {
+                        animation = this._grid.app.getAnimation('default');
+                    }
+                    animation.beforeShow(this._cell.template.el);
+                    animation.show(onEnd);
+                };
+                DetailsRow.prototype._hide = function (onEnd) {
+                    var animation = this._grid.options.animation;
+                    if (!animation) {
+                        animation = this._grid.app.getAnimation('default');
+                    }
+                    animation.beforeHide(this._cell.template.el);
+                    animation.hide(onEnd);
                 };
                 DetailsRow.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -11234,9 +11273,8 @@ var RIAPP;
                     set: function (v) {
                         var self = this;
                         if (v !== this._parentRow) {
-                            var $cell = global.$(this._cell.template.el);
                             if (!!self._parentRow) {
-                                $cell.slideUp('fast', function () {
+                                self._hide(function () {
                                     self._setParentRow(v);
                                 });
                             } else {
@@ -11633,6 +11671,7 @@ var RIAPP;
                     this._options = utils.extend(false, {
                         el: null,
                         dataSource: null,
+                        animation: null,
                         isUseScrollInto: true,
                         isUseScrollIntoDetails: true,
                         containerCss: null,
@@ -12418,6 +12457,13 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
+                Object.defineProperty(DataGrid.prototype, "options", {
+                    get: function () {
+                        return this._options;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
                 Object.defineProperty(DataGrid.prototype, "_tBodyEl", {
                     get: function () {
                         return this._tableEl.tBodies[0];
@@ -12603,6 +12649,7 @@ var RIAPP;
                 GridElView.prototype._init = function (options) {
                     _super.prototype._init.call(this, options);
                     this._dataSource = null;
+                    this._animation = null;
                     this._grid = null;
                     this._gridEventCommand = null;
                     this._options = options;
@@ -12620,7 +12667,8 @@ var RIAPP;
                 GridElView.prototype._createGrid = function () {
                     var options = utils.extend(false, {
                         el: this._el,
-                        dataSource: this._dataSource
+                        dataSource: this._dataSource,
+                        animation: this._animation
                     }, this._options);
                     this._grid = new DataGrid(this.app, options);
                     this._bindGridEvents();
@@ -12702,6 +12750,22 @@ var RIAPP;
                             this._gridEventCommand = v;
                             if (!!this._gridEventCommand)
                                 this.invokeGridEvent('command_connected', {});
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(GridElView.prototype, "animation", {
+                    get: function () {
+                        return this._animation;
+                    },
+                    set: function (v) {
+                        if (this._animation !== v) {
+                            this._animation = v;
+                            if (!!this._grid) {
+                                this._grid.options.animation = v;
+                            }
+                            this.raisePropertyChanged('animation');
                         }
                     },
                     enumerable: true,
@@ -18031,6 +18095,47 @@ var RIAPP;
     //local variable for optimization
     var utils = RIAPP.global.utils, parser = RIAPP.global.parser;
 
+    var DefaultAnimation = (function (_super) {
+        __extends(DefaultAnimation, _super);
+        function DefaultAnimation() {
+            _super.call(this);
+            this._$el = null;
+        }
+        DefaultAnimation.prototype.beforeShow = function (el) {
+            this.stop();
+            this._$el = RIAPP.global.$(el);
+            this._$el.hide();
+        };
+        DefaultAnimation.prototype.show = function (onEnd) {
+            this._$el.slideDown('fast', onEnd);
+        };
+        DefaultAnimation.prototype.beforeHide = function (el) {
+            this.stop();
+            this._$el = RIAPP.global.$(el);
+        };
+        DefaultAnimation.prototype.hide = function (onEnd) {
+            this._$el.slideUp('fast', onEnd);
+        };
+        DefaultAnimation.prototype.stop = function () {
+            if (!!this._$el) {
+                this._$el.finish();
+                this._$el = null;
+            }
+        };
+        DefaultAnimation.prototype.destroy = function () {
+            if (this._isDestroyed)
+                return;
+            this._isDestroyCalled = true;
+            try  {
+                this.stop();
+            } finally {
+                _super.prototype.destroy.call(this);
+            }
+        };
+        return DefaultAnimation;
+    })(RIAPP.BaseObject);
+    RIAPP.DefaultAnimation = DefaultAnimation;
+
     var Application = (function (_super) {
         __extends(Application, _super);
         function Application(options) {
@@ -18078,6 +18183,7 @@ var RIAPP;
                 nextFactory = fn_Factory(nextFactory);
             });
             this._contentFactory = nextFactory;
+            this.registerAnimation('default', new RIAPP.DefaultAnimation());
             RIAPP.global._registerApp(this);
         }
         Object.defineProperty(Application.prototype, "_DATA_BIND_SELECTOR", {
@@ -18415,14 +18521,14 @@ var RIAPP;
             return res;
         };
         Application.prototype.registerAnimation = function (name, obj) {
-            var name2 = 'anim.' + name;
+            var name2 = 'animation.' + name;
             if (!RIAPP.global._getObject(this, name2)) {
                 RIAPP.global._registerObject(this, name2, obj);
             } else
                 throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         };
         Application.prototype.getAnimation = function (name) {
-            var name2 = 'anim.' + name;
+            var name2 = 'animation.' + name;
             var res = RIAPP.global._getObject(this, name2);
             if (!res) {
                 res = RIAPP.global._getObject(RIAPP.global, name2);

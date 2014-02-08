@@ -44,8 +44,11 @@ In my real world applications i use an ASP.NET MVC 4 bundling feature.
 You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
+<p>2014-02-08 Changed animation implemetation. Now it is applied through databinding. This is more versatile, because it can be changed at runtime.
+Also, the DataGrid's details row custom animation can be applied through databinding. The default is - slideUp and slideDown.
+</p>
 <p>2014-02-07 Implemented views transition animations. The demo was also updated.
-P.S. don't forget to clear a browser cache. SPA uses AMD loading and this is a bitch. The browser caches old files.
+P.S. don't forget to clear the browser cache. SPA uses AMD loading and this is a bitch. The browser caches old files.
 </p>
 <p>2014-02-05<br/>
 1) core modules restructuring to remove mutual dependencies between modules - dynacontent, tabs are new modules. 

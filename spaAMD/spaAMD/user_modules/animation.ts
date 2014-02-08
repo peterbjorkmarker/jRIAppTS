@@ -9,50 +9,48 @@ import dynMOD = RIAPP.MOD.dynacontent;
 //local variables for optimization
 var global = RIAPP.global, utils = global.utils;
 
-export class FlipAnimation extends RIAPP.BaseObject implements RIAPP.IAnimate {
-    private _$templateOwner: JQuery;
-    constructor() {
+export class FadeAnimation extends RIAPP.BaseObject implements dynMOD.IAnimation {
+    private _$animatedEl: JQuery;
+    private _effect: string;
+    private _duration: number;
+    private _isAnimateFirstShow: boolean;
+
+    constructor(isAnimateFirstShow: boolean, duration?: number) {
         super();
-        this._$templateOwner = null;
+        this._$animatedEl = null;
+        this._effect = 'fade';
+        this._duration = !!duration ? duration : 1000;
+        this._isAnimateFirstShow = !!isAnimateFirstShow;
     }
     beforeShow(template: templMOD.Template, isFirstShow: boolean):void {
-        //noop
     }
     show(template: templMOD.Template, isFirstShow: boolean): RIAPP.IVoidPromise {
-        var deffered = utils.createDeferred(), self = this,
-            templEl = template.el;
-        this._$templateOwner = global.$(templEl).parent();
         this.stop();
-        var color = global.$(template.loadedElem).css("background-color");
-        this._$templateOwner.css("opacity", 1);
-        var el = this._$templateOwner.get(0);
-        (<any>this._$templateOwner).flip({
-            direction: 'tb',
-            color: color,
-            onBefore: function () {
-                el.removeChild(templEl);
-            },
-            onEnd: function () {
-                el.appendChild(templEl);
-                deffered.resolve();
-            }
+        this._$animatedEl = global.$(template.el.parentElement);
+        this._$animatedEl.hide();
+        var deffered = utils.createDeferred();
+        (<any>this._$animatedEl).show(this._effect, this._duration, () => {
+            deffered.resolve();
         });
         return deffered.promise();
     }
     beforeHide(template: templMOD.Template): void {
+        this.stop();
+        this._$animatedEl = global.$(template.el.parentElement);
     }
     hide(template: templMOD.Template): RIAPP.IVoidPromise {
         var deffered = utils.createDeferred();
-        this.stop();
-        deffered.resolve();
+        (<any>this._$animatedEl).hide(this._effect, this._duration, () => {
+            deffered.resolve();
+        });
         return deffered.promise();
     }
     stop(): void {
-        if (!!this._$templateOwner)
-            this._$templateOwner.finish();
+        if (!!this._$animatedEl)
+            this._$animatedEl.finish();
     }
-    get isAnimateFirstPage() {
-        return false;
+    get isAnimateFirstShow() {
+        return true;
     }
     destroy() {
         if (this._isDestroyed)
@@ -60,7 +58,63 @@ export class FlipAnimation extends RIAPP.BaseObject implements RIAPP.IAnimate {
         this._isDestroyCalled = true;
         try {
             this.stop();
-            this._$templateOwner = null;
+            this._$animatedEl = null;
+        }
+        finally {
+            super.destroy();
+        }
+    }
+}
+
+export class SlideAnimation extends RIAPP.BaseObject implements dynMOD.IAnimation {
+    private _$animatedEl: JQuery;
+    private _effect: string;
+    private _duration: number;
+    private _isAnimateFirstShow: boolean;
+
+    constructor(isAnimateFirstShow: boolean, duration?: number) {
+        super();
+        this._$animatedEl = null;
+        this._effect = 'slide';
+        this._duration = !!duration ? duration : 1000;
+        this._isAnimateFirstShow = !!isAnimateFirstShow;
+    }
+    beforeShow(template: templMOD.Template, isFirstShow: boolean): void {
+    }
+    show(template: templMOD.Template, isFirstShow: boolean): RIAPP.IVoidPromise {
+        this.stop();
+        this._$animatedEl = global.$(template.el.parentElement);
+        var deffered = utils.createDeferred();
+        (<any>this._$animatedEl).show(this._effect, this._duration, () => {
+            deffered.resolve();
+        });
+        return deffered.promise();
+    }
+    beforeHide(template: templMOD.Template): void {
+        this.stop();
+        this._$animatedEl = global.$(template.el.parentElement);
+    }
+    hide(template: templMOD.Template): RIAPP.IVoidPromise {
+        var deffered = utils.createDeferred();
+        (<any>this._$animatedEl).hide(this._effect, this._duration, () => {
+            deffered.resolve();
+        });
+        return deffered.promise();
+    }
+    stop(): void {
+        if (!!this._$animatedEl)
+            this._$animatedEl.finish();
+    }
+    get isAnimateFirstShow() {
+        return true;
+    }
+    destroy() {
+        if (this._isDestroyed)
+            return;
+        this._isDestroyCalled = true;
+        try {
+            this.stop();
+            this._$animatedEl = null;
         }
         finally {
             super.destroy();
@@ -71,7 +125,6 @@ export class FlipAnimation extends RIAPP.BaseObject implements RIAPP.IAnimate {
 
 //this function is executed when an application which uses this module is created
 export function initModule(app: RIAPP.Application) {
-    app.registerAnimation('flip', new FlipAnimation());
     //return something, even null is OK
     return {};
 }

@@ -47,7 +47,7 @@
 @*second page view of customer's details*@
 <div id="SPAcustDetailTemplate" data-role="template">
     <!--for switching views between customerInfo and customerAddr-->
-     <div id="infoDynaContent" data-bind="{this.templateID,to=uiDetailView.viewName}{this.dataContext}" data-view="name=dynacontent,options:{animate:flip}"></div>
+     <div id="infoDynaContent" data-bind="{this.templateID,to=uiDetailView.viewName}{this.dataContext}{this.animation,to=uiDetailView.animation}" data-view="name=dynacontent"></div>
 </div>
 
 

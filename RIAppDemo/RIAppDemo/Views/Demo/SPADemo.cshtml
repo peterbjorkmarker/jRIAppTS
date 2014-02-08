@@ -17,7 +17,6 @@
 
 @section JSImport
 {
-    <script type="text/javascript" src="@Url.Content("~/Scripts/flip/jquery.flip.min.js",true)"></script>
     <script data-main="@Url.Content("~/Scripts/RIAppDemo/SPA/SPAConfig.js",true)" type="text/javascript" src="@Url.Content("~/Scripts/require.js",true)"></script>
 }
 
@@ -129,5 +128,5 @@
 
 <h2  style="display:inline-block;">@ViewBag.Title</h2><span class="space"></span><span>is based on new element view - <span style="color:blue;">dynacontent</span></span>
 <div id="demoContent" data-bind="{this.isBusy,to=dbContext.isBusy}" data-view="name=busy_indicator">
-    <div id="demoDynaContent" data-bind="{this.templateID,to=viewName,source=customerVM.uiMainView}{this.dataContext,source=customerVM}" data-view="name=dynacontent,options:{animate:flip}"></div>
+    <div id="demoDynaContent" data-bind="{this.templateID,to=viewName,source=customerVM.uiMainView}{this.dataContext,source=customerVM}{this.animation,to=animation,source=customerVM.uiMainView}" data-view="name=dynacontent"></div>
 </div>

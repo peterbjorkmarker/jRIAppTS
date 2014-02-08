@@ -4,7 +4,10 @@
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports", "domainModel", "common", "autocomplete"], function(require, exports, DEMODB, COMMON, AUTOCOMPLETE) {
+define(["require", "exports", "domainModel", "common", "autocomplete", "animation"], function(require, exports, DEMODB, COMMON, AUTOCOMPLETE, ANIMATION) {
+    /// <reference path="..\jriapp.d.ts"/>
+    var dynMOD = RIAPP.MOD.dynacontent;
+
     'use strict';
 
     //using static import for CORE jriapp modules (they are inside jriapp.js file)
@@ -20,6 +23,7 @@ define(["require", "exports", "domainModel", "common", "autocomplete"], function
             this._custTemplName = 'SPAcustTemplate';
             this._custDetTemplName = 'SPAcustDetailTemplate';
             this._viewName = this._custTemplName;
+            this._animation = new ANIMATION.FadeAnimation(true);
         }
         MainViewVM.prototype.goToAllCust = function () {
             this.viewName = this.custTemplName;
@@ -30,6 +34,19 @@ define(["require", "exports", "domainModel", "common", "autocomplete"], function
         MainViewVM.prototype.reset = function () {
             this.viewName = this._custTemplName;
         };
+        Object.defineProperty(MainViewVM.prototype, "animation", {
+            get: function () {
+                return this._animation;
+            },
+            set: function (v) {
+                if (v !== this._animation) {
+                    this._animation = v;
+                    this.raisePropertyChanged('animation');
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(MainViewVM.prototype, "viewName", {
             get: function () {
                 return this._viewName;
@@ -68,6 +85,7 @@ define(["require", "exports", "domainModel", "common", "autocomplete"], function
             this._infoTemplName = 'customerInfo';
             this._adrTemplName = 'customerAddr';
             this._viewName = this._infoTemplName;
+            this._animation = new ANIMATION.SlideAnimation(false);
         }
         CustDetViewVM.prototype.goToCustInfo = function () {
             this.viewName = this.infoTemplName;
@@ -78,6 +96,19 @@ define(["require", "exports", "domainModel", "common", "autocomplete"], function
         CustDetViewVM.prototype.reset = function () {
             this.viewName = this._infoTemplName;
         };
+        Object.defineProperty(CustDetViewVM.prototype, "animation", {
+            get: function () {
+                return this._animation;
+            },
+            set: function (v) {
+                if (v !== this._animation) {
+                    this._animation = v;
+                    this.raisePropertyChanged('animation');
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(CustDetViewVM.prototype, "viewName", {
             get: function () {
                 return this._viewName;

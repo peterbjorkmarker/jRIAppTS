@@ -43,13 +43,44 @@ module RIAPP {
     //local variable for optimization
     var utils = global.utils, parser = global.parser;
 
-    export interface IAnimate {
-        beforeShow(template: templMOD.Template, isFirstShow: boolean): void;
-        show(template: templMOD.Template, isFirstShow: boolean): RIAPP.IVoidPromise;
-        beforeHide(template: templMOD.Template): void;
-        hide(template: templMOD.Template): RIAPP.IVoidPromise;
-        stop(): void;
-        isAnimateFirstPage: boolean;
+    export class DefaultAnimation extends RIAPP.BaseObject implements RIAPP.IAnimation {
+        private _$el: JQuery;
+        constructor() {
+            super();
+            this._$el = null;
+        }
+        beforeShow(el: HTMLElement): void {
+            this.stop();
+            this._$el = global.$(el);
+            this._$el.hide();
+        }
+        show(onEnd: () => void): void {
+            this._$el.slideDown('fast', onEnd);
+        }
+        beforeHide(el: HTMLElement): void {
+            this.stop();
+            this._$el = global.$(el);
+        }
+        hide(onEnd: () => void): void {
+            this._$el.slideUp('fast', onEnd);
+        }
+        stop(): void {
+            if (!!this._$el) {
+                this._$el.finish();
+                this._$el = null;
+            }
+        }
+        destroy() {
+            if (this._isDestroyed)
+                return;
+            this._isDestroyCalled = true;
+            try {
+                this.stop();
+            }
+            finally {
+                super.destroy();
+            }
+        }
     }
 
     export interface IAppOptions {
@@ -117,6 +148,7 @@ module RIAPP {
                 nextFactory = fn_Factory(nextFactory);
             });
             this._contentFactory = nextFactory;
+            this.registerAnimation('default', new RIAPP.DefaultAnimation());
             global._registerApp(this);
         }
         _getEventNames() {
@@ -460,16 +492,16 @@ module RIAPP {
                 throw new Error(utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
             return res;
         }
-        registerAnimation(name: string, obj: IAnimate) {
-            var name2 = 'anim.' + name;
+        registerAnimation(name: string, obj: RIAPP.IAnimation) {
+            var name2 = 'animation.' + name;
             if (!global._getObject(this, name2)) {
                 global._registerObject(this, name2, obj);
             }
             else
                 throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         }
-        getAnimation(name: string): IAnimate {
-            var name2 = 'anim.' + name;
+        getAnimation(name: string): RIAPP.IAnimation {
+            var name2 = 'animation.' + name;
             var res = global._getObject(this, name2);
             if (!res) {
                 res = global._getObject(global, name2);
