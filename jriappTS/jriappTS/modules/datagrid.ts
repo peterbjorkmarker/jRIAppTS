@@ -640,6 +640,46 @@
                 get isEditing() { return !!this._item && this._item._isEditing; }
             }
 
+            class DefaultAnimation extends RIAPP.BaseObject implements RIAPP.IAnimation {
+                private _$el: JQuery;
+                constructor() {
+                    super();
+                    this._$el = null;
+                }
+                beforeShow(el: HTMLElement): void {
+                    this.stop();
+                    this._$el = global.$(el);
+                    this._$el.hide();
+                }
+                show(onEnd: () => void): void {
+                    this._$el.slideDown('fast', onEnd);
+                }
+                beforeHide(el: HTMLElement): void {
+                    this.stop();
+                    this._$el = global.$(el);
+                }
+                hide(onEnd: () => void): void {
+                    this._$el.slideUp('fast', onEnd);
+                }
+                stop(): void {
+                    if (!!this._$el) {
+                        this._$el.finish();
+                        this._$el = null;
+                    }
+                }
+                destroy() {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    try {
+                        this.stop();
+                    }
+                    finally {
+                        super.destroy();
+                    }
+                }
+            }
+
             export class DetailsRow extends RIAPP.BaseObject {
                 private _grid: DataGrid;
                 private _el: HTMLTableRowElement;
@@ -693,26 +733,17 @@
                     });
                 }
                 private _initShow() {
-                    var animation = this._grid.options.animation;
-                    if (!animation) {
-                        animation = this._grid.app.getAnimation('default');
-                    }
+                    var animation = this._grid.animation;
                     animation.beforeShow(this._cell.template.el);
                 }
                 private _show(onEnd: () => void) {
-                    var animation = this._grid.options.animation;
+                    var animation = this._grid.animation;
                     this._isFirstShow = false;
-                    if (!animation) {
-                        animation = this._grid.app.getAnimation('default');
-                    }
                     animation.beforeShow(this._cell.template.el);
                     animation.show(onEnd);
                 }
                 private _hide(onEnd: () => void) {
-                    var animation = this._grid.options.animation;
-                    if (!animation) {
-                        animation = this._grid.app.getAnimation('default');
-                    }
+                    var animation = this._grid.animation;
                     animation.beforeHide(this._cell.template.el);
                     animation.hide(onEnd);
                 }
@@ -1892,6 +1923,10 @@
                         this._details.destroy();
                         this._details = null;
                     }
+                    if (this._options.animation) {
+                        this._options.animation.stop();
+                        this._options.animation = null;
+                    }
                     if (!!this._dialog) {
                         this._dialog.destroy();
                         this._dialog = null;
@@ -1985,6 +2020,12 @@
                 }
                 get isUseScrollInto() { return this._options.isUseScrollInto; }
                 set isUseScrollInto(v) { this._options.isUseScrollInto = v; }
+                get animation() {
+                    if (!this.options.animation) {
+                        this.options.animation = new DefaultAnimation();
+                    }
+                    return this.options.animation;
+                }
             }
 
             export interface IGridViewOptions extends IGridOptions, baseElView.IViewOptions {

@@ -11122,6 +11122,46 @@ var RIAPP;
             })(RIAPP.BaseObject);
             datagrid.Row = Row;
 
+            var DefaultAnimation = (function (_super) {
+                __extends(DefaultAnimation, _super);
+                function DefaultAnimation() {
+                    _super.call(this);
+                    this._$el = null;
+                }
+                DefaultAnimation.prototype.beforeShow = function (el) {
+                    this.stop();
+                    this._$el = global.$(el);
+                    this._$el.hide();
+                };
+                DefaultAnimation.prototype.show = function (onEnd) {
+                    this._$el.slideDown('fast', onEnd);
+                };
+                DefaultAnimation.prototype.beforeHide = function (el) {
+                    this.stop();
+                    this._$el = global.$(el);
+                };
+                DefaultAnimation.prototype.hide = function (onEnd) {
+                    this._$el.slideUp('fast', onEnd);
+                };
+                DefaultAnimation.prototype.stop = function () {
+                    if (!!this._$el) {
+                        this._$el.finish();
+                        this._$el = null;
+                    }
+                };
+                DefaultAnimation.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    try  {
+                        this.stop();
+                    } finally {
+                        _super.prototype.destroy.call(this);
+                    }
+                };
+                return DefaultAnimation;
+            })(RIAPP.BaseObject);
+
             var DetailsRow = (function (_super) {
                 __extends(DetailsRow, _super);
                 function DetailsRow(grid, options) {
@@ -11169,26 +11209,17 @@ var RIAPP;
                     });
                 };
                 DetailsRow.prototype._initShow = function () {
-                    var animation = this._grid.options.animation;
-                    if (!animation) {
-                        animation = this._grid.app.getAnimation('default');
-                    }
+                    var animation = this._grid.animation;
                     animation.beforeShow(this._cell.template.el);
                 };
                 DetailsRow.prototype._show = function (onEnd) {
-                    var animation = this._grid.options.animation;
+                    var animation = this._grid.animation;
                     this._isFirstShow = false;
-                    if (!animation) {
-                        animation = this._grid.app.getAnimation('default');
-                    }
                     animation.beforeShow(this._cell.template.el);
                     animation.show(onEnd);
                 };
                 DetailsRow.prototype._hide = function (onEnd) {
-                    var animation = this._grid.options.animation;
-                    if (!animation) {
-                        animation = this._grid.app.getAnimation('default');
-                    }
+                    var animation = this._grid.animation;
                     animation.beforeHide(this._cell.template.el);
                     animation.hide(onEnd);
                 };
@@ -12430,6 +12461,10 @@ var RIAPP;
                         this._details.destroy();
                         this._details = null;
                     }
+                    if (this._options.animation) {
+                        this._options.animation.stop();
+                        this._options.animation = null;
+                    }
                     if (!!this._dialog) {
                         this._dialog.destroy();
                         this._dialog = null;
@@ -12630,6 +12665,16 @@ var RIAPP;
                     },
                     set: function (v) {
                         this._options.isUseScrollInto = v;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(DataGrid.prototype, "animation", {
+                    get: function () {
+                        if (!this.options.animation) {
+                            this.options.animation = new DefaultAnimation();
+                        }
+                        return this.options.animation;
                     },
                     enumerable: true,
                     configurable: true
@@ -18095,47 +18140,6 @@ var RIAPP;
     //local variable for optimization
     var utils = RIAPP.global.utils, parser = RIAPP.global.parser;
 
-    var DefaultAnimation = (function (_super) {
-        __extends(DefaultAnimation, _super);
-        function DefaultAnimation() {
-            _super.call(this);
-            this._$el = null;
-        }
-        DefaultAnimation.prototype.beforeShow = function (el) {
-            this.stop();
-            this._$el = RIAPP.global.$(el);
-            this._$el.hide();
-        };
-        DefaultAnimation.prototype.show = function (onEnd) {
-            this._$el.slideDown('fast', onEnd);
-        };
-        DefaultAnimation.prototype.beforeHide = function (el) {
-            this.stop();
-            this._$el = RIAPP.global.$(el);
-        };
-        DefaultAnimation.prototype.hide = function (onEnd) {
-            this._$el.slideUp('fast', onEnd);
-        };
-        DefaultAnimation.prototype.stop = function () {
-            if (!!this._$el) {
-                this._$el.finish();
-                this._$el = null;
-            }
-        };
-        DefaultAnimation.prototype.destroy = function () {
-            if (this._isDestroyed)
-                return;
-            this._isDestroyCalled = true;
-            try  {
-                this.stop();
-            } finally {
-                _super.prototype.destroy.call(this);
-            }
-        };
-        return DefaultAnimation;
-    })(RIAPP.BaseObject);
-    RIAPP.DefaultAnimation = DefaultAnimation;
-
     var Application = (function (_super) {
         __extends(Application, _super);
         function Application(options) {
@@ -18183,7 +18187,6 @@ var RIAPP;
                 nextFactory = fn_Factory(nextFactory);
             });
             this._contentFactory = nextFactory;
-            this.registerAnimation('default', new RIAPP.DefaultAnimation());
             RIAPP.global._registerApp(this);
         }
         Object.defineProperty(Application.prototype, "_DATA_BIND_SELECTOR", {
@@ -18518,23 +18521,6 @@ var RIAPP;
             }
             if (!res)
                 throw new Error(utils.format(RIAPP.ERRS.ERR_CONVERTER_NOTREGISTERED, name));
-            return res;
-        };
-        Application.prototype.registerAnimation = function (name, obj) {
-            var name2 = 'animation.' + name;
-            if (!RIAPP.global._getObject(this, name2)) {
-                RIAPP.global._registerObject(this, name2, obj);
-            } else
-                throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
-        };
-        Application.prototype.getAnimation = function (name) {
-            var name2 = 'animation.' + name;
-            var res = RIAPP.global._getObject(this, name2);
-            if (!res) {
-                res = RIAPP.global._getObject(RIAPP.global, name2);
-            }
-            if (!res)
-                throw new Error(utils.format(RIAPP.ERRS.ERR_ANIMATION_NOT_REGISTERED, name));
             return res;
         };
         Application.prototype.registerType = function (name, obj) {

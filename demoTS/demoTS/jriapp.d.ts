@@ -2361,6 +2361,7 @@ declare module RIAPP {
                 public isCanDelete : boolean;
                 public isCanAddNew : boolean;
                 public isUseScrollInto : boolean;
+                public animation : RIAPP.IAnimation;
             }
             interface IGridViewOptions extends IGridOptions, MOD.baseElView.IViewOptions {
             }
@@ -3300,16 +3301,6 @@ declare module RIAPP {
     }
 }
 declare module RIAPP {
-    class DefaultAnimation extends RIAPP.BaseObject implements RIAPP.IAnimation {
-        private _$el;
-        constructor();
-        public beforeShow(el: HTMLElement): void;
-        public show(onEnd: () => void): void;
-        public beforeHide(el: HTMLElement): void;
-        public hide(onEnd: () => void): void;
-        public stop(): void;
-        public destroy(): void;
-    }
     interface IAppOptions {
         application_name?: string;
         user_modules?: {
@@ -3371,8 +3362,6 @@ declare module RIAPP {
         public registerContentFactory(fn: (nextFactory?: RIAPP.MOD.baseContent.IContentFactory) => RIAPP.MOD.baseContent.IContentFactory): void;
         public registerConverter(name: string, obj: RIAPP.MOD.converter.IConverter): void;
         public getConverter(name: string): RIAPP.MOD.converter.IConverter;
-        public registerAnimation(name: string, obj: RIAPP.IAnimation): void;
-        public getAnimation(name: string): RIAPP.IAnimation;
         public registerType(name: string, obj: any): void;
         public getType(name: string): any;
         public registerObject(name: string, obj: any): void;

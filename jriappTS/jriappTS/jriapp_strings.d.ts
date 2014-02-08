@@ -16,7 +16,6 @@
         ERR_EVENT_INVALID_FUNC: string;
         ERR_MODULE_NOT_REGISTERED: string;
         ERR_MODULE_ALREDY_REGISTERED: string;
-        ERR_ANIMATION_NOT_REGISTERED: string;
         ERR_PROP_NAME_EMPTY: string;
         ERR_PROP_NAME_INVALID: string;
         ERR_GLOBAL_SINGLTON: string;
