@@ -1,6 +1,15 @@
 ﻿module RIAPP {
     export module MOD {
         export module stackpanel {
+            import constsMOD = RIAPP.MOD.consts;
+            import utilsMOD = RIAPP.MOD.utils;
+            import templMOD = RIAPP.MOD.template;
+            import collMOD = RIAPP.MOD.collection;
+
+            var utils: utilsMOD.Utils, global = RIAPP.global;
+            global.addOnInitialize((s, args) => {
+                utils = s.utils;
+            });
             export var css = {
                 stackpanel: 'ria-stackpanel',
                 item: 'stackpanel-item',
@@ -12,27 +21,41 @@
                 templateID: string;
             }
 
-            export class StackPanel extends RIAPP.BaseObject implements RIAPP.ISelectable {
+            interface IMappedItem { div: HTMLDivElement; template: templMOD.Template; item: collMOD.CollectionItem }
+
+            export interface IStackPanelConstructorOptions extends IStackPanelOptions {
+                el: HTMLTableElement;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+            }
+            export class StackPanel extends RIAPP.BaseObject implements RIAPP.ISelectable, templMOD.ITemplateEvents {
                 private _el: HTMLElement;
                 private _$el: JQuery;
                 private _objId: string;
-                private _dataSource: collection.BaseCollection<collection.CollectionItem>;
+                private _dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
                 private _isDSFilling: boolean;
                 private _orientation: string;
                 private _templateID: string;
-                private _currentItem: collection.CollectionItem;
-                private _itemMap: { [key: string]: { div: HTMLElement; template: template.Template; item: collection.CollectionItem; }; };
+                private _currentItem: collMOD.CollectionItem;
+                private _itemMap: { [key: string]: IMappedItem; };
                 private _app: Application;
 
-                constructor(app:Application, el:HTMLElement, dataSource:collection.BaseCollection<collection.CollectionItem>, options: IStackPanelOptions) {
+                constructor(app: Application, options: IStackPanelConstructorOptions) {
                     super();
+                    var self = this;
+                    options = utils.extend(false,
+                        {
+                            el: null,
+                            dataSource: null,
+                            orientation: null,
+                            templateID: null
+                        }, options);
                     this._app = app;
-                    this._el = el;
+                    this._el = options.el;
                     this._$el = global.$(this._el);
                     this._objId = 'pnl' + global.utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof collection.BaseCollection))
+                    if (!!options.dataSource && !(options.dataSource instanceof collMOD.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_STACKPNL_DATASRC_INVALID);
-                    this._dataSource = dataSource;
+                    this._dataSource = options.dataSource;
                     this._isDSFilling = false;
                     this._orientation = options.orientation || 'horizontal';
                     this._templateID = options.templateID;
@@ -41,6 +64,12 @@
                     this._itemMap = {};
                     if (!this._templateID)
                         throw new Error(RIAPP.ERRS.ERR_STACKPNL_TEMPLATE_INVALID);
+                    this._$el.on('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''),
+                        function (e) {
+                            e.stopPropagation();
+                            var $div = global.$(this), mappedItem: IMappedItem = $div.data('data');
+                            self._onItemClicked(mappedItem.div, mappedItem.item);  
+                      });
                     if (!!this._dataSource) {
                         this._bindDS();
                     }
@@ -50,25 +79,34 @@
                     var base_events = super._getEventNames();
                     return ['item_clicked'].concat(base_events);
                 }
-                addOnItemClicked(fn: (sender: StackPanel, args: { item: collection.CollectionItem; }) => void , namespace?: string) {
+                templateLoading(template: templMOD.Template): void {
+                    //noop
+                }
+                templateLoaded(template: templMOD.Template): void {
+                    //noop
+                }
+                templateUnLoading(template: templMOD.Template): void {
+                    //noop
+                }
+                addOnItemClicked(fn: (sender: StackPanel, args: { item: collMOD.CollectionItem; }) => void , namespace?: string) {
                     this.addHandler('item_clicked', fn, namespace);
                 }
                 removeOnItemClicked(namespace?: string) {
                     this.removeHandler('item_clicked', namespace);
                 }
                 _onKeyDown(key:number, event: Event) {
-                    var ds = this._dataSource, Keys = consts.KEYS, self = this;
+                    var ds = this._dataSource, self = this;
                     if (!ds)
                         return;
                     if (this._orientation == 'horizontal') {
                         switch (key) {
-                            case Keys.left:
+                            case constsMOD.KEYS.left:
                                 event.preventDefault();
                                 if (ds.movePrev(true)) {
                                     self.scrollIntoView(ds.currentItem);
                                 }
                                 break;
-                            case Keys.right:
+                            case constsMOD.KEYS.right:
                                 event.preventDefault();
                                 if (ds.moveNext(true)) {
                                     self.scrollIntoView(ds.currentItem);
@@ -78,13 +116,13 @@
                     }
                     else {
                         switch (key) {
-                            case Keys.up:
+                            case constsMOD.KEYS.up:
                                 event.preventDefault();
                                 if (ds.movePrev(true)) {
                                     self.scrollIntoView(ds.currentItem);
                                 }
                                 break;
-                            case Keys.down:
+                            case constsMOD.KEYS.down:
                                 event.preventDefault();
                                 if (ds.moveNext(true)) {
                                     self.scrollIntoView(ds.currentItem);
@@ -95,28 +133,28 @@
                 }
                 _onKeyUp(key:number, event: Event) {
                 }
-                _updateCurrent(item: collection.CollectionItem, withScroll:boolean) {
-                    var self = this, old = self._currentItem, obj: { div: HTMLElement; template: template.Template; item: collection.CollectionItem; };
+                _updateCurrent(item: collMOD.CollectionItem, withScroll:boolean) {
+                    var self = this, old = self._currentItem, mappedItem: IMappedItem;
                     if (old !== item) {
                         this._currentItem = item;
                         if (!!old) {
-                            obj = self._itemMap[old._key];
-                            if (!!obj) {
-                                global.$(obj.div).removeClass(css.currentItem);
+                            mappedItem = self._itemMap[old._key];
+                            if (!!mappedItem) {
+                                global.$(mappedItem.div).removeClass(css.currentItem);
                             }
                         }
                         if (!!item) {
-                            obj = self._itemMap[item._key];
-                            if (!!obj) {
-                                global.$(obj.div).addClass(css.currentItem);
+                            mappedItem = self._itemMap[item._key];
+                            if (!!mappedItem) {
+                                global.$(mappedItem.div).addClass(css.currentItem);
                                 if (withScroll)
-                                    obj.div.scrollIntoView(false);
+                                    mappedItem.div.scrollIntoView(false);
                             }
                         }
                         this.raisePropertyChanged('currentItem');
                     }
                 }
-                _onDSCurrentChanged(args) {
+                _onDSCurrentChanged() {
                     var ds = this._dataSource, cur = ds.currentItem;
                     if (!cur)
                         this._updateCurrent(null, false);
@@ -124,29 +162,29 @@
                         this._updateCurrent(cur, true);
                     }
                 }
-                _onDSCollectionChanged(args) {
+                _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>) {
                     var self = this, items = args.items;
                     switch (args.change_type) {
-                        case collection.COLL_CHANGE_TYPE.RESET:
+                        case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh();
                             break;
-                        case collection.COLL_CHANGE_TYPE.ADDED:
-                            if (!this._isDSFilling) //if items are filling then it will be appended when fill ends
+                        case collMOD.COLL_CHANGE_TYPE.ADDED:
+                             //if items are filling then it will be appended when the filling is ended
+                            if (!this._isDSFilling)
                                 self._appendItems(items);
                             break;
-                        case collection.COLL_CHANGE_TYPE.REMOVE:
+                        case collMOD.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 self._removeItem(item);
                             });
                             break;
-                        case collection.COLL_CHANGE_TYPE.REMAP_KEY:
+                        case collMOD.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
-                                var obj = self._itemMap[args.old_key];
-                                if (!!obj) {
+                                var mappedItem = self._itemMap[args.old_key];
+                                if (!!mappedItem) {
                                     delete self._itemMap[args.old_key];
-                                    self._itemMap[args.new_key] = obj;
-                                    obj.div.setAttribute(consts.DATA_ATTR.DATA_ITEM_KEY, args.new_key);
+                                    self._itemMap[args.new_key] = mappedItem;
                                 }
                             }
                             break;
@@ -154,7 +192,7 @@
                             throw new Error(global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
-                _onDSFill(args) {
+                _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -167,53 +205,55 @@
                         this._isDSFilling = true;
                     }
                 }
-                _onItemStatusChanged(item:collection.CollectionItem, oldChangeType:number) {
+                _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType:number) {
                     var newChangeType =item._changeType;
                     var obj = this._itemMap[item._key];
                     if (!obj)
                         return;
-                    if (newChangeType === collection.STATUS.DELETED) {
+                    if (newChangeType === collMOD.STATUS.DELETED) {
                         global.$(obj.div).hide();
                     }
-                    else if (oldChangeType === collection.STATUS.DELETED && newChangeType !== collection.STATUS.DELETED) {
+                    else if (oldChangeType === collMOD.STATUS.DELETED && newChangeType !== collMOD.STATUS.DELETED) {
                         global.$(obj.div).show();
                     }
                 }
-                _createTemplate(dcxt) {
+                _createTemplate(item: collMOD.CollectionItem) {
                     var t = new template.Template(this.app, {
                         templateID: this._templateID,
-                        dataContext: dcxt
+                        dataContext: item,
+                        templEvents: this
                     });
                     return t;
                 }
-                _appendItems(newItems: collection.CollectionItem[]) {
+                _appendItems(newItems: collMOD.CollectionItem[]) {
                     if (this._isDestroyCalled)
                         return;
                     var self = this;
                     newItems.forEach(function (item) {
-                        if (!!self._itemMap[item._key])  //row for item already exists
+                        //a row for item already exists
+                        if (!!self._itemMap[item._key])  
                             return;
                         self._appendItem(item);
                     });
                 }
-                _appendItem(item: collection.CollectionItem) {
+                _appendItem(item: collMOD.CollectionItem) {
                     if (!item._key)
                         return;
-                    var self = this, $div = self._createElement('div'), div = $div.get(0), template = self._createTemplate(item);
+                    var self = this,
+                        $div = self._createElement('div'),
+                        div = $div.get(0);
+
                     $div.addClass(css.item);
-                    $div.append(template.el);
                     if (this._orientation == 'horizontal') {
                         $div.css('display', 'inline-block');
                     }
+                    $div.attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, this.uniqueID);
                     self._$el.append($div);
-                    $div.attr(consts.DATA_ATTR.DATA_ITEM_KEY, item._key);
-                    $div.click(function (e) {
-                        var key = this.getAttribute(consts.DATA_ATTR.DATA_ITEM_KEY);
-                        var obj = self._itemMap[key];
-                        if (!!obj)
-                            self._onItemClicked(obj.div, obj.item);
-                    });
-                    self._itemMap[item._key] = { div: div, template: template, item: item };
+                    var mappedItem: IMappedItem = { div: div, template: null, item: item };
+                    $div.data('data', mappedItem);
+                    self._itemMap[item._key] = mappedItem;
+                    mappedItem.template = self._createTemplate(item);
+                    mappedItem.div.appendChild(mappedItem.template.el);
                 }
                 _bindDS() {
                     var self = this, ds = this._dataSource;
@@ -228,13 +268,12 @@
                     }, self._objId);
                     ds.addOnPropertyChange('currentItem', function (sender, args) {
                         if (ds !== sender) return;
-                        self._onDSCurrentChanged(args);
+                        self._onDSCurrentChanged();
                     }, self._objId);
                     ds.addOnStatusChanged(function (sender, args) {
                         if (ds !== sender) return;
                         self._onItemStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
-
                     this._refresh();
                 }
                 _unbindDS() {
@@ -245,7 +284,7 @@
                 _createElement(tag:string) {
                     return global.$(global.document.createElement(tag));
                 }
-                _onItemClicked(div:HTMLElement, item:collection.CollectionItem) {
+                _onItemClicked(div: HTMLElement, item: collMOD.CollectionItem) {
                     this._updateCurrent(item, false);
                     this._dataSource.currentItem = item;
                     this.raiseEvent('item_clicked', { item: item });
@@ -273,19 +312,18 @@
                     });
                 }
                 _removeItemByKey(key:string) {
-                    var self = this, obj = self._itemMap[key];
-                    if (!obj)
+                    var self = this, mappedItem = self._itemMap[key];
+                    if (!mappedItem)
                         return;
                     delete self._itemMap[key];
-                    obj.template.destroy();
+                    mappedItem.template.destroy();
                 }
-                _removeItem(item:collection.CollectionItem) {
-                    var self = this, key = item._key, obj = self._itemMap[key];
-                    if (!obj)
-                        return;
+                _removeItem(item: collMOD.CollectionItem) {
+                    var self = this, key = item._key, mappedItem = self._itemMap[key];
                     delete self._itemMap[key];
-                    obj.template.destroy();
-                    global.$(obj.div).remove();
+                    mappedItem.template.destroy();
+                    mappedItem.template = null;
+                    global.$(mappedItem.div).remove();
                 }
                 _refresh() {
                     var ds = this._dataSource, self = this;
@@ -296,19 +334,19 @@
                         self._appendItem(item);
                     });
                 }
-                scrollIntoView(item: collection.CollectionItem) {
+                scrollIntoView(item: collMOD.CollectionItem) {
                     if (!item)
                         return;
-                    var obj = this._itemMap[item._key];
-                    if (!!obj) {
-                        obj.div.scrollIntoView(false);
+                    var mappedItem = this._itemMap[item._key];
+                    if (!!mappedItem) {
+                        mappedItem.div.scrollIntoView(false);
                     }
                 }
-                getDivElementByItem(item: collection.CollectionItem) {
-                    var obj = this._itemMap[item._key];
-                    if (!obj)
+                getDivElementByItem(item: collMOD.CollectionItem) {
+                    var mappedItem = this._itemMap[item._key];
+                    if (!mappedItem)
                         return null;
-                    return obj.div;
+                    return mappedItem.div;
                 }
                 toString() {
                     return 'StackPanel';
@@ -318,7 +356,7 @@
                 get containerEl() { return this._el; }
                 get uniqueID() { return this._objId; }
                 get dataSource() { return this._dataSource; }
-                set dataSource(v: collection.BaseCollection<collection.CollectionItem>) {
+                set dataSource(v: collMOD.BaseCollection<collMOD.CollectionItem>) {
                     if (v === this._dataSource)
                         return;
                     if (this._dataSource !== null) {
@@ -342,7 +380,12 @@
                     var self = this;
                     this._panel = null;
                     this._options = options;
-                    this._panel = new StackPanel(app, el, null, this._options);
+                    var opts: IStackPanelConstructorOptions = utils.extend(false,
+                        {
+                            el: el,
+                            dataSource: null
+                        }, this._options);
+                    this._panel = new StackPanel(app, opts);
                     this._panel.addOnDestroyed(function () {
                         self._panel = null;
                         self.invokePropChanged('panel');

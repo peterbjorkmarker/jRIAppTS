@@ -18,7 +18,6 @@
 
             export var css = {
                 fieldError: 'ria-field-error',
-                errorTip: 'ui-tooltip-red',
                 commandLink: 'ria-command-link'
             };
 
@@ -121,7 +120,7 @@
                     }
                     var $el = this.$el;
                     if (!!errors && errors.length > 0) {
-                        utils.addToolTip($el, this._getErrorTipInfo(errors), css.errorTip);
+                        utils.addToolTip($el, this._getErrorTipInfo(errors), true);
                         this._setFieldError(true);
                     }
                     else {
@@ -136,8 +135,8 @@
                     }
                     return isHandled;
                 }
-                _setToolTip($el:JQuery, tip:string, className?:string) {
-                    utils.addToolTip($el, tip, className);
+                _setToolTip($el:JQuery, tip:string, isError?: boolean) {
+                    utils.addToolTip($el, tip, isError);
                 }
                 toString() {
                     return 'BaseElView';

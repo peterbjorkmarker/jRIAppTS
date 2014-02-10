@@ -53,14 +53,21 @@
                 options?: any;
             }
 
+            export interface IConstructorContentOptions {
+                parentEl: HTMLElement;
+                contentOptions: IContentOptions;
+                dataContext: any;
+                isEditing: boolean;
+            }
+
             export interface IContentType {
-                new (app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean): IContent;
+                new (app: RIAPP.Application, options: IConstructorContentOptions): IContent;
             }
 
             export interface IContentFactory {
                 getContentType(options: IContentOptions): IContentType;
-                createContent(parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean): IContent;
-                isExternallyCachable(contentType): boolean;
+                createContent(options: IConstructorContentOptions): IContent;
+                isExternallyCachable(contentType: IContentType): boolean;
             }
 
             export function parseContentAttr(content_attr: string): IContentOptions {
@@ -176,7 +183,9 @@
                 isEditing: boolean;
                 dataContext: any;
                 destroy(): void;
-            };
+            }
+
+          
 
             export class BindingContent extends RIAPP.BaseObject implements IContent {
                 _parentEl: HTMLElement;
@@ -190,15 +199,22 @@
                 _tgt: elviewMOD.BaseElView;
                 _app: RIAPP.Application;
 
-                constructor(app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean) {
+                constructor(app: RIAPP.Application, options: IConstructorContentOptions) {
                     super();
                     this._app = app;
-                    this._parentEl = parentEl;
+                    options = utils.extend(false,
+                        {
+                            parentEl: null,
+                            options: null,
+                            dataContext: null,
+                            isEditing: false
+                        }, options);
                     this._el = null;
-                    this._options = options;
+                    this._parentEl = options.parentEl;
+                    this._isEditing = !!options.isEditing;
+                    this._dctx = options.dataContext;
+                    this._options = options.contentOptions;
                     this._isReadOnly = !!this._options.readOnly;
-                    this._isEditing = !!isEditing;
-                    this._dctx = dctx;
                     this._lfScope = null;
                     this._tgt = null;
                     var $p = global.$(this._parentEl);
@@ -368,54 +384,68 @@
                 get app() { return this._app; }
             }
 
-            export class TemplateContent extends RIAPP.BaseObject implements IContent {
-                _parentEl: HTMLElement;
-                _template: templMOD.Template;
-                _templateInfo: ITemplateInfo;
-                _isEditing: boolean;
-                _dctx: any;
-                _app: RIAPP.Application;
+            export class TemplateContent extends RIAPP.BaseObject implements IContent, templMOD.ITemplateEvents {
+                private _parentEl: HTMLElement;
+                private _template: templMOD.Template;
+                private _templateInfo: ITemplateInfo;
+                private _isEditing: boolean;
+                private _dctx: any;
+                private _app: RIAPP.Application;
                 
-                constructor(app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx:any, isEditing: boolean) {
+                constructor(app: RIAPP.Application, options: IConstructorContentOptions) {
                     super();
-                    var templateInfo: ITemplateInfo = options.templateInfo;
                     this._app = app;
-                    this._parentEl = parentEl;
-                    this._isEditing = !!isEditing;
-                    this._dctx = dctx;
-                    this._templateInfo = templateInfo;
+                    options = utils.extend(false,
+                        {
+                            parentEl: null,
+                            options: null,
+                            dataContext: null,
+                            isEditing: false
+                        }, options);
+                    this._parentEl = options.parentEl;
+                    this._isEditing = options.isEditing;
+                    this._dctx = options.dataContext;
+                    this._templateInfo = options.contentOptions.templateInfo;
                     this._template = null;
                     var $p = global.$(this._parentEl);
                     $p.addClass(css.content);
                     this.update();
                 }
-                _createTemplate(): templMOD.Template {
-                    var inf = this._templateInfo, id = inf.displayID;
+                templateLoading(template: templMOD.Template): void {
+                    //noop
+                }
+                templateLoaded(template: templMOD.Template): void {
+                    //noop
+                }
+                templateUnLoading(template: templMOD.Template): void {
+                    this._parentEl.removeChild(template.el);
+                }
+                _createTemplate(): void {
+                    var info = this._templateInfo, id = info.displayID;
                     if (this._isEditing) {
-                        if (!!inf.editID) {
-                            id = inf.editID;
+                        if (!!info.editID) {
+                            id = info.editID;
                         }
                     }
                     else {
                         if (!id) {
-                            id = inf.editID;
+                            id = info.editID;
                         }
                     }
                     if (!id)
                         throw new Error(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID);
-                  
-                    return new templMOD.Template(this.app, {
+                    this._template = new templMOD.Template(this.app, {
                         templateID: id,
-                        dataContext: this._dctx
+                        dataContext: this._dctx,
+                        templEvents: this
                     });
                 }
                 update() {
                     this._cleanUp();
                     var template: templMOD.Template;
                     if (!!this._templateInfo) {
-                        template = this._createTemplate();
-                        this._template = template;
-                        this._parentEl.appendChild(template.el);
+                        this._createTemplate();
+                        this._parentEl.appendChild(this._template.el);
                     }
                 }
                 _cleanUp() {
@@ -527,11 +557,11 @@
 
             export class DateContent extends BindingContent {
                 _fn_cleanup: () => void;
-                constructor(app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean) {
-                    if (options.name != 'datepicker') {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'datepicker'"));
+                constructor(app: RIAPP.Application, options: IConstructorContentOptions) {
+                    if (options.contentOptions.name != 'datepicker') {
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "contentOptions.name == 'datepicker'"));
                     }
-                    super(app, parentEl, options, dctx, isEditing);
+                    super(app, options);
                     this._fn_cleanup = null;
                 }
                 _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx:any, targetPath:string) {
@@ -679,11 +709,11 @@
                     }
                     return MultyLineContent.__allowedKeys;
                 }
-                constructor(app: RIAPP.Application, parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean) {
-                    if (options.name != 'multyline') {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'multyline'"));
+                constructor(app: RIAPP.Application, options: IConstructorContentOptions) {
+                    if (options.contentOptions.name != 'multyline') {
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "contentOptions.name == 'multyline'"));
                     }
-                    super(app, parentEl, options, dctx, isEditing);
+                    super(app, options);
                 }
                 _createTargetElement(): elviewMOD.BaseElView {
                     var el: HTMLElement, info: { name: string; options: any; } = { name: null, options: null };
@@ -780,11 +810,11 @@
                     return res;
                 }
 
-                createContent(parentEl: HTMLElement, options: IContentOptions, dctx, isEditing: boolean): IContent {
-                    var contentType = this.getContentType(options);
-                    return new contentType(this._app, parentEl, options, dctx, isEditing);
+                createContent(options: IConstructorContentOptions): IContent {
+                    var contentType = this.getContentType(options.contentOptions);
+                    return new contentType(this._app, options);
                 }
-                isExternallyCachable(contentType): boolean {
+                isExternallyCachable(contentType: IContentType): boolean {
                     return false;
                 }
                 get app() { return this._app; }

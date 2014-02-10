@@ -44,6 +44,8 @@ In my real world applications i use an ASP.NET MVC 4 bundling feature.
 You are welcome to use it in your applications.
 
 <b>Latest changes:</b>
+<p>2014-02-10 Code refactoring. Tooltips unreliable disapearance fix.
+</p>
 <p>2014-02-08 Changed animation implemetation. Now it is applied through databinding. This is more versatile, because it can be changed at runtime.
 Also, the DataGrid's details row custom animation can be applied through databinding. The default is - slideUp and slideDown.
 </p>

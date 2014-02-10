@@ -386,8 +386,8 @@ module RIAPP {
             return lftm;
         }
         //used as a factory to create Data Contents
-        _getContent(contentType: contentMOD.IContentType, options: contentMOD.IContentOptions, parentEl: HTMLElement, dctx, isEditing: boolean) {
-            return new contentType(this, parentEl, options, dctx, isEditing);
+        _getContent(contentType: contentMOD.IContentType, options: contentMOD.IConstructorContentOptions) {
+            return new contentType(this, options);
         }
         //used to select contentType based on content options
         _getContentType(options: contentMOD.IContentOptions): contentMOD.IContentType {

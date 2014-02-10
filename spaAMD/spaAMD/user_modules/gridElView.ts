@@ -9,9 +9,9 @@ var global = RIAPP.global, utils = global.utils;
 
 export class GridElView extends GRIDMOD.GridElView {
     private _gridEvents: COMMON.IGridEvents;
-    //override base method
-    _onGridCreated(grid: GRIDMOD.DataGrid) {
-        var self = this;
+    _init(options: GRIDMOD.IGridViewOptions) {
+        super._init(options);
+        var self = this, grid = self.grid;
         //example of binding to dataGrid events using strongly typed methods
         if (!!grid) {
             grid.addOnPageChanged(function (s, a) {

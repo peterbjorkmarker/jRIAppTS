@@ -162,6 +162,7 @@
                     return ['close', 'refresh'].concat(base_events);
                 }
                 templateLoading(template: templMOD.Template): void {
+                    //noop
                 }
                 templateLoaded(template: templMOD.Template): void {
                     if (this._isDestroyCalled)
@@ -174,21 +175,19 @@
                     if (!!this._fn_OnTemplateDestroy) {
                         this._fn_OnTemplateDestroy(template);
                     }
-                    this._$template = null;
-                    this._template = null;
                 }
                 _createTemplate() {
                     //create template in disabled state
-                    var t = new templMOD.Template(this._app, {
+                   return new templMOD.Template(this._app, {
                         templateID: this._templateID,
                         dataContext: this._dataContext,
                         isDisabled: true,
                         templEvents: this
                     });
-                    return t;
                 }
                 _destroyTemplate() {
-                    this._template.destroy();
+                    if (!!this._template)
+                        this._template.destroy();
                 }
                 _getButtons(): IButton[] {
                     var self = this, buttons = [
@@ -338,30 +337,37 @@
                     }
                 }
                 show() {
-                    this._result = null;
-                    (<any>this._$template).dialog("option", "buttons", this._getButtons());
-                    this._template.isDisabled = false;
-                    this._onShow();
-                    (<any>this._$template).dialog("open");
+                    var self = this;
+                    self._result = null;
+                    (<any>self._$template).dialog("option", "buttons", this._getButtons());
+                    self._template.isDisabled = false;
+                    self._onShow();
+                    (<any>self._$template).dialog("open");
                 }
                 hide() {
-                    (<any>this._$template).dialog("close");
+                    var self = this;
+                    if (!self._$template)
+                        return;
+                    (<any>self._$template).dialog("close");
                 }
-                getOption(name:string) {
+                getOption(name: string) {
+                    if (!this._$template)
+                        return undefined;
                     return (<any>this._$template).dialog('option', name);
                 }
-                setOption(name:string, value) {
-                    (<any>this._$template).dialog('option', name, value);
+                setOption(name: string, value) {
+                    var self = this;
+                    (<any>self._$template).dialog('option', name, value);
                 }
                 destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (this._dialogCreated) {
-                        this.hide();
-                        this._destroyTemplate();
-                        this._dialogCreated = false;
-                    }
+                    this.hide();
+                    this._destroyTemplate();
+                    this._$template = null;
+                    this._template = null;
+                    this._dialogCreated = false;
                     this._dataContext = null;
                     this._fn_submitOnOK = null;
                     this._app = null;

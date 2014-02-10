@@ -3,6 +3,10 @@
         export module utils {
             import constsMOD = MOD.consts;
             var base_utils = RIAPP.baseUtils, _newID = 0;
+            export var css = {
+                toolTip: 'qtip',
+                toolTipError: 'qtip-red'
+            };
             //adds new properties to some prototype
             export function defineProps(proto, props?: any, propertyDescriptors?:any) {
                 var pds = propertyDescriptors || {}, propertyName;
@@ -832,28 +836,27 @@
                     var names = Object.getOwnPropertyNames(obj);
                     names.forEach(fn);
                 }
-                addToolTip($el:JQuery, tip:string, className?:string) {
+                addToolTip($el:JQuery, tip:string, isError?: boolean) {
                     var options = {
                         content: {
                             text: tip
                         },
                         style: {
-                            classes: !!className ? className : null
+                            classes: !!isError? css.toolTipError : css.toolTip
                         },
                         position: {
                             my: 'top left',
                             at: 'bottom right',
-                            target: $el,
                             viewport: global.$(global.window),
                             adjust: {
-                                method: 'flip none',
-                                x: 0,
-                                y: 0
+                                method: 'flip',
+                                x: 5,
+                                y: 5
                             }
                         },
                         hide: {
-                            fixed: true,
-                            delay: 250
+                            event: 'unfocus click mouseleave',
+                            leave: true
                         }
                     };
                     if (!!$el.data('qtip')) {

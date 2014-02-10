@@ -6,6 +6,7 @@
             import bindMOD = RIAPP.MOD.binding;
             import contentMOD = RIAPP.MOD.baseContent;
             import collMOD = RIAPP.MOD.collection;
+            import templMOD = RIAPP.MOD.template;
 
             var COLUMN_TYPE = { DATA: 'data', ROW_EXPANDER: 'row_expander', ROW_ACTIONS: 'row_actions', ROW_SELECTOR: 'row_selector' };
             var utils: utilsMOD.Utils, global = RIAPP.global;
@@ -73,6 +74,8 @@
                 }
             }
 
+            export interface ICellOptions { row: Row; td: HTMLTableCellElement; column: BaseColumn; }
+
             export class BaseCell extends RIAPP.BaseObject{
                 _row: Row;
                 _el: HTMLTableCellElement;
@@ -80,9 +83,15 @@
                 _div: HTMLElement;
                 _clickTimeOut: number;
 
-                constructor(row: Row, options: { td: HTMLTableCellElement; column: any; }) {
+                constructor(options: ICellOptions) {
                     super();
-                    this._row = row;
+                    options = utils.extend(false,
+                        {
+                            row: null,
+                            td: null,
+                            column: null
+                        }, options);
+                    this._row = options.row;
                     this._el = options.td;
                     this._column = options.column;
                     this._div = global.document.createElement("div");
@@ -147,14 +156,15 @@
                 get item() { return this._row.item; }
             }
 
+
             export class DataCell extends BaseCell {
                 private _content: contentMOD.IContent;
                 private _stateCss: string;
 
-                constructor(row: Row, options: { td: HTMLTableCellElement; column: DataColumn; }) {
+                constructor(options: ICellOptions) {
                     this._content = null;
                     this._stateCss = null;
-                    super(row, options);
+                    super(options);
                 }
                 _init() {
                     var options = this.column.options.content;
@@ -171,7 +181,7 @@
                             if (app.contentFactory.isExternallyCachable(contentType)) {
                                 options.initContentFn = this._getInitContentFn();
                             }
-                            this._content = app._getContent(contentType, options, this._div, this.item, this.item.isEditing);
+                            this._content = app._getContent(contentType, { parentEl: this._div, contentOptions: options, dataContext: this.item, isEditing: this.item.isEditing });
                         }
                         finally {
                             delete options.initContentFn;
@@ -256,9 +266,9 @@
 
             export class ActionsCell extends BaseCell {
                 private _isEditing: boolean;
-                constructor(row: Row, options: { td: HTMLTableCellElement; column: any; }) {
+                constructor(options: ICellOptions) {
                     this._isEditing = false;
-                    super(row, options);
+                    super(options);
                 }
                 _init() {
                     var $el = global.$(this.el), $div = global.$(this._div);
@@ -352,9 +362,15 @@
                     },
                         contentOpts: contentMOD.IContentOptions = {
                             fieldName: 'isSelected',
-                            bindingInfo: bindInfo, displayInfo: null
+                            bindingInfo: bindInfo,
+                            displayInfo: null
                         };
-                    this._content = new RowSelectContent(this.grid.app, this._div, contentOpts, this.row, true);
+                    this._content = new RowSelectContent(this.grid.app, {
+                        parentEl: this._div,
+                        contentOptions: contentOpts,
+                        dataContext: this.row,
+                        isEditing: true
+                    });
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -371,7 +387,7 @@
                 }
             }
 
-            export class DetailsCell extends BaseObject {
+            export class DetailsCell extends BaseObject implements templMOD.ITemplateEvents {
                 private _row: DetailsRow;
                 private _el: HTMLTableCellElement;
                 private _template: template.Template;
@@ -385,12 +401,23 @@
                     var details_id = options.details_id;
                     if (!details_id)
                         return;
-                    this._template = new template.Template(this.grid.app, {
-                        templateID: details_id
-                    });
                     this._el.colSpan = this.grid.columns.length;
-                    this._el.appendChild(this._template.el);
                     this._row.el.appendChild(this._el);
+                    this._template = new templMOD.Template(this.grid.app, {
+                        templateID: details_id,
+                        templEvents: this
+                    });
+                    this._el.appendChild(this._template.el);
+                }
+                templateLoading(template: templMOD.Template): void {
+                    //noop
+                }
+                templateLoaded(template: templMOD.Template): void {
+                    //noop
+                }
+                templateUnLoading(template: templMOD.Template): void {
+                    this._el.removeChild(template.el);
+                    this._template = null;
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -473,19 +500,19 @@
                 private _createCell(col) {
                     var self = this, td: HTMLTableCellElement = <HTMLTableCellElement>global.document.createElement('td'), cell: BaseCell;
                     if (col instanceof ExpanderColumn) {
-                        this._expanderCell = new ExpanderCell(self, { td: td, column: col });
+                        this._expanderCell = new ExpanderCell({row: self, td: td, column: col });
                         cell = this._expanderCell;
                     }
                     else if (col instanceof ActionsColumn) {
-                        this._actionsCell = new ActionsCell(self, { td: td, column: col });
+                        this._actionsCell = new ActionsCell({ row: self, td: td, column: col });
                         cell = this._actionsCell;
                     }
                     else if (col instanceof RowSelectorColumn) {
-                        this._rowSelectorCell = new RowSelectorCell(self, { td: td, column: col });
+                        this._rowSelectorCell = new RowSelectorCell({ row: self, td: td, column: col });
                         cell = this._rowSelectorCell;
                     }
                     else
-                        cell = new DataCell(self, { td: td, column: col });
+                        cell = new DataCell({ row: self, td: td, column: col });
                     return cell;
                 }
                 _onBeginEdit() {
@@ -690,9 +717,9 @@
                 private _$el: JQuery;
                 private _isFirstShow: boolean;
 
-                constructor(grid: DataGrid, options: { tr: HTMLTableRowElement; details_id: string; }) {
+                constructor(options: { grid: DataGrid; tr: HTMLTableRowElement; details_id: string; }) {
                     super();
-                    this._grid = grid;
+                    this._grid = options.grid;
                     this._el = options.tr;
                     this._item = null;
                     this._cell = null;
@@ -1211,10 +1238,6 @@
                     this._wrapTable();
                     this._createColumns();
                     this._bindDS();
-                    //fills all rows
-                    this._refreshGrid();
-                    this._updateColsDim();
-                    this._onDSCurrentChanged();
                     global._trackSelectable(this);
                     _gridCreated(this);
                 }
@@ -1516,6 +1539,10 @@
                         if (ds !== sender) return;
                         self._onItemAdded(args);
                     }, self._objId);
+                    //fills all rows
+                    this._refreshGrid();
+                    this._updateColsDim();
+                    this._onDSCurrentChanged();
                 }
                 _unbindDS() {
                     var self = this, ds = this.dataSource;
@@ -1806,7 +1833,7 @@
                 _createDetails() {
                     var details_id = this._options.details.templateID;
                     var tr: HTMLTableRowElement = <HTMLTableRowElement>global.document.createElement('tr');
-                    return new DetailsRow(this, { tr: tr, details_id: details_id });
+                    return new DetailsRow({grid: this, tr: tr, details_id: details_id });
                 }
                 _expandDetails(parentRow:Row, expanded:boolean) {
                     if (!this._options.details)
@@ -1967,12 +1994,12 @@
                 set dataSource(v: collMOD.BaseCollection<collMOD.CollectionItem>) {
                     if (v === this.dataSource)
                         return;
-                    if (this.dataSource !== null) {
+                    if (!!this.dataSource) {
                         this._unbindDS();
                     }
                     this._clearGrid();
                     this._options.dataSource = v;
-                    if (this.dataSource !== null)
+                    if (!!this.dataSource)
                         this._bindDS();
                     this.raisePropertyChanged('dataSource');
                 }
@@ -2032,29 +2059,27 @@
             }
 
             export class GridElView extends baseElView.BaseElView {
-                private _dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
                 private _grid: DataGrid;
                 private _gridEventCommand: mvvm.ICommand;
                 private _options: IGridViewOptions;
-                private _animation: RIAPP.IAnimation;
                 toString() {
                     return 'GridElView';
                 }
                 _init(options: IGridViewOptions) {
                     super._init(options);
-                    this._dataSource = null;
-                    this._animation = null;
                     this._grid = null;
                     this._gridEventCommand = null;
                     this._options = options;
+                    this._createGrid();
                 }
                 destroy() {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._dataSource) {
-                        this.dataSource = null;
+                    if (!!this._grid && !this._grid._isDestroyCalled) {
+                        this._grid.destroy();
                     }
+                    this._grid = null;
                     this._gridEventCommand = null;
                     super.destroy();
                 }
@@ -2062,12 +2087,11 @@
                     var options: IGridConstructorOptions = utils.extend(false,
                         {
                             el: <HTMLTableElement>this._el,
-                            dataSource: this._dataSource,
-                            animation: this._animation
+                            dataSource: null,
+                            animation: null
                         }, this._options);
                     this._grid = new DataGrid(this.app, options);
                     this._bindGridEvents();
-                    this._onGridCreated(this._grid);
                 }
                 private _bindGridEvents() {
                     if (!this._grid)
@@ -2089,7 +2113,6 @@
                         self.invokeGridEvent('row_state_changed', args);
                     }, this.uniqueID);
                     this._grid.addOnDestroyed(function (s, args) {
-                        self._onGridDestroyed(self._grid);
                         self._grid = null;
                         self.invokePropChanged('grid');
                         self.raisePropertyChanged('grid');
@@ -2102,23 +2125,17 @@
                         self._gridEventCommand.execute(self, data);
                     }
                 }
-                _onGridCreated(grid: DataGrid) {
+                get dataSource() {
+                    if (this._isDestroyCalled)
+                        return undefined;
+                    return this.grid.dataSource;
                 }
-                _onGridDestroyed(grid: DataGrid) {
-                }
-                get dataSource() { return this._dataSource; }
                 set dataSource(v) {
-                    var self = this;
-                    if (this._dataSource !== v) {
-                        this._dataSource = v;
-                        if (!!this._grid && !this._grid._isDestroyCalled) {
-                            this._grid.destroy();
-                        }
-                        this._grid = null;
-                        if (!!this._dataSource) {
-                            this._createGrid();
-                        }
-                        self.invokePropChanged('grid');
+                    if (this._isDestroyCalled)
+                        return;
+                    if (this.dataSource !== v) {
+                        this.grid.dataSource = v;
+                        this.raisePropertyChanged('dataSource');
                     }
                 }
                 get grid() { return this._grid; }
@@ -2133,13 +2150,16 @@
                             this.invokeGridEvent('command_connected', {});
                     }
                 }
-                get animation() { return this._animation; }
+                get animation() {
+                    if (this._isDestroyCalled)
+                        return undefined;
+                    return this._grid.options.animation;
+                }
                 set animation(v) {
-                    if (this._animation !== v) {
-                        this._animation = v;
-                        if (!!this._grid) {
-                            this._grid.options.animation = v;
-                        }
+                    if (this._isDestroyCalled)
+                        return;
+                    if (this.animation !== v) {
+                        this._grid.options.animation = v;
                         this.raisePropertyChanged('animation');
                     }
                 }

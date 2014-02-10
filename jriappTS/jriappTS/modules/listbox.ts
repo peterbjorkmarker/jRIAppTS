@@ -599,9 +599,9 @@
                 private _isListBoxCachedExternally: boolean;
                 private _value: any;
 
-                constructor(app: Application, parentEl: HTMLElement, options: contentMOD.IContentOptions, dctx, isEditing: boolean) {
-                    if (options.name != 'lookup') {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "options.name == 'lookup'"));
+                constructor(app: Application, options: contentMOD.IConstructorContentOptions) {
+                    if (options.contentOptions.name != 'lookup') {
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "contentOptions.name == 'lookup'"));
                     }
                     this._spanView = null;
                     this._selectView = null;
@@ -609,7 +609,7 @@
                     this._valBinding = null;
                     this._listBinding = null;
                     this._value = null;
-                    super(app, parentEl, options, dctx, isEditing);
+                    super(app, options);
                 }
                 _init() {
                     if (!!this._options.initContentFn) {
@@ -805,12 +805,12 @@
                         throw new Error(RIAPP.ERRS.ERR_BINDING_CONTENT_NOT_FOUND);
                 }
 
-                createContent(parentEl: HTMLElement, options: contentMOD.IContentOptions, dctx, isEditing: boolean): contentMOD.IContent {
+                createContent(options: contentMOD.IConstructorContentOptions): contentMOD.IContent {
                     var contentType = this.getContentType(options);
-                    return new contentType(this._app, parentEl, options, dctx, isEditing);
+                    return new contentType(this._app, options);
                 }
 
-                isExternallyCachable(contentType): boolean {
+                isExternallyCachable(contentType: contentMOD.IContentType): boolean {
                     if (LookupContent === contentType)
                         return true;
                     return this._nextFactory.isExternallyCachable(contentType);

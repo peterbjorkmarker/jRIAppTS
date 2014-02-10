@@ -8,7 +8,7 @@
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
             });
-          export var css = {
+            export var css = {
                 pager: 'ria-data-pager',
                 info: 'pager-info',
                 currentPage: 'pager-current-page',

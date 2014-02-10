@@ -128,7 +128,7 @@
                         }
 
                         var contentType = self.app._getContentType(op);
-                        var content = self.app._getContent(contentType, op, el, dctx, isEditing);
+                        var content = self.app._getContent(contentType, { parentEl: el, contentOptions: op, dataContext: dctx, isEditing: isEditing }  );
                         if (!!content) {
                             self._content.push(content);
                         }
@@ -369,7 +369,7 @@
                         $img = global.$('<img name="error_info" alt="error_info" class="error-info" />');
                         $el.prepend($img);
                         $img.get(0).src = image_src;
-                        utils.addToolTip($img, this._getErrorTipInfo(errors), elviewMOD.css.errorTip);
+                        utils.addToolTip($img, this._getErrorTipInfo(errors), true);
                         this._setFieldError(true);
                     }
                     else {

@@ -17,9 +17,9 @@ define(["require", "exports"], function(require, exports) {
         function GridElView() {
             _super.apply(this, arguments);
         }
-        //override base method
-        GridElView.prototype._onGridCreated = function (grid) {
-            var self = this;
+        GridElView.prototype._init = function (options) {
+            _super.prototype._init.call(this, options);
+            var self = this, grid = self.grid;
 
             //example of binding to dataGrid events using strongly typed methods
             if (!!grid) {
