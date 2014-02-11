@@ -17,7 +17,14 @@
 
 @section JSImport
 {
-    <script data-main="@Url.Content("~/Scripts/RIAppDemo/SPA/SPAConfig.js",true)" type="text/javascript" src="@Url.Content("~/Scripts/require.js",true)"></script>
+    <script type="text/javascript">
+        var require ={
+            baseUrl: "@Url.Content("~/Scripts/RIAppDemo/SPA/")",
+            urlArgs: "bust=v2.0.6.0",
+            waitSeconds: 10
+        };
+    </script>
+    <script data-main="SPAConfig.js" type="text/javascript" src="@Url.Content("~/Scripts/require.js",true)"></script>
 }
 
 <style type="text/css">

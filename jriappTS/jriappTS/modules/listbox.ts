@@ -2,7 +2,7 @@
     export module MOD {
         export module listbox{
             import bindMOD = RIAPP.MOD.binding;
-            import collMod = MOD.collection;
+            import collMOD = MOD.collection;
             import elviewMOD = MOD.baseElView;
             import contentMOD = RIAPP.MOD.baseContent;
 
@@ -17,53 +17,62 @@
                 textPath: string;
             }
 
+            export interface IListBoxConstructorOptions extends IListBoxOptions {
+                app: Application;
+                el: HTMLSelectElement;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+            }
             export interface IMappedItem {
-                item: collMod.CollectionItem;
+                item: collMOD.CollectionItem;
                 op: { text: string; value: any; index: number; }; 
             }
 
             export class ListBox extends RIAPP.BaseObject {
-                private _el: HTMLSelectElement;
                 private _$el: JQuery;
                 private _objId: string;
-                private _dataSource: collMod.BaseCollection<collMod.CollectionItem>;
                 private _isRefreshing: boolean;
                 private _isDSFilling: boolean;
-                private _valuePath: string;
-                private _textPath: string;
-                private _selectedItem: collMod.CollectionItem;
-                private _prevSelected: collMod.CollectionItem;
+                private _selectedItem: collMOD.CollectionItem;
+                private _prevSelected: collMOD.CollectionItem;
                 private _keyMap: { [key: string]: IMappedItem; };
                 private _valMap: { [val: string]: IMappedItem; };
                 private _savedValue: string;
                 private _tempValue: any;
+                private _options: IListBoxConstructorOptions;
 
-                constructor(el: HTMLSelectElement, dataSource: collMod.BaseCollection<collMod.CollectionItem>, options: IListBoxOptions) {
+                constructor(options: IListBoxConstructorOptions) {
                     super();
                     var self = this;
-                    this._el = el;
-                    this._$el = global.$(this._el);
-                    this._objId = 'lst' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof collMod.BaseCollection))
+                    options = utils.extend(false,
+                        {
+                            app: null,
+                            el: null,
+                            dataSource: null,
+                            valuePath: null,
+                            textPath: null
+                        }, options);
+                    if (!!options.dataSource && !(options.dataSource instanceof collMOD.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_LISTBOX_DATASRC_INVALID);
+                    this._$el = global.$(options.el);
+                    this._options = options;
+                    this._objId = 'lst' + utils.getNewID();
                     this._$el.on('change.' + this._objId, function (e) {
                         e.stopPropagation();
                         if (self._isRefreshing)
                             return;
                         self._onChanged();
                     });
-                    this._dataSource = null;
                     this._isDSFilling = false;
                     this._isRefreshing = false;
-                    this._valuePath = options.valuePath;
-                    this._textPath = options.textPath;
                     this._selectedItem = null;
                     this._prevSelected = null;
                     this._keyMap = {};
                     this._valMap = {};
                     this._savedValue = undefined;
                     this._tempValue = undefined;
-                    this.dataSource = dataSource;
+                    var ds = this._options.dataSource;
+                    this._options.dataSource = null;
+                    this.dataSource = ds;
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -72,19 +81,18 @@
                     this._unbindDS();
                     this._$el.off('.' + this._objId);
                     this._clear(true);
-                    this._el = null;
                     this._$el = null;
-                    this._dataSource = null;
                     this._tempValue = undefined;
                     this._selectedItem = null;
                     this._prevSelected = null;
                     this._savedValue = null;
+                    this._options = <any>{};
                     super.destroy();
                 }
                 _onChanged() {
                     var op = null, key: string, data: IMappedItem;
-                    if (this._el.selectedIndex >= 0) {
-                        op = this._el.options[this._el.selectedIndex];
+                    if (this.el.selectedIndex >= 0) {
+                        op = this.el.options[this.el.selectedIndex];
                         key = op.value;
                         data = this._keyMap[key];
                     }
@@ -96,26 +104,26 @@
                         this.selectedItem = data.item;
                     }
                 }
-                _getStringValue(item: collMod.CollectionItem):string {
+                _getStringValue(item: collMOD.CollectionItem):string {
                     var v = this._getValue(item);
                     if (utils.check.isNt(v))
                         return '';
                     return '' + v;
                 }
-                _getValue(item: collMod.CollectionItem):any {
+                _getValue(item: collMOD.CollectionItem):any {
                     if (!item)
                         return null;
-                    if (!!this._valuePath) {
-                        return parser.resolvePath(item, this._valuePath);
+                    if (!!this._options.valuePath) {
+                        return parser.resolvePath(item, this._options.valuePath);
                     }
                     else
                         return undefined;
                 }
-                _getText(item: collMod.CollectionItem):string {
+                _getText(item: collMOD.CollectionItem):string {
                     if (!item)
                         return '';
-                    if (!!this._textPath) {
-                        var t = global.parser.resolvePath(item, this._textPath);
+                    if (!!this._options.textPath) {
+                        var t = global.parser.resolvePath(item, this._options.textPath);
                         if (utils.check.isNt(t))
                             return '';
                         return '' + t;
@@ -123,14 +131,14 @@
                     else
                         return this._getStringValue(item);
                 }
-                _onDSCollectionChanged(args: collMod.ICollChangedArgs<collMod.CollectionItem>) {
+                _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>) {
                     var self = this, data;
                     switch (args.change_type) {
-                        case collMod.COLL_CHANGE_TYPE.RESET:
+                        case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh();
                             break;
-                        case collMod.COLL_CHANGE_TYPE.ADDED:
+                        case collMOD.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isDSFilling) //if items are filling then it will be appended when fill ends
                             {
                                 args.items.forEach(function (item) {
@@ -138,12 +146,12 @@
                                 });
                             }
                             break;
-                        case collMod.COLL_CHANGE_TYPE.REMOVE:
+                        case collMOD.COLL_CHANGE_TYPE.REMOVE:
                             args.items.forEach(function (item) {
                                 self._removeOption(item);
                             });
                             break;
-                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
+                        case collMOD.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 data = self._keyMap[args.old_key];
                                 if (!!data) {
@@ -154,7 +162,7 @@
                             }
                     }
                 }
-                _onDSFill(args: collMod.ICollFillArgs<collMod.CollectionItem>) {
+                _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -164,7 +172,7 @@
                         this._isDSFilling = true;
                     }
                 }
-                _onEdit(item: collMod.CollectionItem, isBegin:boolean, isCanceled:boolean) {
+                _onEdit(item: collMOD.CollectionItem, isBegin:boolean, isCanceled:boolean) {
                     var self = this, key:string, data: IMappedItem, oldVal:string, val:string;
                     if (isBegin) {
                         this._savedValue = this._getStringValue(item);
@@ -195,19 +203,19 @@
                         }
                     }
                 }
-                _onStatusChanged(item: collMod.CollectionItem, oldChangeType:number) {
+                _onStatusChanged(item: collMOD.CollectionItem, oldChangeType:number) {
                     var newChangeType = item._changeType;
-                    if (newChangeType === collMod.STATUS.DELETED) {
+                    if (newChangeType === collMOD.STATUS.DELETED) {
                         this._removeOption(item);
                     }
                 }
-                _onCommitChanges(item: collMod.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
+                _onCommitChanges(item: collMOD.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS) {
                     var self = this, oldVal, val, data;
                     if (isBegin) {
-                        if (isRejected && changeType === collMod.STATUS.ADDED) {
+                        if (isRejected && changeType === collMOD.STATUS.ADDED) {
                             return;
                         }
-                        else if (!isRejected && changeType === collMod.STATUS.DELETED) {
+                        else if (!isRejected && changeType === collMOD.STATUS.DELETED) {
                             return;
                         }
 
@@ -217,7 +225,7 @@
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
 
-                        if (isRejected && changeType === collMod.STATUS.DELETED) {
+                        if (isRejected && changeType === collMOD.STATUS.DELETED) {
                             this._addOption(item, true);
                             return;
                         }
@@ -237,7 +245,7 @@
                     }
                 }
                 private _bindDS() {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     if (!ds) return;
                     ds.addOnCollChanged(function (sender, args) {
                         if (ds !== sender) return;
@@ -265,11 +273,11 @@
                     }, self._objId);
                 }
                 private _unbindDS() {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
-                private _addOption(item: collMod.CollectionItem, first:boolean) {
+                private _addOption(item: collMOD.CollectionItem, first:boolean) {
                     if (this._isDestroyCalled)
                         return null;
                     var oOption: HTMLOptionElement, key = '', val: string, text: string;
@@ -286,16 +294,17 @@
                     oOption.value = key;
                     var data: IMappedItem = { item: item, op: oOption };
                     this._keyMap[key] = data;
+                    var selEl = this.el;
                     if (!!val)
                         this._valMap[val] = data;
                     if (!!first) {
-                        if (this._el.options.length < 2)
-                            this._el.add(oOption, null);
+                        if (selEl.options.length < 2)
+                            selEl.add(oOption, null);
                         else
-                            this._el.add(oOption, this._el.options[1]);
+                            selEl.add(oOption, selEl.options[1]);
                     }
                     else
-                        this._el.add(oOption, null);
+                        selEl.add(oOption, null);
                     return oOption;
                 }
                 private _mapByValue() {
@@ -314,7 +323,7 @@
                         data.op.text = self._getText(data.item); 
                     });
                 }
-                private _removeOption(item: collMod.CollectionItem) {
+                private _removeOption(item: collMOD.CollectionItem) {
                     if (this._isDestroyCalled)
                         return;
                     var key = '', data: IMappedItem, val: string;
@@ -324,7 +333,7 @@
                         if (!data) {
                             return;
                         }
-                        this._el.remove(data.op.index);
+                        this.el.remove(data.op.index);
                         val = this._getStringValue(item);
                         delete this._keyMap[key];
                         if (!!val)
@@ -338,7 +347,7 @@
                     }
                 }
                 private _clear(isDestroy: boolean) {
-                    this._el.options.length = 0;
+                    this.el.options.length = 0;
                     this._keyMap = {};
                     this._valMap = {};
                     this._prevSelected = null;
@@ -350,7 +359,7 @@
                         this.selectedItem = null;
                 }
                 private _refresh() {
-                    var self = this, ds = this._dataSource, oldItem = this._selectedItem, tmp = self._tempValue;
+                    var self = this, ds = this.dataSource, oldItem = this._selectedItem, tmp = self._tempValue;
                     this._isRefreshing = true;
                     try {
                         this.clear();
@@ -359,7 +368,7 @@
                                 self._addOption(item, false);
                             });
                             if (utils.check.isUndefined(tmp)) {
-                                self._el.selectedIndex = self._findItemIndex(oldItem);
+                                self.el.selectedIndex = self._findItemIndex(oldItem);
                             }
                             else {
                                 oldItem = self.findItemByValue(tmp);
@@ -376,7 +385,7 @@
                     }
                     self._onChanged();
                 }
-                private _findItemIndex(item: collMod.CollectionItem) {
+                private _findItemIndex(item: collMOD.CollectionItem) {
                     if (!item)
                         return 0;
                     var data:IMappedItem = this._keyMap[item._key];
@@ -393,7 +402,7 @@
                 clear() {
                     this._clear(false);
                 }
-                findItemByValue(val): collMod.CollectionItem {
+                findItemByValue(val): collMOD.CollectionItem {
                     if (utils.check.isNt(val))
                         return null;
                     val = '' + val;
@@ -415,19 +424,19 @@
                 toString() {
                     return 'ListBox';
                 }
-                get dataSource() { return this._dataSource; }
-                set dataSource(v: collMod.BaseCollection<collMod.CollectionItem>) {
-                    if (this._dataSource !== v) {
-                        if (!!this._dataSource)
+                get dataSource() { return this._options.dataSource; }
+                set dataSource(v) {
+                    if (this.dataSource !== v) {
+                        if (!!this.dataSource) {
                             this._tempValue = this.selectedValue;
-                        if (!!this._dataSource)
                             this._unbindDS();
-                        this._dataSource = v;
-                        if (!!this._dataSource) {
+                        }
+                        this._options.dataSource = v;
+                        if (!!this.dataSource) {
                             this._bindDS();
                         }
                         this._refresh();
-                        if (!!this._dataSource)
+                        if (!!this.dataSource)
                             this._tempValue = undefined;
                         this.raisePropertyChanged('dataSource');
                         this.raisePropertyChanged('selectedItem');
@@ -435,14 +444,14 @@
                     }
                 }
                 get selectedValue() {
-                    if (!!this._dataSource)
+                    if (!!this.dataSource)
                         return this._getValue(this.selectedItem);
                     else
                         return undefined;
                 }
                 set selectedValue(v) {
                     var self = this;
-                    if (!!this._dataSource) {
+                    if (!!this.dataSource) {
                         if (this.selectedValue !== v) {
                             var item = self.findItemByValue(v);
                             self.selectedItem = item;
@@ -462,46 +471,46 @@
                     }
                 }
                 get selectedItem() {
-                    if (!!this._dataSource)
+                    if (!!this.dataSource)
                         return this._selectedItem;
                     else
                         return undefined;
                 }
-                set selectedItem(v: collMod.CollectionItem) {
+                set selectedItem(v: collMOD.CollectionItem) {
                     if (this._selectedItem !== v) {
                         if (!!this._selectedItem) {
                             this._prevSelected = this._selectedItem;
                         }
                         this._selectedItem = v;
-                        this._el.selectedIndex = this._findItemIndex(this._selectedItem);
+                        this.el.selectedIndex = this._findItemIndex(this._selectedItem);
                         this.raisePropertyChanged('selectedItem');
                         this.raisePropertyChanged('selectedValue');
                     }
                 }
-                get valuePath() { return this._valuePath; }
+                get valuePath() { return this._options.valuePath; }
                 set valuePath(v:string) {
-                    if (v !== this._valuePath) {
-                        this._valuePath = v;
+                    if (v !== this.valuePath) {
+                        this._options.valuePath = v;
                         this._mapByValue();
                         this.raisePropertyChanged('valuePath');
                     }
                 }
-                get textPath() { return this._textPath; }
+                get textPath() { return this._options.textPath; }
                 set textPath(v:string) {
-                    if (v !== this._textPath) {
-                        this._textPath = v;
+                    if (v !== this.textPath) {
+                        this._options.textPath = v;
                         this._resetText();
                         this.raisePropertyChanged('textPath');
                     }
                 }
-                get isEnabled() { return this._getIsEnabled(this._el); }
+                get isEnabled() { return this._getIsEnabled(this.el); }
                 set isEnabled(v) {
                     if (v !== this.isEnabled) {
-                        this._setIsEnabled(this._el, v);
+                        this._setIsEnabled(this.el, v);
                         this.raisePropertyChanged('isEnabled');
                     }
                 }
-                get el() { return this._el; }
+                get el() { return this._options.el; }
             }
      
             export interface ISelectViewOptions extends IListBoxOptions, elviewMOD.IViewOptions {
@@ -513,7 +522,13 @@
                 constructor(app: Application, el: HTMLSelectElement, options: ISelectViewOptions) {
                     var self = this;
                     self._options = options;
-                    self._listBox = new ListBox(el, null, self._options);
+                    var opts: IListBoxConstructorOptions = utils.extend(false,
+                        {
+                            app: app,
+                            el: el,
+                            dataSource: null
+                        }, this._options);
+                    self._listBox = new ListBox(opts);
                     self._listBox.addOnDestroyed(function () {
                         self._listBox = null;
                         self.invokePropChanged('listBox');
@@ -578,7 +593,7 @@
                         return undefined;
                     return this._listBox.selectedItem;
                 }
-                set selectedItem(v: collMod.CollectionItem) {
+                set selectedItem(v: collMOD.CollectionItem) {
                     if (this._isDestroyCalled)
                         return;
                     this._listBox.selectedItem = v;
@@ -599,7 +614,7 @@
                 private _isListBoxCachedExternally: boolean;
                 private _value: any;
 
-                constructor(app: Application, options: contentMOD.IConstructorContentOptions) {
+                constructor(app: RIAPP.Application, options: contentMOD.IConstructorContentOptions) {
                     if (options.contentOptions.name != 'lookup') {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "contentOptions.name == 'lookup'"));
                     }
@@ -807,7 +822,7 @@
 
                 createContent(options: contentMOD.IConstructorContentOptions): contentMOD.IContent {
                     var contentType = this.getContentType(options);
-                    return new contentType(this._app, options);
+                    return new contentType(this.app, options);
                 }
 
                 isExternallyCachable(contentType: contentMOD.IContentType): boolean {

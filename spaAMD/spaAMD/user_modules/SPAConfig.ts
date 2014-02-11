@@ -5,16 +5,6 @@ import SPADEMO = require("spaDemoApp");
 
 //this variable is intialized on the HTML page
 declare var mainOptions: SPADEMO.IMainOptions;
-
-requirejs.config({
-    baseUrl: '/Scripts/RIAppDemo/SPA',
-    waitSeconds: 60,
-    paths: {
-    },
-    shim: {
-    }
-});
-
 SPADEMO.mainOptions = RIAPP.global.utils.extend(false, SPADEMO.mainOptions, mainOptions);
 
 //create and start application here

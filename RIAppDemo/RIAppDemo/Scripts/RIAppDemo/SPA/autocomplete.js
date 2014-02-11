@@ -124,7 +124,7 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
             return ['hide', 'show'].concat(base_events);
         };
         AutoCompleteElView.prototype._createTemplate = function () {
-            var t = new MOD.template.Template(this.app, { templateID: this._templateId, dataContext: this });
+            var t = new MOD.template.Template({ app: this.app, templateID: this._templateId, dataContext: this });
             return t;
         };
         AutoCompleteElView.prototype._onTextChange = function () {

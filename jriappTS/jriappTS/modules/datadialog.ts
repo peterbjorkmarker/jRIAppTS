@@ -9,9 +9,8 @@
                 utils = s.utils;
             });
 
-           export enum DIALOG_ACTION { Default = 0, StayOpen = 1 };
-           
-            
+            export enum DIALOG_ACTION { Default = 0, StayOpen = 1 };
+
             export interface IDialogConstructorOptions {
                 dataContext?: any;
                 templateID: string;
@@ -72,11 +71,9 @@
                 //save global's currentSelectable  before showing and restore it on dialog's closing
                 private _currentSelectable: RIAPP.ISelectable;
 
-                constructor(app:Application, options: IDialogConstructorOptions) {
+                constructor(app: RIAPP.Application, options: IDialogConstructorOptions) {
                     super();
                     var self = this;
-                    this._app = app;
-                    this._objId = 'dlg' + utils.getNewID();
                     options = utils.extend(false, {
                         dataContext: null,
                         templateID: null,
@@ -93,6 +90,8 @@
                         fn_OnTemplateCreated: null,
                         fn_OnTemplateDestroy: null
                     }, options);
+                    this._objId = 'dlg' + utils.getNewID();
+                    this._app = app;
                     this._dataContext = options.dataContext;
                     this._templateID = options.templateID;
                     this._submitOnOK = options.submitOnOK;
@@ -178,7 +177,8 @@
                 }
                 _createTemplate() {
                     //create template in disabled state
-                   return new templMOD.Template(this._app, {
+                    return new templMOD.Template({
+                        app: this.app,
                         templateID: this._templateID,
                         dataContext: this._dataContext,
                         isDisabled: true,
@@ -373,6 +373,7 @@
                     this._app = null;
                     super.destroy();
                 }
+                get app() { return this._app; }
                 get dataContext() { return this._dataContext; }
                 set dataContext(v) {
                     if (v !== this._dataContext) {

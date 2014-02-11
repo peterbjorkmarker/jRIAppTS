@@ -2,14 +2,6 @@
     'use strict';
 
     
-
-    requirejs.config({
-        baseUrl: '/Scripts/RIAppDemo/SPA',
-        waitSeconds: 60,
-        paths: {},
-        shim: {}
-    });
-
     SPADEMO.mainOptions = RIAPP.global.utils.extend(false, SPADEMO.mainOptions, mainOptions);
 
     //create and start application here

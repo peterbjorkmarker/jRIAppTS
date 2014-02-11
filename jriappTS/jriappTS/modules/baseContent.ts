@@ -185,8 +185,6 @@
                 destroy(): void;
             }
 
-          
-
             export class BindingContent extends RIAPP.BaseObject implements IContent {
                 _parentEl: HTMLElement;
                 _el: HTMLElement;
@@ -201,15 +199,16 @@
 
                 constructor(app: RIAPP.Application, options: IConstructorContentOptions) {
                     super();
-                    this._app = app;
                     options = utils.extend(false,
                         {
+                            app: null,
                             parentEl: null,
                             options: null,
                             dataContext: null,
                             isEditing: false
                         }, options);
                     this._el = null;
+                    this._app = app;
                     this._parentEl = options.parentEl;
                     this._isEditing = !!options.isEditing;
                     this._dctx = options.dataContext;
@@ -389,22 +388,23 @@
                 private _template: templMOD.Template;
                 private _templateInfo: ITemplateInfo;
                 private _isEditing: boolean;
-                private _dctx: any;
+                private _dataContext: any;
                 private _app: RIAPP.Application;
                 
                 constructor(app: RIAPP.Application, options: IConstructorContentOptions) {
                     super();
-                    this._app = app;
                     options = utils.extend(false,
                         {
+                            app: null,
                             parentEl: null,
                             options: null,
                             dataContext: null,
                             isEditing: false
                         }, options);
+                    this._app = app;
                     this._parentEl = options.parentEl;
                     this._isEditing = options.isEditing;
-                    this._dctx = options.dataContext;
+                    this._dataContext = options.dataContext;
                     this._templateInfo = options.contentOptions.templateInfo;
                     this._template = null;
                     var $p = global.$(this._parentEl);
@@ -434,9 +434,10 @@
                     }
                     if (!id)
                         throw new Error(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID);
-                    this._template = new templMOD.Template(this.app, {
+                    this._template = new templMOD.Template({ 
+                        app: this.app,
                         templateID: id,
-                        dataContext: this._dctx,
+                        dataContext: this._dataContext,
                         templEvents: this
                     });
                 }
@@ -462,7 +463,7 @@
                     $p.removeClass(css.content);
                     this._cleanUp();
                     this._parentEl = null;
-                    this._dctx = null;
+                    this._dataContext = null;
                     this._templateInfo = null;
                     this._app = null;
                     super.destroy();
@@ -480,12 +481,12 @@
                         this.update();
                     }
                 }
-                get dataContext() { return this._dctx; }
+                get dataContext() { return this._dataContext; }
                 set dataContext(v) {
-                    if (this._dctx !== v) {
-                        this._dctx = v;
+                    if (this._dataContext !== v) {
+                        this._dataContext = v;
                         if (!!this._template) {
-                            this._template.dataContext = this._dctx;
+                            this._template.dataContext = this._dataContext;
                         }
                     }
                 }
@@ -761,8 +762,9 @@
                     if (!!options.templateInfo) {
                        return TemplateContent;
                     }
-                    if (!options.bindingInfo)
+                    if (!options.bindingInfo) {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'options', 'bindingInfo'));
+                    }
 
                     var fieldInfo = options.fieldInfo, res;
                     switch (fieldInfo.dataType) {
@@ -812,7 +814,7 @@
 
                 createContent(options: IConstructorContentOptions): IContent {
                     var contentType = this.getContentType(options.contentOptions);
-                    return new contentType(this._app, options);
+                    return new contentType(this.app, options);
                 }
                 isExternallyCachable(contentType: IContentType): boolean {
                     return false;

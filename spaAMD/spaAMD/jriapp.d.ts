@@ -1344,24 +1344,21 @@ declare module RIAPP {
                 templateUnLoading(template: Template): void;
             }
             interface ITemplateOptions {
+                app: RIAPP.Application;
                 templateID: string;
                 dataContext?: any;
                 templEvents?: ITemplateEvents;
                 isDisabled?: boolean;
             }
             class Template extends RIAPP.BaseObject {
-                private _dctxt;
                 private _el;
-                private _isDisabled;
                 private _lfTime;
-                private _templateID;
                 private _templElView;
                 private _promise;
                 private _busyTimeOut;
-                private _app;
-                private _templEvents;
                 private _loadedElem;
-                constructor(app: RIAPP.Application, options: ITemplateOptions);
+                private _options;
+                constructor(options: ITemplateOptions);
                 private _getBindings();
                 private _getElViews();
                 private _getTemplateElView();
@@ -1521,7 +1518,7 @@ declare module RIAPP {
                 private _template;
                 private _templateInfo;
                 private _isEditing;
-                private _dctx;
+                private _dataContext;
                 private _app;
                 constructor(app: RIAPP.Application, options: IConstructorContentOptions);
                 public templateLoading(template: MOD.template.Template): void;
@@ -1602,6 +1599,10 @@ declare module RIAPP {
             var css: {
                 dataform: string;
             };
+            interface IDataFormOptions {
+                app: RIAPP.Application;
+                el: HTMLElement;
+            }
             class DataForm extends RIAPP.BaseObject {
                 private _DATA_CONTENT_SELECTOR;
                 private _el;
@@ -1619,7 +1620,8 @@ declare module RIAPP {
                 private _errors;
                 private _app;
                 private _isInsideTemplate;
-                constructor(app: RIAPP.Application, el: HTMLElement);
+                constructor(options: IDataFormOptions);
+                public _onError(error: any, source: any): boolean;
                 private _getBindings();
                 private _getElViews();
                 private _updateIsDisabled();
@@ -1742,6 +1744,11 @@ declare module RIAPP {
                 valuePath: string;
                 textPath: string;
             }
+            interface IListBoxConstructorOptions extends IListBoxOptions {
+                app: RIAPP.Application;
+                el: HTMLSelectElement;
+                dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+            }
             interface IMappedItem {
                 item: MOD.collection.CollectionItem;
                 op: {
@@ -1751,21 +1758,18 @@ declare module RIAPP {
                 };
             }
             class ListBox extends RIAPP.BaseObject {
-                private _el;
                 private _$el;
                 private _objId;
-                private _dataSource;
                 private _isRefreshing;
                 private _isDSFilling;
-                private _valuePath;
-                private _textPath;
                 private _selectedItem;
                 private _prevSelected;
                 private _keyMap;
                 private _valMap;
                 private _savedValue;
                 private _tempValue;
-                constructor(el: HTMLSelectElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IListBoxOptions);
+                private _options;
+                constructor(options: IListBoxConstructorOptions);
                 public destroy(): void;
                 public _onChanged(): void;
                 public _getStringValue(item: MOD.collection.CollectionItem): string;
@@ -1950,6 +1954,7 @@ declare module RIAPP {
                 public getOption(name: string): any;
                 public setOption(name: string, value: any): void;
                 public destroy(): void;
+                public app : RIAPP.Application;
                 public dataContext : any;
                 public result : string;
                 public template : MOD.template.Template;
@@ -2250,6 +2255,7 @@ declare module RIAPP {
                 editor?: MOD.datadialog.IDialogConstructorOptions;
             }
             interface IGridConstructorOptions extends IGridOptions {
+                app: RIAPP.Application;
                 el: HTMLTableElement;
                 dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
                 animation: RIAPP.IAnimation;
@@ -2278,9 +2284,8 @@ declare module RIAPP {
                 private _$headerDiv;
                 private _$wrapDiv;
                 private _$contaner;
-                private _app;
                 public _columnWidthChecker: () => void;
-                constructor(app: RIAPP.Application, options: IGridConstructorOptions);
+                constructor(options: IGridConstructorOptions);
                 public _getEventNames(): string[];
                 public addOnRowExpanded(fn: (sender: DataGrid, args: {
                     old_expandedRow: Row;
@@ -2414,23 +2419,19 @@ declare module RIAPP {
                 hideOnSinglePage?: boolean;
                 sliderSize?: number;
             }
+            interface IPagerConstructorOptions extends IPagerOptions {
+                app: RIAPP.Application;
+                el: HTMLElement;
+                dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
+            }
             class Pager extends RIAPP.BaseObject {
-                private _el;
                 private _$el;
                 private _objId;
-                private _dataSource;
-                private _showTip;
-                private _showInfo;
-                private _showFirstAndLast;
-                private _showPreviousAndNext;
-                private _showNumbers;
+                private _options;
                 private _rowsPerPage;
                 private _rowCount;
                 private _currentPage;
-                private _useSlider;
-                private _sliderSize;
-                private _hideOnSinglePage;
-                constructor(el: HTMLElement, dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>, options: IPagerOptions);
+                constructor(options: IPagerConstructorOptions);
                 public _createElement(tag: string): JQuery;
                 public _render(): void;
                 public _setDSPageIndex(page: number): void;
@@ -2450,6 +2451,7 @@ declare module RIAPP {
                 public _createLast(): JQuery;
                 public _buildTip(page: number): string;
                 public toString(): string;
+                public app : RIAPP.Application;
                 public el : HTMLElement;
                 public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
                 public pageCount : any;
@@ -2492,21 +2494,18 @@ declare module RIAPP {
                 templateID: string;
             }
             interface IStackPanelConstructorOptions extends IStackPanelOptions {
-                el: HTMLTableElement;
+                app: RIAPP.Application;
+                el: HTMLElement;
                 dataSource: MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
             }
             class StackPanel extends RIAPP.BaseObject implements RIAPP.ISelectable, MOD.template.ITemplateEvents {
-                private _el;
                 private _$el;
                 private _objId;
-                private _dataSource;
                 private _isDSFilling;
-                private _orientation;
-                private _templateID;
                 private _currentItem;
                 private _itemMap;
-                private _app;
-                constructor(app: RIAPP.Application, options: IStackPanelConstructorOptions);
+                private _options;
+                constructor(options: IStackPanelConstructorOptions);
                 public _getEventNames(): string[];
                 public templateLoading(template: MOD.template.Template): void;
                 public templateLoaded(template: MOD.template.Template): void;
@@ -2541,6 +2540,8 @@ declare module RIAPP {
                 public el : HTMLElement;
                 public containerEl : HTMLElement;
                 public uniqueID : string;
+                public orientation : string;
+                public templateID : string;
                 public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
                 public currentItem : MOD.collection.CollectionItem;
             }
@@ -2549,7 +2550,7 @@ declare module RIAPP {
             class StackPanelElView extends MOD.baseElView.BaseElView {
                 private _panel;
                 private _options;
-                constructor(app: RIAPP.Application, el: HTMLSelectElement, options: IStackPanelViewOptions);
+                constructor(app: RIAPP.Application, el: HTMLElement, options: IStackPanelViewOptions);
                 public destroy(): void;
                 public toString(): string;
                 public dataSource : MOD.collection.BaseCollection<MOD.collection.CollectionItem>;
@@ -3363,7 +3364,6 @@ declare module RIAPP {
         public _bindElements(scope: {
             querySelectorAll: (selectors: string) => NodeList;
         }, dctx: any, isDataFormBind: boolean, isInsideTemplate: boolean): RIAPP.MOD.utils.LifeTimeScope;
-        public _getContent(contentType: RIAPP.MOD.baseContent.IContentType, options: RIAPP.MOD.baseContent.IConstructorContentOptions): RIAPP.MOD.baseContent.IContent;
         public _getContentType(options: RIAPP.MOD.baseContent.IContentOptions): RIAPP.MOD.baseContent.IContentType;
         public _getElViewType(name: string): RIAPP.MOD.baseElView.IViewType;
         public addOnStartUp(fn: (sender: RIAPP.Global, args: RIAPP.IUnResolvedBindingArgs) => void, namespace?: string): void;

@@ -22,6 +22,7 @@
             }
 
             export interface ITemplateOptions {
+                app: RIAPP.Application;
                 templateID: string;
                 dataContext?: any;
                 templEvents?: ITemplateEvents;
@@ -29,40 +30,33 @@
             }
 
             export class Template extends RIAPP.BaseObject {
-                private _dctxt: any;
                 private _el: HTMLElement;
-                private _isDisabled: boolean;
                 private _lfTime: utilsMOD.LifeTimeScope;
-                private _templateID: string;
                 private _templElView: TemplateElView;
                 private _promise: RIAPP.IDeferred<HTMLElement>;
                 private _busyTimeOut: number;
-                private _app: RIAPP.Application;
-                private _templEvents: ITemplateEvents;
                 private _loadedElem: HTMLElement;
+                private _options: ITemplateOptions;
 
-                constructor(app: RIAPP.Application, options: ITemplateOptions) {
+                constructor(options: ITemplateOptions) {
                     super();
-                    this._app = app;
                     options = utils.extend(false,
                         {
+                            app: null,
                             templateID: null,
                             dataContext: null,
                             templEvents: null,
                             isDisabled: false
                         }, options);
-
-                    this._templateID = options.templateID;
-                    this._templEvents = options.templEvents;
-                    this._dctxt = options.dataContext;
-                    this._isDisabled = !!options.isDisabled;
+                    this._options = options;
                     this._loadedElem = null;
-                    this._el = null;
                     this._lfTime = null;
                     this._templElView = undefined;
                     this._promise = null;
                     this._busyTimeOut = null;
-                    if (!!this._templateID)
+                    this._el = global.document.createElement("div");
+                    this._el.className = css.templateContainer;
+                    if (!!options.templateID)
                         this._loadTemplate();
                 }
                 private _getBindings(): bindMOD.Binding[]{
@@ -101,7 +95,7 @@
                     return res;
                 }
                 private _getTemplateEvents(): ITemplateEvents[]{
-                    var tel_vw = this._getTemplateElView(), ev = this._templEvents;
+                    var tel_vw = this._getTemplateElView(), ev = this._options.templEvents;
                     if (!!tel_vw && !!ev)
                         return [tel_vw, ev];
                     else if (!!tel_vw)
@@ -122,11 +116,11 @@
                             var el = <HTMLElement>tmpDiv.firstElementChild;
                             deferred.resolve(el);
                         }, function (err) {
-                            deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID)));
+                            deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self.templateID)));
                         });
                     }
                     else {
-                        deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID)));
+                        deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self.templateID)));
                     }
                     return deferred;
                 }
@@ -152,21 +146,27 @@
                     }
                 }
                 private _loadTemplate() {
-                    var self = this, tid = self._templateID,
+                    var self = this, tid = self.templateID,
                         promise: RIAPP.IDeferred<HTMLElement>;
-                        
-                    if (!!self._promise) {
-                        self._promise.reject('cancel'); //cancel previous load
-                        self._promise = null;
-                    }
-                    self._unloadTemplate();
-                    if (!!tid) {
-                        promise = self._loadTemplateElAsync(tid);
-                        self._processTemplate(promise, !!(promise.state() == "pending"));
+                    try {
+                        if (!!self._promise) {
+                            self._promise.reject('cancel'); //cancel previous load
+                            self._promise = null;
+                        }
+                        if (!!self._loadedElem) 
+                            self._unloadTemplate();
+
+                        if (!!tid) {
+                            promise = self._loadTemplateElAsync(tid);
+                            self._processTemplate(promise, !!(promise.state() == "pending"));
+                        }
+                    } catch (ex) {
+                        self._onError(ex, self);
+                        global._throwDummy(ex);
                     }
                 }
                 private _processTemplate(promise: RIAPP.IDeferred<HTMLElement>, asyncLoad:boolean) {
-                    var self = this, deffered: RIAPP.IDeferred<HTMLElement>, tmpDiv: HTMLElement;
+                    var self = this, deffered: RIAPP.IDeferred<HTMLElement>, tmpDiv: HTMLElement = self.el;
                     self._promise = deffered = utils.createDeferred();
                     promise.done(function (loadedEl) {
                         if (deffered.state() == "pending")
@@ -177,15 +177,10 @@
                             deffered.reject(err);
                     });
 
-                    if (!self._el) {
-                        self._el = tmpDiv = global.document.createElement("div");
-                        tmpDiv.className = css.templateContainer;
-                    }
-                    else
-                        tmpDiv = self.el;
-                    
                     if (asyncLoad) {
                         self._appendIsBusy(tmpDiv);
+                       
+
                         deffered.done(function () {
                             self._removeIsBusy(tmpDiv);
                         });
@@ -203,7 +198,7 @@
                             return;
                         try {
                             self._promise = null;
-                            if (!loadedEl) {
+                            if (!!self._loadedElem && !loadedEl) {
                                 self._unloadTemplate();
                                 return;
                             }
@@ -241,7 +236,7 @@
                                 }
                             }
                             if (!ex)
-                                ex = new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self._templateID));
+                                ex = new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self.templateID));
                             self._onError(ex, self);
                         });
                 }
@@ -249,9 +244,9 @@
                     var i, len, obj: bindMOD.Binding, bindings = this._getBindings();
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         obj = bindings[i];
-                        obj.isDisabled = this._isDisabled;
+                        obj.isDisabled = this.isDisabled;
                         if (!obj.isSourceFixed)
-                            obj.source = this._dctxt;
+                            obj.source = this.dataContext;
                     }
                 }
                 private _updateIsDisabled() {
@@ -259,12 +254,12 @@
                         DataFormElView = this.app._getElViewType(constsMOD.ELVIEW_NM.DATAFORM);
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         obj = bindings[i];
-                        obj.isDisabled = this._isDisabled;
+                        obj.isDisabled = this.isDisabled;
                     }
                     for (i = 0, len = elViews.length; i < len; i += 1) {
                         obj = elViews[i];
                         if ((obj instanceof DataFormElView) && !!obj.form) {
-                            obj.form.isDisabled = this._isDisabled;
+                            obj.form.isDisabled = this.isDisabled;
                         }
                     }
                 }
@@ -292,7 +287,8 @@
                         //remove with jQuery method to ensure proper cleanUp
                         global.$(this._loadedElem).remove();
                     }
-                    this._loadedElem == null;
+                    this._loadedElem = null;
+
                     if (this._isDestroyCalled && !!this._el) {
                         //remove with jQuery method to ensure proper cleanUp
                         global.$(this._el).remove();
@@ -318,11 +314,8 @@
                         this._promise.reject('cancel');
                         this._promise = null;
                     }
-                    this._dctxt = null;
                     this._unloadTemplate();
-                    this._templEvents = null;
-                    this._templateID = null;
-                    this._app = null;
+                    this._options = <any>{};
                     super.destroy();
                 }
                 //find elements which has specific data-name attribute value
@@ -347,32 +340,32 @@
                 get loadedElem() {
                     return this._loadedElem;
                 }
-                get dataContext() { return this._dctxt; }
+                get dataContext() { return this._options.dataContext; }
                 set dataContext(v) {
-                    if (this._dctxt !== v) {
-                        this._dctxt = v;
+                    if (this.dataContext !== v) {
+                        this._options.dataContext = v;
                         this.raisePropertyChanged('dataContext');
                         this._updateBindingSource();
                     }
                 }
-                get templateID() { return this._templateID; }
+                get templateID() { return this._options.templateID; }
                 set templateID(v) {
-                    if (this._templateID !== v) {
-                        this._templateID = v;
+                    if (this.templateID !== v) {
+                        this._options.templateID = v;
                         this._loadTemplate();
                         this.raisePropertyChanged('templateID');
                     }
                 }
                 get el() { return this._el; }
-                get isDisabled() { return this._isDisabled; }
+                get isDisabled() { return this._options.isDisabled; }
                 set isDisabled(v) {
-                    if (this._isDisabled !== v) {
-                        this._isDisabled = !!v;
+                    if (this.isDisabled !== v) {
+                        this._options.isDisabled = !!v;
                         this._updateIsDisabled();
                         this.raisePropertyChanged('isDisabled');
                     }
                 }
-                get app() { return this._app; }
+                get app() { return this._options.app; }
             }
 
             //for strongly typed parameters

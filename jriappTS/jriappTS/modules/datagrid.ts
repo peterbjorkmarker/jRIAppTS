@@ -181,13 +181,13 @@
                             if (app.contentFactory.isExternallyCachable(contentType)) {
                                 options.initContentFn = this._getInitContentFn();
                             }
-                            this._content = app._getContent(contentType, { parentEl: this._div, contentOptions: options, dataContext: this.item, isEditing: this.item.isEditing });
+                            this._content = new contentType(app, { parentEl: this._div, contentOptions: options, dataContext: this.item, isEditing: this.item.isEditing });
                         }
                         finally {
                             delete options.initContentFn;
                         }
                 }
-                _getInitContentFn() {
+                _getInitContentFn(): (content: contentMOD.IExternallyCachable)=> void {
                     var self = this;
                     return function (content: contentMOD.IExternallyCachable) {
                         content.addOnObjectCreated(function (sender, args) {
@@ -403,7 +403,8 @@
                         return;
                     this._el.colSpan = this.grid.columns.length;
                     this._row.el.appendChild(this._el);
-                    this._template = new templMOD.Template(this.grid.app, {
+                    this._template = new templMOD.Template({
+                        app: this.grid.app,
                         templateID: details_id,
                         templEvents: this
                     });
@@ -1157,6 +1158,7 @@
             }
 
             export interface IGridConstructorOptions extends IGridOptions {
+                app: Application;
                 el: HTMLTableElement;
                 dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
                 animation: RIAPP.IAnimation;
@@ -1186,13 +1188,13 @@
                 private _$headerDiv: JQuery;
                 private _$wrapDiv: JQuery;
                 private _$contaner: JQuery;
-                private _app: Application;
-                _columnWidthChecker: () => void;
+                 _columnWidthChecker: () => void;
 
-                constructor(app: Application, options: IGridConstructorOptions) {
+                constructor(options: IGridConstructorOptions) {
                     super();
-                    this._options = utils.extend(false,
+                    options = utils.extend(false,
                         {
+                            app: null,
                             el: null,
                             dataSource: null,
                             animation: null,
@@ -1206,10 +1208,9 @@
                             isCanDelete: null,
                             isHandleAddNew: false
                         }, options);
-                    if (!!this._options.dataSource && !(this._options.dataSource instanceof collMOD.BaseCollection))
+                    if (!!options.dataSource && !(options.dataSource instanceof collMOD.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_GRID_DATASRC_INVALID);
-                   
-                    this._app = app;
+                    this._options = options;
                     this._columnWidthChecker = () => { };
                     var $t = global.$(this._options.el);
                     this._tableEl = this._options.el;
@@ -1913,14 +1914,15 @@
                 showEditDialog() {
                     if (!this._options.editor || !this._options.editor.templateID || !this._editingRow)
                         return false;
-                    var editorOptions: datadialog.IDialogConstructorOptions, item = this._editingRow.item;
+                    var dialogOptions: datadialog.IDialogConstructorOptions,
+                        item = this._editingRow.item;
                     if (!item.isEditing)
                         item.beginEdit();
                     if (!this._dialog) {
-                        editorOptions = utils.extend(false, {
+                        dialogOptions = utils.extend(false, {
                             dataContext: item
                         }, this._options.editor);
-                        this._dialog = new datadialog.DataEditDialog(this.app, editorOptions);
+                        this._dialog = new datadialog.DataEditDialog(this.app, dialogOptions);
                     }
                     else
                         this._dialog.dataContext = item;
@@ -1964,10 +1966,11 @@
                     global.$(this._tHeadRow).removeClass(css.columnInfo);
                     this._tableEl = null;
                     this._$tableEl = null;
-                    this._app = null;
+                    this._options.app = null;
+                    this._options = <any>{};
                     super.destroy();
                 }
-                get app() { return this._app; }
+                get app() { return this._options.app; }
                 get $container() { return this._$contaner; }
                 get options() { return this._options; }
                 get _tBodyEl() { return this._tableEl.tBodies[0]; }
@@ -2086,11 +2089,12 @@
                 private _createGrid() {
                     var options: IGridConstructorOptions = utils.extend(false,
                         {
+                            app: this._app,
                             el: <HTMLTableElement>this._el,
                             dataSource: null,
                             animation: null
                         }, this._options);
-                    this._grid = new DataGrid(this.app, options);
+                    this._grid = new DataGrid(options);
                     this._bindGridEvents();
                 }
                 private _bindGridEvents() {

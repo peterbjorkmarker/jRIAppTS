@@ -14,6 +14,11 @@
                 utils = s.utils;
             });
             
+            export interface IDataFormOptions {
+                app: Application;
+                el: HTMLElement;
+            }
+
             export class DataForm extends RIAPP.BaseObject {
                 private get _DATA_CONTENT_SELECTOR() { return '*[' + constsMOD.DATA_ATTR.DATA_CONTENT + ']:not([' + constsMOD.DATA_ATTR.DATA_COLUMN + '])'; }
                 private _el: HTMLElement;
@@ -32,11 +37,16 @@
                 private _app: RIAPP.Application;
                 private _isInsideTemplate: boolean;
 
-                constructor(app: RIAPP.Application, el:HTMLElement) {
+                constructor(options: IDataFormOptions) {
                     super();
                     var self = this, parent: HTMLElement;
-                    this._app = app;
-                    this._el = el;
+                    options = utils.extend(false,
+                        {
+                            app: null,
+                            el: null
+                        }, options);
+                    this._app = options.app;
+                    this._el = options.el;
                     this._$el = global.$(this._el);
                     this._objId = 'frm' + utils.getNewID();
                     this._dataContext = null;
@@ -54,13 +64,20 @@
                     //if this form is nested inside another dataform
                     //subscribe for parent's destroy event
                     if (!!parent) {
-                        self._parentDataForm = app.getElementView(parent);
+                        self._parentDataForm = this._app.getElementView(parent);
                         self._parentDataForm.addOnDestroyed(function (sender, args) {
                             //destroy itself if parent form is destroyed
                             if (!self._isDestroyCalled)
                                 self.destroy(); 
                         }, self._objId);
                     }
+                }
+                _onError(error, source): boolean {
+                    var isHandled = super._onError(error, source);
+                    if (!isHandled) {
+                        return this._app._onError(error, source);
+                    }
+                    return isHandled;
                 }
                 private _getBindings(): bindMOD.Binding[] {
                     if (!this._lfTime)
@@ -116,7 +133,8 @@
                         //check if the element inside a nested dataform
                         if (utils.check.isInNestedForm(self._el, forms, el))
                             return;
-                        var attr = el.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT), op = contentMOD.parseContentAttr(attr);
+                        var attr = el.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT),
+                            op = contentMOD.parseContentAttr(attr);
                         if (!!op.fieldName && !op.fieldInfo) {
                             if (!supportsGetFieldInfo) {
                                 throw new Error(RIAPP.ERRS.ERR_DCTX_HAS_NO_FIELDINFO);
@@ -128,33 +146,37 @@
                         }
 
                         var contentType = self.app._getContentType(op);
-                        var content = self.app._getContent(contentType, { parentEl: el, contentOptions: op, dataContext: dctx, isEditing: isEditing }  );
-                        if (!!content) {
-                            self._content.push(content);
-                        }
+                        var content = new contentType(self.app, { parentEl: el, contentOptions: op, dataContext: dctx, isEditing: isEditing });
+                        self._content.push(content);
                     });
                     this._lfTime = self.app._bindElements(this._el, dctx, true, this.isInsideTemplate);
                     this._contentCreated = true;
                 }
                 private _updateContent() {
-                    var dctx:any = this._dataContext, self = this;
+                    try {
+                        var dctx: any = this._dataContext, self = this;
 
-                    if (this._contentCreated) {
-                        this._content.forEach(function (content) {
-                            content.dataContext = dctx;
-                            content.isEditing = self.isEditing;
-                        });
+                        if (this._contentCreated) {
+                            this._content.forEach(function (content) {
+                                content.dataContext = dctx;
+                                content.isEditing = self.isEditing;
+                            });
 
-                        var bindings = this._getBindings();
-                        bindings.forEach(function (binding) {
-                            if (!binding.isSourceFixed)
-                                binding.source = dctx;
-                        });
+                            var bindings = this._getBindings();
+                            bindings.forEach(function (binding) {
+                                if (!binding.isSourceFixed)
+                                    binding.source = dctx;
+                            });
 
-                        return;
+                            return;
+                        }
+
+                        this._createContent();
                     }
-
-                    this._createContent();
+                    catch (ex) {
+                        this._onError(ex, this);
+                        global._throwDummy(ex);
+                    }
                 }
                 private _onDSErrorsChanged() {
                     var dataContext: IErrorNotification = <any>this._dataContext;
@@ -322,7 +344,7 @@
                     super(app, el, options);
                     var self = this;
                     this._options = options;
-                    this._form = new DataForm(this.app, el);
+                    this._form = new DataForm({ app: app, el: el });
                     this._form.addOnDestroyed(function () {
                         self._form = null;
                         self.invokePropChanged('form');

@@ -2,7 +2,7 @@
     export module MOD {
         export module pager {
             import utilsMOD = RIAPP.MOD.utils;
-            import collMod = RIAPP.MOD.collection;
+            import collMOD = RIAPP.MOD.collection;
 
             var utils: utilsMOD.Utils;
             RIAPP.global.addOnInitialize((s, args) => {
@@ -27,44 +27,46 @@
                 sliderSize?: number;
             }
 
+            export interface IPagerConstructorOptions extends IPagerOptions {
+                app: Application;
+                el: HTMLElement;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+            }
+
             export class Pager extends RIAPP.BaseObject {
-                private _el: HTMLElement;
                 private _$el: JQuery;
                 private _objId: string;
-                private _dataSource: collMod.BaseCollection<collMod.CollectionItem>;
-                private _showTip: boolean;
-                private _showInfo: boolean;
-                private _showFirstAndLast: boolean;
-                private _showPreviousAndNext: boolean;
-                private _showNumbers: boolean;
+                private _options: IPagerConstructorOptions;
                 private _rowsPerPage: number;
                 private _rowCount: number;
                 private _currentPage: number;
-                private _useSlider: boolean;
-                private _sliderSize: number;
-                private _hideOnSinglePage: boolean;
 
-                constructor(el: HTMLElement, dataSource: collMod.BaseCollection<collMod.CollectionItem>, options:IPagerOptions) {
+                constructor(options: IPagerConstructorOptions) {
                     super();
-                    this._el = el;
-                    this._$el = global.$(this._el);
-                    this._objId = 'pgr' + utils.getNewID();
-                    if (!!dataSource && !(dataSource instanceof collMod.BaseCollection))
+                    options = utils.extend(false,
+                        {
+                            app: null,
+                            el: null,
+                            dataSource: null,
+                            showTip: true,
+                            showInfo: false,
+                            showNumbers: true,
+                            showFirstAndLast: true,
+                            showPreviousAndNext: false,
+                            useSlider: true,
+                            hideOnSinglePage: true,
+                            sliderSize: 25
+                        }, options);
+                    if (!!options.dataSource && !(options.dataSource instanceof collMOD.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_PAGER_DATASRC_INVALID);
-                    this._dataSource = dataSource;
-                    this._showTip = utils.check.isNt(options.showTip) ? true : !!options.showTip;
-                    this._showInfo = utils.check.isNt(options.showInfo) ? false : !!options.showInfo;
-                    this._showFirstAndLast = utils.check.isNt(options.showFirstAndLast) ? true : !!options.showFirstAndLast;
-                    this._showPreviousAndNext = utils.check.isNt(options.showPreviousAndNext) ? false : !!options.showPreviousAndNext;
-                    this._showNumbers = utils.check.isNt(options.showNumbers) ? true : !!options.showNumbers;
+                    this._options = options;
+                    this._$el = global.$(options.el);
+                    this._objId = 'pgr' + utils.getNewID();
                     this._rowsPerPage = 0;
                     this._rowCount = 0;
                     this._currentPage = 1;
-                    this._useSlider = utils.check.isNt(options.useSlider) ? true : !!options.useSlider;
-                    this._sliderSize = utils.check.isNt(options.sliderSize) ? 25 : options.sliderSize;
-                    this._hideOnSinglePage = utils.check.isNt(options.hideOnSinglePage) ? true : !!options.hideOnSinglePage;
                     this._$el.addClass(css.pager);
-                    if (!!this._dataSource) {
+                    if (!!this._options.dataSource) {
                         this._bindDS();
                     }
                 }
@@ -159,13 +161,13 @@
                 _setDSPageIndex(page:number) {
                     this.dataSource.pageIndex = page - 1;
                 }
-                _onPageSizeChanged(ds: collMod.BaseCollection<collMod.CollectionItem>) {
+                _onPageSizeChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
                     this.rowsPerPage = ds.pageSize;
                 }
-                _onPageIndexChanged(ds: collMod.BaseCollection<collMod.CollectionItem>) {
+                _onPageIndexChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
                     this.currentPage = ds.pageIndex + 1;
                 }
-                _onTotalCountChanged(ds: collMod.BaseCollection<collMod.CollectionItem>) {
+                _onTotalCountChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
                     this.rowCount = ds.totalCount;
                 }
                 destroy() {
@@ -175,14 +177,21 @@
                     this._unbindDS();
                     this._clearContent();
                     this._$el.removeClass(css.pager);
-                    this._el = null;
                     this._$el = null;
+                    this._options = <any>{};
                     super.destroy();
                 }
                 _bindDS() {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     if (!ds) return;
-
+                    ds.addOnFill((s, a) => {
+                        if (!a.isBegin && !a.isPageChanged) {
+                            self._unbindDS();
+                            setTimeout(() => {
+                                self._bindDS();
+                            }, 0);
+                        }
+                    }, self._objId);
                     ds.addOnPropertyChange('pageIndex', function (sender, args) {
                         self._onPageIndexChanged(ds);
                     }, self._objId);
@@ -198,7 +207,7 @@
                     this._render();
                 }
                 _unbindDS() {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
@@ -302,16 +311,17 @@
                 toString() {
                     return 'Pager';
                 }
-                get el() { return this._el; }
-                get dataSource() { return this._dataSource; }
-                set dataSource(v: collMod.BaseCollection<collMod.CollectionItem>) {
-                    if (v === this._dataSource)
+                get app() { return this._options.app; }
+                get el() { return this._options.el; }
+                get dataSource() { return this._options.dataSource; }
+                set dataSource(v) {
+                    if (v === this.dataSource)
                         return;
-                    if (this._dataSource !== null) {
+                    if (!!this.dataSource) {
                         this._unbindDS();
                     }
-                    this._dataSource = v;
-                    if (this._dataSource !== null)
+                    this._options.dataSource = v;
+                    if (!!this.dataSource)
                         this._bindDS();
                     this.raisePropertyChanged('dataSource');
                 }
@@ -354,59 +364,59 @@
                         this.raisePropertyChanged('currentPage');
                     }
                 }
-                get useSlider() { return this._useSlider; }
+                get useSlider() { return this._options.useSlider; }
                 set useSlider(v) {
-                    if (this._useSlider != v) {
-                        this._useSlider = v;
+                    if (this.useSlider !== v) {
+                        this._options.useSlider = v;
                         this._render();
                     }
                 }
-                get sliderSize() { return this._sliderSize; }
+                get sliderSize() { return this._options.sliderSize; }
                 set sliderSize(v) {
-                    if (this._sliderSize != v) {
-                        this._sliderSize = v;
+                    if (this.sliderSize !== v) {
+                        this._options.sliderSize = v;
                         this._render();
                     }
                 }
-                get hideOnSinglePage() { return this._hideOnSinglePage; }
+                get hideOnSinglePage() { return this._options.hideOnSinglePage; }
                 set hideOnSinglePage(v) {
-                    if (this._hideOnSinglePage != v) {
-                        this._hideOnSinglePage = v;
+                    if (this.hideOnSinglePage !== v) {
+                        this._options.hideOnSinglePage = v;
                         this._render();
                     }
                 }
-                get showTip() { return this._showTip; }
+                get showTip() { return this._options.showTip; }
                 set showTip(v) {
-                    if (this._showTip !== v) {
-                        this._showTip = v;
+                    if (this.showTip !== v) {
+                        this._options.showTip = v;
                         this._render();
                     }
                 }
-                get showInfo() { return this._showInfo; }
+                get showInfo() { return this._options.showInfo; }
                 set showInfo(v) {
-                    if (this._showInfo !== v) {
-                        this._showInfo = v;
+                    if (this._options.showInfo !== v) {
+                        this._options.showInfo = v;
                         this._render();
                     }
                 }
-                get showFirstAndLast() { return this._showFirstAndLast; }
+                get showFirstAndLast() { return this._options.showFirstAndLast; }
                 set showFirstAndLast(v) {
-                    if (this._showFirstAndLast !== v) {
-                        this._showFirstAndLast = v;
+                    if (this.showFirstAndLast !== v) {
+                        this._options.showFirstAndLast = v;
                         this._render();
                     }
                 }
-                get showPreviousAndNext() { return this._showPreviousAndNext; }
+                get showPreviousAndNext() { return this._options.showPreviousAndNext; }
                 set showPreviousAndNext(v) {
-                    if (this._showPreviousAndNext !== v) {
-                        this._showPreviousAndNext = v;
+                    if (this.showPreviousAndNext !== v) {
+                        this._options.showPreviousAndNext = v;
                         this._render();
                     }
                 }
-                get showNumbers() { return this._showNumbers; }
+                get showNumbers() { return this._options.showNumbers; }
                 set showNumbers(v) {
-                    if (this._showNumbers !== v) {
-                        this._showNumbers = v;
+                    if (this.showNumbers !== v) {
+                        this._options.showNumbers = v;
                         this._render();
                     }
                 }
@@ -422,7 +432,14 @@
                     var self = this;
                     this._pager = null;
                     this._options = options;
-                    this._pager = new Pager(el, null, this._options);
+
+                    var opts: IPagerConstructorOptions = utils.extend(false,
+                        {
+                            app: app,
+                            el: el,
+                            dataSource: null
+                        }, this._options);
+                    this._pager = new Pager(opts);
                     this._pager.addOnDestroyed(function () {
                         self._pager = null;
                         self.invokePropChanged('pager');

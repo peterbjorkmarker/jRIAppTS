@@ -94,8 +94,9 @@
 
                     try {
                         if (!this._template) {
-                            this._template = new templMOD.Template(this.app,
+                            this._template = new templMOD.Template(
                                 {
+                                    app: this.app,
                                     templateID: newName,
                                     dataContext: this._dataContext,
                                     templEvents: this

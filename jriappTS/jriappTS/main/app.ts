@@ -385,10 +385,6 @@ module RIAPP {
             });
             return lftm;
         }
-        //used as a factory to create Data Contents
-        _getContent(contentType: contentMOD.IContentType, options: contentMOD.IConstructorContentOptions) {
-            return new contentType(this, options);
-        }
         //used to select contentType based on content options
         _getContentType(options: contentMOD.IContentOptions): contentMOD.IContentType {
             return this.contentFactory.getContentType(options);

@@ -850,8 +850,8 @@
                             viewport: global.$(global.window),
                             adjust: {
                                 method: 'flip',
-                                x: 5,
-                                y: 5
+                                x: 0,
+                                y: 0
                             }
                         },
                         hide: {

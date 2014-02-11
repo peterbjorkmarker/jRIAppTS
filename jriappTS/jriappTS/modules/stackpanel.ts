@@ -24,53 +24,49 @@
             interface IMappedItem { div: HTMLDivElement; template: templMOD.Template; item: collMOD.CollectionItem }
 
             export interface IStackPanelConstructorOptions extends IStackPanelOptions {
-                el: HTMLTableElement;
+                app: Application;
+                el: HTMLElement;
                 dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
             }
+
             export class StackPanel extends RIAPP.BaseObject implements RIAPP.ISelectable, templMOD.ITemplateEvents {
-                private _el: HTMLElement;
                 private _$el: JQuery;
                 private _objId: string;
-                private _dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
                 private _isDSFilling: boolean;
-                private _orientation: string;
-                private _templateID: string;
                 private _currentItem: collMOD.CollectionItem;
                 private _itemMap: { [key: string]: IMappedItem; };
-                private _app: Application;
+                private _options: IStackPanelConstructorOptions;
 
-                constructor(app: Application, options: IStackPanelConstructorOptions) {
+                constructor(options: IStackPanelConstructorOptions) {
                     super();
                     var self = this;
                     options = utils.extend(false,
                         {
+                            app: null,
                             el: null,
                             dataSource: null,
-                            orientation: null,
+                            orientation: 'horizontal',
                             templateID: null
                         }, options);
-                    this._app = app;
-                    this._el = options.el;
-                    this._$el = global.$(this._el);
-                    this._objId = 'pnl' + global.utils.getNewID();
                     if (!!options.dataSource && !(options.dataSource instanceof collMOD.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_STACKPNL_DATASRC_INVALID);
-                    this._dataSource = options.dataSource;
+                    if (!options.templateID)
+                        throw new Error(RIAPP.ERRS.ERR_STACKPNL_TEMPLATE_INVALID);
+                    this._options = options;
+                    this._$el = global.$(options.el);
+                    this._objId = 'pnl' + global.utils.getNewID();
                     this._isDSFilling = false;
-                    this._orientation = options.orientation || 'horizontal';
-                    this._templateID = options.templateID;
                     this._currentItem = null;
                     this._$el.addClass(css.stackpanel);
                     this._itemMap = {};
-                    if (!this._templateID)
-                        throw new Error(RIAPP.ERRS.ERR_STACKPNL_TEMPLATE_INVALID);
+                 
                     this._$el.on('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''),
                         function (e) {
                             e.stopPropagation();
                             var $div = global.$(this), mappedItem: IMappedItem = $div.data('data');
                             self._onItemClicked(mappedItem.div, mappedItem.item);  
                       });
-                    if (!!this._dataSource) {
+                    if (!!options.dataSource) {
                         this._bindDS();
                     }
                     global._trackSelectable(this);
@@ -95,10 +91,10 @@
                     this.removeHandler('item_clicked', namespace);
                 }
                 _onKeyDown(key:number, event: Event) {
-                    var ds = this._dataSource, self = this;
+                    var ds = this.dataSource, self = this;
                     if (!ds)
                         return;
-                    if (this._orientation == 'horizontal') {
+                    if (this.orientation == 'horizontal') {
                         switch (key) {
                             case constsMOD.KEYS.left:
                                 event.preventDefault();
@@ -155,7 +151,7 @@
                     }
                 }
                 _onDSCurrentChanged() {
-                    var ds = this._dataSource, cur = ds.currentItem;
+                    var ds = this.dataSource, cur = ds.currentItem;
                     if (!cur)
                         this._updateCurrent(null, false);
                     else {
@@ -218,8 +214,9 @@
                     }
                 }
                 _createTemplate(item: collMOD.CollectionItem) {
-                    var t = new template.Template(this.app, {
-                        templateID: this._templateID,
+                    var t = new template.Template({
+                        app: this.app,
+                        templateID: this.templateID,
                         dataContext: item,
                         templEvents: this
                     });
@@ -244,7 +241,7 @@
                         div = $div.get(0);
 
                     $div.addClass(css.item);
-                    if (this._orientation == 'horizontal') {
+                    if (this.orientation == 'horizontal') {
                         $div.css('display', 'inline-block');
                     }
                     $div.attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, this.uniqueID);
@@ -256,7 +253,7 @@
                     mappedItem.div.appendChild(mappedItem.template.el);
                 }
                 _bindDS() {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     if (!ds) return;
                     ds.addOnCollChanged(function (sender, args) {
                         if (ds !== sender) return;
@@ -277,7 +274,7 @@
                     this._refresh();
                 }
                 _unbindDS() {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
@@ -286,7 +283,7 @@
                 }
                 _onItemClicked(div: HTMLElement, item: collMOD.CollectionItem) {
                     this._updateCurrent(item, false);
-                    this._dataSource.currentItem = item;
+                    this.dataSource.currentItem = item;
                     this.raiseEvent('item_clicked', { item: item });
                 }
                 destroy() {
@@ -297,11 +294,10 @@
                     this._unbindDS();
                     this._clearContent();
                     this._$el.removeClass(css.stackpanel);
-                    this._el = null;
                     this._$el = null;
                     this._currentItem = null;
                     this._itemMap = {};
-                    this._app = null;
+                    this._options = <any>{};
                     super.destroy();
                 }
                 _clearContent() {
@@ -317,16 +313,15 @@
                         return;
                     delete self._itemMap[key];
                     mappedItem.template.destroy();
-                }
-                _removeItem(item: collMOD.CollectionItem) {
-                    var self = this, key = item._key, mappedItem = self._itemMap[key];
-                    delete self._itemMap[key];
-                    mappedItem.template.destroy();
                     mappedItem.template = null;
+                    global.$(mappedItem.div).removeData('data');
                     global.$(mappedItem.div).remove();
                 }
+                _removeItem(item: collMOD.CollectionItem) {
+                    this._removeItemByKey(item._key);
+                }
                 _refresh() {
-                    var ds = this._dataSource, self = this;
+                    var ds = this.dataSource, self = this;
                     this._clearContent();
                     if (!ds)
                         return;
@@ -351,19 +346,21 @@
                 toString() {
                     return 'StackPanel';
                 }
-                get app() { return this._app; }
-                get el() { return this._el; }
-                get containerEl() { return this._el; }
+                get app() { return this._options.app; }
+                get el() { return this._options.el; }
+                get containerEl() { return this._options.el; }
                 get uniqueID() { return this._objId; }
-                get dataSource() { return this._dataSource; }
-                set dataSource(v: collMOD.BaseCollection<collMOD.CollectionItem>) {
-                    if (v === this._dataSource)
+                get orientation() { return this._options.orientation; }
+                get templateID() { return this._options.templateID; }
+                get dataSource() { return this._options.dataSource; }
+                set dataSource(v) {
+                    if (v === this.dataSource)
                         return;
-                    if (this._dataSource !== null) {
+                    if (!!this.dataSource) {
                         this._unbindDS();
                     }
-                    this._dataSource = v;
-                    if (this._dataSource !== null)
+                    this._options.dataSource = v;
+                    if (!!this.dataSource)
                         this._bindDS();
                     this.raisePropertyChanged('dataSource');
                 }
@@ -376,16 +373,17 @@
             export class StackPanelElView extends baseElView.BaseElView {
                 private _panel: StackPanel;
                 private _options: IStackPanelOptions;
-                constructor(app: Application, el: HTMLSelectElement, options: IStackPanelViewOptions) {
+                constructor(app: Application, el: HTMLElement, options: IStackPanelViewOptions) {
                     var self = this;
                     this._panel = null;
                     this._options = options;
                     var opts: IStackPanelConstructorOptions = utils.extend(false,
                         {
+                            app: app,
                             el: el,
                             dataSource: null
                         }, this._options);
-                    this._panel = new StackPanel(app, opts);
+                    this._panel = new StackPanel(opts);
                     this._panel.addOnDestroyed(function () {
                         self._panel = null;
                         self.invokePropChanged('panel');
