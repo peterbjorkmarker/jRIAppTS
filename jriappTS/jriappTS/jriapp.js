@@ -7425,6 +7425,7 @@ var RIAPP;
                     this._dctx = options.dataContext;
                     this._options = options.contentOptions;
                     this._isReadOnly = !!this._options.readOnly;
+                    this._isDisabled = false;
                     this._lfScope = null;
                     this._tgt = null;
                     var $p = RIAPP.global.$(this._parentEl);
@@ -7504,12 +7505,18 @@ var RIAPP;
                     }
                     return res;
                 };
-                BindingContent.prototype._updateBindingSource = function () {
-                    var i, len, obj, bindings = this._getBindings();
+                BindingContent.prototype._updateIsDisabled = function () {
+                    var i, len, bindings = this._getBindings();
                     for (i = 0, len = bindings.length; i < len; i += 1) {
-                        obj = bindings[i];
-                        if (!obj.isSourceFixed)
-                            obj.source = this._dctx;
+                        bindings[i].isDisabled = !!this._isDisabled;
+                    }
+                };
+                BindingContent.prototype._updateBindingSource = function () {
+                    var i, len, bnd, bindings = this._getBindings();
+                    for (i = 0, len = bindings.length; i < len; i += 1) {
+                        bnd = bindings[i];
+                        if (!bnd.isSourceFixed)
+                            bnd.source = this._dctx;
                     }
                 };
                 BindingContent.prototype._cleanUp = function () {
@@ -7540,7 +7547,7 @@ var RIAPP;
                 };
                 BindingContent.prototype.update = function () {
                     this._cleanUp();
-                    var bindingInfo = this._getBindingInfo();
+                    var bindingInfo = this._getBindingInfo(), binding;
                     if (!!bindingInfo) {
                         this._tgt = this._createTargetElement();
                         this._lfScope = new utilsMOD.LifeTimeScope();
@@ -7548,7 +7555,9 @@ var RIAPP;
                             this._lfScope.addObj(this._tgt);
                         var options = this._getBindingOption(bindingInfo, this._tgt, this._dctx, 'value');
                         this._parentEl.appendChild(this._el);
-                        this._lfScope.addObj(this.app.bind(options));
+                        binding = this.app.bind(options);
+                        binding.isDisabled = this.isDisabled;
+                        this._lfScope.addObj(binding);
                     }
                 };
                 BindingContent.prototype.destroy = function () {
@@ -7621,6 +7630,20 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
+                Object.defineProperty(BindingContent.prototype, "isDisabled", {
+                    get: function () {
+                        return this._isDisabled;
+                    },
+                    set: function (v) {
+                        if (this._isDisabled !== v) {
+                            this._isDisabled = !!v;
+                            this._updateIsDisabled();
+                            this.raisePropertyChanged('isDisabled');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
                 return BindingContent;
             })(RIAPP.BaseObject);
             baseContent.BindingContent = BindingContent;
@@ -7668,7 +7691,8 @@ var RIAPP;
                     }
                     if (!id)
                         throw new Error(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID);
-                    this._template = new templMOD.Template({
+
+                    return new templMOD.Template({
                         app: this.app,
                         templateID: id,
                         dataContext: this._dataContext,
@@ -7677,10 +7701,10 @@ var RIAPP;
                 };
                 TemplateContent.prototype.update = function () {
                     this._cleanUp();
-                    var template;
                     if (!!this._templateInfo) {
-                        this._createTemplate();
+                        this._template = this._createTemplate();
                         this._parentEl.appendChild(this._template.el);
+                        this._template.isDisabled = this._isDisabled;
                     }
                 };
                 TemplateContent.prototype._cleanUp = function () {
@@ -7754,6 +7778,21 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
+                Object.defineProperty(TemplateContent.prototype, "isDisabled", {
+                    get: function () {
+                        return this._isDisabled;
+                    },
+                    set: function (v) {
+                        if (this._isDisabled !== v) {
+                            this._isDisabled = !!v;
+                            if (!!this._template)
+                                this._template.isDisabled = this._isDisabled;
+                            this.raisePropertyChanged('isDisabled');
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
                 return TemplateContent;
             })(RIAPP.BaseObject);
             baseContent.TemplateContent = TemplateContent;
@@ -7773,6 +7812,8 @@ var RIAPP;
                         options.mode = 2 /* TwoWay */;
                         this._lfScope.addObj(this.app.bind(options));
                     }
+                };
+                BoolContent.prototype._cleanUp = function () {
                 };
                 BoolContent.prototype._createCheckBoxView = function () {
                     var el = RIAPP.global.document.createElement('input');
@@ -7813,8 +7854,6 @@ var RIAPP;
                         this._tgt = null;
                     }
                     _super.prototype.destroy.call(this);
-                };
-                BoolContent.prototype._cleanUp = function () {
                 };
                 BoolContent.prototype.update = function () {
                     this._cleanUp();
@@ -8181,6 +8220,7 @@ var RIAPP;
                     this._$el.addClass(dataform.css.dataform);
                     this._isEditing = false;
                     this._isDisabled = false;
+                    this._checkIsDisabled = false;
                     this._content = [];
                     this._lfTime = null;
                     this._contentCreated = false;
@@ -8236,22 +8276,6 @@ var RIAPP;
                     }
                     return res;
                 };
-                DataForm.prototype._updateIsDisabled = function () {
-                    var i, len, bnd, vw, bindings = this._getBindings(), elViews = this._getElViews();
-
-                    for (i = 0, len = bindings.length; i < len; i += 1) {
-                        bnd = bindings[i];
-                        bnd.isDisabled = this._isDisabled;
-                    }
-                    for (i = 0, len = elViews.length; i < len; i += 1) {
-                        vw = elViews[i];
-
-                        //can have a nested dataform. disable it too
-                        if (vw instanceof DataFormElView) {
-                            vw.isDisabled = this._isDisabled;
-                        }
-                    }
-                };
                 DataForm.prototype._createContent = function () {
                     var dctx = this._dataContext, self = this;
                     if (!dctx) {
@@ -8281,27 +8305,49 @@ var RIAPP;
 
                         var contentType = self.app._getContentType(op);
                         var content = new contentType(self.app, { parentEl: el, contentOptions: op, dataContext: dctx, isEditing: isEditing });
+                        content.isDisabled = self.isDisabled;
                         self._content.push(content);
                     });
                     this._lfTime = self.app._bindElements(this._el, dctx, true, this.isInsideTemplate);
+
+                    var bindings = this._getBindings();
+                    bindings.forEach(function (binding) {
+                        binding.isDisabled = self._isDisabled;
+                        if (!binding.isSourceFixed)
+                            binding.source = dctx;
+                    });
+
+                    var elViews = this._getElViews();
+                    elViews.forEach(function (elView) {
+                        if (elView instanceof DataFormElView) {
+                            elView.isDisabled = self._isDisabled;
+                        }
+                    });
                     this._contentCreated = true;
                 };
                 DataForm.prototype._updateContent = function () {
                     try  {
                         var dctx = this._dataContext, self = this;
-
                         if (this._contentCreated) {
                             this._content.forEach(function (content) {
+                                content.isDisabled = self.isDisabled;
                                 content.dataContext = dctx;
                                 content.isEditing = self.isEditing;
                             });
 
                             var bindings = this._getBindings();
                             bindings.forEach(function (binding) {
+                                binding.isDisabled = self._isDisabled;
                                 if (!binding.isSourceFixed)
                                     binding.source = dctx;
                             });
 
+                            var elViews = this._getElViews();
+                            elViews.forEach(function (elView) {
+                                if (elView instanceof DataFormElView) {
+                                    elView.isDisabled = self._isDisabled;
+                                }
+                            });
                             return;
                         }
 
@@ -8357,6 +8403,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
+                    this._checkIsDisabled = false;
                     this._clearContent();
                     this._$el.removeClass(dataform.css.dataform);
                     this._el = null;
@@ -8489,8 +8536,8 @@ var RIAPP;
                     },
                     set: function (v) {
                         if (this._isDisabled !== v) {
-                            this._isDisabled = v;
-                            this._updateIsDisabled();
+                            this._isDisabled = !!v;
+                            this._updateContent();
                             this.raisePropertyChanged('isDisabled');
                         }
                     },
@@ -9776,6 +9823,12 @@ var RIAPP;
                     this._cleanUp();
                     this._createTargetElement();
                     this._parentEl.appendChild(this._el);
+                    if (!!this._listBinding) {
+                        this._listBinding.isDisabled = this.isDisabled;
+                    }
+                    if (!!this._valBinding) {
+                        this._valBinding.isDisabled = this.isDisabled;
+                    }
                 };
                 LookupContent.prototype._createTargetElement = function () {
                     var tgt, el, selectView, spanView;
@@ -10058,8 +10111,8 @@ var RIAPP;
                     return new templMOD.Template({
                         app: this.app,
                         templateID: this._templateID,
-                        dataContext: this._dataContext,
-                        isDisabled: true,
+                        dataContext: null,
+                        isDisabled: false,
                         templEvents: this
                     });
                 };
@@ -10174,7 +10227,8 @@ var RIAPP;
                     }
                     if (action == 1 /* StayOpen */)
                         return;
-
+                    if (this._isEditable)
+                        this._dataContext.cancelEdit();
                     this._result = 'cancel';
                     this.hide();
                 };
@@ -10200,7 +10254,7 @@ var RIAPP;
                             this._fn_OnClose(this);
                         this.raiseEvent('close', {});
                     } finally {
-                        this._template.isDisabled = true;
+                        this._template.dataContext = null;
                     }
                     var csel = this._currentSelectable;
                     this._currentSelectable = null;
@@ -10219,7 +10273,7 @@ var RIAPP;
                     var self = this;
                     self._result = null;
                     self._$template.dialog("option", "buttons", this._getButtons());
-                    self._template.isDisabled = false;
+                    this._template.dataContext = this._dataContext;
                     self._onShow();
                     self._$template.dialog("open");
                 };
@@ -10266,8 +10320,6 @@ var RIAPP;
                     set: function (v) {
                         if (v !== this._dataContext) {
                             this._dataContext = v;
-                            if (!!this._template)
-                                this._template.dataContext = this._dataContext;
                             this._updateIsEditable();
                             this.raisePropertyChanged('dataContext');
                         }

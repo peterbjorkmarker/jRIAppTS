@@ -182,6 +182,7 @@
             export interface IContent {
                 isEditing: boolean;
                 dataContext: any;
+                isDisabled: boolean;
                 destroy(): void;
             }
 
@@ -196,6 +197,7 @@
                 //the target of dataBinding
                 _tgt: elviewMOD.BaseElView;
                 _app: RIAPP.Application;
+                private _isDisabled: boolean;
 
                 constructor(app: RIAPP.Application, options: IConstructorContentOptions) {
                     super();
@@ -214,6 +216,7 @@
                     this._dctx = options.dataContext;
                     this._options = options.contentOptions;
                     this._isReadOnly = !!this._options.readOnly;
+                    this._isDisabled = false;
                     this._lfScope = null;
                     this._tgt = null;
                     var $p = global.$(this._parentEl);
@@ -294,12 +297,18 @@
                     }
                     return res;
                 }
-                _updateBindingSource() {
-                    var i: number, len: number, obj: bindMOD.Binding, bindings = this._getBindings();
+                _updateIsDisabled() {
+                    var i: number, len: number, bindings = this._getBindings();
                     for (i = 0, len = bindings.length; i < len; i += 1) {
-                        obj = bindings[i];
-                        if (!obj.isSourceFixed)
-                            obj.source = this._dctx;
+                        bindings[i].isDisabled = !!this._isDisabled;
+                    }
+                }
+                _updateBindingSource() {
+                    var i: number, len: number, bnd: bindMOD.Binding, bindings = this._getBindings();
+                    for (i = 0, len = bindings.length; i < len; i += 1) {
+                        bnd = bindings[i];
+                        if (!bnd.isSourceFixed)
+                            bnd.source = this._dctx;
                     }
                 }
                 _cleanUp() {
@@ -330,7 +339,7 @@
                 }
                 update() {
                     this._cleanUp();
-                    var bindingInfo = this._getBindingInfo();
+                    var bindingInfo = this._getBindingInfo(), binding: bindMOD.Binding;
                     if (!!bindingInfo) {
                         this._tgt =  this._createTargetElement();
                         this._lfScope = new utilsMOD.LifeTimeScope();
@@ -338,7 +347,9 @@
                             this._lfScope.addObj(this._tgt);
                         var options = this._getBindingOption(bindingInfo, this._tgt, this._dctx, 'value');
                         this._parentEl.appendChild(this._el);
-                        this._lfScope.addObj(this.app.bind(options));
+                        binding = this.app.bind(options);
+                        binding.isDisabled = this.isDisabled;
+                        this._lfScope.addObj(binding);
                     }
                 }
                 destroy() {
@@ -381,6 +392,14 @@
                     }
                 }
                 get app() { return this._app; }
+                get isDisabled() { return this._isDisabled; }
+                set isDisabled(v) {
+                    if (this._isDisabled !== v) {
+                        this._isDisabled = !!v;
+                        this._updateIsDisabled();
+                        this.raisePropertyChanged('isDisabled');
+                    }
+                }
             }
 
             export class TemplateContent extends RIAPP.BaseObject implements IContent, templMOD.ITemplateEvents {
@@ -390,6 +409,7 @@
                 private _isEditing: boolean;
                 private _dataContext: any;
                 private _app: RIAPP.Application;
+                private _isDisabled: boolean;
                 
                 constructor(app: RIAPP.Application, options: IConstructorContentOptions) {
                     super();
@@ -420,7 +440,7 @@
                 templateUnLoading(template: templMOD.Template): void {
                     this._parentEl.removeChild(template.el);
                 }
-                _createTemplate(): void {
+                private _createTemplate(): templMOD.Template {
                     var info = this._templateInfo, id = info.displayID;
                     if (this._isEditing) {
                         if (!!info.editID) {
@@ -434,7 +454,8 @@
                     }
                     if (!id)
                         throw new Error(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID);
-                    this._template = new templMOD.Template({ 
+
+                    return new templMOD.Template({ 
                         app: this.app,
                         templateID: id,
                         dataContext: this._dataContext,
@@ -443,10 +464,10 @@
                 }
                 update() {
                     this._cleanUp();
-                    var template: templMOD.Template;
                     if (!!this._templateInfo) {
-                        this._createTemplate();
+                        this._template = this._createTemplate();
                         this._parentEl.appendChild(this._template.el);
+                        this._template.isDisabled = this._isDisabled;
                     }
                 }
                 _cleanUp() {
@@ -490,6 +511,15 @@
                         }
                     }
                 }
+                get isDisabled() { return this._isDisabled; }
+                set isDisabled(v) {
+                    if (this._isDisabled !== v) {
+                        this._isDisabled = !!v;
+                        if (!!this._template)
+                            this._template.isDisabled = this._isDisabled;
+                        this.raisePropertyChanged('isDisabled');
+                    }
+                }
             }
 
             export class BoolContent extends BindingContent{
@@ -503,6 +533,8 @@
                         options.mode = bindMOD.BINDING_MODE.TwoWay;
                         this._lfScope.addObj(this.app.bind(options));
                     }
+                }
+                _cleanUp() {
                 }
                 _createCheckBoxView() {
                     var el = global.document.createElement('input');
@@ -544,8 +576,6 @@
                         this._tgt = null;
                     }
                     super.destroy();
-                }
-                _cleanUp() {
                 }
                 update() {
                     this._cleanUp();

@@ -180,8 +180,8 @@
                     return new templMOD.Template({
                         app: this.app,
                         templateID: this._templateID,
-                        dataContext: this._dataContext,
-                        isDisabled: true,
+                        dataContext: null,
+                        isDisabled: false,
                         templEvents: this
                     });
                 }
@@ -297,7 +297,8 @@
                     }
                     if (action == DIALOG_ACTION.StayOpen)
                         return;
-
+                    if (this._isEditable)
+                        this._dataContext.cancelEdit();
                     this._result = 'cancel';
                     this.hide();
                 }
@@ -324,7 +325,7 @@
                         this.raiseEvent('close', {});
                     }
                     finally {
-                        this._template.isDisabled = true;
+                        this._template.dataContext = null;
                     }
                     var csel = this._currentSelectable;
                     this._currentSelectable = null;
@@ -340,7 +341,7 @@
                     var self = this;
                     self._result = null;
                     (<any>self._$template).dialog("option", "buttons", this._getButtons());
-                    self._template.isDisabled = false;
+                    this._template.dataContext = this._dataContext;
                     self._onShow();
                     (<any>self._$template).dialog("open");
                 }
@@ -378,8 +379,6 @@
                 set dataContext(v) {
                     if (v !== this._dataContext) {
                         this._dataContext = v;
-                        if (!!this._template)
-                            this._template.dataContext = this._dataContext;
                         this._updateIsEditable();
                         this.raisePropertyChanged('dataContext');
                     }

@@ -36,6 +36,7 @@
                 private _errors: RIAPP.IValidationInfo[];
                 private _app: RIAPP.Application;
                 private _isInsideTemplate: boolean;
+                private _checkIsDisabled: boolean;
 
                 constructor(options: IDataFormOptions) {
                     super();
@@ -53,6 +54,7 @@
                     this._$el.addClass(css.dataform);
                     this._isEditing = false;
                     this._isDisabled = false;
+                    this._checkIsDisabled = false;
                     this._content = [];
                     this._lfTime = null;
                     this._contentCreated = false;
@@ -99,22 +101,6 @@
                     }
                     return res;
                 }
-                private _updateIsDisabled() {
-                    var i: number, len: number, bnd: bindMOD.Binding, vw: elviewMOD.BaseElView,
-                        bindings = this._getBindings(), elViews = this._getElViews();
-
-                    for (i = 0, len = bindings.length; i < len; i += 1) {
-                        bnd = bindings[i];
-                        bnd.isDisabled = this._isDisabled;
-                    }
-                    for (i = 0, len = elViews.length; i < len; i += 1) {
-                        vw = elViews[i];
-                        //can have a nested dataform. disable it too
-                        if (vw instanceof DataFormElView) {
-                            (<DataFormElView>vw).isDisabled = this._isDisabled;
-                        }
-                    }
-                }
                 private _createContent() {
                     var dctx: any = this._dataContext, self = this;
                     if (!dctx) {
@@ -147,27 +133,49 @@
 
                         var contentType = self.app._getContentType(op);
                         var content = new contentType(self.app, { parentEl: el, contentOptions: op, dataContext: dctx, isEditing: isEditing });
+                        content.isDisabled = self.isDisabled;
                         self._content.push(content);
                     });
                     this._lfTime = self.app._bindElements(this._el, dctx, true, this.isInsideTemplate);
+
+                    var bindings = this._getBindings();
+                    bindings.forEach(function (binding) {
+                        binding.isDisabled = self._isDisabled;
+                        if (!binding.isSourceFixed)
+                            binding.source = dctx;
+                    });
+
+                    var elViews = this._getElViews();
+                    elViews.forEach(function (elView) {
+                        if (elView instanceof DataFormElView) {
+                            (<DataFormElView>elView).isDisabled = self._isDisabled;
+                        }
+                    });
                     this._contentCreated = true;
                 }
                 private _updateContent() {
                     try {
                         var dctx: any = this._dataContext, self = this;
-
                         if (this._contentCreated) {
                             this._content.forEach(function (content) {
+                                content.isDisabled = self.isDisabled;
                                 content.dataContext = dctx;
                                 content.isEditing = self.isEditing;
                             });
 
                             var bindings = this._getBindings();
                             bindings.forEach(function (binding) {
+                                binding.isDisabled = self._isDisabled;
                                 if (!binding.isSourceFixed)
                                     binding.source = dctx;
                             });
 
+                            var elViews = this._getElViews();
+                            elViews.forEach(function (elView) {
+                                if (elView instanceof DataFormElView) {
+                                    (<DataFormElView>elView).isDisabled = self._isDisabled;
+                                }
+                            });
                             return;
                         }
 
@@ -224,6 +232,7 @@
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
+                    this._checkIsDisabled = false;
                     this._clearContent();
                     this._$el.removeClass(css.dataform);
                     this._el = null;
@@ -245,7 +254,7 @@
                 get app() { return this._app; }
                 get el() { return this._el; }
                 get dataContext() { return this._dataContext; }
-                set dataContext(v: RIAPP.BaseObject) {
+                set dataContext(v) {
                     var dataContext:any;
                     try {
                         if (v === this._dataContext)
@@ -323,15 +332,15 @@
                     }
                 }
                 get isDisabled() { return this._isDisabled; }
-                set isDisabled(v: boolean) {
+                set isDisabled(v) {
                     if (this._isDisabled !== v) {
-                        this._isDisabled = v;
-                        this._updateIsDisabled();
+                        this._isDisabled = !!v;
+                        this._updateContent();
                         this.raisePropertyChanged('isDisabled');
                     }
                 }
                 get isInsideTemplate() { return this._isInsideTemplate; }
-                set isInsideTemplate(v: boolean) {
+                set isInsideTemplate(v) {
                     this._isInsideTemplate = v;
                 }
             }

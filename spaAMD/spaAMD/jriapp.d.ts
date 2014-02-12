@@ -1473,6 +1473,7 @@ declare module RIAPP {
             interface IContent {
                 isEditing: boolean;
                 dataContext: any;
+                isDisabled: boolean;
                 destroy(): void;
             }
             class BindingContent extends RIAPP.BaseObject implements IContent {
@@ -1485,6 +1486,7 @@ declare module RIAPP {
                 public _lfScope: MOD.utils.LifeTimeScope;
                 public _tgt: MOD.baseElView.BaseElView;
                 public _app: RIAPP.Application;
+                private _isDisabled;
                 constructor(app: RIAPP.Application, options: IConstructorContentOptions);
                 public _init(): void;
                 public _updateCss(): void;
@@ -1492,6 +1494,7 @@ declare module RIAPP {
                 public _createTargetElement(): MOD.baseElView.BaseElView;
                 public _getBindingOption(bindingInfo: MOD.binding.IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
                 public _getBindings(): MOD.binding.Binding[];
+                public _updateIsDisabled(): void;
                 public _updateBindingSource(): void;
                 public _cleanUp(): void;
                 public getFieldInfo(): MOD.collection.IFieldInfo;
@@ -1512,6 +1515,7 @@ declare module RIAPP {
                 public isEditing : boolean;
                 public dataContext : any;
                 public app : RIAPP.Application;
+                public isDisabled : boolean;
             }
             class TemplateContent extends RIAPP.BaseObject implements IContent, MOD.template.ITemplateEvents {
                 private _parentEl;
@@ -1520,11 +1524,12 @@ declare module RIAPP {
                 private _isEditing;
                 private _dataContext;
                 private _app;
+                private _isDisabled;
                 constructor(app: RIAPP.Application, options: IConstructorContentOptions);
                 public templateLoading(template: MOD.template.Template): void;
                 public templateLoaded(template: MOD.template.Template): void;
                 public templateUnLoading(template: MOD.template.Template): void;
-                public _createTemplate(): void;
+                private _createTemplate();
                 public update(): void;
                 public _cleanUp(): void;
                 public destroy(): void;
@@ -1534,14 +1539,15 @@ declare module RIAPP {
                 public template : MOD.template.Template;
                 public isEditing : boolean;
                 public dataContext : any;
+                public isDisabled : boolean;
             }
             class BoolContent extends BindingContent {
                 public _init(): void;
+                public _cleanUp(): void;
                 public _createCheckBoxView(): MOD.baseElView.CheckBoxElView;
                 public _createTargetElement(): MOD.baseElView.BaseElView;
                 public _updateCss(): void;
                 public destroy(): void;
-                public _cleanUp(): void;
                 public update(): void;
                 public toString(): string;
             }
@@ -1620,11 +1626,11 @@ declare module RIAPP {
                 private _errors;
                 private _app;
                 private _isInsideTemplate;
+                private _checkIsDisabled;
                 constructor(options: IDataFormOptions);
                 public _onError(error: any, source: any): boolean;
                 private _getBindings();
                 private _getElViews();
-                private _updateIsDisabled();
                 private _createContent();
                 private _updateContent();
                 private _onDSErrorsChanged();

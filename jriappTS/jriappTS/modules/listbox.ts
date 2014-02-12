@@ -708,6 +708,12 @@
                     this._cleanUp();
                     this._createTargetElement();
                     this._parentEl.appendChild(this._el);
+                    if (!!this._listBinding) {
+                        this._listBinding.isDisabled = this.isDisabled;
+                    }
+                    if (!!this._valBinding) {
+                        this._valBinding.isDisabled = this.isDisabled;
+                    }
                 }
                 _createTargetElement(): elviewMOD.BaseElView {
                     var tgt: elviewMOD.BaseElView, el: HTMLElement, selectView: SelectElView, spanView: elviewMOD.SpanElView;
