@@ -27,7 +27,6 @@
 /// <reference path="..\modules\pager.ts"/>
 /// <reference path="..\modules\stackpanel.ts"/>
 /// <reference path="..\modules\db.ts"/>
-
 module RIAPP {
     import constsMOD = MOD.consts;
     import utilsMOD = RIAPP.MOD.utils;
@@ -285,8 +284,7 @@ module RIAPP {
                     elView = self.getElementView(el);
                 }
                 catch (ex) {
-                    self._onError(ex, self);
-                    global._throwDummy(ex);
+                    global.reThrow(ex, this._onError(ex, this));
                 }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
@@ -356,8 +354,7 @@ module RIAPP {
                     elView = self.getElementView(el);
                 }
                 catch (ex) {
-                    self._onError(ex, self);
-                    global._throwDummy(ex);
+                    global.reThrow(ex, this._onError(ex, this));
                 }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
@@ -493,8 +490,7 @@ module RIAPP {
                 }
                 catch (ex)
                 {
-                    self._onError(ex, self);
-                    global._throwDummy(ex);
+                    global.reThrow(ex, this._onError(ex, this));
                 }
             };
 

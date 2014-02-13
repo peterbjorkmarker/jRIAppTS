@@ -26,7 +26,6 @@
                 private _objId: string;
                 private _dataContext: RIAPP.BaseObject;
                 private _isEditing: boolean;
-                private _isDisabled: boolean;
                 private _content: contentMOD.IContent[];
                 private _lfTime: utilsMOD.LifeTimeScope;
                 private _contentCreated: boolean;
@@ -36,8 +35,7 @@
                 private _errors: RIAPP.IValidationInfo[];
                 private _app: RIAPP.Application;
                 private _isInsideTemplate: boolean;
-                private _checkIsDisabled: boolean;
-
+                
                 constructor(options: IDataFormOptions) {
                     super();
                     var self = this, parent: HTMLElement;
@@ -53,8 +51,6 @@
                     this._dataContext = null;
                     this._$el.addClass(css.dataform);
                     this._isEditing = false;
-                    this._isDisabled = false;
-                    this._checkIsDisabled = false;
                     this._content = [];
                     this._lfTime = null;
                     this._contentCreated = false;
@@ -133,24 +129,16 @@
 
                         var contentType = self.app._getContentType(op);
                         var content = new contentType(self.app, { parentEl: el, contentOptions: op, dataContext: dctx, isEditing: isEditing });
-                        content.isDisabled = self.isDisabled;
                         self._content.push(content);
                     });
                     this._lfTime = self.app._bindElements(this._el, dctx, true, this.isInsideTemplate);
 
                     var bindings = this._getBindings();
                     bindings.forEach(function (binding) {
-                        binding.isDisabled = self._isDisabled;
                         if (!binding.isSourceFixed)
                             binding.source = dctx;
                     });
 
-                    var elViews = this._getElViews();
-                    elViews.forEach(function (elView) {
-                        if (elView instanceof DataFormElView) {
-                            (<DataFormElView>elView).isDisabled = self._isDisabled;
-                        }
-                    });
                     this._contentCreated = true;
                 }
                 private _updateContent() {
@@ -158,32 +146,22 @@
                         var dctx: any = this._dataContext, self = this;
                         if (this._contentCreated) {
                             this._content.forEach(function (content) {
-                                content.isDisabled = self.isDisabled;
                                 content.dataContext = dctx;
                                 content.isEditing = self.isEditing;
                             });
 
                             var bindings = this._getBindings();
                             bindings.forEach(function (binding) {
-                                binding.isDisabled = self._isDisabled;
                                 if (!binding.isSourceFixed)
                                     binding.source = dctx;
                             });
-
-                            var elViews = this._getElViews();
-                            elViews.forEach(function (elView) {
-                                if (elView instanceof DataFormElView) {
-                                    (<DataFormElView>elView).isDisabled = self._isDisabled;
-                                }
-                            });
-                            return;
                         }
-
-                        this._createContent();
+                        else {
+                            this._createContent();
+                        }
                     }
                     catch (ex) {
-                        this._onError(ex, this);
-                        global._throwDummy(ex);
+                        global.reThrow(ex, this._onError(ex, this));
                     }
                 }
                 private _onDSErrorsChanged() {
@@ -232,7 +210,6 @@
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    this._checkIsDisabled = false;
                     this._clearContent();
                     this._$el.removeClass(css.dataform);
                     this._el = null;
@@ -249,7 +226,7 @@
                     super.destroy();
                 }
                 toString() {
-                    return 'DataForm_' + this._objId;
+                    return 'DataForm';
                 }
                 get app() { return this._app; }
                 get el() { return this._el; }
@@ -329,14 +306,6 @@
                     if (v !== this._errors) {
                         this._errors = v;
                         this.raisePropertyChanged('validationErrors');
-                    }
-                }
-                get isDisabled() { return this._isDisabled; }
-                set isDisabled(v) {
-                    if (this._isDisabled !== v) {
-                        this._isDisabled = !!v;
-                        this._updateContent();
-                        this.raisePropertyChanged('isDisabled');
                     }
                 }
                 get isInsideTemplate() { return this._isInsideTemplate; }
@@ -431,18 +400,6 @@
                         return;
                     if (this.dataContext !== v) {
                         this._form.dataContext = v;
-                    }
-                }
-                get isDisabled() {
-                    if (this._isDestroyCalled)
-                        return true;
-                    return this._form.isDisabled;
-                }
-                set isDisabled(v: boolean) {
-                    if (this._isDestroyCalled)
-                        return;
-                    if (this.isDisabled !== v) {
-                        this._form.isDisabled = v;
                     }
                 }
                 get form() { return this._form; }

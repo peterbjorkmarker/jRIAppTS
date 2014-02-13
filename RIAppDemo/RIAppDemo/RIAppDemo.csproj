@@ -170,7 +170,7 @@
     <Content Include="Scripts\dynatree\src\skin\ui.dynatree.css" />
     <Content Include="Scripts\dynatree\src\skin\vline-rtl.gif" />
     <Content Include="Scripts\dynatree\src\skin\vline.gif" />
-    <Content Include="Scripts\jquery\jquery-1.10.2.js" />
+    <Content Include="Scripts\jquery\jquery-2.1.0.min.js" />
     <Content Include="Scripts\jquery\jquery-ui-1.10.4.custom.js" />
     <Content Include="Scripts\jquery\jquery-ui-1.10.4.custom.min.js" />
     <Content Include="Scripts\jquery\jquery.cookie.js" />

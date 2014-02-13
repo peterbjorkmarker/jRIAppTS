@@ -18,6 +18,11 @@
                 required: 'ria-required-field'
             };
             
+            export interface IContent {
+                isEditing: boolean;
+                dataContext: any;
+                destroy(): void;
+            }
          
             //can contain two template ids - for display and editing
             export interface ITemplateInfo {
@@ -34,7 +39,6 @@
                 name?: string;
                 options?: any;
             }
-
 
             export interface IExternallyCachable {
                 addOnObjectCreated(fn: (sender: any, args: { objectKey: string; object: RIAPP.BaseObject; isCachedExternally: boolean; }) => void , namespace?: string): void;
@@ -179,25 +183,17 @@
                 return bindingOpts;
             };
 
-            export interface IContent {
-                isEditing: boolean;
-                dataContext: any;
-                isDisabled: boolean;
-                destroy(): void;
-            }
-
             export class BindingContent extends RIAPP.BaseObject implements IContent {
                 _parentEl: HTMLElement;
                 _el: HTMLElement;
                 _options: IContentOptions;
                 _isReadOnly: boolean;
                 _isEditing: boolean;
-                _dctx: any;
+                _dataContext: any;
                 _lfScope: utilsMOD.LifeTimeScope;
                 //the target of dataBinding
-                _tgt: elviewMOD.BaseElView;
+                _target: elviewMOD.BaseElView;
                 _app: RIAPP.Application;
-                private _isDisabled: boolean;
 
                 constructor(app: RIAPP.Application, options: IConstructorContentOptions) {
                     super();
@@ -213,18 +209,24 @@
                     this._app = app;
                     this._parentEl = options.parentEl;
                     this._isEditing = !!options.isEditing;
-                    this._dctx = options.dataContext;
+                    this._dataContext = options.dataContext;
                     this._options = options.contentOptions;
                     this._isReadOnly = !!this._options.readOnly;
-                    this._isDisabled = false;
                     this._lfScope = null;
-                    this._tgt = null;
+                    this._target = null;
                     var $p = global.$(this._parentEl);
                     $p.addClass(css.content);
                     this._init();
                     this.update();
                 }
                 _init() { }
+                _onError(error, source): boolean {
+                    var isHandled = super._onError(error, source);
+                    if (!isHandled) {
+                        return this._app._onError(error, source);
+                    }
+                    return isHandled;
+                }
                 _updateCss() {
                     var displayInfo = this._getDisplayInfo(), $p = global.$(this._parentEl), fieldInfo = this.getFieldInfo();
                     if (this._isEditing && this._canBeEdited()) {
@@ -260,7 +262,7 @@
                     var finf = this.getFieldInfo();
                     if (!finf)
                         return false;
-                    var editable = !!this._dctx && !!this._dctx.beginEdit;
+                    var editable = !!this._dataContext && !!this._dataContext.beginEdit;
                     return editable && !finf.isReadOnly && finf.fieldType != collection.FIELD_TYPE.Calculated;
                 }
                 _createTargetElement(): elviewMOD.BaseElView {
@@ -277,8 +279,8 @@
                     this._el = el;
                     return this._getElementView(this._el, info);
                 }
-                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx:any, targetPath:string) {
-                    var options = getBindingOptions(this.app,bindingInfo, tgt, dctx);
+                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, target: RIAPP.BaseObject, dataContext:any, targetPath:string) {
+                    var options = getBindingOptions(this.app,bindingInfo, target, dataContext);
                     if (this.isEditing && this._canBeEdited())
                         options.mode = bindMOD.BINDING_MODE.TwoWay;
                     else
@@ -297,18 +299,12 @@
                     }
                     return res;
                 }
-                _updateIsDisabled() {
-                    var i: number, len: number, bindings = this._getBindings();
-                    for (i = 0, len = bindings.length; i < len; i += 1) {
-                        bindings[i].isDisabled = !!this._isDisabled;
-                    }
-                }
                 _updateBindingSource() {
-                    var i: number, len: number, bnd: bindMOD.Binding, bindings = this._getBindings();
+                    var i: number, len: number, binding: bindMOD.Binding, bindings = this._getBindings();
                     for (i = 0, len = bindings.length; i < len; i += 1) {
-                        bnd = bindings[i];
-                        if (!bnd.isSourceFixed)
-                            bnd.source = this._dctx;
+                        binding = bindings[i];
+                        if (!binding.isSourceFixed)
+                            binding.source = this._dataContext;
                     }
                 }
                 _cleanUp() {
@@ -320,7 +316,7 @@
                         utils.removeNode(this._el);
                         this._el = null;
                     }
-                    this._tgt = null;
+                    this._target = null;
                 }
                 getFieldInfo() {
                     return this._options.fieldInfo;
@@ -338,18 +334,22 @@
                     return this.app._createElementView(el, view_info);
                 }
                 update() {
-                    this._cleanUp();
-                    var bindingInfo = this._getBindingInfo(), binding: bindMOD.Binding;
-                    if (!!bindingInfo) {
-                        this._tgt =  this._createTargetElement();
-                        this._lfScope = new utilsMOD.LifeTimeScope();
-                        if (!!this._tgt)
-                            this._lfScope.addObj(this._tgt);
-                        var options = this._getBindingOption(bindingInfo, this._tgt, this._dctx, 'value');
-                        this._parentEl.appendChild(this._el);
-                        binding = this.app.bind(options);
-                        binding.isDisabled = this.isDisabled;
-                        this._lfScope.addObj(binding);
+                    try {
+                        this._cleanUp();
+                        var bindingInfo = this._getBindingInfo();
+                        if (!!bindingInfo) {
+                            this._target = this._createTargetElement();
+                            this._lfScope = new utilsMOD.LifeTimeScope();
+                            if (!!this._target)
+                                this._lfScope.addObj(this._target);
+                            var options = this._getBindingOption(bindingInfo, this._target, this._dataContext, 'value');
+                            this._parentEl.appendChild(this._el);
+                            this._lfScope.addObj(this.app.bind(options));
+                        }
+                    }
+                    catch (ex)
+                    {
+                        global.reThrow(ex, this._onError(ex, this));
                     }
                 }
                 destroy() {
@@ -367,7 +367,7 @@
                     }
                     this._cleanUp();
                     this._parentEl = null;
-                    this._dctx = null;
+                    this._dataContext = null;
                     this._options = null;
                     this._app = null;
                     super.destroy();
@@ -376,7 +376,7 @@
                     return 'BindingContent';
                 }
                 get parentEl() { return this._parentEl; }
-                get target() { return this._tgt; }
+                get target() { return this._target; }
                 get isEditing() { return this._isEditing; }
                 set isEditing(v) {
                     if (this._isEditing !== v) {
@@ -384,22 +384,14 @@
                         this.update();
                     }
                 }
-                get dataContext() { return this._dctx; }
+                get dataContext() { return this._dataContext; }
                 set dataContext(v) {
-                    if (this._dctx !== v) {
-                        this._dctx = v;
+                    if (this._dataContext !== v) {
+                        this._dataContext = v;
                         this._updateBindingSource();
                     }
                 }
                 get app() { return this._app; }
-                get isDisabled() { return this._isDisabled; }
-                set isDisabled(v) {
-                    if (this._isDisabled !== v) {
-                        this._isDisabled = !!v;
-                        this._updateIsDisabled();
-                        this.raisePropertyChanged('isDisabled');
-                    }
-                }
             }
 
             export class TemplateContent extends RIAPP.BaseObject implements IContent, templMOD.ITemplateEvents {
@@ -431,6 +423,13 @@
                     $p.addClass(css.content);
                     this.update();
                 }
+                _onError(error, source): boolean {
+                    var isHandled = super._onError(error, source);
+                    if (!isHandled) {
+                        return this._app._onError(error, source);
+                    }
+                    return isHandled;
+                }
                 templateLoading(template: templMOD.Template): void {
                     //noop
                 }
@@ -455,19 +454,23 @@
                     if (!id)
                         throw new Error(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID);
 
-                    return new templMOD.Template({ 
+                    return new templMOD.Template({
                         app: this.app,
                         templateID: id,
                         dataContext: this._dataContext,
                         templEvents: this
                     });
+
                 }
                 update() {
-                    this._cleanUp();
-                    if (!!this._templateInfo) {
-                        this._template = this._createTemplate();
-                        this._parentEl.appendChild(this._template.el);
-                        this._template.isDisabled = this._isDisabled;
+                    try {
+                        this._cleanUp();
+                        if (!!this._templateInfo) {
+                            this._template = this._createTemplate();
+                            this._parentEl.appendChild(this._template.el);
+                        }
+                    } catch (ex) {
+                        global.reThrow(ex, this._onError(ex, this));
                     }
                 }
                 _cleanUp() {
@@ -511,25 +514,16 @@
                         }
                     }
                 }
-                get isDisabled() { return this._isDisabled; }
-                set isDisabled(v) {
-                    if (this._isDisabled !== v) {
-                        this._isDisabled = !!v;
-                        if (!!this._template)
-                            this._template.isDisabled = this._isDisabled;
-                        this.raisePropertyChanged('isDisabled');
-                    }
-                }
             }
 
             export class BoolContent extends BindingContent{
                 _init() {
-                    this._tgt = this._createTargetElement();
+                    this._target = this._createTargetElement();
                     var bindingInfo = this._getBindingInfo();
                     if (!!bindingInfo) {
                         this._updateCss();
                         this._lfScope = new utilsMOD.LifeTimeScope();
-                        var options = this._getBindingOption(bindingInfo, this._tgt, this._dctx, 'checked');
+                        var options = this._getBindingOption(bindingInfo, this._target, this._dataContext, 'checked');
                         options.mode = bindMOD.BINDING_MODE.TwoWay;
                         this._lfScope.addObj(this.app.bind(options));
                     }
@@ -543,7 +537,7 @@
                     return chbxView;
                 }
                 _createTargetElement(): elviewMOD.BaseElView {
-                    var tgt = this._tgt;
+                    var tgt = this._target;
                     if (!tgt) {
                         tgt = this._createCheckBoxView();
                         this._el = tgt.el;
@@ -571,9 +565,9 @@
                         this._lfScope.destroy();
                         this._lfScope = null;
                     }
-                    if (!!this._tgt) {
-                        this._tgt.destroy();
-                        this._tgt = null;
+                    if (!!this._target) {
+                        this._target.destroy();
+                        this._target = null;
                     }
                     super.destroy();
                 }
@@ -674,8 +668,8 @@
                 update() {
                     super.update();
                     var self = this;
-                    if (self._tgt instanceof elviewMOD.TextBoxElView) {
-                        (<elviewMOD.TextBoxElView>self._tgt).addOnKeyPress(function (sender, args) {
+                    if (self._target instanceof elviewMOD.TextBoxElView) {
+                        (<elviewMOD.TextBoxElView>self._target).addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(args.keyCode, args.value);
                         });
                     }
@@ -716,8 +710,8 @@
                 update() {
                     super.update();
                     var self = this, fieldInfo = self.getFieldInfo();
-                    if (self._tgt instanceof elviewMOD.TextBoxElView) {
-                        (<elviewMOD.TextBoxElView>self._tgt).addOnKeyPress(function (sender, args) {
+                    if (self._target instanceof elviewMOD.TextBoxElView) {
+                        (<elviewMOD.TextBoxElView>self._target).addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(fieldInfo, args.keyCode, args.value);
                         });
                     }
@@ -764,8 +758,8 @@
                     super.update();
                     var self = this, fieldInfo = self.getFieldInfo();
 
-                    if (self._tgt instanceof elviewMOD.TextAreaElView) {
-                        (<elviewMOD.TextAreaElView>self._tgt).addOnKeyPress(function (sender, args) {
+                    if (self._target instanceof elviewMOD.TextAreaElView) {
+                        (<elviewMOD.TextAreaElView>self._target).addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(fieldInfo, args.keyCode, args.value);
                         });
                     }

@@ -26,7 +26,6 @@
                 templateID: string;
                 dataContext?: any;
                 templEvents?: ITemplateEvents;
-                isDisabled?: boolean;
             }
 
             export class Template extends RIAPP.BaseObject {
@@ -179,8 +178,6 @@
 
                     if (asyncLoad) {
                         self._appendIsBusy(tmpDiv);
-                       
-
                         deffered.done(function () {
                             self._removeIsBusy(tmpDiv);
                         });
@@ -192,7 +189,7 @@
                     }
 
                     deffered.then(function (loadedEl) {
-                        var i: number, tevents = self._getTemplateEvents(), len: number = tevents.length;
+                        var i: number, tevents: ITemplateEvents[], len: number;
 
                         if (self._isDestroyCalled)
                             return;
@@ -203,12 +200,16 @@
                                 return;
                             }
                             self._loadedElem = loadedEl;
+                            tevents = self._getTemplateEvents();
+                            len = tevents.length;
                             for (i = 0; i < len; i += 1) {
                                 tevents[i].templateLoading(self);
                             }
                             tmpDiv.appendChild(loadedEl);
                             self._lfTime = self.app._bindTemplateElements(loadedEl);
                             self._updateBindingSource();
+                            tevents = self._getTemplateEvents();
+                            len = tevents.length;
                             for (i = 0; i < len; i += 1) {
                                 tevents[i].templateLoaded(self);
                             }
@@ -241,26 +242,11 @@
                         });
                 }
                 private _updateBindingSource() {
-                    var i, len, obj: bindMOD.Binding, bindings = this._getBindings();
+                    var i, len, binding: bindMOD.Binding, bindings = this._getBindings();
                     for (i = 0, len = bindings.length; i < len; i += 1) {
-                        obj = bindings[i];
-                        obj.isDisabled = this.isDisabled;
-                        if (!obj.isSourceFixed)
-                            obj.source = this.dataContext;
-                    }
-                }
-                private _updateIsDisabled() {
-                    var i, len, obj, bindings = this._getBindings(), elViews = this._getElViews(),
-                        DataFormElView = this.app._getElViewType(constsMOD.ELVIEW_NM.DATAFORM);
-                    for (i = 0, len = bindings.length; i < len; i += 1) {
-                        obj = bindings[i];
-                        obj.isDisabled = this.isDisabled;
-                    }
-                    for (i = 0, len = elViews.length; i < len; i += 1) {
-                        obj = elViews[i];
-                        if ((obj instanceof DataFormElView) && !!obj.form) {
-                            obj.form.isDisabled = this.isDisabled;
-                        }
+                        binding = bindings[i];
+                        if (!binding.isSourceFixed)
+                            binding.source = this.dataContext;
                     }
                 }
                 private _unloadTemplate() {
@@ -357,14 +343,6 @@
                     }
                 }
                 get el() { return this._el; }
-                get isDisabled() { return this._options.isDisabled; }
-                set isDisabled(v) {
-                    if (this.isDisabled !== v) {
-                        this._options.isDisabled = !!v;
-                        this._updateIsDisabled();
-                        this.raisePropertyChanged('isDisabled');
-                    }
-                }
                 get app() { return this._options.app; }
             }
 
@@ -390,7 +368,6 @@
                     var self = this, p = self._commandParam;
                     try {
                         self._template = template;
-                        self._template.isDisabled = !this._isEnabled;
                         self._commandParam = { template: template, isLoaded: true };
                         self.invokeCommand();
                         self._commandParam = p;
@@ -423,9 +400,6 @@
                 set isEnabled(v: boolean) {
                     if (this._isEnabled !== v) {
                         this._isEnabled = v;
-                        if (!!this._template) {
-                            this._template.isDisabled = !this._isEnabled;
-                        }
                         this.raisePropertyChanged('isEnabled');
                     }
                 }

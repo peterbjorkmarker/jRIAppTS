@@ -661,7 +661,7 @@
                     if (!!this._selectView)
                         return this._selectView;
                     //proceed creating new selectElView
-                    var dataSource = global.parser.resolvePath(this.app, lookUpOptions.dataSource),
+                    var dataSource = parser.resolvePath(this.app, lookUpOptions.dataSource),
                         options = { valuePath: lookUpOptions.valuePath, textPath: lookUpOptions.textPath };
                     var el = <HTMLSelectElement>global.document.createElement('select');
                     el.setAttribute('size', '1');
@@ -708,12 +708,6 @@
                     this._cleanUp();
                     this._createTargetElement();
                     this._parentEl.appendChild(this._el);
-                    if (!!this._listBinding) {
-                        this._listBinding.isDisabled = this.isDisabled;
-                    }
-                    if (!!this._valBinding) {
-                        this._valBinding.isDisabled = this.isDisabled;
-                    }
                 }
                 _createTargetElement(): elviewMOD.BaseElView {
                     var tgt: elviewMOD.BaseElView, el: HTMLElement, selectView: SelectElView, spanView: elviewMOD.SpanElView;
@@ -751,10 +745,10 @@
                 }
                 _updateBindingSource() {
                     if (!!this._valBinding) {
-                        this._valBinding.source = this._dctx;
+                        this._valBinding.source = this._dataContext;
                     }
                     if (!!this._listBinding) {
-                        this._listBinding.source = this._dctx;
+                        this._listBinding.source = this._dataContext;
                     }
                 }
                 _bindToValue() {
@@ -762,22 +756,24 @@
                         return null;
 
                     var options: bindMOD.IBindingOptions = {
-                        target: this, source: this._dctx,
-                        targetPath: 'value', sourcePath: this._options.fieldName, mode: bindMOD.BINDING_MODE.OneWay,
+                        target: this, source: this._dataContext,
+                        targetPath: 'value', sourcePath: this._options.fieldName,
+                        mode: bindMOD.BINDING_MODE.OneWay,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
-                    return new bindMOD.Binding(options);
+                    return this.app.bind(options);
                 }
                 _bindToList(selectView: SelectElView) {
                     if (!this._options.fieldName)
                         return null;
 
                     var options: bindMOD.IBindingOptions = {
-                        target: selectView, source: this._dctx,
-                        targetPath: 'selectedValue', sourcePath: this._options.fieldName, mode: bindMOD.BINDING_MODE.TwoWay,
+                        target: selectView, source: this._dataContext,
+                        targetPath: 'selectedValue', sourcePath: this._options.fieldName,
+                        mode: bindMOD.BINDING_MODE.TwoWay,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
-                    return new bindMOD.Binding(options);
+                    return this.app.bind(options);
                 }
                 destroy() {
                     if (this._isDestroyed)

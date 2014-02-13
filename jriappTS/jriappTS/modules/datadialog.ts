@@ -132,6 +132,13 @@
                     this._dialogCreated = false;
                     this._createDialog();
                 }
+                _onError(error, source): boolean {
+                    var isHandled = super._onError(error, source);
+                    if (!isHandled) {
+                        return this._app._onError(error, source);
+                    }
+                    return isHandled;
+                }
                 addOnClose(fn: (sender: any, args: {}) => void , namespace?: string) {
                     this.addHandler('close', fn, namespace);
                 }
@@ -150,11 +157,16 @@
                 _createDialog() {
                     if (this._dialogCreated)
                         return;
-                    this._template = this._createTemplate();
-                    this._$template = global.$(this._template.el);
-                    global.document.body.appendChild(this._template.el);
-                    (<any>this._$template).dialog(this._options);
-                    this._dialogCreated = true;
+                    try {
+                        this._template = this._createTemplate();
+                        this._$template = global.$(this._template.el);
+                        global.document.body.appendChild(this._template.el);
+                        (<any>this._$template).dialog(this._options);
+                        this._dialogCreated = true;
+                    }
+                    catch (ex) {
+                        global.reThrow(ex, this._onError(ex, this));
+                    }
                 }
                 _getEventNames() {
                     var base_events = super._getEventNames();
@@ -176,12 +188,10 @@
                     }
                 }
                 _createTemplate() {
-                    //create template in disabled state
                     return new templMOD.Template({
                         app: this.app,
                         templateID: this._templateID,
                         dataContext: null,
-                        isDisabled: false,
                         templEvents: this
                     });
                 }

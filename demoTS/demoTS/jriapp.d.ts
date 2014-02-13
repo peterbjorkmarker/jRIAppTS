@@ -1348,7 +1348,6 @@ declare module RIAPP {
                 templateID: string;
                 dataContext?: any;
                 templEvents?: ITemplateEvents;
-                isDisabled?: boolean;
             }
             class Template extends RIAPP.BaseObject {
                 private _el;
@@ -1369,7 +1368,6 @@ declare module RIAPP {
                 private _loadTemplate();
                 private _processTemplate(promise, asyncLoad);
                 private _updateBindingSource();
-                private _updateIsDisabled();
                 private _unloadTemplate();
                 private _cleanUp();
                 public _onError(error: any, source: any): boolean;
@@ -1381,7 +1379,6 @@ declare module RIAPP {
                 public dataContext : any;
                 public templateID : string;
                 public el : HTMLElement;
-                public isDisabled : boolean;
                 public app : RIAPP.Application;
             }
             class TemplateCommand extends MOD.mvvm.Command {
@@ -1414,6 +1411,11 @@ declare module RIAPP {
                 content: string;
                 required: string;
             };
+            interface IContent {
+                isEditing: boolean;
+                dataContext: any;
+                destroy(): void;
+            }
             interface ITemplateInfo {
                 displayID?: string;
                 editID?: string;
@@ -1470,31 +1472,24 @@ declare module RIAPP {
             }
             function parseContentAttr(content_attr: string): IContentOptions;
             function getBindingOptions(app: RIAPP.Application, bindInfo: MOD.binding.IBindingInfo, defaultTarget: RIAPP.BaseObject, defaultSource: any): MOD.binding.IBindingOptions;
-            interface IContent {
-                isEditing: boolean;
-                dataContext: any;
-                isDisabled: boolean;
-                destroy(): void;
-            }
             class BindingContent extends RIAPP.BaseObject implements IContent {
                 public _parentEl: HTMLElement;
                 public _el: HTMLElement;
                 public _options: IContentOptions;
                 public _isReadOnly: boolean;
                 public _isEditing: boolean;
-                public _dctx: any;
+                public _dataContext: any;
                 public _lfScope: MOD.utils.LifeTimeScope;
-                public _tgt: MOD.baseElView.BaseElView;
+                public _target: MOD.baseElView.BaseElView;
                 public _app: RIAPP.Application;
-                private _isDisabled;
                 constructor(app: RIAPP.Application, options: IConstructorContentOptions);
                 public _init(): void;
+                public _onError(error: any, source: any): boolean;
                 public _updateCss(): void;
                 public _canBeEdited(): boolean;
                 public _createTargetElement(): MOD.baseElView.BaseElView;
-                public _getBindingOption(bindingInfo: MOD.binding.IBindingInfo, tgt: RIAPP.BaseObject, dctx: any, targetPath: string): MOD.binding.IBindingOptions;
+                public _getBindingOption(bindingInfo: MOD.binding.IBindingInfo, target: RIAPP.BaseObject, dataContext: any, targetPath: string): MOD.binding.IBindingOptions;
                 public _getBindings(): MOD.binding.Binding[];
-                public _updateIsDisabled(): void;
                 public _updateBindingSource(): void;
                 public _cleanUp(): void;
                 public getFieldInfo(): MOD.collection.IFieldInfo;
@@ -1515,7 +1510,6 @@ declare module RIAPP {
                 public isEditing : boolean;
                 public dataContext : any;
                 public app : RIAPP.Application;
-                public isDisabled : boolean;
             }
             class TemplateContent extends RIAPP.BaseObject implements IContent, MOD.template.ITemplateEvents {
                 private _parentEl;
@@ -1526,6 +1520,7 @@ declare module RIAPP {
                 private _app;
                 private _isDisabled;
                 constructor(app: RIAPP.Application, options: IConstructorContentOptions);
+                public _onError(error: any, source: any): boolean;
                 public templateLoading(template: MOD.template.Template): void;
                 public templateLoaded(template: MOD.template.Template): void;
                 public templateUnLoading(template: MOD.template.Template): void;
@@ -1539,7 +1534,6 @@ declare module RIAPP {
                 public template : MOD.template.Template;
                 public isEditing : boolean;
                 public dataContext : any;
-                public isDisabled : boolean;
             }
             class BoolContent extends BindingContent {
                 public _init(): void;
@@ -1616,7 +1610,6 @@ declare module RIAPP {
                 private _objId;
                 private _dataContext;
                 private _isEditing;
-                private _isDisabled;
                 private _content;
                 private _lfTime;
                 private _contentCreated;
@@ -1626,7 +1619,6 @@ declare module RIAPP {
                 private _errors;
                 private _app;
                 private _isInsideTemplate;
-                private _checkIsDisabled;
                 constructor(options: IDataFormOptions);
                 public _onError(error: any, source: any): boolean;
                 private _getBindings();
@@ -1644,7 +1636,6 @@ declare module RIAPP {
                 public dataContext : RIAPP.BaseObject;
                 public isEditing : boolean;
                 public validationErrors : RIAPP.IValidationInfo[];
-                public isDisabled : boolean;
                 public isInsideTemplate : boolean;
             }
             class DataFormElView extends MOD.baseElView.BaseElView {
@@ -1656,7 +1647,6 @@ declare module RIAPP {
                 public destroy(): void;
                 public toString(): string;
                 public dataContext : RIAPP.BaseObject;
-                public isDisabled : boolean;
                 public form : DataForm;
             }
         }
@@ -1930,6 +1920,7 @@ declare module RIAPP {
                 private _app;
                 private _currentSelectable;
                 constructor(app: RIAPP.Application, options: IDialogConstructorOptions);
+                public _onError(error: any, source: any): boolean;
                 public addOnClose(fn: (sender: any, args: {}) => void, namespace?: string): void;
                 public removeOnClose(namespace?: string): void;
                 public addOnRefresh(fn: (sender: any, args: {
