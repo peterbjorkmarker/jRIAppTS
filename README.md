@@ -4,8 +4,8 @@ jRIAppTS framework
 <b>a RIA framework for building Line of Buisiness (LOB) applications working in HTML5</b>
 <br/>
 This is a typescript version of the previous (long abandoned) <a href="https://github.com/BBGONE/jRIApp" target="_blank">jRIApp framework</a>
-You can watch video of the demo on <a href="http://youtu.be/m2lxFWhJghA" target="_blank">YouTube SPA Demo</a>
-<a href="https://www.youtube.com/watch?v=bqpIARQHPhA" target="_blank">YouTube Views Transitions Animations Demo</a>
+You can watch video of the demo on <a href="http://youtu.be/m2lxFWhJghA" target="_blank">YouTube SPA Demo</a> |
+<a href="https://www.youtube.com/watch?v=bqpIARQHPhA" target="_blank">YouTube Views Transitions Animations Demo</a> |
 <a href="http://youtu.be/ll_FS2iONV4" target="_blank">YouTube Folder Browser Demo</a><br/>
  
 This branch uses generics introduced in typescript. The primary goal of generics here is to reduce type castings and enhance productivity with better intellisence and design time type checkings. 
