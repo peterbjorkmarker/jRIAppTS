@@ -56,7 +56,7 @@
     <Compile Include="Models\AddressInfo.cs" />
     <Compile Include="Models\HistoryItem.cs" />
     <Compile Include="Models\KeyVal.cs" />
-    <Compile Include="Models\FolderModel.cs" />
+    <Compile Include="Models\FolderItem.cs" />
     <Compile Include="Models\LookUpProduct.cs" />
     <Compile Include="Models\SalesInfo.cs" />
     <Compile Include="DataServices\RIAppDemoService.cs" />

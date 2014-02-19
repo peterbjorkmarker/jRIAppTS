@@ -26,7 +26,7 @@ var RIAPP;
                     permissions: options.permissionInfo
                 });
                 this._assoc = self._dbContext.associations.getChildToParent();
-
+                this._infotype = null;
                 self._foldersDb = self._dbContext.dbSets.FileSystemObject;
 
                 self._foldersDb.definefullPathField(function () {
@@ -82,18 +82,18 @@ var RIAPP;
                 this._$treeRoot = this._$tree.dynatree("getRoot");
             };
             FolderBrowser.prototype.loadRootFolder = function () {
-                var self = this, query = self._foldersDb.createReadRootQuery({ includeFiles: self._includeFiles, infoType: null });
+                var self = this, query = self._foldersDb.createReadRootQuery({ includeFiles: self._includeFiles, infoType: self.infotype });
                 query.isClearPrevData = true;
-                var promise = self._dbContext.load(query);
+                var promise = query.load();
                 promise.done(function (res) {
                     self._onLoaded(res.fetchedItems);
                 });
                 return promise;
             };
             FolderBrowser.prototype.loadChildren = function (item) {
-                var self = this, query = self._foldersDb.createReadChildrenQuery({ parentKey: item.Key, level: item.Level + 1, path: item.fullPath, includeFiles: self._includeFiles, infoType: null });
+                var self = this, query = self._foldersDb.createReadChildrenQuery({ parentKey: item.Key, level: item.Level + 1, path: item.fullPath, includeFiles: self._includeFiles, infoType: self.infotype });
                 query.isClearPrevData = false;
-                var promise = self._dbContext.load(query);
+                var promise = query.load();
                 promise.done(function (res) {
                     self._onLoaded(res.fetchedItems);
                 });
@@ -167,6 +167,19 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
+            Object.defineProperty(FolderBrowser.prototype, "infotype", {
+                get: function () {
+                    return this._infotype;
+                },
+                set: function (v) {
+                    if (this._infotype !== v) {
+                        this._infotype = v;
+                        this.raisePropertyChanged('infotype');
+                    }
+                },
+                enumerable: true,
+                configurable: true
+            });
             return FolderBrowser;
         })(RIAPP.BaseObject);
         FILESDEMO.FolderBrowser = FolderBrowser;
@@ -182,7 +195,7 @@ var RIAPP;
 
         var FolderBrowserVM = (function (_super) {
             __extends(FolderBrowserVM, _super);
-            function FolderBrowserVM(app, includeFiles) {
+            function FolderBrowserVM(app, options) {
                 _super.call(this, app);
                 var self = this;
                 this._selectedItem = null;
@@ -190,17 +203,19 @@ var RIAPP;
                 //we defined this custom type in common.js
                 this._dialogVM = new RIAPP.COMMON.DialogVM(app);
                 this._folderBrowser = null;
-                this._includeFiles = includeFiles;
-
+                this._options = options;
+                this._infotype = null;
+                var title = self._options.includeFiles ? 'Выбор файла' : 'Выбор папки';
                 var dialogOptions = {
                     templateID: 'treeTemplate',
                     width: 650,
                     height: 700,
-                    title: self._includeFiles ? 'File Browser' : 'Folder Browser',
+                    title: title,
                     fn_OnTemplateCreated: function (template) {
+                        //executed in the context of the dialog
                         var dialog = this, $ = global.$;
                         var $tree = global.$(fn_getTemplateElement(template, 'tree'));
-                        var options = utils.mergeObj(app.options, { $tree: $tree, includeFiles: self._includeFiles });
+                        var options = utils.mergeObj(self._options, { $tree: $tree });
                         self._folderBrowser = new FolderBrowser(options);
                         self._folderBrowser.addOnNodeSelected(function (s, a) {
                             self.selectedItem = a.item;
@@ -208,6 +223,7 @@ var RIAPP;
                     },
                     fn_OnShow: function (dialog) {
                         self.selectedItem = null;
+                        self._folderBrowser.infotype = self.infotype;
                         self._folderBrowser.loadRootFolder();
                     },
                     fn_OnClose: function (dialog) {
@@ -216,11 +232,12 @@ var RIAPP;
                         }
                     }
                 };
+
                 this._dialogVM.createDialog('folderBrowser', dialogOptions);
 
                 this._dialogCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     try  {
-                        self._dialogVM.showDialog('folderBrowser', self);
+                        self.showDialog();
                     } catch (ex) {
                         self._onError(ex, this);
                     }
@@ -228,8 +245,15 @@ var RIAPP;
                     return true;
                 });
             }
+            FolderBrowserVM.prototype._getEventNames = function () {
+                var base_events = _super.prototype._getEventNames.call(this);
+                return ['item_selected'].concat(base_events);
+            };
+            FolderBrowserVM.prototype.addOnItemSelected = function (fn, namespace) {
+                this.addHandler('item_selected', fn, namespace);
+            };
             FolderBrowserVM.prototype._onSelected = function (item, fullPath) {
-                alert("selected: " + fullPath);
+                this.raiseEvent('item_selected', { fullPath: fullPath });
             };
             FolderBrowserVM.prototype.destroy = function () {
                 if (this._isDestroyed)
@@ -245,6 +269,9 @@ var RIAPP;
                     self._dialogVM = null;
                 }
                 _super.prototype.destroy.call(this);
+            };
+            FolderBrowserVM.prototype.showDialog = function () {
+                this._dialogVM.showDialog('folderBrowser', this);
             };
             Object.defineProperty(FolderBrowserVM.prototype, "folderBrowser", {
                 get: function () {
@@ -275,7 +302,20 @@ var RIAPP;
             });
             Object.defineProperty(FolderBrowserVM.prototype, "includeFiles", {
                 get: function () {
-                    return this._includeFiles;
+                    return this._options.includeFiles;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(FolderBrowserVM.prototype, "infotype", {
+                get: function () {
+                    return this._infotype;
+                },
+                set: function (v) {
+                    if (this._infotype !== v) {
+                        this._infotype = v;
+                        this.raisePropertyChanged('infotype');
+                    }
                 },
                 enumerable: true,
                 configurable: true
@@ -292,12 +332,23 @@ var RIAPP;
                 this._errorVM = null;
                 this._fbrowserVM1 = null;
                 this._fbrowserVM2 = null;
+                this._selectedPath = null;
             }
             DemoApplication.prototype.onStartUp = function () {
                 var self = this, options = self.options;
                 this._errorVM = new RIAPP.COMMON.ErrorViewModel(this);
-                this._fbrowserVM1 = new FolderBrowserVM(this, false);
-                this._fbrowserVM2 = new FolderBrowserVM(this, true);
+                this._fbrowserVM1 = new FolderBrowserVM(this, { service_url: options.service_url, permissionInfo: options.permissionInfo, includeFiles: false });
+                this._fbrowserVM2 = new FolderBrowserVM(this, { service_url: options.service_url, permissionInfo: options.permissionInfo, includeFiles: true });
+                this._fbrowserVM1.infotype = "BASE_ROOT";
+                this._fbrowserVM2.infotype = "BASE_ROOT";
+                this._fbrowserVM1.addOnItemSelected(function (s, a) {
+                    self._selectedPath = s.infotype + '\\' + a.fullPath;
+                    self.raisePropertyChanged('selectedPath');
+                });
+                this._fbrowserVM2.addOnItemSelected(function (s, a) {
+                    self._selectedPath = s.infotype + '\\' + a.fullPath;
+                    self.raisePropertyChanged('selectedPath');
+                });
 
                 //here we could process application's errors
                 this.addOnError(function (sender, data) {
@@ -354,6 +405,13 @@ var RIAPP;
             Object.defineProperty(DemoApplication.prototype, "fbrowserVM2", {
                 get: function () {
                     return this._fbrowserVM2;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(DemoApplication.prototype, "selectedPath", {
+                get: function () {
+                    return this._selectedPath;
                 },
                 enumerable: true,
                 configurable: true

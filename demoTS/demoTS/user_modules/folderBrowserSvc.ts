@@ -5,7 +5,7 @@ module RIAPP
     export module FOLDERBROWSER_SVC {
         'use strict';
         /*
-            Generated from: /FolderBrowserService/CodeGen?type=ts on 2014-02-05 13:47 at 13:47
+            Generated from: /FolderBrowserService/CodeGen?type=ts on 2014-02-19 11:44 at 11:44
             Don't make manual changes here, because they will be lost when this db interface will be regenerated!
         */
 
@@ -76,6 +76,7 @@ module RIAPP
             }
             createReadRootQuery(args?: {
                 includeFiles: boolean;
+                infoType: string;
             }) {
                 var query = this.createQuery('ReadRoot');
                 query.params = args;
@@ -86,6 +87,7 @@ module RIAPP
                 level: number;
                 path: string;
                 includeFiles: boolean;
+                infoType: string;
             }) {
                 var query = this.createQuery('ReadChildren');
                 query.params = args;
@@ -119,7 +121,7 @@ module RIAPP
                 this._dbSets = new DbSets(this);
                 var associations = [{ "name": "ChildToParent", "parentDbSetName": "FileSystemObject", "childDbSetName": "FileSystemObject", "childToParentName": "Parent", "parentToChildrenName": "Children", "onDeleteAction": 1, "fieldRels": [{ "parentField": "Key", "childField": "ParentKey" }] }];
                 this._initAssociations(associations);
-                var methods = [{ "methodName": "ReadRoot", "parameters": [{ "name": "includeFiles", "dataType": 2, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 0 }], "methodResult": true, "isQuery": true }, { "methodName": "ReadChildren", "parameters": [{ "name": "parentKey", "dataType": 1, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 0 }, { "name": "level", "dataType": 3, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 1 }, { "name": "path", "dataType": 1, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 2 }, { "name": "includeFiles", "dataType": 2, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 3 }], "methodResult": true, "isQuery": true }];
+                var methods = [{ "methodName": "ReadRoot", "parameters": [{ "name": "includeFiles", "dataType": 2, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 0 }, { "name": "infoType", "dataType": 1, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 1 }], "methodResult": true, "isQuery": true }, { "methodName": "ReadChildren", "parameters": [{ "name": "parentKey", "dataType": 1, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 0 }, { "name": "level", "dataType": 3, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 1 }, { "name": "path", "dataType": 1, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 2 }, { "name": "includeFiles", "dataType": 2, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 3 }, { "name": "infoType", "dataType": 1, "isArray": false, "isNullable": false, "dateConversion": 0, "ordinal": 4 }], "methodResult": true, "isQuery": true }];
                 this._initMethods(methods);
             }
             get associations() { return <IAssocs>this._assoc; }

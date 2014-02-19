@@ -7,21 +7,22 @@
     Layout = "~/Views/Shared/_LayoutDemo.cshtml";
 }
 @{
-    ViewBag.Title = "Files explorer Demo";
+    ViewBag.Title = "Files and Folders browser Demo";
 }
 
 @section CssImport
 {
-   <link href="@Url.Content("~/Scripts/dynatree/src/skin/ui.dynatree.css", true)" rel="stylesheet" type="text/css" />
+   <link href="@Url.Content("~/Scripts/dynatree/skin/ui.dynatree.css", true)" rel="stylesheet" type="text/css" />
 }
 
 @section JSImport
 {
-    <script src="@Url.Content("~/Scripts/dynatree/src/jquery.dynatree.js", true)" type="text/javascript"></script>
+    <script src="@Url.Content("~/Scripts/dynatree/jquery.dynatree.min.js", true)" type="text/javascript"></script>
     <script src="@Url.Content("~/Scripts/RIAppDemo/common.js",true)" type="text/javascript"></script>
     <script src="@Url.Content("~/Scripts/RIAppDemo/folderBrowserSvc.js",true)" type="text/javascript"></script>
     <script src="@Url.Content("~/Scripts/RIAppDemo/filesDemo.js",true)" type="text/javascript"></script>
 }
+
 <style type="text/css">
 #demoHeader label
 {
@@ -31,7 +32,7 @@
 #demoContent
 {
     overflow:visible; 
-    height:600px;
+    height: 80px;
     vertical-align:top;
     position:relative;
 }
@@ -63,11 +64,11 @@
 
 <h2 style="display:inline-block;">@ViewBag.Title</h2>
 
-<!--using dataform is convenient because it set datacontext scope for all its content-->
 <div id="demoContent">
    <a class="btn btn-info btn-small" style="margin:5px 5px 5px 0px;" data-bind="{this.command,to=dialogCommand,mode=OneWay,source=fbrowserVM1}">Open folder browser</a>
    <a class="btn btn-info btn-small" style="margin:5px 5px 5px 0px;" data-bind="{this.command,to=dialogCommand,mode=OneWay,source=fbrowserVM2}">Open file browser</a>
 </div>
+<span style="font-weight:bold;">Selected path: </span><span style="color:blue;" data-bind="{this.value,to=selectedPath}"></span>
 
 @section RiaTemplates
 {

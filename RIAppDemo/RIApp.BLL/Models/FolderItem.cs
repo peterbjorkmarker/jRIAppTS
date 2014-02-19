@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RIAppDemo.BLL.Models
 {
-    public class FolderModel
+    public class FolderItem
     {
         public string Key { get; set; }
         public string ParentKey { get; set; }

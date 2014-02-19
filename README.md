@@ -27,6 +27,7 @@ After minification jriapp.js has the size of about 307 KB. When it is gzipped, i
 I recommend using the ASP.NET MVC 4 bundling feature for managing javascript files.
 
 <b>Latest changes:</b>
+<p>2014-02-19 Updated (improved) file and folder browser demo.</p>
 <p>2014-02-13 Removed DataForm's isDisabled property , as well as Template's one. They are redundant.
 <br/>
 Update the docs.
