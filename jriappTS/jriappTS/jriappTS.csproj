@@ -94,7 +94,7 @@
   </PropertyGroup>
   <Import Project="$(VSToolsPath)\TypeScript\Microsoft.TypeScript.targets" />
   <PropertyGroup>
-    <PostBuildEvent>tsc --out $(ProjectDir)\jriapp.js --d --target ES5  $(ProjectDir)\main\app.ts
+    <PostBuildEvent>tsc --out $(ProjectDir)jriapp.js --d --target ES5  $(ProjectDir)main\app.ts
 </PostBuildEvent>
   </PropertyGroup>
 </Project>

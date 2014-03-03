@@ -4,9 +4,10 @@
 		var self =this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
 			dbContext: dbContext,
 			dbSetInfo: {{DBSET_INFO}},
-			childAssoc: {{CHILD_ASSOC}},
-			parentAssoc: {{PARENT_ASSOC}} 
+			childAssoc: ({{CHILD_ASSOC}}),
+			parentAssoc: ({{PARENT_ASSOC}}) 
 		}, utils=RIAPP.global.utils;
+		opts.dbSetInfo.fieldInfos = ({{FIELD_INFOS}});
 		super(opts, {{ENTITY_TYPE}});
 	}
 	findEntity({{PK_VALS}}): {{ENTITY_TYPE}} {

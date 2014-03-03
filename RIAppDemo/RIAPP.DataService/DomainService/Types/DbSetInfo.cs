@@ -16,7 +16,7 @@ namespace RIAPP.DataService.Types
         private Lazy<Field[]> _pkFields;
         private Lazy<Field> _timestampField;
 
-        private FieldsList _fieldInfos = new FieldsList();
+        internal FieldsList _fieldInfos = new FieldsList();
         internal Dictionary<string, Field> _fieldsByNames;
         internal MethodInfo _validateDataMethod;
         internal MethodInfo _deleteDataMethod;

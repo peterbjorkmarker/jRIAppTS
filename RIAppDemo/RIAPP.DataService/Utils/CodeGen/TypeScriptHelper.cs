@@ -607,10 +607,21 @@ namespace RIAPP.DataService.Utils
                             sb.Append(entityType);
                             break;
                         case "ENTITY_INTERFACE":
-                            sb.Append(entityInterfaceName);
+                            {
+                                sb.Append(entityInterfaceName);
+                            }
                             break;
                         case "DBSET_INFO":
-                            sb.Append(this._serviceContainer.Serializer.Serialize(dbSetInfo));
+                            {
+                                dbSetInfo._fieldInfos = null;
+                                sb.Append(this._serviceContainer.Serializer.Serialize(dbSetInfo));
+                                dbSetInfo._fieldInfos = fieldInfos;
+                            }
+                            break;
+                        case "FIELD_INFOS":
+                            {
+                                sb.Append(this._serviceContainer.Serializer.Serialize(dbSetInfo.fieldInfos));
+                            }
                             break;
                         case "CHILD_ASSOC":
                             sb.Append(this._serviceContainer.Serializer.Serialize(childAssoc));
