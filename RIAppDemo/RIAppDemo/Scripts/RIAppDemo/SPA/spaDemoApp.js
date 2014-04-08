@@ -7,9 +7,6 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 define(["require", "exports", "spaDemoViewModels", "domainModel", "common", "autocomplete", "gridElView"], function(require, exports, VIEWMODELS, DEMODB, COMMON, AUTOCOMPLETE, GRIDELVIEW) {
-    //using static import for CORE jriapp modules (they are inside jriapp.js file)
-    var MOD = RIAPP.MOD;
-
     //local variables for optimization
     var global = RIAPP.global, utils = global.utils;
 

@@ -1134,7 +1134,7 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (utils) {
-            var constsMOD = RIAPP.MOD.consts;
+            var constsMOD = MOD.consts;
             var base_utils = RIAPP.baseUtils, _newID = 0;
             utils.css = {
                 toolTip: 'qtip',
@@ -1232,13 +1232,13 @@ var RIAPP;
                     return !!obj && obj instanceof RIAPP.BaseObject;
                 };
                 Checks.isBinding = function (obj) {
-                    return !!obj && obj instanceof RIAPP.MOD.binding.Binding;
+                    return !!obj && obj instanceof MOD.binding.Binding;
                 };
                 Checks.isElView = function (obj) {
-                    return !!obj && obj instanceof RIAPP.MOD.baseElView.BaseElView;
+                    return !!obj && obj instanceof MOD.baseElView.BaseElView;
                 };
                 Checks.isTemplateElView = function (obj) {
-                    return !!obj && obj instanceof RIAPP.MOD.template.TemplateElView;
+                    return !!obj && obj instanceof MOD.template.TemplateElView;
                 };
                 Checks.isEditable = function (obj) {
                     return !!obj && !!obj.beginEdit && !!obj.endEdit && !!obj.cancelEdit && RIAPP.global.utils.hasProp(obj, 'isEditing');
@@ -1417,7 +1417,7 @@ var RIAPP;
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'val', val));
                     }
                     var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), parseInt(parts[3], 10), parseInt(parts[4], 10), parseInt(parts[5], 10), (!!parts[6]) ? parseInt(parts[6], 10) : 0);
-                    var DATE_CONVERSION = RIAPP.MOD.consts.DATE_CONVERSION;
+                    var DATE_CONVERSION = MOD.consts.DATE_CONVERSION;
                     var ctz = RIAPP.global.utils.get_timeZoneOffset();
 
                     switch (dtcnv) {
@@ -1440,7 +1440,7 @@ var RIAPP;
                         return null;
                     if (!Checks.isDate(dt))
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dt', dt));
-                    var DATE_CONVERSION = RIAPP.MOD.consts.DATE_CONVERSION;
+                    var DATE_CONVERSION = MOD.consts.DATE_CONVERSION;
                     var ctz = RIAPP.global.utils.get_timeZoneOffset();
                     switch (dtcnv) {
                         case 0 /* None */:
@@ -1460,7 +1460,7 @@ var RIAPP;
                 compareVals: function (v1, v2, dataType) {
                     if ((v1 === null && v2 !== null) || (v1 !== null && v2 === null))
                         return false;
-                    var DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE;
+                    var DATA_TYPE = MOD.consts.DATA_TYPE;
                     switch (dataType) {
                         case 6 /* DateTime */:
                         case 7 /* Date */:
@@ -1536,7 +1536,7 @@ var RIAPP;
                     }
 
                     if (!isOK)
-                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_WRONG_TYPE, v, RIAPP.MOD.consts.DATA_TYPE[dataType]));
+                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_WRONG_TYPE, v, MOD.consts.DATA_TYPE[dataType]));
                     return res;
                 },
                 parseValue: function (v, dataType, dcnv, stz) {
@@ -2520,8 +2520,6 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (defaults) {
-            var utilsMOD = RIAPP.MOD.utils;
-
             var Defaults = (function (_super) {
                 __extends(Defaults, _super);
                 function Defaults() {
@@ -2715,9 +2713,9 @@ var RIAPP;
                     if (utils.str.startsWith(prop, '[')) {
                         //it is an indexed property, obj must be of collection type
                         prop = this.trimQuotes(this.trimBrackets(prop));
-                        if (obj instanceof RIAPP.MOD.collection.BaseDictionary) {
+                        if (obj instanceof MOD.collection.BaseDictionary) {
                             return obj.getItemByKey(prop);
-                        } else if (obj instanceof RIAPP.MOD.collection.BaseCollection) {
+                        } else if (obj instanceof MOD.collection.BaseCollection) {
                             return obj.getItemByPos(parseInt(prop, 10));
                         } else if (utils.check.isArray(obj)) {
                             return obj[parseInt(prop, 10)];
@@ -4582,9 +4580,6 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (binding) {
-            var converterMOD = RIAPP.MOD.converter;
-            var elviewMOD = RIAPP.MOD.baseElView;
-
             (function (BINDING_MODE) {
                 BINDING_MODE[BINDING_MODE["OneTime"] = 0] = "OneTime";
                 BINDING_MODE[BINDING_MODE["OneWay"] = 1] = "OneWay";
@@ -6823,14 +6818,13 @@ var RIAPP;
 var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
-        (function (template) {
+        (function (_template) {
             var constsMOD = RIAPP.MOD.consts;
-            var utilsMOD = RIAPP.MOD.utils;
-            var bindMOD = RIAPP.MOD.binding;
+
             var elviewMOD = RIAPP.MOD.baseElView;
             var mvvmMOD = RIAPP.MOD.mvvm;
 
-            template.css = {
+            _template.css = {
                 templateContainer: 'ria-template-container'
             };
             var utils, global = RIAPP.global;
@@ -6856,7 +6850,7 @@ var RIAPP;
                     this._promise = null;
                     this._busyTimeOut = null;
                     this._el = global.document.createElement("div");
-                    this._el.className = template.css.templateContainer;
+                    this._el.className = _template.css.templateContainer;
                     if (!!options.templateID)
                         this._loadTemplate();
                 }
@@ -7172,7 +7166,7 @@ var RIAPP;
                 });
                 return Template;
             })(RIAPP.BaseObject);
-            template.Template = Template;
+            _template.Template = Template;
 
             //for strongly typed parameters
             var TemplateCommand = (function (_super) {
@@ -7182,7 +7176,7 @@ var RIAPP;
                 }
                 return TemplateCommand;
             })(mvvmMOD.Command);
-            template.TemplateCommand = TemplateCommand;
+            _template.TemplateCommand = TemplateCommand;
 
             var TemplateElView = (function (_super) {
                 __extends(TemplateElView, _super);
@@ -7245,7 +7239,7 @@ var RIAPP;
                 });
                 return TemplateElView;
             })(elviewMOD.CommandElView);
-            template.TemplateElView = TemplateElView;
+            _template.TemplateElView = TemplateElView;
             ;
 
             global.registerType('Template', Template);
@@ -7262,7 +7256,7 @@ var RIAPP;
         (function (baseContent) {
             var constsMOD = RIAPP.MOD.consts;
             var utilsMOD = RIAPP.MOD.utils;
-            var parserMOD = RIAPP.MOD.parser;
+
             var elviewMOD = RIAPP.MOD.baseElView;
             var bindMOD = RIAPP.MOD.binding;
             var templMOD = RIAPP.MOD.template;
@@ -8153,13 +8147,13 @@ var RIAPP;
 var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
-        (function (dataform) {
+        (function (_dataform) {
             var constsMOD = RIAPP.MOD.consts;
-            var utilsMOD = RIAPP.MOD.utils;
+
             var bindMOD = RIAPP.MOD.binding;
             var elviewMOD = RIAPP.MOD.baseElView;
             var contentMOD = RIAPP.MOD.baseContent;
-            dataform.css = {
+            _dataform.css = {
                 dataform: 'ria-dataform'
             };
             var ERRTEXT = RIAPP.localizable.VALIDATE, utils;
@@ -8181,7 +8175,7 @@ var RIAPP;
                     this._$el = RIAPP.global.$(this._el);
                     this._objId = 'frm' + utils.getNewID();
                     this._dataContext = null;
-                    this._$el.addClass(dataform.css.dataform);
+                    this._$el.addClass(_dataform.css.dataform);
                     this._isEditing = false;
                     this._content = [];
                     this._lfTime = null;
@@ -8347,7 +8341,7 @@ var RIAPP;
                         return;
                     this._isDestroyCalled = true;
                     this._clearContent();
-                    this._$el.removeClass(dataform.css.dataform);
+                    this._$el.removeClass(_dataform.css.dataform);
                     this._el = null;
                     this._$el = null;
                     this._unbindDS();
@@ -8484,7 +8478,7 @@ var RIAPP;
                 });
                 return DataForm;
             })(RIAPP.BaseObject);
-            dataform.DataForm = DataForm;
+            _dataform.DataForm = DataForm;
 
             var DataFormElView = (function (_super) {
                 __extends(DataFormElView, _super);
@@ -8584,7 +8578,7 @@ var RIAPP;
                 });
                 return DataFormElView;
             })(elviewMOD.BaseElView);
-            dataform.DataFormElView = DataFormElView;
+            _dataform.DataFormElView = DataFormElView;
 
             RIAPP.global.registerType('DataFormElView', DataFormElView);
             RIAPP.global.registerElView(constsMOD.ELVIEW_NM.DATAFORM, DataFormElView);
@@ -8598,8 +8592,6 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (dynacontent) {
-            var constsMOD = RIAPP.MOD.consts;
-            var utilsMOD = RIAPP.MOD.utils;
             var elviewMOD = RIAPP.MOD.baseElView;
             var templMOD = RIAPP.MOD.template;
 
@@ -8904,8 +8896,7 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (tabs) {
-            var mvvmMOD = RIAPP.MOD.mvvm;
-            var elviewMOD = RIAPP.MOD.baseElView;
+            var elviewMOD = MOD.baseElView;
 
             var TabsElView = (function (_super) {
                 __extends(TabsElView, _super);
@@ -9007,8 +8998,8 @@ var RIAPP;
     (function (MOD) {
         (function (listbox) {
             var bindMOD = RIAPP.MOD.binding;
-            var collMOD = RIAPP.MOD.collection;
-            var elviewMOD = RIAPP.MOD.baseElView;
+            var collMOD = MOD.collection;
+            var elviewMOD = MOD.baseElView;
             var contentMOD = RIAPP.MOD.baseContent;
 
             var utils, parser;
@@ -9893,7 +9884,6 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (datadialog) {
-            var utilsMOD = RIAPP.MOD.utils;
             var templMOD = RIAPP.MOD.template;
 
             var utils;
@@ -10356,7 +10346,7 @@ var RIAPP;
     (function (MOD) {
         (function (datagrid) {
             var constsMOD = RIAPP.MOD.consts;
-            var utilsMOD = RIAPP.MOD.utils;
+
             var bindMOD = RIAPP.MOD.binding;
             var contentMOD = RIAPP.MOD.baseContent;
             var collMOD = RIAPP.MOD.collection;
@@ -12484,7 +12474,7 @@ var RIAPP;
                         dialogOptions = utils.extend(false, {
                             dataContext: item
                         }, this._options.editor);
-                        this._dialog = new RIAPP.MOD.datadialog.DataEditDialog(this.app, dialogOptions);
+                        this._dialog = new MOD.datadialog.DataEditDialog(this.app, dialogOptions);
                     } else
                         this._dialog.dataContext = item;
                     this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._isNew;
@@ -12862,7 +12852,7 @@ var RIAPP;
                     configurable: true
                 });
                 return GridElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
+            })(MOD.baseElView.BaseElView);
             datagrid.GridElView = GridElView;
 
             global.registerElView('table', GridElView);
@@ -12876,15 +12866,14 @@ var RIAPP;
 var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
-        (function (pager) {
-            var utilsMOD = RIAPP.MOD.utils;
+        (function (_pager) {
             var collMOD = RIAPP.MOD.collection;
 
             var utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-            pager.css = {
+            _pager.css = {
                 pager: 'ria-data-pager',
                 info: 'pager-info',
                 currentPage: 'pager-current-page',
@@ -12917,7 +12906,7 @@ var RIAPP;
                     this._rowsPerPage = 0;
                     this._rowCount = 0;
                     this._currentPage = 1;
-                    this._$el.addClass(pager.css.pager);
+                    this._$el.addClass(_pager.css.pager);
                     if (!!this._options.dataSource) {
                         this._bindDS();
                     }
@@ -12952,7 +12941,7 @@ var RIAPP;
                         if (this.showInfo) {
                             var $span = this._createElement('span');
                             var info = utils.format(PAGER_TXT.pageInfo, currentPage, pageCount);
-                            $span.addClass(pager.css.info).text(info).appendTo($el);
+                            $span.addClass(_pager.css.info).text(info).appendTo($el);
                         }
 
                         if (this.showFirstAndLast && (currentPage != 1)) {
@@ -13026,7 +13015,7 @@ var RIAPP;
                     this._isDestroyCalled = true;
                     this._unbindDS();
                     this._clearContent();
-                    this._$el.removeClass(pager.css.pager);
+                    this._$el.removeClass(_pager.css.pager);
                     this._$el = null;
                     this._options = {};
                     _super.prototype.destroy.call(this);
@@ -13089,7 +13078,7 @@ var RIAPP;
                         tip = PAGER_TXT.firstPageTip;
                     }
                     a = this._createLink(1, PAGER_TXT.firstText, tip);
-                    $span.addClass(pager.css.otherPage).append(a);
+                    $span.addClass(_pager.css.otherPage).append(a);
                     return $span;
                 };
                 Pager.prototype._createPrevious = function () {
@@ -13100,7 +13089,7 @@ var RIAPP;
                     }
 
                     a = this._createLink(previousPage, PAGER_TXT.previousText, tip);
-                    span.addClass(pager.css.otherPage).append(a);
+                    span.addClass(_pager.css.otherPage).append(a);
                     return span;
                 };
                 Pager.prototype._createCurrent = function () {
@@ -13112,7 +13101,7 @@ var RIAPP;
                         utils.addToolTip(span, this._buildTip(currentPage));
                     }
 
-                    span.addClass(pager.css.currentPage);
+                    span.addClass(_pager.css.currentPage);
                     return span;
                 };
                 Pager.prototype._createOther = function (page) {
@@ -13123,7 +13112,7 @@ var RIAPP;
                     }
 
                     a = this._createLink(page, '' + page, tip);
-                    span.addClass(pager.css.otherPage);
+                    span.addClass(_pager.css.otherPage);
                     span.append(a);
                     return span;
                 };
@@ -13134,7 +13123,7 @@ var RIAPP;
                         tip = utils.format(PAGER_TXT.nextPageTip, nextPage);
                     }
                     a = this._createLink(nextPage, PAGER_TXT.nextText, tip);
-                    span.addClass(pager.css.otherPage).append(a);
+                    span.addClass(_pager.css.otherPage).append(a);
                     return span;
                 };
                 Pager.prototype._createLast = function () {
@@ -13144,7 +13133,7 @@ var RIAPP;
                         tip = PAGER_TXT.lastPageTip;
                     }
                     a = this._createLink(this.pageCount, PAGER_TXT.lastText, tip);
-                    span.addClass(pager.css.otherPage).append(a);
+                    span.addClass(_pager.css.otherPage).append(a);
                     return span;
                 };
                 Pager.prototype._buildTip = function (page) {
@@ -13358,7 +13347,7 @@ var RIAPP;
                 });
                 return Pager;
             })(RIAPP.BaseObject);
-            pager.Pager = Pager;
+            _pager.Pager = Pager;
 
             var PagerElView = (function (_super) {
                 __extends(PagerElView, _super);
@@ -13418,8 +13407,8 @@ var RIAPP;
                     configurable: true
                 });
                 return PagerElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
-            pager.PagerElView = PagerElView;
+            })(MOD.baseElView.BaseElView);
+            _pager.PagerElView = PagerElView;
 
             RIAPP.global.registerElView('pager', PagerElView);
             RIAPP.global.onModuleLoaded('pager', pager);
@@ -13431,17 +13420,16 @@ var RIAPP;
 var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
-        (function (stackpanel) {
+        (function (_stackpanel) {
             var constsMOD = RIAPP.MOD.consts;
-            var utilsMOD = RIAPP.MOD.utils;
-            var templMOD = RIAPP.MOD.template;
+
             var collMOD = RIAPP.MOD.collection;
 
             var utils, global = RIAPP.global;
             global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-            stackpanel.css = {
+            _stackpanel.css = {
                 stackpanel: 'ria-stackpanel',
                 item: 'stackpanel-item',
                 currentItem: 'current-item'
@@ -13468,7 +13456,7 @@ var RIAPP;
                     this._objId = 'pnl' + global.utils.getNewID();
                     this._isDSFilling = false;
                     this._currentItem = null;
-                    this._$el.addClass(stackpanel.css.stackpanel);
+                    this._$el.addClass(_stackpanel.css.stackpanel);
                     this._itemMap = {};
 
                     this._$el.on('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''), function (e) {
@@ -13545,13 +13533,13 @@ var RIAPP;
                         if (!!old) {
                             mappedItem = self._itemMap[old._key];
                             if (!!mappedItem) {
-                                global.$(mappedItem.div).removeClass(stackpanel.css.currentItem);
+                                global.$(mappedItem.div).removeClass(_stackpanel.css.currentItem);
                             }
                         }
                         if (!!item) {
                             mappedItem = self._itemMap[item._key];
                             if (!!mappedItem) {
-                                global.$(mappedItem.div).addClass(stackpanel.css.currentItem);
+                                global.$(mappedItem.div).addClass(_stackpanel.css.currentItem);
                                 if (withScroll)
                                     mappedItem.div.scrollIntoView(false);
                             }
@@ -13621,7 +13609,7 @@ var RIAPP;
                     }
                 };
                 StackPanel.prototype._createTemplate = function (item) {
-                    var t = new RIAPP.MOD.template.Template({
+                    var t = new MOD.template.Template({
                         app: this.app,
                         templateID: this.templateID,
                         dataContext: item,
@@ -13645,7 +13633,7 @@ var RIAPP;
                         return;
                     var self = this, $div = self._createElement('div'), div = $div.get(0);
 
-                    $div.addClass(stackpanel.css.item);
+                    $div.addClass(_stackpanel.css.item);
                     if (this.orientation == 'horizontal') {
                         $div.css('display', 'inline-block');
                     }
@@ -13704,7 +13692,7 @@ var RIAPP;
                     global._untrackSelectable(this);
                     this._unbindDS();
                     this._clearContent();
-                    this._$el.removeClass(stackpanel.css.stackpanel);
+                    this._$el.removeClass(_stackpanel.css.stackpanel);
                     this._$el = null;
                     this._currentItem = null;
                     this._itemMap = {};
@@ -13826,7 +13814,7 @@ var RIAPP;
                 });
                 return StackPanel;
             })(RIAPP.BaseObject);
-            stackpanel.StackPanel = StackPanel;
+            _stackpanel.StackPanel = StackPanel;
 
             var StackPanelElView = (function (_super) {
                 __extends(StackPanelElView, _super);
@@ -13885,8 +13873,8 @@ var RIAPP;
                     configurable: true
                 });
                 return StackPanelElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
-            stackpanel.StackPanelElView = StackPanelElView;
+            })(MOD.baseElView.BaseElView);
+            _stackpanel.StackPanelElView = StackPanelElView;
 
             global.registerElView('stackpanel', StackPanelElView);
             global.onModuleLoaded('stackpanel', stackpanel);
@@ -13898,7 +13886,7 @@ var RIAPP;
 var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
-        (function (db) {
+        (function (_db) {
             var constsMOD = RIAPP.MOD.consts;
             var utilsMOD = RIAPP.MOD.utils;
             var collMod = RIAPP.MOD.collection;
@@ -13916,29 +13904,29 @@ var RIAPP;
                 FLAGS[FLAGS["Changed"] = 1] = "Changed";
                 FLAGS[FLAGS["Setted"] = 2] = "Setted";
                 FLAGS[FLAGS["Refreshed"] = 4] = "Refreshed";
-            })(db.FLAGS || (db.FLAGS = {}));
-            var FLAGS = db.FLAGS;
+            })(_db.FLAGS || (_db.FLAGS = {}));
+            var FLAGS = _db.FLAGS;
             (function (REFRESH_MODE) {
                 REFRESH_MODE[REFRESH_MODE["NONE"] = 0] = "NONE";
                 REFRESH_MODE[REFRESH_MODE["RefreshCurrent"] = 1] = "RefreshCurrent";
                 REFRESH_MODE[REFRESH_MODE["MergeIntoCurrent"] = 2] = "MergeIntoCurrent";
                 REFRESH_MODE[REFRESH_MODE["CommitChanges"] = 3] = "CommitChanges";
-            })(db.REFRESH_MODE || (db.REFRESH_MODE = {}));
-            var REFRESH_MODE = db.REFRESH_MODE;
+            })(_db.REFRESH_MODE || (_db.REFRESH_MODE = {}));
+            var REFRESH_MODE = _db.REFRESH_MODE;
             (function (DELETE_ACTION) {
                 DELETE_ACTION[DELETE_ACTION["NoAction"] = 0] = "NoAction";
                 DELETE_ACTION[DELETE_ACTION["Cascade"] = 1] = "Cascade";
                 DELETE_ACTION[DELETE_ACTION["SetNulls"] = 2] = "SetNulls";
-            })(db.DELETE_ACTION || (db.DELETE_ACTION = {}));
-            var DELETE_ACTION = db.DELETE_ACTION;
+            })(_db.DELETE_ACTION || (_db.DELETE_ACTION = {}));
+            var DELETE_ACTION = _db.DELETE_ACTION;
             (function (DATA_OPER) {
                 DATA_OPER[DATA_OPER["SUBMIT"] = 0] = "SUBMIT";
                 DATA_OPER[DATA_OPER["LOAD"] = 1] = "LOAD";
                 DATA_OPER[DATA_OPER["INVOKE"] = 2] = "INVOKE";
                 DATA_OPER[DATA_OPER["REFRESH"] = 3] = "REFRESH";
                 DATA_OPER[DATA_OPER["INIT"] = 4] = "INIT";
-            })(db.DATA_OPER || (db.DATA_OPER = {}));
-            var DATA_OPER = db.DATA_OPER;
+            })(_db.DATA_OPER || (_db.DATA_OPER = {}));
+            var DATA_OPER = _db.DATA_OPER;
 
             var DATA_SVC_METH = {
                 Invoke: 'InvokeMethod', LoadData: 'GetItems', GetMetadata: 'GetMetadata', GetPermissions: 'GetPermissions',
@@ -13965,8 +13953,8 @@ var RIAPP;
                     configurable: true
                 });
                 return DataOperationError;
-            })(RIAPP.MOD.errors.BaseError);
-            db.DataOperationError = DataOperationError;
+            })(MOD.errors.BaseError);
+            _db.DataOperationError = DataOperationError;
             var AccessDeniedError = (function (_super) {
                 __extends(AccessDeniedError, _super);
                 function AccessDeniedError() {
@@ -13974,7 +13962,7 @@ var RIAPP;
                 }
                 return AccessDeniedError;
             })(DataOperationError);
-            db.AccessDeniedError = AccessDeniedError;
+            _db.AccessDeniedError = AccessDeniedError;
             var ConcurrencyError = (function (_super) {
                 __extends(ConcurrencyError, _super);
                 function ConcurrencyError() {
@@ -13982,7 +13970,7 @@ var RIAPP;
                 }
                 return ConcurrencyError;
             })(DataOperationError);
-            db.ConcurrencyError = ConcurrencyError;
+            _db.ConcurrencyError = ConcurrencyError;
             var SvcValidationError = (function (_super) {
                 __extends(SvcValidationError, _super);
                 function SvcValidationError() {
@@ -13990,7 +13978,7 @@ var RIAPP;
                 }
                 return SvcValidationError;
             })(DataOperationError);
-            db.SvcValidationError = SvcValidationError;
+            _db.SvcValidationError = SvcValidationError;
             var SubmitError = (function (_super) {
                 __extends(SubmitError, _super);
                 function SubmitError(origError, allSubmitted, notValidated) {
@@ -14023,7 +14011,7 @@ var RIAPP;
                 });
                 return SubmitError;
             })(DataOperationError);
-            db.SubmitError = SubmitError;
+            _db.SubmitError = SubmitError;
 
             function __checkError(svcError, oper) {
                 if (!svcError)
@@ -14295,7 +14283,7 @@ var RIAPP;
                 });
                 return DataCache;
             })(RIAPP.BaseObject);
-            db.DataCache = DataCache;
+            _db.DataCache = DataCache;
 
             var TDataQuery = (function (_super) {
                 __extends(TDataQuery, _super);
@@ -14603,7 +14591,7 @@ var RIAPP;
                 });
                 return TDataQuery;
             })(RIAPP.BaseObject);
-            db.TDataQuery = TDataQuery;
+            _db.TDataQuery = TDataQuery;
 
             var DataQuery = (function (_super) {
                 __extends(DataQuery, _super);
@@ -14612,7 +14600,7 @@ var RIAPP;
                 }
                 return DataQuery;
             })(TDataQuery);
-            db.DataQuery = DataQuery;
+            _db.DataQuery = DataQuery;
 
             var Entity = (function (_super) {
                 __extends(Entity, _super);
@@ -15173,7 +15161,7 @@ var RIAPP;
                 });
                 return Entity;
             })(collMod.CollectionItem);
-            db.Entity = Entity;
+            _db.Entity = Entity;
 
             var DbSet = (function (_super) {
                 __extends(DbSet, _super);
@@ -15847,7 +15835,7 @@ var RIAPP;
                 });
                 return DbSet;
             })(collMod.BaseCollection);
-            db.DbSet = DbSet;
+            _db.DbSet = DbSet;
 
             //implements lazy initialization pattern for creating DbSet's instances
             var DbSets = (function (_super) {
@@ -15909,7 +15897,7 @@ var RIAPP;
                 };
                 return DbSets;
             })(RIAPP.BaseObject);
-            db.DbSets = DbSets;
+            _db.DbSets = DbSets;
 
             var DbContext = (function (_super) {
                 __extends(DbContext, _super);
@@ -16770,7 +16758,7 @@ var RIAPP;
                 });
                 return DbContext;
             })(RIAPP.BaseObject);
-            db.DbContext = DbContext;
+            _db.DbContext = DbContext;
 
             var Association = (function (_super) {
                 __extends(Association, _super);
@@ -17454,7 +17442,7 @@ var RIAPP;
                 });
                 return Association;
             })(RIAPP.BaseObject);
-            db.Association = Association;
+            _db.Association = Association;
 
             var DataView = (function (_super) {
                 __extends(DataView, _super);
@@ -17941,7 +17929,7 @@ var RIAPP;
                 });
                 return DataView;
             })(collMod.BaseCollection);
-            db.DataView = DataView;
+            _db.DataView = DataView;
 
             var ChildDataView = (function (_super) {
                 __extends(ChildDataView, _super);
@@ -18037,7 +18025,7 @@ var RIAPP;
                 });
                 return ChildDataView;
             })(DataView);
-            db.ChildDataView = ChildDataView;
+            _db.ChildDataView = ChildDataView;
 
             var TDbSet = (function (_super) {
                 __extends(TDbSet, _super);
@@ -18046,7 +18034,7 @@ var RIAPP;
                 }
                 return TDbSet;
             })(DbSet);
-            db.TDbSet = TDbSet;
+            _db.TDbSet = TDbSet;
             var TDataView = (function (_super) {
                 __extends(TDataView, _super);
                 function TDataView() {
@@ -18054,7 +18042,7 @@ var RIAPP;
                 }
                 return TDataView;
             })(DataView);
-            db.TDataView = TDataView;
+            _db.TDataView = TDataView;
             var TChildDataView = (function (_super) {
                 __extends(TChildDataView, _super);
                 function TChildDataView() {
@@ -18062,7 +18050,7 @@ var RIAPP;
                 }
                 return TChildDataView;
             })(ChildDataView);
-            db.TChildDataView = TChildDataView;
+            _db.TChildDataView = TChildDataView;
 
             var BaseComplexProperty = (function (_super) {
                 __extends(BaseComplexProperty, _super);
@@ -18123,7 +18111,7 @@ var RIAPP;
                 };
                 return BaseComplexProperty;
             })(RIAPP.BaseObject);
-            db.BaseComplexProperty = BaseComplexProperty;
+            _db.BaseComplexProperty = BaseComplexProperty;
 
             var RootComplexProperty = (function (_super) {
                 __extends(RootComplexProperty, _super);
@@ -18154,7 +18142,7 @@ var RIAPP;
                 };
                 return RootComplexProperty;
             })(BaseComplexProperty);
-            db.RootComplexProperty = RootComplexProperty;
+            _db.RootComplexProperty = RootComplexProperty;
 
             var ChildComplexProperty = (function (_super) {
                 __extends(ChildComplexProperty, _super);
@@ -18198,7 +18186,7 @@ var RIAPP;
                 };
                 return ChildComplexProperty;
             })(BaseComplexProperty);
-            db.ChildComplexProperty = ChildComplexProperty;
+            _db.ChildComplexProperty = ChildComplexProperty;
 
             //MUST NOTIFY THE GLOBAL
             RIAPP.global.onModuleLoaded('db', db);
@@ -18241,11 +18229,9 @@ var RIAPP;
     var constsMOD = RIAPP.MOD.consts;
     var utilsMOD = RIAPP.MOD.utils;
     var bindMOD = RIAPP.MOD.binding;
-    var elviewMOD = RIAPP.MOD.baseElView;
+
     var contentMOD = RIAPP.MOD.baseContent;
     var formMOD = RIAPP.MOD.dataform;
-    var convertMOD = RIAPP.MOD.converter;
-    var templMOD = RIAPP.MOD.template;
 
     //ALL CORE MODULES are LOADED, INITIALIZE THE Global
     RIAPP.global._initialize();

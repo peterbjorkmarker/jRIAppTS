@@ -5,9 +5,6 @@
     d.prototype = new __();
 };
 define(["require", "exports", "domainModel", "common", "autocomplete", "animation"], function(require, exports, DEMODB, COMMON, AUTOCOMPLETE, ANIMATION) {
-    /// <reference path="..\jriapp.d.ts"/>
-    var dynMOD = RIAPP.MOD.dynacontent;
-
     'use strict';
 
     //using static import for CORE jriapp modules (they are inside jriapp.js file)

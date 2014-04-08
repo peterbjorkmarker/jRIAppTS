@@ -7,11 +7,6 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 define(["require", "exports"], function(require, exports) {
-    //using static import for CORE jriapp modules
-    var MOD = RIAPP.MOD;
-    var templMOD = RIAPP.MOD.template;
-    var dynMOD = RIAPP.MOD.dynacontent;
-
     //local variables for optimization
     var global = RIAPP.global, utils = global.utils;
 

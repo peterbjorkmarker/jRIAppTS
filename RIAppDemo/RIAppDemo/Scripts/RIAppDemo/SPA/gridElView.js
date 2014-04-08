@@ -7,8 +7,6 @@
 define(["require", "exports"], function(require, exports) {
     'use strict';
 
-    //using static import for CORE jriapp modules
-    var MOD = RIAPP.MOD;
     var GRIDMOD = RIAPP.MOD.datagrid;
     var global = RIAPP.global, utils = global.utils;
 

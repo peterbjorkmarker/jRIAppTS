@@ -1134,7 +1134,7 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (utils) {
-            var constsMOD = RIAPP.MOD.consts;
+            var constsMOD = MOD.consts;
             var base_utils = RIAPP.baseUtils, _newID = 0;
             utils.css = {
                 toolTip: 'qtip',
@@ -1232,13 +1232,13 @@ var RIAPP;
                     return !!obj && obj instanceof RIAPP.BaseObject;
                 };
                 Checks.isBinding = function (obj) {
-                    return !!obj && obj instanceof RIAPP.MOD.binding.Binding;
+                    return !!obj && obj instanceof MOD.binding.Binding;
                 };
                 Checks.isElView = function (obj) {
-                    return !!obj && obj instanceof RIAPP.MOD.baseElView.BaseElView;
+                    return !!obj && obj instanceof MOD.baseElView.BaseElView;
                 };
                 Checks.isTemplateElView = function (obj) {
-                    return !!obj && obj instanceof RIAPP.MOD.template.TemplateElView;
+                    return !!obj && obj instanceof MOD.template.TemplateElView;
                 };
                 Checks.isEditable = function (obj) {
                     return !!obj && !!obj.beginEdit && !!obj.endEdit && !!obj.cancelEdit && RIAPP.global.utils.hasProp(obj, 'isEditing');
@@ -1417,7 +1417,7 @@ var RIAPP;
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'val', val));
                     }
                     var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), parseInt(parts[3], 10), parseInt(parts[4], 10), parseInt(parts[5], 10), (!!parts[6]) ? parseInt(parts[6], 10) : 0);
-                    var DATE_CONVERSION = RIAPP.MOD.consts.DATE_CONVERSION;
+                    var DATE_CONVERSION = MOD.consts.DATE_CONVERSION;
                     var ctz = RIAPP.global.utils.get_timeZoneOffset();
 
                     switch (dtcnv) {
@@ -1440,7 +1440,7 @@ var RIAPP;
                         return null;
                     if (!Checks.isDate(dt))
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dt', dt));
-                    var DATE_CONVERSION = RIAPP.MOD.consts.DATE_CONVERSION;
+                    var DATE_CONVERSION = MOD.consts.DATE_CONVERSION;
                     var ctz = RIAPP.global.utils.get_timeZoneOffset();
                     switch (dtcnv) {
                         case 0 /* None */:
@@ -1460,7 +1460,7 @@ var RIAPP;
                 compareVals: function (v1, v2, dataType) {
                     if ((v1 === null && v2 !== null) || (v1 !== null && v2 === null))
                         return false;
-                    var DATA_TYPE = RIAPP.MOD.consts.DATA_TYPE;
+                    var DATA_TYPE = MOD.consts.DATA_TYPE;
                     switch (dataType) {
                         case 6 /* DateTime */:
                         case 7 /* Date */:
@@ -1536,7 +1536,7 @@ var RIAPP;
                     }
 
                     if (!isOK)
-                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_WRONG_TYPE, v, RIAPP.MOD.consts.DATA_TYPE[dataType]));
+                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_WRONG_TYPE, v, MOD.consts.DATA_TYPE[dataType]));
                     return res;
                 },
                 parseValue: function (v, dataType, dcnv, stz) {
@@ -2713,9 +2713,9 @@ var RIAPP;
                     if (utils.str.startsWith(prop, '[')) {
                         //it is an indexed property, obj must be of collection type
                         prop = this.trimQuotes(this.trimBrackets(prop));
-                        if (obj instanceof RIAPP.MOD.collection.BaseDictionary) {
+                        if (obj instanceof MOD.collection.BaseDictionary) {
                             return obj.getItemByKey(prop);
-                        } else if (obj instanceof RIAPP.MOD.collection.BaseCollection) {
+                        } else if (obj instanceof MOD.collection.BaseCollection) {
                             return obj.getItemByPos(parseInt(prop, 10));
                         } else if (utils.check.isArray(obj)) {
                             return obj[parseInt(prop, 10)];
@@ -8896,7 +8896,7 @@ var RIAPP;
 (function (RIAPP) {
     (function (MOD) {
         (function (tabs) {
-            var elviewMOD = RIAPP.MOD.baseElView;
+            var elviewMOD = MOD.baseElView;
 
             var TabsElView = (function (_super) {
                 __extends(TabsElView, _super);
@@ -8998,8 +8998,8 @@ var RIAPP;
     (function (MOD) {
         (function (listbox) {
             var bindMOD = RIAPP.MOD.binding;
-            var collMOD = RIAPP.MOD.collection;
-            var elviewMOD = RIAPP.MOD.baseElView;
+            var collMOD = MOD.collection;
+            var elviewMOD = MOD.baseElView;
             var contentMOD = RIAPP.MOD.baseContent;
 
             var utils, parser;
@@ -12474,7 +12474,7 @@ var RIAPP;
                         dialogOptions = utils.extend(false, {
                             dataContext: item
                         }, this._options.editor);
-                        this._dialog = new RIAPP.MOD.datadialog.DataEditDialog(this.app, dialogOptions);
+                        this._dialog = new MOD.datadialog.DataEditDialog(this.app, dialogOptions);
                     } else
                         this._dialog.dataContext = item;
                     this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._isNew;
@@ -12852,7 +12852,7 @@ var RIAPP;
                     configurable: true
                 });
                 return GridElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
+            })(MOD.baseElView.BaseElView);
             datagrid.GridElView = GridElView;
 
             global.registerElView('table', GridElView);
@@ -13407,7 +13407,7 @@ var RIAPP;
                     configurable: true
                 });
                 return PagerElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
+            })(MOD.baseElView.BaseElView);
             _pager.PagerElView = PagerElView;
 
             RIAPP.global.registerElView('pager', PagerElView);
@@ -13609,7 +13609,7 @@ var RIAPP;
                     }
                 };
                 StackPanel.prototype._createTemplate = function (item) {
-                    var t = new RIAPP.MOD.template.Template({
+                    var t = new MOD.template.Template({
                         app: this.app,
                         templateID: this.templateID,
                         dataContext: item,
@@ -13873,7 +13873,7 @@ var RIAPP;
                     configurable: true
                 });
                 return StackPanelElView;
-            })(RIAPP.MOD.baseElView.BaseElView);
+            })(MOD.baseElView.BaseElView);
             _stackpanel.StackPanelElView = StackPanelElView;
 
             global.registerElView('stackpanel', StackPanelElView);
@@ -13953,7 +13953,7 @@ var RIAPP;
                     configurable: true
                 });
                 return DataOperationError;
-            })(RIAPP.MOD.errors.BaseError);
+            })(MOD.errors.BaseError);
             _db.DataOperationError = DataOperationError;
             var AccessDeniedError = (function (_super) {
                 __extends(AccessDeniedError, _super);
