@@ -30,6 +30,8 @@ After minification jriapp.js has the size of about 307 KB. When it is gzipped, i
 I recommend using the ASP.NET MVC 4 bundling feature for managing javascript files.
 
 <b>Latest changes:</b>
+<p>2014-04-09 Updated the final release. Restored the PostBuild event in jriapp.ts project as it was before. After installation of typescript 1.0 is
+needed a computer restart. After it the postbuild event does not need full path to tsc.exe.</p>
 <p>2014-04-08 Published final release testedf with ts 1.0. No bugs since last updates. Works like a swiss watch.</p>
 <p>2014-03-03 Updates for compatibility with the typescript 0.9.7 compiler. It has a bug https://typescript.codeplex.com/workitem/2233. So a workaround was needed.</p>
 <p>2014-02-19 Updated (improved) file and folder browser demo.</p>
