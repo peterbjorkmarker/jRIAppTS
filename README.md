@@ -31,16 +31,16 @@ I recommend using the ASP.NET MVC 4 bundling feature for managing javascript fil
 
 <b>Latest changes:</b>
 <p>2014-05-18 Now each databinding expression can be in a separate <b>data-bind</b> attribute. For example the databindings in the select element -
-<pre>
-  <select id="prodSCat" size="1" class="span2" data-bind="{this.dataSource,to=filter.ChildCategories}{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}{this.toolTip,to=filter.selectedCategory.Name}" 
- data-view="options:{valuePath=ProductCategoryID,textPath=Name}"></select>
-</pre>
+<code>
+  &lt;select id=&quot;prodSCat&quot; size=&quot;1&quot; class=&quot;span2&quot; data-bind=&quot;{this.dataSource,to=filter.ChildCategories}{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}{this.toolTip,to=filter.selectedCategory.Name}&quot; 
+ data-view=&quot;options:{valuePath=ProductCategoryID,textPath=Name}&quot;&gt;&lt;/select&gt;
+</code>
 can be written as
-<pre>
-  <select id="prodSCat" size="1" class="span2"  data-bind-1="{this.dataSource,to=filter.ChildCategories}" data-bind-2="{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}"
-  data-bind-3="{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}"
-  data-bind-4="{this.toolTip,to=filter.selectedCategory.Name}"  data-view="options:{valuePath=ProductCategoryID,textPath=Name}"></select>
-</pre>
+<code>
+ &lt;select id=&quot;prodSCat&quot; size=&quot;1&quot; class=&quot;span2&quot;  data-bind-1=&quot;{this.dataSource,to=filter.ChildCategories}&quot; data-bind-2=&quot;{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}&quot;
+  data-bind-3=&quot;{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}&quot;
+  data-bind-4=&quot;{this.toolTip,to=filter.selectedCategory.Name}&quot;  data-view=&quot;options:{valuePath=ProductCategoryID,textPath=Name}&quot;&gt;&lt;/select&gt;
+</code>
 which is much easier to read.
 </p>
 <p>2014-05-17 Tested compilation with TS 1.0.1. Updated compiled javascript files in the demo. All is working.</p>
