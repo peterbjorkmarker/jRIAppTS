@@ -30,12 +30,12 @@ After minification jriapp.js has the size of about 307 KB. When it is gzipped, i
 I recommend using the ASP.NET MVC 4 bundling feature for managing javascript files.
 
 <b>Latest changes:</b>
-<p>2014-05-18 Now each databinding expression can be in a separate <b>data-bind</b> attribute. For example the databindings in the select element -
+<p>2014-05-18 Now each databinding expression can be in a separate <b>data-bind</b> attribute. For example the databindings in the select element -<br/>
 <code>
-  &lt;select id=&quot;prodSCat&quot; size=&quot;1&quot; class=&quot;span2&quot; data-bind=&quot;{this.dataSource,to=filter.ChildCategories}{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}{this.toolTip,to=filter.selectedCategory.Name}&quot; 
+ &lt;select id=&quot;prodSCat&quot; size=&quot;1&quot; class=&quot;span2&quot; data-bind=&quot;{this.dataSource,to=filter.ChildCategories}{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}{this.toolTip,to=filter.selectedCategory.Name}&quot; 
  data-view=&quot;options:{valuePath=ProductCategoryID,textPath=Name}&quot;&gt;&lt;/select&gt;
 </code>
-can be written as
+<br/>can be written as:<br/>
 <code>
  &lt;select id=&quot;prodSCat&quot; size=&quot;1&quot; class=&quot;span2&quot;  data-bind-1=&quot;{this.dataSource,to=filter.ChildCategories}&quot; data-bind-2=&quot;{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}&quot;
   data-bind-3=&quot;{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}&quot;
