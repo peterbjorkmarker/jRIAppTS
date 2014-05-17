@@ -2818,8 +2818,8 @@ declare module RIAPP {
                 public destroy(): void;
                 public toString(): string;
                 public _pageCount : number;
-                public pageSize : any;
-                public loadPageCount : any;
+                public pageSize : number;
+                public loadPageCount : number;
                 public totalCount : number;
                 public cacheSize : number;
             }
