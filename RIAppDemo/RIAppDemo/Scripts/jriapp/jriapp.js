@@ -1060,7 +1060,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.0.7';
+        Global.vesion = '2.1.0';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -18431,38 +18431,79 @@ var RIAPP;
                 }
             }
         };
-        Application.prototype._bindTemplateElements = function (templateEl) {
-            var self = this, global = self.global, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR, selectedElem = RIAPP.ArrayHelper.fromList(templateEl.querySelectorAll(selector)), lftm = new utilsMOD.LifeTimeScope(), checks = utils.check, DATA_FORM = constsMOD.DATA_ATTR.DATA_FORM, DATA_BIND = constsMOD.DATA_ATTR.DATA_BIND, DATA_VIEW = constsMOD.DATA_ATTR.DATA_VIEW;
+        Application.prototype._checkBindableElement = function (el) {
+            var val, allAttrs = el.attributes, attr, res = { el: el, dataView: null, dataForm: null, expressions: [] };
+            for (var i = 0, n = allAttrs.length; i < n; i++) {
+                attr = allAttrs[i];
+                if (utils.str.startsWith(attr.name, constsMOD.DATA_ATTR.DATA_BIND)) {
+                    val = attr.value.trim();
+                    if (!val) {
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, attr.name, "empty"));
+                    }
+                    if (val[0] != "{" && val[val.length - 1] != "}")
+                        val = "{" + val + "}";
+                    res.expressions.push(val);
+                }
+                if (utils.str.startsWith(attr.name, constsMOD.DATA_ATTR.DATA_FORM)) {
+                    res.dataForm = attr.value.trim();
+                }
+                if (utils.str.startsWith(attr.name, constsMOD.DATA_ATTR.DATA_VIEW)) {
+                    res.dataView = attr.value.trim();
+                }
+            }
+            if (!!res.dataView || res.expressions.length > 0)
+                return res;
+            else
+                return null;
+        };
+        Application.prototype._getAllBindableHtmlElements = function (scope) {
+            var self = this, result = [], selectedElem = RIAPP.ArrayHelper.fromList(scope.querySelectorAll("*"));
+            selectedElem.forEach(function (el) {
+                var res = self._checkBindableElement(el);
+                if (!!res)
+                    result.push(res);
+            });
 
-            if (templateEl.hasAttribute(DATA_BIND) || templateEl.hasAttribute(DATA_VIEW)) {
-                selectedElem.push(templateEl);
+            return result;
+        };
+        Application.prototype._bindTemplateElements = function (templateEl) {
+            var self = this, global = self.global, selectedElem = this._getAllBindableHtmlElements(templateEl), lftm = new utilsMOD.LifeTimeScope(), checks = utils.check, DATA_FORM = constsMOD.DATA_ATTR.DATA_FORM, res = self._checkBindableElement(templateEl);
+
+            if (res) {
+                selectedElem.push(res);
             }
 
             //mark all dataforms for easier checking that the element is a dataform
-            selectedElem.forEach(function (el) {
-                if (checks.isDataForm(el))
-                    el.setAttribute(DATA_FORM, 'yes');
+            selectedElem.forEach(function (bindElem) {
+                if (!bindElem.dataForm && checks.isDataForm(bindElem.el)) {
+                    bindElem.el.setAttribute(DATA_FORM, 'yes');
+                    bindElem.dataForm = 'yes';
+                }
             });
 
             //select all dataforms inside the scope
-            var formSelector = ['*[', DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(templateEl.querySelectorAll(formSelector));
+            var forms = selectedElem.filter(function (bindElem, index, arr) {
+                return !!bindElem.dataForm;
+            }).map(function (bindElem, index, arr) {
+                return bindElem.el;
+            });
 
-            if (checks.isDataForm(templateEl)) {
+            if (!!res && !!res.dataForm) {
                 //in this case process only this element
-                selectedElem = [templateEl];
+                selectedElem = [res];
             }
 
-            selectedElem.forEach(function (el) {
+            selectedElem.forEach(function (bindElem) {
                 var op, binding, bind_attr, temp_opts, elView, j, len;
 
                 //if element inside a dataform return
-                if (checks.isInNestedForm(templateEl, forms, el)) {
+                if (checks.isInNestedForm(templateEl, forms, bindElem.el)) {
                     return;
                 }
 
                 try  {
                     //first create element view
-                    elView = self.getElementView(el);
+                    elView = self.getElementView(bindElem.el);
                 } catch (ex) {
                     global.reThrow(ex, this._onError(ex, this));
                 }
@@ -18471,14 +18512,9 @@ var RIAPP;
                     elView.form.isInsideTemplate = true;
                 }
 
-                if (el.hasAttribute(DATA_VIEW)) {
-                    el.removeAttribute(DATA_VIEW);
-                }
-
                 //then create databinding if element has data-bind attribute
-                bind_attr = el.getAttribute(DATA_BIND);
+                bind_attr = bindElem.expressions.join('');
                 if (!!bind_attr) {
-                    el.removeAttribute(DATA_BIND);
                     temp_opts = parser.parseOptions(bind_attr);
                     for (j = 0, len = temp_opts.length; j < len; j += 1) {
                         op = contentMOD.getBindingOptions(self, temp_opts[j], elView, null);
@@ -18492,36 +18528,41 @@ var RIAPP;
             return lftm;
         };
         Application.prototype._bindElements = function (scope, dctx, isDataFormBind, isInsideTemplate) {
-            var self = this, global = self.global, checks = utils.check, DATA_FORM = constsMOD.DATA_ATTR.DATA_FORM, DATA_BIND = constsMOD.DATA_ATTR.DATA_BIND, DATA_VIEW = constsMOD.DATA_ATTR.DATA_VIEW, selector = self._DATA_BIND_SELECTOR + ', ' + self._DATA_VIEW_SELECTOR;
+            var self = this, global = self.global, checks = utils.check, DATA_FORM = constsMOD.DATA_ATTR.DATA_FORM;
 
             scope = scope || global.document;
 
             //select all elements with binding attributes
-            var selectedElem = RIAPP.ArrayHelper.fromList(scope.querySelectorAll(selector));
+            var selectedElem = this._getAllBindableHtmlElements(scope);
             var lftm = new utilsMOD.LifeTimeScope();
-
             if (!isDataFormBind) {
                 //mark all dataforms for easier checking that the element is a dataform
-                selectedElem.forEach(function (el) {
-                    if (checks.isDataForm(el))
-                        el.setAttribute(DATA_FORM, 'yes');
+                selectedElem.forEach(function (bindElem) {
+                    if (!bindElem.dataForm && checks.isDataForm(bindElem.el)) {
+                        bindElem.el.setAttribute(DATA_FORM, 'yes');
+                        bindElem.dataForm = 'yes';
+                    }
                 });
             }
 
             //select all dataforms inside the scope
-            var formSelector = ['*[', DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(scope.querySelectorAll(formSelector));
+            var forms = selectedElem.filter(function (bindElem, index, arr) {
+                return !!bindElem.dataForm;
+            }).map(function (bindElem, index, arr) {
+                return bindElem.el;
+            });
 
-            selectedElem.forEach(function (el) {
-                var bind_attr, temp_opts, bind_op, elView, i, len;
+            selectedElem.forEach(function (bindElem) {
+                var bind_attr = "", temp_opts, bind_op, elView, i, len;
 
                 //return if the current element is inside a dataform
-                if (checks.isInNestedForm(scope, forms, el)) {
+                if (checks.isInNestedForm(scope, forms, bindElem.el)) {
                     return;
                 }
 
                 try  {
                     //first create element view
-                    elView = self.getElementView(el);
+                    elView = self.getElementView(bindElem.el);
                 } catch (ex) {
                     global.reThrow(ex, this._onError(ex, this));
                 }
@@ -18529,20 +18570,10 @@ var RIAPP;
                 if (elView instanceof formMOD.DataFormElView) {
                     elView.form.isInsideTemplate = isInsideTemplate;
                 }
-
-                if (isInsideTemplate) {
-                    if (el.hasAttribute(DATA_VIEW)) {
-                        el.removeAttribute(DATA_VIEW);
-                    }
-                }
-
-                bind_attr = el.getAttribute(DATA_BIND);
+                bind_attr = bindElem.expressions.join('');
 
                 //if it has data-bind attribute then proceed to create binding
                 if (!!bind_attr) {
-                    if (isInsideTemplate) {
-                        el.removeAttribute(DATA_BIND);
-                    }
                     temp_opts = parser.parseOptions(bind_attr);
                     for (i = 0, len = temp_opts.length; i < len; i += 1) {
                         bind_op = contentMOD.getBindingOptions(self, temp_opts[i], elView, dctx);

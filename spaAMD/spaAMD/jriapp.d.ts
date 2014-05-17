@@ -3314,6 +3314,12 @@ declare module RIAPP {
     }
 }
 declare module RIAPP {
+    interface IBindableElement {
+        el: HTMLElement;
+        dataView: string;
+        dataForm: string;
+        expressions: string[];
+    }
     interface IAppOptions {
         application_name?: string;
         user_modules?: {
@@ -3357,6 +3363,10 @@ declare module RIAPP {
             options: any;
         }): MOD.baseElView.BaseElView;
         public _setElView(el: HTMLElement, view?: MOD.baseElView.BaseElView): void;
+        public _checkBindableElement(el: HTMLElement): IBindableElement;
+        public _getAllBindableHtmlElements(scope: {
+            querySelectorAll: (selectors: string) => NodeList;
+        }): IBindableElement[];
         public _bindTemplateElements(templateEl: HTMLElement): MOD.utils.LifeTimeScope;
         public _bindElements(scope: {
             querySelectorAll: (selectors: string) => NodeList;

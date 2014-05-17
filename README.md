@@ -30,6 +30,19 @@ After minification jriapp.js has the size of about 307 KB. When it is gzipped, i
 I recommend using the ASP.NET MVC 4 bundling feature for managing javascript files.
 
 <b>Latest changes:</b>
+<p>2014-05-18 Now each databinding expression can be in a separate <b>data-bind</b> attribute. For example the databindings in the select element -
+<pre>
+  <select id="prodSCat" size="1" class="span2" data-bind="{this.dataSource,to=filter.ChildCategories}{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}{this.toolTip,to=filter.selectedCategory.Name}" 
+ data-view="options:{valuePath=ProductCategoryID,textPath=Name}"></select>
+</pre>
+can be written as
+<pre>
+  <select id="prodSCat" size="1" class="span2"  data-bind-1="{this.dataSource,to=filter.ChildCategories}" data-bind-2="{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}"
+  data-bind-3="{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}"
+  data-bind-4="{this.toolTip,to=filter.selectedCategory.Name}"  data-view="options:{valuePath=ProductCategoryID,textPath=Name}"></select>
+</pre>
+which is much easier to read.
+</p>
 <p>2014-05-17 Tested compilation with TS 1.0.1. Updated compiled javascript files in the demo. All is working.</p>
 <p>2014-04-09 Updated the final release. Restored the PostBuild event in jriapp.ts project as it was before. After installation of typescript 1.0 is
 needed a computer restart. After it the postbuild event does not need full path to tsc.exe.</p>
