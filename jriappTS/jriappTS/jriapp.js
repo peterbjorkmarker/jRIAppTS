@@ -1060,7 +1060,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.1.0';
+        Global.vesion = '2.2.0';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
