@@ -10672,6 +10672,7 @@ var RIAPP;
                         return;
                     this._isDestroyCalled = true;
                     var $div = global.$(this._div), $imgs = $div.find('img');
+                    $div.off();
                     $imgs.each(function (index, img) {
                         var $img = global.$(img);
                         $img.removeData();
@@ -11429,6 +11430,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
+                    this._grid._$tableEl.off('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''));
                     this._$extcol.remove();
                     this._$extcol = null;
                     this._$div = null;
@@ -11670,6 +11672,15 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
+                RowSelectorColumn.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this._$chk.off();
+                    this._$chk.remove();
+                    this._$chk = null;
+                    _super.prototype.destroy.call(this);
+                };
                 return RowSelectorColumn;
             })(BaseColumn);
             datagrid.RowSelectorColumn = RowSelectorColumn;
@@ -11732,6 +11743,13 @@ var RIAPP;
                 };
                 ActionsColumn.prototype.toString = function () {
                     return 'ActionsColumn';
+                };
+                ActionsColumn.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this.grid._$tableEl.off("click", 'img[' + constsMOD.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]');
+                    _super.prototype.destroy.call(this);
                 };
                 return ActionsColumn;
             })(BaseColumn);

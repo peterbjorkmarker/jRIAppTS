@@ -2221,6 +2221,7 @@ declare module RIAPP {
                 public _onCheckBoxClicked(isChecked: boolean): void;
                 public toString(): string;
                 public checked : boolean;
+                public destroy(): void;
             }
             interface IActionsColumnInfo extends IColumnInfo {
                 img_ok?: string;
@@ -2235,6 +2236,7 @@ declare module RIAPP {
                 public _onDelete(cell: ActionsCell): void;
                 public _onEdit(cell: ActionsCell): void;
                 public toString(): string;
+                public destroy(): void;
             }
             interface IGridOptions {
                 isUseScrollInto: boolean;

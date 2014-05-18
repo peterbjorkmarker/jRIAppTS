@@ -30,18 +30,18 @@ After minification jriapp.js has the size of about 307 KB. When it is gzipped, i
 I recommend using the ASP.NET MVC 4 bundling feature for managing javascript files.
 
 <b>Latest changes:</b>
-<p>2014-05-18 Now each databinding expression can be in a separate <b>data-bind</b> attribute. For example the databindings in the select element -<br/>
+<p>2014-05-18 New versionn 2.1.0. Now each databinding expression can be in a separate <b>data-bind</b> attribute. For example the databindings in the select element -<br/>
 <code>
- &lt;select id=&quot;prodSCat&quot; size=&quot;1&quot; class=&quot;span2&quot; data-bind=&quot;{this.dataSource,to=filter.ChildCategories}{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}{this.toolTip,to=filter.selectedCategory.Name}&quot; 
+ &lt;select id=&quot;prodSCat&quot; size=&quot;1&quot; class=&quot;span2&quot; <b>data-bind</b>=&quot;{this.dataSource,to=filter.ChildCategories}{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}{this.toolTip,to=filter.selectedCategory.Name}&quot; 
  data-view=&quot;options:{valuePath=ProductCategoryID,textPath=Name}&quot;&gt;&lt;/select&gt;
 </code>
 <br/>can be written as:<br/>
 <code>
- &lt;select id=&quot;prodSCat&quot; size=&quot;1&quot; class=&quot;span2&quot;  data-bind-1=&quot;{this.dataSource,to=filter.ChildCategories}&quot; data-bind-2=&quot;{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}&quot;
-  data-bind-3=&quot;{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}&quot;
-  data-bind-4=&quot;{this.toolTip,to=filter.selectedCategory.Name}&quot;  data-view=&quot;options:{valuePath=ProductCategoryID,textPath=Name}&quot;&gt;&lt;/select&gt;
+ &lt;select id=&quot;prodSCat&quot; size=&quot;1&quot; class=&quot;span2&quot;  <b>data-bind-1</b>=&quot;{this.dataSource,to=filter.ChildCategories}&quot; <b>data-bind-2</b>=&quot;{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}&quot;
+  <b>data-bind-3</b>=&quot;{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}&quot;
+  <b>data-bind-4</b>=&quot;{this.toolTip,to=filter.selectedCategory.Name}&quot;  data-view=&quot;options:{valuePath=ProductCategoryID,textPath=Name}&quot;&gt;&lt;/select&gt;
 </code>
-which is much easier to read.
+<br/>which is much easier to read and write.
 </p>
 <p>2014-05-17 Tested compilation with TS 1.0.1. Updated compiled javascript files in the demo. All is working.</p>
 <p>2014-04-09 Updated the final release. Restored the PostBuild event in jriapp.ts project as it was before. After installation of typescript 1.0 is

@@ -288,6 +288,7 @@
                         return;
                     this._isDestroyCalled = true;
                     var $div = global.$(this._div), $imgs = $div.find('img');
+                    $div.off();
                     $imgs.each(function (index, img) {
                         var $img = global.$(img);
                         $img.removeData();
@@ -914,6 +915,7 @@
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
+                    this._grid._$tableEl.off('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''));
                     this._$extcol.remove();
                     this._$extcol = null;
                     this._$div = null;
@@ -1075,6 +1077,15 @@
                         this.raisePropertyChanged('checked');
                     }
                 }
+                destroy() {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this._$chk.off();
+                    this._$chk.remove();
+                    this._$chk = null;
+                    super.destroy();
+                }
             }
 
             export interface IActionsColumnInfo extends IColumnInfo {
@@ -1140,6 +1151,13 @@
                 }
                 toString() {
                     return 'ActionsColumn';
+                }
+                destroy() {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this.grid._$tableEl.off("click", 'img[' + constsMOD.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]');
+                    super.destroy();
                 }
             }
 
