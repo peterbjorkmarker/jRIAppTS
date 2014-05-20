@@ -30,6 +30,8 @@ After minification jriapp.js has the size of about 307 KB. When it is gzipped, i
 I recommend using the ASP.NET MVC 4 bundling feature for managing javascript files.
 
 <b>Latest changes:</b>
+<p>2014-05-20 Added new implementation (RIAPP.DataService.EF2 project) of specialized BaseDomainService for using Entity Framework 6 DbContext. Previous project RIAPP.DataService.EF
+supports the legacy ObjectContext.</p>
 <p>2014-05-18 Update to <b>version 2.2.0</b>. Now each databinding expression can be in a separate <b>data-bind</b> attribute. For example the databindings in the select element -<br/>
 <code>
  &lt;select id=&quot;prodSCat&quot; size=&quot;1&quot; class=&quot;span2&quot; <b>data-bind</b>=&quot;{this.dataSource,to=filter.ChildCategories}{this.selectedValue,to=filter.childCategoryID,mode=TwoWay}{this.selectedItem,to=filter.selectedCategory,mode=TwoWay}{this.toolTip,to=filter.selectedCategory.Name}&quot; 

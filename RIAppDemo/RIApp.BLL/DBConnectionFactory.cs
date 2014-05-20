@@ -35,6 +35,5 @@ namespace RIAppDemo.BLL
                 cn.Open();
             return cn;
         }
-
     }
 }
