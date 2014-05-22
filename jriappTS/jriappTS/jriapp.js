@@ -1060,7 +1060,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.2.0';
+        Global.vesion = '2.3.0';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -13947,8 +13947,8 @@ var RIAPP;
             var DATA_OPER = _db.DATA_OPER;
 
             var DATA_SVC_METH = {
-                Invoke: 'InvokeMethod', LoadData: 'GetItems', GetMetadata: 'GetMetadata', GetPermissions: 'GetPermissions',
-                Submit: 'SaveChanges', Refresh: 'RefreshItem'
+                Invoke: 'invoke', LoadData: 'query', GetPermissions: 'permissions',
+                Submit: 'save', Refresh: 'refresh'
             };
 
             var DataOperationError = (function (_super) {
@@ -16621,7 +16621,7 @@ var RIAPP;
 
                     try  {
                         this.isBusy = true;
-                        utils.performAjaxCall(loadUrl, undefined, true, function (permissions) {
+                        utils.performAjaxGet(loadUrl).done(function (permissions) {
                             try  {
                                 self._updatePermissions(JSON.parse(permissions));
                                 self.isBusy = false;
@@ -16632,10 +16632,10 @@ var RIAPP;
                                 self._onDataOperError(ex, operType);
                                 RIAPP.global._throwDummy(ex);
                             }
-                        }, function (er) {
+                        }).fail(function (er) {
                             self.isBusy = false;
                             self._onDataOperError(er, operType);
-                        }, null);
+                        });
                     } catch (ex) {
                         this.isBusy = false;
                         this._onDataOperError(ex, operType);

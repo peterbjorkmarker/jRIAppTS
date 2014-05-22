@@ -14,6 +14,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Transactions;
 using System.Xml.Linq;
+using System.Threading.Tasks;
 
 
 namespace RIAppDemo.BLL.DataServices
@@ -515,6 +516,38 @@ namespace RIAppDemo.BLL.DataServices
                 }
                 bstrm.Close();
                 br.Close();
+                trxScope.Complete();
+            }
+
+            product.ThumbnailPhotoFileName = fileName;
+            this.DB.SubmitChanges();
+        }
+
+        public void SaveThumbnail2(int id, string fileName, Func<System.IO.Stream, Task> copy)
+        {
+            var product = this.DB.Products.Where(a => a.ProductID == id).FirstOrDefault();
+            if (product == null)
+                throw new Exception("Product is not found");
+
+            TransactionOptions topts = new System.Transactions.TransactionOptions();
+            topts.Timeout = TimeSpan.FromSeconds(60);
+            topts.IsolationLevel = System.Transactions.IsolationLevel.Serializable;
+            using (TransactionScope trxScope = new TransactionScope(TransactionScopeOption.Required, topts))
+            using (DbConnection conn = DBConnectionFactory.GetRIAppDemoConnection())
+            {
+                string fldname = "ThumbNailPhoto";
+                BlobStream bstrm = new BlobStream(conn as SqlConnection, "[SalesLT].[Product]", fldname, string.Format("WHERE [ProductID]={0}", id));
+                bstrm.InitColumn();
+                bstrm.Open();
+                try
+                {
+                    if (!copy(bstrm).Wait(10000))
+                        throw new Exception("Write stream timeout");
+                }
+                finally
+                {
+                    bstrm.Close();
+                }
                 trxScope.Complete();
             }
 

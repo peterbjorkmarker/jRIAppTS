@@ -65,25 +65,19 @@ namespace RIAPP.DataService.Mvc
         private Lazy<IDomainService> _DomainService;
 
         [ChildActionOnly]
-        public string Metadata()
-        {
-            var info = this.DomainService.ServiceGetMetadata();
-            return this.Serializer.Serialize(info);
-        }
-
-        [ChildActionOnly]
         public string PermissionsInfo()
         {
             var info = this.DomainService.ServiceGetPermissions();
             return this.Serializer.Serialize(info);
         }
 
+        [ActionName("code")]
         [HttpGet]
-        public ActionResult CodeGen(string type)
+        public ActionResult GetCode(string lang)
         {
-            if (type != null)
+            if (lang != null)
             {
-                switch (type.ToLowerInvariant())
+                switch (lang.ToLowerInvariant())
                 {
                     case "ts":
                     case "typescript":
@@ -94,47 +88,47 @@ namespace RIAPP.DataService.Mvc
                     case "csharp":
                         return this._GetCSharp();
                     default:
-                        throw new Exception(string.Format("Unknown type argument: {0}", type));
+                        throw new Exception(string.Format("Unknown type argument: {0}", lang));
                 }
             }
             else
                 return this._GetTypeScript();
         }
 
+        [ActionName("permissions")]
+        [HttpGet]
         public ActionResult GetPermissions()
         {
             var res = this.DomainService.ServiceGetPermissions();
             return Json(res, JsonRequestBehavior.AllowGet);
         }
 
-        public ActionResult GetMetadata()
-        {
-            var res = this.DomainService.ServiceGetMetadata();
-            return Json(res, JsonRequestBehavior.AllowGet);
-        }
-
+        [ActionName("query")]
         [HttpPost]
-        public ActionResult GetItems([SericeParamsBinder] QueryRequest request)
+        public ActionResult PerformQuery([SericeParamsBinder] QueryRequest request)
         {
             return new IncrementalResult(this.DomainService.ServiceGetData(request), this.Serializer);
         }
 
+        [ActionName("save")]
         [HttpPost]
-        public ActionResult SaveChanges([SericeParamsBinder] ChangeSet changeSet)
+        public ActionResult Save([SericeParamsBinder] ChangeSet changeSet)
         {
             var res = this.DomainService.ServiceApplyChangeSet(changeSet);
             return Json(res);
         }
 
+        [ActionName("refresh")]
         [HttpPost]
-        public ActionResult RefreshItem([SericeParamsBinder] RefreshInfo refreshInfo)
+        public ActionResult Refresh([SericeParamsBinder] RefreshInfo refreshInfo)
         {
             var res = this.DomainService.ServiceRefreshRow(refreshInfo);
             return Json(res);
         }
 
+        [ActionName("invoke")]
         [HttpPost]
-        public ActionResult InvokeMethod([SericeParamsBinder] InvokeRequest invokeInfo)
+        public ActionResult Invoke([SericeParamsBinder] InvokeRequest invokeInfo)
         {
             var res = this.DomainService.ServiceInvokeMethod(invokeInfo);
             return Json(res);

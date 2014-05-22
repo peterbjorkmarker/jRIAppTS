@@ -81,7 +81,6 @@ module RIAPP
                 this._resetCommand = new MOD.mvvm.Command(function (sender, data) {
                     self.reset();
                 }, self, null);
-
             }
             _loadCategories() {
                 var query = this.ProductCategories.createReadProductCategoryQuery();
@@ -835,9 +834,23 @@ module RIAPP
                     //need to update ThumbnailPhotoFileName
                     a.product.refresh();
                 });
-                this.productVM.filter.modelData = options.modelData;
-                this.productVM.filter.categoryData = options.categoryData;
-                this.productVM.load().done(function (loadRes) {/*alert(loadRes.outOfBandData.test);*/ return; });
+
+                if (!!options.modelData && !!options.categoryData) {
+                    //the data was embedded into HTML page as json, just use it
+                    this.productVM.filter.modelData = options.modelData;
+                    this.productVM.filter.categoryData = options.categoryData;
+                    this.productVM.load().done(function (loadRes) {
+                        //alert(loadRes.outOfBandData.test);
+                        return;
+                    });
+
+                }
+                else {
+                     //there was no embedded data for the filter on the HTML page, so load it first, and then load products
+                    this.productVM.filter.load().done(() => {
+                        self.productVM.load().done(function (loadRes) {/*alert(loadRes.outOfBandData.test);*/ return; });
+                    });
+                }
                 super.onStartUp();
             }
             private _handleError(sender, data) {

@@ -21,8 +21,8 @@
             export enum DATA_OPER { SUBMIT, LOAD, INVOKE, REFRESH, INIT }
 
             var DATA_SVC_METH = {
-                Invoke: 'InvokeMethod', LoadData: 'GetItems', GetMetadata: 'GetMetadata', GetPermissions: 'GetPermissions',
-                Submit: 'SaveChanges', Refresh: 'RefreshItem'
+                Invoke: 'invoke', LoadData: 'query', GetPermissions: 'permissions',
+                Submit: 'save', Refresh: 'refresh'
             };
 
             export class DataOperationError extends MOD.errors.BaseError {
@@ -2659,27 +2659,22 @@
 
                     try {
                         this.isBusy = true;
-                        utils.performAjaxCall(
-                            loadUrl,
-                            undefined,
-                            true,
-                            function (permissions: string) { //success
-                                try {
-                                    self._updatePermissions(JSON.parse(permissions));
-                                    self.isBusy = false;
-                                    self._isInitialized = true;
-                                    self.raisePropertyChanged('isInitialized');
-                                }
-                                catch (ex) {
-                                    self.isBusy = false;
-                                    self._onDataOperError(ex, operType);
-                                    global._throwDummy(ex);
-                                }
-                            },
-                            function (er) { //error
+                        utils.performAjaxGet(loadUrl).done((permissions: string) => {
+                            try {
+                                self._updatePermissions(JSON.parse(permissions));
+                                self.isBusy = false;
+                                self._isInitialized = true;
+                                self.raisePropertyChanged('isInitialized');
+                            }
+                            catch (ex) {
+                                self.isBusy = false;
+                                self._onDataOperError(ex, operType);
+                                global._throwDummy(ex);
+                            }
+                        }).fail((er) => {
                                 self.isBusy = false;
                                 self._onDataOperError(er, operType);
-                            }, null);
+                        });
                     }
                     catch (ex) {
                         this.isBusy = false;

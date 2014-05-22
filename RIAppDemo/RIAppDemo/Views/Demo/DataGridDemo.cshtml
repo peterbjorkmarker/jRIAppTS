@@ -116,19 +116,29 @@
             modelData: null,
             categoryData: null
         };
-
-        //The Application is also declared and started in there 
+        //The Application is also declared and started in there
     */
     (function(ops){
         ops.images_path = '@Url.Content("~/Scripts/jriapp/img/")';
+        //download template using ASP.NET MVC controller  - it first go through Razor engine to create links
+        ops.templates_url = '@Url.Action("Download", "Templates", new {name="DataGridDemo"})';
+
+        @*
+        //these commented links were used to work with ASP.NET MVC controller (you can uncomment it ,and comment WEB API links)
         ops.service_url = '@Url.RouteUrl("Default",new {controller="RIAppDemoService", action=""})';
         ops.permissionInfo =  @Html.Action("PermissionsInfo", "RIAppDemoService");
-        ops.templates_url = '@Url.Action("Download", "Templates", new {name="DataGridDemo"})';
         ops.upload_thumb_url = '@Url.Action("ThumbnailUpload", "Upload", null)';
         ops.productEditTemplate_url = '@Url.Action("DownloadTemplate", "Download", new {name="productEditTemplate"})';
         ops.sizeDisplayTemplate_url = '@Url.Action("DownloadTemplate", "Download", new { name = "sizeDisplayTemplate" })';
         ops.modelData = @Html.Action("ProductModelData", "RIAppDemoService");
         ops.categoryData = @Html.Action("ProductCategoryData", "RIAppDemoService");
+        *@
+        
+        //these links are used to work with WEB API controller instead of ASP.NET MVC controller
+        ops.service_url = '@Url.Action("", "RIAppDemo", new { httproute = "ApiByAction" })';
+        ops.upload_thumb_url = '@Url.Action("UploadThumbnail", "File", new { httproute = "ApiByAction" })';
+        ops.productEditTemplate_url = '@Url.Action("DownloadTemplate", "File", new { httproute = "ApiByName", name = "productEditTemplate" })';
+        ops.sizeDisplayTemplate_url = '@Url.Action("DownloadTemplate", "File", new { httproute = "ApiByName", name = "sizeDisplayTemplate" })';
     })(RIAPP.GRIDDEMO.mainOptions);
 </script>
 

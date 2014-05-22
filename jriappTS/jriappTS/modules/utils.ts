@@ -765,7 +765,7 @@
                     }
                     return promise;
                 }
-                performAjaxGet(url:string):IPromise<string> {
+                performAjaxGet(url: string): IPromise<string> {
                     var req = new XMLHttpRequest();
                     req.open('GET', url, true); /* always async mode */
                     var deferred = this.createDeferred();

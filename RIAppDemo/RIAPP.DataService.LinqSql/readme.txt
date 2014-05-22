@@ -1,1 +1,0 @@
-An implementation of specialized BaseDomainService for working with Linq For SQL data access classes.
