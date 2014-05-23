@@ -167,7 +167,7 @@ namespace RIAPP.DataService.WebApi
 
             private static string _Encode(string str)
             {
-                return System.Web.HttpUtility.JavaScriptStringEncode(str);
+                return RIAPP.DataService.Utils.DataHelper.JavaScriptStringEncode(str);
             }
 
             private static void _SerializeArray(object[] arr, StringBuilder sbld)
