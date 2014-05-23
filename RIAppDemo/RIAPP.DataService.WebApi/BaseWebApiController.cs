@@ -234,7 +234,8 @@ namespace RIAPP.DataService.WebApi
 
         protected virtual IHttpActionResult GetTypeScript(HttpRequestMessage request)
         {
-            var info = this.DataService.ServiceGetTypeScript();
+            string comment = string.Format("\tGenerated from: {0} on {1:yyyy-MM-dd HH:mm} at {1:HH:mm}\r\n\tDon't make manual changes here, because they will be lost when this db interface will be regenerated!", request.RequestUri, DateTime.Now);
+            var info = this.DataService.ServiceGetTypeScript(comment);
             return new PlainTextActionResult(request, info);
         }
 
