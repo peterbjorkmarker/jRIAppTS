@@ -18523,7 +18523,7 @@ var RIAPP;
                     //first create element view
                     elView = self.getElementView(bindElem.el);
                 } catch (ex) {
-                    global.reThrow(ex, this._onError(ex, this));
+                    global.reThrow(ex, self._onError(ex, self));
                 }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
@@ -18582,7 +18582,7 @@ var RIAPP;
                     //first create element view
                     elView = self.getElementView(bindElem.el);
                 } catch (ex) {
-                    global.reThrow(ex, this._onError(ex, this));
+                    global.reThrow(ex, self._onError(ex, self));
                 }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
