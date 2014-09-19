@@ -1,0 +1,19 @@
+﻿export class {{DBSET_TYPE}} extends RIAPP.MOD.db.DbSet<{{ENTITY_TYPE}}>
+{
+	constructor(dbContext: DbContext) {
+		var self =this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
+			dbContext: dbContext,
+			dbSetInfo: {{DBSET_INFO}},
+			childAssoc: ({{CHILD_ASSOC}}),
+			parentAssoc: ({{PARENT_ASSOC}}) 
+		}, utils=RIAPP.global.utils;
+		opts.dbSetInfo.fieldInfos = ({{FIELD_INFOS}});
+		super(opts, {{ENTITY_TYPE}});
+	}
+	findEntity({{PK_VALS}}): {{ENTITY_TYPE}} {
+		return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
+	}
+{{QUERIES}}
+{{CALC_FIELDS}}
+	get items2()  { return <{{ENTITY_INTERFACE}}[]>this.items; }
+}
