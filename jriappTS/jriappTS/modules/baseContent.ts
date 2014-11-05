@@ -7,6 +7,7 @@
             import elviewMOD = RIAPP.MOD.baseElView;
             import bindMOD = RIAPP.MOD.binding;
             import templMOD = RIAPP.MOD.template;
+            import collMOD = RIAPP.MOD.collection;
 
             var utils: utilsMOD.Utils, parser: parserMOD.Parser;
             RIAPP.global.addOnInitialize((s, args) => {
@@ -49,7 +50,7 @@
                 name?: string;
                 readOnly?: boolean;
                 initContentFn?: (content: IExternallyCachable) => void;
-                fieldInfo?: collection.IFieldInfo;
+                fieldInfo?: collMOD.IFieldInfo;
                 bindingInfo?: bindMOD.IBindingInfo;
                 displayInfo?: { displayCss?: string; editCss?: string; };
                 templateInfo?: ITemplateInfo;
@@ -263,7 +264,7 @@
                     if (!finf)
                         return false;
                     var editable = !!this._dataContext && !!this._dataContext.beginEdit;
-                    return editable && !finf.isReadOnly && finf.fieldType != collection.FIELD_TYPE.Calculated;
+                    return editable && !finf.isReadOnly && finf.fieldType != collMOD.FIELD_TYPE.Calculated;
                 }
                 _createTargetElement(): elviewMOD.BaseElView {
                     var el: HTMLElement, doc = global.document, info: { name: string; options: any; } = { name: null, options: null };
@@ -675,23 +676,23 @@
                     }
                 }
                 _previewKeyPress(keyCode:number, value:string) {
+                    var ch = String.fromCharCode(keyCode), digits = "1234567890", defaults = global.defaults, notAllowedChars = "~@#$%^&*()+=_";
+                    if (notAllowedChars.indexOf(ch) > -1)
+                        return false;
                     if (this._allowedKeys.indexOf(keyCode) > -1)
                         return true;
-                    if (keyCode === 47) // backslash
-                    {
-                        return false;
-                    }
-                    var keys = { 32: ' ', 44: ',', 46: '.' };
-                    var ch = keys[keyCode];
-                    var defaults = global.defaults;
+                    if (ch === "-" && value.length === 0)
+                        return true;
                     if (ch === defaults.decimalPoint) {
                         if (value.length === 0)
                             return false;
-                        else return value.indexOf(ch) < 0;
+                        else
+                            return value.indexOf(ch) < 0;
                     }
-                    if (!!ch && ch !== defaults.thousandSep)
-                        return false;
-                    return !(!ch && (keyCode < 45 || keyCode > 57));
+                    if (ch === defaults.thousandSep)
+                        return true
+                    else
+                        return digits.indexOf(ch) > -1;
                 }
                 toString() {
                     return 'NumberContent';
@@ -716,8 +717,10 @@
                         });
                     }
                 }
-                _previewKeyPress(fieldInfo:collection.IFieldInfo, keyCode:number, value:string) {
-                    return !(fieldInfo.maxLength > 0 && value.length >= fieldInfo.maxLength && this._allowedKeys.indexOf(keyCode) === -1);
+                _previewKeyPress(fieldInfo: collMOD.IFieldInfo, keyCode: number, value: string) {
+                    if (this._allowedKeys.indexOf(keyCode) > -1)
+                        return true;
+                    return !(fieldInfo.maxLength > 0 && value.length >= fieldInfo.maxLength);
                 }
                 toString() {
                     return 'StringContent';
@@ -764,8 +767,10 @@
                         });
                     }
                 }
-                _previewKeyPress(fieldInfo: collection.IFieldInfo, keyCode: number, value: string) {
-                    return !(fieldInfo.maxLength > 0 && value.length >= fieldInfo.maxLength && this._allowedKeys.indexOf(keyCode) === -1);
+                _previewKeyPress(fieldInfo: collMOD.IFieldInfo, keyCode: number, value: string) {
+                    if (this._allowedKeys.indexOf(keyCode) > -1)
+                        return true;
+                    return !(fieldInfo.maxLength > 0 && value.length >= fieldInfo.maxLength);
                 }
                 toString() {
                     return 'MultyLineContent';

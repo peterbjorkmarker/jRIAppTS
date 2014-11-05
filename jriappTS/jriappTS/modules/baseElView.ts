@@ -492,8 +492,8 @@
                 _setFieldError(isError: boolean) {
                     var $el = this.$el;
                     if (isError) {
-                        var span = global.$('<div></div>').addClass(css.fieldError);
-                        $el.wrap(span);
+                        var div = global.$('<div></div>').addClass(css.fieldError);
+                        $el.wrap(div);
                     }
                     else {
                         if ($el.parent('.' + css.fieldError).length > 0)

@@ -3637,8 +3637,8 @@ var RIAPP;
                 CheckBoxThreeStateElView.prototype._setFieldError = function (isError) {
                     var $el = this.$el;
                     if (isError) {
-                        var span = RIAPP.global.$('<div></div>').addClass(baseElView.css.fieldError);
-                        $el.wrap(span);
+                        var div = RIAPP.global.$('<div></div>').addClass(baseElView.css.fieldError);
+                        $el.wrap(div);
                     } else {
                         if ($el.parent('.' + baseElView.css.fieldError).length > 0)
                             $el.unwrap();
@@ -7260,6 +7260,7 @@ var RIAPP;
             var elviewMOD = RIAPP.MOD.baseElView;
             var bindMOD = RIAPP.MOD.binding;
             var templMOD = RIAPP.MOD.template;
+            var collMOD = RIAPP.MOD.collection;
 
             var utils, parser;
             RIAPP.global.addOnInitialize(function (s, args) {
@@ -7933,23 +7934,23 @@ var RIAPP;
                     }
                 };
                 NumberContent.prototype._previewKeyPress = function (keyCode, value) {
+                    var ch = String.fromCharCode(keyCode), digits = "1234567890", defaults = RIAPP.global.defaults, notAllowedChars = "~@#$%^&*()+=_";
+                    if (notAllowedChars.indexOf(ch) > -1)
+                        return false;
                     if (this._allowedKeys.indexOf(keyCode) > -1)
                         return true;
-                    if (keyCode === 47) {
-                        return false;
-                    }
-                    var keys = { 32: ' ', 44: ',', 46: '.' };
-                    var ch = keys[keyCode];
-                    var defaults = RIAPP.global.defaults;
+                    if (ch === "-" && value.length === 0)
+                        return true;
                     if (ch === defaults.decimalPoint) {
                         if (value.length === 0)
                             return false;
                         else
                             return value.indexOf(ch) < 0;
                     }
-                    if (!!ch && ch !== defaults.thousandSep)
-                        return false;
-                    return !(!ch && (keyCode < 45 || keyCode > 57));
+                    if (ch === defaults.thousandSep)
+                        return true;
+                    else
+                        return digits.indexOf(ch) > -1;
                 };
                 NumberContent.prototype.toString = function () {
                     return 'NumberContent';
@@ -7985,7 +7986,9 @@ var RIAPP;
                     }
                 };
                 StringContent.prototype._previewKeyPress = function (fieldInfo, keyCode, value) {
-                    return !(fieldInfo.maxLength > 0 && value.length >= fieldInfo.maxLength && this._allowedKeys.indexOf(keyCode) === -1);
+                    if (this._allowedKeys.indexOf(keyCode) > -1)
+                        return true;
+                    return !(fieldInfo.maxLength > 0 && value.length >= fieldInfo.maxLength);
                 };
                 StringContent.prototype.toString = function () {
                     return 'StringContent';
@@ -8039,7 +8042,9 @@ var RIAPP;
                     }
                 };
                 MultyLineContent.prototype._previewKeyPress = function (fieldInfo, keyCode, value) {
-                    return !(fieldInfo.maxLength > 0 && value.length >= fieldInfo.maxLength && this._allowedKeys.indexOf(keyCode) === -1);
+                    if (this._allowedKeys.indexOf(keyCode) > -1)
+                        return true;
+                    return !(fieldInfo.maxLength > 0 && value.length >= fieldInfo.maxLength);
                 };
                 MultyLineContent.prototype.toString = function () {
                     return 'MultyLineContent';
@@ -18523,7 +18528,7 @@ var RIAPP;
                     //first create element view
                     elView = self.getElementView(bindElem.el);
                 } catch (ex) {
-                    global.reThrow(ex, this._onError(ex, this));
+                    global.reThrow(ex, self._onError(ex, self));
                 }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
@@ -18582,7 +18587,7 @@ var RIAPP;
                     //first create element view
                     elView = self.getElementView(bindElem.el);
                 } catch (ex) {
-                    global.reThrow(ex, this._onError(ex, this));
+                    global.reThrow(ex, self._onError(ex, self));
                 }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
