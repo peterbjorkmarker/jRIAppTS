@@ -70,10 +70,10 @@
                         this._bindDS();
                     }
                 }
-                _createElement(tag:string) {
+                protected _createElement(tag:string) {
                     return global.$(global.document.createElement(tag));
                 }
-                _render() {
+                protected _render() {
                     var $el = this._$el, rowCount:number, currentPage:number, pageCount:number;
                     this._clearContent();
 
@@ -158,16 +158,16 @@
                         }
                     }
                 }
-                _setDSPageIndex(page:number) {
+                protected _setDSPageIndex(page:number) {
                     this.dataSource.pageIndex = page - 1;
                 }
-                _onPageSizeChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
+                protected _onPageSizeChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
                     this.rowsPerPage = ds.pageSize;
                 }
-                _onPageIndexChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
+                protected _onPageIndexChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
                     this.currentPage = ds.pageIndex + 1;
                 }
-                _onTotalCountChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
+                protected _onTotalCountChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
                     this.rowCount = ds.totalCount;
                 }
                 destroy() {
@@ -181,7 +181,7 @@
                     this._options = <any>{};
                     super.destroy();
                 }
-                _bindDS() {
+                protected _bindDS() {
                     var self = this, ds = this.dataSource;
                     if (!ds) return;
                     ds.addOnFill((s, a) => {
@@ -206,15 +206,15 @@
                     this._rowCount = ds.totalCount;
                     this._render();
                 }
-                _unbindDS() {
+                protected _unbindDS() {
                     var self = this, ds = this.dataSource;
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
-                _clearContent() {
+                protected _clearContent() {
                     this._$el.empty();
                 }
-                _createLink(page:number, text:string, tip?:string) {
+                protected _createLink(page:number, text:string, tip?:string) {
                     var a = this._createElement('a'), self = this;
                     a.text('' + text);
                     a.attr('href', 'javascript:void(0)');
@@ -230,7 +230,7 @@
 
                     return a;
                 }
-                _createFirst() {
+                protected _createFirst() {
                     var $span = this._createElement('span'), tip:string, a;
 
                     if (this.showTip) {
@@ -240,7 +240,7 @@
                     $span.addClass(css.otherPage).append(a);
                     return $span;
                 }
-                _createPrevious() {
+                protected _createPrevious() {
                     var span = this._createElement('span'), previousPage = this.currentPage - 1, tip:string, a;
 
                     if (this.showTip) {
@@ -251,7 +251,7 @@
                     span.addClass(css.otherPage).append(a);
                     return span;
                 }
-                _createCurrent() {
+                protected _createCurrent() {
                     var span = this._createElement('span'), currentPage = this.currentPage;
 
                     span.text('' + currentPage);
@@ -263,7 +263,7 @@
                     span.addClass(css.currentPage);
                     return span;
                 }
-                _createOther(page:number) {
+                protected _createOther(page:number) {
                     var span = this._createElement('span'), tip:string, a;
 
                     if (this.showTip) {
@@ -275,7 +275,7 @@
                     span.append(a);
                     return span;
                 }
-                _createNext() {
+                protected _createNext() {
                     var span = this._createElement('span'), nextPage = this.currentPage + 1, tip, a;
 
                     if (this.showTip) {
@@ -285,7 +285,7 @@
                     span.addClass(css.otherPage).append(a);
                     return span;
                 }
-                _createLast() {
+                protected _createLast() {
                     var span = this._createElement('span'), tip, a;
 
                     if (this.showTip) {
@@ -295,7 +295,7 @@
                     span.addClass(css.otherPage).append(a);
                     return span;
                 }
-                _buildTip(page:number) {
+                protected _buildTip(page:number) {
                     var rowsPerPage = this.rowsPerPage, rowCount = this.rowCount,
                         start = (((page - 1) * rowsPerPage) + 1),
                         end = (page == this.pageCount) ? rowCount : (page * rowsPerPage), tip = '';
@@ -451,7 +451,7 @@
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._pager && !this._pager._isDestroyCalled) {
+                    if (!!this._pager && !this._pager.getIsDestroyCalled()) {
                         this._pager.destroy();
                     }
                     this._pager = null;

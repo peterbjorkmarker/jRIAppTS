@@ -1,12 +1,12 @@
 ﻿/*!
- * jRIAppTS framework v2.0.7
+ * jRIAppTS framework v2.4.0
  * https://github.com/BBGONE/jRIAppTS
  *
  * Copyright 2013, 2014 Maxim V. Tsapov
  * Released under the MIT license
  * https://github.com/BBGONE/jRIAppTS/blob/generics/LICENSE.txt
  *
- * Date: 2014-02-13T10:00Z
+ * Date: 2014-11-20T21:00Z
  */
 'use strict';
 module RIAPP {

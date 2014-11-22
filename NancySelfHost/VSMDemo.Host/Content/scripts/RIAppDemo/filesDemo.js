@@ -1,4 +1,4 @@
-﻿var __extends = this.__extends || function (d, b) {
+var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -9,10 +9,10 @@
 /// <reference path="folderBrowserSvc.ts"/>
 var RIAPP;
 (function (RIAPP) {
+    var FILESDEMO;
     (function (FILESDEMO) {
         'use strict';
         var global = RIAPP.global, utils = global.utils;
-
         var FolderBrowser = (function (_super) {
             __extends(FolderBrowser, _super);
             function FolderBrowser(options) {
@@ -28,17 +28,14 @@ var RIAPP;
                 this._assoc = self._dbContext.associations.getChildToParent();
                 this._infotype = null;
                 self._foldersDb = self._dbContext.dbSets.FileSystemObject;
-
                 self._foldersDb.definefullPathField(function () {
                     return self.getFullPath(this);
                 });
-
                 self._loadRootCommand = new RIAPP.MOD.mvvm.Command(function (s, a) {
                     self.loadRootFolder();
                 }, self, function (s, a) {
                     return true;
                 });
-
                 this._createDynaTree();
             }
             FolderBrowser.prototype._getEventNames = function () {
@@ -66,7 +63,6 @@ var RIAPP;
                                     return;
                                 item.deleteItem();
                             }, false);
-
                             //remove all child nodes when node collapsed
                             node.removeChildren();
                             self._dbContext.acceptChanges();
@@ -101,15 +97,16 @@ var RIAPP;
             };
             FolderBrowser.prototype._onLoaded = function (fetchedItems) {
                 var self = this;
-                try  {
+                try {
                     var topLevel = fetchedItems.filter(function (item) {
                         return item.Level == 0;
                     });
                     if (topLevel.length > 0) {
                         self._addItemsToTree(topLevel);
                     }
-                } catch (ex) {
-                    self._onError(ex, self);
+                }
+                catch (ex) {
+                    self.handleError(ex, self);
                     global._throwDummy(ex);
                 }
             };
@@ -134,7 +131,8 @@ var RIAPP;
                 var parent = this._assoc.getParentItem(item);
                 if (!parent) {
                     return item.Name + part;
-                } else {
+                }
+                else {
                     return self._getFullPath(parent, item.Name + part);
                 }
             };
@@ -183,7 +181,6 @@ var RIAPP;
             return FolderBrowser;
         })(RIAPP.BaseObject);
         FILESDEMO.FolderBrowser = FolderBrowser;
-
         function fn_getTemplateElement(template, name) {
             var t = template;
             var els = t.findElByDataName(name);
@@ -192,14 +189,12 @@ var RIAPP;
             return els[0];
         }
         ;
-
         var FolderBrowserVM = (function (_super) {
             __extends(FolderBrowserVM, _super);
             function FolderBrowserVM(app, options) {
                 _super.call(this, app);
                 var self = this;
                 this._selectedItem = null;
-
                 //we defined this custom type in common.js
                 this._dialogVM = new RIAPP.COMMON.DialogVM(app);
                 this._folderBrowser = null;
@@ -232,14 +227,13 @@ var RIAPP;
                         }
                     }
                 };
-
                 this._dialogVM.createDialog('folderBrowser', dialogOptions);
-
                 this._dialogCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
-                    try  {
+                    try {
                         self.showDialog();
-                    } catch (ex) {
-                        self._onError(ex, this);
+                    }
+                    catch (ex) {
+                        self.handleError(ex, this);
                     }
                 }, self, function (sender, param) {
                     return true;
@@ -323,7 +317,6 @@ var RIAPP;
             return FolderBrowserVM;
         })(RIAPP.MOD.mvvm.BaseViewModel);
         FILESDEMO.FolderBrowserVM = FolderBrowserVM;
-
         var DemoApplication = (function (_super) {
             __extends(DemoApplication, _super);
             function DemoApplication(options) {
@@ -349,7 +342,6 @@ var RIAPP;
                     self._selectedPath = s.infotype + '\\' + a.fullPath;
                     self.raisePropertyChanged('selectedPath');
                 });
-
                 //here we could process application's errors
                 this.addOnError(function (sender, data) {
                     debugger;
@@ -359,18 +351,18 @@ var RIAPP;
                 });
                 _super.prototype.onStartUp.call(this);
             };
-
             //really, the destroy method is redundant here because application lives till the page lives
             DemoApplication.prototype.destroy = function () {
                 if (this._isDestroyed)
                     return;
                 this._isDestroyCalled = true;
                 var self = this;
-                try  {
+                try {
                     self._errorVM.destroy();
                     self._fbrowserVM1.destroy();
                     self._fbrowserVM2.destroy();
-                } finally {
+                }
+                finally {
                     _super.prototype.destroy.call(this);
                 }
             };
@@ -419,40 +411,31 @@ var RIAPP;
             return DemoApplication;
         })(RIAPP.Application);
         FILESDEMO.DemoApplication = DemoApplication;
-
         //global error handler - the last resort (typically display message to the user)
         RIAPP.global.addOnError(function (sender, args) {
             debugger;
             alert(args.error.message);
         });
-
         RIAPP.global.addOnLoad(function (sender, a) {
             var global = sender;
-
             //initialize images folder path
             global.defaults.imagesPath = FILESDEMO.mainOptions.images_path;
-
             //create and then start application
             var thisApp = new DemoApplication(FILESDEMO.mainOptions);
             thisApp.startUp(function (app) {
             });
         });
-
         function initModule(app) {
             return FILESDEMO;
         }
         ;
-
         //properties must be initialized on HTML page
         FILESDEMO.mainOptions = {
             service_url: null,
             permissionInfo: null,
             images_path: null,
-            user_modules: [
-                { name: "COMMON", initFn: RIAPP.COMMON.initModule },
-                { name: "FILESDEMO", initFn: initModule }]
+            user_modules: [{ name: "COMMON", initFn: RIAPP.COMMON.initModule }, { name: "FILESDEMO", initFn: initModule }]
         };
-    })(RIAPP.FILESDEMO || (RIAPP.FILESDEMO = {}));
-    var FILESDEMO = RIAPP.FILESDEMO;
+    })(FILESDEMO = RIAPP.FILESDEMO || (RIAPP.FILESDEMO = {}));
 })(RIAPP || (RIAPP = {}));
 //# sourceMappingURL=filesDemo.js.map

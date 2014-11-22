@@ -15,6 +15,7 @@ namespace RIAPP.DataService.Mvc
          where T : BaseDomainService
     {
         private ISerializer _serializer;
+        private Lazy<IDomainService> _DomainService;
         
         #region PRIVATE METHODS
         private ActionResult _GetTypeScript()
@@ -61,8 +62,6 @@ namespace RIAPP.DataService.Mvc
             var service = (IDomainService)Activator.CreateInstance(typeof(T), args);
             return service;
         }
-
-        private Lazy<IDomainService> _DomainService;
 
         [ChildActionOnly]
         public string PermissionsInfo()

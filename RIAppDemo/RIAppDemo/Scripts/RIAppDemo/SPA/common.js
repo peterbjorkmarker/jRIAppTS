@@ -1,4 +1,4 @@
-﻿/// <reference path="..\jriapp.d.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 'use strict';
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -6,13 +6,11 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports"], function(require, exports) {
+define(["require", "exports"], function (require, exports) {
     //static import
     var MOD = RIAPP.MOD;
-
     //local variables for optimization
     var global = RIAPP.global, utils = global.utils;
-
     var NotConverter = (function (_super) {
         __extends(NotConverter, _super);
         function NotConverter() {
@@ -27,7 +25,6 @@ define(["require", "exports"], function(require, exports) {
         return NotConverter;
     })(MOD.converter.BaseConverter);
     exports.NotConverter = NotConverter;
-
     //a  helper function
     function addTextQuery(query, fldName, val) {
         var tmp;
@@ -35,13 +32,16 @@ define(["require", "exports"], function(require, exports) {
             if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                 tmp = utils.str.trim(val, '% ');
                 query.where(fldName, 4 /* Contains */, [tmp]);
-            } else if (utils.str.startsWith(val, '%')) {
+            }
+            else if (utils.str.startsWith(val, '%')) {
                 tmp = utils.str.trim(val, '% ');
                 query.where(fldName, 3 /* EndsWith */, [tmp]);
-            } else if (utils.str.endsWith(val, '%')) {
+            }
+            else if (utils.str.endsWith(val, '%')) {
                 tmp = utils.str.trim(val, '% ');
                 query.where(fldName, 2 /* StartsWith */, [tmp]);
-            } else {
+            }
+            else {
                 tmp = utils.str.trim(val);
                 query.where(fldName, 0 /* Equals */, [tmp]);
             }
@@ -49,7 +49,6 @@ define(["require", "exports"], function(require, exports) {
         return query;
     }
     exports.addTextQuery = addTextQuery;
-
     var DialogVM = (function (_super) {
         __extends(DialogVM, _super);
         function DialogVM(app) {
@@ -96,7 +95,6 @@ define(["require", "exports"], function(require, exports) {
         return DialogVM;
     })(MOD.mvvm.BaseViewModel);
     exports.DialogVM = DialogVM;
-
     var DownloadLinkElView = (function (_super) {
         __extends(DownloadLinkElView, _super);
         function DownloadLinkElView() {
@@ -176,7 +174,6 @@ define(["require", "exports"], function(require, exports) {
         return DownloadLinkElView;
     })(MOD.baseElView.BaseElView);
     exports.DownloadLinkElView = DownloadLinkElView;
-
     var FileImgElView = (function (_super) {
         __extends(FileImgElView, _super);
         function FileImgElView() {
@@ -265,7 +262,6 @@ define(["require", "exports"], function(require, exports) {
         return FileImgElView;
     })(MOD.baseElView.BaseElView);
     exports.FileImgElView = FileImgElView;
-
     var ErrorViewModel = (function (_super) {
         __extends(ErrorViewModel, _super);
         function ErrorViewModel(app) {
@@ -287,7 +283,6 @@ define(["require", "exports"], function(require, exports) {
                         self._error = self.error.origError;
                         self.raisePropertyChanged('error');
                     }
-
                     if (self.error instanceof MOD.db.AccessDeniedError)
                         self.title = "ACCESS DENIED";
                     else if (self.error instanceof MOD.db.ConcurrencyError)
@@ -300,7 +295,6 @@ define(["require", "exports"], function(require, exports) {
                         self.title = "DATA OPERATION ERROR";
                     else
                         self.title = "UNEXPECTED ERROR";
-
                     self.message = (!self.error.message) ? ('' + self.error) : self.error.message;
                     dialog.title = self.title;
                 },
@@ -309,7 +303,6 @@ define(["require", "exports"], function(require, exports) {
                     self.raisePropertyChanged('error');
                 }
             };
-
             //dialogs are distinguished by their given names
             this._dialogVM.createDialog('errorDialog', dialogOptions);
         }
@@ -332,7 +325,7 @@ define(["require", "exports"], function(require, exports) {
             set: function (v) {
                 var old = this._error;
                 if (!!old) {
-                    global._onError(v, null);
+                    global.handleError(v, null);
                     global._throwDummy(v);
                 }
                 this._error = v;
@@ -372,12 +365,10 @@ define(["require", "exports"], function(require, exports) {
         return ErrorViewModel;
     })(MOD.mvvm.BaseViewModel);
     exports.ErrorViewModel = ErrorViewModel;
-
     function initModule(app) {
         app.registerConverter('notConverter', new NotConverter());
         app.registerElView('fileLink', DownloadLinkElView);
         app.registerElView('fileImage', FileImgElView);
-
         //return something, even null is OK
         return {};
     }

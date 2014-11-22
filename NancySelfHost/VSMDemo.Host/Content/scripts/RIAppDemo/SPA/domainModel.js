@@ -1,4 +1,4 @@
-﻿/// <reference path="..\jriapp.d.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 'use strict';
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -6,11 +6,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports"], function(require, exports) {
-    
-
-    
-
+define(["require", "exports"], function (require, exports) {
     (function (TestEnum) {
         TestEnum[TestEnum["None"] = 0] = "None";
         TestEnum[TestEnum["OK"] = 1] = "OK";
@@ -18,13 +14,8 @@ define(["require", "exports"], function(require, exports) {
         TestEnum[TestEnum["Loading"] = 3] = "Loading";
     })(exports.TestEnum || (exports.TestEnum = {}));
     var TestEnum = exports.TestEnum;
-
-    
-
-    
-
     /*
-    An enum for testing of conversion C# types to typescript
+        An enum for testing of conversion C# types to typescript
     */
     (function (TestEnum2) {
         TestEnum2[TestEnum2["None"] = 0] = "None";
@@ -33,9 +24,6 @@ define(["require", "exports"], function(require, exports) {
         TestEnum2[TestEnum2["Three"] = 3] = "Three";
     })(exports.TestEnum2 || (exports.TestEnum2 = {}));
     var TestEnum2 = exports.TestEnum2;
-
-    
-
     //******BEGIN LISTS REGION******
     var TestModelListItem = (function (_super) {
         __extends(TestModelListItem, _super);
@@ -108,7 +96,6 @@ define(["require", "exports"], function(require, exports) {
         return TestModelListItem;
     })(RIAPP.MOD.collection.ListItem);
     exports.TestModelListItem = TestModelListItem;
-
     var TestDictionary = (function (_super) {
         __extends(TestDictionary, _super);
         function TestDictionary() {
@@ -128,7 +115,6 @@ define(["require", "exports"], function(require, exports) {
         return TestDictionary;
     })(RIAPP.MOD.collection.BaseDictionary);
     exports.TestDictionary = TestDictionary;
-
     var TestList = (function (_super) {
         __extends(TestList, _super);
         function TestList() {
@@ -145,7 +131,6 @@ define(["require", "exports"], function(require, exports) {
         return TestList;
     })(RIAPP.MOD.collection.BaseList);
     exports.TestList = TestList;
-
     var KeyValListItem = (function (_super) {
         __extends(KeyValListItem, _super);
         function KeyValListItem(coll, obj) {
@@ -177,7 +162,6 @@ define(["require", "exports"], function(require, exports) {
         return KeyValListItem;
     })(RIAPP.MOD.collection.ListItem);
     exports.KeyValListItem = KeyValListItem;
-
     var KeyValDictionary = (function (_super) {
         __extends(KeyValDictionary, _super);
         function KeyValDictionary() {
@@ -197,7 +181,6 @@ define(["require", "exports"], function(require, exports) {
         return KeyValDictionary;
     })(RIAPP.MOD.collection.BaseDictionary);
     exports.KeyValDictionary = KeyValDictionary;
-
     var HistoryItemListItem = (function (_super) {
         __extends(HistoryItemListItem, _super);
         function HistoryItemListItem(coll, obj) {
@@ -229,7 +212,6 @@ define(["require", "exports"], function(require, exports) {
         return HistoryItemListItem;
     })(RIAPP.MOD.collection.ListItem);
     exports.HistoryItemListItem = HistoryItemListItem;
-
     var HistoryList = (function (_super) {
         __extends(HistoryList, _super);
         function HistoryList() {
@@ -246,7 +228,6 @@ define(["require", "exports"], function(require, exports) {
         return HistoryList;
     })(RIAPP.MOD.collection.BaseList);
     exports.HistoryList = HistoryList;
-
     //******END LISTS REGION******
     //******BEGIN COMPLEX TYPES REGION*****
     var Customer_ComplexProp1 = (function (_super) {
@@ -274,14 +255,12 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         Customer_ComplexProp1.prototype.toString = function () {
             return 'Customer_ComplexProp1';
         };
         return Customer_ComplexProp1;
     })(RIAPP.MOD.db.ChildComplexProperty);
     exports.Customer_ComplexProp1 = Customer_ComplexProp1;
-
     var Customer_ComplexProp = (function (_super) {
         __extends(Customer_ComplexProp, _super);
         function Customer_ComplexProp(name, owner) {
@@ -335,16 +314,12 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         Customer_ComplexProp.prototype.toString = function () {
             return 'Customer_ComplexProp';
         };
         return Customer_ComplexProp;
     })(RIAPP.MOD.db.RootComplexProperty);
     exports.Customer_ComplexProp = Customer_ComplexProp;
-
-    
-
     var Customer = (function (_super) {
         __extends(Customer, _super);
         function Customer(dbSet, row, names) {
@@ -463,7 +438,6 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         Customer.prototype.getDbContext = function () {
             return _super.prototype.getDbContext.call(this);
         };
@@ -489,7 +463,6 @@ define(["require", "exports"], function(require, exports) {
         return Customer;
     })(RIAPP.MOD.db.Entity);
     exports.Customer = Customer;
-
     var CustomerDb = (function (_super) {
         __extends(CustomerDb, _super);
         function CustomerDb(dbContext) {
@@ -510,11 +483,9 @@ define(["require", "exports"], function(require, exports) {
             query.params = args;
             return query;
         };
-
         CustomerDb.prototype.defineComplexProp_NameField = function (getFunc) {
             this._defineCalculatedField('ComplexProp.Name', getFunc);
         };
-
         Object.defineProperty(CustomerDb.prototype, "items2", {
             get: function () {
                 return this.items;
@@ -525,7 +496,6 @@ define(["require", "exports"], function(require, exports) {
         return CustomerDb;
     })(RIAPP.MOD.db.DbSet);
     exports.CustomerDb = CustomerDb;
-
     var CustomerAddress = (function (_super) {
         __extends(CustomerAddress, _super);
         function CustomerAddress(dbSet, row, names) {
@@ -605,7 +575,6 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         CustomerAddress.prototype.getDbContext = function () {
             return _super.prototype.getDbContext.call(this);
         };
@@ -631,7 +600,6 @@ define(["require", "exports"], function(require, exports) {
         return CustomerAddress;
     })(RIAPP.MOD.db.Entity);
     exports.CustomerAddress = CustomerAddress;
-
     var CustomerAddressDb = (function (_super) {
         __extends(CustomerAddressDb, _super);
         function CustomerAddressDb(dbContext) {
@@ -655,7 +623,6 @@ define(["require", "exports"], function(require, exports) {
             query.params = args;
             return query;
         };
-
         Object.defineProperty(CustomerAddressDb.prototype, "items2", {
             get: function () {
                 return this.items;
@@ -666,7 +633,6 @@ define(["require", "exports"], function(require, exports) {
         return CustomerAddressDb;
     })(RIAPP.MOD.db.DbSet);
     exports.CustomerAddressDb = CustomerAddressDb;
-
     var Address = (function (_super) {
         __extends(Address, _super);
         function Address(dbSet, row, names) {
@@ -760,7 +726,6 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         Address.prototype.getDbContext = function () {
             return _super.prototype.getDbContext.call(this);
         };
@@ -786,7 +751,6 @@ define(["require", "exports"], function(require, exports) {
         return Address;
     })(RIAPP.MOD.db.Entity);
     exports.Address = Address;
-
     var AddressDb = (function (_super) {
         __extends(AddressDb, _super);
         function AddressDb(dbContext) {
@@ -810,7 +774,6 @@ define(["require", "exports"], function(require, exports) {
             query.params = args;
             return query;
         };
-
         Object.defineProperty(AddressDb.prototype, "items2", {
             get: function () {
                 return this.items;
@@ -821,7 +784,6 @@ define(["require", "exports"], function(require, exports) {
         return AddressDb;
     })(RIAPP.MOD.db.DbSet);
     exports.AddressDb = AddressDb;
-
     var Product = (function (_super) {
         __extends(Product, _super);
         function Product(dbSet, row, names) {
@@ -992,7 +954,6 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         Product.prototype.getDbContext = function () {
             return _super.prototype.getDbContext.call(this);
         };
@@ -1018,7 +979,6 @@ define(["require", "exports"], function(require, exports) {
         return Product;
     })(RIAPP.MOD.db.Entity);
     exports.Product = Product;
-
     var ProductDb = (function (_super) {
         __extends(ProductDb, _super);
         function ProductDb(dbContext) {
@@ -1044,11 +1004,9 @@ define(["require", "exports"], function(require, exports) {
             query.params = args;
             return query;
         };
-
         ProductDb.prototype.defineIsActiveField = function (getFunc) {
             this._defineCalculatedField('IsActive', getFunc);
         };
-
         Object.defineProperty(ProductDb.prototype, "items2", {
             get: function () {
                 return this.items;
@@ -1059,7 +1017,6 @@ define(["require", "exports"], function(require, exports) {
         return ProductDb;
     })(RIAPP.MOD.db.DbSet);
     exports.ProductDb = ProductDb;
-
     var ProductModel = (function (_super) {
         __extends(ProductModel, _super);
         function ProductModel(dbSet, row, names) {
@@ -1082,7 +1039,6 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         ProductModel.prototype.getDbContext = function () {
             return _super.prototype.getDbContext.call(this);
         };
@@ -1108,7 +1064,6 @@ define(["require", "exports"], function(require, exports) {
         return ProductModel;
     })(RIAPP.MOD.db.Entity);
     exports.ProductModel = ProductModel;
-
     var ProductModelDb = (function (_super) {
         __extends(ProductModelDb, _super);
         function ProductModelDb(dbContext) {
@@ -1127,7 +1082,6 @@ define(["require", "exports"], function(require, exports) {
         ProductModelDb.prototype.createReadProductModelQuery = function () {
             return this.createQuery('ReadProductModel');
         };
-
         Object.defineProperty(ProductModelDb.prototype, "items2", {
             get: function () {
                 return this.items;
@@ -1138,7 +1092,6 @@ define(["require", "exports"], function(require, exports) {
         return ProductModelDb;
     })(RIAPP.MOD.db.DbSet);
     exports.ProductModelDb = ProductModelDb;
-
     var SalesOrderHeader = (function (_super) {
         __extends(SalesOrderHeader, _super);
         function SalesOrderHeader(dbSet, row, names) {
@@ -1368,7 +1321,6 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         SalesOrderHeader.prototype.getDbContext = function () {
             return _super.prototype.getDbContext.call(this);
         };
@@ -1394,7 +1346,6 @@ define(["require", "exports"], function(require, exports) {
         return SalesOrderHeader;
     })(RIAPP.MOD.db.Entity);
     exports.SalesOrderHeader = SalesOrderHeader;
-
     var SalesOrderHeaderDb = (function (_super) {
         __extends(SalesOrderHeaderDb, _super);
         function SalesOrderHeaderDb(dbContext) {
@@ -1413,7 +1364,6 @@ define(["require", "exports"], function(require, exports) {
         SalesOrderHeaderDb.prototype.createReadSalesOrderHeaderQuery = function () {
             return this.createQuery('ReadSalesOrderHeader');
         };
-
         Object.defineProperty(SalesOrderHeaderDb.prototype, "items2", {
             get: function () {
                 return this.items;
@@ -1424,7 +1374,6 @@ define(["require", "exports"], function(require, exports) {
         return SalesOrderHeaderDb;
     })(RIAPP.MOD.db.DbSet);
     exports.SalesOrderHeaderDb = SalesOrderHeaderDb;
-
     var SalesOrderDetail = (function (_super) {
         __extends(SalesOrderDetail, _super);
         function SalesOrderDetail(dbSet, row, names) {
@@ -1522,7 +1471,6 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         SalesOrderDetail.prototype.getDbContext = function () {
             return _super.prototype.getDbContext.call(this);
         };
@@ -1548,7 +1496,6 @@ define(["require", "exports"], function(require, exports) {
         return SalesOrderDetail;
     })(RIAPP.MOD.db.Entity);
     exports.SalesOrderDetail = SalesOrderDetail;
-
     var SalesOrderDetailDb = (function (_super) {
         __extends(SalesOrderDetailDb, _super);
         function SalesOrderDetailDb(dbContext) {
@@ -1567,7 +1514,6 @@ define(["require", "exports"], function(require, exports) {
         SalesOrderDetailDb.prototype.createReadSalesOrderDetailQuery = function () {
             return this.createQuery('ReadSalesOrderDetail');
         };
-
         Object.defineProperty(SalesOrderDetailDb.prototype, "items2", {
             get: function () {
                 return this.items;
@@ -1578,7 +1524,6 @@ define(["require", "exports"], function(require, exports) {
         return SalesOrderDetailDb;
     })(RIAPP.MOD.db.DbSet);
     exports.SalesOrderDetailDb = SalesOrderDetailDb;
-
     var ProductCategory = (function (_super) {
         __extends(ProductCategory, _super);
         function ProductCategory(dbSet, row, names) {
@@ -1631,7 +1576,6 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         ProductCategory.prototype.getDbContext = function () {
             return _super.prototype.getDbContext.call(this);
         };
@@ -1657,7 +1601,6 @@ define(["require", "exports"], function(require, exports) {
         return ProductCategory;
     })(RIAPP.MOD.db.Entity);
     exports.ProductCategory = ProductCategory;
-
     var ProductCategoryDb = (function (_super) {
         __extends(ProductCategoryDb, _super);
         function ProductCategoryDb(dbContext) {
@@ -1676,7 +1619,6 @@ define(["require", "exports"], function(require, exports) {
         ProductCategoryDb.prototype.createReadProductCategoryQuery = function () {
             return this.createQuery('ReadProductCategory');
         };
-
         Object.defineProperty(ProductCategoryDb.prototype, "items2", {
             get: function () {
                 return this.items;
@@ -1687,7 +1629,6 @@ define(["require", "exports"], function(require, exports) {
         return ProductCategoryDb;
     })(RIAPP.MOD.db.DbSet);
     exports.ProductCategoryDb = ProductCategoryDb;
-
     var SalesInfo = (function (_super) {
         __extends(SalesInfo, _super);
         function SalesInfo(dbSet, row, names) {
@@ -1703,7 +1644,6 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         SalesInfo.prototype.getDbContext = function () {
             return _super.prototype.getDbContext.call(this);
         };
@@ -1729,7 +1669,6 @@ define(["require", "exports"], function(require, exports) {
         return SalesInfo;
     })(RIAPP.MOD.db.Entity);
     exports.SalesInfo = SalesInfo;
-
     var SalesInfoDb = (function (_super) {
         __extends(SalesInfoDb, _super);
         function SalesInfoDb(dbContext) {
@@ -1748,7 +1687,6 @@ define(["require", "exports"], function(require, exports) {
         SalesInfoDb.prototype.createReadSalesInfoQuery = function () {
             return this.createQuery('ReadSalesInfo');
         };
-
         Object.defineProperty(SalesInfoDb.prototype, "items2", {
             get: function () {
                 return this.items;
@@ -1759,7 +1697,6 @@ define(["require", "exports"], function(require, exports) {
         return SalesInfoDb;
     })(RIAPP.MOD.db.DbSet);
     exports.SalesInfoDb = SalesInfoDb;
-
     var LookUpProduct = (function (_super) {
         __extends(LookUpProduct, _super);
         function LookUpProduct(dbSet, row, names) {
@@ -1785,7 +1722,6 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         LookUpProduct.prototype.getDbContext = function () {
             return _super.prototype.getDbContext.call(this);
         };
@@ -1811,7 +1747,6 @@ define(["require", "exports"], function(require, exports) {
         return LookUpProduct;
     })(RIAPP.MOD.db.Entity);
     exports.LookUpProduct = LookUpProduct;
-
     var LookUpProductDb = (function (_super) {
         __extends(LookUpProductDb, _super);
         function LookUpProductDb(dbContext) {
@@ -1830,7 +1765,6 @@ define(["require", "exports"], function(require, exports) {
         LookUpProductDb.prototype.createReadProductLookUpQuery = function () {
             return this.createQuery('ReadProductLookUp');
         };
-
         Object.defineProperty(LookUpProductDb.prototype, "items2", {
             get: function () {
                 return this.items;
@@ -1841,7 +1775,6 @@ define(["require", "exports"], function(require, exports) {
         return LookUpProductDb;
     })(RIAPP.MOD.db.DbSet);
     exports.LookUpProductDb = LookUpProductDb;
-
     var AddressInfo = (function (_super) {
         __extends(AddressInfo, _super);
         function AddressInfo(dbSet, row, names) {
@@ -1889,7 +1822,6 @@ define(["require", "exports"], function(require, exports) {
             enumerable: true,
             configurable: true
         });
-
         AddressInfo.prototype.getDbContext = function () {
             return _super.prototype.getDbContext.call(this);
         };
@@ -1915,7 +1847,6 @@ define(["require", "exports"], function(require, exports) {
         return AddressInfo;
     })(RIAPP.MOD.db.Entity);
     exports.AddressInfo = AddressInfo;
-
     var AddressInfoDb = (function (_super) {
         __extends(AddressInfoDb, _super);
         function AddressInfoDb(dbContext) {
@@ -1934,7 +1865,6 @@ define(["require", "exports"], function(require, exports) {
         AddressInfoDb.prototype.createReadAddressInfoQuery = function () {
             return this.createQuery('ReadAddressInfo');
         };
-
         Object.defineProperty(AddressInfoDb.prototype, "items2", {
             get: function () {
                 return this.items;
@@ -1945,7 +1875,6 @@ define(["require", "exports"], function(require, exports) {
         return AddressInfoDb;
     })(RIAPP.MOD.db.DbSet);
     exports.AddressInfoDb = AddressInfoDb;
-
     var DbSets = (function (_super) {
         __extends(DbSets, _super);
         function DbSets(dbContext) {
@@ -2043,7 +1972,6 @@ define(["require", "exports"], function(require, exports) {
         return DbSets;
     })(RIAPP.MOD.db.DbSets);
     exports.DbSets = DbSets;
-
     var DbContext = (function (_super) {
         __extends(DbContext, _super);
         function DbContext() {

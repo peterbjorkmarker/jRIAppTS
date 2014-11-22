@@ -1,18 +1,15 @@
-﻿var __extends = this.__extends || function (d, b) {
+var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports", "domainModel", "common", "autocomplete", "animation"], function(require, exports, DEMODB, COMMON, AUTOCOMPLETE, ANIMATION) {
+define(["require", "exports", "domainModel", "common", "autocomplete", "animation"], function (require, exports, DEMODB, COMMON, AUTOCOMPLETE, ANIMATION) {
     'use strict';
-
     //using static import for CORE jriapp modules (they are inside jriapp.js file)
     var MOD = RIAPP.MOD;
-
     //local variables for optimization
     var global = RIAPP.global, utils = global.utils;
-
     var MainViewVM = (function (_super) {
         __extends(MainViewVM, _super);
         function MainViewVM() {
@@ -74,7 +71,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return MainViewVM;
     })(RIAPP.BaseObject);
     exports.MainViewVM = MainViewVM;
-
     var CustDetViewVM = (function (_super) {
         __extends(CustDetViewVM, _super);
         function CustDetViewVM() {
@@ -136,7 +132,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return CustDetViewVM;
     })(RIAPP.BaseObject);
     exports.CustDetViewVM = CustDetViewVM;
-
     var AddrViewVM = (function (_super) {
         __extends(AddrViewVM, _super);
         function AddrViewVM() {
@@ -181,7 +176,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return AddrViewVM;
     })(RIAPP.BaseObject);
     exports.AddrViewVM = AddrViewVM;
-
     //instead of obtaining a reference to the real dataGrid instance
     //we communicate with the dataGrid through this object
     //achieving a loose coupling between UI control and a ViewModel
@@ -221,7 +215,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return CustomerGridEvents;
     })(RIAPP.BaseObject);
     exports.CustomerGridEvents = CustomerGridEvents;
-
     var CustomerVM = (function (_super) {
         __extends(CustomerVM, _super);
         function CustomerVM(app) {
@@ -243,45 +236,38 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                 }
             });
             this._gridEvents = new CustomerGridEvents(this);
-
             this._dbSet.addOnItemDeleting(function (sender, args) {
                 if (!confirm('Are you sure that you want to delete customer ?'))
                     args.isCancel = true;
             }, self.uniqueID);
-
             this._dbSet.addOnFill(function (sender, args) {
                 //when fill is ended
                 if (args.isBegin && args.isPageChanged) {
                     self.raiseEvent('page_changed', {});
                 }
             }, self.uniqueID);
-
             this._dbSet.addOnItemAdded(function (s, args) {
                 args.item.NameStyle = false;
                 args.item.ComplexProp.LastName = "Dummy1";
                 args.item.ComplexProp.FirstName = "Dummy2";
             });
-
             this._editCommand = new MOD.mvvm.Command(function (sender, param) {
                 self.currentItem.beginEdit();
             }, self, function (sender, param) {
                 return !!self.currentItem;
             });
-
             this._endEditCommand = new MOD.mvvm.Command(function (sender, param) {
                 if (self.currentItem.endEdit())
                     self.dbContext.submitChanges();
             }, self, function (sender, param) {
                 return !!self.currentItem;
             });
-
             this._cancelEditCommand = new MOD.mvvm.Command(function (sender, param) {
                 self.currentItem.cancelEdit();
                 self.dbContext.rejectChanges();
             }, self, function (sender, param) {
                 return !!self.currentItem;
             });
-
             //adds new customer - uses dialog to enter the data
             this._addNewCommand = new MOD.mvvm.Command(function (sender, param) {
                 //showing of the dialog is handled by the datagrid
@@ -290,7 +276,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                 //the command is always enabled
                 return true;
             });
-
             //saves changes (submitts them to the service)
             this._saveCommand = new MOD.mvvm.Command(function (sender, param) {
                 self.dbContext.submitChanges();
@@ -298,53 +283,43 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                 //the command is enabled when there are pending changes
                 return self.dbContext.hasChanges;
             });
-
             this._undoCommand = new MOD.mvvm.Command(function (sender, param) {
                 self.dbContext.rejectChanges();
             }, self, function (s, p) {
                 //the command is enabled when there are pending changes
                 return self.dbContext.hasChanges;
             });
-
             //load data from the server
             this._loadCommand = new MOD.mvvm.Command(function (sender, args) {
                 self.load();
             }, self, null);
-
             //it is not needed here, but can be used when we want to respond to the tabs events
             this._tabsEventCommand = new MOD.mvvm.Command(function (sender, param) {
                 //alert(param.eventName);
             }, self, null);
-
             this._switchViewCommand = new MOD.mvvm.Command(function (sender, param) {
                 self.uiMainView.viewName = param;
             }, self, null);
-
             this._switchDetViewCommand = new MOD.mvvm.Command(function (sender, param) {
                 self.uiDetailView.viewName = param;
             }, self, null);
-
             //the property watcher helps us handling properties changes
             //more convenient than using addOnPropertyChange
             this._propWatcher.addPropWatch(self.dbContext, 'hasChanges', function (prop) {
                 self._saveCommand.raiseCanExecuteChanged();
                 self._undoCommand.raiseCanExecuteChanged();
             });
-
             this._propWatcher.addPropWatch(this._dbSet, 'currentItem', function (prop) {
                 self._editCommand.raiseCanExecuteChanged();
                 self._endEditCommand.raiseCanExecuteChanged();
                 self._cancelEditCommand.raiseCanExecuteChanged();
                 self._onCurrentChanged();
             });
-
             this._dbSet.addOnCleared(function (s, a) {
                 self.dbSets.CustomerAddress.clear();
                 self.dbSets.Address.clear();
             }, self.uniqueID);
-
             var custAssoc = self.dbContext.associations.getCustAddrToCustomer();
-
             //the view to filter CustomerAddresses related to the current customer only
             this._custAdressView = new MOD.db.ChildDataView({
                 association: custAssoc,
@@ -352,7 +327,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                     return a.AddressID - b.AddressID;
                 }
             });
-
             this._ordersVM = new OrderVM(this);
             this._customerAddressVM = new CustomerAddressVM(this);
         }
@@ -374,12 +348,10 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             this._custAdressView.parentItem = this._dbSet.currentItem;
             this.raisePropertyChanged('currentItem');
         };
-
         //returns promise
         CustomerVM.prototype.load = function () {
             var query = this._dbSet.createReadCustomerQuery({ includeNav: true });
             query.pageSize = 50;
-
             //load without filtering
             query.orderBy('LastName').thenBy('MiddleName').thenBy('FirstName');
             return this.dbContext.load(query);
@@ -390,7 +362,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             this._isDestroyCalled = true;
             this._propWatcher.destroy();
             this._propWatcher = null;
-
             if (!!this._dbSet) {
                 this._dbSet.removeNSHandlers(this.uniqueID);
             }
@@ -554,7 +525,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return CustomerVM;
     })(MOD.mvvm.BaseViewModel);
     exports.CustomerVM = CustomerVM;
-
     //instead of obtaining a reference to the real dataGrid instance
     //we communicate with the dataGrid through this object
     //achieving a loose coupling between UI control and a ViewModel
@@ -594,7 +564,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return OrderGridEvents;
     })(RIAPP.BaseObject);
     exports.OrderGridEvents = OrderGridEvents;
-
     var OrderVM = (function (_super) {
         __extends(OrderVM, _super);
         function OrderVM(customerVM) {
@@ -606,29 +575,23 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             this._gridEvents = new OrderGridEvents(this);
             this._selectedTabIndex = null;
             this._orderStatuses = new DEMODB.KeyValDictionary();
-            this._orderStatuses.fillItems([
-                { key: 0, val: 'New Order' }, { key: 1, val: 'Status 1' },
-                { key: 2, val: 'Status 2' }, { key: 3, val: 'Status 3' },
-                { key: 4, val: 'Status 4' }, { key: 5, val: 'Completed Order' }], true);
-
+            this._orderStatuses.fillItems([{ key: 0, val: 'New Order' }, { key: 1, val: 'Status 1' }, { key: 2, val: 'Status 2' }, { key: 3, val: 'Status 3' }, { key: 4, val: 'Status 4' }, { key: 5, val: 'Completed Order' }], true);
             //loads the data only when customer's row is expanded
             this._customerVM.addHandler('row_expanded', function (sender, args) {
                 if (args.isExpanded) {
                     self.currentCustomer = args.customer;
-                } else {
+                }
+                else {
                     self.currentCustomer = null;
                 }
             }, self.uniqueID);
-
             this._dbSet.addOnPropertyChange('currentItem', function (sender, args) {
                 self._onCurrentChanged();
             }, self.uniqueID);
-
             this._dbSet.addOnItemDeleting(function (sender, args) {
                 if (!confirm('Are you sure that you want to delete the order?'))
                     args.isCancel = true;
             }, self.uniqueID);
-
             this._dbSet.addOnItemAdded(function (sender, args) {
                 var item = args.item;
                 item.Customer = self.currentCustomer;
@@ -636,7 +599,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                 item.DueDate = moment().add('days', 7).toDate();
                 item.OnlineOrderFlag = false;
             }, self.uniqueID);
-
             //adds new order - uses dialog to fill the data
             this._addNewCommand = new MOD.mvvm.Command(function (sender, param) {
                 //the dialog shown by the datagrid
@@ -644,7 +606,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             }, self, function (sender, param) {
                 return true;
             });
-
             this._tabsEventCommand = new MOD.mvvm.Command(function (sender, param) {
                 switch (param.eventName) {
                     case "select":
@@ -654,7 +615,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                         break;
                 }
             }, self, null);
-
             this._addressVM = new AddressVM(this);
             this._orderDetailVM = new OrderDetailVM(this);
         }
@@ -665,7 +625,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         OrderVM.prototype._onTabSelected = function (index) {
             this._selectedTabIndex = index;
             this.raisePropertyChanged('selectedTabIndex');
-
             if (index === 2) {
                 //load details only when tab which contain details grid is selected
                 this._orderDetailVM.currentOrder = this.dbSet.currentItem;
@@ -688,7 +647,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         OrderVM.prototype.clear = function () {
             this.dbSet.clear();
         };
-
         //returns promise
         OrderVM.prototype.load = function () {
             //explicitly clear before every load
@@ -821,7 +779,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return OrderVM;
     })(MOD.mvvm.BaseViewModel);
     exports.OrderVM = OrderVM;
-
     var OrderDetailVM = (function (_super) {
         __extends(OrderDetailVM, _super);
         function OrderDetailVM(orderVM) {
@@ -830,25 +787,20 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             this._dbSet = this.dbSets.SalesOrderDetail;
             this._orderVM = orderVM;
             this._currentOrder = null;
-
             this._orderVM.dbSet.addOnCleared(function (s, a) {
                 self.clear();
             }, self.uniqueID);
-
             this._dbSet.addOnPropertyChange('currentItem', function (sender, args) {
                 self._onCurrentChanged();
             }, self.uniqueID);
-
             this._productVM = new ProductVM(this);
         }
         OrderDetailVM.prototype._onCurrentChanged = function () {
             this.raisePropertyChanged('currentItem');
         };
-
         //returns promise
         OrderDetailVM.prototype.load = function () {
             this.clear();
-
             if (!this.currentOrder || this.currentOrder.getIsNew()) {
                 var deferred = utils.createDeferred();
                 deferred.reject();
@@ -935,7 +887,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return OrderDetailVM;
     })(MOD.mvvm.BaseViewModel);
     exports.OrderDetailVM = OrderDetailVM;
-
     var AddressVM = (function (_super) {
         __extends(AddressVM, _super);
         function AddressVM(orderVM) {
@@ -947,7 +898,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                 if (!args.isBegin)
                     self.loadAddressesForOrders(args.fetchedItems);
             }, self.uniqueID);
-
             this._dbSet.addOnPropertyChange('currentItem', function (sender, args) {
                 self._onCurrentChanged();
             }, self.uniqueID);
@@ -955,7 +905,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         AddressVM.prototype._onCurrentChanged = function () {
             this.raisePropertyChanged('currentItem');
         };
-
         //returns a promise
         AddressVM.prototype.loadAddressesForOrders = function (orders) {
             var ids1 = orders.map(function (item) {
@@ -969,11 +918,9 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             });
             return this.load(RIAPP.ArrayHelper.distinct(ids), false);
         };
-
         //returns a promise
         AddressVM.prototype.load = function (ids, isClearTable) {
             var query = this.dbSet.createReadAddressByIdsQuery({ addressIDs: ids });
-
             //if true, then the previous data will be cleared when the new is loaded
             query.isClearPrevData = isClearTable;
             return query.load();
@@ -1046,7 +993,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return AddressVM;
     })(MOD.mvvm.BaseViewModel);
     exports.AddressVM = AddressVM;
-
     var ProductAutoComplete = (function (_super) {
         __extends(ProductAutoComplete, _super);
         function ProductAutoComplete() {
@@ -1061,7 +1007,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                 self._updateValue();
             }, self._objId);
         };
-
         //overriden base method
         ProductAutoComplete.prototype._updateSelection = function () {
             if (!!this.dataContext) {
@@ -1073,7 +1018,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             _super.prototype._onHide.call(this);
             this._updateValue();
         };
-
         //new method
         ProductAutoComplete.prototype._updateValue = function () {
             if (!this.dataContext) {
@@ -1084,7 +1028,8 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             var product = this._lookupSource.findEntity(productID);
             if (!!product) {
                 this.value = product.Name;
-            } else {
+            }
+            else {
                 this.value = '';
                 if (this._lastLoadedID !== productID) {
                     //this prevents the cicles of loading of the same item
@@ -1095,7 +1040,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                 }
             }
         };
-
         Object.defineProperty(ProductAutoComplete.prototype, "dataContext", {
             //overriden base property
             get: function () {
@@ -1120,7 +1064,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             enumerable: true,
             configurable: true
         });
-
         Object.defineProperty(ProductAutoComplete.prototype, "currentSelection", {
             //overriden base property
             get: function () {
@@ -1135,7 +1078,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return ProductAutoComplete;
     })(AUTOCOMPLETE.AutoCompleteElView);
     exports.ProductAutoComplete = ProductAutoComplete;
-
     var ProductVM = (function (_super) {
         __extends(ProductVM, _super);
         function ProductVM(orderDetailVM) {
@@ -1143,17 +1085,14 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             var self = this;
             this._orderDetailVM = orderDetailVM;
             this._dbSet = this.dbSets.Product;
-
             this._customerDbSet.addOnCleared(function (s, a) {
                 self.clear();
             }, self.uniqueID);
-
             //here we load products which are referenced in order details
             this._orderDetailVM.dbSet.addOnFill(function (sender, args) {
                 if (!args.isBegin)
                     self.loadProductsForOrderDetails(args.fetchedItems);
             }, self.uniqueID);
-
             this._dbSet.addOnPropertyChange('currentItem', function (sender, args) {
                 self._onCurrentChanged();
             }, self.uniqueID);
@@ -1164,7 +1103,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         ProductVM.prototype.clear = function () {
             this.dbSet.clear();
         };
-
         //returns promise
         ProductVM.prototype.loadProductsForOrderDetails = function (orderDetails) {
             var ids = orderDetails.map(function (item) {
@@ -1172,10 +1110,8 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             }).filter(function (id) {
                 return id !== null;
             });
-
             return this.load(RIAPP.ArrayHelper.distinct(ids), false);
         };
-
         //returns promise
         ProductVM.prototype.load = function (ids, isClearTable) {
             var query = this.dbSet.createReadProductByIdsQuery({ productIDs: ids });
@@ -1240,7 +1176,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return ProductVM;
     })(MOD.mvvm.BaseViewModel);
     exports.ProductVM = ProductVM;
-
     var CustomerAddressVM = (function (_super) {
         __extends(CustomerAddressVM, _super);
         function CustomerAddressVM(customerVM) {
@@ -1251,39 +1186,34 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             this._currentCustomer = self._customerVM.currentItem;
             this._addressesDb = this.dbSets.Address;
             this._custAdressDb = this.dbSets.CustomerAddress;
-
             this._custAdressDb.addOnItemDeleting(function (sender, args) {
                 if (!confirm('Are you sure that you want to unlink Address from this customer?'))
                     args.isCancel = true;
             }, self.uniqueID);
-
             this._custAdressDb.addOnBeginEdit(function (sender, args) {
                 var item = args.item.asInterface();
-
                 //start editing Address entity, when CustomerAddress begins editing
                 //p.s.- Address is navigation property
                 var address = item.Address;
                 if (!!address)
                     address.beginEdit();
             }, self.uniqueID);
-
             this._custAdressDb.addOnEndEdit(function (sender, args) {
                 var item = args.item;
                 var address = item.Address;
                 if (!args.isCanceled) {
                     if (!!address)
                         address.endEdit();
-                } else {
+                }
+                else {
                     if (address)
                         address.cancelEdit();
                 }
             }, self.uniqueID);
-
             this._addressesDb.addOnItemDeleting(function (sender, args) {
                 if (!confirm('Are you sure that you want to delete the Customer\'s Address?'))
                     args.isCancel = true;
             }, self.uniqueID);
-
             //the view to filter addresses related to the current customer
             this._addressesView = new MOD.db.DataView({
                 dataSource: this._addressesDb,
@@ -1308,11 +1238,9 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                     });
                 }
             });
-
             this._custAdressView.addOnViewRefreshed(function (s, a) {
                 self._addressesView.refresh();
             }, self.uniqueID);
-
             this._customerVM.addOnPropertyChange('currentItem', function (sender, args) {
                 self._currentCustomer = self._customerVM.currentItem;
                 self.raisePropertyChanged('currentCustomer');
@@ -1321,10 +1249,8 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         //async load, returns promise
         CustomerAddressVM.prototype._loadAddresses = function (addressIDs, isClearTable) {
             var query = this._addressesDb.createReadAddressByIdsQuery({ addressIDs: addressIDs });
-
             //if true, we clear all previous data in the TDbSet
             query.isClearPrevData = isClearTable;
-
             //returns promise
             return query.load();
         };
@@ -1335,14 +1261,11 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         };
         CustomerAddressVM.prototype._addNewCustAddress = function (address) {
             var cust = this.currentCustomer;
-
             //to add item here, use the TDataView, not TDbSet
             var ca = this.custAdressView.addNew();
             ca.CustomerID = cust.CustomerID;
-
             //this is default, can edit later
             ca.AddressType = "Main Office";
-
             //create relationship with the address
             //if the address is new, then the primary keys will be aquired when the data is submitted to the server
             ca.Address = address;
@@ -1351,12 +1274,10 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         };
         CustomerAddressVM.prototype.load = function (customers) {
             var self = this, custArr = customers || [];
-
             //customerIDs for all loaded customers entities (for current page only, not which in cache if query.loadPageCount>1)
             var custIDs = custArr.map(function (item) {
                 return item.CustomerID;
             });
-
             var query = this._custAdressDb.createReadAddressForCustomersQuery({ custIDs: custIDs });
             query.load();
         };
@@ -1364,7 +1285,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             if (this._isDestroyed)
                 return;
             this._isDestroyCalled = true;
-
             if (!!this._addressesDb) {
                 this._addressesDb.removeNSHandlers(this.uniqueID);
             }
@@ -1383,7 +1303,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             }
             _super.prototype.destroy.call(this);
         };
-
         Object.defineProperty(CustomerAddressVM.prototype, "app", {
             get: function () {
                 return this._app;
@@ -1460,7 +1379,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return CustomerAddressVM;
     })(MOD.mvvm.BaseViewModel);
     exports.CustomerAddressVM = CustomerAddressVM;
-
     var AddAddressVM = (function (_super) {
         __extends(AddAddressVM, _super);
         function AddAddressVM(customerAddressVM) {
@@ -1473,10 +1391,8 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             this._newAddress = null;
             this._adressInfosGrid = null;
             this._searchString = null;
-
             //for switching user interface current view
             this._uiViewVM = new AddrViewVM();
-
             this._dialogVM = new COMMON.DialogVM(self.app);
             var dialogOptions = {
                 templateID: 'addAddressTemplate',
@@ -1522,7 +1438,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                 }
             };
             this._dialogVM.createDialog('addressDialog', dialogOptions);
-
             //this data displayed in the right panel - contains available (existing in db) addresses
             this._addressInfosView = new MOD.db.DataView({
                 dataSource: this._addressInfosDb,
@@ -1535,62 +1450,53 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                     });
                 }
             });
-
             //enable paging in the data view
             this._addressInfosView.isPagingEnabled = true;
             this._addressInfosView.pageSize = 50;
-
             this._addressInfosView.addOnPropertyChange('currentItem', function (sender, args) {
                 self.raisePropertyChanged('currentAddressInfo');
                 self._linkCommand.raiseCanExecuteChanged();
             }, self.uniqueID);
-
             this._customerAddressVM.addOnPropertyChange('currentCustomer', function (sender, args) {
                 self._currentCustomer = self._customerAddressVM.currentCustomer;
                 self.raisePropertyChanged('customer');
                 self._addNewCommand.raiseCanExecuteChanged();
             }, self.uniqueID);
-
             //this data is displayed on the left panel - addresses currently linked to the customer
             this.custAdressView.addOnPropertyChange('currentItem', function (sender, args) {
                 self._unLinkCommand.raiseCanExecuteChanged();
             }, self.uniqueID);
-
             //add new or existing address
             this._addNewCommand = new MOD.mvvm.Command(function (sender, param) {
-                try  {
+                try {
                     self._dialogVM.showDialog('addressDialog', self);
-                } catch (ex) {
-                    self._onError(ex, this);
+                }
+                catch (ex) {
+                    self.handleError(ex, this);
                 }
             }, self, function (sender, param) {
                 //enable this command when customer is not null
                 return !!self.customer;
             });
-
             //load searched address data from the server
             this._execSearchCommand = new MOD.mvvm.Command(function (sender, args) {
                 self.loadAddressInfos();
             }, self, null);
-
             //adds new address to the customer
             this._addNewAddressCommand = new MOD.mvvm.Command(function (sender, args) {
                 self._addNewAddress();
             }, self, null);
-
             //adds existed address to the customer
             this._linkCommand = new MOD.mvvm.Command(function (sender, args) {
                 self._linkAddress();
             }, self, function (s, a) {
                 return !!self._addressInfosView.currentItem;
             });
-
             this._unLinkCommand = new MOD.mvvm.Command(function (sender, args) {
                 self._unLinkAddress();
             }, self, function (s, a) {
                 return !!self.custAdressView.currentItem;
             });
-
             //this is databound to the grid element view on the page
             //by this command we can get hold of the datagrid control
             //this command executed when an element view property changes
@@ -1609,7 +1515,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             self.uiViewVM.goToLinkAdr();
             self.raisePropertyChanged('newAddress');
         };
-
         //returns a promise
         AddAddressVM.prototype.loadAddressInfos = function () {
             var query = this._addressInfosDb.createReadAddressInfoQuery();
@@ -1633,19 +1538,16 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             var existedAddr = adrView.items.some(function (item) {
                 return item.AddressID === adrID;
             });
-
             if (existedAddr) {
                 alert('Customer already has this address!');
                 return;
             }
-
             //don't clear, append to the existing
             var promise = this._customerAddressVM._loadAddresses([adrID], false);
             promise.done(function (res) {
                 var address = self._customerAddressVM.addressesDb.findEntity(adrID);
                 if (!!address) {
                     self._customerAddressVM._addNewCustAddress(address);
-
                     //remove address from right panel
                     self._removeAddressRP(adrID);
                 }
@@ -1657,13 +1559,11 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                 return;
             }
             var id = item.AddressID;
-
             //delete it from the left panel
             if (item.deleteItem())
                 //and then add the address to the right panel (really adds an addressInfo, not the address entity)
                 this._addAddressRP(id);
         };
-
         //adds an addressInfo to the right panel
         AddAddressVM.prototype._addAddressRP = function (addressID) {
             //if address already on client, just make it be displayed in the view
@@ -1672,10 +1572,8 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                 deferred.reject();
                 return deferred.promise();
             }
-
             //if we are here, we need to load the address from the server
             var self = this, query = this._addressInfosDb.createReadAddressInfoQuery();
-
             //dont clear, append to the existing
             query.isClearPrevData = false;
             query.where('AddressID', 0 /* Equals */, [addressID]);
@@ -1685,7 +1583,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             });
             return promise;
         };
-
         //make sure if the addressInfo already on the client, adds it to the view
         AddAddressVM.prototype._checkAddressInRP = function (addressID) {
             //try to find it in the TDbSet
@@ -1699,7 +1596,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             }
             return !!item;
         };
-
         //remove the address from the right panel (it is done by removing the item from the view)
         AddAddressVM.prototype._removeAddressRP = function (addressID) {
             var item = this._addressInfosView.findByPK(addressID);
@@ -1827,7 +1723,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             enumerable: true,
             configurable: true
         });
-
         Object.defineProperty(AddAddressVM.prototype, "linkCommand", {
             //links an address to the customer
             get: function () {
@@ -1881,12 +1776,10 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
         return AddAddressVM;
     })(MOD.mvvm.BaseViewModel);
     exports.AddAddressVM = AddAddressVM;
-
     //this function is executed when the application is created
     //it can be used to initialize application specific resources in the module
     function initModule(app) {
         app.registerElView('productAutocomplete', ProductAutoComplete);
-
         //return something, even null is OK
         return {};
     }

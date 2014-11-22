@@ -16,63 +16,13 @@
                 static __keyValDelimeter = ',';
                 constructor() {
                 }
-                _getPathParts(path:string) {
-                    var self = this, parts:string[] = (!path) ? [] : path.split('.'), parts2:string[] = [];
-                    parts.forEach(function (part) {
-                        var matches:string[], obj:string, index:string;
-                        matches = part.match(Parser.__indexedPropRX);
-                        if (!!matches) {
-                            obj = matches[1];
-                            index = matches[2];
-                            parts2.push(obj);
-                            parts2.push('[' + index + ']');
-                        }
-                        else
-                            parts2.push(part);
-                    });
-
-                    return parts2;
-                }
-                _resolveProp(obj: any, prop: string) {
-                    if (!prop)
-                        return obj;
-                    if (utils.str.startsWith(prop, '[')) { 
-                        //it is an indexed property, obj must be of collection type
-                        prop = this.trimQuotes(this.trimBrackets(prop));
-                        if (obj instanceof collection.BaseDictionary) {
-                            return obj.getItemByKey(prop);
-                        }
-                        else if (obj instanceof collection.BaseCollection) {
-                            return obj.getItemByPos(parseInt(prop, 10));
-                        }
-                        else if (utils.check.isArray(obj)) {
-                            return obj[parseInt(prop, 10)];
-                        }
-                        else
-                            return obj[prop];
-                    }
-                    else
-                        return obj[prop];
-                }
-                _setPropertyValue(obj: any, prop: string, val: any) {
-                    if (utils.str.startsWith(prop, '[')) { //it is an indexed property, obj must be of collection type
-                        prop = this.trimQuotes(this.trimBrackets(prop));  //remove brakets from a string like: [index]
-                        if (utils.check.isArray(obj)) {
-                            obj[parseInt(prop, 10)] = val;
-                        }
-                        else
-                            obj[prop] = val;
-                    }
-                    else
-                        obj[prop] = val;
-                }
                 //extract key - value pairs
-                _getKeyVals(val:string) {
+                protected _getKeyVals(val: string) {
                     var i: number, ch: string, literal: string, parts: { key: string; val: any; }[] = [],
                         kv: { key: string; val: any; } = { key: '', val: '' }, isKey = true, bracePart: string,
                         vd1 = Parser.__valueDelimeter1, vd2 = Parser.__valueDelimeter2, kvd = Parser.__keyValDelimeter;
 
-                    var addNewKeyValPair = function (kv:{ key: string; val: any; }) {
+                    var addNewKeyValPair = function (kv: { key: string; val: any; }) {
                         if (kv.val) {
                             if (utils.check.isNumeric(kv.val)) {
                                 kv.val = Number(kv.val);
@@ -145,6 +95,56 @@
                     });
                     return parts;
                 }
+                getPathParts(path:string) {
+                    var self = this, parts:string[] = (!path) ? [] : path.split('.'), parts2:string[] = [];
+                    parts.forEach(function (part) {
+                        var matches:string[], obj:string, index:string;
+                        matches = part.match(Parser.__indexedPropRX);
+                        if (!!matches) {
+                            obj = matches[1];
+                            index = matches[2];
+                            parts2.push(obj);
+                            parts2.push('[' + index + ']');
+                        }
+                        else
+                            parts2.push(part);
+                    });
+
+                    return parts2;
+                }
+                resolveProp(obj: any, prop: string) {
+                    if (!prop)
+                        return obj;
+                    if (utils.str.startsWith(prop, '[')) { 
+                        //it is an indexed property, obj must be of collection type
+                        prop = this.trimQuotes(this.trimBrackets(prop));
+                        if (obj instanceof collection.BaseDictionary) {
+                            return obj.getItemByKey(prop);
+                        }
+                        else if (obj instanceof collection.BaseCollection) {
+                            return obj.getItemByPos(parseInt(prop, 10));
+                        }
+                        else if (utils.check.isArray(obj)) {
+                            return obj[parseInt(prop, 10)];
+                        }
+                        else
+                            return obj[prop];
+                    }
+                    else
+                        return obj[prop];
+                }
+                setPropertyValue(obj: any, prop: string, val: any) {
+                    if (utils.str.startsWith(prop, '[')) { //it is an indexed property, obj must be of collection type
+                        prop = this.trimQuotes(this.trimBrackets(prop));  //remove brakets from a string like: [index]
+                        if (utils.check.isArray(obj)) {
+                            obj[parseInt(prop, 10)] = val;
+                        }
+                        else
+                            obj[prop] = val;
+                    }
+                    else
+                        obj[prop] = val;
+                }
                 resolveBindingSource(root:any, srcParts:string[]) {
                     if (!root)
                         return undefined;
@@ -154,7 +154,7 @@
                     }
 
                     if (srcParts.length > 0) {
-                        return this.resolveBindingSource(this._resolveProp(root, srcParts[0]), srcParts.slice(1));
+                        return this.resolveBindingSource(this.resolveProp(root, srcParts[0]), srcParts.slice(1));
                     }
 
                     throw new Error('Invalid operation');
@@ -162,13 +162,13 @@
                 resolvePath(obj:any, path:string):any {
                     if (!path)
                         return obj;
-                    var parts = this._getPathParts(path), res = obj, len = parts.length - 1;
+                    var parts = this.getPathParts(path), res = obj, len = parts.length - 1;
                     for (var i = 0; i < len; i += 1) {
-                        res = this._resolveProp(res, parts[i]);
+                        res = this.resolveProp(res, parts[i]);
                         if (!res)
                             return undefined;
                     }
-                    return this._resolveProp(res, parts[len]);
+                    return this.resolveProp(res, parts[len]);
                 }
                 //extract top level braces
                 getBraceParts(val:string, firstOnly:boolean) {

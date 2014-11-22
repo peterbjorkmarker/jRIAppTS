@@ -333,6 +333,7 @@ module RIAPP
                                 a.css = 'rowInactive';
                             }
                         }, self.uniqueID);
+                        self._dataGrid.addOnCellDblClicked((s, a) => { alert("you double clicked "+ a.cell.uniqueID); }, self.uniqueID);
                     }
                 }, self, null);
 
@@ -527,7 +528,7 @@ module RIAPP
                     try {
                         self.uploadFiles(self._fileEl.files);
                     } catch (ex) {
-                        self._onError(ex, this);
+                        self.handleError(ex, this);
                     }
                 }, self, function (sender, param) {
                     return self._canUpload();
@@ -537,7 +538,7 @@ module RIAPP
                 this.xhr = new XMLHttpRequest();
                 if (!this.xhr.upload) {
                     this.xhr = null;
-                    this._onError('Browser dose not support HTML5 files upload interface', this);
+                    this.handleError('Browser dose not support HTML5 files upload interface', this);
                     return false;
                 }
                 var self = this, xhr = this.xhr, upload = xhr.upload;
@@ -568,13 +569,13 @@ module RIAPP
                 upload.onerror = function (e) {
                     self.fileInfo = null;
                     self._progressDiv.hide();
-                    self._onError(new Error('File uploading error'), self);
+                    self.handleError(new Error('File uploading error'), self);
                 };
 
                 xhr.onreadystatechange = function (e) {
                     if (xhr.readyState === 4) {
                         if (xhr.status >= 400) {
-                            self._onError(new Error(utils.format("File upload error: {0}", xhr.statusText)), self);
+                            self.handleError(new Error(utils.format("File upload error: {0}", xhr.statusText)), self);
                         }
                     }
                 };
@@ -716,7 +717,7 @@ module RIAPP
                         self.id = self._product.ProductID;
                         self._dialogVM.showDialog('uploadDialog', self);
                     } catch (ex) {
-                        self._onError(ex, this);
+                        self.handleError(ex, this);
                     }
                 }, self, function (sender, param) {
                     return true;
@@ -743,7 +744,7 @@ module RIAPP
                             $('*[data-name="btn-input"]', template.el).off('click');
                         }
                     } catch (ex) {
-                        self._onError(ex, this);
+                        self.handleError(ex, this);
                     }
                 }, self, function (sender, param) {
                     return true;

@@ -1,15 +1,13 @@
-﻿var __extends = this.__extends || function (d, b) {
+var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports"], function(require, exports) {
+define(["require", "exports"], function (require, exports) {
     'use strict';
-
     var GRIDMOD = RIAPP.MOD.datagrid;
     var global = RIAPP.global, utils = global.utils;
-
     var GridElView = (function (_super) {
         __extends(GridElView, _super);
         function GridElView() {
@@ -18,7 +16,6 @@ define(["require", "exports"], function(require, exports) {
         GridElView.prototype._init = function (options) {
             _super.prototype._init.call(this, options);
             var self = this, grid = self.grid;
-
             //example of binding to dataGrid events using strongly typed methods
             if (!!grid) {
                 grid.addOnPageChanged(function (s, a) {
@@ -46,7 +43,8 @@ define(["require", "exports"], function(require, exports) {
             if (!!this._gridEvents) {
                 if (isExpanded) {
                     this._gridEvents.onRowExpanded(row.item);
-                } else {
+                }
+                else {
                     this._gridEvents.onRowCollapsed(oldRow.item);
                 }
             }
@@ -73,7 +71,6 @@ define(["require", "exports"], function(require, exports) {
                     }
                     this._gridEvents = v;
                     this.raisePropertyChanged('gridEvents');
-
                     //a new gridEvents object was set
                     if (!!this._gridEvents) {
                         this._gridEvents.regFocusGridFunc(function () {
@@ -91,7 +88,6 @@ define(["require", "exports"], function(require, exports) {
         return GridElView;
     })(GRIDMOD.GridElView);
     exports.GridElView = GridElView;
-
     function initModule(app) {
         app.registerElView('my_grid', GridElView);
         return {};

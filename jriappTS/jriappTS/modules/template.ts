@@ -160,7 +160,7 @@
                             self._processTemplate(promise, !!(promise.state() == "pending"));
                         }
                     } catch (ex) {
-                        self._onError(ex, self);
+                        self.handleError(ex, self);
                         global._throwDummy(ex);
                     }
                 }
@@ -214,7 +214,7 @@
                                 tevents[i].templateLoaded(self);
                             }
                         } catch (ex) {
-                            self._onError(ex, self);
+                            self.handleError(ex, self);
                             global._throwDummy(ex);
                         }
                     },
@@ -238,7 +238,7 @@
                             }
                             if (!ex)
                                 ex = new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self.templateID));
-                            self._onError(ex, self);
+                            self.handleError(ex, self);
                         });
                 }
                 private _updateBindingSource() {
@@ -281,10 +281,10 @@
                         this._el = null;
                     }
                 }
-                _onError(error, source): boolean {
-                    var isHandled = super._onError(error, source);
+                handleError(error, source): boolean {
+                    var isHandled = super.handleError(error, source);
                     if (!isHandled) {
-                        return this.app._onError(error, source);
+                        return this.app.handleError(error, source);
                     }
                     return isHandled;
                 }
@@ -374,7 +374,7 @@
                         this.raisePropertyChanged('template');
                     }
                     catch (ex) {
-                        this._onError(ex, this);
+                        this.handleError(ex, this);
                         global._throwDummy(ex);
                     }
                 }
@@ -385,7 +385,7 @@
                         self.invokeCommand();
                     }
                     catch (ex) {
-                        this._onError(ex, this);
+                        this.handleError(ex, this);
                     }
                     finally {
                         self._commandParam = p;

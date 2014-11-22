@@ -294,7 +294,7 @@ export class ErrorViewModel extends MOD.mvvm.BaseViewModel {
     set error(v) {
         var old = this._error;
         if (!!old) {
-            global._onError(v, null);
+            global.handleError(v, null);
             global._throwDummy(v);
         }
         this._error = v;

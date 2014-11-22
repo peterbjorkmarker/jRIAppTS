@@ -1,4 +1,4 @@
-﻿/// <reference path="..\jriapp.d.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 'use strict';
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -6,10 +6,9 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports"], function(require, exports) {
+define(["require", "exports"], function (require, exports) {
     //local variables for optimization
     var global = RIAPP.global, utils = global.utils;
-
     var FadeAnimation = (function (_super) {
         __extends(FadeAnimation, _super);
         function FadeAnimation(isAnimateFirstShow, duration) {
@@ -57,17 +56,17 @@ define(["require", "exports"], function(require, exports) {
             if (this._isDestroyed)
                 return;
             this._isDestroyCalled = true;
-            try  {
+            try {
                 this.stop();
                 this._$animatedEl = null;
-            } finally {
+            }
+            finally {
                 _super.prototype.destroy.call(this);
             }
         };
         return FadeAnimation;
     })(RIAPP.BaseObject);
     exports.FadeAnimation = FadeAnimation;
-
     var SlideAnimation = (function (_super) {
         __extends(SlideAnimation, _super);
         function SlideAnimation(isAnimateFirstShow, duration) {
@@ -114,17 +113,17 @@ define(["require", "exports"], function(require, exports) {
             if (this._isDestroyed)
                 return;
             this._isDestroyCalled = true;
-            try  {
+            try {
                 this.stop();
                 this._$animatedEl = null;
-            } finally {
+            }
+            finally {
                 _super.prototype.destroy.call(this);
             }
         };
         return SlideAnimation;
     })(RIAPP.BaseObject);
     exports.SlideAnimation = SlideAnimation;
-
     //this function is executed when an application which uses this module is created
     function initModule(app) {
         //return something, even null is OK

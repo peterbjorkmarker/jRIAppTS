@@ -1,7 +1,6 @@
 ﻿module RIAPP {
     export module MOD {
         export module binding {
-            import converterMOD = RIAPP.MOD.converter;
             import elviewMOD = RIAPP.MOD.baseElView;
 
             export enum BINDING_MODE {
@@ -30,7 +29,7 @@
             export interface IBindingOptions {
                 mode?: BINDING_MODE;
                 converterParam?: any;
-                converter?: converterMOD.IConverter;
+                converter?: RIAPP.IConverter;
                 targetPath: string;
                 sourcePath?: string;
                 target?: RIAPP.BaseObject;
@@ -51,7 +50,7 @@
             export class Binding extends RIAPP.BaseObject{
                 private _state:any;
                 private _mode: BINDING_MODE;
-                private _converter: converterMOD.IConverter;
+                private _converter: RIAPP.IConverter;
                 private _converterParam: any;
                 private _srcPath:string[];
                 private _tgtPath:string[];
@@ -105,8 +104,8 @@
                     this._mode = opts.mode;
                     this._converter = opts.converter || global._getConverter('BaseConverter');
                     this._converterParam = opts.converterParam;
-                    this._srcPath = parser._getPathParts(opts.sourcePath);
-                    this._tgtPath = parser._getPathParts(opts.targetPath);
+                    this._srcPath = parser.getPathParts(opts.sourcePath);
+                    this._tgtPath = parser.getPathParts(opts.targetPath);
                     if (this._tgtPath.length < 1)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     this._isSourceFixed = (!!opts.isSourceFixed);
@@ -167,7 +166,7 @@
                 }
                 private _getTgtChangedFn(self: Binding, obj, prop:string, restPath:string[], lvl:number) {
                     var fn = function (sender, data) {
-                        var val = parser._resolveProp(obj, prop);
+                        var val = parser.resolveProp(obj, prop);
                         if (restPath.length > 0) {
                             self._setPathItem(null, BindTo.Target, lvl, restPath);
                         }
@@ -177,7 +176,7 @@
                 }
                 private _getSrcChangedFn(self: Binding, obj, prop:string, restPath:string[], lvl:number) {
                     var fn = function (sender, data) {
-                        var val = parser._resolveProp(obj, prop);
+                        var val = parser.resolveProp(obj, prop);
                         if (restPath.length > 0) {
                             self._setPathItem(null, BindTo.Source, lvl, restPath);
                         }
@@ -210,7 +209,7 @@
                         }
 
                         if (!!obj) {
-                            nextObj = global.parser._resolveProp(obj, path[0]);
+                            nextObj = global.parser.resolveProp(obj, path[0]);
                             if (!!nextObj) {
                                 self._parseSrcPath2(nextObj, path.slice(1), lvl + 1);
                             }
@@ -272,7 +271,7 @@
                             (<BaseObject>obj).addOnPropertyChange(path[0], self._getTgtChangedFn(self, obj, path[0], path.slice(1), lvl + 1), self._objId);
                         }
                         if (!!obj) {
-                            nextObj = global.parser._resolveProp(obj, path[0]);
+                            nextObj = global.parser.resolveProp(obj, path[0]);
                             if (!!nextObj) {
                                 self._parseTgtPath2(nextObj, path.slice(1), lvl + 1);
                             }
@@ -370,7 +369,7 @@
                             this.targetValue = res;
                     }
                     catch (ex) {
-                        global.reThrow(ex, this._onError(ex, this));
+                        global.reThrow(ex, this.handleError(ex, this));
                     }
                     finally {
                         this._ignoreTgtChange = false;
@@ -393,7 +392,7 @@
                             //2) when error is not ValidationError
                             this._ignoreSrcChange = false;
                             this._updateTarget(); //resync target with source
-                            if (!this._onError(ex, this))
+                            if (!this.handleError(ex, this))
                                 throw ex;
                         }
                     }
@@ -401,14 +400,14 @@
                         this._ignoreSrcChange = false;
                     }
                 }
-                _onError(error: any, source: any): boolean {
-                    var isHandled = super._onError(error, source);
+                handleError(error: any, source: any): boolean {
+                    var isHandled = super.handleError(error, source);
                     if (!isHandled) {
                         if (!!this._appName) {
-                            return global.findApp(this._appName)._onError(error, source);
+                            return global.findApp(this._appName).handleError(error, source);
                         }
                         else
-                            return global._onError(error, source);
+                            return global.handleError(error, source);
                     }
                     return isHandled;
                 }
@@ -487,30 +486,36 @@
                     if (this._sourceObj === null)
                         return null;
                     var prop = this._srcPath[this._srcPath.length - 1];
-                    var res = global.parser._resolveProp(this._sourceObj, prop);
+                    var res = global.parser.resolveProp(this._sourceObj, prop);
                     return res;
                 }
                 set sourceValue(v) {
                     if (this._srcPath.length === 0 || this._sourceObj === null)
                         return;
+                    if (utils.check.isBaseObj(this._sourceObj) && (<BaseObject>this._sourceObj).getIsDestroyCalled()) {
+                        return;
+                    }
                     var prop = this._srcPath[this._srcPath.length - 1];
-                    global.parser._setPropertyValue(this._sourceObj, prop, v);
+                    global.parser.setPropertyValue(this._sourceObj, prop, v);
                 }
                 get targetValue() {
                     if (this._targetObj === null)
                         return null;
                     var prop = this._tgtPath[this._tgtPath.length - 1];
-                    return global.parser._resolveProp(this._targetObj, prop);
+                    return global.parser.resolveProp(this._targetObj, prop);
                 }
                 set targetValue(v) {
                     if (this._targetObj === null)
                         return;
+                    if (utils.check.isBaseObj(this._targetObj) && (<BaseObject>this._targetObj).getIsDestroyCalled()) {
+                        return;
+                    }
                     var prop = this._tgtPath[this._tgtPath.length - 1];
-                    global.parser._setPropertyValue(this._targetObj, prop, v);
+                    global.parser.setPropertyValue(this._targetObj, prop, v);
                 }
                 get mode() { return this._mode; }
                 get converter() { return this._converter; }
-                set converter(v: converterMOD.IConverter) { this._converter = v; }
+                set converter(v: RIAPP.IConverter) { this._converter = v; }
                 get converterParam() { return this._converterParam; }
                 set converterParam(v) { this._converterParam = v; }
                 get isSourceFixed() { return this._isSourceFixed; }

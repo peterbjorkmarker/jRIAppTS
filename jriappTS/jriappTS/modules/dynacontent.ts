@@ -88,7 +88,7 @@
                             return;
                         }
                     } catch (ex) {
-                        this._onError(ex, this);
+                        this.handleError(ex, this);
                         global._throwDummy(ex);
                     }
 
@@ -116,7 +116,7 @@
                         else
                             self._template.templateID = newName;
                     } catch (ex) {
-                        this._onError(ex, this);
+                        this.handleError(ex, this);
                         global._throwDummy(ex);
                     }
                 }

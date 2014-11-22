@@ -39,6 +39,7 @@
                 colSortAsc: 'sort-asc',
                 colSortDesc: 'sort-desc'
             };
+            export enum ROW_ACTION { OK, EDIT, CANCEL, DELETE }
 
             var _columnWidthInterval, _gridsCount: number = 0;
             var _created_grids: { [id: string]: DataGrid; } = {};
@@ -59,7 +60,7 @@
             function _checkGridWidth() {
                 utils.forEachProp(_created_grids, (id) => {
                     var grid = _created_grids[id];
-                    if (grid._isDestroyCalled)
+                    if (grid.getIsDestroyCalled())
                         return;
                     grid._columnWidthChecker();
                 });
@@ -74,14 +75,15 @@
                 }
             }
 
-            export interface ICellOptions { row: Row; td: HTMLTableCellElement; column: BaseColumn; }
+            export interface ICellOptions { row: Row; td: HTMLTableCellElement; column: BaseColumn; num: number; }
 
             export class BaseCell extends RIAPP.BaseObject{
-                _row: Row;
-                _el: HTMLTableCellElement;
-                _column: BaseColumn;
-                _div: HTMLElement;
-                _clickTimeOut: number;
+                protected _row: Row;
+                protected _el: HTMLTableCellElement;
+                protected _column: BaseColumn;
+                protected _div: HTMLElement;
+                protected _clickTimeOut: number;
+                private _num: number;
 
                 constructor(options: ICellOptions) {
                     super();
@@ -94,6 +96,7 @@
                     this._row = options.row;
                     this._el = options.td;
                     this._column = options.column;
+                    this._num = options.num;
                     this._div = global.document.createElement("div");
                     var $div = global.$(this._div);
                     this._clickTimeOut = null;
@@ -109,21 +112,24 @@
                     this._el.appendChild(this._div);
                     this._row.el.appendChild(this._el);
                 }
-                _init() {
+                protected _init() {
                 }
-                _onCellClicked() {
-                    this.grid.currentRow = this._row;
+                protected _onCellClicked(row?: Row) {
+                    this.grid.currentRow = row || this._row;
                 }
-                _onDblClicked() {
-                    this.grid.currentRow = this._row;
+                protected _onDblClicked(row?: Row) {
+                    this.grid.currentRow = row || this._row;
                     this.grid._onCellDblClicked(this);
                 }
-                _onError(error, source) {
-                    var isHandled = super._onError(error, source);
+                handleError(error, source) {
+                    var isHandled = super.handleError(error, source);
                     if (!isHandled) {
-                        return this.row._onError(error, source);
+                        return this.row.handleError(error, source);
                     }
                     return isHandled;
+                }
+                click() {
+                    this._onCellClicked(this._row);
                 }
                 scrollIntoView(isUp:boolean) {
                     var div = this._div;
@@ -154,8 +160,9 @@
                 get column() { return this._column; }
                 get grid() { return this._row.grid; }
                 get item() { return this._row.item; }
+                get uniqueID() { return this._row.uniqueID +'_'+ this._num; }
+                get num() { return this._num; }
             }
-
 
             export class DataCell extends BaseCell {
                 private _content: contentMOD.IContent;
@@ -166,7 +173,7 @@
                     this._stateCss = null;
                     super(options);
                 }
-                _init() {
+                protected _init() {
                     var options = this.column.options.content;
                     if (!options.fieldInfo && !!options.fieldName) {
                         options.fieldInfo = this.item.getFieldInfo(options.fieldName);
@@ -174,30 +181,33 @@
                             throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, '', options.fieldName));
                         }
                     }
-                    var app = this.grid.app;
+                    var self=this, app = this.grid.app;
                     options.initContentFn = null;
-                        try {
-                            var contentType = app._getContentType(options);
-                            if (app.contentFactory.isExternallyCachable(contentType)) {
-                                options.initContentFn = this._getInitContentFn();
-                            }
-                            this._content = new contentType(app, { parentEl: this._div, contentOptions: options, dataContext: this.item, isEditing: this.item.isEditing });
+                    try {
+                        var contentType = app._getContentType(options);
+                        if (app.contentFactory.isExternallyCachable(contentType)) {
+                            options.initContentFn = this.column._getInitContentFn();
                         }
-                        finally {
-                            delete options.initContentFn;
-                        }
+                        this._content = new contentType(app, { parentEl: this._div, contentOptions: options, dataContext: this.item, isEditing: this.item.isEditing });
+                    }
+                    finally {
+                        delete options.initContentFn;
+                    }
                 }
-                _getInitContentFn(): (content: contentMOD.IExternallyCachable)=> void {
-                    var self = this;
-                    return function (content: contentMOD.IExternallyCachable) {
-                        content.addOnObjectCreated(function (sender, args) {
-                            self.column._cacheObject(args.objectKey,args.object);
-                            args.isCachedExternally = !!self.column._getCachedObject(args.objectKey);
-                        });
-                        content.addOnObjectNeeded(function (sender, args) {
-                            args.object = self.column._getCachedObject(args.objectKey);
-                        });
-                    };
+                /*override*/
+                click() {
+                    var self = this, row = this._row;
+                    if (!!this._clickTimeOut) {
+                        clearTimeout(this._clickTimeOut);
+                        this._clickTimeOut = null;
+                        this._onDblClicked(row);
+                    }
+                    else {
+                       this._clickTimeOut = setTimeout(function () {
+                            self._clickTimeOut = null;
+                            self._onCellClicked(row);
+                        }, 350);
+                    }
                 }
                 _beginEdit() {
                     if (!this._content.isEditing) {
@@ -237,18 +247,19 @@
             }
 
             export class ExpanderCell extends BaseCell {
-                _init() {
+                protected _init() {
                     var $el = global.$(this.el);
                     $el.addClass(css.rowCollapsed);
                     $el.addClass(css.rowExpander);
                 }
-                _onCellClicked() {
-                    if (!this._row)
+                protected _onCellClicked(row?: Row) {
+                    var clicked_row: Row = row || this._row;
+                    if (!clicked_row)
                         return;
-                    super._onCellClicked();
-                    this._row.isExpanded = !this._row.isExpanded;
+                    super._onCellClicked(clicked_row);
+                    clicked_row.isExpanded = !clicked_row.isExpanded;
                 }
-                _toggleImage() {
+                toggleImage() {
                     var $el = global.$(this.el);
                     if (this._row.isExpanded) {
                         $el.removeClass(css.rowCollapsed);
@@ -270,7 +281,7 @@
                     this._isEditing = false;
                     super(options);
                 }
-                _init() {
+                protected _init() {
                     var $el = global.$(this.el), $div = global.$(this._div);
                     $el.addClass([css.rowActions, css.cellDiv, css.nobr].join(' '));
                     $div.on("mouseenter", "img", function (e) {
@@ -295,7 +306,7 @@
                     });
                     super.destroy();
                 }
-                _createButtons(editing:boolean) {
+                protected _createButtons(editing:boolean) {
                     if (!this._el)
                         return;
                     var self = this, $ = global.$, $div = global.$(this._div), $newElems:JQuery;
@@ -352,7 +363,7 @@
 
             export class RowSelectorCell extends BaseCell {
                 private _content: contentMOD.IContent;
-                _init() {
+                protected _init() {
                     var $el = global.$(this.el);
                     $el.addClass(css.rowSelector);
                     var bindInfo: bindMOD.IBindingInfo = {
@@ -398,7 +409,7 @@
                     this._el = options.td;
                     this._init(options);
                 }
-                _init(options: { td: HTMLElement; details_id: string; }) {
+                protected _init(options: { td: HTMLElement; details_id: string; }) {
                     var details_id = options.details_id;
                     if (!details_id)
                         return;
@@ -464,7 +475,7 @@
                     this._el = options.tr;
                     this._item = options.item;
                     this._cells = null;
-                    this._objId = this._grid.uniqueID + '_' + this._item._key;
+                    this._objId = 'r'+utils.getNewID();
                     this._expanderCell = null;
                     this._actionsCell = null;
                     this._rowSelectorCell = null;
@@ -473,21 +484,21 @@
                     this._isSelected = false;
                     this._createCells();
                     this.isDeleted = this._item._isDeleted;
-                    var fn_state = function () {
+                    var fn_state = ()=>{
                         var css = self._grid._onRowStateChanged(self, self._item[self._grid.options.rowStateField]);
                         self._setState(css);
                     };
-                    if (!!this._grid.options.rowStateField) {
+                    if (!!this.isHasStateField) {
                         this._item.addOnPropertyChange(this._grid.options.rowStateField, function (s, a) {
                             fn_state();
                         }, this._objId);
                         fn_state();
                     }
                 }
-                _onError(error, source):boolean {
-                    var isHandled = super._onError(error, source);
+                handleError(error, source):boolean {
+                    var isHandled = super.handleError(error, source);
                     if (!isHandled) {
-                        return this.grid._onError(error, source);
+                        return this.grid.handleError(error, source);
                     }
                     return isHandled;
                 }
@@ -495,27 +506,35 @@
                     var self = this, i = 0;
                     self._cells = new Array(this.columns.length);
                     this.columns.forEach(function (col) {
-                        self._cells[i] = self._createCell(col);
+                        self._cells[i] = self._createCell(col, i);
                         i += 1;
                     });
                 }
-                private _createCell(col) {
+                private _createCell(col: BaseColumn, num:number) {
                     var self = this, td: HTMLTableCellElement = <HTMLTableCellElement>global.document.createElement('td'), cell: BaseCell;
                     if (col instanceof ExpanderColumn) {
-                        this._expanderCell = new ExpanderCell({row: self, td: td, column: col });
+                        this._expanderCell = new ExpanderCell({ row: self, td: td, column: col, num: num });
                         cell = this._expanderCell;
                     }
                     else if (col instanceof ActionsColumn) {
-                        this._actionsCell = new ActionsCell({ row: self, td: td, column: col });
+                        this._actionsCell = new ActionsCell({ row: self, td: td, column: col, num: num });
                         cell = this._actionsCell;
                     }
                     else if (col instanceof RowSelectorColumn) {
-                        this._rowSelectorCell = new RowSelectorCell({ row: self, td: td, column: col });
+                        this._rowSelectorCell = new RowSelectorCell({ row: self, td: td, column: col, num: num });
                         cell = this._rowSelectorCell;
                     }
                     else
-                        cell = new DataCell({ row: self, td: td, column: col });
+                        cell = new DataCell({ row: self, td: td, column: col, num: num });
                     return cell;
+                }
+                protected _setState(css: string) {
+                    for (var i = 0, len = this._cells.length; i < len; i++) {
+                        var cell = this._cells[i];
+                        if (cell instanceof DataCell) {
+                            (<DataCell>cell)._setState(css);
+                        }
+                    }
                 }
                 _onBeginEdit() {
                     var self = this;
@@ -591,13 +610,6 @@
                         this._cells[0].scrollIntoView(isUp);
                     }
                 }
-                _setState(css:string) {
-                    this.cells.forEach(function (cell) {
-                        if (cell instanceof DataCell) {
-                            (<DataCell>cell)._setState(css);
-                        }
-                    });
-                }
                 toString() {
                     return 'Row';
                 }
@@ -666,7 +678,8 @@
                             global.$(this._el).removeClass(css.rowDeleted);
                     }
                 }
-                get isEditing() { return !!this._item && this._item._isEditing; }
+                get isEditing() { return !!this._item && this._item.isEditing; }
+                get isHasStateField() { return !!this._grid.options.rowStateField; }
             }
 
             class DefaultAnimation extends RIAPP.BaseObject implements RIAPP.IAnimation {
@@ -721,6 +734,7 @@
 
                 constructor(options: { grid: DataGrid; tr: HTMLTableRowElement; details_id: string; }) {
                     super();
+                    var self = this;
                     this._grid = options.grid;
                     this._el = options.tr;
                     this._item = null;
@@ -731,18 +745,22 @@
                     this._createCell(options.details_id);
                     this._$el = global.$(this._el);
                     this._$el.addClass(css.rowDetails);
+                    this._grid.addOnRowExpanded((sender, args) => {
+                        if (!args.isExpanded && !!args.old_expandedRow)
+                            self._setParentRow(null);
+                    }, this._objId);
                 }
                 private _createCell(details_id: string) {
                     var td: HTMLTableCellElement = <HTMLTableCellElement>global.document.createElement('td');
                     this._cell = new DetailsCell({ row: this, td: td, details_id: details_id });
                 }
-                _setParentRow(row:Row) {
+                protected _setParentRow(row:Row) {
                     var self = this;
                     this._item = null;
                     this._cell.item = null;
                     //don't use global.$(this._el).remove() here - or it will remove all jQuery plugins!
                     utils.removeNode(this._el); 
-                    if (!row || row._isDestroyCalled) {
+                    if (!row || row.getIsDestroyCalled()) {
                         this._parentRow = null;
                         return;
                     }
@@ -755,7 +773,7 @@
                     //var isLast = this.grid._getLastRow() === this._parentRow;
                     this._show(() => {
                         var row = self._parentRow;
-                        if (!row || row._isDestroyCalled)
+                        if (!row || row.getIsDestroyCalled())
                             return;
                         if (self.grid.options.isUseScrollIntoDetails)
                             row.scrollIntoView(true);
@@ -780,6 +798,7 @@
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
+                    this._grid.removeNSHandlers(this._objId);
                     if (!!this._cell) {
                         this._cell.destroy();
                         this._cell = null;
@@ -879,22 +898,7 @@
                             if (!!cell) {
                                 global.currentSelectable = grid;
                                 grid._setCurrentColumn(self);
-                                if (cell instanceof DataCell) {
-                                    if (!!cell._clickTimeOut) {
-                                        clearTimeout(cell._clickTimeOut);
-                                        cell._clickTimeOut = null;
-                                        cell._onDblClicked();
-                                    }
-                                    else {
-                                        cell._onCellClicked();
-                                        cell._clickTimeOut = setTimeout(function () {
-                                            cell._clickTimeOut = null;
-                                        }, 350);
-                                    }
-                                }
-                                else {
-                                    cell._onCellClicked();
-                                }
+                                cell.click();
                             }
                         });
 
@@ -907,7 +911,7 @@
                         self._$div.addClass(this._options.colCellCss);
                     }
                 }
-                _init() {
+                protected _init() {
                     if (!!this.title)
                         this._$div.html(this.title);
                 }
@@ -929,7 +933,7 @@
                     var div = this._$div.get(0);
                     div.scrollIntoView(!!isUp);
                 }
-                _onColumnClicked() {
+                protected _onColumnClicked() {
                 }
                 toString() {
                     return 'BaseColumn';
@@ -965,14 +969,14 @@
                     this._objCache = {};
                     this.$div.addClass(css.dataColumn);
                 }
-                _init() {
+                protected _init() {
                     super._init();
                     this._sortOrder = null;
                     if (this.isSortable) {
                         this.$div.addClass(css.colSortable);
                     }
                 }
-                _onColumnClicked() {
+                protected _onColumnClicked() {
                     if (this.isSortable && !!this.sortMemberName) {
                         var sortOrd = this._sortOrder;
                         this.grid._resetColumnsSort();
@@ -988,11 +992,23 @@
                         this.grid.sortByColumn(this);
                     }
                 }
-                _cacheObject(key: string, obj: BaseObject) {
+                protected _cacheObject(key: string, obj: BaseObject) {
                     this._objCache[key] = obj;
                 }
-                _getCachedObject(key: string) {
+                protected _getCachedObject(key: string) {
                     return this._objCache[key];
+                }
+                _getInitContentFn(): (content: contentMOD.IExternallyCachable) => void {
+                    var self = this;
+                    return function (content: contentMOD.IExternallyCachable) {
+                        content.addOnObjectCreated(function (sender, args) {
+                            self._cacheObject(args.objectKey, args.object);
+                            args.isCachedExternally = !!self._getCachedObject(args.objectKey);
+                        });
+                        content.addOnObjectNeeded(function (sender, args) {
+                            args.object = self._getCachedObject(args.objectKey);
+                        });
+                    };
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -1030,7 +1046,7 @@
             }
 
             export class ExpanderColumn extends BaseColumn {
-                _init() {
+                protected _init() {
                     super._init();
                     this.$div.addClass(css.rowExpander);
                 }
@@ -1042,7 +1058,7 @@
             export class RowSelectorColumn extends BaseColumn {
                 private _val: boolean;
                 private _$chk: JQuery;
-                _init() {
+                protected _init() {
                     super._init();
                     var self = this;
                     this._val = false;
@@ -1059,7 +1075,7 @@
                         self.checked = this.checked;
                     });
                 }
-                _onCheckBoxClicked(isChecked:boolean) {
+                protected _onCheckBoxClicked(isChecked:boolean) {
                     this.grid.selectRows(isChecked);
                 }
                 toString() {
@@ -1095,9 +1111,8 @@
                 img_delete?: string;
             }
 
-
             export class ActionsColumn extends BaseColumn {
-                _init() {
+                protected _init() {
                     super._init();
                     var self = this, opts: IActionsColumnInfo = this.options;
                     this.$div.addClass(css.rowActions);
@@ -1124,28 +1139,44 @@
                                     break;
                             }
                         });
+                    this.grid.addOnRowAction((sender, args) => {
+                        switch (args.action) {
+                            case ROW_ACTION.OK:
+                                self._onOk(args.row.actionsCell);
+                                break;
+                            case ROW_ACTION.EDIT:
+                                self._onEdit(args.row.actionsCell);
+                                break;
+                            case ROW_ACTION.CANCEL:
+                                self._onCancel(args.row.actionsCell);
+                                break;
+                            case ROW_ACTION.DELETE:
+                                self._onDelete(args.row.actionsCell);
+                                break;
+                        }
+                    }, this.uniqueID);
                 }
-                _onOk(cell: ActionsCell) {
-                    if (!cell._row)
+                protected _onOk(cell: ActionsCell) {
+                    if (!cell.row)
                         return;
-                    cell._row.endEdit();
+                    cell.row.endEdit();
                     cell.update();
                 }
-                _onCancel(cell: ActionsCell) {
-                    if (!cell._row)
+                protected _onCancel(cell: ActionsCell) {
+                    if (!cell.row)
                         return;
-                    cell._row.cancelEdit();
+                    cell.row.cancelEdit();
                     cell.update();
                 }
-                _onDelete(cell: ActionsCell) {
-                    if (!cell._row)
+                protected _onDelete(cell: ActionsCell) {
+                    if (!cell.row)
                         return;
-                    cell._row.deleteRow();
+                    cell.row.deleteRow();
                 }
-                _onEdit(cell: ActionsCell) {
-                    if (!cell._row)
+                protected _onEdit(cell: ActionsCell) {
+                    if (!cell.row)
                         return;
-                    cell._row.beginEdit();
+                    cell.row.beginEdit();
                     cell.update();
                     this.grid.showEditDialog();
                 }
@@ -1157,6 +1188,7 @@
                         return;
                     this._isDestroyCalled = true;
                     this.grid._$tableEl.off("click", 'img[' + constsMOD.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]');
+                    this.grid.removeNSHandlers(this.uniqueID);
                     super.destroy();
                 }
             }
@@ -1206,7 +1238,7 @@
                 private _$headerDiv: JQuery;
                 private _$wrapDiv: JQuery;
                 private _$contaner: JQuery;
-                 _columnWidthChecker: () => void;
+                public _columnWidthChecker: () => void;
 
                 constructor(options: IGridConstructorOptions) {
                     super();
@@ -1260,10 +1292,10 @@
                     global._trackSelectable(this);
                     _gridCreated(this);
                 }
-                _getEventNames() {
+                protected _getEventNames() {
                     var base_events = super._getEventNames();
                     return ['row_expanded', 'row_selected', 'page_changed', 'row_state_changed',
-                        'cell_dblclicked'].concat(base_events);
+                        'cell_dblclicked', 'row_action'].concat(base_events);
                 }
                 addOnRowExpanded(fn: (sender: DataGrid, args: { old_expandedRow: Row; expandedRow: Row; isExpanded: boolean; }) => void , namespace?: string) {
                     this.addHandler('row_expanded', fn, namespace);
@@ -1295,6 +1327,12 @@
                 removeOnCellDblClicked(namespace?: string) {
                     this.removeHandler('cell_dblclicked', namespace);
                 }
+                addOnRowAction(fn: (sender: DataGrid, args: { row: Row; action: ROW_ACTION; }) => void, namespace?: string) {
+                    this.addHandler('row_action', fn, namespace);
+                }
+                removeOnRowAction(namespace?: string) {
+                    this.removeHandler('row_action', namespace);
+                }
                 _isRowExpanded(row: Row): boolean {
                     return this._expandedRow === row;
                 }
@@ -1308,219 +1346,17 @@
                     if (!!this._currentColumn)
                         this._currentColumn.isSelected = true;
                 }
-                _parseColumnAttr(column_attr:string, content_attr:string) {
-                    var defaultOp: IColumnInfo = {
-                        type: COLUMN_TYPE.DATA, //default column type
-                        title: null,
-                        sortable: false,
-                        sortMemberName: null,
-                        content: null
-                    }, options: IColumnInfo;
-
-                    var temp_opts = global.parser.parseOptions(column_attr);
-                    if (temp_opts.length > 0)
-                        options = utils.extend(false, defaultOp, temp_opts[0]);
-                    else
-                        options = defaultOp;
-
-                    if (!!content_attr) {
-                        options.content = contentMOD.parseContentAttr(content_attr);
-                        if (!options.sortMemberName && !!options.content.fieldName)
-                            options.sortMemberName = options.content.fieldName;
-                    }
-
-                    return options;
-                }
-                _findUndeleted(row:Row, isUp:boolean) {
-                    if (!row)
-                        return null;
-                    if (!row.isDeleted)
-                        return row;
-                    //find nearest nondeleted row (search up and down)
-                    var delIndex = this.rows.indexOf(row), i = delIndex, len = this.rows.length;
-                    if (!isUp) {
-                        i -= 1;
-                        if (i >= 0)
-                            row = this.rows[i];
-                        while (i >= 0 && row.isDeleted) {
-                            i -= 1;
-                            if (i >= 0)
-                                row = this.rows[i];
-                        }
-                        if (row.isDeleted)
-                            row = null;
-                    }
-                    else {
-                        i += 1;
-                        if (i < len)
-                            row = this.rows[i];
-                        while (i < len && row.isDeleted) {
-                            i += 1;
-                            if (i < len)
-                                row = this.rows[i];
-                        }
-                        if (row.isDeleted)
-                            row = null;
-                    }
-                    return row;
-                }
-                _updateCurrent(row: Row, withScroll:boolean) {
-                    this.currentRow = row;
-                    if (withScroll && !!row && !row.isDeleted)
-                        this._scrollToCurrent(true);
-                }
-                _scrollToCurrent(isUp:boolean) {
-                    var row = this.currentRow;
-                    if (!!row) {
-                        row.scrollIntoView(isUp);
-                    }
-                }
-                _onRowStateChanged(row:Row, val) {
+                _onRowStateChanged(row: Row, val) {
                     var args = { row: row, val: val, css: null };
                     this.raiseEvent('row_state_changed', args);
                     return args.css;
                 }
-                _onCellDblClicked(cell:BaseCell) {
+                _onCellDblClicked(cell: BaseCell) {
                     var args = { cell: cell };
                     this.raiseEvent('cell_dblclicked', args);
                 }
-                _onError(error, source):boolean {
-                    var isHandled = super._onError(error, source);
-                    if (!isHandled) {
-                        return global._onError(error, source);
-                    }
-                    return isHandled;
-                }
-                _onDSCurrentChanged() {
-                    var ds = this.dataSource, cur: collMOD.CollectionItem;
-                    if (!!ds)
-                        cur = ds.currentItem;
-                    if (!cur)
-                        this._updateCurrent(null, false);
-                    else {
-                        this._updateCurrent(this._rowMap[cur._key], false);
-                    }
-                }
-                _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>) {
-                    var self = this, row: Row, items = args.items;
-                    switch (args.change_type) {
-                        case collMOD.COLL_CHANGE_TYPE.RESET:
-                            if (!this._isDSFilling)
-                                this._refreshGrid();
-                            break;
-                        case collMOD.COLL_CHANGE_TYPE.ADDED:
-                            if (!this._isDSFilling) //if items are filling then it will be appended when it ends
-                                self._appendItems(args.items);
-                            break;
-                        case collMOD.COLL_CHANGE_TYPE.REMOVE:
-                            items.forEach(function (item) {
-                                var row = self._rowMap[item._key];
-                                if (!!row) {
-                                    self._removeRow(row);
-                                }
-                            });
-                            break;
-                        case collMOD.COLL_CHANGE_TYPE.REMAP_KEY:
-                            {
-                                row = self._rowMap[args.old_key];
-                                if (!!row) {
-                                    delete self._rowMap[args.old_key];
-                                    self._rowMap[args.new_key] = row;
-                                }
-                            }
-                            break;
-                        default:
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
-                    }
-                }
-                _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>) {
-                    var isEnd = !args.isBegin, self = this;
-                    if (isEnd) {
-                        self._isDSFilling = false;
-                        if (args.resetUI)
-                            self._refreshGrid();
-                        else
-                            self._appendItems(args.newItems);
-
-                        if (!!args.isPageChanged) {
-                            setTimeout(function () {
-                                if (self._isDestroyCalled)
-                                    return;
-                                self._onPageChanged();
-                            }, 0);
-                        }
-                        setTimeout(function () {
-                            if (self._isDestroyCalled)
-                                return;
-                            self._updateColsDim();
-                        }, 0);
-                    }
-                    else {
-                        self._isDSFilling = true;
-                        if (!self._isSorting) {
-                            if (!args.isPageChanged)
-                                self._resetColumnsSort();
-                        }
-                    }
-                }
-                _onPageChanged() {
-                    if (!!this._rowSelectorCol) {
-                        this._rowSelectorCol.checked = false;
-                    }
-                    this._scrollToCurrent(false);
-                    this.raiseEvent('page_changed', {});
-                }
-                _onItemEdit(item, isBegin, isCanceled) {
-                    var row = this._rowMap[item._key];
-                    if (!row)
-                        return;
-                    if (isBegin) {
-                        row._onBeginEdit();
-                        this._editingRow = row;
-                    }
-                    else {
-                        row._onEndEdit(isCanceled);
-                        this._editingRow = null;
-                    }
-                    this.raisePropertyChanged('editingRow');
-                }
-                _onItemAdded(args: collMOD.ICollItemAddedArgs<collMOD.CollectionItem>) {
-                    var item = args.item, row = this._rowMap[item._key];
-                    if (!row)
-                        return;
-                    this._updateCurrent(row, true);
-                    //row.isExpanded = true;
-                    if (this._options.isHandleAddNew && !args.isAddNewHandled) {
-                        args.isAddNewHandled = this.showEditDialog();
-                    }
-                }
-                _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType: collMOD.STATUS) {
-                    var newChangeType = item._changeType, ds = this.dataSource;
-                    var row = this._rowMap[item._key];
-                    if (!row)
-                        return;
-                    if (newChangeType === collMOD.STATUS.DELETED) {
-                        row.isDeleted = true;
-                        var row2 = this._findUndeleted(row, true);
-                        if (!row2) {
-                            row2 = this._findUndeleted(row, false);
-                        }
-                        if (!!row2) {
-                            ds.currentItem = row2.item;
-                        }
-                    }
-                    else if (oldChangeType === collMOD.STATUS.DELETED && newChangeType !== collMOD.STATUS.DELETED) {
-                        row.isDeleted = false;
-                    }
-                }
-                _onRowSelectionChanged(row:Row) {
+                _onRowSelectionChanged(row: Row) {
                     this.raiseEvent('row_selected', { row: row });
-                }
-                _onDSErrorsChanged(item: collMOD.CollectionItem) {
-                    var row = this._rowMap[item._key];
-                    if (!row)
-                        return;
-                    row.updateErrorState();
                 }
                 _resetColumnsSort() {
                     this.columns.forEach(function (col) {
@@ -1528,45 +1364,6 @@
                             (<DataColumn>col).sortOrder = null;
                         }
                     });
-                }
-                _bindDS() {
-                    var self = this, ds = this.dataSource;
-                    if (!ds) return;
-                    ds.addOnCollChanged(function (sender, args) {
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addOnFill(function (sender, args) {
-                        self._onDSFill(args);
-                    }, self._objId);
-                    ds.addOnPropertyChange('currentItem', function (sender, args) {
-                        self._onDSCurrentChanged();
-                    }, self._objId);
-                    ds.addOnBeginEdit(function (sender, args) {
-                        self._onItemEdit(args.item, true, undefined);
-                    }, self._objId);
-                    ds.addOnEndEdit(function (sender, args) {
-                        self._onItemEdit(args.item, false, args.isCanceled);
-                    }, self._objId);
-                    ds.addOnErrorsChanged(function (sender, args) {
-                        self._onDSErrorsChanged(args.item);
-                    }, self._objId);
-                    ds.addOnStatusChanged(function (sender, args) {
-                        if (ds !== sender) return;
-                        self._onItemStatusChanged(args.item, args.oldChangeType);
-                    }, self._objId);
-                    ds.addOnItemAdded(function (sender, args) {
-                        if (ds !== sender) return;
-                        self._onItemAdded(args);
-                    }, self._objId);
-                    //fills all rows
-                    this._refreshGrid();
-                    this._updateColsDim();
-                    this._onDSCurrentChanged();
-                }
-                _unbindDS() {
-                    var self = this, ds = this.dataSource;
-                    if (!ds) return;
-                    ds.removeNSHandlers(self._objId);
                 }
                 _getLastRow() {
                     if (this._rows.length === 0)
@@ -1600,139 +1397,7 @@
                             delete this._rowMap[rowkey];
                     }
                 }
-                _clearGrid() {
-                    if (this._rows.length === 0)
-                        return;
-                    this._isClearing = true;
-                    try {
-                        this.collapseDetails();
-                        var self = this, tbody = self._tBodyEl, newTbody = global.document.createElement('tbody');
-                        this._tableEl.replaceChild(newTbody, tbody);
-                        var rows = this._rows;
-                        this._rows = [];
-                        this._rowMap = {};
-                        rows.forEach(function (row) {
-                            row.destroy();
-                        });
-                    }
-                    finally {
-                        this._isClearing = false;
-                    }
-                    this._currentRow = null;
-                }
-                _updateColsDim() {
-                    var width = 0, headerDiv = this._$headerDiv;
-                    this._columns.forEach(function (col) {
-                        width += col.el.offsetWidth;
-                    });
-                    headerDiv.width(width);
-                    this._columns.forEach(function (col) {
-                        col.$extcol.width(col.el.offsetWidth);
-                    });
-                }
-                _wrapTable() {
-                    var $t = this._$tableEl, headerDiv: JQuery, wrapDiv: JQuery, container: JQuery, self = this;
-
-                    $t.wrap(global.$('<div></div>').addClass(css.wrapDiv));
-                    wrapDiv = $t.parent();
-                    wrapDiv.wrap(global.$('<div></div>').addClass(css.container));
-                    container = wrapDiv.parent();
-
-                    headerDiv = global.$('<div></div>').addClass(css.headerDiv).insertBefore(wrapDiv);
-                    global.$(this._tHeadRow).addClass(css.columnInfo);
-                    this._$wrapDiv = wrapDiv;
-                    this._$headerDiv = headerDiv;
-
-                    this._$contaner = container;
-
-                    if (this._options.containerCss) {
-                        container.addClass(this._options.containerCss);
-                    }
-
-                    if (this._options.wrapCss) {
-                        wrapDiv.addClass(this._options.wrapCss);
-                    }
-                    if (this._options.headerCss) {
-                        headerDiv.addClass(this._options.headerCss);
-                    }
-                    var tw = $t.width();
-                    self._columnWidthChecker = function () {
-                        var test = $t.width();
-                        if (tw !== test) {
-                            tw = test;
-                            self._updateColsDim();
-                        }
-                    };
-                }
-                _unWrapTable() {
-                    var $t = this._$tableEl;
-                    if (!this._$headerDiv)
-                        return;
-                    this._columnWidthChecker = () => { };
-                    this._$headerDiv.remove();
-                    this._$headerDiv = null;
-                    //remove wrapDiv
-                    $t.unwrap();
-                    this._$wrapDiv = null;
-                    //remove container
-                    $t.unwrap();
-                    this._$contaner = null;
-                }
-                _createColumns() {
-                    var self = this, headCells = this._tHeadCells, cnt = headCells.length, cellInfo: { th: HTMLTableHeaderCellElement; colinfo: IColumnInfo; }[] = [];
-                    var th, attr: IColumnInfo;
-                    for (var i = 0; i < cnt; i += 1) {
-                        th = headCells[i];
-                        attr = this._parseColumnAttr(th.getAttribute(constsMOD.DATA_ATTR.DATA_COLUMN), th.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT));
-                        cellInfo.push({ th: th, colinfo: attr });
-                    }
-
-                    cellInfo.forEach(function (inf) {
-                        var col = self._createColumn(inf);
-                        if (!!col)
-                            self._columns.push(col);
-                    });
-                }
-                _createColumn(options: {th: HTMLTableHeaderCellElement; colinfo: IColumnInfo;}) {
-                    var col: BaseColumn;
-                    switch (options.colinfo.type) {
-                        case COLUMN_TYPE.ROW_EXPANDER:
-                            if (!this._expanderCol) {
-                                col = new ExpanderColumn(this, options);
-                                this._expanderCol = <ExpanderColumn>col;
-                            }
-                            break;
-                        case COLUMN_TYPE.ROW_ACTIONS:
-                            if (!this._actionsCol) {
-                                col = new ActionsColumn(this, options);
-                                this._actionsCol = <ActionsColumn>col;
-                            }
-                            break;
-                        case COLUMN_TYPE.ROW_SELECTOR:
-                            if (!this._rowSelectorCol) {
-                                col = new RowSelectorColumn(this, options);
-                                this._rowSelectorCol = <RowSelectorColumn>col;
-                            }
-                            break;
-                        case COLUMN_TYPE.DATA:
-                            col = new DataColumn(this, options);
-                            break;
-                        default:
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_GRID_COLTYPE_INVALID, options.colinfo.type));
-                    }
-                    return col;
-                }
-                _appendItems(newItems: collMOD.CollectionItem[]) {
-                    if (this._isDestroyCalled)
-                        return;
-                    var self = this, item, tbody = this._tBodyEl;
-                    for (var i = 0, k = newItems.length; i < k; i += 1) {
-                        item = newItems[i];
-                        if (!self._rowMap[item._key])  //not row for item already exists
-                            self._createRowForItem(tbody, item);
-                    }
-                }
-                _onKeyDown(key:number, event: Event) {
+                _onKeyDown(key: number, event: Event) {
                     var ds = this.dataSource, Keys = constsMOD.KEYS, self = this;
                     if (!ds)
                         return;
@@ -1796,7 +1461,7 @@
                             break;
                     }
                 }
-                _onKeyUp(key:number, event:Event) {
+                _onKeyUp(key: number, event: Event) {
                     var ds = this.dataSource, Keys = constsMOD.KEYS;
                     if (!ds)
                         return;
@@ -1804,11 +1469,11 @@
                         case Keys.enter:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
-                                    this._actionsCol._onOk(this._currentRow.actionsCell);
+                                    this.raiseEvent('row_action', { row: this._currentRow, action: ROW_ACTION.OK });
                                     event.preventDefault();
                                 }
                                 else {
-                                    this._actionsCol._onEdit(this._currentRow.actionsCell);
+                                    this.raiseEvent('row_action', { row: this._currentRow, action: ROW_ACTION.EDIT });
                                     event.preventDefault();
                                 }
                             }
@@ -1816,7 +1481,7 @@
                         case Keys.esc:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
-                                    this._actionsCol._onCancel(this._currentRow.actionsCell);
+                                    this.raiseEvent('row_action', { row: this._currentRow, action: ROW_ACTION.CANCEL });
                                     event.preventDefault();
                                 }
                             }
@@ -1829,32 +1494,7 @@
                             break;
                     }
                 }
-                //Full grid refresh
-                _refreshGrid() {
-                    var self = this, ds = this.dataSource;
-                    self._clearGrid();
-                    if (!ds) return;
-                    var docFr = global.document.createDocumentFragment(), oldTbody = this._tBodyEl, newTbody = global.document.createElement('tbody');
-                    ds.items.forEach(function (item, pos) {
-                        self._createRowForItem(docFr, item, pos);
-                    });
-                    newTbody.appendChild(docFr);
-                    self._tableEl.replaceChild(newTbody, oldTbody);
-                }
-                _createRowForItem(parent, item, pos?:number) {
-                    var self = this, tr = global.document.createElement('tr');
-                    var gridRow = new Row(self, { tr: tr, item: item });
-                    self._rowMap[item._key] = gridRow;
-                    self._rows.push(gridRow);
-                    parent.appendChild(gridRow.el);
-                    return gridRow;
-                }
-                _createDetails() {
-                    var details_id = this._options.details.templateID;
-                    var tr: HTMLTableRowElement = <HTMLTableRowElement>global.document.createElement('tr');
-                    return new DetailsRow({grid: this, tr: tr, details_id: details_id });
-                }
-                _expandDetails(parentRow:Row, expanded:boolean) {
+                _expandDetails(parentRow: Row, expanded: boolean) {
                     if (!this._options.details)
                         return;
                     if (!this._details) {
@@ -1871,20 +1511,418 @@
                     if (expanded) {
                         this._expandedRow = parentRow;
                         this._details.parentRow = parentRow;
-                        this._expandedRow.expanderCell._toggleImage();
+                        this._expandedRow.expanderCell.toggleImage();
                     }
                     else {
                         this._expandedRow = null;
                         this._details.parentRow = null;
                         if (!!old) {
-                            old.expanderCell._toggleImage();
+                            old.expanderCell.toggleImage();
                         }
                     }
                     if (old !== parentRow) {
                         if (!!old)
-                            old.expanderCell._toggleImage();
+                            old.expanderCell.toggleImage();
                     }
                     this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: parentRow, isExpanded: expanded });
+                }
+                protected _parseColumnAttr(column_attr:string, content_attr:string) {
+                    var defaultOp: IColumnInfo = {
+                        type: COLUMN_TYPE.DATA, //default column type
+                        title: null,
+                        sortable: false,
+                        sortMemberName: null,
+                        content: null
+                    }, options: IColumnInfo;
+
+                    var temp_opts = global.parser.parseOptions(column_attr);
+                    if (temp_opts.length > 0)
+                        options = utils.extend(false, defaultOp, temp_opts[0]);
+                    else
+                        options = defaultOp;
+
+                    if (!!content_attr) {
+                        options.content = contentMOD.parseContentAttr(content_attr);
+                        if (!options.sortMemberName && !!options.content.fieldName)
+                            options.sortMemberName = options.content.fieldName;
+                    }
+
+                    return options;
+                }
+                protected _findUndeleted(row:Row, isUp:boolean) {
+                    if (!row)
+                        return null;
+                    if (!row.isDeleted)
+                        return row;
+                    //find nearest nondeleted row (search up and down)
+                    var delIndex = this.rows.indexOf(row), i = delIndex, len = this.rows.length;
+                    if (!isUp) {
+                        i -= 1;
+                        if (i >= 0)
+                            row = this.rows[i];
+                        while (i >= 0 && row.isDeleted) {
+                            i -= 1;
+                            if (i >= 0)
+                                row = this.rows[i];
+                        }
+                        if (row.isDeleted)
+                            row = null;
+                    }
+                    else {
+                        i += 1;
+                        if (i < len)
+                            row = this.rows[i];
+                        while (i < len && row.isDeleted) {
+                            i += 1;
+                            if (i < len)
+                                row = this.rows[i];
+                        }
+                        if (row.isDeleted)
+                            row = null;
+                    }
+                    return row;
+                }
+                protected _updateCurrent(row: Row, withScroll:boolean) {
+                    this.currentRow = row;
+                    if (withScroll && !!row && !row.isDeleted)
+                        this._scrollToCurrent(true);
+                }
+                protected _scrollToCurrent(isUp:boolean) {
+                    var row = this.currentRow;
+                    if (!!row) {
+                        row.scrollIntoView(isUp);
+                    }
+                }
+                handleError(error, source):boolean {
+                    var isHandled = super.handleError(error, source);
+                    if (!isHandled) {
+                        return global.handleError(error, source);
+                    }
+                    return isHandled;
+                }
+                protected _onDSCurrentChanged() {
+                    var ds = this.dataSource, cur: collMOD.CollectionItem;
+                    if (!!ds)
+                        cur = ds.currentItem;
+                    if (!cur)
+                        this._updateCurrent(null, false);
+                    else {
+                        this._updateCurrent(this._rowMap[cur._key], false);
+                    }
+                }
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>) {
+                    var self = this, row: Row, items = args.items;
+                    switch (args.change_type) {
+                        case collMOD.COLL_CHANGE_TYPE.RESET:
+                            if (!this._isDSFilling)
+                                this._refreshGrid();
+                            break;
+                        case collMOD.COLL_CHANGE_TYPE.ADDED:
+                            if (!this._isDSFilling) //if items are filling then it will be appended when it ends
+                                self._appendItems(args.items);
+                            break;
+                        case collMOD.COLL_CHANGE_TYPE.REMOVE:
+                            items.forEach(function (item) {
+                                var row = self._rowMap[item._key];
+                                if (!!row) {
+                                    self._removeRow(row);
+                                }
+                            });
+                            break;
+                        case collMOD.COLL_CHANGE_TYPE.REMAP_KEY:
+                            {
+                                row = self._rowMap[args.old_key];
+                                if (!!row) {
+                                    delete self._rowMap[args.old_key];
+                                    self._rowMap[args.new_key] = row;
+                                }
+                            }
+                            break;
+                        default:
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                    }
+                }
+                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>) {
+                    var isEnd = !args.isBegin, self = this;
+                    if (isEnd) {
+                        self._isDSFilling = false;
+                        if (args.resetUI)
+                            self._refreshGrid();
+                        else
+                            self._appendItems(args.newItems);
+
+                        if (!!args.isPageChanged) {
+                            setTimeout(function () {
+                                if (self._isDestroyCalled)
+                                    return;
+                                self._onPageChanged();
+                            }, 0);
+                        }
+                        setTimeout(function () {
+                            if (self._isDestroyCalled)
+                                return;
+                            self._updateColsDim();
+                        }, 0);
+                    }
+                    else {
+                        self._isDSFilling = true;
+                        if (!self._isSorting) {
+                            if (!args.isPageChanged)
+                                self._resetColumnsSort();
+                        }
+                    }
+                }
+                protected _onPageChanged() {
+                    if (!!this._rowSelectorCol) {
+                        this._rowSelectorCol.checked = false;
+                    }
+                    this._scrollToCurrent(false);
+                    this.raiseEvent('page_changed', {});
+                }
+                protected _onItemEdit(item, isBegin, isCanceled) {
+                    var row = this._rowMap[item._key];
+                    if (!row)
+                        return;
+                    if (isBegin) {
+                        row._onBeginEdit();
+                        this._editingRow = row;
+                    }
+                    else {
+                        row._onEndEdit(isCanceled);
+                        this._editingRow = null;
+                    }
+                    this.raisePropertyChanged('editingRow');
+                }
+                protected _onItemAdded(args: collMOD.ICollItemAddedArgs<collMOD.CollectionItem>) {
+                    var item = args.item, row = this._rowMap[item._key];
+                    if (!row)
+                        return;
+                    this._updateCurrent(row, true);
+                    //row.isExpanded = true;
+                    if (this._options.isHandleAddNew && !args.isAddNewHandled) {
+                        args.isAddNewHandled = this.showEditDialog();
+                    }
+                }
+                protected _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType: collMOD.STATUS) {
+                    var newChangeType = item._changeType, ds = this.dataSource;
+                    var row = this._rowMap[item._key];
+                    if (!row)
+                        return;
+                    if (newChangeType === collMOD.STATUS.DELETED) {
+                        row.isDeleted = true;
+                        var row2 = this._findUndeleted(row, true);
+                        if (!row2) {
+                            row2 = this._findUndeleted(row, false);
+                        }
+                        if (!!row2) {
+                            ds.currentItem = row2.item;
+                        }
+                    }
+                    else if (oldChangeType === collMOD.STATUS.DELETED && newChangeType !== collMOD.STATUS.DELETED) {
+                        row.isDeleted = false;
+                    }
+                }
+                protected _onDSErrorsChanged(item: collMOD.CollectionItem) {
+                    var row = this._rowMap[item._key];
+                    if (!row)
+                        return;
+                    row.updateErrorState();
+                }
+                protected _bindDS() {
+                    var self = this, ds = this.dataSource;
+                    if (!ds) return;
+                    ds.addOnCollChanged(function (sender, args) {
+                        self._onDSCollectionChanged(args);
+                    }, self._objId);
+                    ds.addOnFill(function (sender, args) {
+                        self._onDSFill(args);
+                    }, self._objId);
+                    ds.addOnPropertyChange('currentItem', function (sender, args) {
+                        self._onDSCurrentChanged();
+                    }, self._objId);
+                    ds.addOnBeginEdit(function (sender, args) {
+                        self._onItemEdit(args.item, true, undefined);
+                    }, self._objId);
+                    ds.addOnEndEdit(function (sender, args) {
+                        self._onItemEdit(args.item, false, args.isCanceled);
+                    }, self._objId);
+                    ds.addOnErrorsChanged(function (sender, args) {
+                        self._onDSErrorsChanged(args.item);
+                    }, self._objId);
+                    ds.addOnStatusChanged(function (sender, args) {
+                        if (ds !== sender) return;
+                        self._onItemStatusChanged(args.item, args.oldChangeType);
+                    }, self._objId);
+                    ds.addOnItemAdded(function (sender, args) {
+                        if (ds !== sender) return;
+                        self._onItemAdded(args);
+                    }, self._objId);
+                    //fills all rows
+                    this._refreshGrid();
+                    this._updateColsDim();
+                    this._onDSCurrentChanged();
+                }
+                protected _unbindDS() {
+                    var self = this, ds = this.dataSource;
+                    if (!ds) return;
+                    ds.removeNSHandlers(self._objId);
+                }
+                protected _clearGrid() {
+                    if (this._rows.length === 0)
+                        return;
+                    this._isClearing = true;
+                    try {
+                        this.collapseDetails();
+                        var self = this, tbody = self._tBodyEl, newTbody = global.document.createElement('tbody');
+                        this._tableEl.replaceChild(newTbody, tbody);
+                        var rows = this._rows;
+                        this._rows = [];
+                        this._rowMap = {};
+                        rows.forEach(function (row) {
+                            row.destroy();
+                        });
+                    }
+                    finally {
+                        this._isClearing = false;
+                    }
+                    this._currentRow = null;
+                }
+                protected _updateColsDim() {
+                    var width = 0, headerDiv = this._$headerDiv;
+                    this._columns.forEach(function (col) {
+                        width += col.el.offsetWidth;
+                    });
+                    headerDiv.width(width);
+                    this._columns.forEach(function (col) {
+                        col.$extcol.width(col.el.offsetWidth);
+                    });
+                }
+                protected _wrapTable() {
+                    var $t = this._$tableEl, headerDiv: JQuery, wrapDiv: JQuery, container: JQuery, self = this;
+
+                    $t.wrap(global.$('<div></div>').addClass(css.wrapDiv));
+                    wrapDiv = $t.parent();
+                    wrapDiv.wrap(global.$('<div></div>').addClass(css.container));
+                    container = wrapDiv.parent();
+
+                    headerDiv = global.$('<div></div>').addClass(css.headerDiv).insertBefore(wrapDiv);
+                    global.$(this._tHeadRow).addClass(css.columnInfo);
+                    this._$wrapDiv = wrapDiv;
+                    this._$headerDiv = headerDiv;
+
+                    this._$contaner = container;
+
+                    if (this._options.containerCss) {
+                        container.addClass(this._options.containerCss);
+                    }
+
+                    if (this._options.wrapCss) {
+                        wrapDiv.addClass(this._options.wrapCss);
+                    }
+                    if (this._options.headerCss) {
+                        headerDiv.addClass(this._options.headerCss);
+                    }
+                    var tw = $t.width();
+                    self._columnWidthChecker = function () {
+                        var test = $t.width();
+                        if (tw !== test) {
+                            tw = test;
+                            self._updateColsDim();
+                        }
+                    };
+                }
+                protected _unWrapTable() {
+                    var $t = this._$tableEl;
+                    if (!this._$headerDiv)
+                        return;
+                    this._columnWidthChecker = () => { };
+                    this._$headerDiv.remove();
+                    this._$headerDiv = null;
+                    //remove wrapDiv
+                    $t.unwrap();
+                    this._$wrapDiv = null;
+                    //remove container
+                    $t.unwrap();
+                    this._$contaner = null;
+                }
+                protected _createColumns() {
+                    var self = this, headCells = this._tHeadCells, cnt = headCells.length, cellInfo: { th: HTMLTableHeaderCellElement; colinfo: IColumnInfo; }[] = [];
+                    var th, attr: IColumnInfo;
+                    for (var i = 0; i < cnt; i += 1) {
+                        th = headCells[i];
+                        attr = this._parseColumnAttr(th.getAttribute(constsMOD.DATA_ATTR.DATA_COLUMN), th.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT));
+                        cellInfo.push({ th: th, colinfo: attr });
+                    }
+
+                    cellInfo.forEach(function (inf) {
+                        var col = self._createColumn(inf);
+                        if (!!col)
+                            self._columns.push(col);
+                    });
+                }
+                protected _createColumn(options: {th: HTMLTableHeaderCellElement; colinfo: IColumnInfo;}) {
+                    var col: BaseColumn;
+                    switch (options.colinfo.type) {
+                        case COLUMN_TYPE.ROW_EXPANDER:
+                            if (!this._expanderCol) {
+                                col = new ExpanderColumn(this, options);
+                                this._expanderCol = <ExpanderColumn>col;
+                            }
+                            break;
+                        case COLUMN_TYPE.ROW_ACTIONS:
+                            if (!this._actionsCol) {
+                                col = new ActionsColumn(this, options);
+                                this._actionsCol = <ActionsColumn>col;
+                            }
+                            break;
+                        case COLUMN_TYPE.ROW_SELECTOR:
+                            if (!this._rowSelectorCol) {
+                                col = new RowSelectorColumn(this, options);
+                                this._rowSelectorCol = <RowSelectorColumn>col;
+                            }
+                            break;
+                        case COLUMN_TYPE.DATA:
+                            col = new DataColumn(this, options);
+                            break;
+                        default:
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_GRID_COLTYPE_INVALID, options.colinfo.type));
+                    }
+                    return col;
+                }
+                protected _appendItems(newItems: collMOD.CollectionItem[]) {
+                    if (this._isDestroyCalled)
+                        return;
+                    var self = this, item, tbody = this._tBodyEl;
+                    for (var i = 0, k = newItems.length; i < k; i += 1) {
+                        item = newItems[i];
+                        if (!self._rowMap[item._key])  //not row for item already exists
+                            self._createRowForItem(tbody, item);
+                    }
+                }
+                //Full grid refresh
+                protected _refreshGrid() {
+                    var self = this, ds = this.dataSource;
+                    self._clearGrid();
+                    if (!ds) return;
+                    var docFr = global.document.createDocumentFragment(), oldTbody = this._tBodyEl, newTbody = global.document.createElement('tbody');
+                    ds.items.forEach(function (item, pos) {
+                        self._createRowForItem(docFr, item, pos);
+                    });
+                    newTbody.appendChild(docFr);
+                    self._tableEl.replaceChild(newTbody, oldTbody);
+                }
+                protected _createRowForItem(parent, item, pos?:number) {
+                    var self = this, tr = global.document.createElement('tr');
+                    var gridRow = new Row(self, { tr: tr, item: item });
+                    self._rowMap[item._key] = gridRow;
+                    self._rows.push(gridRow);
+                    parent.appendChild(gridRow.el);
+                    return gridRow;
+                }
+                protected _createDetails() {
+                    var details_id = this._options.details.templateID;
+                    var tr: HTMLTableRowElement = <HTMLTableRowElement>global.document.createElement('tr');
+                    return new DetailsRow({grid: this, tr: tr, details_id: details_id });
                 }
                 sortByColumn(column: DataColumn) {
                     var self=this, ds = this.dataSource;
@@ -1914,7 +1952,6 @@
                     var old = this._expandedRow;
                     if (!!old) {
                         this._expandedRow = null;
-                        this._details._setParentRow(null);
                         this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: null, isExpanded: false });
                     }
                 }
@@ -1957,7 +1994,7 @@
                         ds.addNew();
                         this.showEditDialog();
                     } catch (ex) {
-                        global.reThrow(ex, this._onError(ex, this));
+                        global.reThrow(ex, this.handleError(ex, this));
                     }
                 }
                 destroy() {
@@ -2086,7 +2123,7 @@
                 toString() {
                     return 'GridElView';
                 }
-                _init(options: IGridViewOptions) {
+                protected _init(options: IGridViewOptions) {
                     super._init(options);
                     this._grid = null;
                     this._gridEventCommand = null;
@@ -2097,7 +2134,7 @@
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._grid && !this._grid._isDestroyCalled) {
+                    if (!!this._grid && !this._grid.getIsDestroyCalled()) {
                         this._grid.destroy();
                     }
                     this._grid = null;

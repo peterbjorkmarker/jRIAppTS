@@ -1,4 +1,4 @@
-﻿/// <reference path="..\jriapp.d.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 'use strict';
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -6,10 +6,9 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports", "spaDemoViewModels", "domainModel", "common", "autocomplete", "gridElView"], function(require, exports, VIEWMODELS, DEMODB, COMMON, AUTOCOMPLETE, GRIDELVIEW) {
+define(["require", "exports", "spaDemoViewModels", "domainModel", "common", "autocomplete", "gridElView"], function (require, exports, VIEWMODELS, DEMODB, COMMON, AUTOCOMPLETE, GRIDELVIEW) {
     //local variables for optimization
     var global = RIAPP.global, utils = global.utils;
-
     var DemoApplication = (function (_super) {
         __extends(DemoApplication, _super);
         function DemoApplication(options) {
@@ -30,25 +29,20 @@ define(["require", "exports", "spaDemoViewModels", "domainModel", "common", "aut
                     return str;
             }
             ;
-
             this._dbContext.dbSets.Customer.defineComplexProp_NameField(function () {
                 return toText(this.ComplexProp.LastName) + '  ' + toText(this.ComplexProp.MiddleName) + '  ' + toText(this.ComplexProp.FirstName);
             });
-
             //register globally accesible dbContext's instance
             this.registerObject('dbContext', this._dbContext);
             this._errorVM = new COMMON.ErrorViewModel(this);
             this._customerVM = new VIEWMODELS.CustomerVM(this);
-
             function handleError(sender, data) {
                 self._handleError(sender, data);
             }
             ;
-
             //here we could process application's errors
             this.addOnError(handleError);
             this._dbContext.addOnError(handleError);
-
             _super.prototype.onStartUp.call(this);
             this._customerVM.load();
         };
@@ -58,18 +52,18 @@ define(["require", "exports", "spaDemoViewModels", "domainModel", "common", "aut
             this.errorVM.error = data.error;
             this.errorVM.showDialog();
         };
-
         //really, the destroy method is redundant here because the application lives while the page lives
         DemoApplication.prototype.destroy = function () {
             if (this._isDestroyed)
                 return;
             this._isDestroyCalled = true;
             var self = this;
-            try  {
+            try {
                 self._errorVM.destroy();
                 self._customerVM.destroy();
                 self._dbContext.destroy();
-            } finally {
+            }
+            finally {
                 _super.prototype.destroy.call(this);
             }
         };
@@ -111,28 +105,25 @@ define(["require", "exports", "spaDemoViewModels", "domainModel", "common", "aut
         return DemoApplication;
     })(RIAPP.Application);
     exports.DemoApplication = DemoApplication;
-
     //global error handler - the last resort (typically display message to the user)
     RIAPP.global.addOnError(function (sender, args) {
         debugger;
         alert(args.error.message);
     });
-
     //will be executed only when RIAPP.DebugLevel higher than NONE
     RIAPP.global.addOnUnResolvedBinding(function (s, args) {
         var msg = "unresolved databound property for";
         if (args.bindTo == 0 /* Source */) {
             msg += " Source: ";
-        } else {
+        }
+        else {
             msg += " Target: ";
         }
         msg += "'" + args.root + "'";
         msg += ", property: '" + args.propName + "'";
         msg += ", binding path: '" + args.path + "'";
-
         console.log(msg);
     });
-
     //properties must be initialized on the HTML page
     exports.mainOptions = {
         service_url: null,
@@ -141,12 +132,7 @@ define(["require", "exports", "spaDemoViewModels", "domainModel", "common", "aut
         spa_template1_url: null,
         spa_template2_url: null,
         spa_template3_url: null,
-        user_modules: [
-            { name: "COMMON", initFn: COMMON.initModule },
-            { name: "AUTOCOMPLETE", initFn: AUTOCOMPLETE.initModule },
-            { name: "GRIDELVIEW", initFn: GRIDELVIEW.initModule },
-            { name: "SPADEMO", initFn: VIEWMODELS.initModule }
-        ]
+        user_modules: [{ name: "COMMON", initFn: COMMON.initModule }, { name: "AUTOCOMPLETE", initFn: AUTOCOMPLETE.initModule }, { name: "GRIDELVIEW", initFn: GRIDELVIEW.initModule }, { name: "SPADEMO", initFn: VIEWMODELS.initModule }]
     };
 });
 //# sourceMappingURL=spaDemoApp.js.map

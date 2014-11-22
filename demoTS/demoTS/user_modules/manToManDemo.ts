@@ -464,7 +464,7 @@ module RIAPP
                     try {
                         self._dialogVM.showDialog('addressDialog', self);
                     } catch (ex) {
-                        self._onError(ex, this);
+                        self.handleError(ex, this);
                     }
                 }, self,
                     function (sender, param) {

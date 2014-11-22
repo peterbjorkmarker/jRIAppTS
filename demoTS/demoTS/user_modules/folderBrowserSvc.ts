@@ -5,7 +5,7 @@ module RIAPP
     export module FOLDERBROWSER_SVC {
         'use strict';
         /*
-            Generated from: /FolderBrowserService/CodeGen?type=ts on 2014-03-03 10:43 at 10:43
+            Generated from: /FolderBrowserService/code?lang=ts on 2014-11-21 15:51 at 15:51
             Don't make manual changes here, because they will be lost when this db interface will be regenerated!
         */
 
@@ -117,7 +117,7 @@ module RIAPP
         }
 
         export class DbContext extends RIAPP.MOD.db.DbContext {
-            _initDbSets() {
+            protected _initDbSets() {
                 super._initDbSets();
                 this._dbSets = new DbSets(this);
                 var associations = [{ "name": "ChildToParent", "parentDbSetName": "FileSystemObject", "childDbSetName": "FileSystemObject", "childToParentName": "Parent", "parentToChildrenName": "Children", "onDeleteAction": 1, "fieldRels": [{ "parentField": "Key", "childField": "ParentKey" }] }];

@@ -70,10 +70,10 @@
                         }, self._objId);
                     }
                 }
-                _onError(error, source): boolean {
-                    var isHandled = super._onError(error, source);
+                handleError(error, source): boolean {
+                    var isHandled = super.handleError(error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 }
@@ -161,7 +161,7 @@
                         }
                     }
                     catch (ex) {
-                        global.reThrow(ex, this._onError(ex, this));
+                        global.reThrow(ex, this.handleError(ex, this));
                     }
                 }
                 private _onDSErrorsChanged() {
@@ -191,7 +191,7 @@
                 private _unbindDS() {
                     var dataContext = this._dataContext;
                     this.validationErrors = null;
-                    if (!!dataContext && !dataContext._isDestroyCalled) {
+                    if (!!dataContext && !dataContext.getIsDestroyCalled()) {
                         dataContext.removeNSHandlers(this._objId);
                     }
                 }
@@ -217,7 +217,7 @@
                     this._unbindDS();
                     var parentDataForm = this._parentDataForm;
                     this._parentDataForm = null;
-                    if (!!parentDataForm && !parentDataForm._isDestroyCalled) {
+                    if (!!parentDataForm && !parentDataForm.getIsDestroyCalled()) {
                         parentDataForm.removeNSHandlers(this._objId);
                     }
                     this._dataContext = null;
@@ -261,7 +261,7 @@
                             }
                         }
                     } catch (ex) {
-                        global.reThrow(ex, this._onError(ex, this));
+                        global.reThrow(ex, this.handleError(ex, this));
                     }
                 }
                 get isEditing() { return this._isEditing; }
@@ -291,7 +291,7 @@
                             }
                         }
                         catch (ex) {
-                            global.reThrow(ex, this._onError(ex, dataContext));
+                            global.reThrow(ex, this.handleError(ex, dataContext));
                         }
                     }
 
@@ -340,7 +340,7 @@
                         }
                     }, this._objId);
                 }
-                _getErrorTipInfo(errors: RIAPP.IValidationInfo[]) {
+                protected _getErrorTipInfo(errors: RIAPP.IValidationInfo[]) {
                     var tip = ['<b>', ERRTEXT.errorInfo, '</b>', '<ul>'];
                     errors.forEach(function (info) {
                         var fieldName = info.fieldName, res = '';
@@ -359,7 +359,7 @@
                     tip.push('</ul>');
                     return tip.join('');
                 }
-                _updateErrorUI(el: HTMLElement, errors: RIAPP.IValidationInfo[]) {
+                protected _updateErrorUI(el: HTMLElement, errors: RIAPP.IValidationInfo[]) {
                     if (!el) {
                         return;
                     }
@@ -381,7 +381,7 @@
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._form && !this._form._isDestroyCalled) {
+                    if (!!this._form && !this._form.getIsDestroyCalled()) {
                         this._form.destroy();
                     }
                     this._form = null;

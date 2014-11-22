@@ -4,15 +4,15 @@
             import utilsMOD = RIAPP.MOD.utils;
 
             export class Defaults extends RIAPP.BaseObject{
-                _imagesPath: string;
-                _datepicker: RIAPP.IDatepicker;
-                _dateFormat: string;
-                _dateTimeFormat: string;
-                _timeFormat: string;
-                _decimalPoint: string;
-                _thousandSep: string;
-                _decPrecision: number;
-                _ajaxTimeOut: number;
+                private _imagesPath: string;
+                private _datepicker: RIAPP.IDatepicker;
+                private _dateFormat: string;
+                private _dateTimeFormat: string;
+                private _timeFormat: string;
+                private _decimalPoint: string;
+                private _thousandSep: string;
+                private _decPrecision: number;
+                private _ajaxTimeOut: number;
 
                 constructor() {
                     super();

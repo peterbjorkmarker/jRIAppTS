@@ -261,7 +261,7 @@ module RIAPP
             set error(v) {
                 var old = this._error;
                 if (!!old) {
-                    global._onError(v, null);
+                    global.handleError(v, null);
                     global._throwDummy(v);
                 }
                 this._error = v;

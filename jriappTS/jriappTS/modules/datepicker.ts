@@ -81,7 +81,7 @@
             }
 
             export class DatePickerElView extends elviewMOD.TextBoxElView {
-                _init(options: IDatePickerOptions) {
+                protected _init(options: IDatePickerOptions) {
                     super._init(options);
                     var $el = this.$el;
                     global.defaults.datepicker.attachTo($el, options.datepicker);

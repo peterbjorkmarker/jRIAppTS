@@ -460,7 +460,7 @@
                         return;
                     this._isDestroyCalled = true;
                     this._objs.forEach(function (obj) {
-                        if (!obj._isDestroyCalled)
+                        if (!obj.getIsDestroyCalled())
                             obj.destroy();
                     });
                     this._objs = [];
@@ -544,7 +544,7 @@
                     return new WaitQueue(owner);
                 }
                 _checkQueue(prop:string, value:any) {
-                    if (!this._owner || this._owner._isDestroyCalled) {
+                    if (!this._owner || this._owner.getIsDestroyCalled()) {
                         return;
                     }
                     var self = this, propQueue = this._queue[prop], task;
@@ -608,7 +608,7 @@
                                     task.action.apply(self._owner, task.args);
                                 }
                                 catch (ex) {
-                                    self._owner._onError(ex, self);
+                                    self._owner.handleError(ex, self);
                                 }
                             });
                         }

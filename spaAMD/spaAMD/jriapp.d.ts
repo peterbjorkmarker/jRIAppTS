@@ -1,4 +1,4 @@
-﻿/// <reference path="thirdparty/jquery.d.ts" />
+/// <reference path="thirdparty/jquery.d.ts" />
 /// <reference path="thirdparty/moment.d.ts" />
 /// <reference path="jriapp_strings.d.ts" />
 declare module RIAPP {
@@ -88,8 +88,8 @@ declare module RIAPP {
     class ArrayHelper {
         static clone(arr: any[]): any[];
         static fromList(list: {
+            [x: number]: any;
             length: number;
-            [index: number]: any;
         }): any[];
         static fromCollection(list: HTMLCollection): any[];
         static distinct(arr: any[]): any[];
@@ -121,35 +121,42 @@ declare module RIAPP {
 }
 declare module RIAPP {
     class BaseObject {
-        public _isDestroyed: boolean;
-        public _isDestroyCalled: boolean;
-        private __events;
+        protected _isDestroyed: boolean;
+        protected _isDestroyCalled: boolean;
+        private _events;
+        private static hasNode(list, node);
+        private static countNodes(list);
+        private static prependNode(list, node);
+        private static appendNode(list, node);
+        private static removeNodes(list, ns);
         constructor();
-        public _getEventNames(): string[];
-        public _addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string, prepend?: boolean): void;
-        public _removeHandler(name?: string, namespace?: string): void;
-        public _raiseEvent(name: string, data: any): void;
-        public _onError(error: any, source: any): boolean;
-        public _checkEventName(name: string): void;
-        public _isHasProp(prop: string): boolean;
-        public raisePropertyChanged(name: string): void;
-        public addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string): void;
-        public removeHandler(name?: string, namespace?: string): void;
-        public addOnDestroyed(fn: (sender: any, args: {}) => void, namespace?: string): void;
-        public removeOnDestroyed(namespace?: string): void;
-        public addOnError(fn: (sender: any, args: {
+        protected _getEventNames(): string[];
+        protected _addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string, prepend?: boolean): void;
+        protected _removeHandler(name?: string, namespace?: string): void;
+        protected _raiseEvent(name: string, args: any): void;
+        protected _checkEventName(name: string): void;
+        protected _isHasProp(prop: string): boolean;
+        handleError(error: any, source: any): boolean;
+        raisePropertyChanged(name: string): void;
+        addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string, prepend?: boolean): void;
+        removeHandler(name?: string, namespace?: string): void;
+        addOnDestroyed(fn: (sender: any, args: {}) => void, namespace?: string): void;
+        removeOnDestroyed(namespace?: string): void;
+        addOnError(fn: (sender: any, args: {
             error: any;
             source: any;
             isHandled: boolean;
         }) => void, namespace?: string): void;
-        public removeOnError(namespace?: string): void;
-        public removeNSHandlers(namespace?: string): void;
-        public raiseEvent(name: string, args: any): void;
-        public addOnPropertyChange(prop: string, fn: (sender: any, args: {
+        removeOnError(namespace?: string): void;
+        removeNSHandlers(namespace?: string): void;
+        raiseEvent(name: string, args: any): void;
+        addOnPropertyChange(prop: string, fn: (sender: any, args: {
             property: string;
         }) => void, namespace?: string): void;
-        public removeOnPropertyChange(prop?: string, namespace?: string): void;
-        public destroy(): void;
+        removeOnPropertyChange(prop?: string, namespace?: string): void;
+        getIsDestroyed(): boolean;
+        getIsDestroyCalled(): boolean;
+        destroy(): void;
     }
 }
 declare module RIAPP {
@@ -158,6 +165,10 @@ declare module RIAPP {
     enum BindTo {
         Source = 0,
         Target = 1,
+    }
+    interface IConverter {
+        convertToSource(val: any, param: any, dataContext: any): any;
+        convertToTarget(val: any, param: any, dataContext: any): any;
     }
     interface ISelectable {
         containerEl: HTMLElement;
@@ -210,60 +221,60 @@ declare module RIAPP {
         private _processTemplateSection(templateSection, app);
         private _registerTemplateLoaderCore(name, loader);
         private _getTemplateLoaderCore(name);
-        public _getEventNames(): string[];
-        public _initialize(): void;
-        public _addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string, prepend?: boolean): void;
-        public _trackSelectable(selectable: ISelectable): void;
-        public _untrackSelectable(selectable: ISelectable): void;
-        public _registerApp(app: Application): void;
-        public _unregisterApp(app: Application): void;
-        public _destroyApps(): void;
-        public _throwDummy(origErr: any): void;
-        public _checkIsDummy(error: any): boolean;
-        public _registerObject(root: IExports, name: string, obj: any): void;
-        public _getObject(root: IExports, name: string): any;
-        public _removeObject(root: IExports, name: string): any;
-        public _processTemplateSections(root: {
+        protected _getEventNames(): string[];
+        _initialize(): void;
+        protected _addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string, prepend?: boolean): void;
+        _trackSelectable(selectable: ISelectable): void;
+        _untrackSelectable(selectable: ISelectable): void;
+        _registerApp(app: Application): void;
+        _unregisterApp(app: Application): void;
+        _destroyApps(): void;
+        _throwDummy(origErr: any): void;
+        _checkIsDummy(error: any): boolean;
+        _registerObject(root: IExports, name: string, obj: any): void;
+        _getObject(root: IExports, name: string): any;
+        _removeObject(root: IExports, name: string): any;
+        _processTemplateSections(root: {
             querySelectorAll: (selectors: string) => NodeList;
         }): void;
-        public _loadTemplatesAsync(fn_loader: () => IPromise<string>, app: Application): IPromise<any>;
-        public _registerTemplateLoader(name: any, loader: ITemplateLoaderInfo): void;
-        public _getTemplateLoader(name: string): () => IPromise<string>;
-        public _registerTemplateGroup(groupName: string, group: IGroupInfo): void;
-        public _getTemplateGroup(name: string): IGroupInfo;
-        public _waitForNotLoading(callback: any, callbackArgs: any): void;
-        public _getConverter(name: string): MOD.converter.IConverter;
-        public _onUnResolvedBinding(bindTo: BindTo, root: any, path: string, propName: string): void;
-        public addOnLoad(fn: (sender: Global, args: any) => void, namespace?: string): void;
-        public addOnUnLoad(fn: (sender: Global, args: any) => void, namespace?: string): void;
-        public addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string): void;
-        public addOnUnResolvedBinding(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string): void;
-        public removeOnUnResolvedBinding(namespace?: string): void;
-        public getExports(): {
-            [name: string]: any;
+        _loadTemplatesAsync(fn_loader: () => IPromise<string>, app: Application): IPromise<any>;
+        _registerTemplateLoader(name: any, loader: ITemplateLoaderInfo): void;
+        _getTemplateLoader(name: string): () => IPromise<string>;
+        _registerTemplateGroup(groupName: string, group: IGroupInfo): void;
+        _getTemplateGroup(name: string): IGroupInfo;
+        _waitForNotLoading(callback: any, callbackArgs: any): void;
+        _getConverter(name: string): IConverter;
+        _onUnResolvedBinding(bindTo: BindTo, root: any, path: string, propName: string): void;
+        addOnLoad(fn: (sender: Global, args: any) => void, namespace?: string): void;
+        addOnUnLoad(fn: (sender: Global, args: any) => void, namespace?: string): void;
+        addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string): void;
+        addOnUnResolvedBinding(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string): void;
+        removeOnUnResolvedBinding(namespace?: string): void;
+        getExports(): {
+            [x: string]: any;
         };
-        public reThrow(ex: any, isHandled: any): void;
-        public onModuleLoaded(name: string, module_obj: any): void;
-        public isModuleLoaded(name: string): boolean;
-        public findApp(name: string): Application;
-        public destroy(): void;
-        public registerType(name: string, obj: any): void;
-        public getType(name: string): any;
-        public registerConverter(name: string, obj: MOD.converter.IConverter): void;
-        public registerElView(name: string, elViewType: any): void;
-        public getImagePath(imageName: string): string;
-        public loadTemplates(url: string): void;
-        public toString(): string;
-        public moduleNames : any[];
-        public parser : MOD.parser.Parser;
-        public isLoading : boolean;
-        public $ : JQueryStatic;
-        public window : Window;
-        public document : Document;
-        public currentSelectable : ISelectable;
-        public defaults : MOD.defaults.Defaults;
-        public utils : MOD.utils.Utils;
-        public UC : any;
+        reThrow(ex: any, isHandled: any): void;
+        onModuleLoaded(name: string, module_obj: any): void;
+        isModuleLoaded(name: string): boolean;
+        findApp(name: string): Application;
+        destroy(): void;
+        registerType(name: string, obj: any): void;
+        getType(name: string): any;
+        registerConverter(name: string, obj: IConverter): void;
+        registerElView(name: string, elViewType: any): void;
+        getImagePath(imageName: string): string;
+        loadTemplates(url: string): void;
+        toString(): string;
+        moduleNames: any[];
+        parser: MOD.parser.Parser;
+        isLoading: boolean;
+        $: JQueryStatic;
+        window: Window;
+        document: Document;
+        currentSelectable: ISelectable;
+        defaults: MOD.defaults.Defaults;
+        utils: MOD.utils.Utils;
+        UC: any;
     }
 }
 declare module RIAPP {
@@ -327,6 +338,7 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module utils {
+            import constsMOD = MOD.consts;
             var css: {
                 toolTip: string;
                 toolTipError: string;
@@ -334,16 +346,16 @@ declare module RIAPP {
             function defineProps(proto: any, props?: any, propertyDescriptors?: any): any;
             function __extendType(_super: any, pds: any, props: any): () => void;
             class Checks {
-                static isNull: (a: any) => boolean;
-                static isUndefined: (a: any) => boolean;
-                static isNt: (a: any) => boolean;
-                static isFunction: (a: any) => boolean;
-                static isString: (a: any) => boolean;
-                static isArray: (o: any) => boolean;
-                static isBoolean: (a: any) => boolean;
-                static isDate: (a: any) => boolean;
-                static isNumber: (a: any) => boolean;
-                static isNumeric: (obj: any) => boolean;
+                static isNull: typeof baseUtils.isNull;
+                static isUndefined: typeof baseUtils.isUndefined;
+                static isNt: typeof baseUtils.isNt;
+                static isFunction: typeof baseUtils.isFunc;
+                static isString: typeof baseUtils.isString;
+                static isArray: typeof baseUtils.isArray;
+                static isBoolean: typeof baseUtils.isBoolean;
+                static isDate: typeof baseUtils.isDate;
+                static isNumber: typeof baseUtils.isNumber;
+                static isNumeric: typeof baseUtils.isNumeric;
                 static isHTML(a: any): boolean;
                 static isObject(a: any): boolean;
                 static isSimpleObject(a: any): boolean;
@@ -359,12 +371,12 @@ declare module RIAPP {
                 static isInNestedForm(root: any, forms: HTMLElement[], el: HTMLElement): boolean;
             }
             class StringUtils {
-                static endsWith: (str: any, suffix: any) => boolean;
-                static startsWith: (str: any, prefix: any) => boolean;
-                static trim: (str: string, chars?: string) => string;
+                static endsWith: typeof baseUtils.endsWith;
+                static startsWith: typeof baseUtils.startsWith;
+                static trim: typeof baseUtils.trim;
                 /**
-                *    Usage:     formatNumber(123456.789, 2, '.', ',');
-                *    result:    123,456.79
+                 *    Usage:     formatNumber(123456.789, 2, '.', ',');
+                 *    result:    123,456.79
                 **/
                 static formatNumber(num: any, decimals?: number, dec_point?: string, thousands_sep?: string): string;
                 static stripNonNumeric(str: string): string;
@@ -376,78 +388,78 @@ declare module RIAPP {
             }
             interface IValueUtils {
                 valueToDate(val: string, dtcnv: number, stz: number): Date;
-                dateToValue(dt: Date, dtcnv: consts.DATE_CONVERSION, stz: number): string;
-                compareVals(v1: any, v2: any, dataType: consts.DATA_TYPE): boolean;
-                stringifyValue(v: any, dcnv: consts.DATE_CONVERSION, dataType: consts.DATA_TYPE, stz: number): string;
-                parseValue(v: string, dataType: consts.DATA_TYPE, dcnv: consts.DATE_CONVERSION, stz: number): any;
+                dateToValue(dt: Date, dtcnv: constsMOD.DATE_CONVERSION, stz: number): string;
+                compareVals(v1: any, v2: any, dataType: constsMOD.DATA_TYPE): boolean;
+                stringifyValue(v: any, dcnv: constsMOD.DATE_CONVERSION, dataType: constsMOD.DATA_TYPE, stz: number): string;
+                parseValue(v: string, dataType: constsMOD.DATA_TYPE, dcnv: constsMOD.DATE_CONVERSION, stz: number): any;
             }
             var valueUtils: IValueUtils;
             class LifeTimeScope extends BaseObject {
                 private _objs;
                 constructor();
                 static create(): LifeTimeScope;
-                public addObj(b: BaseObject): void;
-                public removeObj(b: BaseObject): void;
-                public getObjs(): BaseObject[];
-                public destroy(): void;
-                public toString(): string;
+                addObj(b: BaseObject): void;
+                removeObj(b: BaseObject): void;
+                getObjs(): BaseObject[];
+                destroy(): void;
+                toString(): string;
             }
             class PropWatcher extends BaseObject {
-                public _objId: string;
-                public _objs: BaseObject[];
+                _objId: string;
+                _objs: BaseObject[];
                 constructor();
                 static create(): PropWatcher;
-                public addPropWatch(obj: BaseObject, prop: string, fn_onChange: (prop: string) => void): void;
-                public addWatch(obj: BaseObject, props: string[], fn_onChange: (prop: string) => void): void;
-                public removeWatch(obj: BaseObject): void;
-                public destroy(): void;
-                public toString(): string;
-                public uniqueID : string;
+                addPropWatch(obj: BaseObject, prop: string, fn_onChange: (prop: string) => void): void;
+                addWatch(obj: BaseObject, props: string[], fn_onChange: (prop: string) => void): void;
+                removeWatch(obj: BaseObject): void;
+                destroy(): void;
+                toString(): string;
+                uniqueID: string;
             }
             class WaitQueue extends BaseObject {
-                public _objId: string;
-                public _owner: BaseObject;
-                public _queue: any;
+                _objId: string;
+                _owner: BaseObject;
+                _queue: any;
                 constructor(owner: BaseObject);
                 static create(owner: BaseObject): WaitQueue;
-                public _checkQueue(prop: string, value: any): void;
-                public enQueue(options: any): void;
-                public destroy(): void;
-                public toString(): string;
-                public uniqueID : string;
-                public owner : BaseObject;
+                _checkQueue(prop: string, value: any): void;
+                enQueue(options: any): void;
+                destroy(): void;
+                toString(): string;
+                uniqueID: string;
+                owner: BaseObject;
             }
             class Utils {
                 constructor();
                 static create(): Utils;
-                public check : typeof Checks;
-                public str : typeof StringUtils;
-                public validation : typeof Validations;
-                public getNewID(): number;
-                public isContained(oNode: any, oCont: any): boolean;
-                public slice: (start?: number, end?: number) => any[];
-                public get_timeZoneOffset: () => number;
-                public parseBool(bool_value: any): any;
-                public round(num: number, decimals: number): number;
-                public performAjaxCall(url: string, postData: string, async: boolean, fn_success: (res: string) => void, fn_error: (res: any) => void, context: any): IPromise<string>;
-                public performAjaxGet(url: string): IPromise<string>;
-                public format: (format_str: string, ...args: any[]) => string;
-                public extend(deep: boolean, defaults: any, options: any): any;
-                public removeNode(node: Node): void;
-                public insertAfter(referenceNode: Node, newNode: Node): void;
-                public getProps(obj: any): string[];
-                public getParentDataForm(rootForm: HTMLElement, el: HTMLElement): HTMLElement;
-                public forEachProp(obj: any, fn: (name: string) => void): void;
-                public addToolTip($el: JQuery, tip: string, isError?: boolean): void;
-                public hasProp(obj: any, prop: string): boolean;
-                public createDeferred(): IDeferred<any>;
-                public cloneObj(o: any, mergeIntoObj?: any): any;
-                public shallowCopy(o: any): any;
-                public mergeObj(obj: any, mergeIntoObj: any): any;
-                public removeFromArray(array: any[], obj: any): number;
-                public insertIntoArray(array: any[], obj: any, pos: number): void;
-                public destroyJQueryPlugin($el: JQuery, name: string): void;
-                public uuid: (len?: number, radix?: number) => string;
+                check: typeof Checks;
+                str: typeof StringUtils;
+                validation: typeof Validations;
+                getNewID(): number;
+                isContained(oNode: any, oCont: any): boolean;
+                slice: (start?: number, end?: number) => any[];
+                get_timeZoneOffset: () => number;
+                parseBool(bool_value: any): any;
+                round(num: number, decimals: number): number;
+                performAjaxCall(url: string, postData: string, async: boolean, fn_success: (res: string) => void, fn_error: (res: any) => void, context: any): IPromise<string>;
+                performAjaxGet(url: string): IPromise<string>;
+                format: typeof baseUtils.format;
+                extend(deep: boolean, defaults: any, options: any): any;
+                removeNode(node: Node): void;
+                insertAfter(referenceNode: Node, newNode: Node): void;
+                getProps(obj: any): string[];
+                getParentDataForm(rootForm: HTMLElement, el: HTMLElement): HTMLElement;
+                forEachProp(obj: any, fn: (name: string) => void): void;
+                addToolTip($el: JQuery, tip: string, isError?: boolean): void;
+                hasProp(obj: any, prop: string): boolean;
+                createDeferred(): IDeferred<any>;
+                cloneObj(o: any, mergeIntoObj?: any): any;
+                shallowCopy(o: any): any;
+                mergeObj(obj: any, mergeIntoObj: any): any;
+                removeFromArray(array: any[], obj: any): number;
+                insertIntoArray(array: any[], obj: any, pos: number): void;
+                destroyJQueryPlugin($el: JQuery, name: string): void;
+                uuid: (len?: number, radix?: number) => string;
             }
         }
     }
@@ -456,26 +468,26 @@ declare module RIAPP {
     module MOD {
         module errors {
             class BaseError extends BaseObject {
-                public _message: string;
-                public _isDummy: boolean;
-                public _origError: any;
+                private _message;
+                private _isDummy;
+                private _origError;
                 constructor(message: string);
                 static create(message: string): BaseError;
-                public toString(): string;
-                public message : string;
-                public isDummy : boolean;
-                public origError : any;
+                toString(): string;
+                message: string;
+                isDummy: boolean;
+                origError: any;
             }
             class DummyError extends BaseError {
                 constructor(ex: any);
                 static create(ex: any): DummyError;
             }
             class ValidationError extends BaseError {
-                public _errors: IValidationInfo[];
-                public _item: any;
+                _errors: IValidationInfo[];
+                _item: any;
                 constructor(errorInfo: IValidationInfo[], item: any);
-                public item : any;
-                public errors : IValidationInfo[];
+                item: any;
+                errors: IValidationInfo[];
             }
         }
     }
@@ -490,48 +502,44 @@ declare module RIAPP {
                 Float: number;
                 SmallInt: number;
             };
-            interface IConverter {
+            class BaseConverter implements IConverter {
                 convertToSource(val: any, param: any, dataContext: any): any;
                 convertToTarget(val: any, param: any, dataContext: any): any;
             }
-            class BaseConverter implements IConverter {
-                public convertToSource(val: any, param: any, dataContext: any): any;
-                public convertToTarget(val: any, param: any, dataContext: any): any;
-            }
             class DateConverter implements IConverter {
-                public convertToSource(val: any, param: any, dataContext: any): Date;
-                public convertToTarget(val: any, param: any, dataContext: any): string;
-                public toString(): string;
+                convertToSource(val: any, param: any, dataContext: any): Date;
+                convertToTarget(val: any, param: any, dataContext: any): string;
+                toString(): string;
             }
             class DateTimeConverter implements IConverter {
-                public convertToSource(val: any, param: any, dataContext: any): Date;
-                public convertToTarget(val: any, param: any, dataContext: any): string;
-                public toString(): string;
+                convertToSource(val: any, param: any, dataContext: any): Date;
+                convertToTarget(val: any, param: any, dataContext: any): string;
+                toString(): string;
             }
             class NumberConverter implements IConverter {
-                public convertToSource(val: any, param: any, dataContext: any): any;
-                public convertToTarget(val: any, param: any, dataContext: any): string;
-                public toString(): string;
+                convertToSource(val: any, param: any, dataContext: any): any;
+                convertToTarget(val: any, param: any, dataContext: any): string;
+                toString(): string;
             }
             class IntegerConverter implements IConverter {
-                public convertToSource(val: any, param: any, dataContext: any): any;
-                public convertToTarget(val: any, param: any, dataContext: any): string;
-                public toString(): string;
+                convertToSource(val: any, param: any, dataContext: any): any;
+                convertToTarget(val: any, param: any, dataContext: any): string;
+                toString(): string;
             }
             class SmallIntConverter implements IConverter {
-                public convertToSource(val: any, param: any, dataContext: any): any;
-                public convertToTarget(val: any, param: any, dataContext: any): string;
-                public toString(): string;
+                convertToSource(val: any, param: any, dataContext: any): any;
+                convertToTarget(val: any, param: any, dataContext: any): string;
+                toString(): string;
             }
             class DecimalConverter implements IConverter {
-                public convertToSource(val: any, param: any, dataContext: any): any;
-                public convertToTarget(val: any, param: any, dataContext: any): string;
-                public toString(): string;
+                convertToSource(val: any, param: any, dataContext: any): any;
+                convertToTarget(val: any, param: any, dataContext: any): string;
+                toString(): string;
             }
             class FloatConverter implements IConverter {
-                public convertToSource(val: any, param: any, dataContext: any): any;
-                public convertToTarget(val: any, param: any, dataContext: any): string;
-                public toString(): string;
+                convertToSource(val: any, param: any, dataContext: any): any;
+                convertToTarget(val: any, param: any, dataContext: any): string;
+                toString(): string;
             }
         }
     }
@@ -540,26 +548,26 @@ declare module RIAPP {
     module MOD {
         module defaults {
             class Defaults extends BaseObject {
-                public _imagesPath: string;
-                public _datepicker: IDatepicker;
-                public _dateFormat: string;
-                public _dateTimeFormat: string;
-                public _timeFormat: string;
-                public _decimalPoint: string;
-                public _thousandSep: string;
-                public _decPrecision: number;
-                public _ajaxTimeOut: number;
+                private _imagesPath;
+                private _datepicker;
+                private _dateFormat;
+                private _dateTimeFormat;
+                private _timeFormat;
+                private _decimalPoint;
+                private _thousandSep;
+                private _decPrecision;
+                private _ajaxTimeOut;
                 constructor();
-                public toString(): string;
-                public ajaxTimeOut : number;
-                public dateFormat : string;
-                public timeFormat : string;
-                public dateTimeFormat : string;
-                public datepicker : IDatepicker;
-                public imagesPath : string;
-                public decimalPoint : string;
-                public thousandSep : string;
-                public decPrecision : number;
+                toString(): string;
+                ajaxTimeOut: number;
+                dateFormat: string;
+                timeFormat: string;
+                dateTimeFormat: string;
+                datepicker: IDatepicker;
+                imagesPath: string;
+                decimalPoint: string;
+                thousandSep: string;
+                decPrecision: number;
             }
         }
     }
@@ -576,23 +584,23 @@ declare module RIAPP {
                 static __valueDelimeter2: string;
                 static __keyValDelimeter: string;
                 constructor();
-                public _getPathParts(path: string): string[];
-                public _resolveProp(obj: any, prop: string): any;
-                public _setPropertyValue(obj: any, prop: string, val: any): void;
-                public _getKeyVals(val: string): {
+                protected _getKeyVals(val: string): {
                     key: string;
                     val: any;
                 }[];
-                public resolveBindingSource(root: any, srcParts: string[]): any;
-                public resolvePath(obj: any, path: string): any;
-                public getBraceParts(val: string, firstOnly: boolean): string[];
-                public trimOuterBraces(val: string): string;
-                public trimQuotes(val: string): string;
-                public trimBrackets(val: string): string;
-                public isWithOuterBraces(str: string): boolean;
-                public parseOption(part: string): any;
-                public parseOptions(str: string): any[];
-                public toString(): string;
+                getPathParts(path: string): string[];
+                resolveProp(obj: any, prop: string): any;
+                setPropertyValue(obj: any, prop: string, val: any): void;
+                resolveBindingSource(root: any, srcParts: string[]): any;
+                resolvePath(obj: any, path: string): any;
+                getBraceParts(val: string, firstOnly: boolean): string[];
+                trimOuterBraces(val: string): string;
+                trimQuotes(val: string): string;
+                trimBrackets(val: string): string;
+                isWithOuterBraces(str: string): boolean;
+                parseOption(part: string): any;
+                parseOptions(str: string): any[];
+                toString(): string;
             }
         }
     }
@@ -606,30 +614,30 @@ declare module RIAPP {
                 raiseCanExecuteChanged: () => void;
             }
             class Command extends BaseObject implements ICommand {
-                public _action: (sender: any, param: any) => void;
-                public _thisObj: any;
-                public _canExecute: (sender: any, param: any) => boolean;
-                public _objId: string;
+                private _action;
+                private _thisObj;
+                private _canExecute;
+                private _objId;
                 constructor(fn_action: (sender: any, param: any) => void, thisObj: any, fn_canExecute: (sender: any, param: any) => boolean);
-                public _getEventNames(): string[];
-                public addOnCanExecuteChanged(fn: (sender: Command, args: {}) => void, namespace?: string): void;
-                public removeOnCanExecuteChanged(namespace?: string): void;
-                public canExecute(sender: any, param: any): boolean;
-                public execute(sender: any, param: any): void;
-                public destroy(): void;
-                public raiseCanExecuteChanged(): void;
-                public toString(): string;
+                protected _getEventNames(): string[];
+                addOnCanExecuteChanged(fn: (sender: Command, args: {}) => void, namespace?: string): void;
+                removeOnCanExecuteChanged(namespace?: string): void;
+                canExecute(sender: any, param: any): boolean;
+                execute(sender: any, param: any): void;
+                destroy(): void;
+                raiseCanExecuteChanged(): void;
+                toString(): string;
             }
             class BaseViewModel extends BaseObject {
-                public _objId: string;
-                public _app: Application;
+                private _objId;
+                protected _app: Application;
                 constructor(app: Application);
-                public _onError(error: any, source: any): boolean;
-                public toString(): string;
-                public destroy(): void;
-                public uniqueID : string;
-                public $ : JQueryStatic;
-                public app : Application;
+                handleError(error: any, source: any): boolean;
+                toString(): string;
+                destroy(): void;
+                uniqueID: string;
+                $: JQueryStatic;
+                app: Application;
             }
         }
     }
@@ -637,7 +645,8 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module baseElView {
-            class PropChangedCommand extends mvvm.Command {
+            import mvvmMOD = RIAPP.MOD.mvvm;
+            class PropChangedCommand extends mvvmMOD.Command {
                 constructor(fn_action: (sender: any, param: {
                     property: string;
                 }) => void, thisObj: any, fn_canExecute: (sender: any, param: {
@@ -653,59 +662,59 @@ declare module RIAPP {
                 tip?: string;
             }
             interface IViewType {
-                new(app: Application, el: HTMLElement, options: IViewOptions): BaseElView;
+                new (app: Application, el: HTMLElement, options: IViewOptions): BaseElView;
             }
             class BaseElView extends BaseObject {
-                public _el: HTMLElement;
-                public _$el: JQuery;
-                public _oldDisplay: string;
-                public _objId: string;
-                public _propChangedCommand: mvvm.ICommand;
-                public _errors: IValidationInfo[];
-                public _toolTip: string;
-                public _css: string;
-                public _app: Application;
+                protected _el: HTMLElement;
+                protected _$el: JQuery;
+                protected _oldDisplay: string;
+                protected _objId: string;
+                protected _propChangedCommand: mvvmMOD.ICommand;
+                protected _errors: IValidationInfo[];
+                protected _toolTip: string;
+                protected _css: string;
+                protected _app: Application;
                 constructor(app: Application, el: HTMLElement, options: IViewOptions);
-                public _applyToolTip(): void;
-                public _init(options: IViewOptions): void;
-                public destroy(): void;
-                public invokePropChanged(property: string): void;
-                public _getErrorTipInfo(errors: IValidationInfo[]): string;
-                public _setFieldError(isError: boolean): void;
-                public _updateErrorUI(el: HTMLElement, errors: IValidationInfo[]): void;
-                public _onError(error: any, source: any): boolean;
-                public _setToolTip($el: JQuery, tip: string, isError?: boolean): void;
-                public toString(): string;
-                public $el : JQuery;
-                public el : HTMLElement;
-                public uniqueID : string;
-                public isVisible : boolean;
-                public propChangedCommand : mvvm.ICommand;
-                public validationErrors : IValidationInfo[];
-                public dataNameAttr : string;
-                public toolTip : string;
-                public css : string;
-                public app : Application;
+                protected _applyToolTip(): void;
+                protected _init(options: IViewOptions): void;
+                destroy(): void;
+                invokePropChanged(property: string): void;
+                protected _getErrorTipInfo(errors: IValidationInfo[]): string;
+                protected _setFieldError(isError: boolean): void;
+                protected _updateErrorUI(el: HTMLElement, errors: IValidationInfo[]): void;
+                handleError(error: any, source: any): boolean;
+                protected _setToolTip($el: JQuery, tip: string, isError?: boolean): void;
+                toString(): string;
+                $el: JQuery;
+                el: HTMLElement;
+                uniqueID: string;
+                isVisible: boolean;
+                propChangedCommand: mvvmMOD.ICommand;
+                validationErrors: IValidationInfo[];
+                dataNameAttr: string;
+                toolTip: string;
+                css: string;
+                app: Application;
             }
             class InputElView extends BaseElView {
                 constructor(app: Application, el: HTMLInputElement, options: IViewOptions);
-                public toString(): string;
-                public isEnabled : boolean;
-                public el : HTMLInputElement;
-                public value : string;
+                toString(): string;
+                isEnabled: boolean;
+                el: HTMLInputElement;
+                value: string;
             }
             class CommandElView extends BaseElView {
                 private _command;
-                public _commandParam: any;
+                protected _commandParam: any;
                 constructor(app: Application, el: HTMLElement, options: IViewOptions);
-                public destroy(): void;
-                public invokeCommand(): void;
-                public _onCommandChanged(): void;
-                public _setCommand(v: mvvm.Command): void;
-                public toString(): string;
-                public isEnabled : boolean;
-                public command : mvvm.Command;
-                public commandParam : any;
+                destroy(): void;
+                invokeCommand(): void;
+                protected _onCommandChanged(): void;
+                protected _setCommand(v: mvvmMOD.Command): void;
+                toString(): string;
+                isEnabled: boolean;
+                command: mvvmMOD.Command;
+                commandParam: any;
             }
             class BusyElView extends BaseElView {
                 private _delay;
@@ -714,46 +723,46 @@ declare module RIAPP {
                 private _$loader;
                 private _isBusy;
                 constructor(app: Application, el: HTMLElement, options: IViewOptions);
-                public _init(options: any): void;
-                public destroy(): void;
-                public toString(): string;
-                public isBusy : boolean;
-                public delay : number;
+                protected _init(options: any): void;
+                destroy(): void;
+                toString(): string;
+                isBusy: boolean;
+                delay: number;
             }
             class CheckBoxElView extends InputElView {
                 private _val;
-                public _init(options: IViewOptions): void;
-                public _setFieldError(isError: boolean): void;
-                public destroy(): void;
-                public toString(): string;
-                public checked : boolean;
+                protected _init(options: IViewOptions): void;
+                protected _setFieldError(isError: boolean): void;
+                destroy(): void;
+                toString(): string;
+                checked: boolean;
             }
             class CheckBoxThreeStateElView extends InputElView {
                 private _val;
                 private _cbxVal;
-                public _init(options: IViewOptions): void;
-                public _setFieldError(isError: boolean): void;
-                public destroy(): void;
-                public toString(): string;
-                public checked : boolean;
+                protected _init(options: IViewOptions): void;
+                protected _setFieldError(isError: boolean): void;
+                destroy(): void;
+                toString(): string;
+                checked: boolean;
             }
             interface ITextBoxOptions extends IViewOptions {
                 updateOnKeyUp?: boolean;
             }
             class TextBoxElView extends InputElView {
-                public _init(options: ITextBoxOptions): void;
-                public _getEventNames(): string[];
-                public addOnKeyPress(fn: (sender: TextBoxElView, args: {
+                protected _init(options: ITextBoxOptions): void;
+                protected _getEventNames(): string[];
+                addOnKeyPress(fn: (sender: TextBoxElView, args: {
                     keyCode: number;
                     value: string;
                     isCancel: boolean;
                 }) => void, namespace?: string): void;
-                public removeOnKeyPress(namespace?: string): void;
-                public toString(): string;
-                public color : string;
+                removeOnKeyPress(namespace?: string): void;
+                toString(): string;
+                color: string;
             }
             class HiddenElView extends InputElView {
-                public toString(): string;
+                toString(): string;
             }
             interface ITextAreaOptions extends ITextBoxOptions {
                 rows?: number;
@@ -762,31 +771,31 @@ declare module RIAPP {
             }
             class TextAreaElView extends BaseElView {
                 constructor(app: Application, el: HTMLTextAreaElement, options: ITextAreaOptions);
-                public _init(options: ITextAreaOptions): void;
-                public _getEventNames(): string[];
-                public addOnKeyPress(fn: (sender: TextAreaElView, args: {
+                protected _init(options: ITextAreaOptions): void;
+                protected _getEventNames(): string[];
+                addOnKeyPress(fn: (sender: TextAreaElView, args: {
                     keyCode: number;
                     value: string;
                     isCancel: boolean;
                 }) => void, namespace?: string): void;
-                public removeOnKeyPress(namespace?: string): void;
-                public toString(): string;
-                public el : HTMLTextAreaElement;
-                public value : string;
-                public isEnabled : boolean;
-                public rows : number;
-                public cols : number;
-                public wrap : string;
+                removeOnKeyPress(namespace?: string): void;
+                toString(): string;
+                el: HTMLTextAreaElement;
+                value: string;
+                isEnabled: boolean;
+                rows: number;
+                cols: number;
+                wrap: string;
             }
             class RadioElView extends InputElView {
                 private _val;
-                public _init(options: IViewOptions): void;
-                public _updateGroup(): void;
-                public _setFieldError(isError: boolean): void;
-                public toString(): string;
-                public checked : boolean;
-                public value : string;
-                public name : string;
+                protected _init(options: IViewOptions): void;
+                protected _updateGroup(): void;
+                protected _setFieldError(isError: boolean): void;
+                toString(): string;
+                checked: boolean;
+                value: string;
+                name: string;
             }
             interface IButtonOptions extends IViewOptions {
                 preventDefault?: boolean;
@@ -794,13 +803,13 @@ declare module RIAPP {
             class ButtonElView extends CommandElView {
                 private _preventDefault;
                 constructor(app: Application, el: HTMLElement, options: IAncorOptions);
-                public _init(options: IButtonOptions): void;
-                public _onClick(e: Event): void;
-                public toString(): string;
-                public value : any;
-                public text : string;
-                public html : string;
-                public preventDefault : boolean;
+                protected _init(options: IButtonOptions): void;
+                protected _onClick(e: Event): void;
+                toString(): string;
+                value: any;
+                text: string;
+                html: string;
+                preventDefault: boolean;
             }
             interface IAncorOptions extends IButtonOptions {
                 imageSrc?: string;
@@ -810,17 +819,17 @@ declare module RIAPP {
                 private _image;
                 private _preventDefault;
                 constructor(app: Application, el: HTMLAnchorElement, options: IAncorOptions);
-                public _init(options: IAncorOptions): void;
-                public _onClick(e: Event): void;
-                public _updateImage(src: string): void;
-                public destroy(): void;
-                public toString(): string;
-                public el : HTMLAnchorElement;
-                public imageSrc : string;
-                public html : string;
-                public text : string;
-                public href : string;
-                public preventDefault : boolean;
+                protected _init(options: IAncorOptions): void;
+                protected _onClick(e: Event): void;
+                protected _updateImage(src: string): void;
+                destroy(): void;
+                toString(): string;
+                el: HTMLAnchorElement;
+                imageSrc: string;
+                html: string;
+                text: string;
+                href: string;
+                preventDefault: boolean;
             }
             interface IExpanderOptions {
                 expandedsrc?: string;
@@ -831,34 +840,34 @@ declare module RIAPP {
                 private _expandedsrc;
                 private _collapsedsrc;
                 private _isExpanded;
-                public _init(options: IExpanderOptions): void;
-                public destroy(): void;
-                public _onCommandChanged(): void;
-                public _onClick(e: any): void;
-                public invokeCommand(): void;
-                public toString(): string;
-                public isExpanded : boolean;
+                protected _init(options: IExpanderOptions): void;
+                destroy(): void;
+                protected _onCommandChanged(): void;
+                protected _onClick(e: any): void;
+                invokeCommand(): void;
+                toString(): string;
+                isExpanded: boolean;
             }
             class SpanElView extends BaseElView {
-                public toString(): string;
-                public text : string;
-                public value : string;
-                public html : string;
-                public color : string;
-                public fontSize : string;
+                toString(): string;
+                text: string;
+                value: string;
+                html: string;
+                color: string;
+                fontSize: string;
             }
             class BlockElView extends SpanElView {
-                public toString(): string;
-                public borderColor : string;
-                public borderStyle : string;
-                public width : number;
-                public height : number;
+                toString(): string;
+                borderColor: string;
+                borderStyle: string;
+                width: number;
+                height: number;
             }
             class ImgElView extends BaseElView {
                 constructor(app: Application, el: HTMLImageElement, options: IViewOptions);
-                public toString(): string;
-                public el : HTMLImageElement;
-                public src : string;
+                toString(): string;
+                el: HTMLImageElement;
+                src: string;
             }
         }
     }
@@ -884,7 +893,7 @@ declare module RIAPP {
             interface IBindingOptions {
                 mode?: BINDING_MODE;
                 converterParam?: any;
-                converter?: converter.IConverter;
+                converter?: IConverter;
                 targetPath: string;
                 sourcePath?: string;
                 target?: BaseObject;
@@ -929,22 +938,22 @@ declare module RIAPP {
                 private _bindToTarget();
                 private _updateTarget();
                 private _updateSource();
-                public _onError(error: any, source: any): boolean;
-                public destroy(): void;
-                public toString(): string;
-                public bindingID : string;
-                public target : BaseObject;
-                public source : any;
-                public targetPath : string[];
-                public sourcePath : string[];
-                public sourceValue : any;
-                public targetValue : any;
-                public mode : BINDING_MODE;
-                public converter : converter.IConverter;
-                public converterParam : any;
-                public isSourceFixed : boolean;
-                public isDisabled : boolean;
-                public appName : string;
+                handleError(error: any, source: any): boolean;
+                destroy(): void;
+                toString(): string;
+                bindingID: string;
+                target: BaseObject;
+                source: any;
+                targetPath: string[];
+                sourcePath: string[];
+                sourceValue: any;
+                targetValue: any;
+                mode: BINDING_MODE;
+                converter: IConverter;
+                converterParam: any;
+                isSourceFixed: boolean;
+                isDisabled: boolean;
+                appName: string;
             }
         }
     }
@@ -952,6 +961,8 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module collection {
+            import constsMOD = RIAPP.MOD.consts;
+            import utilsMOD = RIAPP.MOD.utils;
             enum FIELD_TYPE {
                 None = 0,
                 ClientOnly = 1,
@@ -998,13 +1009,13 @@ declare module RIAPP {
             interface IFieldInfo {
                 fieldName: string;
                 isPrimaryKey: number;
-                dataType: consts.DATA_TYPE;
+                dataType: constsMOD.DATA_TYPE;
                 isNullable: boolean;
                 isReadOnly: boolean;
                 isAutoGenerated: boolean;
                 isNeedOriginal: boolean;
                 maxLength: number;
-                dateConversion: consts.DATE_CONVERSION;
+                dateConversion: constsMOD.DATE_CONVERSION;
                 allowClientDefault: boolean;
                 range: string;
                 regex: string;
@@ -1017,58 +1028,59 @@ declare module RIAPP {
             function fn_getPropertyByName(name: string, props: IFieldInfo[]): IFieldInfo;
             function fn_traverseField(fld: IFieldInfo, fn: (name: string, fld: IFieldInfo) => void): void;
             class CollectionItem extends BaseObject implements IErrorNotification, IEditable, ISubmittable {
-                public _fkey: string;
-                public _isEditing: boolean;
-                public _saveVals: {
-                    [fieldName: string]: any;
+                protected _fkey: string;
+                protected _isEditing: boolean;
+                protected _saveVals: {
+                    [x: string]: any;
                 };
-                public _vals: {
-                    [fieldName: string]: any;
+                protected _vals: {
+                    [x: string]: any;
                 };
-                public _notEdited: boolean;
+                protected _notEdited: boolean;
                 constructor();
-                public _getEventNames(): string[];
-                public addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
-                public removeOnErrorsChanged(namespace?: string): void;
-                public _onErrorsChanged(args: any): void;
-                public _onError(error: any, source: any): boolean;
-                public _beginEdit(): boolean;
-                public _endEdit(): boolean;
-                public _validate(): IValidationInfo;
-                public _skipValidate(fieldInfo: IFieldInfo, val: any): boolean;
-                public _validateField(fieldName: any): IValidationInfo;
-                public _validateAll(): IValidationInfo[];
-                public _checkVal(fieldInfo: IFieldInfo, val: any): any;
-                public _resetIsNew(): void;
-                public _onAttaching(): void;
-                public _onAttach(): void;
-                public getFieldInfo(fieldName: string): IFieldInfo;
-                public getFieldNames(): string[];
-                public getFieldErrors(fieldName: any): IValidationInfo[];
-                public getAllErrors(): IValidationInfo[];
-                public getErrorString(): string;
-                public submitChanges(): IVoidPromise;
-                public beginEdit(): boolean;
-                public endEdit(): boolean;
-                public cancelEdit(): boolean;
-                public deleteItem(): boolean;
-                public getIsNew(): boolean;
-                public getIsDeleted(): boolean;
-                public getKey(): string;
-                public getCollection(): Collection;
-                public getIsEditing(): boolean;
-                public getIsHasErrors(): boolean;
-                public getIErrorNotification(): IErrorNotification;
-                public destroy(): void;
-                public toString(): string;
-                public _isCanSubmit : boolean;
-                public _changeType : STATUS;
-                public _isNew : boolean;
-                public _isDeleted : boolean;
-                public _key : string;
-                public _collection : Collection;
-                public _isUpdating : boolean;
-                public isEditing : boolean;
+                protected _getEventNames(): string[];
+                protected _onErrorsChanged(args: any): void;
+                handleError(error: any, source: any): boolean;
+                protected _beginEdit(): boolean;
+                protected _endEdit(): boolean;
+                protected _validate(): IValidationInfo;
+                protected _skipValidate(fieldInfo: IFieldInfo, val: any): boolean;
+                protected _validateField(fieldName: any): IValidationInfo;
+                protected _validateAll(): IValidationInfo[];
+                protected _checkVal(fieldInfo: IFieldInfo, val: any): any;
+                protected _resetIsNew(): void;
+                addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
+                removeOnErrorsChanged(namespace?: string): void;
+                _onAttaching(): void;
+                _onAttach(): void;
+                raiseErrorsChanged(args: any): void;
+                getFieldInfo(fieldName: string): IFieldInfo;
+                getFieldNames(): string[];
+                getFieldErrors(fieldName: any): IValidationInfo[];
+                getAllErrors(): IValidationInfo[];
+                getErrorString(): string;
+                submitChanges(): IVoidPromise;
+                beginEdit(): boolean;
+                endEdit(): boolean;
+                cancelEdit(): boolean;
+                deleteItem(): boolean;
+                getIsNew(): boolean;
+                getIsDeleted(): boolean;
+                getKey(): string;
+                getCollection(): Collection;
+                getIsEditing(): boolean;
+                getIsHasErrors(): boolean;
+                getIErrorNotification(): IErrorNotification;
+                destroy(): void;
+                toString(): string;
+                _isCanSubmit: boolean;
+                _changeType: STATUS;
+                _isNew: boolean;
+                _isDeleted: boolean;
+                _key: string;
+                _collection: Collection;
+                _isUpdating: boolean;
+                isEditing: boolean;
             }
             interface ICollectionOptions {
                 enablePaging: boolean;
@@ -1105,117 +1117,103 @@ declare module RIAPP {
                 isAddNewHandled: boolean;
             }
             class BaseCollection<TItem extends CollectionItem> extends BaseObject {
-                public _options: ICollectionOptions;
-                public _isLoading: boolean;
-                public _EditingItem: TItem;
-                public _perms: IPermissions;
-                public _totalCount: number;
-                public _pageIndex: number;
-                public _items: TItem[];
-                public _itemsByKey: {
-                    [key: string]: TItem;
+                protected _options: ICollectionOptions;
+                protected _isLoading: boolean;
+                protected _EditingItem: TItem;
+                protected _perms: IPermissions;
+                protected _totalCount: number;
+                protected _pageIndex: number;
+                protected _items: TItem[];
+                protected _itemsByKey: {
+                    [x: string]: TItem;
                 };
-                public _currentPos: number;
-                public _newKey: number;
-                public _fieldMap: {
-                    [fieldName: string]: IFieldInfo;
+                protected _currentPos: number;
+                protected _newKey: number;
+                protected _fieldMap: {
+                    [x: string]: IFieldInfo;
                 };
-                public _fieldInfos: IFieldInfo[];
-                public _errors: {
-                    [item_key: string]: {
-                        [fieldName: string]: string[];
+                protected _fieldInfos: IFieldInfo[];
+                protected _errors: {
+                    [x: string]: {
+                        [x: string]: string[];
                     };
                 };
-                public _ignoreChangeErrors: boolean;
-                public _pkInfo: IFieldInfo[];
-                public _isUpdating: boolean;
-                public _isClearing: boolean;
-                public _waitQueue: utils.WaitQueue;
+                protected _ignoreChangeErrors: boolean;
+                protected _pkInfo: IFieldInfo[];
+                protected _isUpdating: boolean;
+                protected _isClearing: boolean;
+                protected _waitQueue: utilsMOD.WaitQueue;
                 constructor();
                 static getEmptyFieldInfo(fieldName: string): IFieldInfo;
-                public _getEventNames(): string[];
-                public addOnClearing(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string): void;
-                public removeOnClearing(namespace?: string): void;
-                public addOnCleared(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string): void;
-                public removeOnCleared(namespace?: string): void;
-                public addOnFill(fn: (sender: BaseCollection<TItem>, args: ICollFillArgs<TItem>) => void, namespace?: string): void;
-                public removeOnFill(namespace?: string): void;
-                public addOnCollChanged(fn: (sender: BaseCollection<TItem>, args: ICollChangedArgs<TItem>) => void, namespace?: string): void;
-                public removeOnCollChanged(namespace?: string): void;
-                public addOnValidate(fn: (sender: BaseCollection<TItem>, args: ICollValidateArgs<TItem>) => void, namespace?: string): void;
-                public removeOnValidate(namespace?: string): void;
-                public addOnItemDeleting(fn: (sender: BaseCollection<TItem>, args: {
+                protected _getEventNames(): string[];
+                handleError(error: any, source: any): boolean;
+                addOnClearing(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string): void;
+                removeOnClearing(namespace?: string): void;
+                addOnCleared(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string): void;
+                removeOnCleared(namespace?: string): void;
+                addOnFill(fn: (sender: BaseCollection<TItem>, args: ICollFillArgs<TItem>) => void, namespace?: string): void;
+                removeOnFill(namespace?: string): void;
+                addOnCollChanged(fn: (sender: BaseCollection<TItem>, args: ICollChangedArgs<TItem>) => void, namespace?: string): void;
+                removeOnCollChanged(namespace?: string): void;
+                addOnValidate(fn: (sender: BaseCollection<TItem>, args: ICollValidateArgs<TItem>) => void, namespace?: string): void;
+                removeOnValidate(namespace?: string): void;
+                addOnItemDeleting(fn: (sender: BaseCollection<TItem>, args: {
                     item: TItem;
                     isCancel: boolean;
                 }) => void, namespace?: string): void;
-                public removeOnItemDeleting(namespace?: string): void;
-                public addOnItemAdding(fn: (sender: BaseCollection<TItem>, args: {
+                removeOnItemDeleting(namespace?: string): void;
+                addOnItemAdding(fn: (sender: BaseCollection<TItem>, args: {
                     item: TItem;
                     isCancel: boolean;
                 }) => void, namespace?: string): void;
-                public removeOnItemAdding(namespace?: string): void;
-                public addOnItemAdded(fn: (sender: BaseCollection<TItem>, args: {
+                removeOnItemAdding(namespace?: string): void;
+                addOnItemAdded(fn: (sender: BaseCollection<TItem>, args: {
                     item: TItem;
                     isAddNewHandled: boolean;
                 }) => void, namespace?: string): void;
-                public removeOnItemAdded(namespace?: string): void;
-                public addOnCurrentChanging(fn: (sender: BaseCollection<TItem>, args: {
+                removeOnItemAdded(namespace?: string): void;
+                addOnCurrentChanging(fn: (sender: BaseCollection<TItem>, args: {
                     newCurrent: TItem;
                 }) => void, namespace?: string): void;
-                public removeOnCurrentChanging(namespace?: string): void;
-                public addOnPageChanging(fn: (sender: BaseCollection<TItem>, args: {
+                removeOnCurrentChanging(namespace?: string): void;
+                addOnPageChanging(fn: (sender: BaseCollection<TItem>, args: {
                     page: number;
                     isCancel: boolean;
                 }) => void, namespace?: string): void;
-                public removeOnPageChanging(namespace?: string): void;
-                public addOnErrorsChanged(fn: (sender: BaseCollection<TItem>, args: {
+                removeOnPageChanging(namespace?: string): void;
+                addOnErrorsChanged(fn: (sender: BaseCollection<TItem>, args: {
                     item: TItem;
                 }) => void, namespace?: string): void;
-                public removeOnErrorsChanged(namespace?: string): void;
-                public addOnBeginEdit(fn: (sender: BaseCollection<TItem>, args: {
+                removeOnErrorsChanged(namespace?: string): void;
+                addOnBeginEdit(fn: (sender: BaseCollection<TItem>, args: {
                     item: TItem;
                 }) => void, namespace?: string): void;
-                public removeOnBeginEdit(namespace?: string): void;
-                public addOnEndEdit(fn: (sender: BaseCollection<TItem>, args: {
+                removeOnBeginEdit(namespace?: string): void;
+                addOnEndEdit(fn: (sender: BaseCollection<TItem>, args: {
                     item: TItem;
                     isCanceled: boolean;
                 }) => void, namespace?: string): void;
-                public removeOnEndEdit(namespace?: string): void;
-                public addOnCommitChanges(fn: (sender: BaseCollection<TItem>, args: {
+                removeOnEndEdit(namespace?: string): void;
+                addOnCommitChanges(fn: (sender: BaseCollection<TItem>, args: {
                     item: TItem;
                     isBegin: boolean;
                     isRejected: boolean;
                     changeType: number;
                 }) => void, namespace?: string): void;
-                public removeOnCommitChanges(namespace?: string): void;
-                public addOnStatusChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemStatusArgs<TItem>) => void, namespace?: string): void;
-                public removeOnStatusChanged(namespace?: string): void;
-                public _getStrValue(val: any, fieldInfo: IFieldInfo): string;
-                public _getPKFieldInfos(): IFieldInfo[];
-                public _onError(error: any, source: any): boolean;
-                public _onCurrentChanging(newCurrent: TItem): void;
-                public _onCurrentChanged(): void;
-                public _onEditing(item: TItem, isBegin: boolean, isCanceled: boolean): void;
-                public _onCommitChanges(item: TItem, isBegin: boolean, isRejected: boolean, changeType: number): void;
-                public _onItemStatusChanged(item: TItem, oldChangeType: number): void;
-                public _validateItem(item: TItem): IValidationInfo;
-                public _validateItemField(item: TItem, fieldName: string): IValidationInfo;
-                public _addErrors(item: TItem, errors: IValidationInfo[]): void;
-                public _addError(item: TItem, fieldName: string, errors: string[]): void;
-                public _removeError(item: TItem, fieldName: string): void;
-                public _removeAllErrors(item: TItem): void;
-                public _getErrors(item: TItem): {
-                    [fieldName: string]: string[];
-                };
-                public _onErrorsChanged(item: TItem): void;
-                public _onItemDeleting(item: TItem): boolean;
-                public _onFillStart(args: {
+                removeOnCommitChanges(namespace?: string): void;
+                addOnStatusChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemStatusArgs<TItem>) => void, namespace?: string): void;
+                removeOnStatusChanged(namespace?: string): void;
+                protected _getPKFieldInfos(): IFieldInfo[];
+                protected _onCurrentChanging(newCurrent: TItem): void;
+                protected _onCurrentChanged(): void;
+                protected _onItemStatusChanged(item: TItem, oldChangeType: number): void;
+                protected _onFillStart(args: {
                     isBegin: boolean;
                     rowCount: number;
                     time: Date;
                     isPageChanged: boolean;
                 }): void;
-                public _onFillEnd(args: {
+                protected _onFillEnd(args: {
                     isBegin: boolean;
                     rowCount: number;
                     time: Date;
@@ -1224,62 +1222,78 @@ declare module RIAPP {
                     fetchedItems: TItem[];
                     newItems: TItem[];
                 }): void;
-                public _onItemsChanged(args: {
+                protected _onItemsChanged(args: {
                     change_type: COLL_CHANGE_TYPE;
                     items: TItem[];
                     pos?: number[];
                     old_key?: string;
                     new_key?: string;
                 }): void;
-                public _onItemAdding(item: TItem): void;
-                public _onItemAdded(item: TItem): void;
-                public _createNew(): TItem;
-                public _attach(item: TItem, itemPos?: number): any;
-                public _onRemoved(item: TItem, pos: number): void;
-                public _onPageSizeChanged(): void;
-                public _onPageChanging(): boolean;
-                public _onPageChanged(): void;
-                public _setCurrentItem(v: TItem): void;
-                public _destroyItems(): void;
-                public _isHasProp(prop: string): boolean;
-                public getFieldInfo(fieldName: string): IFieldInfo;
-                public getFieldNames(): string[];
-                public getFieldInfos(): IFieldInfo[];
-                public cancelEdit(): void;
-                public endEdit(): void;
-                public getItemsWithErrors(): TItem[];
-                public addNew(): TItem;
-                public getItemByPos(pos: number): TItem;
-                public getItemByKey(key: string): TItem;
-                public findByPK(...vals: any[]): TItem;
-                public moveFirst(skipDeleted?: boolean): boolean;
-                public movePrev(skipDeleted?: boolean): boolean;
-                public moveNext(skipDeleted?: boolean): boolean;
-                public moveLast(skipDeleted?: boolean): boolean;
-                public goTo(pos: number): boolean;
-                public forEach(callback: (item: TItem) => void, thisObj?: any): void;
-                public removeItem(item: TItem): void;
-                public getIsHasErrors(): boolean;
-                public sort(fieldNames: string[], sortOrder: SORT_ORDER): IPromise<any>;
-                public sortLocal(fieldNames: string[], sortOrder: SORT_ORDER): IPromise<any>;
-                public sortLocalByFunc(fn: (a: any, b: any) => number): IPromise<any>;
-                public clear(): void;
-                public destroy(): void;
-                public waitForNotLoading(callback: any, callbackArgs: any[], syncCheck: boolean, groupName: string): void;
-                public toString(): string;
-                public options : ICollectionOptions;
-                public currentItem : TItem;
-                public count : number;
-                public totalCount : number;
-                public pageSize : number;
-                public pageIndex : number;
-                public items : TItem[];
-                public isPagingEnabled : boolean;
-                public permissions : IPermissions;
-                public isEditing : boolean;
-                public isLoading : boolean;
-                public isUpdating : boolean;
-                public pageCount : number;
+                protected _onItemAdding(item: TItem): void;
+                protected _onItemAdded(item: TItem): void;
+                protected _createNew(): TItem;
+                protected _attach(item: TItem, itemPos?: number): any;
+                protected _onRemoved(item: TItem, pos: number): void;
+                protected _onPageSizeChanged(): void;
+                protected _onPageChanging(): boolean;
+                protected _onPageChanged(): void;
+                protected _setCurrentItem(v: TItem): void;
+                protected _destroyItems(): void;
+                protected _isHasProp(prop: string): boolean;
+                _getEditingItem(): TItem;
+                _getStrValue(val: any, fieldInfo: IFieldInfo): string;
+                _onEditing(item: TItem, isBegin: boolean, isCanceled: boolean): void;
+                _onCommitChanges(item: TItem, isBegin: boolean, isRejected: boolean, changeType: number): void;
+                _validateItem(item: TItem): IValidationInfo;
+                _validateItemField(item: TItem, fieldName: string): IValidationInfo;
+                _addErrors(item: TItem, errors: IValidationInfo[]): void;
+                _addError(item: TItem, fieldName: string, errors: string[]): void;
+                _removeError(item: TItem, fieldName: string): void;
+                _removeAllErrors(item: TItem): void;
+                _getErrors(item: TItem): {
+                    [x: string]: string[];
+                };
+                _onErrorsChanged(item: TItem): void;
+                _onItemDeleting(item: TItem): boolean;
+                getFieldInfo(fieldName: string): IFieldInfo;
+                getFieldNames(): string[];
+                getIsClearing(): boolean;
+                getFieldInfos(): IFieldInfo[];
+                cancelEdit(): void;
+                endEdit(): void;
+                getItemsWithErrors(): TItem[];
+                addNew(): TItem;
+                getItemByPos(pos: number): TItem;
+                getItemByKey(key: string): TItem;
+                findByPK(...vals: any[]): TItem;
+                moveFirst(skipDeleted?: boolean): boolean;
+                movePrev(skipDeleted?: boolean): boolean;
+                moveNext(skipDeleted?: boolean): boolean;
+                moveLast(skipDeleted?: boolean): boolean;
+                goTo(pos: number): boolean;
+                forEach(callback: (item: TItem) => void, thisObj?: any): void;
+                removeItem(item: TItem): void;
+                getIsHasErrors(): boolean;
+                sort(fieldNames: string[], sortOrder: SORT_ORDER): IPromise<any>;
+                sortLocal(fieldNames: string[], sortOrder: SORT_ORDER): IPromise<any>;
+                sortLocalByFunc(fn: (a: any, b: any) => number): IPromise<any>;
+                clear(): void;
+                destroy(): void;
+                waitForNotLoading(callback: any, callbackArgs: any[], syncCheck: boolean, groupName: string): void;
+                toString(): string;
+                options: ICollectionOptions;
+                currentItem: TItem;
+                count: number;
+                totalCount: number;
+                pageSize: number;
+                pageIndex: number;
+                items: TItem[];
+                isPagingEnabled: boolean;
+                permissions: IPermissions;
+                isEditing: boolean;
+                isLoading: boolean;
+                isUpdating: boolean;
+                pageCount: number;
             }
             class Collection extends BaseCollection<CollectionItem> {
             }
@@ -1288,46 +1302,46 @@ declare module RIAPP {
                 dtype: number;
             }
             class ListItem extends CollectionItem {
-                public __isNew: boolean;
-                public __coll: Collection;
+                protected __isNew: boolean;
+                protected __coll: Collection;
                 constructor(coll: BaseList<ListItem, any>, obj?: any);
-                public _setProp(name: string, val: any): void;
-                public _getProp(name: string): any;
-                public _resetIsNew(): void;
-                public toString(): string;
-                public _isNew : boolean;
-                public _collection : Collection;
+                protected _setProp(name: string, val: any): void;
+                protected _getProp(name: string): any;
+                _resetIsNew(): void;
+                toString(): string;
+                _isNew: boolean;
+                _collection: Collection;
             }
             interface IListItemConstructor<TItem extends ListItem, TObj> {
-                new(coll: BaseList<TItem, TObj>, obj?: TObj): TItem;
+                new (coll: BaseList<TItem, TObj>, obj?: TObj): TItem;
             }
             class BaseList<TItem extends ListItem, TObj> extends BaseCollection<TItem> {
-                public _type_name: string;
-                public _itemType: IListItemConstructor<TItem, TObj>;
+                protected _type_name: string;
+                protected _itemType: IListItemConstructor<TItem, TObj>;
                 constructor(itemType: IListItemConstructor<TItem, TObj>, props: IPropInfo[]);
                 private _updateFieldMap(props);
-                public _attach(item: TItem): any;
-                public _createNew(): TItem;
-                public _getNewKey(item: any): string;
-                public fillItems(objArray: TObj[], clearAll?: boolean): void;
-                public getNewObjects(): TItem[];
-                public resetNewObjects(): void;
-                public toString(): string;
+                protected _attach(item: TItem): any;
+                protected _createNew(): TItem;
+                protected _getNewKey(item: any): string;
+                fillItems(objArray: TObj[], clearAll?: boolean): void;
+                getNewObjects(): TItem[];
+                resetNewObjects(): void;
+                toString(): string;
             }
             class BaseDictionary<TItem extends ListItem, TObj> extends BaseList<TItem, TObj> {
                 private _keyName;
                 constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]);
-                public _getNewKey(item: TItem): string;
-                public _onItemAdded(item: TItem): void;
-                public _onRemoved(item: TItem, pos: number): void;
-                public keyName : string;
+                protected _getNewKey(item: TItem): string;
+                protected _onItemAdded(item: TItem): void;
+                protected _onRemoved(item: TItem, pos: number): void;
+                keyName: string;
             }
             class List extends BaseList<ListItem, any> {
                 constructor(type_name: string, properties: any);
             }
             class Dictionary extends BaseDictionary<ListItem, any> {
                 constructor(type_name: string, properties: any, keyName: string);
-                public _getNewKey(item: ListItem): string;
+                protected _getNewKey(item: ListItem): string;
             }
         }
     }
@@ -1335,6 +1349,8 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module template {
+            import elviewMOD = RIAPP.MOD.baseElView;
+            import mvvmMOD = RIAPP.MOD.mvvm;
             var css: {
                 templateContainer: string;
             };
@@ -1370,18 +1386,18 @@ declare module RIAPP {
                 private _updateBindingSource();
                 private _unloadTemplate();
                 private _cleanUp();
-                public _onError(error: any, source: any): boolean;
-                public destroy(): void;
-                public findElByDataName(name: string): HTMLElement[];
-                public findElViewsByDataName(name: string): baseElView.BaseElView[];
-                public toString(): string;
-                public loadedElem : HTMLElement;
-                public dataContext : any;
-                public templateID : string;
-                public el : HTMLElement;
-                public app : Application;
+                handleError(error: any, source: any): boolean;
+                destroy(): void;
+                findElByDataName(name: string): HTMLElement[];
+                findElViewsByDataName(name: string): elviewMOD.BaseElView[];
+                toString(): string;
+                loadedElem: HTMLElement;
+                dataContext: any;
+                templateID: string;
+                el: HTMLElement;
+                app: Application;
             }
-            class TemplateCommand extends mvvm.Command {
+            class TemplateCommand extends mvvmMOD.Command {
                 constructor(fn_action: (sender: TemplateElView, param: {
                     template: Template;
                     isLoaded: boolean;
@@ -1390,16 +1406,16 @@ declare module RIAPP {
                     isLoaded: boolean;
                 }) => boolean);
             }
-            class TemplateElView extends baseElView.CommandElView implements ITemplateEvents {
+            class TemplateElView extends elviewMOD.CommandElView implements ITemplateEvents {
                 private _template;
                 private _isEnabled;
-                constructor(app: Application, el: HTMLElement, options: baseElView.IViewOptions);
-                public templateLoading(template: Template): void;
-                public templateLoaded(template: Template): void;
-                public templateUnLoading(template: Template): void;
-                public toString(): string;
-                public isEnabled : boolean;
-                public template : Template;
+                constructor(app: Application, el: HTMLElement, options: elviewMOD.IViewOptions);
+                templateLoading(template: Template): void;
+                templateLoaded(template: Template): void;
+                templateUnLoading(template: Template): void;
+                toString(): string;
+                isEnabled: boolean;
+                template: Template;
             }
         }
     }
@@ -1407,6 +1423,11 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module baseContent {
+            import utilsMOD = RIAPP.MOD.utils;
+            import elviewMOD = RIAPP.MOD.baseElView;
+            import bindMOD = RIAPP.MOD.binding;
+            import templMOD = RIAPP.MOD.template;
+            import collMOD = RIAPP.MOD.collection;
             var css: {
                 content: string;
                 required: string;
@@ -1446,8 +1467,8 @@ declare module RIAPP {
                 name?: string;
                 readOnly?: boolean;
                 initContentFn?: (content: IExternallyCachable) => void;
-                fieldInfo?: collection.IFieldInfo;
-                bindingInfo?: binding.IBindingInfo;
+                fieldInfo?: collMOD.IFieldInfo;
+                bindingInfo?: bindMOD.IBindingInfo;
                 displayInfo?: {
                     displayCss?: string;
                     editCss?: string;
@@ -1463,7 +1484,7 @@ declare module RIAPP {
                 isEditing: boolean;
             }
             interface IContentType {
-                new(app: Application, options: IConstructorContentOptions): IContent;
+                new (app: Application, options: IConstructorContentOptions): IContent;
             }
             interface IContentFactory {
                 getContentType(options: IContentOptions): IContentType;
@@ -1471,47 +1492,47 @@ declare module RIAPP {
                 isExternallyCachable(contentType: IContentType): boolean;
             }
             function parseContentAttr(content_attr: string): IContentOptions;
-            function getBindingOptions(app: Application, bindInfo: binding.IBindingInfo, defaultTarget: BaseObject, defaultSource: any): binding.IBindingOptions;
+            function getBindingOptions(app: Application, bindInfo: bindMOD.IBindingInfo, defaultTarget: BaseObject, defaultSource: any): bindMOD.IBindingOptions;
             class BindingContent extends BaseObject implements IContent {
-                public _parentEl: HTMLElement;
-                public _el: HTMLElement;
-                public _options: IContentOptions;
-                public _isReadOnly: boolean;
-                public _isEditing: boolean;
-                public _dataContext: any;
-                public _lfScope: utils.LifeTimeScope;
-                public _target: baseElView.BaseElView;
-                public _app: Application;
+                protected _parentEl: HTMLElement;
+                protected _el: HTMLElement;
+                protected _options: IContentOptions;
+                protected _isReadOnly: boolean;
+                protected _isEditing: boolean;
+                protected _dataContext: any;
+                protected _lfScope: utilsMOD.LifeTimeScope;
+                protected _target: elviewMOD.BaseElView;
+                protected _app: Application;
                 constructor(app: Application, options: IConstructorContentOptions);
-                public _init(): void;
-                public _onError(error: any, source: any): boolean;
-                public _updateCss(): void;
-                public _canBeEdited(): boolean;
-                public _createTargetElement(): baseElView.BaseElView;
-                public _getBindingOption(bindingInfo: binding.IBindingInfo, target: BaseObject, dataContext: any, targetPath: string): binding.IBindingOptions;
-                public _getBindings(): binding.Binding[];
-                public _updateBindingSource(): void;
-                public _cleanUp(): void;
-                public getFieldInfo(): collection.IFieldInfo;
-                public _getBindingInfo(): binding.IBindingInfo;
-                public _getDisplayInfo(): {
+                protected _init(): void;
+                handleError(error: any, source: any): boolean;
+                protected _updateCss(): void;
+                protected _canBeEdited(): boolean;
+                protected _createTargetElement(): elviewMOD.BaseElView;
+                protected _getBindingOption(bindingInfo: bindMOD.IBindingInfo, target: BaseObject, dataContext: any, targetPath: string): bindMOD.IBindingOptions;
+                protected _getBindings(): bindMOD.Binding[];
+                protected _updateBindingSource(): void;
+                protected _cleanUp(): void;
+                getFieldInfo(): collMOD.IFieldInfo;
+                protected _getBindingInfo(): bindMOD.IBindingInfo;
+                protected _getDisplayInfo(): {
                     displayCss?: string;
                     editCss?: string;
                 };
-                public _getElementView(el: HTMLElement, view_info: {
+                protected _getElementView(el: HTMLElement, view_info: {
                     name: string;
                     options: any;
-                }): baseElView.BaseElView;
-                public update(): void;
-                public destroy(): void;
-                public toString(): string;
-                public parentEl : HTMLElement;
-                public target : baseElView.BaseElView;
-                public isEditing : boolean;
-                public dataContext : any;
-                public app : Application;
+                }): elviewMOD.BaseElView;
+                update(): void;
+                destroy(): void;
+                toString(): string;
+                parentEl: HTMLElement;
+                target: elviewMOD.BaseElView;
+                isEditing: boolean;
+                dataContext: any;
+                app: Application;
             }
-            class TemplateContent extends BaseObject implements IContent, template.ITemplateEvents {
+            class TemplateContent extends BaseObject implements IContent, templMOD.ITemplateEvents {
                 private _parentEl;
                 private _template;
                 private _templateInfo;
@@ -1520,74 +1541,74 @@ declare module RIAPP {
                 private _app;
                 private _isDisabled;
                 constructor(app: Application, options: IConstructorContentOptions);
-                public _onError(error: any, source: any): boolean;
-                public templateLoading(template: template.Template): void;
-                public templateLoaded(template: template.Template): void;
-                public templateUnLoading(template: template.Template): void;
+                handleError(error: any, source: any): boolean;
+                templateLoading(template: templMOD.Template): void;
+                templateLoaded(template: templMOD.Template): void;
+                templateUnLoading(template: templMOD.Template): void;
                 private _createTemplate();
-                public update(): void;
-                public _cleanUp(): void;
-                public destroy(): void;
-                public toString(): string;
-                public app : Application;
-                public parentEl : HTMLElement;
-                public template : template.Template;
-                public isEditing : boolean;
-                public dataContext : any;
+                update(): void;
+                protected _cleanUp(): void;
+                destroy(): void;
+                toString(): string;
+                app: Application;
+                parentEl: HTMLElement;
+                template: templMOD.Template;
+                isEditing: boolean;
+                dataContext: any;
             }
             class BoolContent extends BindingContent {
-                public _init(): void;
-                public _cleanUp(): void;
-                public _createCheckBoxView(): baseElView.CheckBoxElView;
-                public _createTargetElement(): baseElView.BaseElView;
-                public _updateCss(): void;
-                public destroy(): void;
-                public update(): void;
-                public toString(): string;
+                protected _init(): void;
+                protected _cleanUp(): void;
+                protected _createCheckBoxView(): elviewMOD.CheckBoxElView;
+                protected _createTargetElement(): elviewMOD.BaseElView;
+                protected _updateCss(): void;
+                destroy(): void;
+                update(): void;
+                toString(): string;
             }
             class DateContent extends BindingContent {
-                public _fn_cleanup: () => void;
+                _fn_cleanup: () => void;
                 constructor(app: Application, options: IConstructorContentOptions);
-                public _getBindingOption(bindingInfo: binding.IBindingInfo, tgt: BaseObject, dctx: any, targetPath: string): binding.IBindingOptions;
-                public _createTargetElement(): baseElView.BaseElView;
-                public toString(): string;
+                protected _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: BaseObject, dctx: any, targetPath: string): bindMOD.IBindingOptions;
+                protected _createTargetElement(): elviewMOD.BaseElView;
+                toString(): string;
             }
             class DateTimeContent extends BindingContent {
-                public _getBindingOption(bindingInfo: binding.IBindingInfo, tgt: BaseObject, dctx: any, targetPath: string): binding.IBindingOptions;
-                public toString(): string;
+                protected _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: BaseObject, dctx: any, targetPath: string): bindMOD.IBindingOptions;
+                toString(): string;
             }
             class NumberContent extends BindingContent {
                 static __allowedKeys: number[];
                 private _allowedKeys;
-                public _getBindingOption(bindingInfo: binding.IBindingInfo, tgt: BaseObject, dctx: any, targetPath: string): binding.IBindingOptions;
-                public update(): void;
-                public _previewKeyPress(keyCode: number, value: string): boolean;
-                public toString(): string;
+                protected _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: BaseObject, dctx: any, targetPath: string): bindMOD.IBindingOptions;
+                update(): void;
+                protected _previewKeyPress(keyCode: number, value: string): boolean;
+                toString(): string;
             }
             class StringContent extends BindingContent {
                 static __allowedKeys: number[];
                 private _allowedKeys;
-                public update(): void;
-                public _previewKeyPress(fieldInfo: collection.IFieldInfo, keyCode: number, value: string): boolean;
-                public toString(): string;
+                update(): void;
+                protected _previewKeyPress(fieldInfo: collMOD.IFieldInfo, keyCode: number, value: string): boolean;
+                toString(): string;
             }
             class MultyLineContent extends BindingContent {
                 static __allowedKeys: number[];
                 private _allowedKeys;
                 constructor(app: Application, options: IConstructorContentOptions);
-                public _createTargetElement(): baseElView.BaseElView;
-                public update(): void;
-                public _previewKeyPress(fieldInfo: collection.IFieldInfo, keyCode: number, value: string): boolean;
-                public toString(): string;
+                protected _createTargetElement(): elviewMOD.BaseElView;
+                update(): void;
+                protected _previewKeyPress(fieldInfo: collMOD.IFieldInfo, keyCode: number, value: string): boolean;
+                toString(): string;
             }
             class ContentFactory implements IContentFactory {
-                public _app: Application;
-                public _nextFactory: IContentFactory;
+                private _app;
+                private _nextFactory;
                 constructor(app: Application, nextFactory?: IContentFactory);
-                public getContentType(options: IContentOptions): IContentType;
-                public createContent(options: IConstructorContentOptions): IContent;
-                public isExternallyCachable(contentType: IContentType): boolean;
-                public app : Application;
+                getContentType(options: IContentOptions): IContentType;
+                createContent(options: IConstructorContentOptions): IContent;
+                isExternallyCachable(contentType: IContentType): boolean;
+                app: Application;
             }
             function initModule(app: Application): typeof baseContent;
         }
@@ -1596,6 +1617,7 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module dataform {
+            import elviewMOD = RIAPP.MOD.baseElView;
             var css: {
                 dataform: string;
             };
@@ -1620,7 +1642,7 @@ declare module RIAPP {
                 private _app;
                 private _isInsideTemplate;
                 constructor(options: IDataFormOptions);
-                public _onError(error: any, source: any): boolean;
+                handleError(error: any, source: any): boolean;
                 private _getBindings();
                 private _getElViews();
                 private _createContent();
@@ -1629,25 +1651,25 @@ declare module RIAPP {
                 private _bindDS();
                 private _unbindDS();
                 private _clearContent();
-                public destroy(): void;
-                public toString(): string;
-                public app : Application;
-                public el : HTMLElement;
-                public dataContext : BaseObject;
-                public isEditing : boolean;
-                public validationErrors : IValidationInfo[];
-                public isInsideTemplate : boolean;
+                destroy(): void;
+                toString(): string;
+                app: Application;
+                el: HTMLElement;
+                dataContext: BaseObject;
+                isEditing: boolean;
+                validationErrors: IValidationInfo[];
+                isInsideTemplate: boolean;
             }
-            class DataFormElView extends baseElView.BaseElView {
+            class DataFormElView extends elviewMOD.BaseElView {
                 private _form;
                 private _options;
-                constructor(app: Application, el: HTMLSelectElement, options: baseElView.IViewOptions);
-                public _getErrorTipInfo(errors: IValidationInfo[]): string;
-                public _updateErrorUI(el: HTMLElement, errors: IValidationInfo[]): void;
-                public destroy(): void;
-                public toString(): string;
-                public dataContext : BaseObject;
-                public form : DataForm;
+                constructor(app: Application, el: HTMLSelectElement, options: elviewMOD.IViewOptions);
+                protected _getErrorTipInfo(errors: IValidationInfo[]): string;
+                protected _updateErrorUI(el: HTMLElement, errors: IValidationInfo[]): void;
+                destroy(): void;
+                toString(): string;
+                dataContext: BaseObject;
+                form: DataForm;
             }
         }
     }
@@ -1655,33 +1677,35 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module dynacontent {
+            import elviewMOD = RIAPP.MOD.baseElView;
+            import templMOD = RIAPP.MOD.template;
             interface IAnimation {
-                beforeShow(template: template.Template, isFirstShow: boolean): void;
-                show(template: template.Template, isFirstShow: boolean): IVoidPromise;
-                beforeHide(template: template.Template): void;
-                hide(template: template.Template): IVoidPromise;
+                beforeShow(template: templMOD.Template, isFirstShow: boolean): void;
+                show(template: templMOD.Template, isFirstShow: boolean): IVoidPromise;
+                beforeHide(template: templMOD.Template): void;
+                hide(template: templMOD.Template): IVoidPromise;
                 stop(): void;
                 isAnimateFirstShow: boolean;
             }
-            interface IDynaContentOptions extends baseElView.IViewOptions {
+            interface IDynaContentOptions extends elviewMOD.IViewOptions {
                 animate?: string;
             }
-            class DynaContentElView extends baseElView.BaseElView implements template.ITemplateEvents {
+            class DynaContentElView extends elviewMOD.BaseElView implements templMOD.ITemplateEvents {
                 private _dataContext;
                 private _prevTemplateID;
                 private _templateID;
                 private _template;
                 private _animation;
                 constructor(app: Application, el: HTMLElement, options: IDynaContentOptions);
-                public templateLoading(template: template.Template): void;
-                public templateLoaded(template: template.Template): void;
-                public templateUnLoading(template: template.Template): void;
+                templateLoading(template: templMOD.Template): void;
+                templateLoaded(template: templMOD.Template): void;
+                templateUnLoading(template: templMOD.Template): void;
                 private _templateChanging(oldName, newName);
-                public destroy(): void;
-                public template : template.Template;
-                public templateID : string;
-                public dataContext : any;
-                public animation : IAnimation;
+                destroy(): void;
+                template: templMOD.Template;
+                templateID: string;
+                dataContext: any;
+                animation: IAnimation;
             }
         }
     }
@@ -1689,28 +1713,29 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module datepicker {
+            import elviewMOD = RIAPP.MOD.baseElView;
             class Datepicker extends BaseObject implements IDatepicker {
                 private _datepickerRegion;
                 private _dateFormat;
                 constructor();
-                public toString(): string;
-                public attachTo($el: any, options?: {
+                toString(): string;
+                attachTo($el: any, options?: {
                     dateFormat?: string;
                 }): void;
-                public detachFrom($el: any): void;
-                public parseDate(str: string): Date;
-                public formatDate(date: Date): string;
-                public dateFormat : string;
-                public datepickerRegion : string;
-                public datePickerFn : any;
+                detachFrom($el: any): void;
+                parseDate(str: string): Date;
+                formatDate(date: Date): string;
+                dateFormat: string;
+                datepickerRegion: string;
+                datePickerFn: any;
             }
-            interface IDatePickerOptions extends baseElView.ITextBoxOptions {
+            interface IDatePickerOptions extends elviewMOD.ITextBoxOptions {
                 datepicker?: any;
             }
-            class DatePickerElView extends baseElView.TextBoxElView {
-                public _init(options: IDatePickerOptions): void;
-                public destroy(): void;
-                public toString(): string;
+            class DatePickerElView extends elviewMOD.TextBoxElView {
+                protected _init(options: IDatePickerOptions): void;
+                destroy(): void;
+                toString(): string;
             }
         }
     }
@@ -1718,17 +1743,19 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module tabs {
-            class TabsElView extends baseElView.BaseElView {
+            import mvvmMOD = RIAPP.MOD.mvvm;
+            import elviewMOD = MOD.baseElView;
+            class TabsElView extends elviewMOD.BaseElView {
                 private _tabsEventCommand;
                 private _tabOpts;
-                public _init(options: any): void;
-                public _createTabs(): void;
-                public _destroyTabs(): void;
-                public invokeTabsEvent(eventName: string, args: any): void;
-                public destroy(): void;
-                public toString(): string;
-                public tabsEventCommand : mvvm.ICommand;
-                public tabIndex : number;
+                protected _init(options: any): void;
+                protected _createTabs(): void;
+                protected _destroyTabs(): void;
+                invokeTabsEvent(eventName: string, args: any): void;
+                destroy(): void;
+                toString(): string;
+                tabsEventCommand: mvvmMOD.ICommand;
+                tabIndex: number;
             }
         }
     }
@@ -1736,6 +1763,10 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module listbox {
+            import bindMOD = RIAPP.MOD.binding;
+            import collMOD = MOD.collection;
+            import elviewMOD = MOD.baseElView;
+            import contentMOD = RIAPP.MOD.baseContent;
             interface IListBoxOptions {
                 valuePath: string;
                 textPath: string;
@@ -1743,10 +1774,10 @@ declare module RIAPP {
             interface IListBoxConstructorOptions extends IListBoxOptions {
                 app: Application;
                 el: HTMLSelectElement;
-                dataSource: collection.BaseCollection<collection.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
             }
             interface IMappedItem {
-                item: collection.CollectionItem;
+                item: collMOD.CollectionItem;
                 op: {
                     text: string;
                     value: any;
@@ -1766,16 +1797,16 @@ declare module RIAPP {
                 private _tempValue;
                 private _options;
                 constructor(options: IListBoxConstructorOptions);
-                public destroy(): void;
-                public _onChanged(): void;
-                public _getStringValue(item: collection.CollectionItem): string;
-                public _getValue(item: collection.CollectionItem): any;
-                public _getText(item: collection.CollectionItem): string;
-                public _onDSCollectionChanged(args: collection.ICollChangedArgs<collection.CollectionItem>): void;
-                public _onDSFill(args: collection.ICollFillArgs<collection.CollectionItem>): void;
-                public _onEdit(item: collection.CollectionItem, isBegin: boolean, isCanceled: boolean): void;
-                public _onStatusChanged(item: collection.CollectionItem, oldChangeType: number): void;
-                public _onCommitChanges(item: collection.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collection.STATUS): void;
+                destroy(): void;
+                protected _onChanged(): void;
+                protected _getStringValue(item: collMOD.CollectionItem): string;
+                protected _getValue(item: collMOD.CollectionItem): any;
+                protected _getText(item: collMOD.CollectionItem): string;
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>): void;
+                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>): void;
+                protected _onEdit(item: collMOD.CollectionItem, isBegin: boolean, isCanceled: boolean): void;
+                protected _onStatusChanged(item: collMOD.CollectionItem, oldChangeType: number): void;
+                protected _onCommitChanges(item: collMOD.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS): void;
                 private _bindDS();
                 private _unbindDS();
                 private _addOption(item, first);
@@ -1785,84 +1816,84 @@ declare module RIAPP {
                 private _clear(isDestroy);
                 private _refresh();
                 private _findItemIndex(item);
-                public _setIsEnabled(el: HTMLSelectElement, v: boolean): void;
-                public _getIsEnabled(el: HTMLSelectElement): boolean;
-                public clear(): void;
-                public findItemByValue(val: any): collection.CollectionItem;
-                public getTextByValue(val: any): string;
-                public toString(): string;
-                public dataSource : collection.BaseCollection<collection.CollectionItem>;
-                public selectedValue : any;
-                public selectedItem : collection.CollectionItem;
-                public valuePath : string;
-                public textPath : string;
-                public isEnabled : boolean;
-                public el : HTMLSelectElement;
+                protected _setIsEnabled(el: HTMLSelectElement, v: boolean): void;
+                protected _getIsEnabled(el: HTMLSelectElement): boolean;
+                clear(): void;
+                findItemByValue(val: any): collMOD.CollectionItem;
+                getTextByValue(val: any): string;
+                toString(): string;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                selectedValue: any;
+                selectedItem: collMOD.CollectionItem;
+                valuePath: string;
+                textPath: string;
+                isEnabled: boolean;
+                el: HTMLSelectElement;
             }
-            interface ISelectViewOptions extends IListBoxOptions, baseElView.IViewOptions {
+            interface ISelectViewOptions extends IListBoxOptions, elviewMOD.IViewOptions {
             }
-            class SelectElView extends baseElView.BaseElView {
+            class SelectElView extends elviewMOD.BaseElView {
                 private _listBox;
                 private _options;
                 constructor(app: Application, el: HTMLSelectElement, options: ISelectViewOptions);
-                public destroy(): void;
-                public toString(): string;
-                public isEnabled : boolean;
-                public el : HTMLSelectElement;
-                public dataSource : collection.BaseCollection<collection.CollectionItem>;
-                public selectedValue : any;
-                public selectedItem : collection.CollectionItem;
-                public listBox : ListBox;
+                destroy(): void;
+                toString(): string;
+                isEnabled: boolean;
+                el: HTMLSelectElement;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                selectedValue: any;
+                selectedItem: collMOD.CollectionItem;
+                listBox: ListBox;
             }
             interface ILookupOptions {
                 dataSource: string;
                 valuePath: string;
                 textPath: string;
             }
-            class LookupContent extends baseContent.BindingContent implements baseContent.IExternallyCachable {
+            class LookupContent extends contentMOD.BindingContent implements contentMOD.IExternallyCachable {
                 private _spanView;
                 private _valBinding;
                 private _listBinding;
                 private _selectView;
                 private _isListBoxCachedExternally;
                 private _value;
-                constructor(app: Application, options: baseContent.IConstructorContentOptions);
-                public _init(): void;
-                public _getEventNames(): string[];
-                public addOnObjectCreated(fn: (sender: any, args: {
+                constructor(app: Application, options: contentMOD.IConstructorContentOptions);
+                protected _init(): void;
+                protected _getEventNames(): string[];
+                addOnObjectCreated(fn: (sender: any, args: {
                     objectKey: string;
                     object: BaseObject;
                     isCachedExternally: boolean;
                 }) => void, namespace?: string): void;
-                public removeOnObjectCreated(namespace?: string): void;
-                public addOnObjectNeeded(fn: (sender: any, args: {
+                removeOnObjectCreated(namespace?: string): void;
+                addOnObjectNeeded(fn: (sender: any, args: {
                     objectKey: string;
                     object: BaseObject;
                 }) => void, namespace?: string): void;
-                public removeOnObjectNeeded(namespace?: string): void;
-                public _getSelectView(): SelectElView;
-                public _createSelectElView(el: HTMLSelectElement, options: ISelectViewOptions): SelectElView;
-                public _updateTextValue(): void;
-                public _getLookupText(): string;
-                public _getSpanView(): baseElView.SpanElView;
-                public update(): void;
-                public _createTargetElement(): baseElView.BaseElView;
-                public _cleanUp(): void;
-                public _updateBindingSource(): void;
-                public _bindToValue(): binding.Binding;
-                public _bindToList(selectView: SelectElView): binding.Binding;
-                public destroy(): void;
-                public toString(): string;
-                public value : any;
+                removeOnObjectNeeded(namespace?: string): void;
+                protected _getSelectView(): SelectElView;
+                protected _createSelectElView(el: HTMLSelectElement, options: ISelectViewOptions): SelectElView;
+                protected _updateTextValue(): void;
+                protected _getLookupText(): string;
+                protected _getSpanView(): elviewMOD.SpanElView;
+                update(): void;
+                protected _createTargetElement(): elviewMOD.BaseElView;
+                protected _cleanUp(): void;
+                protected _updateBindingSource(): void;
+                protected _bindToValue(): bindMOD.Binding;
+                protected _bindToList(selectView: SelectElView): bindMOD.Binding;
+                destroy(): void;
+                toString(): string;
+                value: any;
             }
-            class ContentFactory implements baseContent.IContentFactory {
+            class ContentFactory implements contentMOD.IContentFactory {
                 private _app;
                 private _nextFactory;
-                constructor(app: Application, nextFactory?: baseContent.IContentFactory);
-                public getContentType(options: baseContent.IContentOptions): baseContent.IContentType;
-                public createContent(options: baseContent.IConstructorContentOptions): baseContent.IContent;
-                public isExternallyCachable(contentType: baseContent.IContentType): boolean;
-                public app : Application;
+                constructor(app: Application, nextFactory?: contentMOD.IContentFactory);
+                getContentType(options: contentMOD.IContentOptions): contentMOD.IContentType;
+                createContent(options: contentMOD.IConstructorContentOptions): contentMOD.IContent;
+                isExternallyCachable(contentType: contentMOD.IContentType): boolean;
+                app: Application;
             }
             function initModule(app: Application): typeof listbox;
         }
@@ -1871,6 +1902,7 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module datadialog {
+            import templMOD = RIAPP.MOD.template;
             enum DIALOG_ACTION {
                 Default = 0,
                 StayOpen = 1,
@@ -1888,8 +1920,8 @@ declare module RIAPP {
                 fn_OnOK?: (dialog: DataEditDialog) => number;
                 fn_OnShow?: (dialog: DataEditDialog) => void;
                 fn_OnCancel?: (dialog: DataEditDialog) => number;
-                fn_OnTemplateCreated?: (template: template.Template) => void;
-                fn_OnTemplateDestroy?: (template: template.Template) => void;
+                fn_OnTemplateCreated?: (template: templMOD.Template) => void;
+                fn_OnTemplateDestroy?: (template: templMOD.Template) => void;
             }
             interface IButton {
                 id: string;
@@ -1897,7 +1929,7 @@ declare module RIAPP {
                 class: string;
                 click: () => void;
             }
-            class DataEditDialog extends BaseObject implements template.ITemplateEvents {
+            class DataEditDialog extends BaseObject implements templMOD.ITemplateEvents {
                 private _objId;
                 private _dataContext;
                 private _templateID;
@@ -1920,47 +1952,47 @@ declare module RIAPP {
                 private _app;
                 private _currentSelectable;
                 constructor(app: Application, options: IDialogConstructorOptions);
-                public _onError(error: any, source: any): boolean;
-                public addOnClose(fn: (sender: any, args: {}) => void, namespace?: string): void;
-                public removeOnClose(namespace?: string): void;
-                public addOnRefresh(fn: (sender: any, args: {
+                handleError(error: any, source: any): boolean;
+                addOnClose(fn: (sender: any, args: {}) => void, namespace?: string): void;
+                removeOnClose(namespace?: string): void;
+                addOnRefresh(fn: (sender: any, args: {
                     isHandled: boolean;
                 }) => void, namespace?: string): void;
-                public removeOnRefresh(namespace?: string): void;
-                public _updateIsEditable(): void;
-                public _createDialog(): void;
-                public _getEventNames(): string[];
-                public templateLoading(template: template.Template): void;
-                public templateLoaded(template: template.Template): void;
-                public templateUnLoading(template: template.Template): void;
-                public _createTemplate(): template.Template;
-                public _destroyTemplate(): void;
-                public _getButtons(): IButton[];
-                public _getOkButton(): JQuery;
-                public _getCancelButton(): JQuery;
-                public _getRefreshButton(): JQuery;
-                public _getAllButtons(): JQuery[];
-                public _disableButtons(isDisable: boolean): void;
-                public _onOk(): void;
-                public _onCancel(): void;
-                public _onRefresh(): void;
-                public _onClose(): void;
-                public _onShow(): void;
-                public show(): void;
-                public hide(): void;
-                public getOption(name: string): any;
-                public setOption(name: string, value: any): void;
-                public destroy(): void;
-                public app : Application;
-                public dataContext : any;
-                public result : string;
-                public template : template.Template;
-                public isSubmitOnOK : boolean;
-                public width : any;
-                public height : any;
-                public title : any;
-                public canRefresh : boolean;
-                public canCancel : boolean;
+                removeOnRefresh(namespace?: string): void;
+                protected _updateIsEditable(): void;
+                protected _createDialog(): void;
+                protected _getEventNames(): string[];
+                templateLoading(template: templMOD.Template): void;
+                templateLoaded(template: templMOD.Template): void;
+                templateUnLoading(template: templMOD.Template): void;
+                protected _createTemplate(): templMOD.Template;
+                protected _destroyTemplate(): void;
+                protected _getButtons(): IButton[];
+                protected _getOkButton(): JQuery;
+                protected _getCancelButton(): JQuery;
+                protected _getRefreshButton(): JQuery;
+                protected _getAllButtons(): JQuery[];
+                protected _disableButtons(isDisable: boolean): void;
+                protected _onOk(): void;
+                protected _onCancel(): void;
+                protected _onRefresh(): void;
+                protected _onClose(): void;
+                protected _onShow(): void;
+                show(): void;
+                hide(): void;
+                getOption(name: string): any;
+                setOption(name: string, value: any): void;
+                destroy(): void;
+                app: Application;
+                dataContext: any;
+                result: string;
+                template: templMOD.Template;
+                isSubmitOnOK: boolean;
+                width: any;
+                height: any;
+                title: any;
+                canRefresh: boolean;
+                canCancel: boolean;
             }
         }
     }
@@ -1968,6 +2000,9 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module datagrid {
+            import contentMOD = RIAPP.MOD.baseContent;
+            import collMOD = RIAPP.MOD.collection;
+            import templMOD = RIAPP.MOD.template;
             var css: {
                 container: string;
                 dataTable: string;
@@ -1993,72 +2028,83 @@ declare module RIAPP {
                 colSortAsc: string;
                 colSortDesc: string;
             };
-            class RowSelectContent extends baseContent.BoolContent {
-                public _canBeEdited(): boolean;
-                public toString(): string;
+            enum ROW_ACTION {
+                OK = 0,
+                EDIT = 1,
+                CANCEL = 2,
+                DELETE = 3,
+            }
+            class RowSelectContent extends contentMOD.BoolContent {
+                _canBeEdited(): boolean;
+                toString(): string;
             }
             interface ICellOptions {
                 row: Row;
                 td: HTMLTableCellElement;
                 column: BaseColumn;
+                num: number;
             }
             class BaseCell extends BaseObject {
-                public _row: Row;
-                public _el: HTMLTableCellElement;
-                public _column: BaseColumn;
-                public _div: HTMLElement;
-                public _clickTimeOut: number;
+                protected _row: Row;
+                protected _el: HTMLTableCellElement;
+                protected _column: BaseColumn;
+                protected _div: HTMLElement;
+                protected _clickTimeOut: number;
+                private _num;
                 constructor(options: ICellOptions);
-                public _init(): void;
-                public _onCellClicked(): void;
-                public _onDblClicked(): void;
-                public _onError(error: any, source: any): boolean;
-                public scrollIntoView(isUp: boolean): void;
-                public destroy(): void;
-                public toString(): string;
-                public el : HTMLTableCellElement;
-                public row : Row;
-                public column : BaseColumn;
-                public grid : DataGrid;
-                public item : collection.CollectionItem;
+                protected _init(): void;
+                protected _onCellClicked(row?: Row): void;
+                protected _onDblClicked(row?: Row): void;
+                handleError(error: any, source: any): boolean;
+                click(): void;
+                scrollIntoView(isUp: boolean): void;
+                destroy(): void;
+                toString(): string;
+                el: HTMLTableCellElement;
+                row: Row;
+                column: BaseColumn;
+                grid: DataGrid;
+                item: collMOD.CollectionItem;
+                uniqueID: string;
+                num: number;
             }
             class DataCell extends BaseCell {
                 private _content;
                 private _stateCss;
                 constructor(options: ICellOptions);
-                public _init(): void;
-                public _getInitContentFn(): (content: baseContent.IExternallyCachable) => void;
-                public _beginEdit(): void;
-                public _endEdit(isCanceled: any): void;
-                public _setState(css: string): void;
-                public destroy(): void;
-                public toString(): string;
-                public column : DataColumn;
+                protected _init(): void;
+                click(): void;
+                _beginEdit(): void;
+                _endEdit(isCanceled: any): void;
+                _setState(css: string): void;
+                destroy(): void;
+                toString(): string;
+                column: DataColumn;
             }
             class ExpanderCell extends BaseCell {
-                public _init(): void;
-                public _onCellClicked(): void;
-                public _toggleImage(): void;
-                public toString(): string;
+                protected _init(): void;
+                protected _onCellClicked(row?: Row): void;
+                toggleImage(): void;
+                toString(): string;
             }
             class ActionsCell extends BaseCell {
                 private _isEditing;
                 constructor(options: ICellOptions);
-                public _init(): void;
-                public destroy(): void;
-                public _createButtons(editing: boolean): void;
-                public update(): void;
-                public toString(): string;
-                public isCanEdit : boolean;
-                public isCanDelete : boolean;
+                protected _init(): void;
+                destroy(): void;
+                protected _createButtons(editing: boolean): void;
+                update(): void;
+                toString(): string;
+                isCanEdit: boolean;
+                isCanDelete: boolean;
             }
             class RowSelectorCell extends BaseCell {
                 private _content;
-                public _init(): void;
-                public destroy(): void;
-                public toString(): string;
+                protected _init(): void;
+                destroy(): void;
+                toString(): string;
             }
-            class DetailsCell extends BaseObject implements template.ITemplateEvents {
+            class DetailsCell extends BaseObject implements templMOD.ITemplateEvents {
                 private _row;
                 private _el;
                 private _template;
@@ -2067,20 +2113,20 @@ declare module RIAPP {
                     td: HTMLTableCellElement;
                     details_id: string;
                 });
-                public _init(options: {
+                protected _init(options: {
                     td: HTMLElement;
                     details_id: string;
                 }): void;
-                public templateLoading(template: template.Template): void;
-                public templateLoaded(template: template.Template): void;
-                public templateUnLoading(template: template.Template): void;
-                public destroy(): void;
-                public toString(): string;
-                public el : HTMLTableCellElement;
-                public row : DetailsRow;
-                public grid : DataGrid;
-                public item : any;
-                public template : template.Template;
+                templateLoading(template: templMOD.Template): void;
+                templateLoaded(template: templMOD.Template): void;
+                templateUnLoading(template: templMOD.Template): void;
+                destroy(): void;
+                toString(): string;
+                el: HTMLTableCellElement;
+                row: DetailsRow;
+                grid: DataGrid;
+                item: any;
+                template: templMOD.Template;
             }
             class Row extends BaseObject {
                 private _grid;
@@ -2096,36 +2142,37 @@ declare module RIAPP {
                 private _isSelected;
                 constructor(grid: DataGrid, options: {
                     tr: HTMLElement;
-                    item: collection.CollectionItem;
+                    item: collMOD.CollectionItem;
                 });
-                public _onError(error: any, source: any): boolean;
+                handleError(error: any, source: any): boolean;
                 private _createCells();
-                private _createCell(col);
-                public _onBeginEdit(): void;
-                public _onEndEdit(isCanceled: boolean): void;
-                public beginEdit(): boolean;
-                public endEdit(): boolean;
-                public cancelEdit(): boolean;
-                public destroy(): void;
-                public deleteRow(): void;
-                public updateErrorState(): void;
-                public scrollIntoView(isUp: boolean): void;
-                public _setState(css: string): void;
-                public toString(): string;
-                public el : HTMLElement;
-                public grid : DataGrid;
-                public item : collection.CollectionItem;
-                public cells : BaseCell[];
-                public columns : BaseColumn[];
-                public uniqueID : string;
-                public itemKey : string;
-                public isCurrent : boolean;
-                public isSelected : boolean;
-                public isExpanded : boolean;
-                public expanderCell : ExpanderCell;
-                public actionsCell : ActionsCell;
-                public isDeleted : boolean;
-                public isEditing : boolean;
+                private _createCell(col, num);
+                protected _setState(css: string): void;
+                _onBeginEdit(): void;
+                _onEndEdit(isCanceled: boolean): void;
+                beginEdit(): boolean;
+                endEdit(): boolean;
+                cancelEdit(): boolean;
+                destroy(): void;
+                deleteRow(): void;
+                updateErrorState(): void;
+                scrollIntoView(isUp: boolean): void;
+                toString(): string;
+                el: HTMLElement;
+                grid: DataGrid;
+                item: collMOD.CollectionItem;
+                cells: BaseCell[];
+                columns: BaseColumn[];
+                uniqueID: string;
+                itemKey: string;
+                isCurrent: boolean;
+                isSelected: boolean;
+                isExpanded: boolean;
+                expanderCell: ExpanderCell;
+                actionsCell: ActionsCell;
+                isDeleted: boolean;
+                isEditing: boolean;
+                isHasStateField: boolean;
             }
             class DetailsRow extends BaseObject {
                 private _grid;
@@ -2142,20 +2189,20 @@ declare module RIAPP {
                     details_id: string;
                 });
                 private _createCell(details_id);
-                public _setParentRow(row: Row): void;
+                protected _setParentRow(row: Row): void;
                 private _initShow();
                 private _show(onEnd);
                 private _hide(onEnd);
-                public destroy(): void;
-                public toString(): string;
-                public el : HTMLTableRowElement;
-                public $el : JQuery;
-                public grid : DataGrid;
-                public item : any;
-                public cell : DetailsCell;
-                public uniqueID : string;
-                public itemKey : any;
-                public parentRow : Row;
+                destroy(): void;
+                toString(): string;
+                el: HTMLTableRowElement;
+                $el: JQuery;
+                grid: DataGrid;
+                item: any;
+                cell: DetailsCell;
+                uniqueID: string;
+                itemKey: any;
+                parentRow: Row;
             }
             interface IColumnInfo {
                 type?: string;
@@ -2165,7 +2212,7 @@ declare module RIAPP {
                 colCellCss?: string;
                 rowCellCss?: string;
                 width?: any;
-                content?: baseContent.IContentOptions;
+                content?: contentMOD.IContentOptions;
             }
             class BaseColumn extends BaseObject {
                 private _grid;
@@ -2179,19 +2226,19 @@ declare module RIAPP {
                     th: HTMLTableHeaderCellElement;
                     colinfo: IColumnInfo;
                 });
-                public _init(): void;
-                public destroy(): void;
-                public scrollIntoView(isUp: boolean): void;
-                public _onColumnClicked(): void;
-                public toString(): string;
-                public uniqueID : string;
-                public el : HTMLTableHeaderCellElement;
-                public $div : JQuery;
-                public $extcol : JQuery;
-                public grid : DataGrid;
-                public options : IColumnInfo;
-                public title : string;
-                public isSelected : boolean;
+                protected _init(): void;
+                destroy(): void;
+                scrollIntoView(isUp: boolean): void;
+                protected _onColumnClicked(): void;
+                toString(): string;
+                uniqueID: string;
+                el: HTMLTableHeaderCellElement;
+                $div: JQuery;
+                $extcol: JQuery;
+                grid: DataGrid;
+                options: IColumnInfo;
+                title: string;
+                isSelected: boolean;
             }
             class DataColumn extends BaseColumn {
                 private _sortOrder;
@@ -2200,28 +2247,29 @@ declare module RIAPP {
                     th: HTMLTableHeaderCellElement;
                     colinfo: IColumnInfo;
                 });
-                public _init(): void;
-                public _onColumnClicked(): void;
-                public _cacheObject(key: string, obj: BaseObject): void;
-                public _getCachedObject(key: string): BaseObject;
-                public destroy(): void;
-                public toString(): string;
-                public isSortable : boolean;
-                public sortMemberName : string;
-                public sortOrder : collection.SORT_ORDER;
+                protected _init(): void;
+                protected _onColumnClicked(): void;
+                protected _cacheObject(key: string, obj: BaseObject): void;
+                protected _getCachedObject(key: string): BaseObject;
+                _getInitContentFn(): (content: contentMOD.IExternallyCachable) => void;
+                destroy(): void;
+                toString(): string;
+                isSortable: boolean;
+                sortMemberName: string;
+                sortOrder: collMOD.SORT_ORDER;
             }
             class ExpanderColumn extends BaseColumn {
-                public _init(): void;
-                public toString(): string;
+                protected _init(): void;
+                toString(): string;
             }
             class RowSelectorColumn extends BaseColumn {
                 private _val;
                 private _$chk;
-                public _init(): void;
-                public _onCheckBoxClicked(isChecked: boolean): void;
-                public toString(): string;
-                public checked : boolean;
-                public destroy(): void;
+                protected _init(): void;
+                protected _onCheckBoxClicked(isChecked: boolean): void;
+                toString(): string;
+                checked: boolean;
+                destroy(): void;
             }
             interface IActionsColumnInfo extends IColumnInfo {
                 img_ok?: string;
@@ -2230,13 +2278,13 @@ declare module RIAPP {
                 img_delete?: string;
             }
             class ActionsColumn extends BaseColumn {
-                public _init(): void;
-                public _onOk(cell: ActionsCell): void;
-                public _onCancel(cell: ActionsCell): void;
-                public _onDelete(cell: ActionsCell): void;
-                public _onEdit(cell: ActionsCell): void;
-                public toString(): string;
-                public destroy(): void;
+                protected _init(): void;
+                protected _onOk(cell: ActionsCell): void;
+                protected _onCancel(cell: ActionsCell): void;
+                protected _onDelete(cell: ActionsCell): void;
+                protected _onEdit(cell: ActionsCell): void;
+                toString(): string;
+                destroy(): void;
             }
             interface IGridOptions {
                 isUseScrollInto: boolean;
@@ -2256,13 +2304,13 @@ declare module RIAPP {
             interface IGridConstructorOptions extends IGridOptions {
                 app: Application;
                 el: HTMLTableElement;
-                dataSource: collection.BaseCollection<collection.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
                 animation: IAnimation;
             }
             class DataGrid extends BaseObject implements ISelectable {
                 private _options;
-                public _$tableEl: JQuery;
-                public _isClearing: boolean;
+                _$tableEl: JQuery;
+                _isClearing: boolean;
                 private _tableEl;
                 private _name;
                 private _objId;
@@ -2283,101 +2331,106 @@ declare module RIAPP {
                 private _$headerDiv;
                 private _$wrapDiv;
                 private _$contaner;
-                public _columnWidthChecker: () => void;
+                _columnWidthChecker: () => void;
                 constructor(options: IGridConstructorOptions);
-                public _getEventNames(): string[];
-                public addOnRowExpanded(fn: (sender: DataGrid, args: {
+                protected _getEventNames(): string[];
+                addOnRowExpanded(fn: (sender: DataGrid, args: {
                     old_expandedRow: Row;
                     expandedRow: Row;
                     isExpanded: boolean;
                 }) => void, namespace?: string): void;
-                public removeOnRowExpanded(namespace?: string): void;
-                public addOnRowSelected(fn: (sender: DataGrid, args: {
+                removeOnRowExpanded(namespace?: string): void;
+                addOnRowSelected(fn: (sender: DataGrid, args: {
                     row: Row;
                 }) => void, namespace?: string): void;
-                public removeOnRowSelected(namespace?: string): void;
-                public addOnPageChanged(fn: (sender: DataGrid, args: {}) => void, namespace?: string): void;
-                public removeOnPageChanged(namespace?: string): void;
-                public addOnRowStateChanged(fn: (sender: DataGrid, args: {
+                removeOnRowSelected(namespace?: string): void;
+                addOnPageChanged(fn: (sender: DataGrid, args: {}) => void, namespace?: string): void;
+                removeOnPageChanged(namespace?: string): void;
+                addOnRowStateChanged(fn: (sender: DataGrid, args: {
                     row: Row;
                     val: any;
                     css: string;
                 }) => void, namespace?: string): void;
-                public removeOnRowStateChanged(namespace?: string): void;
-                public addOnCellDblClicked(fn: (sender: DataGrid, args: {
+                removeOnRowStateChanged(namespace?: string): void;
+                addOnCellDblClicked(fn: (sender: DataGrid, args: {
                     cell: BaseCell;
                 }) => void, namespace?: string): void;
-                public removeOnCellDblClicked(namespace?: string): void;
-                public _isRowExpanded(row: Row): boolean;
-                public _appendToHeader(el: HTMLElement): void;
-                public _setCurrentColumn(column: BaseColumn): void;
-                public _parseColumnAttr(column_attr: string, content_attr: string): IColumnInfo;
-                public _findUndeleted(row: Row, isUp: boolean): Row;
-                public _updateCurrent(row: Row, withScroll: boolean): void;
-                public _scrollToCurrent(isUp: boolean): void;
-                public _onRowStateChanged(row: Row, val: any): any;
-                public _onCellDblClicked(cell: BaseCell): void;
-                public _onError(error: any, source: any): boolean;
-                public _onDSCurrentChanged(): void;
-                public _onDSCollectionChanged(args: collection.ICollChangedArgs<collection.CollectionItem>): void;
-                public _onDSFill(args: collection.ICollFillArgs<collection.CollectionItem>): void;
-                public _onPageChanged(): void;
-                public _onItemEdit(item: any, isBegin: any, isCanceled: any): void;
-                public _onItemAdded(args: collection.ICollItemAddedArgs<collection.CollectionItem>): void;
-                public _onItemStatusChanged(item: collection.CollectionItem, oldChangeType: collection.STATUS): void;
-                public _onRowSelectionChanged(row: Row): void;
-                public _onDSErrorsChanged(item: collection.CollectionItem): void;
-                public _resetColumnsSort(): void;
-                public _bindDS(): void;
-                public _unbindDS(): void;
-                public _getLastRow(): Row;
-                public _removeRow(row: Row): void;
-                public _clearGrid(): void;
-                public _updateColsDim(): void;
-                public _wrapTable(): void;
-                public _unWrapTable(): void;
-                public _createColumns(): void;
-                public _createColumn(options: {
+                removeOnCellDblClicked(namespace?: string): void;
+                addOnRowAction(fn: (sender: DataGrid, args: {
+                    row: Row;
+                    action: ROW_ACTION;
+                }) => void, namespace?: string): void;
+                removeOnRowAction(namespace?: string): void;
+                _isRowExpanded(row: Row): boolean;
+                _appendToHeader(el: HTMLElement): void;
+                _setCurrentColumn(column: BaseColumn): void;
+                _onRowStateChanged(row: Row, val: any): any;
+                _onCellDblClicked(cell: BaseCell): void;
+                _onRowSelectionChanged(row: Row): void;
+                _resetColumnsSort(): void;
+                _getLastRow(): Row;
+                _removeRow(row: Row): void;
+                _onKeyDown(key: number, event: Event): void;
+                _onKeyUp(key: number, event: Event): void;
+                _expandDetails(parentRow: Row, expanded: boolean): void;
+                protected _parseColumnAttr(column_attr: string, content_attr: string): IColumnInfo;
+                protected _findUndeleted(row: Row, isUp: boolean): Row;
+                protected _updateCurrent(row: Row, withScroll: boolean): void;
+                protected _scrollToCurrent(isUp: boolean): void;
+                handleError(error: any, source: any): boolean;
+                protected _onDSCurrentChanged(): void;
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>): void;
+                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>): void;
+                protected _onPageChanged(): void;
+                protected _onItemEdit(item: any, isBegin: any, isCanceled: any): void;
+                protected _onItemAdded(args: collMOD.ICollItemAddedArgs<collMOD.CollectionItem>): void;
+                protected _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType: collMOD.STATUS): void;
+                protected _onDSErrorsChanged(item: collMOD.CollectionItem): void;
+                protected _bindDS(): void;
+                protected _unbindDS(): void;
+                protected _clearGrid(): void;
+                protected _updateColsDim(): void;
+                protected _wrapTable(): void;
+                protected _unWrapTable(): void;
+                protected _createColumns(): void;
+                protected _createColumn(options: {
                     th: HTMLTableHeaderCellElement;
                     colinfo: IColumnInfo;
                 }): BaseColumn;
-                public _appendItems(newItems: collection.CollectionItem[]): void;
-                public _onKeyDown(key: number, event: Event): void;
-                public _onKeyUp(key: number, event: Event): void;
-                public _refreshGrid(): void;
-                public _createRowForItem(parent: any, item: any, pos?: number): Row;
-                public _createDetails(): DetailsRow;
-                public _expandDetails(parentRow: Row, expanded: boolean): void;
-                public sortByColumn(column: DataColumn): void;
-                public selectRows(isSelect: boolean): void;
-                public findRowByItem(item: collection.CollectionItem): Row;
-                public collapseDetails(): void;
-                public getSelectedRows(): any[];
-                public showEditDialog(): boolean;
-                public scrollToCurrent(isUp: boolean): void;
-                public addNew(): void;
-                public destroy(): void;
-                public app : Application;
-                public $container : JQuery;
-                public options : IGridConstructorOptions;
-                public _tBodyEl : Element;
-                public _tHeadEl : HTMLTableSectionElement;
-                public _tFootEl : HTMLTableSectionElement;
-                public _tHeadRow : HTMLTableRowElement;
-                public _tHeadCells : any[];
-                public containerEl : HTMLElement;
-                public uniqueID : string;
-                public name : string;
-                public dataSource : collection.BaseCollection<collection.CollectionItem>;
-                public rows : Row[];
-                public columns : BaseColumn[];
-                public currentRow : Row;
-                public editingRow : Row;
-                public isCanEdit : boolean;
-                public isCanDelete : boolean;
-                public isCanAddNew : boolean;
-                public isUseScrollInto : boolean;
-                public animation : IAnimation;
+                protected _appendItems(newItems: collMOD.CollectionItem[]): void;
+                protected _refreshGrid(): void;
+                protected _createRowForItem(parent: any, item: any, pos?: number): Row;
+                protected _createDetails(): DetailsRow;
+                sortByColumn(column: DataColumn): void;
+                selectRows(isSelect: boolean): void;
+                findRowByItem(item: collMOD.CollectionItem): Row;
+                collapseDetails(): void;
+                getSelectedRows(): any[];
+                showEditDialog(): boolean;
+                scrollToCurrent(isUp: boolean): void;
+                addNew(): void;
+                destroy(): void;
+                app: Application;
+                $container: JQuery;
+                options: IGridConstructorOptions;
+                _tBodyEl: Element;
+                _tHeadEl: HTMLTableSectionElement;
+                _tFootEl: HTMLTableSectionElement;
+                _tHeadRow: HTMLTableRowElement;
+                _tHeadCells: any[];
+                containerEl: HTMLElement;
+                uniqueID: string;
+                name: string;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                rows: Row[];
+                columns: BaseColumn[];
+                currentRow: Row;
+                editingRow: Row;
+                isCanEdit: boolean;
+                isCanDelete: boolean;
+                isCanAddNew: boolean;
+                isUseScrollInto: boolean;
+                animation: IAnimation;
             }
             interface IGridViewOptions extends IGridOptions, baseElView.IViewOptions {
             }
@@ -2385,16 +2438,16 @@ declare module RIAPP {
                 private _grid;
                 private _gridEventCommand;
                 private _options;
-                public toString(): string;
-                public _init(options: IGridViewOptions): void;
-                public destroy(): void;
+                toString(): string;
+                protected _init(options: IGridViewOptions): void;
+                destroy(): void;
                 private _createGrid();
                 private _bindGridEvents();
-                public invokeGridEvent(eventName: any, args: any): void;
-                public dataSource : collection.BaseCollection<collection.CollectionItem>;
-                public grid : DataGrid;
-                public gridEventCommand : mvvm.ICommand;
-                public animation : IAnimation;
+                invokeGridEvent(eventName: any, args: any): void;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                grid: DataGrid;
+                gridEventCommand: mvvm.ICommand;
+                animation: IAnimation;
             }
         }
     }
@@ -2402,6 +2455,7 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module pager {
+            import collMOD = RIAPP.MOD.collection;
             var css: {
                 pager: string;
                 info: string;
@@ -2421,7 +2475,7 @@ declare module RIAPP {
             interface IPagerConstructorOptions extends IPagerOptions {
                 app: Application;
                 el: HTMLElement;
-                dataSource: collection.BaseCollection<collection.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
             }
             class Pager extends BaseObject {
                 private _$el;
@@ -2431,40 +2485,40 @@ declare module RIAPP {
                 private _rowCount;
                 private _currentPage;
                 constructor(options: IPagerConstructorOptions);
-                public _createElement(tag: string): JQuery;
-                public _render(): void;
-                public _setDSPageIndex(page: number): void;
-                public _onPageSizeChanged(ds: collection.BaseCollection<collection.CollectionItem>): void;
-                public _onPageIndexChanged(ds: collection.BaseCollection<collection.CollectionItem>): void;
-                public _onTotalCountChanged(ds: collection.BaseCollection<collection.CollectionItem>): void;
-                public destroy(): void;
-                public _bindDS(): void;
-                public _unbindDS(): void;
-                public _clearContent(): void;
-                public _createLink(page: number, text: string, tip?: string): JQuery;
-                public _createFirst(): JQuery;
-                public _createPrevious(): JQuery;
-                public _createCurrent(): JQuery;
-                public _createOther(page: number): JQuery;
-                public _createNext(): JQuery;
-                public _createLast(): JQuery;
-                public _buildTip(page: number): string;
-                public toString(): string;
-                public app : Application;
-                public el : HTMLElement;
-                public dataSource : collection.BaseCollection<collection.CollectionItem>;
-                public pageCount : any;
-                public rowCount : number;
-                public rowsPerPage : number;
-                public currentPage : number;
-                public useSlider : boolean;
-                public sliderSize : number;
-                public hideOnSinglePage : boolean;
-                public showTip : boolean;
-                public showInfo : boolean;
-                public showFirstAndLast : boolean;
-                public showPreviousAndNext : boolean;
-                public showNumbers : boolean;
+                protected _createElement(tag: string): JQuery;
+                protected _render(): void;
+                protected _setDSPageIndex(page: number): void;
+                protected _onPageSizeChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>): void;
+                protected _onPageIndexChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>): void;
+                protected _onTotalCountChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>): void;
+                destroy(): void;
+                protected _bindDS(): void;
+                protected _unbindDS(): void;
+                protected _clearContent(): void;
+                protected _createLink(page: number, text: string, tip?: string): JQuery;
+                protected _createFirst(): JQuery;
+                protected _createPrevious(): JQuery;
+                protected _createCurrent(): JQuery;
+                protected _createOther(page: number): JQuery;
+                protected _createNext(): JQuery;
+                protected _createLast(): JQuery;
+                protected _buildTip(page: number): string;
+                toString(): string;
+                app: Application;
+                el: HTMLElement;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                pageCount: any;
+                rowCount: number;
+                rowsPerPage: number;
+                currentPage: number;
+                useSlider: boolean;
+                sliderSize: number;
+                hideOnSinglePage: boolean;
+                showTip: boolean;
+                showInfo: boolean;
+                showFirstAndLast: boolean;
+                showPreviousAndNext: boolean;
+                showNumbers: boolean;
             }
             interface IPagerViewOptions extends IPagerOptions, baseElView.IViewOptions {
             }
@@ -2472,10 +2526,10 @@ declare module RIAPP {
                 private _options;
                 private _pager;
                 constructor(app: Application, el: HTMLElement, options: IPagerViewOptions);
-                public destroy(): void;
-                public toString(): string;
-                public dataSource : collection.BaseCollection<collection.CollectionItem>;
-                public pager : Pager;
+                destroy(): void;
+                toString(): string;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                pager: Pager;
             }
         }
     }
@@ -2483,6 +2537,8 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module stackpanel {
+            import templMOD = RIAPP.MOD.template;
+            import collMOD = RIAPP.MOD.collection;
             var css: {
                 stackpanel: string;
                 item: string;
@@ -2495,9 +2551,9 @@ declare module RIAPP {
             interface IStackPanelConstructorOptions extends IStackPanelOptions {
                 app: Application;
                 el: HTMLElement;
-                dataSource: collection.BaseCollection<collection.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
             }
-            class StackPanel extends BaseObject implements ISelectable, template.ITemplateEvents {
+            class StackPanel extends BaseObject implements ISelectable, templMOD.ITemplateEvents {
                 private _$el;
                 private _objId;
                 private _isDSFilling;
@@ -2505,44 +2561,44 @@ declare module RIAPP {
                 private _itemMap;
                 private _options;
                 constructor(options: IStackPanelConstructorOptions);
-                public _getEventNames(): string[];
-                public templateLoading(template: template.Template): void;
-                public templateLoaded(template: template.Template): void;
-                public templateUnLoading(template: template.Template): void;
-                public addOnItemClicked(fn: (sender: StackPanel, args: {
-                    item: collection.CollectionItem;
+                protected _getEventNames(): string[];
+                templateLoading(template: templMOD.Template): void;
+                templateLoaded(template: templMOD.Template): void;
+                templateUnLoading(template: templMOD.Template): void;
+                addOnItemClicked(fn: (sender: StackPanel, args: {
+                    item: collMOD.CollectionItem;
                 }) => void, namespace?: string): void;
-                public removeOnItemClicked(namespace?: string): void;
-                public _onKeyDown(key: number, event: Event): void;
-                public _onKeyUp(key: number, event: Event): void;
-                public _updateCurrent(item: collection.CollectionItem, withScroll: boolean): void;
-                public _onDSCurrentChanged(): void;
-                public _onDSCollectionChanged(args: collection.ICollChangedArgs<collection.CollectionItem>): void;
-                public _onDSFill(args: collection.ICollFillArgs<collection.CollectionItem>): void;
-                public _onItemStatusChanged(item: collection.CollectionItem, oldChangeType: number): void;
-                public _createTemplate(item: collection.CollectionItem): template.Template;
-                public _appendItems(newItems: collection.CollectionItem[]): void;
-                public _appendItem(item: collection.CollectionItem): void;
-                public _bindDS(): void;
-                public _unbindDS(): void;
-                public _createElement(tag: string): JQuery;
-                public _onItemClicked(div: HTMLElement, item: collection.CollectionItem): void;
-                public destroy(): void;
-                public _clearContent(): void;
-                public _removeItemByKey(key: string): void;
-                public _removeItem(item: collection.CollectionItem): void;
-                public _refresh(): void;
-                public scrollIntoView(item: collection.CollectionItem): void;
-                public getDivElementByItem(item: collection.CollectionItem): HTMLDivElement;
-                public toString(): string;
-                public app : Application;
-                public el : HTMLElement;
-                public containerEl : HTMLElement;
-                public uniqueID : string;
-                public orientation : string;
-                public templateID : string;
-                public dataSource : collection.BaseCollection<collection.CollectionItem>;
-                public currentItem : collection.CollectionItem;
+                removeOnItemClicked(namespace?: string): void;
+                _onKeyDown(key: number, event: Event): void;
+                _onKeyUp(key: number, event: Event): void;
+                protected _updateCurrent(item: collMOD.CollectionItem, withScroll: boolean): void;
+                protected _onDSCurrentChanged(): void;
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>): void;
+                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>): void;
+                protected _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType: number): void;
+                protected _createTemplate(item: collMOD.CollectionItem): templMOD.Template;
+                protected _appendItems(newItems: collMOD.CollectionItem[]): void;
+                protected _appendItem(item: collMOD.CollectionItem): void;
+                protected _bindDS(): void;
+                protected _unbindDS(): void;
+                protected _createElement(tag: string): JQuery;
+                protected _onItemClicked(div: HTMLElement, item: collMOD.CollectionItem): void;
+                destroy(): void;
+                protected _clearContent(): void;
+                protected _removeItemByKey(key: string): void;
+                protected _removeItem(item: collMOD.CollectionItem): void;
+                protected _refresh(): void;
+                scrollIntoView(item: collMOD.CollectionItem): void;
+                getDivElementByItem(item: collMOD.CollectionItem): HTMLDivElement;
+                toString(): string;
+                app: Application;
+                el: HTMLElement;
+                containerEl: HTMLElement;
+                uniqueID: string;
+                orientation: string;
+                templateID: string;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                currentItem: collMOD.CollectionItem;
             }
             interface IStackPanelViewOptions extends IStackPanelOptions, baseElView.IViewOptions {
             }
@@ -2550,10 +2606,10 @@ declare module RIAPP {
                 private _panel;
                 private _options;
                 constructor(app: Application, el: HTMLElement, options: IStackPanelViewOptions);
-                public destroy(): void;
-                public toString(): string;
-                public dataSource : collection.BaseCollection<collection.CollectionItem>;
-                public panel : StackPanel;
+                destroy(): void;
+                toString(): string;
+                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                panel: StackPanel;
             }
         }
     }
@@ -2561,6 +2617,8 @@ declare module RIAPP {
 declare module RIAPP {
     module MOD {
         module db {
+            import constsMOD = RIAPP.MOD.consts;
+            import collMod = RIAPP.MOD.collection;
             enum FLAGS {
                 None = 0,
                 Changed = 1,
@@ -2586,9 +2644,9 @@ declare module RIAPP {
                 INIT = 4,
             }
             class DataOperationError extends errors.BaseError {
-                public _operationName: DATA_OPER;
+                private _operationName;
                 constructor(ex: any, operationName: DATA_OPER);
-                public operationName : DATA_OPER;
+                operationName: DATA_OPER;
             }
             class AccessDeniedError extends DataOperationError {
             }
@@ -2597,11 +2655,11 @@ declare module RIAPP {
             class SvcValidationError extends DataOperationError {
             }
             class SubmitError extends DataOperationError {
-                public _allSubmitted: Entity[];
-                public _notValidated: Entity[];
+                private _allSubmitted;
+                private _notValidated;
                 constructor(origError: any, allSubmitted: Entity[], notValidated: Entity[]);
-                public allSubmitted : Entity[];
-                public notValidated : Entity[];
+                allSubmitted: Entity[];
+                notValidated: Entity[];
             }
             interface IFieldName {
                 n: string;
@@ -2612,8 +2670,8 @@ declare module RIAPP {
                 pageIndex: number;
             }
             interface IQueryParamInfo {
-                dataType: consts.DATA_TYPE;
-                dateConversion: consts.DATE_CONVERSION;
+                dataType: constsMOD.DATA_TYPE;
+                dateConversion: constsMOD.DATE_CONVERSION;
                 isArray: boolean;
                 isNullable: boolean;
                 name: string;
@@ -2628,18 +2686,18 @@ declare module RIAPP {
             interface IFilterInfo {
                 filterItems: {
                     fieldName: string;
-                    kind: collection.FILTER_TYPE;
+                    kind: collMod.FILTER_TYPE;
                     values: any[];
                 }[];
             }
             interface ISortInfo {
                 sortItems: {
                     fieldName: string;
-                    sortOrder: collection.SORT_ORDER;
+                    sortOrder: collMod.SORT_ORDER;
                 }[];
             }
             interface IEntityConstructor {
-                new(dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]): Entity;
+                new (dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]): Entity;
             }
             interface IValueChange {
                 val: any;
@@ -2660,7 +2718,7 @@ declare module RIAPP {
                 error: string;
                 invalid?: IValidationErrorInfo[];
             }
-            interface IPermissions extends collection.IPermissions {
+            interface IPermissions extends collMod.IPermissions {
                 dbSetName: string;
             }
             interface IPermissionsInfo {
@@ -2689,7 +2747,7 @@ declare module RIAPP {
                 dbSetName: string;
                 enablePaging: boolean;
                 pageSize: number;
-                fieldInfos: collection.IFieldInfo[];
+                fieldInfos: collMod.IFieldInfo[];
             }
             interface IRefreshRowInfo {
                 dbSetName: string;
@@ -2728,7 +2786,7 @@ declare module RIAPP {
                     parentField: string;
                 }[];
             }
-            interface IDbSetOptions extends collection.ICollectionOptions {
+            interface IDbSetOptions extends collMod.ICollectionOptions {
                 dbSetName: string;
             }
             interface IMetadata {
@@ -2793,93 +2851,91 @@ declare module RIAPP {
                 included: IIncludedResult[];
             }
             interface IDbSetConstructor {
-                new(dbContext: DbContext): DbSet<Entity>;
+                new (dbContext: DbContext): DbSet<Entity>;
             }
             class DataCache extends BaseObject {
-                public _query: TDataQuery<Entity>;
-                public _cache: ICachedPage[];
-                public _totalCount: number;
-                public _itemsByKey: {
-                    [key: string]: Entity;
-                };
+                private _query;
+                private _cache;
+                private _totalCount;
+                private _itemsByKey;
                 constructor(query: TDataQuery<Entity>);
-                public getCachedPage(pageIndex: number): ICachedPage;
-                public reindexCache(): void;
-                public getPrevCachedPageIndex(currentPageIndex: number): number;
-                public getNextRange(pageIndex: number): {
+                getCachedPage(pageIndex: number): ICachedPage;
+                reindexCache(): void;
+                getPrevCachedPageIndex(currentPageIndex: number): number;
+                getNextRange(pageIndex: number): {
                     start: number;
                     end: number;
                     cnt: number;
                 };
-                public fillCache(start: number, items: Entity[]): void;
-                public clear(): void;
-                public clearCacheForPage(pageIndex: number): void;
-                public hasPage(pageIndex: number): boolean;
-                public getItemByKey(key: string): Entity;
-                public getPageByItem(item: Entity): number;
-                public destroy(): void;
-                public toString(): string;
-                public _pageCount : number;
-                public pageSize : number;
-                public loadPageCount : number;
-                public totalCount : number;
-                public cacheSize : number;
+                fillCache(start: number, items: Entity[]): void;
+                clear(): void;
+                clearCacheForPage(pageIndex: number): void;
+                hasPage(pageIndex: number): boolean;
+                getItemByKey(key: string): Entity;
+                getPageByItem(item: Entity): number;
+                destroy(): void;
+                toString(): string;
+                _pageCount: number;
+                pageSize: number;
+                loadPageCount: number;
+                totalCount: number;
+                cacheSize: number;
             }
             class TDataQuery<TEntity extends Entity> extends BaseObject {
-                public _dbSet: DbSet<TEntity>;
-                public __queryInfo: IQueryInfo;
-                public _filterInfo: IFilterInfo;
-                public _sortInfo: ISortInfo;
-                public _isIncludeTotalCount: boolean;
-                public _isClearPrevData: boolean;
-                public _pageSize: number;
-                public _pageIndex: number;
-                public _params: any;
-                public _loadPageCount: number;
-                public _isClearCacheOnEveryLoad: boolean;
-                public _dataCache: DataCache;
-                public _cacheInvalidated: boolean;
+                private _dbSet;
+                private __queryInfo;
+                private _filterInfo;
+                private _sortInfo;
+                private _isIncludeTotalCount;
+                private _isClearPrevData;
+                private _pageSize;
+                private _pageIndex;
+                private _params;
+                private _loadPageCount;
+                private _isClearCacheOnEveryLoad;
+                private _dataCache;
+                private _cacheInvalidated;
                 constructor(dbSet: DbSet<TEntity>, queryInfo: IQueryInfo);
-                public getFieldInfo(fieldName: string): collection.IFieldInfo;
-                public getFieldNames(): string[];
+                getFieldInfo(fieldName: string): collMod.IFieldInfo;
+                getFieldNames(): string[];
                 private _addSort(fieldName, sortOrder);
                 private _addFilterItem(fieldName, operand, value);
-                public where(fieldName: string, operand: collection.FILTER_TYPE, value: any): TDataQuery<TEntity>;
-                public and(fieldName: string, operand: collection.FILTER_TYPE, value: any): TDataQuery<TEntity>;
-                public orderBy(fieldName: string, sortOrder?: collection.SORT_ORDER): TDataQuery<TEntity>;
-                public thenBy(fieldName: string, sortOrder?: collection.SORT_ORDER): TDataQuery<TEntity>;
-                public clearSort(): TDataQuery<TEntity>;
-                public clearFilter(): TDataQuery<TEntity>;
-                public clearParams(): TDataQuery<TEntity>;
-                public _clearCache(): void;
-                public _getCache(): DataCache;
-                public _reindexCache(): void;
-                public _isPageCached(pageIndex: number): boolean;
-                public _resetCacheInvalidated(): void;
-                public load(): IPromise<IQueryResult<TEntity>>;
-                public destroy(): void;
-                public toString(): string;
-                public _queryInfo : IQueryInfo;
-                public _serverTimezone : number;
-                public entityType : IEntityConstructor;
-                public dbSet : DbSet<TEntity>;
-                public dbSetName : string;
-                public queryName : string;
-                public filterInfo : IFilterInfo;
-                public sortInfo : ISortInfo;
-                public isIncludeTotalCount : boolean;
-                public isClearPrevData : boolean;
-                public pageSize : number;
-                public pageIndex : number;
-                public params : any;
-                public isPagingEnabled : boolean;
-                public loadPageCount : number;
-                public isClearCacheOnEveryLoad : boolean;
-                public isCacheValid : boolean;
+                where(fieldName: string, operand: collMod.FILTER_TYPE, value: any): TDataQuery<TEntity>;
+                and(fieldName: string, operand: collMod.FILTER_TYPE, value: any): TDataQuery<TEntity>;
+                orderBy(fieldName: string, sortOrder?: collMod.SORT_ORDER): TDataQuery<TEntity>;
+                thenBy(fieldName: string, sortOrder?: collMod.SORT_ORDER): TDataQuery<TEntity>;
+                clearSort(): TDataQuery<TEntity>;
+                clearFilter(): TDataQuery<TEntity>;
+                clearParams(): TDataQuery<TEntity>;
+                _clearCache(): void;
+                _getCache(): DataCache;
+                _reindexCache(): void;
+                _isPageCached(pageIndex: number): boolean;
+                protected _resetCacheInvalidated(): void;
+                load(): IPromise<IQueryResult<TEntity>>;
+                destroy(): void;
+                toString(): string;
+                _queryInfo: IQueryInfo;
+                _serverTimezone: number;
+                entityType: IEntityConstructor;
+                dbSet: DbSet<TEntity>;
+                dbSetName: string;
+                queryName: string;
+                filterInfo: IFilterInfo;
+                sortInfo: ISortInfo;
+                isIncludeTotalCount: boolean;
+                isClearPrevData: boolean;
+                pageSize: number;
+                pageIndex: number;
+                params: any;
+                isPagingEnabled: boolean;
+                loadPageCount: number;
+                isClearCacheOnEveryLoad: boolean;
+                isCacheValid: boolean;
             }
             class DataQuery extends TDataQuery<Entity> {
             }
-            class Entity extends collection.CollectionItem {
+            class Entity extends collMod.CollectionItem {
                 private __changeType;
                 private __isRefreshing;
                 private __isCached;
@@ -2888,55 +2944,55 @@ declare module RIAPP {
                 private _origVals;
                 private _saveChangeType;
                 constructor(dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]);
-                public _updateKeys(srvKey: string): void;
-                public _initRowInfo(row: IRowData, names: IFieldName[]): void;
-                public _processValues(path: string, values: any[], names: IFieldName[]): void;
-                public _checkCanRefresh(): void;
-                public _refreshValue(val: any, fullName: string, refreshMode: REFRESH_MODE): void;
-                public _refreshValues(rowInfo: IRowInfo, refreshMode: REFRESH_MODE): void;
-                public _onFieldChanged(fieldName: string, fieldInfo: collection.IFieldInfo): void;
-                public _getValueChange(fullName: string, fld: collection.IFieldInfo, changedOnly: boolean): IValueChange;
-                public _getValueChanges(changedOnly: boolean): IValueChange[];
-                public _getRowInfo(): IRowInfo;
-                public _fldChanging(fieldName: string, fieldInfo: collection.IFieldInfo, oldV: any, newV: any): boolean;
-                public _fldChanged(fieldName: string, fieldInfo: collection.IFieldInfo, oldV: any, newV: any): boolean;
-                public _clearFieldVal(fieldName: string): void;
-                public _skipValidate(fieldInfo: collection.IFieldInfo, val: any): boolean;
-                public _getFieldVal(fieldName: string): any;
-                public _setFieldVal(fieldName: string, val: any): boolean;
-                public _getCalcFieldVal(fieldName: string): any;
-                public _getNavFieldVal(fieldName: string): any;
-                public _setNavFieldVal(fieldName: string, value: any): void;
-                public _onAttaching(): void;
-                public _onAttach(): void;
-                public _beginEdit(): boolean;
-                public _endEdit(): boolean;
-                public deleteItem(): boolean;
-                public deleteOnSubmit(): boolean;
-                public acceptChanges(rowInfo?: IRowInfo): void;
-                public rejectChanges(): void;
-                public submitChanges(): IVoidPromise;
-                public refresh(): IPromise<Entity>;
-                public cancelEdit(): boolean;
-                public getDbContext(): DbContext;
-                public getDbSet(): DbSet<Entity>;
-                public toString(): string;
-                public destroy(): void;
-                public _isCanSubmit : boolean;
-                public _changeType : collection.STATUS;
-                public _isNew : boolean;
-                public _isDeleted : boolean;
-                public _entityType : IEntityConstructor;
-                public _srvKey : string;
-                public _dbSetName : string;
-                public _serverTimezone : number;
-                public _collection : collection.BaseCollection<Entity>;
-                public _dbSet : DbSet<Entity>;
-                public _isRefreshing : boolean;
-                public _isCached : boolean;
-                public isHasChanges : boolean;
+                protected _initRowInfo(row: IRowData, names: IFieldName[]): void;
+                protected _processValues(path: string, values: any[], names: IFieldName[]): void;
+                protected _onFieldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo): void;
+                protected _getValueChange(fullName: string, fld: collMod.IFieldInfo, changedOnly: boolean): IValueChange;
+                protected _getValueChanges(changedOnly: boolean): IValueChange[];
+                protected _fldChanging(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV: any, newV: any): boolean;
+                protected _fldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV: any, newV: any): boolean;
+                protected _skipValidate(fieldInfo: collMod.IFieldInfo, val: any): boolean;
+                protected _beginEdit(): boolean;
+                protected _endEdit(): boolean;
+                _getCalcFieldVal(fieldName: string): any;
+                _getNavFieldVal(fieldName: string): any;
+                _setNavFieldVal(fieldName: string, value: any): void;
+                _updateKeys(srvKey: string): void;
+                _checkCanRefresh(): void;
+                _refreshValue(val: any, fullName: string, refreshMode: REFRESH_MODE): void;
+                _refreshValues(rowInfo: IRowInfo, refreshMode: REFRESH_MODE): void;
+                _getRowInfo(): IRowInfo;
+                _clearFieldVal(fieldName: string): void;
+                _getFieldVal(fieldName: string): any;
+                _setFieldVal(fieldName: string, val: any): boolean;
+                _onAttaching(): void;
+                _onAttach(): void;
+                deleteItem(): boolean;
+                deleteOnSubmit(): boolean;
+                acceptChanges(rowInfo?: IRowInfo): void;
+                rejectChanges(): void;
+                submitChanges(): IVoidPromise;
+                refresh(): IPromise<Entity>;
+                cancelEdit(): boolean;
+                getDbContext(): DbContext;
+                getDbSet(): DbSet<Entity>;
+                toString(): string;
+                destroy(): void;
+                _isCanSubmit: boolean;
+                _changeType: collMod.STATUS;
+                _isNew: boolean;
+                _isDeleted: boolean;
+                _entityType: IEntityConstructor;
+                _srvKey: string;
+                _dbSetName: string;
+                _serverTimezone: number;
+                _collection: collMod.BaseCollection<Entity>;
+                _dbSet: DbSet<Entity>;
+                _isRefreshing: boolean;
+                _isCached: boolean;
+                isHasChanges: boolean;
             }
-            class DbSet<TEntity extends Entity> extends collection.BaseCollection<TEntity> {
+            class DbSet<TEntity extends Entity> extends collMod.BaseCollection<TEntity> {
                 private _dbContext;
                 private _isSubmitOnDelete;
                 private _trackAssoc;
@@ -2945,308 +3001,301 @@ declare module RIAPP {
                 private _parentAssocMap;
                 private _changeCount;
                 private _changeCache;
-                public _options: IDbSetOptions;
-                public _navfldMap: {
-                    [fieldName: string]: {
+                protected _options: IDbSetOptions;
+                protected _navfldMap: {
+                    [x: string]: {
                         getFunc: () => any;
                         setFunc: (v: any) => void;
                     };
                 };
-                public _calcfldMap: {
-                    [fieldName: string]: {
+                protected _calcfldMap: {
+                    [x: string]: {
                         getFunc: () => any;
                     };
                 };
-                public _itemsByKey: {
-                    [key: string]: TEntity;
+                protected _itemsByKey: {
+                    [x: string]: TEntity;
                 };
-                public _entityType: IEntityConstructor;
-                public _ignorePageChanged: boolean;
-                public _query: TDataQuery<TEntity>;
+                protected _entityType: IEntityConstructor;
+                protected _ignorePageChanged: boolean;
+                protected _query: TDataQuery<TEntity>;
                 constructor(opts: IDbSetConstuctorOptions, entityType: IEntityConstructor);
-                public getFieldInfo(fieldName: string): collection.IFieldInfo;
-                public _onError(error: any, source: any): boolean;
-                public _mapAssocFields(): void;
-                public _updatePermissions(perms: IPermissions): void;
-                public _getChildToParentNames(childFieldName: string): string[];
-                public _getStrValue(val: any, fieldInfo: collection.IFieldInfo): string;
-                public _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collection.IFieldInfo): {
+                handleError(error: any, source: any): boolean;
+                protected _mapAssocFields(): void;
+                protected _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo): {
                     getFunc: () => any;
                     setFunc: (v: any) => void;
                 };
-                public _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: collection.IFieldInfo): {
+                protected _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo): {
                     getFunc: () => any;
                 };
-                public _refreshValues(path: string, item: Entity, values: any[], names: IFieldName[], rm: REFRESH_MODE): void;
-                public _fillFromService(data: {
+                protected _refreshValues(path: string, item: Entity, values: any[], names: IFieldName[], rm: REFRESH_MODE): void;
+                protected _setCurrentItem(v: TEntity): void;
+                protected _getNewKey(item: TEntity): string;
+                protected _createNew(): TEntity;
+                protected _clearChangeCache(): void;
+                protected _onPageChanging(): boolean;
+                protected _onPageChanged(): void;
+                protected _onPageSizeChanged(): void;
+                protected _destroyItems(): void;
+                protected _defineCalculatedField(fullName: string, getFunc: () => any): void;
+                _getCalcFieldVal(fieldName: string, item: Entity): any;
+                _getNavFieldVal(fieldName: string, item: Entity): any;
+                _setNavFieldVal(fieldName: string, item: Entity, value: any): any;
+                _beforeLoad(query: TDataQuery<TEntity>, oldQuery: TDataQuery<TEntity>): void;
+                _updatePermissions(perms: IPermissions): void;
+                _getChildToParentNames(childFieldName: string): string[];
+                _getStrValue(val: any, fieldInfo: collMod.IFieldInfo): string;
+                _fillFromService(data: {
                     res: IQueryResponse;
                     isPageChanged: boolean;
                     fn_beforeFillEnd: () => void;
                 }): IQueryResult<TEntity>;
-                public _fillFromCache(data: {
+                _fillFromCache(data: {
                     isPageChanged: boolean;
                     fn_beforeFillEnd: () => void;
                 }): IQueryResult<TEntity>;
-                public _commitChanges(rows: IRowInfo[]): void;
-                public _setItemInvalid(row: IRowInfo): TEntity;
-                public _setCurrentItem(v: TEntity): void;
-                public _getChanges(): IRowInfo[];
-                public _getTrackAssocInfo(): ITrackAssoc[];
-                public _getNewKey(item: TEntity): string;
-                public _createNew(): TEntity;
-                public _addToChanged(item: TEntity): void;
-                public _removeFromChanged(key: string): void;
-                public _clearChangeCache(): void;
-                public _onItemStatusChanged(item: TEntity, oldChangeType: number): void;
-                public _onRemoved(item: TEntity, pos: number): void;
-                public _onPageChanging(): boolean;
-                public _onPageChanged(): void;
-                public _onPageSizeChanged(): void;
-                public _destroyItems(): void;
-                public _defineCalculatedField(fullName: string, getFunc: () => any): void;
-                public sort(fieldNames: string[], sortOrder: collection.SORT_ORDER): IPromise<IQueryResult<Entity>>;
-                public fillItems(data: {
+                _commitChanges(rows: IRowInfo[]): void;
+                _setItemInvalid(row: IRowInfo): TEntity;
+                _getChanges(): IRowInfo[];
+                _getTrackAssocInfo(): ITrackAssoc[];
+                _addToChanged(item: TEntity): void;
+                _removeFromChanged(key: string): void;
+                _onItemStatusChanged(item: TEntity, oldChangeType: number): void;
+                _onRemoved(item: TEntity, pos: number): void;
+                getFieldInfo(fieldName: string): collMod.IFieldInfo;
+                sort(fieldNames: string[], sortOrder: collMod.SORT_ORDER): IPromise<IQueryResult<Entity>>;
+                fillItems(data: {
                     names: IFieldName[];
                     rows: IRowData[];
                 }): void;
-                public acceptChanges(): void;
-                public rejectChanges(): void;
-                public deleteOnSubmit(item: TEntity): void;
-                public clear(): void;
-                public createQuery(name: string): TDataQuery<TEntity>;
-                public clearCache(): void;
-                public destroy(): void;
-                public toString(): string;
-                public items : TEntity[];
-                public dbContext : DbContext;
-                public dbSetName : string;
-                public entityType : IEntityConstructor;
-                public query : TDataQuery<TEntity>;
-                public hasChanges : boolean;
-                public cacheSize : number;
-                public isSubmitOnDelete : boolean;
+                acceptChanges(): void;
+                rejectChanges(): void;
+                deleteOnSubmit(item: TEntity): void;
+                clear(): void;
+                createQuery(name: string): TDataQuery<TEntity>;
+                clearCache(): void;
+                destroy(): void;
+                toString(): string;
+                items: TEntity[];
+                dbContext: DbContext;
+                dbSetName: string;
+                entityType: IEntityConstructor;
+                query: TDataQuery<TEntity>;
+                hasChanges: boolean;
+                cacheSize: number;
+                isSubmitOnDelete: boolean;
             }
             class DbSets extends BaseObject {
-                public _dbSetNames: string[];
+                protected _dbSetNames: string[];
                 private _dbContext;
                 private _dbSets;
                 private _arrDbSets;
                 constructor(dbContext: DbContext);
-                public _dbSetCreated(dbSet: DbSet<Entity>): void;
-                public _createDbSet(name: string, dbSetType: IDbSetConstructor): void;
-                public dbSetNames : string[];
-                public arrDbSets : DbSet<Entity>[];
-                public getDbSet(name: string): DbSet<Entity>;
-                public destroy(): void;
+                protected _dbSetCreated(dbSet: DbSet<Entity>): void;
+                protected _createDbSet(name: string, dbSetType: IDbSetConstructor): void;
+                dbSetNames: string[];
+                arrDbSets: DbSet<Entity>[];
+                getDbSet(name: string): DbSet<Entity>;
+                destroy(): void;
             }
             class DbContext extends BaseObject {
-                public _isInitialized: boolean;
-                public _dbSets: DbSets;
-                public _svcMethods: any;
-                public _assoc: any;
-                public _arrAssoc: Association[];
-                public _queryInf: {
-                    [queryName: string]: IQueryInfo;
-                };
-                public _serviceUrl: string;
-                public _isBusy: number;
-                public _isSubmiting: boolean;
-                public _hasChanges: boolean;
-                public _pendingSubmit: {
-                    deferred: IDeferred<any>;
-                };
-                public _serverTimezone: number;
-                public _waitQueue: utils.WaitQueue;
+                protected _isInitialized: boolean;
+                protected _dbSets: DbSets;
+                protected _svcMethods: any;
+                protected _assoc: any;
+                private _arrAssoc;
+                private _queryInf;
+                private _serviceUrl;
+                private _isBusy;
+                private _isSubmiting;
+                private _hasChanges;
+                private _pendingSubmit;
+                private _serverTimezone;
+                private _waitQueue;
                 constructor();
-                public _getEventNames(): string[];
-                public addOnSubmitError(fn: (sender: DbContext, args: {
-                    error: any;
-                    isHandled: boolean;
-                }) => void, namespace?: string): void;
-                public removeOnSubmitError(namespace?: string): void;
-                public _onGetCalcField(args: {
+                protected _getEventNames(): string[];
+                protected _onGetCalcField(args: {
                     dbSetName: string;
                     fieldName: string;
                     getFunc: () => any;
                 }): void;
-                public _getQueryInfo(name: string): IQueryInfo;
-                public _initDbSets(): void;
-                public _initAssociations(associations: IAssociationInfo[]): void;
-                public _initMethods(methods: IQueryInfo[]): void;
-                public _updatePermissions(info: IPermissionsInfo): void;
-                public _onDbSetHasChangesChanged(eSet: DbSet<Entity>): void;
-                public _initAssociation(assoc: IAssociationInfo): void;
-                public _initMethod(methodInfo: IQueryInfo): void;
-                public _getMethodParams(methodInfo: IQueryInfo, args: {
-                    [paramName: string]: any;
+                protected _initDbSets(): void;
+                protected _initAssociations(associations: IAssociationInfo[]): void;
+                protected _initMethods(methods: IQueryInfo[]): void;
+                protected _updatePermissions(info: IPermissionsInfo): void;
+                protected _initAssociation(assoc: IAssociationInfo): void;
+                protected _initMethod(methodInfo: IQueryInfo): void;
+                protected _getMethodParams(methodInfo: IQueryInfo, args: {
+                    [x: string]: any;
                 }): IInvokeRequest;
-                public _invokeMethod(methodInfo: IQueryInfo, data: IInvokeRequest, callback: (res: {
+                protected _invokeMethod(methodInfo: IQueryInfo, data: IInvokeRequest, callback: (res: {
                     result: any;
                     error: any;
                 }) => void): void;
-                public _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): IQueryResult<Entity>;
-                public _loadIncluded(res: IQueryResponse): void;
-                public _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<Entity>;
-                public _dataSaved(res: IChangeSet): void;
-                public _getChanges(): IChangeSet;
-                public _getUrl(action: any): string;
-                public _onItemRefreshed(res: IRefreshRowInfo, item: Entity): void;
-                public _refreshItem(item: Entity): IPromise<Entity>;
-                public _onError(error: any, source: any): boolean;
-                public _onDataOperError(ex: any, oper: any): boolean;
-                public _onSubmitError(error: any): void;
-                public _beforeLoad(query: TDataQuery<Entity>, oldQuery: TDataQuery<Entity>, dbSet: DbSet<Entity>): void;
-                public _load(query: TDataQuery<Entity>, isPageChanged: boolean): IPromise<IQueryResult<Entity>>;
-                public getDbSet(name: string): DbSet<Entity>;
-                public getAssociation(name: string): Association;
-                public submitChanges(): IVoidPromise;
-                public load(query: TDataQuery<Entity>): IPromise<IQueryResult<Entity>>;
-                public acceptChanges(): void;
-                public rejectChanges(): void;
-                public initialize(options: {
+                protected _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): IQueryResult<Entity>;
+                protected _loadIncluded(res: IQueryResponse): void;
+                protected _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<Entity>;
+                protected _dataSaved(res: IChangeSet): void;
+                protected _getChanges(): IChangeSet;
+                protected _getUrl(action: any): string;
+                handleError(error: any, source: any): boolean;
+                protected _onDataOperError(ex: any, oper: any): boolean;
+                protected _onSubmitError(error: any): void;
+                protected waitForNotBusy(callback: any, callbackArgs: any): void;
+                protected waitForNotSubmiting(callback: any, callbackArgs: any, groupName: any): void;
+                protected waitForInitialized(callback: any, callbackArgs: any): void;
+                initialize(options: {
                     serviceUrl: string;
                     permissions?: IPermissionsInfo;
                 }): void;
-                public waitForNotBusy(callback: any, callbackArgs: any): void;
-                public waitForNotSubmiting(callback: any, callbackArgs: any, groupName: any): void;
-                public waitForInitialized(callback: any, callbackArgs: any): void;
-                public destroy(): void;
-                public service_url : string;
-                public isInitialized : boolean;
-                public isBusy : boolean;
-                public isSubmiting : boolean;
-                public serverTimezone : number;
-                public dbSets : DbSets;
-                public serviceMethods : any;
-                public hasChanges : boolean;
+                addOnSubmitError(fn: (sender: DbContext, args: {
+                    error: any;
+                    isHandled: boolean;
+                }) => void, namespace?: string): void;
+                removeOnSubmitError(namespace?: string): void;
+                _onItemRefreshed(res: IRefreshRowInfo, item: Entity): void;
+                _refreshItem(item: Entity): IPromise<Entity>;
+                _getQueryInfo(name: string): IQueryInfo;
+                _onDbSetHasChangesChanged(eSet: DbSet<Entity>): void;
+                _load(query: TDataQuery<Entity>, isPageChanged: boolean): IPromise<IQueryResult<Entity>>;
+                getDbSet(name: string): DbSet<Entity>;
+                getAssociation(name: string): Association;
+                submitChanges(): IVoidPromise;
+                load(query: TDataQuery<Entity>): IPromise<IQueryResult<Entity>>;
+                acceptChanges(): void;
+                rejectChanges(): void;
+                destroy(): void;
+                service_url: string;
+                isInitialized: boolean;
+                isBusy: boolean;
+                isSubmiting: boolean;
+                serverTimezone: number;
+                dbSets: DbSets;
+                serviceMethods: any;
+                hasChanges: boolean;
             }
             class Association extends BaseObject {
-                public _objId: string;
-                public _name: string;
-                public _dbContext: DbContext;
-                public _onDeleteAction: DELETE_ACTION;
-                public _parentDS: DbSet<Entity>;
-                public _childDS: DbSet<Entity>;
-                public _parentFldInfos: collection.IFieldInfo[];
-                public _childFldInfos: collection.IFieldInfo[];
-                public _parentToChildrenName: string;
-                public _childToParentName: string;
-                public _parentMap: {
-                    [key: string]: Entity;
-                };
-                public _childMap: {
-                    [key: string]: Entity[];
-                };
-                public _isParentFilling: boolean;
-                public _isChildFilling: boolean;
-                public _saveParentFKey: string;
-                public _saveChildFKey: string;
-                public _changedTimeout: number;
-                public _changed: {
-                    [key: string]: number;
-                };
+                private _objId;
+                private _name;
+                private _dbContext;
+                private _onDeleteAction;
+                private _parentDS;
+                private _childDS;
+                private _parentFldInfos;
+                private _childFldInfos;
+                private _parentToChildrenName;
+                private _childToParentName;
+                private _parentMap;
+                private _childMap;
+                private _isParentFilling;
+                private _isChildFilling;
+                private _saveParentFKey;
+                private _saveChildFKey;
+                private _changedTimeout;
+                private _changed;
                 constructor(options: IAssocConstructorOptions);
-                public _onError(error: any, source: any): boolean;
-                public _bindParentDS(): void;
-                public _bindChildDS(): void;
-                public _onParentCollChanged(args: collection.ICollChangedArgs<Entity>): void;
-                public _onParentFill(args: collection.ICollFillArgs<Entity>): void;
-                public _onParentEdit(item: Entity, isBegin: boolean, isCanceled: boolean): void;
-                public _onParentCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collection.STATUS): void;
-                public _storeParentFKey(item: Entity): void;
-                public _checkParentFKey(item: Entity): void;
-                public _onParentStatusChanged(item: Entity, oldChangeType: collection.STATUS): void;
-                public _onChildCollChanged(args: collection.ICollChangedArgs<Entity>): void;
-                public _notifyChildrenChanged(changed: string[]): void;
-                public _notifyParentChanged(changed: string[]): void;
-                public _notifyChanged(changed_pkeys: string[], changed_ckeys: string[]): void;
-                public _onChildFill(args: collection.ICollFillArgs<Entity>): void;
-                public _onChildEdit(item: Entity, isBegin: boolean, isCanceled: boolean): void;
-                public _onChildCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collection.STATUS): void;
-                public _storeChildFKey(item: Entity): void;
-                public _checkChildFKey(item: Entity): void;
-                public _onChildStatusChanged(item: Entity, oldChangeType: collection.STATUS): void;
-                public _getItemKey(finf: collection.IFieldInfo[], ds: DbSet<Entity>, item: Entity): string;
-                public _resetChildMap(): void;
-                public _resetParentMap(): void;
-                public _unMapChildItem(item: Entity): any;
-                public _unMapParentItem(item: Entity): any;
-                public _mapParentItems(items: Entity[]): string[];
-                public _onChildrenChanged(fkey: string): void;
-                public _onParentChanged(fkey: string): void;
-                public _mapChildren(items: Entity[]): string[];
-                public _unbindParentDS(): void;
-                public _unbindChildDS(): void;
-                public getParentFKey(item: Entity): string;
-                public getChildFKey(item: Entity): any;
-                public getChildItems(item: Entity): Entity[];
-                public getParentItem(item: Entity): Entity;
-                public refreshParentMap(): string[];
-                public refreshChildMap(): string[];
-                public destroy(): void;
-                public toString(): string;
-                public name : string;
-                public parentToChildrenName : string;
-                public childToParentName : string;
-                public parentDS : DbSet<Entity>;
-                public childDS : DbSet<Entity>;
-                public parentFldInfos : collection.IFieldInfo[];
-                public childFldInfos : collection.IFieldInfo[];
-                public onDeleteAction : DELETE_ACTION;
+                handleError(error: any, source: any): boolean;
+                protected _bindParentDS(): void;
+                protected _bindChildDS(): void;
+                protected _onParentCollChanged(args: collMod.ICollChangedArgs<Entity>): void;
+                protected _onParentFill(args: collMod.ICollFillArgs<Entity>): void;
+                protected _onParentEdit(item: Entity, isBegin: boolean, isCanceled: boolean): void;
+                protected _onParentCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS): void;
+                protected _storeParentFKey(item: Entity): void;
+                protected _checkParentFKey(item: Entity): void;
+                protected _onParentStatusChanged(item: Entity, oldChangeType: collMod.STATUS): void;
+                protected _onChildCollChanged(args: collMod.ICollChangedArgs<Entity>): void;
+                protected _notifyChildrenChanged(changed: string[]): void;
+                protected _notifyParentChanged(changed: string[]): void;
+                protected _notifyChanged(changed_pkeys: string[], changed_ckeys: string[]): void;
+                protected _onChildFill(args: collMod.ICollFillArgs<Entity>): void;
+                protected _onChildEdit(item: Entity, isBegin: boolean, isCanceled: boolean): void;
+                protected _onChildCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS): void;
+                protected _storeChildFKey(item: Entity): void;
+                protected _checkChildFKey(item: Entity): void;
+                protected _onChildStatusChanged(item: Entity, oldChangeType: collMod.STATUS): void;
+                protected _getItemKey(finf: collMod.IFieldInfo[], ds: DbSet<Entity>, item: Entity): string;
+                protected _resetChildMap(): void;
+                protected _resetParentMap(): void;
+                protected _unMapChildItem(item: Entity): any;
+                protected _unMapParentItem(item: Entity): any;
+                protected _mapParentItems(items: Entity[]): string[];
+                protected _onChildrenChanged(fkey: string): void;
+                protected _onParentChanged(fkey: string): void;
+                protected _mapChildren(items: Entity[]): string[];
+                protected _unbindParentDS(): void;
+                protected _unbindChildDS(): void;
+                getParentFKey(item: Entity): string;
+                getChildFKey(item: Entity): any;
+                getChildItems(item: Entity): Entity[];
+                getParentItem(item: Entity): Entity;
+                refreshParentMap(): string[];
+                refreshChildMap(): string[];
+                destroy(): void;
+                toString(): string;
+                name: string;
+                parentToChildrenName: string;
+                childToParentName: string;
+                parentDS: DbSet<Entity>;
+                childDS: DbSet<Entity>;
+                parentFldInfos: collMod.IFieldInfo[];
+                childFldInfos: collMod.IFieldInfo[];
+                onDeleteAction: DELETE_ACTION;
             }
-            class DataView<TItem extends collection.CollectionItem> extends collection.BaseCollection<TItem> {
-                public _dataSource: collection.BaseCollection<TItem>;
-                public _fn_filter: (item: TItem) => boolean;
-                public _fn_sort: (item1: TItem, item2: TItem) => number;
-                public _fn_itemsProvider: (ds: collection.BaseCollection<TItem>) => TItem[];
-                public _isDSFilling: boolean;
-                public _isAddingNew: boolean;
-                public _objId: string;
+            class DataView<TItem extends collMod.CollectionItem> extends collMod.BaseCollection<TItem> {
+                private _dataSource;
+                private _fn_filter;
+                private _fn_sort;
+                private _fn_itemsProvider;
+                private _isDSFilling;
+                private _isAddingNew;
+                private _objId;
                 constructor(options: {
-                    dataSource: collection.BaseCollection<TItem>;
+                    dataSource: collMod.BaseCollection<TItem>;
                     fn_filter?: (item: TItem) => boolean;
                     fn_sort?: (item1: TItem, item2: TItem) => number;
-                    fn_itemsProvider?: (ds: collection.BaseCollection<TItem>) => TItem[];
+                    fn_itemsProvider?: (ds: collMod.BaseCollection<TItem>) => TItem[];
                 });
-                public _getEventNames(): string[];
-                public addOnViewRefreshed(fn: (sender: DataView<TItem>, args: {}) => void, namespace?: string): void;
-                public removeOnViewRefreshed(namespace?: string): void;
-                public _filterForPaging(items: TItem[]): TItem[];
-                public _onViewRefreshed(args: {}): void;
-                public _clear(isPageChanged: boolean): void;
-                public _refresh(isPageChanged: boolean): void;
-                public _fillItems(data: {
+                protected _getEventNames(): string[];
+                addOnViewRefreshed(fn: (sender: DataView<TItem>, args: {}) => void, namespace?: string): void;
+                removeOnViewRefreshed(namespace?: string): void;
+                protected _filterForPaging(items: TItem[]): TItem[];
+                protected _onViewRefreshed(args: {}): void;
+                protected _clear(isPageChanged: boolean): void;
+                protected _refresh(isPageChanged: boolean): void;
+                protected _fillItems(data: {
                     items: TItem[];
                     isPageChanged: boolean;
                     clear: boolean;
                     isAppend: boolean;
                 }): TItem[];
-                public _onDSCollectionChanged(args: collection.ICollChangedArgs<TItem>): void;
-                public _onDSFill(args: collection.ICollFillArgs<TItem>): void;
-                public _onDSStatusChanged(args: collection.ICollItemStatusArgs<TItem>): void;
-                public _bindDS(): void;
-                public _unbindDS(): void;
-                public _getStrValue(val: any, fieldInfo: any): string;
-                public _onCurrentChanging(newCurrent: TItem): void;
-                public _getErrors(item: TItem): {
-                    [fieldName: string]: string[];
+                protected _onDSCollectionChanged(args: collMod.ICollChangedArgs<TItem>): void;
+                protected _onDSFill(args: collMod.ICollFillArgs<TItem>): void;
+                protected _onDSStatusChanged(args: collMod.ICollItemStatusArgs<TItem>): void;
+                protected _bindDS(): void;
+                protected _unbindDS(): void;
+                protected _onCurrentChanging(newCurrent: TItem): void;
+                protected _onPageChanged(): void;
+                _getStrValue(val: any, fieldInfo: any): string;
+                _getErrors(item: TItem): {
+                    [x: string]: string[];
                 };
-                public _onPageChanged(): void;
-                public getItemsWithErrors(): TItem[];
-                public appendItems(items: TItem[]): TItem[];
-                public addNew(): TItem;
-                public removeItem(item: TItem): void;
-                public sortLocal(fieldNames: string[], sortOrder: collection.SORT_ORDER): IPromise<any>;
-                public getIsHasErrors(): boolean;
-                public clear(): void;
-                public refresh(): void;
-                public destroy(): void;
-                public dataSource : collection.BaseCollection<TItem>;
-                public isPagingEnabled : boolean;
-                public permissions : collection.IPermissions;
-                public fn_filter : (item: TItem) => boolean;
-                public fn_sort : (item1: TItem, item2: TItem) => number;
-                public fn_itemsProvider : (ds: collection.BaseCollection<TItem>) => TItem[];
+                getItemsWithErrors(): TItem[];
+                appendItems(items: TItem[]): TItem[];
+                addNew(): TItem;
+                removeItem(item: TItem): void;
+                sortLocal(fieldNames: string[], sortOrder: collMod.SORT_ORDER): IPromise<any>;
+                getIsHasErrors(): boolean;
+                clear(): void;
+                refresh(): void;
+                destroy(): void;
+                dataSource: collMod.BaseCollection<TItem>;
+                isPagingEnabled: boolean;
+                permissions: collMod.IPermissions;
+                fn_filter: (item: TItem) => boolean;
+                fn_sort: (item1: TItem, item2: TItem) => number;
+                fn_itemsProvider: (ds: collMod.BaseCollection<TItem>) => TItem[];
             }
             class ChildDataView<TEntity extends Entity> extends DataView<TEntity> {
                 private _parentItem;
@@ -3257,11 +3306,11 @@ declare module RIAPP {
                     fn_filter?: (item: TEntity) => boolean;
                     fn_sort?: (item1: TEntity, item2: TEntity) => number;
                 });
-                public _refresh(isPageChanged: boolean): void;
-                public destroy(): void;
-                public toString(): string;
-                public parentItem : Entity;
-                public association : Association;
+                protected _refresh(isPageChanged: boolean): void;
+                destroy(): void;
+                toString(): string;
+                parentItem: Entity;
+                association: Association;
             }
             class TDbSet extends DbSet<Entity> {
             }
@@ -3270,52 +3319,56 @@ declare module RIAPP {
             class TChildDataView extends ChildDataView<Entity> {
             }
             class BaseComplexProperty extends BaseObject implements IErrorNotification {
-                public _name: string;
+                private _name;
                 constructor(name: string);
-                public _getFullPath(path: any): string;
-                public getName(): string;
-                public setValue(fullName: string, value: any): void;
-                public getValue(fullName: string): any;
-                public getFieldInfo(): collection.IFieldInfo;
-                public getProperties(): collection.IFieldInfo[];
-                public getFullPath(name: string): string;
-                public getEntity(): Entity;
-                public getPropertyByName(name: string): collection.IFieldInfo;
-                public getIsHasErrors(): boolean;
-                public addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
-                public removeOnErrorsChanged(namespace?: string): void;
-                public getFieldErrors(fieldName: any): IValidationInfo[];
-                public getAllErrors(): IValidationInfo[];
-                public getIErrorNotification(): IErrorNotification;
+                _getFullPath(path: any): string;
+                getName(): string;
+                setValue(fullName: string, value: any): void;
+                getValue(fullName: string): any;
+                getFieldInfo(): collMod.IFieldInfo;
+                getProperties(): collMod.IFieldInfo[];
+                getFullPath(name: string): string;
+                getEntity(): Entity;
+                getPropertyByName(name: string): collMod.IFieldInfo;
+                getIsHasErrors(): boolean;
+                addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
+                removeOnErrorsChanged(namespace?: string): void;
+                getFieldErrors(fieldName: any): IValidationInfo[];
+                getAllErrors(): IValidationInfo[];
+                getIErrorNotification(): IErrorNotification;
             }
             class RootComplexProperty extends BaseComplexProperty {
                 private _entity;
                 constructor(name: string, owner: Entity);
-                public _getFullPath(path: any): string;
-                public setValue(fullName: string, value: any): void;
-                public getValue(fullName: string): any;
-                public getFieldInfo(): collection.IFieldInfo;
-                public getProperties(): collection.IFieldInfo[];
-                public getEntity(): Entity;
-                public getFullPath(name: string): string;
+                _getFullPath(path: any): string;
+                setValue(fullName: string, value: any): void;
+                getValue(fullName: string): any;
+                getFieldInfo(): collMod.IFieldInfo;
+                getProperties(): collMod.IFieldInfo[];
+                getEntity(): Entity;
+                getFullPath(name: string): string;
             }
             class ChildComplexProperty extends BaseComplexProperty {
                 private _parent;
                 constructor(name: string, parent: BaseComplexProperty);
-                public _getFullPath(path: string): string;
-                public setValue(fullName: string, value: any): void;
-                public getValue(fullName: string): any;
-                public getFieldInfo(): collection.IFieldInfo;
-                public getProperties(): collection.IFieldInfo[];
-                public getParent(): BaseComplexProperty;
-                public getRootProperty(): RootComplexProperty;
-                public getFullPath(name: string): string;
-                public getEntity(): Entity;
+                _getFullPath(path: string): string;
+                setValue(fullName: string, value: any): void;
+                getValue(fullName: string): any;
+                getFieldInfo(): collMod.IFieldInfo;
+                getProperties(): collMod.IFieldInfo[];
+                getParent(): BaseComplexProperty;
+                getRootProperty(): RootComplexProperty;
+                getFullPath(name: string): string;
+                getEntity(): Entity;
             }
         }
     }
 }
 declare module RIAPP {
+    import utilsMOD = RIAPP.MOD.utils;
+    import bindMOD = RIAPP.MOD.binding;
+    import elviewMOD = MOD.baseElView;
+    import contentMOD = RIAPP.MOD.baseContent;
     interface IBindableElement {
         el: HTMLElement;
         dataView: string;
@@ -3349,73 +3402,73 @@ declare module RIAPP {
         private _objId;
         private _objMaps;
         private _exports;
-        public _options: IAppOptions;
+        protected _options: IAppOptions;
         constructor(options?: IAppOptions);
-        public _getEventNames(): string[];
+        protected _getEventNames(): string[];
         private _cleanUpObjMaps();
         private _initModules();
         private _initUserModules(user_modules);
         private _destroyBindings();
         private _setUpBindings();
         private _getElementViewInfo(el);
-        public _onError(error: any, source: any): boolean;
-        public _getElView(el: HTMLElement): MOD.baseElView.BaseElView;
-        public _createElementView(el: HTMLElement, view_info: {
-            name: string;
-            options: any;
-        }): MOD.baseElView.BaseElView;
-        public _setElView(el: HTMLElement, view?: MOD.baseElView.BaseElView): void;
-        public _checkBindableElement(el: HTMLElement): IBindableElement;
-        public _getAllBindableHtmlElements(scope: {
+        handleError(error: any, source: any): boolean;
+        protected _getElViewType(name: string): elviewMOD.IViewType;
+        protected _checkBindableElement(el: HTMLElement): IBindableElement;
+        protected _getAllBindableHtmlElements(scope: {
             querySelectorAll: (selectors: string) => NodeList;
         }): IBindableElement[];
-        public _bindTemplateElements(templateEl: HTMLElement): MOD.utils.LifeTimeScope;
-        public _bindElements(scope: {
+        _getElView(el: HTMLElement): elviewMOD.BaseElView;
+        _createElementView(el: HTMLElement, view_info: {
+            name: string;
+            options: any;
+        }): elviewMOD.BaseElView;
+        _setElView(el: HTMLElement, view?: elviewMOD.BaseElView): void;
+        _bindTemplateElements(templateEl: HTMLElement): utilsMOD.LifeTimeScope;
+        _bindElements(scope: {
             querySelectorAll: (selectors: string) => NodeList;
-        }, dctx: any, isDataFormBind: boolean, isInsideTemplate: boolean): MOD.utils.LifeTimeScope;
-        public _getContentType(options: MOD.baseContent.IContentOptions): MOD.baseContent.IContentType;
-        public _getElViewType(name: string): MOD.baseElView.IViewType;
-        public addOnStartUp(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string): void;
-        public removeOnStartUp(namespace?: string): void;
-        public getExports(): {
-            [name: string]: any;
+        }, dctx: any, isDataFormBind: boolean, isInsideTemplate: boolean): utilsMOD.LifeTimeScope;
+        _getContentType(options: contentMOD.IContentOptions): contentMOD.IContentType;
+        addOnStartUp(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string): void;
+        removeOnStartUp(namespace?: string): void;
+        getExports(): {
+            [x: string]: any;
         };
-        public registerElView(name: string, type: MOD.baseElView.IViewType): void;
-        public getElementView(el: HTMLElement): MOD.baseElView.BaseElView;
-        public bind(opts: MOD.binding.IBindingOptions): MOD.binding.Binding;
-        public registerContentFactory(fn: (nextFactory?: MOD.baseContent.IContentFactory) => MOD.baseContent.IContentFactory): void;
-        public registerConverter(name: string, obj: MOD.converter.IConverter): void;
-        public getConverter(name: string): MOD.converter.IConverter;
-        public registerType(name: string, obj: any): void;
-        public getType(name: string): any;
-        public registerObject(name: string, obj: any): void;
-        public getObject(name: string): any;
-        public onStartUp(): void;
-        public startUp(fn_sandbox?: (app: Application) => void): void;
-        public loadTemplates(url: any): void;
-        public loadTemplatesAsync(fn_loader: () => IPromise<string>): void;
-        public registerTemplateLoader(name: string, fn_loader: () => IPromise<string>): void;
-        public getTemplateLoader(name: any): () => IPromise<string>;
-        public registerTemplateGroup(name: string, group: {
+        registerElView(name: string, type: elviewMOD.IViewType): void;
+        getElementView(el: HTMLElement): elviewMOD.BaseElView;
+        bind(opts: bindMOD.IBindingOptions): bindMOD.Binding;
+        registerContentFactory(fn: (nextFactory?: contentMOD.IContentFactory) => contentMOD.IContentFactory): void;
+        registerConverter(name: string, obj: IConverter): void;
+        getConverter(name: string): IConverter;
+        registerType(name: string, obj: any): void;
+        getType(name: string): any;
+        registerObject(name: string, obj: any): void;
+        getObject(name: string): any;
+        onStartUp(): void;
+        startUp(fn_sandbox?: (app: Application) => void): void;
+        loadTemplates(url: any): void;
+        loadTemplatesAsync(fn_loader: () => IPromise<string>): void;
+        registerTemplateLoader(name: string, fn_loader: () => IPromise<string>): void;
+        getTemplateLoader(name: any): () => IPromise<string>;
+        registerTemplateGroup(name: string, group: {
             fn_loader?: () => IPromise<string>;
             url?: string;
             names: string[];
         }): void;
-        public destroy(): void;
-        public toString(): string;
-        public uniqueID : string;
-        public options : IAppOptions;
-        public contentFactory : MOD.baseContent.IContentFactory;
-        public appName : string;
-        public appRoot : {
+        destroy(): void;
+        toString(): string;
+        uniqueID: string;
+        options: IAppOptions;
+        contentFactory: contentMOD.IContentFactory;
+        appName: string;
+        appRoot: {
             querySelectorAll: (selectors: string) => NodeList;
         };
-        public modules : {
-            [name: string]: any;
+        modules: {
+            [x: string]: any;
         };
-        public global : Global;
-        public UC : any;
-        public VM : any;
-        public app : Application;
+        global: Global;
+        UC: any;
+        VM: any;
+        app: Application;
     }
 }

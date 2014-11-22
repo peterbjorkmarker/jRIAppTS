@@ -1,4 +1,4 @@
-﻿/// <reference path="..\jriapp.d.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -7,10 +7,10 @@ var __extends = this.__extends || function (d, b) {
 };
 var RIAPP;
 (function (RIAPP) {
+    var COMMON;
     (function (COMMON) {
         'use strict';
         var global = RIAPP.global, utils = global.utils;
-
         var NotConverter = (function (_super) {
             __extends(NotConverter, _super);
             function NotConverter() {
@@ -25,7 +25,6 @@ var RIAPP;
             return NotConverter;
         })(RIAPP.MOD.converter.BaseConverter);
         COMMON.NotConverter = NotConverter;
-
         var DialogVM = (function (_super) {
             __extends(DialogVM, _super);
             function DialogVM(app) {
@@ -72,7 +71,6 @@ var RIAPP;
             return DialogVM;
         })(RIAPP.MOD.mvvm.BaseViewModel);
         COMMON.DialogVM = DialogVM;
-
         var DownloadLinkElView = (function (_super) {
             __extends(DownloadLinkElView, _super);
             function DownloadLinkElView() {
@@ -152,7 +150,6 @@ var RIAPP;
             return DownloadLinkElView;
         })(RIAPP.MOD.baseElView.BaseElView);
         COMMON.DownloadLinkElView = DownloadLinkElView;
-
         var FileImgElView = (function (_super) {
             __extends(FileImgElView, _super);
             function FileImgElView() {
@@ -241,7 +238,6 @@ var RIAPP;
             return FileImgElView;
         })(RIAPP.MOD.baseElView.BaseElView);
         COMMON.FileImgElView = FileImgElView;
-
         var ErrorViewModel = (function (_super) {
             __extends(ErrorViewModel, _super);
             function ErrorViewModel(app) {
@@ -263,7 +259,6 @@ var RIAPP;
                             self._error = self.error.origError;
                             self.raisePropertyChanged('error');
                         }
-
                         if (self.error instanceof RIAPP.MOD.db.AccessDeniedError)
                             self.title = "ACCESS DENIED";
                         else if (self.error instanceof RIAPP.MOD.db.ConcurrencyError)
@@ -276,7 +271,6 @@ var RIAPP;
                             self.title = "DATA OPERATION ERROR";
                         else
                             self.title = "UNEXPECTED ERROR";
-
                         self.message = (!self.error.message) ? ('' + self.error) : self.error.message;
                         dialog.title = self.title;
                     },
@@ -285,7 +279,6 @@ var RIAPP;
                         self.raisePropertyChanged('error');
                     }
                 };
-
                 //dialogs are distinguished by their given names
                 this._dialogVM.createDialog('errorDialog', dialogOptions);
             }
@@ -308,7 +301,7 @@ var RIAPP;
                 set: function (v) {
                     var old = this._error;
                     if (!!old) {
-                        global._onError(v, null);
+                        global.handleError(v, null);
                         global._throwDummy(v);
                     }
                     this._error = v;
@@ -348,7 +341,6 @@ var RIAPP;
             return ErrorViewModel;
         })(RIAPP.MOD.mvvm.BaseViewModel);
         COMMON.ErrorViewModel = ErrorViewModel;
-
         function initModule(app) {
             app.registerConverter('notConverter', new NotConverter());
             app.registerElView('fileLink', DownloadLinkElView);
@@ -357,7 +349,6 @@ var RIAPP;
         }
         COMMON.initModule = initModule;
         ;
-    })(RIAPP.COMMON || (RIAPP.COMMON = {}));
-    var COMMON = RIAPP.COMMON;
+    })(COMMON = RIAPP.COMMON || (RIAPP.COMMON = {}));
 })(RIAPP || (RIAPP = {}));
 //# sourceMappingURL=common.js.map

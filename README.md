@@ -31,6 +31,7 @@ After minification jriapp.js has the size of about 307 KB. When it is gzipped, i
 I recommend using the ASP.NET MVC 4 bundling feature for managing javascript files. 
 
 <b>Latest changes:</b>
+<p>2014-11-22 <b>Major code refactoring. Updated the framework to use new TypeScript 1.3 features.</b></p>
 <p>2014-09-19 Added <b>the Nancy framework</b> support by encapsulating the RIAPP DataService in Nancy framework module. Added the NancySelfHost Demo which shows how the jRIAppTS framework
 integrates with Nancy. You can test it on your computers, only it is needed to check database connection string to the <b>AdventureWorksLT</b> database.
 I ported the DataGridDemo only. The other demos can be ported as well.

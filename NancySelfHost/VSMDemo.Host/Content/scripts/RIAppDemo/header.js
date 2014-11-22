@@ -1,4 +1,4 @@
-﻿/// <reference path="..\jriapp.d.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -7,6 +7,7 @@ var __extends = this.__extends || function (d, b) {
 };
 var RIAPP;
 (function (RIAPP) {
+    var HEADER;
     (function (HEADER) {
         'use strict';
         var global = RIAPP.global, utils = global.utils;
@@ -14,7 +15,6 @@ var RIAPP;
         HEADER.contentPanel;
         HEADER.topPanel = "#demoHeader";
         HEADER.contentPanel = "#demoContent";
-
         var HeaderVM = (function (_super) {
             __extends(HeaderVM, _super);
             function HeaderVM(app) {
@@ -25,11 +25,11 @@ var RIAPP;
                 this._contentPanelHeight = 0;
                 if (!!this._$contentPanel)
                     this._contentPanelHeight = this._$contentPanel.height();
-
                 this._expanderCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     if (sender.isExpanded) {
                         self.expand();
-                    } else
+                    }
+                    else
                         self.collapse();
                 }, self, null);
             }
@@ -88,13 +88,11 @@ var RIAPP;
             return HeaderVM;
         })(RIAPP.MOD.mvvm.BaseViewModel);
         HEADER.HeaderVM = HeaderVM;
-
         function initModule(app) {
             return HEADER;
         }
         HEADER.initModule = initModule;
         ;
-    })(RIAPP.HEADER || (RIAPP.HEADER = {}));
-    var HEADER = RIAPP.HEADER;
+    })(HEADER = RIAPP.HEADER || (RIAPP.HEADER = {}));
 })(RIAPP || (RIAPP = {}));
 //# sourceMappingURL=header.js.map

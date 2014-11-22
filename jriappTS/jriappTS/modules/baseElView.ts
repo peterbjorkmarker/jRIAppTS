@@ -31,15 +31,15 @@
             }
 
             export class BaseElView extends RIAPP.BaseObject{
-                _el: HTMLElement;
-                _$el: JQuery;
-                _oldDisplay: string;
-                _objId: string;
-                _propChangedCommand: mvvmMOD.ICommand;
-                _errors: RIAPP.IValidationInfo[];
-                _toolTip: string;
-                _css: string;
-                _app: RIAPP.Application;
+                protected _el: HTMLElement;
+                protected _$el: JQuery;
+                protected _oldDisplay: string;
+                protected _objId: string;
+                protected _propChangedCommand: mvvmMOD.ICommand;
+                protected _errors: RIAPP.IValidationInfo[];
+                protected _toolTip: string;
+                protected _css: string;
+                protected _app: RIAPP.Application;
 
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions) {
                     super();
@@ -57,12 +57,12 @@
                     this._init(options);
                     this._applyToolTip();
                 }
-                _applyToolTip() {
+                protected _applyToolTip() {
                     if (!!this._toolTip) {
                         this._setToolTip(this.$el, this._toolTip);
                     }
                 }
-                _init(options: IViewOptions) {
+                protected _init(options: IViewOptions) {
                     if (!!this._css) {
                         this.$el.addClass(this._css);
                     }
@@ -93,7 +93,7 @@
                         self._propChangedCommand.execute(self, data);
                     }
                 }
-                _getErrorTipInfo(errors: RIAPP.IValidationInfo[]) {
+                protected _getErrorTipInfo(errors: RIAPP.IValidationInfo[]) {
                     var tip = ['<b>', ERRTEXT.errorInfo, '</b>', '<br/>'];
                     errors.forEach(function (info) {
                         var res = '';
@@ -105,7 +105,7 @@
                     });
                     return tip.join('');
                 }
-                _setFieldError(isError:boolean) {
+                protected _setFieldError(isError:boolean) {
                     var $el = this.$el;
                     if (isError) {
                         $el.addClass(css.fieldError);
@@ -114,7 +114,7 @@
                         $el.removeClass(css.fieldError);
                     }
                 }
-                _updateErrorUI(el: HTMLElement, errors: RIAPP.IValidationInfo[]) {
+                protected _updateErrorUI(el: HTMLElement, errors: RIAPP.IValidationInfo[]) {
                     if (!el) {
                         return;
                     }
@@ -128,14 +128,14 @@
                         this._setFieldError(false);
                     }
                 }
-                _onError(error, source):boolean {
-                    var isHandled = super._onError(error, source);
+                handleError(error, source):boolean {
+                    var isHandled = super.handleError(error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 }
-                _setToolTip($el:JQuery, tip:string, isError?: boolean) {
+                protected _setToolTip($el:JQuery, tip:string, isError?: boolean) {
                     utils.addToolTip($el, tip, isError);
                 }
                 toString() {
@@ -246,7 +246,7 @@
 
             export class CommandElView extends BaseElView {
                 private _command: mvvmMOD.Command;
-                _commandParam: any;
+                protected _commandParam: any;
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions) {
                     super(app, el, options);
                     this._command = null;
@@ -275,10 +275,10 @@
                         }, 0);
                     }
                 }
-                _onCommandChanged() {
+                protected _onCommandChanged() {
                     this.raisePropertyChanged('command');
                 }
-                _setCommand(v: mvvmMOD.Command) {
+                protected _setCommand(v: mvvmMOD.Command) {
                     var self = this;
                     if (v !== this._command) {
                         if (!!this._command) {
@@ -320,7 +320,6 @@
                     }
                 }
             };
-
          
             export class BusyElView extends BaseElView {
                 private _delay: number;
@@ -331,7 +330,7 @@
                 constructor(app: RIAPP.Application, el: HTMLElement, options: IViewOptions) {
                     super(app, el, options);
                 }
-                _init(options) {
+                protected _init(options) {
                     super._init(options);
                     var img;
                     if (!!options.img)
@@ -411,7 +410,7 @@
 
             export class CheckBoxElView extends InputElView {
                 private _val: boolean;
-                _init(options: IViewOptions) {
+                protected _init(options: IViewOptions) {
                     var self = this;
                     super._init(options);
                     this._val = this.el.checked;
@@ -420,7 +419,7 @@
                         self.checked = this.checked;
                     });
                 }
-                _setFieldError(isError:boolean) {
+                protected _setFieldError(isError:boolean) {
                     var $el = this.$el;
                     if (isError) {
                         var span = global.$('<div></div>').addClass(css.fieldError);
@@ -464,7 +463,7 @@
             export class CheckBoxThreeStateElView extends InputElView {
                 private _val: boolean;
                 private _cbxVal: number;
-                _init(options: IViewOptions) {
+                protected _init(options: IViewOptions) {
                     var self = this;
                     super._init(options);
                     this._val = this.el.checked;
@@ -489,7 +488,7 @@
                         self.checked = (self._cbxVal == 1) ? null : ((self._cbxVal == 2) ? true : false);
                     });
                 }
-                _setFieldError(isError: boolean) {
+                protected _setFieldError(isError: boolean) {
                     var $el = this.$el;
                     if (isError) {
                         var div = global.$('<div></div>').addClass(css.fieldError);
@@ -540,7 +539,7 @@
             }
 
             export class TextBoxElView extends InputElView {
-                _init(options:ITextBoxOptions) {
+                protected _init(options:ITextBoxOptions) {
                     var self = this;
                     super._init(options);
                     var $el =  this.$el;
@@ -562,7 +561,7 @@
                         });
                     }
                 }
-                _getEventNames() {
+                protected _getEventNames() {
                     var base_events = super._getEventNames();
                     return ['keypress'].concat(base_events);
                 }
@@ -605,7 +604,7 @@
                 constructor(app: RIAPP.Application, el: HTMLTextAreaElement, options: ITextAreaOptions) {
                     super(app, el, options);
                 }
-                _init(options: ITextAreaOptions) {
+                protected _init(options: ITextAreaOptions) {
                     super._init(options);
                     var self = this;
                     if (!!options.rows) {
@@ -636,7 +635,7 @@
                         });
                     }
                 }
-                _getEventNames() {
+                protected _getEventNames() {
                     var base_events = super._getEventNames();
                     return ['keypress'].concat(base_events);
                 }
@@ -733,7 +732,7 @@
 
             export class RadioElView extends InputElView {
                 private _val: boolean;
-                _init(options: IViewOptions) {
+                protected _init(options: IViewOptions) {
                     var self = this;
                     super._init(options);
                     this._val = this.el.checked;
@@ -743,7 +742,7 @@
                         self._updateGroup();
                     });
                 }
-                _updateGroup() {
+                protected _updateGroup() {
                     var groupName = this.el.getAttribute('name'), self = this;
                     if (!groupName)
                         return;
@@ -760,7 +759,7 @@
                         }
                     });
                 }
-                _setFieldError(isError:boolean) {
+                protected _setFieldError(isError:boolean) {
                     var $el = this.$el;
                     if (isError) {
                         var span = global.$('<div></div>').addClass(css.fieldError);
@@ -818,7 +817,7 @@
                     this._preventDefault = false;
                     super(app, el, options);
                 }
-                _init(options: IButtonOptions) {
+                protected _init(options: IButtonOptions) {
                     super._init(options);
                     var self = this, $el = this.$el;
                     if (!!options.preventDefault)
@@ -828,7 +827,7 @@
                         self._onClick(e);
                     });
                 }
-                _onClick(e: Event) {
+                protected _onClick(e: Event) {
                     if (this._preventDefault)
                         e.preventDefault();
                     this.invokeCommand();
@@ -918,7 +917,7 @@
                     this._preventDefault = false;
                     super(app, el, options);
                 }
-                _init(options: IAncorOptions) {
+                protected _init(options: IAncorOptions) {
                     super._init(options);
                     var self = this, $el = this.$el;
                     if (!!options.imageSrc)
@@ -930,12 +929,12 @@
                         self._onClick(e);
                     });
                 }
-                _onClick(e: Event) {
+                protected _onClick(e: Event) {
                     if (this._preventDefault)
                         e.preventDefault();
                     this.invokeCommand();
                 }
-                _updateImage(src:string) {
+                protected _updateImage(src:string) {
                     var $a = this.$el, $img, self = this;
                     if (this._imageSrc === src)
                         return;
@@ -1063,7 +1062,7 @@
                 private _expandedsrc: string;
                 private _collapsedsrc: string;
                 private _isExpanded: boolean;
-                _init(options: IExpanderOptions) {
+                protected _init(options: IExpanderOptions) {
                     this._expandedsrc = options.expandedsrc || global.getImagePath('collapse.jpg');
                     this._collapsedsrc = options.collapsedsrc || global.getImagePath('expand.jpg');
                     this._isExpanded = !!options.isExpanded;
@@ -1079,11 +1078,11 @@
                     this._isExpanded = false;
                     super.destroy();
                 }
-                _onCommandChanged() {
+                protected _onCommandChanged() {
                     super._onCommandChanged();
                     this.invokeCommand();
                 }
-                _onClick(e) {
+                protected _onClick(e) {
                     var self = this;
                     self._isExpanded = !self._isExpanded;
                     super._onClick(e);

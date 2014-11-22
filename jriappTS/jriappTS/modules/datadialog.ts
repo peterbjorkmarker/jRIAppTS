@@ -132,10 +132,10 @@
                     this._dialogCreated = false;
                     this._createDialog();
                 }
-                _onError(error, source): boolean {
-                    var isHandled = super._onError(error, source);
+                handleError(error, source): boolean {
+                    var isHandled = super.handleError(error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 }
@@ -151,10 +151,10 @@
                 removeOnRefresh(namespace?: string) {
                     this.removeHandler('refresh', namespace);
                 }
-                _updateIsEditable() {
+                protected _updateIsEditable() {
                     this._isEditable = utils.check.isEditable(this._dataContext);
                 }
-                _createDialog() {
+                protected _createDialog() {
                     if (this._dialogCreated)
                         return;
                     try {
@@ -165,10 +165,10 @@
                         this._dialogCreated = true;
                     }
                     catch (ex) {
-                        global.reThrow(ex, this._onError(ex, this));
+                        global.reThrow(ex, this.handleError(ex, this));
                     }
                 }
-                _getEventNames() {
+                protected _getEventNames() {
                     var base_events = super._getEventNames();
                     return ['close', 'refresh'].concat(base_events);
                 }
@@ -187,7 +187,7 @@
                         this._fn_OnTemplateDestroy(template);
                     }
                 }
-                _createTemplate() {
+                protected _createTemplate() {
                     return new templMOD.Template({
                         app: this.app,
                         templateID: this._templateID,
@@ -195,11 +195,11 @@
                         templEvents: this
                     });
                 }
-                _destroyTemplate() {
+                protected _destroyTemplate() {
                     if (!!this._template)
                         this._template.destroy();
                 }
-                _getButtons(): IButton[] {
+                protected _getButtons(): IButton[] {
                     var self = this, buttons = [
                         {
                             'id': self._objId + 'Refresh',
@@ -234,25 +234,25 @@
                     }
                     return buttons;
                 }
-                _getOkButton() {
+                protected _getOkButton() {
                     return $("#" + this._objId + 'Ok');
                 }
-                _getCancelButton() {
+                protected _getCancelButton() {
                     return $("#" + this._objId + 'Cancel');
                 }
-                _getRefreshButton() {
+                protected _getRefreshButton() {
                     return $("#" + this._objId + 'Refresh');
                 }
-                _getAllButtons() {
+                protected _getAllButtons() {
                     return [this._getOkButton(), this._getCancelButton(), this._getRefreshButton()];
                 }
-                _disableButtons(isDisable:boolean) {
+                protected _disableButtons(isDisable:boolean) {
                     var btns = this._getAllButtons();
                     btns.forEach(function ($btn) {
                         $btn.prop("disabled", !!isDisable);
                     });
                 }
-                _onOk() {
+                protected _onOk() {
                     var self = this, canCommit:boolean, action = DIALOG_ACTION.Default;
                     if (!!this._fn_OnOK) {
                         action = this._fn_OnOK(this);
@@ -300,7 +300,7 @@
                         }
                     }
                 }
-                _onCancel() {
+                protected _onCancel() {
                     var action = DIALOG_ACTION.Default;
                     if (!!this._fn_OnCancel) {
                         action = this._fn_OnCancel(this);
@@ -312,7 +312,7 @@
                     this._result = 'cancel';
                     this.hide();
                 }
-                _onRefresh() {
+                protected _onRefresh() {
                     var args = { isHandled: false };
                     this.raiseEvent('refresh', args);
                     if (args.isHandled)
@@ -321,7 +321,7 @@
                         this._dataContext.refresh();
                     }
                 }
-                _onClose() {
+                protected _onClose() {
                     try {
                         if (this._result != 'ok' && !!this._dataContext) {
                             if (this._isEditable)
@@ -341,7 +341,7 @@
                     this._currentSelectable = null;
                     setTimeout(function () { global.currentSelectable = csel; csel = null; }, 50);
                 }
-                _onShow() {
+                protected _onShow() {
                     this._currentSelectable = global.currentSelectable;
                     if (!!this._fn_OnShow) {
                         this._fn_OnShow(this);

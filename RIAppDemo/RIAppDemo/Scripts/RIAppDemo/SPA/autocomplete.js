@@ -1,20 +1,17 @@
-﻿/// <reference path="..\jriapp.d.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports", "common"], function(require, exports, COMMON) {
+define(["require", "exports", "common"], function (require, exports, COMMON) {
     'use strict';
-
     //using static import for CORE jriapp modules
     var MOD = RIAPP.MOD;
     var constsMOD = RIAPP.MOD.consts;
-
     //local variables for optimization
     var global = RIAPP.global, utils = global.utils;
-
     var AutoCompleteElView = (function (_super) {
         __extends(AutoCompleteElView, _super);
         function AutoCompleteElView() {
@@ -22,7 +19,6 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
         }
         AutoCompleteElView.prototype._init = function (options) {
             var self = this;
-
             //debugger;
             _super.prototype._init.call(this, options);
             this._templateId = options.templateId;
@@ -44,7 +40,6 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
             this._height = options.height || '300px';
             this._$dlg = null;
             var $el = this.$el;
-
             $el.on('change.' + this._objId, function (e) {
                 e.stopPropagation();
                 self._onTextChange();
@@ -58,7 +53,6 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
                 e.stopPropagation();
                 self._onKeyPress(e.which);
             });
-
             this._isOpen = false;
             this._createGridDataSource();
             this._template = this._createTemplate();
@@ -136,7 +130,6 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
                 this._loadTimeout = setTimeout(function () {
                     if (self._isDestroyCalled)
                         return;
-
                     if (self._prevText != text) {
                         self._prevText = text;
                         if (!self._isOpen)
@@ -144,7 +137,8 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
                         self.load(text);
                     }
                 }, 500);
-            } else
+            }
+            else
                 self.gridDataSource.clear();
         };
         AutoCompleteElView.prototype._onKeyPress = function (keyCode) {
@@ -179,7 +173,6 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
             if (this._isOpen)
                 return;
             var self = this;
-
             this._$dlg = this.$el.closest(".ui-dialog");
             var ns = "dialogdrag." + this._objId;
             this._$dlg.on(ns, null, function (event) {
@@ -188,17 +181,14 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
                 self._updatePosition();
                 return null;
             });
-
             this._updatePosition();
             this._$dropDown.css({ visibility: "visible", display: "none" });
             this._$dropDown.slideDown('medium');
-
             if (!!this._lookupGrid) {
                 this._lookupGrid.addHandler('cell_dblclicked', function (s, a) {
                     self._updateSelection();
                     self._hide();
                 }, this._objId);
-
                 global.$(global.document).on('keyup.' + this._objId, function (e) {
                     e.stopPropagation();
                     if (global.currentSelectable === self._lookupGrid)
@@ -214,11 +204,9 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
                 return;
             global.$(global.document).off('.' + this._objId);
             this._$dlg.off('.' + this._objId);
-
             if (!!this._lookupGrid) {
                 this._lookupGrid.removeNSHandlers(this._objId);
             }
-
             this._$dropDown.slideUp('medium', function () {
                 if (self._isDestroyCalled)
                     return;
@@ -258,7 +246,6 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
             this._dataContext = null;
             _super.prototype.destroy.call(this);
         };
-
         Object.defineProperty(AutoCompleteElView.prototype, "fieldName", {
             //field name for lookup in dbSet
             get: function () {
@@ -284,7 +271,6 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
             enumerable: true,
             configurable: true
         });
-
         Object.defineProperty(AutoCompleteElView.prototype, "template", {
             //template instance of drop down area (which contains datagrid) under textbox
             get: function () {
@@ -293,7 +279,6 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
             enumerable: true,
             configurable: true
         });
-
         Object.defineProperty(AutoCompleteElView.prototype, "dataContext", {
             //Entity which is databound to the textbox
             get: function () {
@@ -308,7 +293,6 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
             enumerable: true,
             configurable: true
         });
-
         Object.defineProperty(AutoCompleteElView.prototype, "gridDataSource", {
             //dbSet for a datagrid's dataSource (for lookup values)
             get: function () {
@@ -350,11 +334,9 @@ define(["require", "exports", "common"], function(require, exports, COMMON) {
         return AutoCompleteElView;
     })(MOD.baseElView.InputElView);
     exports.AutoCompleteElView = AutoCompleteElView;
-
     //this function is executed when an application which uses this module is created
     function initModule(app) {
         app.registerElView('autocomplete', AutoCompleteElView);
-
         //return something, even null is OK
         return {};
     }

@@ -1,13 +1,13 @@
-﻿/*!
-* jRIAppTS framework v2.0.7
-* https://github.com/BBGONE/jRIAppTS
-*
-* Copyright 2013, 2014 Maxim V. Tsapov
-* Released under the MIT license
-* https://github.com/BBGONE/jRIAppTS/blob/generics/LICENSE.txt
-*
-* Date: 2014-02-13T10:00Z
-*/
+/*!
+ * jRIAppTS framework v2.4.0
+ * https://github.com/BBGONE/jRIAppTS
+ *
+ * Copyright 2013, 2014 Maxim V. Tsapov
+ * Released under the MIT license
+ * https://github.com/BBGONE/jRIAppTS/blob/generics/LICENSE.txt
+ *
+ * Date: 2014-11-20T21:00Z
+ */
 'use strict';
 var RIAPP;
 (function (RIAPP) {
@@ -17,16 +17,15 @@ var RIAPP;
         DEBUG_LEVEL[DEBUG_LEVEL["HIGH"] = 2] = "HIGH";
     })(RIAPP.DEBUG_LEVEL || (RIAPP.DEBUG_LEVEL = {}));
     var DEBUG_LEVEL = RIAPP.DEBUG_LEVEL;
-
     RIAPP.DebugLevel = 0 /* NONE */;
-
     var ArrayHelper = (function () {
         function ArrayHelper() {
         }
         ArrayHelper.clone = function (arr) {
             if (arr.length === 1) {
                 return [arr[0]];
-            } else {
+            }
+            else {
                 return Array.apply(null, arr);
             }
         };
@@ -51,7 +50,6 @@ var RIAPP;
         return ArrayHelper;
     })();
     RIAPP.ArrayHelper = ArrayHelper;
-
     //essential basic utils
     var baseUtils = (function () {
         function baseUtils() {
@@ -141,18 +139,17 @@ var RIAPP;
                 }
             }
         };
-
         /*
-        *    Usage:     format('test {0}={1}', 'x', 100);
-        *    result:    test x=100
+         *    Usage:     format('test {0}={1}', 'x', 100);
+         *    result:    test x=100
         */
         baseUtils.format = function (format_str) {
             var args = [];
-            for (var _i = 0; _i < (arguments.length - 1); _i++) {
-                args[_i] = arguments[_i + 1];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                args[_i - 1] = arguments[_i];
             }
             var result = '';
-            for (var i = 0; ;) {
+            for (var i = 0;;) {
                 var open = format_str.indexOf('{', i);
                 var close = format_str.indexOf('}', i);
                 if ((open < 0) && (close < 0)) {
@@ -186,19 +183,17 @@ var RIAPP;
                 if (arg === undefined || arg === null) {
                     arg = '';
                 }
-
                 if (arg.format) {
                     result += arg.format(argFormat);
-                } else
+                }
+                else
                     result += arg.toString();
                 i = close + 1;
             }
             return result;
         };
-
         baseUtils.setValue = function (root, namePath, val, checkOverwrite) {
             var parts = namePath.split('.'), parent = root, i;
-
             for (i = 0; i < parts.length - 1; i += 1) {
                 // create a property if it doesn't exist
                 if (!parent[parts[i]]) {
@@ -206,7 +201,6 @@ var RIAPP;
                 }
                 parent = parent[parts[i]];
             }
-
             //the last part is the name itself
             var n = parts[parts.length - 1];
             if (!!checkOverwrite && (parent[n] !== undefined)) {
@@ -216,7 +210,6 @@ var RIAPP;
         };
         baseUtils.getValue = function (root, namePath) {
             var parts = namePath.split('.'), parent = root, i, res;
-
             for (i = 0; i < parts.length; i += 1) {
                 res = parent[parts[i]];
                 if (res === undefined) {
@@ -228,25 +221,21 @@ var RIAPP;
         };
         baseUtils.removeValue = function (root, namePath) {
             var parts = namePath.split('.'), parent = root, i, val = null;
-
             for (i = 0; i < parts.length - 1; i += 1) {
                 if (!parent[parts[i]]) {
                     return null;
                 }
                 parent = parent[parts[i]];
             }
-
             //the last part is the object name itself
             var n = parts[parts.length - 1];
             val = parent[n];
             if (val !== undefined) {
                 delete parent[n];
             }
-
             //returns deleted value
             return val;
         };
-
         //the object that directly has this property (last object in chain)
         baseUtils.resolveOwner = function (obj, path) {
             var parts = path.split('.'), i, res, len = parts.length;
@@ -272,131 +261,182 @@ var RIAPP;
         function BaseObject() {
             this._isDestroyed = false;
             this._isDestroyCalled = false;
-            this.__events = null;
+            this._events = null;
         }
+        /*
+        private _stringEvents(text: string): string {
+            if (!this._events)
+                return text +'- empty';
+            var ev = this._events, keys = Object.keys(ev), res = '';
+            keys.forEach(function (n) {
+                res += ',' + n + ':' + countNodes(ev[n]);
+            });
+            res = text+ '- '+res.substr(1);
+            console.log(res);
+            return res;
+        }
+        */
+        BaseObject.hasNode = function (list, node) {
+            if (!list || !node)
+                return false;
+            var curNode = list;
+            while (!!curNode) {
+                if (curNode.fn === node.fn && curNode.ns == node.ns)
+                    return true;
+                curNode = curNode.next;
+            }
+            return false;
+        };
+        BaseObject.countNodes = function (list) {
+            if (!list)
+                return 0;
+            var curNode = list, i = 0;
+            while (!!curNode) {
+                curNode = curNode.next;
+                ++i;
+            }
+            return i;
+        };
+        BaseObject.prependNode = function (list, node) {
+            if (BaseObject.hasNode(list, node))
+                return list;
+            node.next = list;
+            return node;
+        };
+        BaseObject.appendNode = function (list, node) {
+            var prevNode = list, lastNode = prevNode.next;
+            if (!prevNode)
+                return null;
+            //if already have it, return without adding it again
+            if (prevNode.fn === node.fn && prevNode.ns == node.ns)
+                return list;
+            while (!!lastNode) {
+                //prevent adding it more than once
+                if (lastNode.fn === node.fn && lastNode.ns == node.ns)
+                    return list;
+                prevNode = lastNode;
+                lastNode = prevNode.next;
+            }
+            lastNode = prevNode;
+            lastNode.next = node;
+            return list;
+        };
+        BaseObject.removeNodes = function (list, ns) {
+            if (!list)
+                return null;
+            var firstNode = list, prevNode = null, curNode = list, nextNode = (!curNode) ? null : curNode.next;
+            while (!!curNode) {
+                if (curNode.ns == ns) {
+                    if (!prevNode) {
+                        firstNode = nextNode;
+                        curNode.fn = null;
+                        curNode.next = null;
+                        curNode = nextNode;
+                        nextNode = (!curNode) ? null : curNode.next;
+                    }
+                    else {
+                        prevNode.next = nextNode;
+                        curNode.fn = null;
+                        curNode.next = null;
+                        curNode = nextNode;
+                        nextNode = (!curNode) ? null : curNode.next;
+                    }
+                }
+                else {
+                    prevNode = curNode;
+                    curNode = curNode.next;
+                    nextNode = (!curNode) ? null : curNode.next;
+                }
+            }
+            return firstNode;
+        };
         BaseObject.prototype._getEventNames = function () {
             return ['error', 'destroyed'];
         };
         BaseObject.prototype._addHandler = function (name, fn, namespace, prepend) {
             if (this._isDestroyed)
                 return;
-
             if (!RIAPP.baseUtils.isFunc(fn))
                 throw new Error(RIAPP.ERRS.ERR_EVENT_INVALID_FUNC);
             if (!name)
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
-
-            if (this.__events === null)
-                this.__events = {};
-            var self = this, ev = self.__events, n = name, ns = '*';
-
+            if (this._events === null)
+                this._events = {};
+            var self = this, ev = self._events, n = name, ns = '*';
             if (!!namespace)
                 ns = '' + namespace;
-
-            if (!ev[n])
-                ev[n] = [];
-
-            var arr = ev[n];
-
-            if (!arr.some(function (obj) {
-                return obj.fn === fn && obj.ns == ns;
-            })) {
-                if (!prepend)
-                    arr.push({ fn: fn, ns: ns });
-                else
-                    arr.unshift({ fn: fn, ns: ns });
+            var list = ev[n];
+            if (!list) {
+                ev[n] = { fn: fn, ns: ns, next: null };
+                return;
+            }
+            var newNode = { fn: fn, ns: ns, next: null };
+            if (!prepend) {
+                ev[n] = BaseObject.appendNode(list, newNode);
+            }
+            else {
+                ev[n] = BaseObject.prependNode(list, newNode);
             }
         };
         BaseObject.prototype._removeHandler = function (name, namespace) {
-            var self = this, ev = self.__events, n = name, ns = '*';
+            var self = this, ev = self._events, n = name, ns = '*';
             if (!ev)
                 return;
-
             if (!!namespace)
                 ns = '' + namespace;
-            var arr, toRemove, i;
-
-            //arguments supplyed name (and optionally namespace)
+            var list;
+            //arguments supplied is name (and optionally namespace)
             if (!!n) {
-                if (!ev[n])
+                list = ev[n];
+                if (!list)
                     return;
                 if (ns == '*') {
                     delete ev[n];
-                } else {
-                    arr = ev[n];
-                    toRemove = arr.filter(function (obj) {
-                        return obj.ns == ns;
-                    });
-                    i = arr.length;
-
-                    while (i > 0) {
-                        i -= 1;
-                        if (toRemove.indexOf(arr[i]) > -1) {
-                            arr.splice(i, 1);
-                        }
-                    }
-                    if (arr.length == 0)
+                }
+                else {
+                    list = BaseObject.removeNodes(list, ns);
+                    if (!list)
                         delete ev[n];
+                    else
+                        ev[n] = list;
                 }
                 return;
             }
-
-            //arguments supplyed only namespace
+            //arguments supplied is only namespace
             if (ns != '*') {
                 var keys = Object.keys(ev);
                 keys.forEach(function (n) {
-                    var arr = ev[n];
-                    var toRemove = arr.filter(function (obj) {
-                        return obj.ns == ns;
-                    });
-                    i = arr.length;
-                    while (i > 0) {
-                        i -= 1;
-                        if (toRemove.indexOf(arr[i]) > -1) {
-                            arr.splice(i, 1);
-                        }
-                    }
-                    if (arr.length == 0)
+                    var list = ev[n];
+                    list = BaseObject.removeNodes(list, ns);
+                    if (!list)
                         delete ev[n];
+                    else
+                        ev[n] = list;
                 });
                 return;
             }
-
-            //no arguments supplyed
-            self.__events = null;
+            //no arguments supplied
+            self._events = null;
         };
-        BaseObject.prototype._raiseEvent = function (name, data) {
-            var self = this, ev = self.__events;
+        BaseObject.prototype._raiseEvent = function (name, args) {
+            var self = this, ev = self._events;
             if (ev === null)
                 return;
             if (ev === undefined) {
-                throw new Error("Object instance is invalid. The constructor was not called.");
+                throw new Error("The object instance is invalid. The object constructor has not been called!");
             }
-
             if (!!name) {
-                //if property changed
+                //if an object property changed
                 if (name != '0*' && RIAPP.baseUtils.startsWith(name, '0')) {
-                    //notify those who subscribed for all property changes
-                    this._raiseEvent('0*', data);
+                    //notify all those who subscribed for all property changes
+                    this._raiseEvent('0*', args);
                 }
-                if (!ev[name])
-                    return;
-                var arr = RIAPP.ArrayHelper.clone(ev[name]);
-                arr.forEach(function (obj) {
-                    obj.fn.apply(self, [self, data]);
-                });
+                var curNode = ev[name];
+                while (!!curNode) {
+                    curNode.fn.apply(self, [self, args]);
+                    curNode = curNode.next;
+                }
             }
-        };
-        BaseObject.prototype._onError = function (error, source) {
-            if (!!RIAPP.global && RIAPP.global._checkIsDummy(error)) {
-                return true;
-            }
-            if (!error.message) {
-                error = new Error('' + error);
-            }
-            var args = { error: error, source: source, isHandled: false };
-            this._raiseEvent('error', args);
-            return args.isHandled;
         };
         BaseObject.prototype._checkEventName = function (name) {
             if (this._getEventNames().indexOf(name) === -1) {
@@ -408,6 +448,17 @@ var RIAPP;
         };
         BaseObject.prototype._isHasProp = function (prop) {
             return RIAPP.baseUtils.hasProp(this, prop);
+        };
+        BaseObject.prototype.handleError = function (error, source) {
+            if (!!RIAPP.global && RIAPP.global._checkIsDummy(error)) {
+                return true;
+            }
+            if (!error.message) {
+                error = new Error('' + error);
+            }
+            var args = { error: error, source: source, isHandled: false };
+            this._raiseEvent('error', args);
+            return args.isHandled;
         };
         BaseObject.prototype.raisePropertyChanged = function (name) {
             var data = { property: name };
@@ -423,7 +474,8 @@ var RIAPP;
                 if (obj instanceof BaseObject) {
                     obj._raiseEvent('0' + lastPropName, data);
                 }
-            } else {
+            }
+            else {
                 if (RIAPP.DebugLevel > 0 /* NONE */ && !RIAPP.baseUtils.hasProp(this, lastPropName)) {
                     if (RIAPP.DebugLevel == 2 /* HIGH */) {
                         debugger;
@@ -433,9 +485,9 @@ var RIAPP;
                 this._raiseEvent('0' + lastPropName, data);
             }
         };
-        BaseObject.prototype.addHandler = function (name, fn, namespace) {
+        BaseObject.prototype.addHandler = function (name, fn, namespace, prepend) {
             this._checkEventName(name);
-            this._addHandler(name, fn, namespace, false);
+            this._addHandler(name, fn, namespace, !!prepend);
         };
         BaseObject.prototype.removeHandler = function (name, namespace) {
             if (!!name) {
@@ -455,7 +507,6 @@ var RIAPP;
         BaseObject.prototype.removeOnError = function (namespace) {
             this.removeHandler('error', namespace);
         };
-
         //remove event handlers by namespace
         BaseObject.prototype.removeNSHandlers = function (namespace) {
             this._removeHandler(null, namespace);
@@ -464,8 +515,7 @@ var RIAPP;
             this._checkEventName(name);
             this._raiseEvent(name, args);
         };
-
-        //to subscribe for the changes on all properties, pass in the prop parameter: '*'
+        //to subscribe for changes on all properties, pass in the prop parameter: '*'
         BaseObject.prototype.addOnPropertyChange = function (prop, fn, namespace) {
             if (!prop)
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);
@@ -490,15 +540,22 @@ var RIAPP;
             }
             this._removeHandler(prop, namespace);
         };
+        BaseObject.prototype.getIsDestroyed = function () {
+            return this._isDestroyed;
+        };
+        BaseObject.prototype.getIsDestroyCalled = function () {
+            return this._isDestroyCalled;
+        };
         BaseObject.prototype.destroy = function () {
             if (this._isDestroyed)
                 return;
             this._isDestroyed = true;
             this._isDestroyCalled = true;
-            try  {
+            try {
                 this._raiseEvent('destroyed', {});
-            } finally {
-                this.__events = null;
+            }
+            finally {
+                this._events = null;
             }
         };
         return BaseObject;
@@ -515,13 +572,11 @@ var RIAPP;
 (function (RIAPP) {
     RIAPP.global = null;
     RIAPP.css_riaTemplate = 'ria-template';
-
     (function (BindTo) {
         BindTo[BindTo["Source"] = 0] = "Source";
         BindTo[BindTo["Target"] = 1] = "Target";
     })(RIAPP.BindTo || (RIAPP.BindTo = {}));
     var BindTo = RIAPP.BindTo;
-
     var Global = (function (_super) {
         __extends(Global, _super);
         function Global(window, jQuery) {
@@ -535,7 +590,6 @@ var RIAPP;
             this._$ = jQuery;
             this._currentSelectable = null;
             this._userCode = {};
-
             //exported types
             this._exports = {};
             this._templateLoaders = {};
@@ -558,7 +612,6 @@ var RIAPP;
                     self.removeHandler('load', null);
                 }, 0);
             });
-
             //when clicked outside any Selectable set _currentSelectable = null
             self.$(self.document).on("click.global", function (e) {
                 e.stopPropagation();
@@ -579,7 +632,6 @@ var RIAPP;
             self.$(self.window).unload(function () {
                 self.raiseEvent('unload', {});
             });
-
             //this way to attach for correct work in firefox
             self.window.onerror = function (msg, url, linenumber) {
                 if (!!msg && msg.toString().indexOf("DUMMY_ERROR") > -1) {
@@ -643,7 +695,6 @@ var RIAPP;
             }
             if (!isOK)
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
-
             this._isInitialized = true;
             self.raiseEvent('initialize', {});
             setTimeout(function () {
@@ -728,13 +779,14 @@ var RIAPP;
             var deferred = self.utils.createDeferred();
             promise.then(function (html) {
                 self.utils.removeFromArray(self._promises, promise);
-                try  {
+                try {
                     var tmpDiv = self.document.createElement('div');
                     tmpDiv.innerHTML = html;
                     self._processTemplateSection(tmpDiv, app);
                     deferred.resolve();
-                } catch (ex) {
-                    self._onError(ex, self);
+                }
+                catch (ex) {
+                    self.handleError(ex, self);
                     deferred.reject();
                 }
                 if (!self.isLoading)
@@ -745,25 +797,25 @@ var RIAPP;
                     self.raisePropertyChanged('isLoading');
                 deferred.reject();
                 if (!!err && !!err.message) {
-                    self._onError(err, self);
-                } else if (!!err && !!err.responseText) {
-                    self._onError(new Error(err.responseText), self);
-                } else
-                    self._onError(new Error('Failed to load templates'), self);
+                    self.handleError(err, self);
+                }
+                else if (!!err && !!err.responseText) {
+                    self.handleError(new Error(err.responseText), self);
+                }
+                else
+                    self.handleError(new Error('Failed to load templates'), self);
             });
             return deferred.promise();
         };
-
         /*
-        fn_loader must load template and return promise which resolves with loaded HTML string
-        */
+         fn_loader must load template and return promise which resolves with loaded HTML string
+         */
         Global.prototype._registerTemplateLoader = function (name, loader) {
             var self = this;
             loader = self.utils.extend(false, {
                 fn_loader: null,
                 groupName: null
             }, loader);
-
             if (!loader.groupName && !self.utils.check.isFunction(loader.fn_loader)) {
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'fn_loader is Function'));
             }
@@ -786,17 +838,15 @@ var RIAPP;
                 if (!group) {
                     throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_TEMPLATE_GROUP_NOTREGISTERED, loader.groupName));
                 }
-
                 //this function will return promise resolved with the template's html
                 return function () {
                     if (!group.promise) {
                         //start the loading only if no loading in progress
                         group.promise = self._loadTemplatesAsync(group.fn_loader, group.app);
                     }
-
                     var deferred = self.utils.createDeferred();
                     group.promise.done(function () {
-                        try  {
+                        try {
                             group.promise = null;
                             group.names.forEach(function (name) {
                                 if (!!group.app) {
@@ -807,31 +857,29 @@ var RIAPP;
                                     throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_TEMPLATE_NOTREGISTERED, name));
                                 }
                             });
-
                             var loader = self._getTemplateLoaderCore(name);
                             if (!loader || !loader.fn_loader) {
                                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_TEMPLATE_NOTREGISTERED, name));
                             }
                             delete self._templateGroups[loader.groupName];
-
                             loader.fn_loader().done(function (html) {
                                 deferred.resolve(html);
                             }).fail(function (er) {
                                 deferred.reject(er);
                             });
-                        } catch (ex) {
+                        }
+                        catch (ex) {
                             deferred.reject(ex);
                         }
                     });
-
                     group.promise.fail(function (er) {
                         group.promise = null;
                         deferred.reject(er);
                     });
-
                     return deferred.promise();
                 };
-            } else
+            }
+            else
                 return loader.fn_loader;
         };
         Global.prototype._registerTemplateGroup = function (groupName, group) {
@@ -842,25 +890,22 @@ var RIAPP;
                 app: null,
                 promise: null
             }, group);
-
             if (!!group2.url && !group2.fn_loader) {
                 //make a function to load from this url
                 group2.fn_loader = function () {
                     return self.utils.performAjaxGet(group2.url);
                 };
             }
-
             RIAPP.baseUtils.setValue(self._templateGroups, groupName, group2, true);
             group2.names.forEach(function (name) {
                 if (!!group2.app) {
                     name = group2.app.appName + '.' + name;
                 }
-
                 //for each template in the group register dummy loader function which has only group name
                 //when template will be requested, this dummy loader will be replaced with the real one
                 self._registerTemplateLoader(name, {
                     groupName: groupName,
-                    fn_loader: null
+                    fn_loader: null //no loader function
                 });
             });
         };
@@ -913,13 +958,11 @@ var RIAPP;
             else
                 throw ex;
         };
-
         //each module on its loading invokes this  function
         Global.prototype.onModuleLoaded = function (name, module_obj) {
             var self = this;
             if (this.isModuleLoaded(name))
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_MODULE_ALREDY_REGISTERED, name));
-
             this._moduleNames.push(name);
         };
         Global.prototype.isModuleLoaded = function (name) {
@@ -961,14 +1004,16 @@ var RIAPP;
             var name2 = 'converters.' + name;
             if (!this._getObject(this, name2)) {
                 this._registerObject(this, name2, obj);
-            } else
+            }
+            else
                 throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         };
         Global.prototype.registerElView = function (name, elViewType) {
             var name2 = 'elvws.' + name;
             if (!this._getObject(this, name2)) {
                 this._registerObject(this, name2, elViewType);
-            } else
+            }
+            else
                 throw new Error(RIAPP.global.utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         };
         Global.prototype.getImagePath = function (imageName) {
@@ -1060,18 +1105,19 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.3.0';
+        Global.vesion = '2.4.0';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
     })(RIAPP.BaseObject);
     RIAPP.Global = Global;
-
     RIAPP.global = new Global(window, jQuery);
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var consts;
         (function (consts) {
             consts.DATA_ATTR = {
                 EL_VIEW_KEY: 'data-elvwkey',
@@ -1123,16 +1169,15 @@ var RIAPP;
             var KEYS = consts.KEYS;
             consts.ELVIEW_NM = { DATAFORM: 'dataform' };
             consts.LOADER_GIF = { SMALL: 'loader2.gif', NORMAL: 'loader.gif' };
-
             RIAPP.global.onModuleLoaded('consts', consts);
-        })(MOD.consts || (MOD.consts = {}));
-        var consts = MOD.consts;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(consts = MOD.consts || (MOD.consts = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var utils;
         (function (utils) {
             var constsMOD = MOD.consts;
             var base_utils = RIAPP.baseUtils, _newID = 0;
@@ -1140,7 +1185,6 @@ var RIAPP;
                 toolTip: 'qtip',
                 toolTipError: 'qtip-red'
             };
-
             //adds new properties to some prototype
             function defineProps(proto, props, propertyDescriptors) {
                 var pds = propertyDescriptors || {}, propertyName;
@@ -1154,7 +1198,6 @@ var RIAPP;
                         pd['configurable'] = false;
                     }
                 });
-
                 if (!!props) {
                     var simpleProperties = Object.getOwnPropertyNames(props);
                     for (var i = 0, len = simpleProperties.length; i < len; i += 1) {
@@ -1162,16 +1205,13 @@ var RIAPP;
                         if (pds.hasOwnProperty(propertyName)) {
                             continue;
                         }
-
                         pds[propertyName] = Object.getOwnPropertyDescriptor(props, propertyName);
                     }
                 }
-
                 return Object.defineProperties(proto, pds);
             }
             utils.defineProps = defineProps;
             ;
-
             function extend(typeConstructor, superType) {
                 for (var p in superType)
                     if (superType.hasOwnProperty(p))
@@ -1183,7 +1223,6 @@ var RIAPP;
                 typeConstructor.prototype = new __();
             }
             ;
-
             //we can add new properties to existing type, it generates new type - constructor function
             function __extendType(_super, pds, props) {
                 var fn = function () {
@@ -1195,7 +1234,6 @@ var RIAPP;
             }
             utils.__extendType = __extendType;
             ;
-
             var Checks = (function () {
                 function Checks() {
                 }
@@ -1255,7 +1293,6 @@ var RIAPP;
                     var opts = RIAPP.global.parser.parseOptions(attr);
                     return (opts.length > 0 && opts[0].name === constsMOD.ELVIEW_NM.DATAFORM);
                 };
-
                 //check if element is placed inside DataForm
                 Checks.isInsideDataForm = function (el) {
                     if (!el)
@@ -1264,12 +1301,12 @@ var RIAPP;
                     if (!!parent) {
                         if (!Checks.isDataForm(parent)) {
                             return Checks.isInsideDataForm(parent);
-                        } else
+                        }
+                        else
                             return true;
                     }
                     return false;
                 };
-
                 //check if the element inside of any dataform in the array
                 Checks.isInNestedForm = function (root, forms, el) {
                     var i, oNode, len = forms.length;
@@ -1277,7 +1314,6 @@ var RIAPP;
                         return false;
                     }
                     oNode = el.parentElement;
-
                     while (!!oNode) {
                         for (i = 0; i < len; i += 1) {
                             if (oNode === forms[i]) {
@@ -1285,21 +1321,18 @@ var RIAPP;
                                 return true;
                             }
                         }
-
                         if (!!root && oNode === root) {
                             //reached up to the root
                             return false;
                         }
-
                         //try parent element
                         oNode = oNode.parentElement;
                     }
-
                     return false;
                 };
                 Checks.isNull = base_utils.isNull;
                 Checks.isUndefined = base_utils.isUndefined;
-
+                //checking for null type
                 Checks.isNt = base_utils.isNt;
                 Checks.isFunction = base_utils.isFunc;
                 Checks.isString = base_utils.isString;
@@ -1311,27 +1344,27 @@ var RIAPP;
                 return Checks;
             })();
             utils.Checks = Checks;
-
             var StringUtils = (function () {
                 function StringUtils() {
                 }
                 /**
-                *    Usage:     formatNumber(123456.789, 2, '.', ',');
-                *    result:    123,456.79
+                 *    Usage:     formatNumber(123456.789, 2, '.', ',');
+                 *    result:    123,456.79
                 **/
                 StringUtils.formatNumber = function (num, decimals, dec_point, thousands_sep) {
                     num = (num + '').replace(/[^0-9+-Ee.]/g, '');
-                    var n = !isFinite(+num) ? 0 : +num, prec = !isFinite(+decimals) ? 0 : Math.abs(decimals), sep = (thousands_sep === undefined) ? ',' : thousands_sep, dec = (dec_point === undefined) ? '.' : dec_point, s = [''], toFixedFix = function (n, prec) {
+                    var n = !isFinite(+num) ? 0 : +num, prec = !isFinite(+decimals) ? 0 : Math.abs(decimals), sep = (thousands_sep === undefined) ? ',' : thousands_sep, dec = (dec_point === undefined) ? '.' : dec_point, s = [''], 
+                    // Fix for IE parseFloat(0.55).toFixed(0) = 0;
+                    toFixedFix = function (n, prec) {
                         var k = Math.pow(10, prec);
                         return '' + Math.round(n * k) / k;
                     };
-
                     if (Checks.isNt(decimals)) {
                         s = ('' + n).split('.');
                         prec = 2;
-                    } else
+                    }
+                    else
                         s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
-
                     var i, s0 = '', len = s[0].length;
                     if (len > 3) {
                         for (i = 0; i < len; i += 1) {
@@ -1367,7 +1400,6 @@ var RIAPP;
             })();
             utils.StringUtils = StringUtils;
             ;
-
             var Validations = (function () {
                 function Validations() {
                 }
@@ -1406,7 +1438,6 @@ var RIAPP;
             })();
             utils.Validations = Validations;
             ;
-
             utils.valueUtils = {
                 valueToDate: function (val, dtcnv, stz) {
                     if (!val)
@@ -1419,7 +1450,6 @@ var RIAPP;
                     var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), parseInt(parts[3], 10), parseInt(parts[4], 10), parseInt(parts[5], 10), (!!parts[6]) ? parseInt(parts[6], 10) : 0);
                     var DATE_CONVERSION = MOD.consts.DATE_CONVERSION;
                     var ctz = RIAPP.global.utils.get_timeZoneOffset();
-
                     switch (dtcnv) {
                         case 0 /* None */:
                             break;
@@ -1475,10 +1505,8 @@ var RIAPP;
                 },
                 stringifyValue: function (v, dcnv, dataType, stz) {
                     var res = null;
-
                     if (Checks.isNt(v))
                         return res;
-
                     function conv(v) {
                         if (Checks.isDate(v))
                             return utils.valueUtils.dateToValue(v, dcnv, stz);
@@ -1534,14 +1562,12 @@ var RIAPP;
                         default:
                             throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dataType', dataType));
                     }
-
                     if (!isOK)
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_WRONG_TYPE, v, MOD.consts.DATA_TYPE[dataType]));
                     return res;
                 },
                 parseValue: function (v, dataType, dcnv, stz) {
                     var res = null;
-
                     if (v === undefined || v === null)
                         return res;
                     switch (dataType) {
@@ -1573,11 +1599,9 @@ var RIAPP;
                         default:
                             throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dataType', dataType));
                     }
-
                     return res;
                 }
             };
-
             /*
             LifeTimeScope used to hold references to objects and destroys
             them all when LifeTimeScope is destroyed itself
@@ -1606,7 +1630,7 @@ var RIAPP;
                         return;
                     this._isDestroyCalled = true;
                     this._objs.forEach(function (obj) {
-                        if (!obj._isDestroyCalled)
+                        if (!obj.getIsDestroyCalled())
                             obj.destroy();
                     });
                     this._objs = [];
@@ -1618,7 +1642,6 @@ var RIAPP;
                 return LifeTimeScope;
             })(RIAPP.BaseObject);
             utils.LifeTimeScope = LifeTimeScope;
-
             var PropWatcher = (function (_super) {
                 __extends(PropWatcher, _super);
                 function PropWatcher() {
@@ -1634,7 +1657,6 @@ var RIAPP;
                     obj.addOnPropertyChange(prop, function (s, a) {
                         fn_onChange(a.property);
                     }, self.uniqueID);
-
                     if (self._objs.indexOf(obj) < 0)
                         self._objs.push(obj);
                 };
@@ -1645,7 +1667,6 @@ var RIAPP;
                             fn_onChange(a.property);
                         }
                     }, self.uniqueID);
-
                     if (self._objs.indexOf(obj) < 0)
                         self._objs.push(obj);
                 };
@@ -1676,12 +1697,11 @@ var RIAPP;
                 return PropWatcher;
             })(RIAPP.BaseObject);
             utils.PropWatcher = PropWatcher;
-
             /*
-            waits for property change on the object (the owner)
-            then checks queue of actions for the property change
-            based on property value checking predicate
-            if the predicate returns true, invokes the task's action
+               waits for property change on the object (the owner)
+               then checks queue of actions for the property change
+               based on property value checking predicate
+               if the predicate returns true, invokes the task's action
             */
             var WaitQueue = (function (_super) {
                 __extends(WaitQueue, _super);
@@ -1695,23 +1715,22 @@ var RIAPP;
                     return new WaitQueue(owner);
                 };
                 WaitQueue.prototype._checkQueue = function (prop, value) {
-                    if (!this._owner || this._owner._isDestroyCalled) {
+                    if (!this._owner || this._owner.getIsDestroyCalled()) {
                         return;
                     }
                     var self = this, propQueue = this._queue[prop], task;
                     if (!propQueue || propQueue.length == 0) {
                         return;
                     }
-
                     var i, firstWins, groups = { group: null, arr: [] }, found = [], forRemoval = [];
-
                     for (i = 0; i < propQueue.length; i += 1) {
                         task = propQueue[i];
                         if (task.predicate(value)) {
                             if (!task.group && groups.arr.length == 0) {
                                 firstWins = task;
                                 break;
-                            } else if (!!task.group) {
+                            }
+                            else if (!!task.group) {
                                 if (!groups.group) {
                                     groups.group = task.group;
                                 }
@@ -1721,27 +1740,26 @@ var RIAPP;
                             }
                         }
                     }
-
                     if (!!firstWins) {
                         found.push(firstWins);
                         forRemoval.push(firstWins);
-                    } else {
+                    }
+                    else {
                         while (groups.arr.length > 0) {
                             task = groups.arr.pop();
                             if (!firstWins) {
                                 firstWins = task;
                             }
-
                             if (firstWins.lastWins) {
                                 if (found.length == 0)
                                     found.push(task); //add only the last task, the rest just remove from queue
-                            } else
+                            }
+                            else
                                 found.push(task); //add all tasks in the group, they will be executed all
                             forRemoval.push(task);
                         }
                     }
-
-                    try  {
+                    try {
                         if (found.length > 0) {
                             i = propQueue.length;
                             while (i > 0) {
@@ -1750,16 +1768,17 @@ var RIAPP;
                                     propQueue.splice(i, 1);
                                 }
                             }
-
                             found.forEach(function (task) {
-                                try  {
+                                try {
                                     task.action.apply(self._owner, task.args);
-                                } catch (ex) {
-                                    self._owner._onError(ex, self);
+                                }
+                                catch (ex) {
+                                    self._owner.handleError(ex, self);
                                 }
                             });
                         }
-                    } finally {
+                    }
+                    finally {
                         if (propQueue.length == 0) {
                             delete this._queue[prop];
                             this._owner.removeOnPropertyChange(prop, this.uniqueID);
@@ -1780,7 +1799,6 @@ var RIAPP;
                     if (!this._owner)
                         return;
                     var property = opts.prop, propQueue = this._queue[property];
-
                     if (!propQueue) {
                         propQueue = [];
                         this._queue[property] = propQueue;
@@ -1802,7 +1820,8 @@ var RIAPP;
                     propQueue.push(task);
                     if (!!opts.syncCheck) {
                         self._checkQueue(property, self._owner[property]);
-                    } else {
+                    }
+                    else {
                         setTimeout(function () {
                             if (self._isDestroyCalled)
                                 return;
@@ -1839,62 +1858,57 @@ var RIAPP;
                 return WaitQueue;
             })(RIAPP.BaseObject);
             utils.WaitQueue = WaitQueue;
-
             var Utils = (function () {
                 function Utils() {
                     this.slice = Array.prototype.slice;
                     this.get_timeZoneOffset = (function () {
                         var dt = new Date();
                         var tz = dt.getTimezoneOffset();
-
                         return function () {
                             return tz;
                         };
                     })();
                     this.format = base_utils.format;
                     /*
-                    * Generate a random uuid.
-                    *
-                    * USAGE: utils.uuid(length, radix)
-                    *   length - the desired number of characters
-                    *   radix  - the number of allowable values for each character.
-                    *
-                    * EXAMPLES:
-                    *   // No arguments  - returns RFC4122, version 4 ID
-                    *   >>> utils.uuid()
-                    *   "92329D39-6F5C-4520-ABFC-AAB64544E172"
-                    *
-                    *   // One argument - returns ID of the specified length
-                    *   >>> utils.uuid(15)     // 15 character ID (default base=62)
-                    *   "VcydxgltxrVZSTV"
-                    *
-                    *   // Two arguments - returns ID of the specified length, and radix. (Radix must be <= 62)
-                    *   >>> utils.uuid(8, 2)  // 8 character ID (base=2)
-                    *   "01001010"
-                    *   >>> utils.uuid(8, 10) // 8 character ID (base=10)
-                    *   "47473046"
-                    *   >>> utils.uuid(8, 16) // 8 character ID (base=16)
-                    *   "098F4D35"
-                    */
+                     * Generate a random uuid.
+                     *
+                     * USAGE: utils.uuid(length, radix)
+                     *   length - the desired number of characters
+                     *   radix  - the number of allowable values for each character.
+                     *
+                     * EXAMPLES:
+                     *   // No arguments  - returns RFC4122, version 4 ID
+                     *   >>> utils.uuid()
+                     *   "92329D39-6F5C-4520-ABFC-AAB64544E172"
+                     *
+                     *   // One argument - returns ID of the specified length
+                     *   >>> utils.uuid(15)     // 15 character ID (default base=62)
+                     *   "VcydxgltxrVZSTV"
+                     *
+                     *   // Two arguments - returns ID of the specified length, and radix. (Radix must be <= 62)
+                     *   >>> utils.uuid(8, 2)  // 8 character ID (base=2)
+                     *   "01001010"
+                     *   >>> utils.uuid(8, 10) // 8 character ID (base=10)
+                     *   "47473046"
+                     *   >>> utils.uuid(8, 16) // 8 character ID (base=16)
+                     *   "098F4D35"
+                     */
                     this.uuid = (function () {
                         // Private array of chars to use
                         var CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
-
                         return function (len, radix) {
                             var i, chars = CHARS, uuid = [], rnd = Math.random;
                             radix = radix || chars.length;
-
                             if (!!len) {
                                 for (i = 0; i < len; i += 1)
                                     uuid[i] = chars[0 | rnd() * radix];
-                            } else {
+                            }
+                            else {
                                 // rfc4122, version 4 form
                                 var r;
-
                                 // rfc4122 requires these characters
                                 uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-';
                                 uuid[14] = '4';
-
                                 for (i = 0; i < 36; i += 1) {
                                     if (!uuid[i]) {
                                         r = 0 | rnd() * 16;
@@ -1902,7 +1916,6 @@ var RIAPP;
                                     }
                                 }
                             }
-
                             return uuid.join('');
                         };
                     })();
@@ -1944,7 +1957,6 @@ var RIAPP;
                             return true;
                     return false;
                 };
-
                 Utils.prototype.parseBool = function (bool_value) {
                     if (Checks.isBoolean(bool_value))
                         return bool_value;
@@ -1979,13 +1991,11 @@ var RIAPP;
                     req.setRequestHeader('Content-Type', mimeType);
                     req.send(postData);
                     var promise = deferred.promise();
-
                     if (!!fn_success) {
                         promise.done(function (data) {
                             fn_success.call(context, data);
                         });
                     }
-
                     if (!!fn_error) {
                         promise.fail(function (err) {
                             fn_error.call(context, err);
@@ -2015,7 +2025,6 @@ var RIAPP;
                     var promise = deferred.promise();
                     return promise;
                 };
-
                 Utils.prototype.extend = function (deep, defaults, options) {
                     if (deep)
                         return this.cloneObj(options, defaults);
@@ -2039,10 +2048,9 @@ var RIAPP;
                 Utils.prototype.getProps = function (obj) {
                     return Object.getOwnPropertyNames(obj);
                 };
-
                 /*
-                in case of dataforms nesting, element's parent dataform can be nested dataform
-                this function returns element dataform
+                    in case of dataforms nesting, element's parent dataform can be nested dataform
+                    this function returns element dataform
                 */
                 Utils.prototype.getParentDataForm = function (rootForm, el) {
                     if (!el)
@@ -2053,10 +2061,10 @@ var RIAPP;
                             return rootForm;
                         if (Checks.isDataForm(parent)) {
                             return parent;
-                        } else
+                        }
+                        else
                             return this.getParentDataForm(rootForm, parent);
                     }
-
                     return null;
                 };
                 Utils.prototype.forEachProp = function (obj, fn) {
@@ -2089,9 +2097,11 @@ var RIAPP;
                     if (!!$el.data('qtip')) {
                         if (!tip) {
                             $el['qtip']('destroy');
-                        } else
+                        }
+                        else
                             $el['qtip']('option', 'content.text', tip);
-                    } else if (!!tip) {
+                    }
+                    else if (!!tip) {
                         $el['qtip'](options);
                     }
                 };
@@ -2106,14 +2116,14 @@ var RIAPP;
                     if (!o) {
                         return o;
                     }
-
                     if (self.check.isArray(o)) {
                         len = o.length;
                         c = new Array(len);
                         for (i = 0; i < len; i += 1) {
                             c[i] = self.cloneObj(o[i], null);
                         }
-                    } else if (self.check.isSimpleObject(o)) {
+                    }
+                    else if (self.check.isSimpleObject(o)) {
                         //clone only simple objects
                         c = mergeIntoObj || {};
                         var p, keys = Object.getOwnPropertyNames(o);
@@ -2122,7 +2132,8 @@ var RIAPP;
                             p = keys[i];
                             c[p] = self.cloneObj(o[p], null);
                         }
-                    } else
+                    }
+                    else
                         return o;
                     return c;
                 };
@@ -2161,19 +2172,18 @@ var RIAPP;
                 return Utils;
             })();
             utils.Utils = Utils;
-
             RIAPP.global.registerType('PropWatcher', PropWatcher);
             RIAPP.global.registerType('LifeTimeScope', LifeTimeScope);
             RIAPP.global.registerType('WaitQueue', WaitQueue);
             RIAPP.global.onModuleLoaded('utils', utils);
-        })(MOD.utils || (MOD.utils = {}));
-        var utils = MOD.utils;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(utils = MOD.utils || (MOD.utils = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var errors;
         (function (errors) {
             var BaseError = (function (_super) {
                 __extends(BaseError, _super);
@@ -2222,13 +2232,12 @@ var RIAPP;
                 return BaseError;
             })(RIAPP.BaseObject);
             errors.BaseError = BaseError;
-
             var DummyError = (function (_super) {
                 __extends(DummyError, _super);
                 function DummyError(ex) {
                     _super.call(this, "DUMMY_ERROR");
-                    this._origError = ex;
-                    this._isDummy = true;
+                    this.origError = ex;
+                    this.isDummy = true;
                 }
                 DummyError.create = function (ex) {
                     return new DummyError(ex);
@@ -2236,7 +2245,6 @@ var RIAPP;
                 return DummyError;
             })(BaseError);
             errors.DummyError = DummyError;
-
             var ValidationError = (function (_super) {
                 __extends(ValidationError, _super);
                 function ValidationError(errorInfo, item) {
@@ -2271,19 +2279,17 @@ var RIAPP;
                 return ValidationError;
             })(BaseError);
             errors.ValidationError = ValidationError;
-
             RIAPP.global.onModuleLoaded('errors', errors);
-        })(MOD.errors || (MOD.errors = {}));
-        var errors = MOD.errors;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(errors = MOD.errors || (MOD.errors = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var converter;
         (function (converter) {
             converter.NUM_CONV = { None: 0, Integer: 1, Decimal: 2, Float: 3, SmallInt: 4 };
-
             var BaseConverter = (function () {
                 function BaseConverter() {
                 }
@@ -2300,7 +2306,6 @@ var RIAPP;
             converter.BaseConverter = BaseConverter;
             ;
             var baseConverter = new BaseConverter();
-
             var DateConverter = (function () {
                 function DateConverter() {
                 }
@@ -2330,7 +2335,6 @@ var RIAPP;
             converter.DateConverter = DateConverter;
             ;
             var dateConverter = new DateConverter();
-
             var DateTimeConverter = (function () {
                 function DateTimeConverter() {
                 }
@@ -2358,7 +2362,6 @@ var RIAPP;
             converter.DateTimeConverter = DateTimeConverter;
             ;
             var dateTimeConverter = new DateTimeConverter();
-
             var NumberConverter = (function () {
                 function NumberConverter() {
                 }
@@ -2391,7 +2394,6 @@ var RIAPP;
                         default:
                             num = Number(value);
                     }
-
                     if (!utils.check.isNumber(num)) {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_CONV_INVALID_NUM, val));
                     }
@@ -2429,7 +2431,6 @@ var RIAPP;
             converter.NumberConverter = NumberConverter;
             ;
             var numberConverter = new NumberConverter();
-
             var IntegerConverter = (function () {
                 function IntegerConverter() {
                 }
@@ -2447,7 +2448,6 @@ var RIAPP;
             converter.IntegerConverter = IntegerConverter;
             ;
             var integerConverter = new IntegerConverter();
-
             var SmallIntConverter = (function () {
                 function SmallIntConverter() {
                 }
@@ -2465,7 +2465,6 @@ var RIAPP;
             converter.SmallIntConverter = SmallIntConverter;
             ;
             var smallIntConverter = new SmallIntConverter();
-
             var DecimalConverter = (function () {
                 function DecimalConverter() {
                 }
@@ -2483,7 +2482,6 @@ var RIAPP;
             converter.DecimalConverter = DecimalConverter;
             ;
             var decimalConverter = new DecimalConverter();
-
             var FloatConverter = (function () {
                 function FloatConverter() {
                 }
@@ -2501,7 +2499,6 @@ var RIAPP;
             converter.FloatConverter = FloatConverter;
             ;
             var floatConverter = new FloatConverter();
-
             RIAPP.global.registerConverter('BaseConverter', baseConverter);
             RIAPP.global.registerConverter('dateConverter', dateConverter);
             RIAPP.global.registerConverter('dateTimeConverter', dateTimeConverter);
@@ -2511,14 +2508,14 @@ var RIAPP;
             RIAPP.global.registerConverter('decimalConverter', decimalConverter);
             RIAPP.global.registerConverter('floatConverter', floatConverter);
             RIAPP.global.onModuleLoaded('converter', converter);
-        })(MOD.converter || (MOD.converter = {}));
-        var converter = MOD.converter;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(converter = MOD.converter || (MOD.converter = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var defaults;
         (function (defaults) {
             var Defaults = (function (_super) {
                 __extends(Defaults, _super);
@@ -2537,7 +2534,6 @@ var RIAPP;
                 Defaults.prototype.toString = function () {
                     return 'Defaults';
                 };
-
                 Object.defineProperty(Defaults.prototype, "ajaxTimeOut", {
                     //timeout for server requests in seconds
                     get: function () {
@@ -2552,7 +2548,6 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-
                 Object.defineProperty(Defaults.prototype, "dateFormat", {
                     //uses moment.js format
                     get: function () {
@@ -2567,7 +2562,6 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-
                 Object.defineProperty(Defaults.prototype, "timeFormat", {
                     //uses moment.js format
                     get: function () {
@@ -2608,7 +2602,6 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-
                 Object.defineProperty(Defaults.prototype, "imagesPath", {
                     //path to where application images are stored
                     get: function () {
@@ -2620,7 +2613,8 @@ var RIAPP;
                         if (this._imagesPath !== v) {
                             if (!RIAPP.baseUtils.endsWith(v, '/')) {
                                 this._imagesPath = v + '/';
-                            } else
+                            }
+                            else
                                 this._imagesPath = v;
                             this.raisePropertyChanged("imagesPath");
                         }
@@ -2654,7 +2648,6 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-
                 Object.defineProperty(Defaults.prototype, "decPrecision", {
                     //money decimal presision: defaults to 2
                     get: function () {
@@ -2672,26 +2665,93 @@ var RIAPP;
                 return Defaults;
             })(RIAPP.BaseObject);
             defaults.Defaults = Defaults;
-
             RIAPP.global.onModuleLoaded('defaults', defaults);
-        })(MOD.defaults || (MOD.defaults = {}));
-        var defaults = MOD.defaults;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(defaults = MOD.defaults || (MOD.defaults = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var parser;
         (function (parser) {
             var utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-
             var Parser = (function () {
                 function Parser() {
                 }
-                Parser.prototype._getPathParts = function (path) {
+                //extract key - value pairs
+                Parser.prototype._getKeyVals = function (val) {
+                    var i, ch, literal, parts = [], kv = { key: '', val: '' }, isKey = true, bracePart, vd1 = Parser.__valueDelimeter1, vd2 = Parser.__valueDelimeter2, kvd = Parser.__keyValDelimeter;
+                    var addNewKeyValPair = function (kv) {
+                        if (kv.val) {
+                            if (utils.check.isNumeric(kv.val)) {
+                                kv.val = Number(kv.val);
+                            }
+                            else if (utils.check.isBoolString(kv.val)) {
+                                kv.val = utils.parseBool(kv.val);
+                            }
+                        }
+                        parts.push(kv);
+                    };
+                    var checkTokens = function (kv) {
+                        //key starts with this like used in binding expressions this.property
+                        if (kv.val === '' && utils.str.startsWith(kv.key, 'this.')) {
+                            kv.val = kv.key.substr(5); //extract property
+                            kv.key = 'targetPath';
+                        }
+                    };
+                    for (i = 0; i < val.length; i += 1) {
+                        ch = val.charAt(i);
+                        //is this content inside '' or "" ?
+                        if (ch == "'" || ch == '"') {
+                            if (!literal)
+                                literal = ch;
+                            else if (literal == ch)
+                                literal = null;
+                        }
+                        //value inside braces
+                        if (!literal && ch === "{" && !isKey) {
+                            bracePart = val.substr(i);
+                            bracePart = this.getBraceParts(bracePart, true)[0];
+                            kv.val += bracePart;
+                            i += bracePart.length - 1;
+                            continue;
+                        }
+                        if (!literal && ch === kvd) {
+                            if (!!kv.key) {
+                                addNewKeyValPair(kv);
+                                kv = { key: '', val: '' };
+                                isKey = true; //currently parsing key value
+                            }
+                        }
+                        else if (!literal && (ch === vd1 || ch === vd2)) {
+                            isKey = false; //begin parsing value
+                        }
+                        else {
+                            if (isKey)
+                                kv.key += ch;
+                            else
+                                kv.val += ch;
+                        }
+                    }
+                    if (!!kv.key) {
+                        addNewKeyValPair(kv);
+                    }
+                    parts.forEach(function (kv) {
+                        kv.key = utils.str.trim(kv.key);
+                        if (utils.check.isString(kv.val))
+                            kv.val = utils.str.trim(kv.val);
+                        checkTokens(kv);
+                    });
+                    parts = parts.filter(function (kv) {
+                        return kv.val !== ''; //when key has value
+                    });
+                    return parts;
+                };
+                Parser.prototype.getPathParts = function (path) {
                     var self = this, parts = (!path) ? [] : path.split('.'), parts2 = [];
                     parts.forEach(function (part) {
                         var matches, obj, index;
@@ -2701,13 +2761,13 @@ var RIAPP;
                             index = matches[2];
                             parts2.push(obj);
                             parts2.push('[' + index + ']');
-                        } else
+                        }
+                        else
                             parts2.push(part);
                     });
-
                     return parts2;
                 };
-                Parser.prototype._resolveProp = function (obj, prop) {
+                Parser.prototype.resolveProp = function (obj, prop) {
                     if (!prop)
                         return obj;
                     if (utils.str.startsWith(prop, '[')) {
@@ -2715,134 +2775,58 @@ var RIAPP;
                         prop = this.trimQuotes(this.trimBrackets(prop));
                         if (obj instanceof MOD.collection.BaseDictionary) {
                             return obj.getItemByKey(prop);
-                        } else if (obj instanceof MOD.collection.BaseCollection) {
+                        }
+                        else if (obj instanceof MOD.collection.BaseCollection) {
                             return obj.getItemByPos(parseInt(prop, 10));
-                        } else if (utils.check.isArray(obj)) {
+                        }
+                        else if (utils.check.isArray(obj)) {
                             return obj[parseInt(prop, 10)];
-                        } else
+                        }
+                        else
                             return obj[prop];
-                    } else
+                    }
+                    else
                         return obj[prop];
                 };
-                Parser.prototype._setPropertyValue = function (obj, prop, val) {
+                Parser.prototype.setPropertyValue = function (obj, prop, val) {
                     if (utils.str.startsWith(prop, '[')) {
                         prop = this.trimQuotes(this.trimBrackets(prop)); //remove brakets from a string like: [index]
                         if (utils.check.isArray(obj)) {
                             obj[parseInt(prop, 10)] = val;
-                        } else
+                        }
+                        else
                             obj[prop] = val;
-                    } else
+                    }
+                    else
                         obj[prop] = val;
-                };
-
-                //extract key - value pairs
-                Parser.prototype._getKeyVals = function (val) {
-                    var i, ch, literal, parts = [], kv = { key: '', val: '' }, isKey = true, bracePart, vd1 = Parser.__valueDelimeter1, vd2 = Parser.__valueDelimeter2, kvd = Parser.__keyValDelimeter;
-
-                    var addNewKeyValPair = function (kv) {
-                        if (kv.val) {
-                            if (utils.check.isNumeric(kv.val)) {
-                                kv.val = Number(kv.val);
-                            } else if (utils.check.isBoolString(kv.val)) {
-                                kv.val = utils.parseBool(kv.val);
-                            }
-                        }
-                        parts.push(kv);
-                    };
-
-                    var checkTokens = function (kv) {
-                        //key starts with this like used in binding expressions this.property
-                        if (kv.val === '' && utils.str.startsWith(kv.key, 'this.')) {
-                            kv.val = kv.key.substr(5); //extract property
-                            kv.key = 'targetPath';
-                        }
-                    };
-
-                    for (i = 0; i < val.length; i += 1) {
-                        ch = val.charAt(i);
-
-                        //is this content inside '' or "" ?
-                        if (ch == "'" || ch == '"') {
-                            if (!literal)
-                                literal = ch;
-                            else if (literal == ch)
-                                literal = null;
-                        }
-
-                        //value inside braces
-                        if (!literal && ch === "{" && !isKey) {
-                            bracePart = val.substr(i);
-                            bracePart = this.getBraceParts(bracePart, true)[0];
-                            kv.val += bracePart;
-                            i += bracePart.length - 1;
-                            continue;
-                        }
-
-                        if (!literal && ch === kvd) {
-                            if (!!kv.key) {
-                                addNewKeyValPair(kv);
-                                kv = { key: '', val: '' };
-                                isKey = true; //currently parsing key value
-                            }
-                        } else if (!literal && (ch === vd1 || ch === vd2)) {
-                            isKey = false; //begin parsing value
-                        } else {
-                            if (isKey)
-                                kv.key += ch;
-                            else
-                                kv.val += ch;
-                        }
-                    }
-
-                    if (!!kv.key) {
-                        addNewKeyValPair(kv);
-                    }
-
-                    parts.forEach(function (kv) {
-                        kv.key = utils.str.trim(kv.key);
-                        if (utils.check.isString(kv.val))
-                            kv.val = utils.str.trim(kv.val);
-                        checkTokens(kv);
-                    });
-
-                    parts = parts.filter(function (kv) {
-                        return kv.val !== '';
-                    });
-                    return parts;
                 };
                 Parser.prototype.resolveBindingSource = function (root, srcParts) {
                     if (!root)
                         return undefined;
-
                     if (srcParts.length === 0) {
                         return root;
                     }
-
                     if (srcParts.length > 0) {
-                        return this.resolveBindingSource(this._resolveProp(root, srcParts[0]), srcParts.slice(1));
+                        return this.resolveBindingSource(this.resolveProp(root, srcParts[0]), srcParts.slice(1));
                     }
-
                     throw new Error('Invalid operation');
                 };
                 Parser.prototype.resolvePath = function (obj, path) {
                     if (!path)
                         return obj;
-                    var parts = this._getPathParts(path), res = obj, len = parts.length - 1;
+                    var parts = this.getPathParts(path), res = obj, len = parts.length - 1;
                     for (var i = 0; i < len; i += 1) {
-                        res = this._resolveProp(res, parts[i]);
+                        res = this.resolveProp(res, parts[i]);
                         if (!res)
                             return undefined;
                     }
-                    return this._resolveProp(res, parts[len]);
+                    return this.resolveProp(res, parts[len]);
                 };
-
                 //extract top level braces
                 Parser.prototype.getBraceParts = function (val, firstOnly) {
                     var i, s = '', ch, literal, cnt = 0, parts = [];
-
                     for (i = 0; i < val.length; i += 1) {
                         ch = val.charAt(i);
-
                         //is this content inside '' or "" ?
                         if (ch === "'" || ch === '"') {
                             if (!literal)
@@ -2850,11 +2834,11 @@ var RIAPP;
                             else if (literal === ch)
                                 literal = null;
                         }
-
                         if (!literal && ch === '{') {
                             cnt += 1;
                             s += ch;
-                        } else if (!literal && ch === '}') {
+                        }
+                        else if (!literal && ch === '}') {
                             cnt -= 1;
                             s += ch;
                             if (cnt === 0) {
@@ -2863,13 +2847,13 @@ var RIAPP;
                                 if (firstOnly)
                                     return parts;
                             }
-                        } else {
+                        }
+                        else {
                             if (cnt > 0) {
                                 s += ch;
                             }
                         }
                     }
-
                     return parts;
                 };
                 Parser.prototype.trimOuterBraces = function (val) {
@@ -2901,12 +2885,10 @@ var RIAPP;
                                 res[kv.key] = kv.val;
                         }
                     });
-
                     return res;
                 };
                 Parser.prototype.parseOptions = function (str) {
                     var res = [], self = this;
-
                     str = utils.str.trim(str);
                     var parts = [str];
                     if (self.isWithOuterBraces(str)) {
@@ -2915,7 +2897,6 @@ var RIAPP;
                     parts.forEach(function (part) {
                         res.push(self.parseOption(part));
                     });
-
                     return res;
                 };
                 Parser.prototype.toString = function () {
@@ -2924,23 +2905,22 @@ var RIAPP;
                 Parser.__trimOuterBracesRX = /^([{]){0,1}|([}]){0,1}$/g;
                 Parser.__trimQuotsRX = /^(['"])+|(['"])+$/g;
                 Parser.__trimBracketsRX = /^(\[)+|(\])+$/g;
-                Parser.__indexedPropRX = /(^\w+)\s*\[\s*['"]?\s*([^'"]+)\s*['",]?\s*\]/i;
+                Parser.__indexedPropRX = /(^\w+)\s*\[\s*['"]?\s*([^'"]+)\s*['",]?\s*\]/i; //regex expression to extract parts from obj[index] strings
                 Parser.__valueDelimeter1 = ':';
                 Parser.__valueDelimeter2 = '=';
                 Parser.__keyValDelimeter = ',';
                 return Parser;
             })();
             parser.Parser = Parser;
-
             RIAPP.global.onModuleLoaded('parser', parser);
-        })(MOD.parser || (MOD.parser = {}));
-        var parser = MOD.parser;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(parser = MOD.parser || (MOD.parser = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var mvvm;
         (function (mvvm) {
             var Command = (function (_super) {
                 __extends(Command, _super);
@@ -2990,7 +2970,6 @@ var RIAPP;
                 return Command;
             })(RIAPP.BaseObject);
             mvvm.Command = Command;
-
             var BaseViewModel = (function (_super) {
                 __extends(BaseViewModel, _super);
                 function BaseViewModel(app) {
@@ -2998,10 +2977,10 @@ var RIAPP;
                     this._app = app;
                     this._objId = 'vm' + RIAPP.global.utils.getNewID();
                 }
-                BaseViewModel.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                BaseViewModel.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -3036,28 +3015,25 @@ var RIAPP;
                 return BaseViewModel;
             })(RIAPP.BaseObject);
             mvvm.BaseViewModel = BaseViewModel;
-
             RIAPP.global.registerType('Command', Command);
             RIAPP.global.registerType('BaseViewModel', BaseViewModel);
             RIAPP.global.onModuleLoaded('mvvm', mvvm);
-        })(MOD.mvvm || (MOD.mvvm = {}));
-        var mvvm = MOD.mvvm;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(mvvm = MOD.mvvm || (MOD.mvvm = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var baseElView;
         (function (baseElView) {
             var constsMOD = RIAPP.MOD.consts;
             var mvvmMOD = RIAPP.MOD.mvvm;
-
             //local variables for optimization
             var ERRTEXT = RIAPP.localizable.VALIDATE, utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-
             var PropChangedCommand = (function (_super) {
                 __extends(PropChangedCommand, _super);
                 function PropChangedCommand(fn_action, thisObj, fn_canExecute) {
@@ -3066,12 +3042,10 @@ var RIAPP;
                 return PropChangedCommand;
             })(mvvmMOD.Command);
             baseElView.PropChangedCommand = PropChangedCommand;
-
             baseElView.css = {
                 fieldError: 'ria-field-error',
                 commandLink: 'ria-command-link'
             };
-
             var BaseElView = (function (_super) {
                 __extends(BaseElView, _super);
                 function BaseElView(app, el, options) {
@@ -3079,7 +3053,6 @@ var RIAPP;
                     this._app = app;
                     this._el = el;
                     this._$el = null;
-
                     //save previous css display style
                     this._oldDisplay = null;
                     this._objId = 'elv' + utils.getNewID();
@@ -3108,13 +3081,14 @@ var RIAPP;
                     var $el = this._$el, el = this._el;
                     if (!!$el)
                         $el.off('.' + this._objId);
-                    try  {
+                    try {
                         this._propChangedCommand = null;
                         this.validationErrors = null;
                         this.toolTip = null;
                         this._el = null;
                         this._$el = null;
-                    } finally {
+                    }
+                    finally {
                         this._app._setElView(el, null);
                         this._app = null;
                     }
@@ -3142,7 +3116,8 @@ var RIAPP;
                     var $el = this.$el;
                     if (isError) {
                         $el.addClass(baseElView.css.fieldError);
-                    } else {
+                    }
+                    else {
                         $el.removeClass(baseElView.css.fieldError);
                     }
                 };
@@ -3154,15 +3129,16 @@ var RIAPP;
                     if (!!errors && errors.length > 0) {
                         utils.addToolTip($el, this._getErrorTipInfo(errors), true);
                         this._setFieldError(true);
-                    } else {
+                    }
+                    else {
                         this._setToolTip($el, this.toolTip);
                         this._setFieldError(false);
                     }
                 };
-                BaseElView.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                BaseElView.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -3206,7 +3182,8 @@ var RIAPP;
                             if (!v) {
                                 this._oldDisplay = this.el.style.display;
                                 this.el.style.display = 'none';
-                            } else {
+                            }
+                            else {
                                 if (!!this._oldDisplay)
                                     this.el.style.display = this._oldDisplay;
                                 else
@@ -3296,7 +3273,6 @@ var RIAPP;
             })(RIAPP.BaseObject);
             baseElView.BaseElView = BaseElView;
             ;
-
             var InputElView = (function (_super) {
                 __extends(InputElView, _super);
                 function InputElView(app, el, options) {
@@ -3352,7 +3328,6 @@ var RIAPP;
             })(BaseElView);
             baseElView.InputElView = InputElView;
             ;
-
             var CommandElView = (function (_super) {
                 __extends(CommandElView, _super);
                 function CommandElView(app, el, options) {
@@ -3398,7 +3373,8 @@ var RIAPP;
                                 self.isEnabled = cmd.canExecute(self, self.commandParam);
                             }, this._objId);
                             self.isEnabled = this._command.canExecute(self, self.commandParam);
-                        } else
+                        }
+                        else
                             self.isEnabled = false;
                         this._onCommandChanged();
                     }
@@ -3450,7 +3426,6 @@ var RIAPP;
             })(BaseElView);
             baseElView.CommandElView = CommandElView;
             ;
-
             var BusyElView = (function (_super) {
                 __extends(BusyElView, _super);
                 function BusyElView(app, el, options) {
@@ -3503,7 +3478,6 @@ var RIAPP;
                                 "of": RIAPP.global.$(self.el)
                             });
                         };
-
                         if (v !== self._isBusy) {
                             self._isBusy = v;
                             if (self._isBusy) {
@@ -3513,13 +3487,16 @@ var RIAPP;
                                 }
                                 if (self._delay > 0) {
                                     self._timeOut = setTimeout(fn, self._delay);
-                                } else
+                                }
+                                else
                                     fn();
-                            } else {
+                            }
+                            else {
                                 if (!!self._timeOut) {
                                     clearTimeout(self._timeOut);
                                     self._timeOut = null;
-                                } else
+                                }
+                                else
                                     self._$loader.hide();
                             }
                             self.raisePropertyChanged('isBusy');
@@ -3544,7 +3521,6 @@ var RIAPP;
                 return BusyElView;
             })(BaseElView);
             baseElView.BusyElView = BusyElView;
-
             var CheckBoxElView = (function (_super) {
                 __extends(CheckBoxElView, _super);
                 function CheckBoxElView() {
@@ -3564,7 +3540,8 @@ var RIAPP;
                     if (isError) {
                         var span = RIAPP.global.$('<div></div>').addClass(baseElView.css.fieldError);
                         $el.wrap(span);
-                    } else {
+                    }
+                    else {
                         if ($el.parent('.' + baseElView.css.fieldError).length > 0)
                             $el.unwrap();
                     }
@@ -3591,10 +3568,10 @@ var RIAPP;
                             this._val = v;
                             if (el)
                                 el.checked = !!this._val;
-
                             if (this._val === null) {
                                 this.$el.css("opacity", 0.33);
-                            } else
+                            }
+                            else
                                 this.$el.css("opacity", 1.0);
                             this.raisePropertyChanged('checked');
                         }
@@ -3605,7 +3582,6 @@ var RIAPP;
                 return CheckBoxElView;
             })(InputElView);
             baseElView.CheckBoxElView = CheckBoxElView;
-
             var CheckBoxThreeStateElView = (function (_super) {
                 __extends(CheckBoxThreeStateElView, _super);
                 function CheckBoxThreeStateElView() {
@@ -3623,11 +3599,9 @@ var RIAPP;
                             case 0:
                                 self._cbxVal = 1;
                                 break;
-
                             case 1:
                                 self._cbxVal = 2;
                                 break;
-
                             default:
                                 self._cbxVal = 0;
                         }
@@ -3639,7 +3613,8 @@ var RIAPP;
                     if (isError) {
                         var div = RIAPP.global.$('<div></div>').addClass(baseElView.css.fieldError);
                         $el.wrap(div);
-                    } else {
+                    }
+                    else {
                         if ($el.parent('.' + baseElView.css.fieldError).length > 0)
                             $el.unwrap();
                     }
@@ -3686,7 +3661,6 @@ var RIAPP;
                 return CheckBoxThreeStateElView;
             })(InputElView);
             baseElView.CheckBoxThreeStateElView = CheckBoxThreeStateElView;
-
             var TextBoxElView = (function (_super) {
                 __extends(TextBoxElView, _super);
                 function TextBoxElView() {
@@ -3746,7 +3720,6 @@ var RIAPP;
                 return TextBoxElView;
             })(InputElView);
             baseElView.TextBoxElView = TextBoxElView;
-
             var HiddenElView = (function (_super) {
                 __extends(HiddenElView, _super);
                 function HiddenElView() {
@@ -3758,7 +3731,6 @@ var RIAPP;
                 return HiddenElView;
             })(InputElView);
             baseElView.HiddenElView = HiddenElView;
-
             var TextAreaElView = (function (_super) {
                 __extends(TextAreaElView, _super);
                 function TextAreaElView(app, el, options) {
@@ -3919,7 +3891,6 @@ var RIAPP;
                 return TextAreaElView;
             })(BaseElView);
             baseElView.TextAreaElView = TextAreaElView;
-
             var RadioElView = (function (_super) {
                 __extends(RadioElView, _super);
                 function RadioElView() {
@@ -3957,7 +3928,8 @@ var RIAPP;
                     if (isError) {
                         var span = RIAPP.global.$('<div></div>').addClass(baseElView.css.fieldError);
                         $el.wrap(span);
-                    } else {
+                    }
+                    else {
                         if ($el.parent('.' + baseElView.css.fieldError).length > 0)
                             $el.unwrap();
                     }
@@ -3977,10 +3949,10 @@ var RIAPP;
                             this._val = v;
                             if (el)
                                 el.checked = !!this._val;
-
                             if (this._val === null) {
                                 this.$el.css("opacity", 0.33);
-                            } else
+                            }
+                            else
                                 this.$el.css("opacity", 1.0);
                             this.raisePropertyChanged('checked');
                         }
@@ -4017,7 +3989,6 @@ var RIAPP;
                 return RadioElView;
             })(InputElView);
             baseElView.RadioElView = RadioElView;
-
             var ButtonElView = (function (_super) {
                 __extends(ButtonElView, _super);
                 function ButtonElView(app, el, options) {
@@ -4029,7 +4000,6 @@ var RIAPP;
                     var self = this, $el = this.$el;
                     if (!!options.preventDefault)
                         this._preventDefault = true;
-
                     $el.on('click.' + this._objId, function (e) {
                         self._onClick(e);
                     });
@@ -4051,7 +4021,6 @@ var RIAPP;
                     set: function (v) {
                         if (!this._el)
                             return;
-
                         var x = this.$el.val();
                         if (v === null)
                             v = '';
@@ -4074,7 +4043,6 @@ var RIAPP;
                     set: function (v) {
                         if (!this._el)
                             return;
-
                         var x = this.$el.text();
                         if (v === null)
                             v = '';
@@ -4097,7 +4065,6 @@ var RIAPP;
                     set: function (v) {
                         if (!this._el)
                             return;
-
                         var x = this.$el.html();
                         if (v === null)
                             v = '';
@@ -4127,7 +4094,6 @@ var RIAPP;
                 return ButtonElView;
             })(CommandElView);
             baseElView.ButtonElView = ButtonElView;
-
             var AnchorElView = (function (_super) {
                 __extends(AnchorElView, _super);
                 function AnchorElView(app, el, options) {
@@ -4162,7 +4128,6 @@ var RIAPP;
                         RIAPP.global.$(this._image).remove();
                         this._image = null;
                     }
-
                     if (!!src) {
                         if (!this._image) {
                             self.html = null;
@@ -4174,7 +4139,8 @@ var RIAPP;
                                     RIAPP.global.$(this).css("opacity", 1.0);
                             }).appendTo($a);
                             this._image = $img.get(0);
-                        } else
+                        }
+                        else
                             this._image.src = src;
                     }
                 };
@@ -4221,7 +4187,6 @@ var RIAPP;
                     set: function (v) {
                         if (!this._el)
                             return;
-
                         var x = this.$el.html();
                         if (v === null)
                             v = '';
@@ -4244,7 +4209,6 @@ var RIAPP;
                     set: function (v) {
                         if (!this._el)
                             return;
-
                         var x = this.$el.text();
                         if (v === null)
                             v = '';
@@ -4267,7 +4231,6 @@ var RIAPP;
                     set: function (v) {
                         if (!this._el)
                             return;
-
                         var x = this.href;
                         if (v === null)
                             v = '';
@@ -4297,7 +4260,6 @@ var RIAPP;
                 return AnchorElView;
             })(CommandElView);
             baseElView.AnchorElView = AnchorElView;
-
             var ExpanderElView = (function (_super) {
                 __extends(ExpanderElView, _super);
                 function ExpanderElView() {
@@ -4353,7 +4315,6 @@ var RIAPP;
                 return ExpanderElView;
             })(AnchorElView);
             baseElView.ExpanderElView = ExpanderElView;
-
             var SpanElView = (function (_super) {
                 __extends(SpanElView, _super);
                 function SpanElView() {
@@ -4440,7 +4401,6 @@ var RIAPP;
                 return SpanElView;
             })(BaseElView);
             baseElView.SpanElView = SpanElView;
-
             var BlockElView = (function (_super) {
                 __extends(BlockElView, _super);
                 function BlockElView() {
@@ -4516,7 +4476,6 @@ var RIAPP;
                 return BlockElView;
             })(SpanElView);
             baseElView.BlockElView = BlockElView;
-
             var ImgElView = (function (_super) {
                 __extends(ImgElView, _super);
                 function ImgElView(app, el, options) {
@@ -4549,7 +4508,6 @@ var RIAPP;
                 return ImgElView;
             })(BaseElView);
             baseElView.ImgElView = ImgElView;
-
             RIAPP.global.registerElView('busy_indicator', BusyElView);
             RIAPP.global.registerElView('input:checkbox', CheckBoxElView);
             RIAPP.global.registerElView('threeState', CheckBoxThreeStateElView);
@@ -4568,17 +4526,16 @@ var RIAPP;
             RIAPP.global.registerElView('section', BlockElView);
             RIAPP.global.registerElView('block', BlockElView);
             RIAPP.global.registerElView('img', ImgElView);
-
             //signal to the global object that the module is loaded
             RIAPP.global.onModuleLoaded('baseElView', baseElView);
-        })(MOD.baseElView || (MOD.baseElView = {}));
-        var baseElView = MOD.baseElView;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(baseElView = MOD.baseElView || (MOD.baseElView = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var binding;
         (function (binding) {
             (function (BINDING_MODE) {
                 BINDING_MODE[BINDING_MODE["OneTime"] = 0] = "OneTime";
@@ -4591,9 +4548,6 @@ var RIAPP;
                 utils = s.utils;
                 parser = s.parser;
             });
-
-            
-
             function _checkIsErrorNotification(obj) {
                 if (!obj)
                     return false;
@@ -4603,50 +4557,48 @@ var RIAPP;
                 return !!tmp && utils.check.isFunction(tmp.getIErrorNotification);
             }
             binding._checkIsErrorNotification = _checkIsErrorNotification;
-
             var Binding = (function (_super) {
                 __extends(Binding, _super);
                 function Binding(options, appName) {
                     _super.call(this);
                     var opts = utils.extend(false, {
-                        target: null, source: null,
-                        targetPath: null, sourcePath: null, mode: 1 /* OneWay */,
-                        converter: null, converterParam: null, isSourceFixed: false
+                        target: null,
+                        source: null,
+                        targetPath: null,
+                        sourcePath: null,
+                        mode: 1 /* OneWay */,
+                        converter: null,
+                        converterParam: null,
+                        isSourceFixed: false
                     }, options);
-
                     if (utils.check.isString(opts.mode)) {
                         opts.mode = BINDING_MODE[opts.mode];
                     }
-
                     if (!utils.check.isString(opts.targetPath)) {
                         if (RIAPP.DebugLevel == 2 /* HIGH */) {
                             debugger;
                         }
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     }
-
                     if (utils.check.isUndefined(BINDING_MODE[opts.mode])) {
                         if (RIAPP.DebugLevel == 2 /* HIGH */) {
                             debugger;
                         }
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_BIND_MODE_INVALID, opts.mode));
                     }
-
                     if (!opts.target) {
                         throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_EMPTY);
                     }
-
                     if (!utils.check.isBaseObj(opts.target)) {
                         throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
                     }
-
                     this._appName = appName;
                     this._state = null; //save state - source and target when binding is disabled
                     this._mode = opts.mode;
                     this._converter = opts.converter || global._getConverter('BaseConverter');
                     this._converterParam = opts.converterParam;
-                    this._srcPath = parser._getPathParts(opts.sourcePath);
-                    this._tgtPath = parser._getPathParts(opts.targetPath);
+                    this._srcPath = parser.getPathParts(opts.sourcePath);
+                    this._tgtPath = parser.getPathParts(opts.targetPath);
                     if (this._tgtPath.length < 1)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     this._isSourceFixed = (!!opts.isSourceFixed);
@@ -4707,7 +4659,7 @@ var RIAPP;
                 };
                 Binding.prototype._getTgtChangedFn = function (self, obj, prop, restPath, lvl) {
                     var fn = function (sender, data) {
-                        var val = parser._resolveProp(obj, prop);
+                        var val = parser.resolveProp(obj, prop);
                         if (restPath.length > 0) {
                             self._setPathItem(null, 1 /* Target */, lvl, restPath);
                         }
@@ -4717,7 +4669,7 @@ var RIAPP;
                 };
                 Binding.prototype._getSrcChangedFn = function (self, obj, prop, restPath, lvl) {
                     var fn = function (sender, data) {
-                        var val = parser._resolveProp(obj, prop);
+                        var val = parser.resolveProp(obj, prop);
                         if (restPath.length > 0) {
                             self._setPathItem(null, 0 /* Source */, lvl, restPath);
                         }
@@ -4730,29 +4682,28 @@ var RIAPP;
                     self._sourceObj = null;
                     if (path.length === 0) {
                         self._sourceObj = obj;
-                    } else
+                    }
+                    else
                         self._parseSrcPath2(obj, path, lvl);
                     if (!!self._targetObj)
                         self._updateTarget();
                 };
                 Binding.prototype._parseSrcPath2 = function (obj, path, lvl) {
                     var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj)), isValidProp;
-
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnSrcDestroyedProxy(), self._objId);
                         self._setPathItem(obj, 0 /* Source */, lvl, path);
                     }
-
                     if (path.length > 1) {
                         if (isBaseObj) {
                             obj.addOnPropertyChange(path[0], self._getSrcChangedFn(self, obj, path[0], path.slice(1), lvl + 1), self._objId);
                         }
-
                         if (!!obj) {
-                            nextObj = global.parser._resolveProp(obj, path[0]);
+                            nextObj = global.parser.resolveProp(obj, path[0]);
                             if (!!nextObj) {
                                 self._parseSrcPath2(nextObj, path.slice(1), lvl + 1);
-                            } else if (base_utils.isUndefined(nextObj)) {
+                            }
+                            else if (base_utils.isUndefined(nextObj)) {
                                 if (RIAPP.DebugLevel == 2 /* HIGH */) {
                                     debugger;
                                 }
@@ -4763,12 +4714,10 @@ var RIAPP;
                         }
                         return;
                     }
-
                     if (!!obj && path.length == 1) {
                         isValidProp = true;
                         if (RIAPP.DebugLevel != 0 /* NONE */)
                             isValidProp = isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0]);
-
                         if (isValidProp) {
                             var updateOnChange = isBaseObj && (self._mode === 1 /* OneWay */ || self._mode === 2 /* TwoWay */);
                             if (updateOnChange) {
@@ -4778,7 +4727,8 @@ var RIAPP;
                                 obj.addOnErrorsChanged(self._getSrcErrChangedProxy(), self._objId);
                             }
                             self._sourceObj = obj;
-                        } else {
+                        }
+                        else {
                             if (RIAPP.DebugLevel == 2 /* HIGH */) {
                                 debugger;
                             }
@@ -4791,28 +4741,28 @@ var RIAPP;
                     self._targetObj = null;
                     if (path.length === 0) {
                         self._targetObj = obj;
-                    } else
+                    }
+                    else
                         self._parseTgtPath2(obj, path, lvl);
                     if (!!self._targetObj)
                         self._updateTarget(); //update target (not source!)
                 };
                 Binding.prototype._parseTgtPath2 = function (obj, path, lvl) {
                     var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj)), isValidProp;
-
                     if (isBaseObj) {
                         obj.addOnDestroyed(self._getOnTgtDestroyedProxy(), self._objId);
                         self._setPathItem(obj, 1 /* Target */, lvl, path);
                     }
-
                     if (path.length > 1) {
                         if (isBaseObj) {
                             obj.addOnPropertyChange(path[0], self._getTgtChangedFn(self, obj, path[0], path.slice(1), lvl + 1), self._objId);
                         }
                         if (!!obj) {
-                            nextObj = global.parser._resolveProp(obj, path[0]);
+                            nextObj = global.parser.resolveProp(obj, path[0]);
                             if (!!nextObj) {
                                 self._parseTgtPath2(nextObj, path.slice(1), lvl + 1);
-                            } else if (base_utils.isUndefined(nextObj)) {
+                            }
+                            else if (base_utils.isUndefined(nextObj)) {
                                 if (RIAPP.DebugLevel == 2 /* HIGH */) {
                                     debugger;
                                 }
@@ -4823,19 +4773,18 @@ var RIAPP;
                         }
                         return;
                     }
-
                     if (!!obj && path.length === 1) {
                         isValidProp = true;
                         if (RIAPP.DebugLevel != 0 /* NONE */)
                             isValidProp = isBaseObj ? obj._isHasProp(path[0]) : base_utils.hasProp(obj, path[0]);
-
                         if (isValidProp) {
                             var updateOnChange = isBaseObj && (self._mode === 2 /* TwoWay */);
                             if (updateOnChange) {
                                 obj.addOnPropertyChange(path[0], self._getUpdSrcProxy(), self._objId);
                             }
                             self._targetObj = obj;
-                        } else {
+                        }
+                        else {
                             if (RIAPP.DebugLevel == 2 /* HIGH */) {
                                 debugger;
                             }
@@ -4856,13 +4805,11 @@ var RIAPP;
                             default:
                                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'bindingTo', bindingTo));
                         }
-
                         oldObj = this._pathItems[key];
                         if (!!oldObj) {
                             oldObj.removeNSHandlers(this._objId);
                             delete this._pathItems[key];
                         }
-
                         if (!!newObj && i == lvl) {
                             this._pathItems[key] = newObj;
                         }
@@ -4884,7 +4831,6 @@ var RIAPP;
                         setTimeout(function () {
                             if (self._isDestroyCalled)
                                 return;
-
                             //rebind after source destroy fully completed
                             self._bindToSource();
                         }, 0);
@@ -4900,13 +4846,15 @@ var RIAPP;
                     if (this._ignoreSrcChange)
                         return;
                     this._ignoreTgtChange = true;
-                    try  {
+                    try {
                         var res = this._converter.convertToTarget(this.sourceValue, this._converterParam, this._sourceObj);
                         if (res !== undefined)
                             this.targetValue = res;
-                    } catch (ex) {
-                        global.reThrow(ex, this._onError(ex, this));
-                    } finally {
+                    }
+                    catch (ex) {
+                        global.reThrow(ex, this.handleError(ex, this));
+                    }
+                    finally {
                         this._ignoreTgtChange = false;
                     }
                 };
@@ -4914,11 +4862,12 @@ var RIAPP;
                     if (this._ignoreTgtChange)
                         return;
                     this._ignoreSrcChange = true;
-                    try  {
+                    try {
                         var res = this._converter.convertToSource(this.targetValue, this._converterParam, this._sourceObj);
                         if (res !== undefined)
                             this.sourceValue = res;
-                    } catch (ex) {
+                    }
+                    catch (ex) {
                         if (!(ex instanceof RIAPP.MOD.errors.ValidationError) || !utils.check.isElView(this._targetObj)) {
                             //BaseElView is notified about errors in _onSrcErrorsChanged event handler
                             //we only need to invoke _onError in other cases
@@ -4926,20 +4875,22 @@ var RIAPP;
                             //2) when error is not ValidationError
                             this._ignoreSrcChange = false;
                             this._updateTarget(); //resync target with source
-                            if (!this._onError(ex, this))
+                            if (!this.handleError(ex, this))
                                 throw ex;
                         }
-                    } finally {
+                    }
+                    finally {
                         this._ignoreSrcChange = false;
                     }
                 };
-                Binding.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                Binding.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
                         if (!!this._appName) {
-                            return global.findApp(this._appName)._onError(error, source);
-                        } else
-                            return global._onError(error, source);
+                            return global.findApp(this._appName).handleError(error, source);
+                        }
+                        else
+                            return global.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -4969,7 +4920,6 @@ var RIAPP;
                 Binding.prototype.toString = function () {
                     return 'Binding';
                 };
-
                 Object.defineProperty(Binding.prototype, "bindingID", {
                     get: function () {
                         return this._objId;
@@ -4989,9 +4939,10 @@ var RIAPP;
                         if (this._target !== v) {
                             if (!!this._targetObj && !this._targetObj._isDestroyCalled) {
                                 this._ignoreTgtChange = true;
-                                try  {
+                                try {
                                     this.targetValue = null;
-                                } finally {
+                                }
+                                finally {
                                     this._ignoreTgtChange = false;
                                 }
                             }
@@ -5046,14 +4997,17 @@ var RIAPP;
                         if (this._sourceObj === null)
                             return null;
                         var prop = this._srcPath[this._srcPath.length - 1];
-                        var res = global.parser._resolveProp(this._sourceObj, prop);
+                        var res = global.parser.resolveProp(this._sourceObj, prop);
                         return res;
                     },
                     set: function (v) {
                         if (this._srcPath.length === 0 || this._sourceObj === null)
                             return;
+                        if (utils.check.isBaseObj(this._sourceObj) && this._sourceObj.getIsDestroyCalled()) {
+                            return;
+                        }
                         var prop = this._srcPath[this._srcPath.length - 1];
-                        global.parser._setPropertyValue(this._sourceObj, prop, v);
+                        global.parser.setPropertyValue(this._sourceObj, prop, v);
                     },
                     enumerable: true,
                     configurable: true
@@ -5063,13 +5017,16 @@ var RIAPP;
                         if (this._targetObj === null)
                             return null;
                         var prop = this._tgtPath[this._tgtPath.length - 1];
-                        return global.parser._resolveProp(this._targetObj, prop);
+                        return global.parser.resolveProp(this._targetObj, prop);
                     },
                     set: function (v) {
                         if (this._targetObj === null)
                             return;
+                        if (utils.check.isBaseObj(this._targetObj) && this._targetObj.getIsDestroyCalled()) {
+                            return;
+                        }
                         var prop = this._tgtPath[this._tgtPath.length - 1];
-                        global.parser._setPropertyValue(this._targetObj, prop, v);
+                        global.parser.setPropertyValue(this._targetObj, prop, v);
                     },
                     enumerable: true,
                     configurable: true
@@ -5119,13 +5076,15 @@ var RIAPP;
                             if (v) {
                                 //going to disabled state
                                 s = { source: this._source, target: this._target };
-                                try  {
+                                try {
                                     this.target = null;
                                     this.source = null;
-                                } finally {
+                                }
+                                finally {
                                     this._state = s;
                                 }
-                            } else {
+                            }
+                            else {
                                 s = this._state;
                                 this._state = null;
                                 this.target = s.target;
@@ -5146,26 +5105,23 @@ var RIAPP;
                 return Binding;
             })(RIAPP.BaseObject);
             binding.Binding = Binding;
-
             global.onModuleLoaded('binding', binding);
-        })(MOD.binding || (MOD.binding = {}));
-        var binding = MOD.binding;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(binding = MOD.binding || (MOD.binding = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var collection;
         (function (collection) {
             var constsMOD = RIAPP.MOD.consts;
             var utilsMOD = RIAPP.MOD.utils;
-
             //local variables for optimization
             var ValidationError = RIAPP.MOD.errors.ValidationError, DATA_TYPE = constsMOD.DATA_TYPE, valueUtils = utilsMOD.valueUtils, baseUtils = RIAPP.baseUtils, utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-
             (function (FIELD_TYPE) {
                 FIELD_TYPE[FIELD_TYPE["None"] = 0] = "None";
                 FIELD_TYPE[FIELD_TYPE["ClientOnly"] = 1] = "ClientOnly";
@@ -5208,7 +5164,6 @@ var RIAPP;
                 FILTER_TYPE[FILTER_TYPE["NotEq"] = 9] = "NotEq";
             })(collection.FILTER_TYPE || (collection.FILTER_TYPE = {}));
             var FILTER_TYPE = collection.FILTER_TYPE;
-
             function fn_getPropertyByName(name, props) {
                 var arrProps = props.filter(function (f) {
                     return f.fieldName == name;
@@ -5218,12 +5173,10 @@ var RIAPP;
                 return arrProps[0];
             }
             collection.fn_getPropertyByName = fn_getPropertyByName;
-
             function fn_traverseField(fld, fn) {
                 function _fn_traverseField(name, fld, fn) {
                     if (fld.fieldType == 5 /* Object */) {
                         fn(name, fld);
-
                         //for object fields traverse their nested properties
                         if (!!fld.nested && fld.nested.length > 0) {
                             var prop, i, len = fld.nested.length;
@@ -5231,19 +5184,20 @@ var RIAPP;
                                 prop = fld.nested[i];
                                 if (prop.fieldType == 5 /* Object */) {
                                     _fn_traverseField(name + '.' + prop.fieldName, prop, fn);
-                                } else {
+                                }
+                                else {
                                     fn(name + '.' + prop.fieldName, prop);
                                 }
                             }
                         }
-                    } else {
+                    }
+                    else {
                         fn(name, fld);
                     }
                 }
                 _fn_traverseField(fld.fieldName, fld, fn);
             }
             collection.fn_traverseField = fn_traverseField;
-
             var CollectionItem = (function (_super) {
                 __extends(CollectionItem, _super);
                 function CollectionItem() {
@@ -5258,36 +5212,31 @@ var RIAPP;
                     var base_events = _super.prototype._getEventNames.call(this);
                     return ['errors_changed'].concat(base_events);
                 };
-                CollectionItem.prototype.addOnErrorsChanged = function (fn, namespace) {
-                    this.addHandler('errors_changed', fn, namespace);
-                };
-                CollectionItem.prototype.removeOnErrorsChanged = function (namespace) {
-                    this.removeHandler('errors_changed', namespace);
-                };
                 CollectionItem.prototype._onErrorsChanged = function (args) {
                     this.raiseEvent('errors_changed', args);
                 };
-                CollectionItem.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                CollectionItem.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return this._collection._onError(error, source);
+                        return this._collection.handleError(error, source);
                     }
                     return isHandled;
                 };
                 CollectionItem.prototype._beginEdit = function () {
                     var coll = this._collection, isHandled;
                     if (coll.isEditing) {
-                        var eitem = coll._EditingItem;
+                        var eitem = coll._getEditingItem();
                         if (eitem === this)
                             return false;
-                        try  {
+                        try {
                             eitem.endEdit();
                             if (eitem.getIsHasErrors()) {
-                                this._onError(new ValidationError(eitem.getAllErrors(), eitem), eitem);
+                                this.handleError(new ValidationError(eitem.getAllErrors(), eitem), eitem);
                                 eitem.cancelEdit();
                             }
-                        } catch (ex) {
-                            isHandled = this._onError(ex, eitem);
+                        }
+                        catch (ex) {
+                            isHandled = this.handleError(ex, eitem);
                             eitem.cancelEdit();
                             RIAPP.global.reThrow(ex, isHandled);
                         }
@@ -5302,12 +5251,12 @@ var RIAPP;
                 CollectionItem.prototype._endEdit = function () {
                     if (!this._isEditing)
                         return false;
-                    var validation_errors, coll = this._collection, self = this;
+                    var coll = this._collection, self = this;
                     if (this.getIsHasErrors()) {
                         return false;
                     }
                     coll._removeAllErrors(this); //revalidate all
-                    validation_errors = this._validateAll();
+                    var validation_errors = this._validateAll();
                     if (validation_errors.length > 0) {
                         coll._addErrors(self, validation_errors);
                     }
@@ -5326,24 +5275,27 @@ var RIAPP;
                 };
                 CollectionItem.prototype._validateField = function (fieldName) {
                     var val, fieldInfo = this.getFieldInfo(fieldName), res = null;
-                    try  {
+                    try {
                         val = baseUtils.getValue(this._vals, fieldName);
                         if (this._skipValidate(fieldInfo, val))
                             return res;
                         if (this._isNew) {
                             if (val === null && !fieldInfo.isNullable && !fieldInfo.isReadOnly && !fieldInfo.isAutoGenerated)
                                 throw new Error(RIAPP.ERRS.ERR_FIELD_ISNOT_NULLABLE);
-                        } else {
+                        }
+                        else {
                             if (val === null && !fieldInfo.isNullable && !fieldInfo.isReadOnly)
                                 throw new Error(RIAPP.ERRS.ERR_FIELD_ISNOT_NULLABLE);
                         }
-                    } catch (ex) {
+                    }
+                    catch (ex) {
                         res = { fieldName: fieldName, errors: [ex.message] };
                     }
                     var tmp = this._collection._validateItemField(this, fieldName);
                     if (!!res && !!tmp) {
                         res.errors = res.errors.concat(tmp.errors);
-                    } else if (!!tmp)
+                    }
+                    else if (!!tmp)
                         res = tmp;
                     return res;
                 };
@@ -5359,7 +5311,6 @@ var RIAPP;
                             }
                         });
                     });
-
                     var res = self._validate();
                     if (!!res) {
                         errs.push(res);
@@ -5374,10 +5325,8 @@ var RIAPP;
                         throw new Error(ERRS.ERR_FIELD_READONLY);
                     if ((val === null || (utils.check.isString(val) && !val)) && !fieldInfo.isNullable)
                         throw new Error(ERRS.ERR_FIELD_ISNOT_NULLABLE);
-
                     if (val === null)
                         return val;
-
                     switch (fieldInfo.dataType) {
                         case 0 /* None */:
                             break;
@@ -5438,9 +5387,18 @@ var RIAPP;
                     //can reset _isNew on all items in the collection
                     //the list descendant does it
                 };
+                CollectionItem.prototype.addOnErrorsChanged = function (fn, namespace) {
+                    this.addHandler('errors_changed', fn, namespace);
+                };
+                CollectionItem.prototype.removeOnErrorsChanged = function (namespace) {
+                    this.removeHandler('errors_changed', namespace);
+                };
                 CollectionItem.prototype._onAttaching = function () {
                 };
                 CollectionItem.prototype._onAttach = function () {
+                };
+                CollectionItem.prototype.raiseErrorsChanged = function (args) {
+                    this._onErrorsChanged(args);
                 };
                 CollectionItem.prototype.getFieldInfo = function (fieldName) {
                     return this._collection.getFieldInfo(fieldName);
@@ -5517,16 +5475,13 @@ var RIAPP;
                     this._vals = this._saveVals;
                     this._saveVals = null;
                     coll._removeAllErrors(this);
-
                     //refresh User interface when values restored
                     coll.getFieldNames().forEach(function (name) {
                         if (changes[name] !== this._vals[name])
                             this.raisePropertyChanged(name);
                     }, this);
-
                     if (isNew && this._notEdited)
                         coll.removeItem(this);
-
                     this._isEditing = false;
                     coll._onEditing(this, false, true);
                     this.raisePropertyChanged('isEditing');
@@ -5568,7 +5523,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._fkey && !!this._collection && !this._collection._isClearing) {
+                    if (!!this._fkey && !!this._collection && !this._collection.getIsClearing()) {
                         this._collection.removeItem(this);
                     }
                     this._fkey = null;
@@ -5647,7 +5602,6 @@ var RIAPP;
                 return CollectionItem;
             })(RIAPP.BaseObject);
             collection.CollectionItem = CollectionItem;
-
             var BaseCollection = (function (_super) {
                 __extends(BaseCollection, _super);
                 function BaseCollection() {
@@ -5656,10 +5610,8 @@ var RIAPP;
                     this._isLoading = false;
                     this._isClearing = false;
                     this._isUpdating = false;
-
                     this._EditingItem = null;
                     this._perms = { canAddRow: true, canEditRow: true, canDeleteRow: true, canRefreshRow: false };
-
                     //includes stored on server
                     this._totalCount = 0;
                     this._pageIndex = 0;
@@ -5697,10 +5649,14 @@ var RIAPP;
                 };
                 BaseCollection.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return [
-                        'begin_edit', 'end_edit', 'fill', 'coll_changed', 'item_deleting', 'item_adding', 'item_added',
-                        'validate', 'current_changing', 'page_changing', 'errors_changed', 'status_changed', 'clearing',
-                        'cleared', 'commit_changes'].concat(base_events);
+                    return ['begin_edit', 'end_edit', 'fill', 'coll_changed', 'item_deleting', 'item_adding', 'item_added', 'validate', 'current_changing', 'page_changing', 'errors_changed', 'status_changed', 'clearing', 'cleared', 'commit_changes'].concat(base_events);
+                };
+                BaseCollection.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
+                    if (!isHandled) {
+                        return RIAPP.global.handleError(error, source);
+                    }
+                    return isHandled;
                 };
                 BaseCollection.prototype.addOnClearing = function (fn, namespace) {
                     this.addHandler('clearing', fn, namespace);
@@ -5792,10 +5748,6 @@ var RIAPP;
                 BaseCollection.prototype.removeOnStatusChanged = function (namespace) {
                     this.removeHandler('status_changed', namespace);
                 };
-                BaseCollection.prototype._getStrValue = function (val, fieldInfo) {
-                    var dcnv = fieldInfo.dateConversion, stz = utils.get_timeZoneOffset();
-                    return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
-                };
                 BaseCollection.prototype._getPKFieldInfos = function () {
                     if (!!this._pkInfo)
                         return this._pkInfo;
@@ -5811,23 +5763,145 @@ var RIAPP;
                     this._pkInfo = pk;
                     return this._pkInfo;
                 };
-                BaseCollection.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
-                    if (!isHandled) {
-                        return RIAPP.global._onError(error, source);
-                    }
-                    return isHandled;
-                };
                 BaseCollection.prototype._onCurrentChanging = function (newCurrent) {
-                    try  {
+                    try {
                         this.endEdit();
-                    } catch (ex) {
-                        RIAPP.global.reThrow(ex, this._onError(ex, this));
+                    }
+                    catch (ex) {
+                        RIAPP.global.reThrow(ex, this.handleError(ex, this));
                     }
                     this.raiseEvent('current_changing', { newCurrent: newCurrent });
                 };
                 BaseCollection.prototype._onCurrentChanged = function () {
                     this.raisePropertyChanged('currentItem');
+                };
+                //occurs when item changeType Changed (not used in simple collections)
+                BaseCollection.prototype._onItemStatusChanged = function (item, oldChangeType) {
+                    this.raiseEvent('status_changed', { item: item, oldChangeType: oldChangeType, key: item._key });
+                };
+                BaseCollection.prototype._onFillStart = function (args) {
+                    this.raiseEvent('fill', args);
+                };
+                BaseCollection.prototype._onFillEnd = function (args) {
+                    this.raiseEvent('fill', args);
+                };
+                BaseCollection.prototype._onItemsChanged = function (args) {
+                    this.raiseEvent('coll_changed', args);
+                };
+                //new item is being added, but is not in the collection now
+                BaseCollection.prototype._onItemAdding = function (item) {
+                    var args = { item: item, isCancel: false };
+                    this.raiseEvent('item_adding', args);
+                    if (args.isCancel)
+                        RIAPP.global._throwDummy(new Error('operation canceled'));
+                };
+                //new item has been added and now is in editing state and is currentItem
+                BaseCollection.prototype._onItemAdded = function (item) {
+                    var args = { item: item, isAddNewHandled: false };
+                    this.raiseEvent('item_added', args);
+                };
+                BaseCollection.prototype._createNew = function () {
+                    throw new Error('_createNew Not implemented');
+                };
+                BaseCollection.prototype._attach = function (item, itemPos) {
+                    if (!!this._itemsByKey[item._key]) {
+                        throw new Error(RIAPP.ERRS.ERR_ITEM_IS_ATTACHED);
+                    }
+                    try {
+                        this.endEdit();
+                    }
+                    catch (ex) {
+                        RIAPP.global.reThrow(ex, this.handleError(ex, this));
+                    }
+                    var pos;
+                    item._onAttaching();
+                    if (utils.check.isNt(itemPos)) {
+                        pos = this._items.length;
+                        this._items.push(item);
+                    }
+                    else {
+                        pos = itemPos;
+                        utils.insertIntoArray(this._items, item, pos);
+                    }
+                    this._itemsByKey[item._key] = item;
+                    this._onItemsChanged({ change_type: 1 /* ADDED */, items: [item], pos: [pos] });
+                    item._onAttach();
+                    this.raisePropertyChanged('count');
+                    this._onCurrentChanging(item);
+                    this._currentPos = pos;
+                    this._onCurrentChanged();
+                    return pos;
+                };
+                BaseCollection.prototype._onRemoved = function (item, pos) {
+                    try {
+                        this._onItemsChanged({ change_type: 0 /* REMOVE */, items: [item], pos: [pos] });
+                    }
+                    finally {
+                        this.raisePropertyChanged('count');
+                    }
+                };
+                BaseCollection.prototype._onPageSizeChanged = function () {
+                };
+                BaseCollection.prototype._onPageChanging = function () {
+                    var args = { page: this.pageIndex, isCancel: false };
+                    this._raiseEvent('page_changing', args);
+                    if (!args.isCancel) {
+                        try {
+                            this.endEdit();
+                        }
+                        catch (ex) {
+                            RIAPP.global.reThrow(ex, this.handleError(ex, this));
+                        }
+                    }
+                    return !args.isCancel;
+                };
+                BaseCollection.prototype._onPageChanged = function () {
+                };
+                BaseCollection.prototype._setCurrentItem = function (v) {
+                    var self = this, oldPos = self._currentPos;
+                    if (!v) {
+                        if (oldPos !== -1) {
+                            self._onCurrentChanging(null);
+                            self._currentPos = -1;
+                            self._onCurrentChanged();
+                        }
+                        return;
+                    }
+                    if (!v._key)
+                        throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
+                    var oldItem, pos, item = self.getItemByKey(v._key);
+                    if (!item) {
+                        throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
+                    }
+                    oldItem = self.getItemByPos(oldPos);
+                    pos = self._items.indexOf(v);
+                    if (pos < 0)
+                        throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
+                    if (oldPos !== pos || oldItem !== v) {
+                        self._onCurrentChanging(v);
+                        self._currentPos = pos;
+                        self._onCurrentChanged();
+                    }
+                };
+                BaseCollection.prototype._destroyItems = function () {
+                    this._items.forEach(function (item) {
+                        item.destroy();
+                    });
+                };
+                BaseCollection.prototype._isHasProp = function (prop) {
+                    //first check for indexed property name
+                    if (baseUtils.startsWith(prop, '[')) {
+                        var res = RIAPP.global.parser.resolveProp(this, prop);
+                        return !baseUtils.isUndefined(res);
+                    }
+                    return _super.prototype._isHasProp.call(this, prop);
+                };
+                BaseCollection.prototype._getEditingItem = function () {
+                    return this._EditingItem;
+                };
+                BaseCollection.prototype._getStrValue = function (val, fieldInfo) {
+                    var dcnv = fieldInfo.dateConversion, stz = utils.get_timeZoneOffset();
+                    return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
                 };
                 BaseCollection.prototype._onEditing = function (item, isBegin, isCanceled) {
                     if (this._isUpdating)
@@ -5835,20 +5909,15 @@ var RIAPP;
                     if (isBegin) {
                         this._EditingItem = item;
                         this.raiseEvent('begin_edit', { item: item });
-                    } else {
+                    }
+                    else {
                         this._EditingItem = null;
                         this.raiseEvent('end_edit', { item: item, isCanceled: isCanceled });
                     }
                 };
-
                 //used by descendants when commiting submits for items
                 BaseCollection.prototype._onCommitChanges = function (item, isBegin, isRejected, changeType) {
                     this.raiseEvent('commit_changes', { item: item, isBegin: isBegin, isRejected: isRejected, changeType: changeType });
-                };
-
-                //occurs when item changeType Changed (not used in simple collections)
-                BaseCollection.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    this.raiseEvent('status_changed', { item: item, oldChangeType: oldChangeType, key: item._key });
                 };
                 BaseCollection.prototype._validateItem = function (item) {
                     var args = { item: item, fieldName: null, errors: [] };
@@ -5869,11 +5938,12 @@ var RIAPP;
                 BaseCollection.prototype._addErrors = function (item, errors) {
                     var self = this;
                     this._ignoreChangeErrors = true;
-                    try  {
+                    try {
                         errors.forEach(function (err) {
                             self._addError(item, err.fieldName, err.errors);
                         });
-                    } finally {
+                    }
+                    finally {
                         this._ignoreChangeErrors = false;
                     }
                     this._onErrorsChanged(item);
@@ -5919,127 +5989,12 @@ var RIAPP;
                 BaseCollection.prototype._onErrorsChanged = function (item) {
                     var args = { item: item };
                     this.raiseEvent('errors_changed', args);
-                    item._onErrorsChanged(args);
+                    item.raiseErrorsChanged({});
                 };
                 BaseCollection.prototype._onItemDeleting = function (item) {
                     var args = { item: item, isCancel: false };
                     this.raiseEvent('item_deleting', args);
                     return !args.isCancel;
-                };
-                BaseCollection.prototype._onFillStart = function (args) {
-                    this.raiseEvent('fill', args);
-                };
-                BaseCollection.prototype._onFillEnd = function (args) {
-                    this.raiseEvent('fill', args);
-                };
-                BaseCollection.prototype._onItemsChanged = function (args) {
-                    this.raiseEvent('coll_changed', args);
-                };
-
-                //new item is being added, but is not in the collection now
-                BaseCollection.prototype._onItemAdding = function (item) {
-                    var args = { item: item, isCancel: false };
-                    this.raiseEvent('item_adding', args);
-                    if (args.isCancel)
-                        RIAPP.global._throwDummy(new Error('operation canceled'));
-                };
-
-                //new item has been added and now is in editing state and is currentItem
-                BaseCollection.prototype._onItemAdded = function (item) {
-                    var args = { item: item, isAddNewHandled: false };
-                    this.raiseEvent('item_added', args);
-                };
-                BaseCollection.prototype._createNew = function () {
-                    throw new Error('_createNew Not implemented');
-                };
-                BaseCollection.prototype._attach = function (item, itemPos) {
-                    if (!!this._itemsByKey[item._key]) {
-                        throw new Error(RIAPP.ERRS.ERR_ITEM_IS_ATTACHED);
-                    }
-                    try  {
-                        this.endEdit();
-                    } catch (ex) {
-                        RIAPP.global.reThrow(ex, this._onError(ex, this));
-                    }
-                    var pos;
-                    item._onAttaching();
-                    if (utils.check.isNt(itemPos)) {
-                        pos = this._items.length;
-                        this._items.push(item);
-                    } else {
-                        pos = itemPos;
-                        utils.insertIntoArray(this._items, item, pos);
-                    }
-                    this._itemsByKey[item._key] = item;
-                    this._onItemsChanged({ change_type: 1 /* ADDED */, items: [item], pos: [pos] });
-                    item._onAttach();
-                    this.raisePropertyChanged('count');
-                    this._onCurrentChanging(item);
-                    this._currentPos = pos;
-                    this._onCurrentChanged();
-                    return pos;
-                };
-                BaseCollection.prototype._onRemoved = function (item, pos) {
-                    try  {
-                        this._onItemsChanged({ change_type: 0 /* REMOVE */, items: [item], pos: [pos] });
-                    } finally {
-                        this.raisePropertyChanged('count');
-                    }
-                };
-                BaseCollection.prototype._onPageSizeChanged = function () {
-                };
-                BaseCollection.prototype._onPageChanging = function () {
-                    var args = { page: this.pageIndex, isCancel: false };
-                    this._raiseEvent('page_changing', args);
-                    if (!args.isCancel) {
-                        try  {
-                            this.endEdit();
-                        } catch (ex) {
-                            RIAPP.global.reThrow(ex, this._onError(ex, this));
-                        }
-                    }
-                    return !args.isCancel;
-                };
-                BaseCollection.prototype._onPageChanged = function () {
-                };
-                BaseCollection.prototype._setCurrentItem = function (v) {
-                    var self = this, oldPos = self._currentPos;
-                    if (!v) {
-                        if (oldPos !== -1) {
-                            self._onCurrentChanging(null);
-                            self._currentPos = -1;
-                            self._onCurrentChanged();
-                        }
-                        return;
-                    }
-                    if (!v._key)
-                        throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
-                    var oldItem, pos, item = self.getItemByKey(v._key);
-                    if (!item) {
-                        throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
-                    }
-                    oldItem = self.getItemByPos(oldPos);
-                    pos = self._items.indexOf(v);
-                    if (pos < 0)
-                        throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
-                    if (oldPos !== pos || oldItem !== v) {
-                        self._onCurrentChanging(v);
-                        self._currentPos = pos;
-                        self._onCurrentChanged();
-                    }
-                };
-                BaseCollection.prototype._destroyItems = function () {
-                    this._items.forEach(function (item) {
-                        item.destroy();
-                    });
-                };
-                BaseCollection.prototype._isHasProp = function (prop) {
-                    //first check for indexed property name
-                    if (baseUtils.startsWith(prop, '[')) {
-                        var res = RIAPP.global.parser._resolveProp(this, prop);
-                        return !baseUtils.isUndefined(res);
-                    }
-                    return _super.prototype._isHasProp.call(this, prop);
                 };
                 BaseCollection.prototype.getFieldInfo = function (fieldName) {
                     var parts = fieldName.split('.'), fld = this._fieldMap[parts[0]];
@@ -6059,6 +6014,9 @@ var RIAPP;
                         return f.fieldName;
                     });
                 };
+                BaseCollection.prototype.getIsClearing = function () {
+                    return this._isClearing;
+                };
                 BaseCollection.prototype.getFieldInfos = function () {
                     return this._fieldInfos;
                 };
@@ -6071,7 +6029,7 @@ var RIAPP;
                     if (this.isEditing) {
                         EditingItem = this._EditingItem;
                         if (!EditingItem.endEdit() && EditingItem.getIsHasErrors()) {
-                            this._onError(new ValidationError(EditingItem.getAllErrors(), EditingItem), EditingItem);
+                            this.handleError(new ValidationError(EditingItem.getAllErrors(), EditingItem), EditingItem);
                             this.cancelEdit();
                         }
                     }
@@ -6089,12 +6047,13 @@ var RIAPP;
                     item = this._createNew();
                     this._onItemAdding(item);
                     this._attach(item, null);
-                    try  {
+                    try {
                         this.currentItem = item;
                         item.beginEdit();
                         this._onItemAdded(item);
-                    } catch (ex) {
-                        isHandled = this._onError(ex, this);
+                    }
+                    catch (ex) {
+                        isHandled = this.handleError(ex, this);
                         item.cancelEdit();
                         RIAPP.global.reThrow(ex, isHandled);
                     }
@@ -6113,15 +6072,16 @@ var RIAPP;
                 };
                 BaseCollection.prototype.findByPK = function () {
                     var vals = [];
-                    for (var _i = 0; _i < (arguments.length - 0); _i++) {
-                        vals[_i] = arguments[_i + 0];
+                    for (var _i = 0; _i < arguments.length; _i++) {
+                        vals[_i - 0] = arguments[_i];
                     }
                     if (arguments.length === 0)
                         return null;
                     var self = this, pkInfo = self._getPKFieldInfos(), arr = [], key, values = [];
                     if (vals.length === 1 && utils.check.isArray(vals[0])) {
                         values = vals[0];
-                    } else
+                    }
+                    else
                         values = vals;
                     if (values.length !== pkInfo.length) {
                         return null;
@@ -6129,7 +6089,6 @@ var RIAPP;
                     for (var i = 0, len = pkInfo.length; i < len; i += 1) {
                         arr.push(self._getStrValue(values[i], pkInfo[i]));
                     }
-
                     key = arr.join(';');
                     return self.getItemByKey(key);
                 };
@@ -6240,7 +6199,6 @@ var RIAPP;
                     item._key = null;
                     item.removeHandler(null, null);
                     var test = this.getItemByPos(oldPos), curPos = this._currentPos;
-
                     //if detached item was current item
                     if (curPos === oldPos) {
                         if (!test) {
@@ -6248,7 +6206,6 @@ var RIAPP;
                         }
                         this._onCurrentChanged();
                     }
-
                     if (curPos > oldPos) {
                         this._currentPos = curPos - 1;
                         this._onCurrentChanged();
@@ -6279,7 +6236,6 @@ var RIAPP;
                                 res = mult;
                             else
                                 res = 0;
-
                             if (res !== 0)
                                 return res;
                         }
@@ -6292,22 +6248,22 @@ var RIAPP;
                     this.waitForNotLoading(function () {
                         var cur = self.currentItem;
                         self.isLoading = true;
-                        try  {
+                        try {
                             self._items.sort(fn);
                             self._onItemsChanged({ change_type: 2 /* RESET */, items: [], pos: [] });
-                        } finally {
+                        }
+                        finally {
                             self.isLoading = false;
                             deffered.resolve();
                         }
                         self.currentItem = null;
                         self.currentItem = cur;
                     }, [], false, null);
-
                     return deffered.promise();
                 };
                 BaseCollection.prototype.clear = function () {
                     this._isClearing = true;
-                    try  {
+                    try {
                         this.raiseEvent('clearing', {});
                         this.cancelEdit();
                         this._EditingItem = null;
@@ -6318,7 +6274,8 @@ var RIAPP;
                         this._itemsByKey = {};
                         this._errors = {};
                         this._onItemsChanged({ change_type: 2 /* RESET */, items: [], pos: [] });
-                    } finally {
+                    }
+                    finally {
                         this._isClearing = false;
                     }
                     this.raiseEvent('cleared', {});
@@ -6479,14 +6436,13 @@ var RIAPP;
                 Object.defineProperty(BaseCollection.prototype, "pageCount", {
                     get: function () {
                         var rowCount = this.totalCount, rowPerPage = this.pageSize, result;
-
                         if ((rowCount === 0) || (rowPerPage === 0)) {
                             return 0;
                         }
-
                         if ((rowCount % rowPerPage) === 0) {
                             result = (rowCount / rowPerPage);
-                        } else {
+                        }
+                        else {
                             result = (rowCount / rowPerPage);
                             result = Math.floor(result) + 1;
                         }
@@ -6498,7 +6454,6 @@ var RIAPP;
                 return BaseCollection;
             })(RIAPP.BaseObject);
             collection.BaseCollection = BaseCollection;
-
             var Collection = (function (_super) {
                 __extends(Collection, _super);
                 function Collection() {
@@ -6507,7 +6462,6 @@ var RIAPP;
                 return Collection;
             })(BaseCollection);
             collection.Collection = Collection;
-
             var ListItem = (function (_super) {
                 __extends(ListItem, _super);
                 function ListItem(coll, obj) {
@@ -6515,18 +6469,17 @@ var RIAPP;
                     var self = this;
                     this.__coll = coll;
                     this.__isNew = !obj;
-
                     //if an object provided then all properties are exposed from the object
                     if (!!obj)
                         this._vals = obj;
-
                     if (!obj) {
                         //if no object then set all values to nulls
                         var fieldInfos = this.__coll.getFieldInfos();
                         fieldInfos.forEach(function (fld) {
                             if (fld.fieldType != 5 /* Object */) {
                                 self._vals[fld.fieldName] = null;
-                            } else {
+                            }
+                            else {
                                 //object field
                                 fn_traverseField(fld, function (name, fld) {
                                     if (fld.fieldType == 5 /* Object */)
@@ -6541,7 +6494,7 @@ var RIAPP;
                 ListItem.prototype._setProp = function (name, val) {
                     var validation_error, error, coll = this._collection;
                     if (this._getProp(name) !== val) {
-                        try  {
+                        try {
                             baseUtils.setValue(this._vals, name, val, false);
                             this.raisePropertyChanged(name);
                             coll._removeError(this, name);
@@ -6549,10 +6502,12 @@ var RIAPP;
                             if (!!validation_error) {
                                 throw new ValidationError([validation_error], this);
                             }
-                        } catch (ex) {
+                        }
+                        catch (ex) {
                             if (ex instanceof ValidationError) {
                                 error = ex;
-                            } else {
+                            }
+                            else {
                                 error = new ValidationError([
                                     { fieldName: name, errors: [ex.message] }
                                 ], this);
@@ -6588,7 +6543,6 @@ var RIAPP;
                 return ListItem;
             })(CollectionItem);
             collection.ListItem = ListItem;
-
             var BaseList = (function (_super) {
                 __extends(BaseList, _super);
                 function BaseList(itemType, props) {
@@ -6602,7 +6556,6 @@ var RIAPP;
                     var self = this;
                     if (!utils.check.isArray(props) || props.length == 0)
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'props', props));
-
                     self._fieldMap = {};
                     self._fieldInfos = [];
                     props.forEach(function (prop) {
@@ -6617,10 +6570,11 @@ var RIAPP;
                     });
                 };
                 BaseList.prototype._attach = function (item) {
-                    try  {
+                    try {
                         this.endEdit();
-                    } catch (ex) {
-                        RIAPP.global.reThrow(ex, this._onError(ex, this));
+                    }
+                    catch (ex) {
+                        RIAPP.global.reThrow(ex, this.handleError(ex, this));
                     }
                     return _super.prototype._attach.call(this, item);
                 };
@@ -6629,10 +6583,9 @@ var RIAPP;
                     item._key = this._getNewKey(null); //client item ID
                     return item;
                 };
-
                 //here item parameter is not used, but can be used in descendants
                 BaseList.prototype._getNewKey = function (item) {
-                    var key = 'clkey_' + this._newKey;
+                    var key = 'clkey_' + this._newKey; //client's item ID
                     this._newKey += 1;
                     return key;
                 };
@@ -6641,7 +6594,7 @@ var RIAPP;
                     if (!objArray)
                         objArray = [];
                     this._onFillStart({ isBegin: true, rowCount: objArray.length, time: new Date(), isPageChanged: false });
-                    try  {
+                    try {
                         if (!!clearAll)
                             this.clear();
                         objArray.forEach(function (obj) {
@@ -6654,19 +6607,25 @@ var RIAPP;
                                 newItems.push(item);
                                 positions.push(self._items.length - 1);
                                 fetchedItems.push(item);
-                            } else {
+                            }
+                            else {
                                 fetchedItems.push(oldItem);
                             }
                         });
-
                         if (newItems.length > 0) {
                             this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
-                    } finally {
+                    }
+                    finally {
                         this._onFillEnd({
-                            isBegin: false, rowCount: fetchedItems.length, time: new Date(), resetUI: !!clearAll,
-                            fetchedItems: fetchedItems, newItems: newItems, isPageChanged: false
+                            isBegin: false,
+                            rowCount: fetchedItems.length,
+                            time: new Date(),
+                            resetUI: !!clearAll,
+                            fetchedItems: fetchedItems,
+                            newItems: newItems,
+                            isPageChanged: false
                         });
                     }
                     this.moveFirst();
@@ -6687,7 +6646,6 @@ var RIAPP;
                 return BaseList;
             })(BaseCollection);
             collection.BaseList = BaseList;
-
             var BaseDictionary = (function (_super) {
                 __extends(BaseDictionary, _super);
                 function BaseDictionary(itemType, keyName, props) {
@@ -6729,11 +6687,9 @@ var RIAPP;
                 return BaseDictionary;
             })(BaseList);
             collection.BaseDictionary = BaseDictionary;
-
             //private helper functions
             function getItemType(fieldNames) {
                 var propDescriptors = {};
-
                 //create field accessor descriptor for each field
                 fieldNames.forEach(function (name) {
                     propDescriptors[name] = {
@@ -6745,31 +6701,30 @@ var RIAPP;
                         }
                     };
                 });
-
                 return utilsMOD.__extendType(ListItem, {}, propDescriptors);
             }
-            ;
             function getPropInfos(properties) {
                 var props = null;
                 if (utils.check.isArray(properties)) {
                     props = properties.map(function (p) {
                         return { name: p, dtype: 0 };
                     });
-                } else if (properties instanceof CollectionItem) {
+                }
+                else if (properties instanceof CollectionItem) {
                     props = properties.getFieldNames().map(function (p) {
                         var fldInfo = properties.getFieldInfo(p);
                         return { name: p, dtype: fldInfo.dataType };
                     });
-                } else if (!!properties) {
+                }
+                else if (!!properties) {
                     props = Object.keys(properties).map(function (p) {
                         return { name: p, dtype: 0 };
                     });
-                } else
+                }
+                else
                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
                 return props;
             }
-            ;
-
             var List = (function (_super) {
                 __extends(List, _super);
                 function List(type_name, properties) {
@@ -6784,7 +6739,6 @@ var RIAPP;
                 return List;
             })(BaseList);
             collection.List = List;
-
             var Dictionary = (function (_super) {
                 __extends(Dictionary, _super);
                 function Dictionary(type_name, properties, keyName) {
@@ -6808,22 +6762,19 @@ var RIAPP;
                 return Dictionary;
             })(BaseDictionary);
             collection.Dictionary = Dictionary;
-
             RIAPP.global.onModuleLoaded('collection', collection);
-        })(MOD.collection || (MOD.collection = {}));
-        var collection = MOD.collection;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(collection = MOD.collection || (MOD.collection = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var template;
         (function (_template) {
             var constsMOD = RIAPP.MOD.consts;
-
             var elviewMOD = RIAPP.MOD.baseElView;
             var mvvmMOD = RIAPP.MOD.mvvm;
-
             _template.css = {
                 templateContainer: 'ria-template-container'
             };
@@ -6831,7 +6782,6 @@ var RIAPP;
             global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-
             var Template = (function (_super) {
                 __extends(Template, _super);
                 function Template(options) {
@@ -6900,7 +6850,6 @@ var RIAPP;
                     else
                         return [];
                 };
-
                 //returns a deferred which resolves with loaded template DOM element
                 Template.prototype._loadTemplateElAsync = function (name) {
                     var self = this, fn_loader = this.app.getTemplateLoader(name), deferred = utils.createDeferred();
@@ -6913,7 +6862,8 @@ var RIAPP;
                         }, function (err) {
                             deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self.templateID)));
                         });
-                    } else {
+                    }
+                    else {
                         deferred.reject(new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self.templateID)));
                     }
                     return deferred;
@@ -6941,20 +6891,20 @@ var RIAPP;
                 };
                 Template.prototype._loadTemplate = function () {
                     var self = this, tid = self.templateID, promise;
-                    try  {
+                    try {
                         if (!!self._promise) {
                             self._promise.reject('cancel'); //cancel previous load
                             self._promise = null;
                         }
                         if (!!self._loadedElem)
                             self._unloadTemplate();
-
                         if (!!tid) {
                             promise = self._loadTemplateElAsync(tid);
                             self._processTemplate(promise, !!(promise.state() == "pending"));
                         }
-                    } catch (ex) {
-                        self._onError(ex, self);
+                    }
+                    catch (ex) {
+                        self.handleError(ex, self);
                         global._throwDummy(ex);
                     }
                 };
@@ -6969,7 +6919,6 @@ var RIAPP;
                         if (deffered.state() == "pending")
                             deffered.reject(err);
                     });
-
                     if (asyncLoad) {
                         self._appendIsBusy(tmpDiv);
                         deffered.done(function () {
@@ -6981,13 +6930,11 @@ var RIAPP;
                             }
                         });
                     }
-
                     deffered.then(function (loadedEl) {
                         var i, tevents, len;
-
                         if (self._isDestroyCalled)
                             return;
-                        try  {
+                        try {
                             self._promise = null;
                             if (!!self._loadedElem && !loadedEl) {
                                 self._unloadTemplate();
@@ -7007,8 +6954,9 @@ var RIAPP;
                             for (i = 0; i < len; i += 1) {
                                 tevents[i].templateLoaded(self);
                             }
-                        } catch (ex) {
-                            self._onError(ex, self);
+                        }
+                        catch (ex) {
+                            self.handleError(ex, self);
                             global._throwDummy(ex);
                         }
                     }, function (arg) {
@@ -7024,13 +6972,14 @@ var RIAPP;
                                 ex = arg;
                             else if (!!arg.statusText) {
                                 ex = new Error(arg.statusText);
-                            } else if (utils.check.isString(arg)) {
+                            }
+                            else if (utils.check.isString(arg)) {
                                 ex = new Error(arg);
                             }
                         }
                         if (!ex)
                             ex = new Error(utils.format(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID, self.templateID));
-                        self._onError(ex, self);
+                        self.handleError(ex, self);
                     });
                 };
                 Template.prototype._updateBindingSource = function () {
@@ -7043,13 +6992,14 @@ var RIAPP;
                 };
                 Template.prototype._unloadTemplate = function () {
                     var i, tevents = this._getTemplateEvents(), len = tevents.length;
-                    try  {
+                    try {
                         if (!!this._el) {
                             for (i = 0; i < len; i += 1) {
                                 tevents[i].templateUnLoading(this);
                             }
                         }
-                    } finally {
+                    }
+                    finally {
                         this._cleanUp();
                     }
                 };
@@ -7059,23 +7009,21 @@ var RIAPP;
                         this._lfTime = null;
                     }
                     this._templElView = null;
-
                     if (!!this._loadedElem) {
                         //remove with jQuery method to ensure proper cleanUp
                         global.$(this._loadedElem).remove();
                     }
                     this._loadedElem = null;
-
                     if (this._isDestroyCalled && !!this._el) {
                         //remove with jQuery method to ensure proper cleanUp
                         global.$(this._el).remove();
                         this._el = null;
                     }
                 };
-                Template.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                Template.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return this.app._onError(error, source);
+                        return this.app.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -7095,7 +7043,6 @@ var RIAPP;
                     this._options = {};
                     _super.prototype.destroy.call(this);
                 };
-
                 //find elements which has specific data-name attribute value
                 //returns plain array of elements, or empty array
                 Template.prototype.findElByDataName = function (name) {
@@ -7167,7 +7114,6 @@ var RIAPP;
                 return Template;
             })(RIAPP.BaseObject);
             _template.Template = Template;
-
             //for strongly typed parameters
             var TemplateCommand = (function (_super) {
                 __extends(TemplateCommand, _super);
@@ -7177,7 +7123,6 @@ var RIAPP;
                 return TemplateCommand;
             })(mvvmMOD.Command);
             _template.TemplateCommand = TemplateCommand;
-
             var TemplateElView = (function (_super) {
                 __extends(TemplateElView, _super);
                 function TemplateElView(app, el, options) {
@@ -7190,25 +7135,28 @@ var RIAPP;
                 };
                 TemplateElView.prototype.templateLoaded = function (template) {
                     var self = this, p = self._commandParam;
-                    try  {
+                    try {
                         self._template = template;
                         self._commandParam = { template: template, isLoaded: true };
                         self.invokeCommand();
                         self._commandParam = p;
                         this.raisePropertyChanged('template');
-                    } catch (ex) {
-                        this._onError(ex, this);
+                    }
+                    catch (ex) {
+                        this.handleError(ex, this);
                         global._throwDummy(ex);
                     }
                 };
                 TemplateElView.prototype.templateUnLoading = function (template) {
                     var self = this, p = self._commandParam;
-                    try  {
+                    try {
                         self._commandParam = { template: template, isLoaded: false };
                         self.invokeCommand();
-                    } catch (ex) {
-                        this._onError(ex, this);
-                    } finally {
+                    }
+                    catch (ex) {
+                        this.handleError(ex, this);
+                    }
+                    finally {
                         self._commandParam = p;
                         self._template = null;
                     }
@@ -7241,27 +7189,24 @@ var RIAPP;
             })(elviewMOD.CommandElView);
             _template.TemplateElView = TemplateElView;
             ;
-
             global.registerType('Template', Template);
             global.registerElView('template', TemplateElView);
             global.onModuleLoaded('template', template);
-        })(MOD.template || (MOD.template = {}));
-        var template = MOD.template;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(template = MOD.template || (MOD.template = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var baseContent;
         (function (baseContent) {
             var constsMOD = RIAPP.MOD.consts;
             var utilsMOD = RIAPP.MOD.utils;
-
             var elviewMOD = RIAPP.MOD.baseElView;
             var bindMOD = RIAPP.MOD.binding;
             var templMOD = RIAPP.MOD.template;
             var collMOD = RIAPP.MOD.collection;
-
             var utils, parser;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
@@ -7271,11 +7216,6 @@ var RIAPP;
                 content: 'ria-content-field',
                 required: 'ria-required-field'
             };
-
-            
-
-            
-
             function parseContentAttr(content_attr) {
                 var contentOptions = {
                     name: null,
@@ -7285,19 +7225,20 @@ var RIAPP;
                     fieldName: null,
                     options: null
                 };
-
                 var attr, temp_opts = parser.parseOptions(content_attr);
                 if (temp_opts.length === 0)
                     return contentOptions;
                 attr = temp_opts[0];
                 if (!attr.template && !!attr.fieldName) {
                     var bindInfo = {
-                        target: null, source: null,
-                        targetPath: null, sourcePath: attr.fieldName,
+                        target: null,
+                        source: null,
+                        targetPath: null,
+                        sourcePath: attr.fieldName,
                         mode: bindMOD.BINDING_MODE[1 /* OneWay */],
-                        converter: null, converterParam: null
+                        converter: null,
+                        converterParam: null
                     };
-
                     contentOptions.bindingInfo = bindInfo;
                     contentOptions.displayInfo = attr.css;
                     contentOptions.fieldName = attr.fieldName;
@@ -7307,7 +7248,8 @@ var RIAPP;
                         contentOptions.options = attr.options;
                     if (attr.readOnly !== undefined)
                         contentOptions.readOnly = utils.parseBool(attr.readOnly);
-                } else if (!!attr.template) {
+                }
+                else if (!!attr.template) {
                     contentOptions.templateInfo = attr.template;
                     delete attr.template;
                 }
@@ -7315,7 +7257,6 @@ var RIAPP;
             }
             baseContent.parseContentAttr = parseContentAttr;
             ;
-
             function getBindingOptions(app, bindInfo, defaultTarget, defaultSource) {
                 var bindingOpts = {
                     mode: 1 /* OneWay */,
@@ -7327,9 +7268,7 @@ var RIAPP;
                     source: null,
                     isSourceFixed: false
                 };
-
                 var fixedSource = bindInfo.source, fixedTarget = bindInfo.target;
-
                 if (!bindInfo.sourcePath && !!bindInfo.to)
                     bindingOpts.sourcePath = bindInfo.to;
                 else if (!!bindInfo.sourcePath)
@@ -7340,14 +7279,12 @@ var RIAPP;
                     bindingOpts.converterParam = bindInfo.converterParam;
                 if (!!bindInfo.mode)
                     bindingOpts.mode = bindMOD.BINDING_MODE[bindInfo.mode];
-
                 if (!!bindInfo.converter) {
                     if (utils.check.isString(bindInfo.converter))
                         bindingOpts.converter = app.getConverter(bindInfo.converter);
                     else
                         bindingOpts.converter = bindInfo.converter;
                 }
-
                 if (!fixedTarget)
                     bindingOpts.target = defaultTarget;
                 else {
@@ -7356,33 +7293,34 @@ var RIAPP;
                             bindingOpts.target = defaultTarget;
                         else {
                             //if no fixed target, then target evaluation starts from this app
-                            bindingOpts.target = parser.resolveBindingSource(app, parser._getPathParts(fixedTarget));
+                            bindingOpts.target = parser.resolveBindingSource(app, parser.getPathParts(fixedTarget));
                         }
-                    } else
+                    }
+                    else
                         bindingOpts.target = fixedTarget;
                 }
-
                 if (!fixedSource) {
                     //if source is not supplied use defaultSource parameter as source
                     bindingOpts.source = defaultSource;
-                } else {
+                }
+                else {
                     bindingOpts.isSourceFixed = true;
                     if (utils.check.isString(fixedSource)) {
                         if (fixedSource == 'this') {
                             bindingOpts.source = defaultTarget;
-                        } else {
-                            //source evaluation starts from this app
-                            bindingOpts.source = parser.resolveBindingSource(app, parser._getPathParts(fixedSource));
                         }
-                    } else
+                        else {
+                            //source evaluation starts from this app
+                            bindingOpts.source = parser.resolveBindingSource(app, parser.getPathParts(fixedSource));
+                        }
+                    }
+                    else
                         bindingOpts.source = fixedSource;
                 }
-
                 return bindingOpts;
             }
             baseContent.getBindingOptions = getBindingOptions;
             ;
-
             var BindingContent = (function (_super) {
                 __extends(BindingContent, _super);
                 function BindingContent(app, options) {
@@ -7410,10 +7348,10 @@ var RIAPP;
                 }
                 BindingContent.prototype._init = function () {
                 };
-                BindingContent.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                BindingContent.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -7431,7 +7369,8 @@ var RIAPP;
                         if (!!fieldInfo && !fieldInfo.isNullable) {
                             $p.addClass(baseContent.css.required);
                         }
-                    } else {
+                    }
+                    else {
                         if (!!displayInfo) {
                             if (!!displayInfo.displayCss) {
                                 $p.addClass(displayInfo.displayCss);
@@ -7460,7 +7399,8 @@ var RIAPP;
                         el = doc.createElement('input');
                         el.setAttribute('type', 'text');
                         info.options = this._options.options;
-                    } else {
+                    }
+                    else {
                         el = doc.createElement('span');
                     }
                     this._updateCss();
@@ -7522,7 +7462,7 @@ var RIAPP;
                     return this.app._createElementView(el, view_info);
                 };
                 BindingContent.prototype.update = function () {
-                    try  {
+                    try {
                         this._cleanUp();
                         var bindingInfo = this._getBindingInfo();
                         if (!!bindingInfo) {
@@ -7534,8 +7474,9 @@ var RIAPP;
                             this._parentEl.appendChild(this._el);
                             this._lfScope.addObj(this.app.bind(options));
                         }
-                    } catch (ex) {
-                        RIAPP.global.reThrow(ex, this._onError(ex, this));
+                    }
+                    catch (ex) {
+                        RIAPP.global.reThrow(ex, this.handleError(ex, this));
                     }
                 };
                 BindingContent.prototype.destroy = function () {
@@ -7611,7 +7552,6 @@ var RIAPP;
                 return BindingContent;
             })(RIAPP.BaseObject);
             baseContent.BindingContent = BindingContent;
-
             var TemplateContent = (function (_super) {
                 __extends(TemplateContent, _super);
                 function TemplateContent(app, options) {
@@ -7633,10 +7573,10 @@ var RIAPP;
                     $p.addClass(baseContent.css.content);
                     this.update();
                 }
-                TemplateContent.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                TemplateContent.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -7655,14 +7595,14 @@ var RIAPP;
                         if (!!info.editID) {
                             id = info.editID;
                         }
-                    } else {
+                    }
+                    else {
                         if (!id) {
                             id = info.editID;
                         }
                     }
                     if (!id)
                         throw new Error(RIAPP.ERRS.ERR_TEMPLATE_ID_INVALID);
-
                     return new templMOD.Template({
                         app: this.app,
                         templateID: id,
@@ -7671,14 +7611,15 @@ var RIAPP;
                     });
                 };
                 TemplateContent.prototype.update = function () {
-                    try  {
+                    try {
                         this._cleanUp();
                         if (!!this._templateInfo) {
                             this._template = this._createTemplate();
                             this._parentEl.appendChild(this._template.el);
                         }
-                    } catch (ex) {
-                        RIAPP.global.reThrow(ex, this._onError(ex, this));
+                    }
+                    catch (ex) {
+                        RIAPP.global.reThrow(ex, this.handleError(ex, this));
                     }
                 };
                 TemplateContent.prototype._cleanUp = function () {
@@ -7755,7 +7696,6 @@ var RIAPP;
                 return TemplateContent;
             })(RIAPP.BaseObject);
             baseContent.TemplateContent = TemplateContent;
-
             var BoolContent = (function (_super) {
                 __extends(BoolContent, _super);
                 function BoolContent() {
@@ -7795,7 +7735,8 @@ var RIAPP;
                     if (this._isEditing && this._canBeEdited()) {
                         if (el.disabled)
                             el.disabled = false;
-                    } else {
+                    }
+                    else {
                         if (!el.disabled)
                             el.disabled = true;
                     }
@@ -7824,7 +7765,6 @@ var RIAPP;
                 return BoolContent;
             })(BindingContent);
             baseContent.BoolContent = BoolContent;
-
             var DateContent = (function (_super) {
                 __extends(DateContent, _super);
                 function DateContent(app, options) {
@@ -7846,7 +7786,8 @@ var RIAPP;
                         el.setAttribute('type', 'text');
                         info.options = this._options.options;
                         info.name = 'datepicker';
-                    } else {
+                    }
+                    else {
                         el = doc.createElement('span');
                     }
                     this._updateCss();
@@ -7859,7 +7800,6 @@ var RIAPP;
                 return DateContent;
             })(BindingContent);
             baseContent.DateContent = DateContent;
-
             var DateTimeContent = (function (_super) {
                 __extends(DateTimeContent, _super);
                 function DateTimeContent() {
@@ -7891,7 +7831,6 @@ var RIAPP;
                 return DateTimeContent;
             })(BindingContent);
             baseContent.DateTimeContent = DateTimeContent;
-
             var NumberContent = (function (_super) {
                 __extends(NumberContent, _super);
                 function NumberContent() {
@@ -7959,7 +7898,6 @@ var RIAPP;
                 return NumberContent;
             })(BindingContent);
             baseContent.NumberContent = NumberContent;
-
             var StringContent = (function (_super) {
                 __extends(StringContent, _super);
                 function StringContent() {
@@ -7997,7 +7935,6 @@ var RIAPP;
                 return StringContent;
             })(BindingContent);
             baseContent.StringContent = StringContent;
-
             var MultyLineContent = (function (_super) {
                 __extends(MultyLineContent, _super);
                 function MultyLineContent(app, options) {
@@ -8017,14 +7954,14 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-
                 MultyLineContent.prototype._createTargetElement = function () {
                     var el, info = { name: null, options: null };
                     if (this._isEditing && this._canBeEdited()) {
                         el = RIAPP.global.document.createElement('textarea');
                         info.options = this._options.options;
                         info.name = null;
-                    } else {
+                    }
+                    else {
                         el = RIAPP.global.document.createElement('div');
                     }
                     this._updateCss();
@@ -8034,7 +7971,6 @@ var RIAPP;
                 MultyLineContent.prototype.update = function () {
                     _super.prototype.update.call(this);
                     var self = this, fieldInfo = self.getFieldInfo();
-
                     if (self._target instanceof elviewMOD.TextAreaElView) {
                         self._target.addOnKeyPress(function (sender, args) {
                             args.isCancel = !self._previewKeyPress(fieldInfo, args.keyCode, args.value);
@@ -8053,7 +7989,6 @@ var RIAPP;
                 return MultyLineContent;
             })(BindingContent);
             baseContent.MultyLineContent = MultyLineContent;
-
             //base content factory
             var ContentFactory = (function () {
                 function ContentFactory(app, nextFactory) {
@@ -8067,7 +8002,6 @@ var RIAPP;
                     if (!options.bindingInfo) {
                         throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'options', 'bindingInfo'));
                     }
-
                     var fieldInfo = options.fieldInfo, res;
                     switch (fieldInfo.dataType) {
                         case 0 /* None */:
@@ -8113,7 +8047,6 @@ var RIAPP;
                         throw new Error(RIAPP.ERRS.ERR_BINDING_CONTENT_NOT_FOUND);
                     return res;
                 };
-
                 ContentFactory.prototype.createContent = function (options) {
                     var contentType = this.getContentType(options.contentOptions);
                     return new contentType(this.app, options);
@@ -8131,7 +8064,6 @@ var RIAPP;
                 return ContentFactory;
             })();
             baseContent.ContentFactory = ContentFactory;
-
             //this function (if present) is executed by the application
             //it allows to init resources specific to an application
             function initModule(app) {
@@ -8142,30 +8074,27 @@ var RIAPP;
             }
             baseContent.initModule = initModule;
             ;
-
             RIAPP.global.onModuleLoaded('baseContent', baseContent);
-        })(MOD.baseContent || (MOD.baseContent = {}));
-        var baseContent = MOD.baseContent;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(baseContent = MOD.baseContent || (MOD.baseContent = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
-        (function (_dataform) {
+        var dataform;
+        (function (dataform) {
             var constsMOD = RIAPP.MOD.consts;
-
             var bindMOD = RIAPP.MOD.binding;
             var elviewMOD = RIAPP.MOD.baseElView;
             var contentMOD = RIAPP.MOD.baseContent;
-            _dataform.css = {
+            dataform.css = {
                 dataform: 'ria-dataform'
             };
             var ERRTEXT = RIAPP.localizable.VALIDATE, utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-
             var DataForm = (function (_super) {
                 __extends(DataForm, _super);
                 function DataForm(options) {
@@ -8180,7 +8109,7 @@ var RIAPP;
                     this._$el = RIAPP.global.$(this._el);
                     this._objId = 'frm' + utils.getNewID();
                     this._dataContext = null;
-                    this._$el.addClass(_dataform.css.dataform);
+                    this._$el.addClass(dataform.css.dataform);
                     this._isEditing = false;
                     this._content = [];
                     this._lfTime = null;
@@ -8190,7 +8119,6 @@ var RIAPP;
                     this._parentDataForm = null;
                     this._errors = null;
                     parent = utils.getParentDataForm(null, this._el);
-
                     //if this form is nested inside another dataform
                     //subscribe for parent's destroy event
                     if (!!parent) {
@@ -8209,11 +8137,10 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-
-                DataForm.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                DataForm.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -8243,12 +8170,9 @@ var RIAPP;
                         return;
                     }
                     var supportsGetFieldInfo = utils.check.isFunction(dctx.getFieldInfo);
-
                     var elements = RIAPP.ArrayHelper.fromList(this._el.querySelectorAll(self._DATA_CONTENT_SELECTOR)), isEditing = this.isEditing;
-
                     //select all dataforms inside the scope
                     var formSelector = ['*[', constsMOD.DATA_ATTR.DATA_FORM, ']'].join(''), forms = RIAPP.ArrayHelper.fromList(this._el.querySelectorAll(formSelector));
-
                     elements.forEach(function (el) {
                         //check if the element inside a nested dataform
                         if (utils.check.isInNestedForm(self._el, forms, el))
@@ -8263,40 +8187,38 @@ var RIAPP;
                                 throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, '', op.fieldName));
                             }
                         }
-
                         var contentType = self.app._getContentType(op);
                         var content = new contentType(self.app, { parentEl: el, contentOptions: op, dataContext: dctx, isEditing: isEditing });
                         self._content.push(content);
                     });
                     this._lfTime = self.app._bindElements(this._el, dctx, true, this.isInsideTemplate);
-
                     var bindings = this._getBindings();
                     bindings.forEach(function (binding) {
                         if (!binding.isSourceFixed)
                             binding.source = dctx;
                     });
-
                     this._contentCreated = true;
                 };
                 DataForm.prototype._updateContent = function () {
-                    try  {
+                    try {
                         var dctx = this._dataContext, self = this;
                         if (this._contentCreated) {
                             this._content.forEach(function (content) {
                                 content.dataContext = dctx;
                                 content.isEditing = self.isEditing;
                             });
-
                             var bindings = this._getBindings();
                             bindings.forEach(function (binding) {
                                 if (!binding.isSourceFixed)
                                     binding.source = dctx;
                             });
-                        } else {
+                        }
+                        else {
                             this._createContent();
                         }
-                    } catch (ex) {
-                        RIAPP.global.reThrow(ex, this._onError(ex, this));
+                    }
+                    catch (ex) {
+                        RIAPP.global.reThrow(ex, this.handleError(ex, this));
                     }
                 };
                 DataForm.prototype._onDSErrorsChanged = function () {
@@ -8310,13 +8232,11 @@ var RIAPP;
                     dataContext.addOnDestroyed(function (s, a) {
                         self.dataContext = null;
                     }, self._objId);
-
                     if (this._supportEdit) {
                         dataContext.addOnPropertyChange('isEditing', function (sender, args) {
                             self.isEditing = sender.isEditing;
                         }, self._objId);
                     }
-
                     if (this._supportErrNotify) {
                         dataContext.addOnErrorsChanged(function (sender, args) {
                             self._onDSErrorsChanged();
@@ -8326,7 +8246,7 @@ var RIAPP;
                 DataForm.prototype._unbindDS = function () {
                     var dataContext = this._dataContext;
                     this.validationErrors = null;
-                    if (!!dataContext && !dataContext._isDestroyCalled) {
+                    if (!!dataContext && !dataContext.getIsDestroyCalled()) {
                         dataContext.removeNSHandlers(this._objId);
                     }
                 };
@@ -8346,13 +8266,13 @@ var RIAPP;
                         return;
                     this._isDestroyCalled = true;
                     this._clearContent();
-                    this._$el.removeClass(_dataform.css.dataform);
+                    this._$el.removeClass(dataform.css.dataform);
                     this._el = null;
                     this._$el = null;
                     this._unbindDS();
                     var parentDataForm = this._parentDataForm;
                     this._parentDataForm = null;
-                    if (!!parentDataForm && !parentDataForm._isDestroyCalled) {
+                    if (!!parentDataForm && !parentDataForm.getIsDestroyCalled()) {
                         parentDataForm.removeNSHandlers(this._objId);
                     }
                     this._dataContext = null;
@@ -8383,7 +8303,7 @@ var RIAPP;
                     },
                     set: function (v) {
                         var dataContext;
-                        try  {
+                        try {
                             if (v === this._dataContext)
                                 return;
                             if (!!v && !utils.check.isBaseObj(v)) {
@@ -8394,7 +8314,6 @@ var RIAPP;
                             this._supportErrNotify = false;
                             this._dataContext = v;
                             dataContext = this._dataContext;
-
                             if (!!dataContext) {
                                 this._supportEdit = utils.check.isEditable(dataContext);
                                 this._supportErrNotify = bindMOD._checkIsErrorNotification(dataContext);
@@ -8410,8 +8329,9 @@ var RIAPP;
                                     this._onDSErrorsChanged();
                                 }
                             }
-                        } catch (ex) {
-                            RIAPP.global.reThrow(ex, this._onError(ex, this));
+                        }
+                        catch (ex) {
+                            RIAPP.global.reThrow(ex, this.handleError(ex, this));
                         }
                     },
                     enumerable: true,
@@ -8426,29 +8346,27 @@ var RIAPP;
                         if (!dataContext)
                             return;
                         var isEditing = this._isEditing, editable;
-
                         if (!this._supportEdit && v !== isEditing) {
                             this._isEditing = v;
                             this._updateContent();
                             this.raisePropertyChanged('isEditing');
                             return;
                         }
-
                         if (this._supportEdit)
                             editable = dataContext;
-
                         if (v !== isEditing) {
-                            try  {
+                            try {
                                 if (v) {
                                     editable.beginEdit();
-                                } else {
+                                }
+                                else {
                                     editable.endEdit();
                                 }
-                            } catch (ex) {
-                                RIAPP.global.reThrow(ex, this._onError(ex, dataContext));
+                            }
+                            catch (ex) {
+                                RIAPP.global.reThrow(ex, this.handleError(ex, dataContext));
                             }
                         }
-
                         if (this._supportEdit && editable.isEditing !== isEditing) {
                             this._isEditing = editable.isEditing;
                             this._updateContent();
@@ -8483,8 +8401,7 @@ var RIAPP;
                 });
                 return DataForm;
             })(RIAPP.BaseObject);
-            _dataform.DataForm = DataForm;
-
+            dataform.DataForm = DataForm;
             var DataFormElView = (function (_super) {
                 __extends(DataFormElView, _super);
                 function DataFormElView(app, el, options) {
@@ -8540,7 +8457,8 @@ var RIAPP;
                         $img.get(0).src = image_src;
                         utils.addToolTip($img, this._getErrorTipInfo(errors), true);
                         this._setFieldError(true);
-                    } else {
+                    }
+                    else {
                         $el.children('img[name="error_info"]').remove();
                         this._setFieldError(false);
                     }
@@ -8549,7 +8467,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._form && !this._form._isDestroyCalled) {
+                    if (!!this._form && !this._form.getIsDestroyCalled()) {
                         this._form.destroy();
                     }
                     this._form = null;
@@ -8583,28 +8501,25 @@ var RIAPP;
                 });
                 return DataFormElView;
             })(elviewMOD.BaseElView);
-            _dataform.DataFormElView = DataFormElView;
-
+            dataform.DataFormElView = DataFormElView;
             RIAPP.global.registerType('DataFormElView', DataFormElView);
             RIAPP.global.registerElView(constsMOD.ELVIEW_NM.DATAFORM, DataFormElView);
             RIAPP.global.onModuleLoaded('dataform', dataform);
-        })(MOD.dataform || (MOD.dataform = {}));
-        var dataform = MOD.dataform;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(dataform = MOD.dataform || (MOD.dataform = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var dynacontent;
         (function (dynacontent) {
             var elviewMOD = RIAPP.MOD.baseElView;
             var templMOD = RIAPP.MOD.template;
-
             var utils, global = RIAPP.global;
             global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-
             var DynaContentElView = (function (_super) {
                 __extends(DynaContentElView, _super);
                 function DynaContentElView(app, el, options) {
@@ -8629,7 +8544,6 @@ var RIAPP;
                     if (!utils.isContained(template.el, this.el)) {
                         this.el.appendChild(template.el);
                     }
-
                     var isFirstShow = !this._prevTemplateID, canShow = !!this._animation && (this._animation.isAnimateFirstShow || (!this._animation.isAnimateFirstShow && !isFirstShow));
                     if (canShow) {
                         this._animation.show(template, isFirstShow);
@@ -8640,7 +8554,7 @@ var RIAPP;
                 };
                 DynaContentElView.prototype._templateChanging = function (oldName, newName) {
                     var self = this;
-                    try  {
+                    try {
                         if (!newName && !!this._template) {
                             if (!!this._animation && !!this._template.loadedElem) {
                                 this._animation.stop();
@@ -8652,19 +8566,20 @@ var RIAPP;
                                     self._template = null;
                                     self.raisePropertyChanged('template');
                                 });
-                            } else {
+                            }
+                            else {
                                 self._template.destroy();
                                 self._template = null;
                                 self.raisePropertyChanged('template');
                             }
                             return;
                         }
-                    } catch (ex) {
-                        this._onError(ex, this);
+                    }
+                    catch (ex) {
+                        this.handleError(ex, this);
                         global._throwDummy(ex);
                     }
-
-                    try  {
+                    try {
                         if (!this._template) {
                             this._template = new templMOD.Template({
                                 app: this.app,
@@ -8683,10 +8598,12 @@ var RIAPP;
                                     return;
                                 self._template.templateID = newName;
                             });
-                        } else
+                        }
+                        else
                             self._template.templateID = newName;
-                    } catch (ex) {
-                        this._onError(ex, this);
+                    }
+                    catch (ex) {
+                        this.handleError(ex, this);
                         global._throwDummy(ex);
                     }
                 };
@@ -8714,7 +8631,6 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-
                 Object.defineProperty(DynaContentElView.prototype, "templateID", {
                     get: function () {
                         return this._templateID;
@@ -8763,20 +8679,18 @@ var RIAPP;
                 return DynaContentElView;
             })(elviewMOD.BaseElView);
             dynacontent.DynaContentElView = DynaContentElView;
-
             global.registerElView('dynacontent', DynaContentElView);
             global.onModuleLoaded('dynacontent', dynacontent);
-        })(MOD.dynacontent || (MOD.dynacontent = {}));
-        var dynacontent = MOD.dynacontent;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(dynacontent = MOD.dynacontent || (MOD.dynacontent = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var datepicker;
         (function (datepicker) {
             var elviewMOD = RIAPP.MOD.baseElView;
-
             var Datepicker = (function (_super) {
                 __extends(Datepicker, _super);
                 function Datepicker() {
@@ -8807,14 +8721,14 @@ var RIAPP;
                 Datepicker.prototype.formatDate = function (date) {
                     return this.datePickerFn.formatDate(this.dateFormat, date);
                 };
-
                 Object.defineProperty(Datepicker.prototype, "dateFormat", {
                     //uses jQuery datepicker format
                     get: function () {
                         if (!this._dateFormat) {
                             var regional = this.datePickerFn.regional[this._datepickerRegion];
                             return regional.dateFormat;
-                        } else
+                        }
+                        else
                             return this._dateFormat;
                     },
                     set: function (v) {
@@ -8863,7 +8777,6 @@ var RIAPP;
                 return Datepicker;
             })(RIAPP.BaseObject);
             datepicker.Datepicker = Datepicker;
-
             var DatePickerElView = (function (_super) {
                 __extends(DatePickerElView, _super);
                 function DatePickerElView() {
@@ -8888,21 +8801,19 @@ var RIAPP;
                 return DatePickerElView;
             })(elviewMOD.TextBoxElView);
             datepicker.DatePickerElView = DatePickerElView;
-
             RIAPP.global.registerType('IDatepicker', new Datepicker());
             RIAPP.global.registerElView('datepicker', DatePickerElView);
             RIAPP.global.onModuleLoaded('datepicker', datepicker);
-        })(MOD.datepicker || (MOD.datepicker = {}));
-        var datepicker = MOD.datepicker;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(datepicker = MOD.datepicker || (MOD.datepicker = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var tabs;
         (function (tabs) {
             var elviewMOD = MOD.baseElView;
-
             var TabsElView = (function (_super) {
                 __extends(TabsElView, _super);
                 function TabsElView() {
@@ -8990,29 +8901,26 @@ var RIAPP;
                 return TabsElView;
             })(elviewMOD.BaseElView);
             tabs.TabsElView = TabsElView;
-
             RIAPP.global.registerElView('tabs', TabsElView);
             RIAPP.global.onModuleLoaded('tabs', tabs);
-        })(MOD.tabs || (MOD.tabs = {}));
-        var tabs = MOD.tabs;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(tabs = MOD.tabs || (MOD.tabs = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var listbox;
         (function (listbox) {
             var bindMOD = RIAPP.MOD.binding;
             var collMOD = MOD.collection;
             var elviewMOD = MOD.baseElView;
             var contentMOD = RIAPP.MOD.baseContent;
-
             var utils, parser;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
                 parser = s.parser;
             });
-
             var ListBox = (function (_super) {
                 __extends(ListBox, _super);
                 function ListBox(options) {
@@ -9070,10 +8978,10 @@ var RIAPP;
                         key = op.value;
                         data = this._keyMap[key];
                     }
-
                     if (!data && !!this._selectedItem) {
                         this.selectedItem = null;
-                    } else if (data.item !== this._selectedItem) {
+                    }
+                    else if (data.item !== this._selectedItem) {
                         this.selectedItem = data.item;
                     }
                 };
@@ -9088,7 +8996,8 @@ var RIAPP;
                         return null;
                     if (!!this._options.valuePath) {
                         return parser.resolvePath(item, this._options.valuePath);
-                    } else
+                    }
+                    else
                         return undefined;
                 };
                 ListBox.prototype._getText = function (item) {
@@ -9099,7 +9008,8 @@ var RIAPP;
                         if (utils.check.isNt(t))
                             return '';
                         return '' + t;
-                    } else
+                    }
+                    else
                         return this._getStringValue(item);
                 };
                 ListBox.prototype._onDSCollectionChanged = function (args) {
@@ -9121,14 +9031,15 @@ var RIAPP;
                                 self._removeOption(item);
                             });
                             break;
-                        case 3 /* REMAP_KEY */: {
-                            data = self._keyMap[args.old_key];
-                            if (!!data) {
-                                delete self._keyMap[args.old_key];
-                                self._keyMap[args.new_key] = data;
-                                data.op.value = args.new_key;
+                        case 3 /* REMAP_KEY */:
+                            {
+                                data = self._keyMap[args.old_key];
+                                if (!!data) {
+                                    delete self._keyMap[args.old_key];
+                                    self._keyMap[args.new_key] = data;
+                                    data.op.value = args.new_key;
+                                }
                             }
-                        }
                     }
                 };
                 ListBox.prototype._onDSFill = function (args) {
@@ -9136,7 +9047,8 @@ var RIAPP;
                     if (isEnd) {
                         this._isDSFilling = false;
                         this._refresh();
-                    } else {
+                    }
+                    else {
                         this._isDSFilling = true;
                     }
                 };
@@ -9144,7 +9056,8 @@ var RIAPP;
                     var self = this, key, data, oldVal, val;
                     if (isBegin) {
                         this._savedValue = this._getStringValue(item);
-                    } else {
+                    }
+                    else {
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
                         if (!isCanceled) {
@@ -9161,7 +9074,8 @@ var RIAPP;
                                         self._valMap[val] = data;
                                     }
                                 }
-                            } else {
+                            }
+                            else {
                                 if (!!oldVal) {
                                     delete self._valMap[oldVal];
                                 }
@@ -9180,15 +9094,15 @@ var RIAPP;
                     if (isBegin) {
                         if (isRejected && changeType === 1 /* ADDED */) {
                             return;
-                        } else if (!isRejected && changeType === 3 /* DELETED */) {
+                        }
+                        else if (!isRejected && changeType === 3 /* DELETED */) {
                             return;
                         }
-
                         this._savedValue = this._getStringValue(item);
-                    } else {
+                    }
+                    else {
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
-
                         if (isRejected && changeType === 3 /* DELETED */) {
                             this._addOption(item, true);
                             return;
@@ -9274,7 +9188,8 @@ var RIAPP;
                             selEl.add(oOption, null);
                         else
                             selEl.add(oOption, selEl.options[1]);
-                    } else
+                    }
+                    else
                         selEl.add(oOption, null);
                     return oOption;
                 };
@@ -9325,13 +9240,14 @@ var RIAPP;
                     if (!isDestroy) {
                         this._addOption(null, false);
                         this.selectedItem = null;
-                    } else
+                    }
+                    else
                         this.selectedItem = null;
                 };
                 ListBox.prototype._refresh = function () {
                     var self = this, ds = this.dataSource, oldItem = this._selectedItem, tmp = self._tempValue;
                     this._isRefreshing = true;
-                    try  {
+                    try {
                         this.clear();
                         if (!!ds) {
                             ds.forEach(function (item) {
@@ -9339,7 +9255,8 @@ var RIAPP;
                             });
                             if (utils.check.isUndefined(tmp)) {
                                 self.el.selectedIndex = self._findItemIndex(oldItem);
-                            } else {
+                            }
+                            else {
                                 oldItem = self.findItemByValue(tmp);
                                 self.selectedItem = oldItem;
                                 if (!oldItem)
@@ -9348,7 +9265,8 @@ var RIAPP;
                                     self._tempValue = undefined;
                             }
                         }
-                    } finally {
+                    }
+                    finally {
                         self._isRefreshing = false;
                     }
                     self._onChanged();
@@ -9435,7 +9353,8 @@ var RIAPP;
                                 else
                                     self._tempValue = undefined;
                             }
-                        } else {
+                        }
+                        else {
                             if (this._tempValue !== v) {
                                 this._selectedItem = null;
                                 this._tempValue = v;
@@ -9519,7 +9438,6 @@ var RIAPP;
                 return ListBox;
             })(RIAPP.BaseObject);
             listbox.ListBox = ListBox;
-
             var SelectElView = (function (_super) {
                 __extends(SelectElView, _super);
                 function SelectElView(app, el, options) {
@@ -9545,7 +9463,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._listBox && !this._listBox._isDestroyCalled) {
+                    if (!!this._listBox && !this._listBox.getIsDestroyCalled()) {
                         this._listBox.destroy();
                     }
                     this._listBox = null;
@@ -9632,7 +9550,6 @@ var RIAPP;
                 return SelectElView;
             })(elviewMOD.BaseElView);
             listbox.SelectElView = SelectElView;
-
             var LookupContent = (function (_super) {
                 __extends(LookupContent, _super);
                 function LookupContent(app, options) {
@@ -9673,7 +9590,6 @@ var RIAPP;
                         return this._selectView;
                     var lookUpOptions = this._options.options;
                     var args1 = { objectKey: 'selectElView', object: null };
-
                     //try get externally externally cached listBox
                     this.raiseEvent('object_needed', args1);
                     if (!!args1.object) {
@@ -9682,7 +9598,6 @@ var RIAPP;
                     }
                     if (!!this._selectView)
                         return this._selectView;
-
                     //proceed creating new selectElView
                     var dataSource = parser.resolvePath(this.app, lookUpOptions.dataSource), options = { valuePath: lookUpOptions.valuePath, textPath: lookUpOptions.textPath };
                     var el = RIAPP.global.document.createElement('select');
@@ -9690,7 +9605,6 @@ var RIAPP;
                     var selectElView = this._createSelectElView(el, options);
                     selectElView.dataSource = dataSource;
                     var args2 = { objectKey: 'selectElView', object: selectElView, isCachedExternally: false };
-
                     //this allows to cache listBox externally
                     this.raiseEvent('object_created', args2);
                     this._isListBoxCachedExternally = args2.isCachedExternally;
@@ -9738,7 +9652,8 @@ var RIAPP;
                         selectView = this._getSelectView();
                         this._listBinding = this._bindToList(selectView);
                         tgt = selectView;
-                    } else {
+                    }
+                    else {
                         spanView = this._getSpanView();
                         this._valBinding = this._bindToValue();
                         tgt = spanView;
@@ -9760,7 +9675,6 @@ var RIAPP;
                         this._valBinding.destroy();
                         this._valBinding = null;
                     }
-
                     if (!!this._selectView && this._isListBoxCachedExternally) {
                         this._selectView = null;
                     }
@@ -9776,24 +9690,30 @@ var RIAPP;
                 LookupContent.prototype._bindToValue = function () {
                     if (!this._options.fieldName)
                         return null;
-
                     var options = {
-                        target: this, source: this._dataContext,
-                        targetPath: 'value', sourcePath: this._options.fieldName,
+                        target: this,
+                        source: this._dataContext,
+                        targetPath: 'value',
+                        sourcePath: this._options.fieldName,
                         mode: 1 /* OneWay */,
-                        converter: null, converterParam: null, isSourceFixed: false
+                        converter: null,
+                        converterParam: null,
+                        isSourceFixed: false
                     };
                     return this.app.bind(options);
                 };
                 LookupContent.prototype._bindToList = function (selectView) {
                     if (!this._options.fieldName)
                         return null;
-
                     var options = {
-                        target: selectView, source: this._dataContext,
-                        targetPath: 'selectedValue', sourcePath: this._options.fieldName,
+                        target: selectView,
+                        source: this._dataContext,
+                        targetPath: 'selectedValue',
+                        sourcePath: this._options.fieldName,
                         mode: 2 /* TwoWay */,
-                        converter: null, converterParam: null, isSourceFixed: false
+                        converter: null,
+                        converterParam: null,
+                        isSourceFixed: false
                     };
                     return this.app.bind(options);
                 };
@@ -9832,7 +9752,6 @@ var RIAPP;
                 return LookupContent;
             })(contentMOD.BindingContent);
             listbox.LookupContent = LookupContent;
-
             var ContentFactory = (function () {
                 function ContentFactory(app, nextFactory) {
                     this._app = app;
@@ -9847,12 +9766,10 @@ var RIAPP;
                     else
                         throw new Error(RIAPP.ERRS.ERR_BINDING_CONTENT_NOT_FOUND);
                 };
-
                 ContentFactory.prototype.createContent = function (options) {
                     var contentType = this.getContentType(options);
                     return new contentType(this.app, options);
                 };
-
                 ContentFactory.prototype.isExternallyCachable = function (contentType) {
                     if (LookupContent === contentType)
                         return true;
@@ -9868,7 +9785,6 @@ var RIAPP;
                 return ContentFactory;
             })();
             listbox.ContentFactory = ContentFactory;
-
             function initModule(app) {
                 app.registerContentFactory(function (nextFactory) {
                     return new ContentFactory(app, nextFactory);
@@ -9877,32 +9793,28 @@ var RIAPP;
             }
             listbox.initModule = initModule;
             ;
-
             RIAPP.global.registerElView('select', SelectElView);
             RIAPP.global.onModuleLoaded('listbox', listbox);
-        })(MOD.listbox || (MOD.listbox = {}));
-        var listbox = MOD.listbox;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(listbox = MOD.listbox || (MOD.listbox = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var datadialog;
         (function (datadialog) {
             var templMOD = RIAPP.MOD.template;
-
             var utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-
             (function (DIALOG_ACTION) {
                 DIALOG_ACTION[DIALOG_ACTION["Default"] = 0] = "Default";
                 DIALOG_ACTION[DIALOG_ACTION["StayOpen"] = 1] = "StayOpen";
             })(datadialog.DIALOG_ACTION || (datadialog.DIALOG_ACTION = {}));
             var DIALOG_ACTION = datadialog.DIALOG_ACTION;
             ;
-
             var DataEditDialog = (function (_super) {
                 __extends(DataEditDialog, _super);
                 function DataEditDialog(app, options) {
@@ -9937,7 +9849,6 @@ var RIAPP;
                     this._fn_OnCancel = options.fn_OnCancel;
                     this._fn_OnTemplateCreated = options.fn_OnTemplateCreated;
                     this._fn_OnTemplateDestroy = options.fn_OnTemplateDestroy;
-
                     this._isEditable = false;
                     this._template = null;
                     this._$template = null;
@@ -9966,10 +9877,10 @@ var RIAPP;
                     this._dialogCreated = false;
                     this._createDialog();
                 }
-                DataEditDialog.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                DataEditDialog.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -9991,14 +9902,15 @@ var RIAPP;
                 DataEditDialog.prototype._createDialog = function () {
                     if (this._dialogCreated)
                         return;
-                    try  {
+                    try {
                         this._template = this._createTemplate();
                         this._$template = RIAPP.global.$(this._template.el);
                         RIAPP.global.document.body.appendChild(this._template.el);
                         this._$template.dialog(this._options);
                         this._dialogCreated = true;
-                    } catch (ex) {
-                        RIAPP.global.reThrow(ex, this._onError(ex, this));
+                    }
+                    catch (ex) {
+                        RIAPP.global.reThrow(ex, this.handleError(ex, this));
                     }
                 };
                 DataEditDialog.prototype._getEventNames = function () {
@@ -10092,17 +10004,14 @@ var RIAPP;
                     }
                     if (action == 1 /* StayOpen */)
                         return;
-
                     if (!this._dataContext) {
                         self.hide();
                         return;
                     }
-
                     if (this._isEditable)
                         canCommit = this._dataContext.endEdit();
                     else
                         canCommit = true;
-
                     if (canCommit) {
                         if (this._submitOnOK) {
                             this._disableButtons(true);
@@ -10126,7 +10035,8 @@ var RIAPP;
                                     }
                                 }
                             });
-                        } else {
+                        }
+                        else {
                             self._result = 'ok';
                             self.hide();
                         }
@@ -10154,7 +10064,7 @@ var RIAPP;
                     }
                 };
                 DataEditDialog.prototype._onClose = function () {
-                    try  {
+                    try {
                         if (this._result != 'ok' && !!this._dataContext) {
                             if (this._isEditable)
                                 this._dataContext.cancelEdit();
@@ -10165,7 +10075,8 @@ var RIAPP;
                         if (!!this._fn_OnClose)
                             this._fn_OnClose(this);
                         this.raiseEvent('close', {});
-                    } finally {
+                    }
+                    finally {
                         this._template.dataContext = null;
                     }
                     var csel = this._currentSelectable;
@@ -10339,30 +10250,26 @@ var RIAPP;
                 return DataEditDialog;
             })(RIAPP.BaseObject);
             datadialog.DataEditDialog = DataEditDialog;
-
             RIAPP.global.onModuleLoaded('datadialog', datadialog);
-        })(MOD.datadialog || (MOD.datadialog = {}));
-        var datadialog = MOD.datadialog;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(datadialog = MOD.datadialog || (MOD.datadialog = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var datagrid;
         (function (datagrid) {
             var constsMOD = RIAPP.MOD.consts;
-
             var bindMOD = RIAPP.MOD.binding;
             var contentMOD = RIAPP.MOD.baseContent;
             var collMOD = RIAPP.MOD.collection;
             var templMOD = RIAPP.MOD.template;
-
             var COLUMN_TYPE = { DATA: 'data', ROW_EXPANDER: 'row_expander', ROW_ACTIONS: 'row_actions', ROW_SELECTOR: 'row_selector' };
             var utils, global = RIAPP.global;
             global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-
             datagrid.css = {
                 container: 'ria-table-container',
                 dataTable: 'ria-data-table',
@@ -10388,7 +10295,13 @@ var RIAPP;
                 colSortAsc: 'sort-asc',
                 colSortDesc: 'sort-desc'
             };
-
+            (function (ROW_ACTION) {
+                ROW_ACTION[ROW_ACTION["OK"] = 0] = "OK";
+                ROW_ACTION[ROW_ACTION["EDIT"] = 1] = "EDIT";
+                ROW_ACTION[ROW_ACTION["CANCEL"] = 2] = "CANCEL";
+                ROW_ACTION[ROW_ACTION["DELETE"] = 3] = "DELETE";
+            })(datagrid.ROW_ACTION || (datagrid.ROW_ACTION = {}));
+            var ROW_ACTION = datagrid.ROW_ACTION;
             var _columnWidthInterval, _gridsCount = 0;
             var _created_grids = {};
             function _gridCreated(grid) {
@@ -10408,13 +10321,12 @@ var RIAPP;
             function _checkGridWidth() {
                 utils.forEachProp(_created_grids, function (id) {
                     var grid = _created_grids[id];
-                    if (grid._isDestroyCalled)
+                    if (grid.getIsDestroyCalled())
                         return;
                     grid._columnWidthChecker();
                 });
             }
             ;
-
             var RowSelectContent = (function (_super) {
                 __extends(RowSelectContent, _super);
                 function RowSelectContent() {
@@ -10429,7 +10341,6 @@ var RIAPP;
                 return RowSelectContent;
             })(contentMOD.BoolContent);
             datagrid.RowSelectContent = RowSelectContent;
-
             var BaseCell = (function (_super) {
                 __extends(BaseCell, _super);
                 function BaseCell(options) {
@@ -10442,6 +10353,7 @@ var RIAPP;
                     this._row = options.row;
                     this._el = options.td;
                     this._column = options.column;
+                    this._num = options.num;
                     this._div = global.document.createElement("div");
                     var $div = global.$(this._div);
                     this._clickTimeOut = null;
@@ -10459,19 +10371,22 @@ var RIAPP;
                 }
                 BaseCell.prototype._init = function () {
                 };
-                BaseCell.prototype._onCellClicked = function () {
-                    this.grid.currentRow = this._row;
+                BaseCell.prototype._onCellClicked = function (row) {
+                    this.grid.currentRow = row || this._row;
                 };
-                BaseCell.prototype._onDblClicked = function () {
-                    this.grid.currentRow = this._row;
+                BaseCell.prototype._onDblClicked = function (row) {
+                    this.grid.currentRow = row || this._row;
                     this.grid._onCellDblClicked(this);
                 };
-                BaseCell.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                BaseCell.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return this.row._onError(error, source);
+                        return this.row.handleError(error, source);
                     }
                     return isHandled;
+                };
+                BaseCell.prototype.click = function () {
+                    this._onCellClicked(this._row);
                 };
                 BaseCell.prototype.scrollIntoView = function (isUp) {
                     var div = this._div;
@@ -10532,10 +10447,23 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
+                Object.defineProperty(BaseCell.prototype, "uniqueID", {
+                    get: function () {
+                        return this._row.uniqueID + '_' + this._num;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(BaseCell.prototype, "num", {
+                    get: function () {
+                        return this._num;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
                 return BaseCell;
             })(RIAPP.BaseObject);
             datagrid.BaseCell = BaseCell;
-
             var DataCell = (function (_super) {
                 __extends(DataCell, _super);
                 function DataCell(options) {
@@ -10551,29 +10479,33 @@ var RIAPP;
                             throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, '', options.fieldName));
                         }
                     }
-                    var app = this.grid.app;
+                    var self = this, app = this.grid.app;
                     options.initContentFn = null;
-                    try  {
+                    try {
                         var contentType = app._getContentType(options);
                         if (app.contentFactory.isExternallyCachable(contentType)) {
-                            options.initContentFn = this._getInitContentFn();
+                            options.initContentFn = this.column._getInitContentFn();
                         }
                         this._content = new contentType(app, { parentEl: this._div, contentOptions: options, dataContext: this.item, isEditing: this.item.isEditing });
-                    } finally {
+                    }
+                    finally {
                         delete options.initContentFn;
                     }
                 };
-                DataCell.prototype._getInitContentFn = function () {
-                    var self = this;
-                    return function (content) {
-                        content.addOnObjectCreated(function (sender, args) {
-                            self.column._cacheObject(args.objectKey, args.object);
-                            args.isCachedExternally = !!self.column._getCachedObject(args.objectKey);
-                        });
-                        content.addOnObjectNeeded(function (sender, args) {
-                            args.object = self.column._getCachedObject(args.objectKey);
-                        });
-                    };
+                /*override*/
+                DataCell.prototype.click = function () {
+                    var self = this, row = this._row;
+                    if (!!this._clickTimeOut) {
+                        clearTimeout(this._clickTimeOut);
+                        this._clickTimeOut = null;
+                        this._onDblClicked(row);
+                    }
+                    else {
+                        this._clickTimeOut = setTimeout(function () {
+                            self._clickTimeOut = null;
+                            self._onCellClicked(row);
+                        }, 350);
+                    }
                 };
                 DataCell.prototype._beginEdit = function () {
                     if (!this._content.isEditing) {
@@ -10619,7 +10551,6 @@ var RIAPP;
                 return DataCell;
             })(BaseCell);
             datagrid.DataCell = DataCell;
-
             var ExpanderCell = (function (_super) {
                 __extends(ExpanderCell, _super);
                 function ExpanderCell() {
@@ -10630,18 +10561,20 @@ var RIAPP;
                     $el.addClass(datagrid.css.rowCollapsed);
                     $el.addClass(datagrid.css.rowExpander);
                 };
-                ExpanderCell.prototype._onCellClicked = function () {
-                    if (!this._row)
+                ExpanderCell.prototype._onCellClicked = function (row) {
+                    var clicked_row = row || this._row;
+                    if (!clicked_row)
                         return;
-                    _super.prototype._onCellClicked.call(this);
-                    this._row.isExpanded = !this._row.isExpanded;
+                    _super.prototype._onCellClicked.call(this, clicked_row);
+                    clicked_row.isExpanded = !clicked_row.isExpanded;
                 };
-                ExpanderCell.prototype._toggleImage = function () {
+                ExpanderCell.prototype.toggleImage = function () {
                     var $el = global.$(this.el);
                     if (this._row.isExpanded) {
                         $el.removeClass(datagrid.css.rowCollapsed);
                         $el.addClass(datagrid.css.rowExpanded);
-                    } else {
+                    }
+                    else {
                         $el.removeClass(datagrid.css.rowExpanded);
                         $el.addClass(datagrid.css.rowCollapsed);
                     }
@@ -10652,7 +10585,6 @@ var RIAPP;
                 return ExpanderCell;
             })(BaseCell);
             datagrid.ExpanderCell = ExpanderCell;
-
             var ActionsCell = (function (_super) {
                 __extends(ActionsCell, _super);
                 function ActionsCell(options) {
@@ -10705,12 +10637,12 @@ var RIAPP;
                             $img.attr(constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, self._column.uniqueID);
                         });
                     };
-
                     if (editing) {
                         this._isEditing = true;
                         $newElems = global.$('<img name="img_ok" alt="ok"/>&nbsp;<img name="img_cancel" alt="cancel"/>');
                         fn_setUpImages($newElems.filter('img'));
-                    } else {
+                    }
+                    else {
                         this._isEditing = false;
                         $newElems = $('<img name="img_edit" alt="edit"/>&nbsp;<img name="img_delete" alt="delete"/>');
                         if (!self.isCanEdit) {
@@ -10750,7 +10682,6 @@ var RIAPP;
                 return ActionsCell;
             })(BaseCell);
             datagrid.ActionsCell = ActionsCell;
-
             var RowSelectorCell = (function (_super) {
                 __extends(RowSelectorCell, _super);
                 function RowSelectorCell() {
@@ -10760,10 +10691,13 @@ var RIAPP;
                     var $el = global.$(this.el);
                     $el.addClass(datagrid.css.rowSelector);
                     var bindInfo = {
-                        target: null, source: null,
-                        targetPath: null, sourcePath: 'isSelected',
+                        target: null,
+                        source: null,
+                        targetPath: null,
+                        sourcePath: 'isSelected',
                         mode: bindMOD.BINDING_MODE[2 /* TwoWay */],
-                        converter: null, converterParam: null
+                        converter: null,
+                        converterParam: null
                     }, contentOpts = {
                         fieldName: 'isSelected',
                         bindingInfo: bindInfo,
@@ -10792,7 +10726,6 @@ var RIAPP;
                 return RowSelectorCell;
             })(BaseCell);
             datagrid.RowSelectorCell = RowSelectorCell;
-
             var DetailsCell = (function (_super) {
                 __extends(DetailsCell, _super);
                 function DetailsCell(options) {
@@ -10880,7 +10813,6 @@ var RIAPP;
                 return DetailsCell;
             })(RIAPP.BaseObject);
             datagrid.DetailsCell = DetailsCell;
-
             var Row = (function (_super) {
                 __extends(Row, _super);
                 function Row(grid, options) {
@@ -10890,7 +10822,7 @@ var RIAPP;
                     this._el = options.tr;
                     this._item = options.item;
                     this._cells = null;
-                    this._objId = this._grid.uniqueID + '_' + this._item._key;
+                    this._objId = 'r' + utils.getNewID();
                     this._expanderCell = null;
                     this._actionsCell = null;
                     this._rowSelectorCell = null;
@@ -10903,17 +10835,17 @@ var RIAPP;
                         var css = self._grid._onRowStateChanged(self, self._item[self._grid.options.rowStateField]);
                         self._setState(css);
                     };
-                    if (!!this._grid.options.rowStateField) {
+                    if (!!this.isHasStateField) {
                         this._item.addOnPropertyChange(this._grid.options.rowStateField, function (s, a) {
                             fn_state();
                         }, this._objId);
                         fn_state();
                     }
                 }
-                Row.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                Row.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return this.grid._onError(error, source);
+                        return this.grid.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -10921,24 +10853,35 @@ var RIAPP;
                     var self = this, i = 0;
                     self._cells = new Array(this.columns.length);
                     this.columns.forEach(function (col) {
-                        self._cells[i] = self._createCell(col);
+                        self._cells[i] = self._createCell(col, i);
                         i += 1;
                     });
                 };
-                Row.prototype._createCell = function (col) {
+                Row.prototype._createCell = function (col, num) {
                     var self = this, td = global.document.createElement('td'), cell;
                     if (col instanceof ExpanderColumn) {
-                        this._expanderCell = new ExpanderCell({ row: self, td: td, column: col });
+                        this._expanderCell = new ExpanderCell({ row: self, td: td, column: col, num: num });
                         cell = this._expanderCell;
-                    } else if (col instanceof ActionsColumn) {
-                        this._actionsCell = new ActionsCell({ row: self, td: td, column: col });
+                    }
+                    else if (col instanceof ActionsColumn) {
+                        this._actionsCell = new ActionsCell({ row: self, td: td, column: col, num: num });
                         cell = this._actionsCell;
-                    } else if (col instanceof RowSelectorColumn) {
-                        this._rowSelectorCell = new RowSelectorCell({ row: self, td: td, column: col });
+                    }
+                    else if (col instanceof RowSelectorColumn) {
+                        this._rowSelectorCell = new RowSelectorCell({ row: self, td: td, column: col, num: num });
                         cell = this._rowSelectorCell;
-                    } else
-                        cell = new DataCell({ row: self, td: td, column: col });
+                    }
+                    else
+                        cell = new DataCell({ row: self, td: td, column: col, num: num });
                     return cell;
+                };
+                Row.prototype._setState = function (css) {
+                    for (var i = 0, len = this._cells.length; i < len; i++) {
+                        var cell = this._cells[i];
+                        if (cell instanceof DataCell) {
+                            cell._setState(css);
+                        }
+                    }
                 };
                 Row.prototype._onBeginEdit = function () {
                     var self = this;
@@ -11005,20 +10948,14 @@ var RIAPP;
                     var $el = global.$(this._el);
                     if (hasErrors) {
                         $el.addClass(datagrid.css.rowError);
-                    } else
+                    }
+                    else
                         $el.removeClass(datagrid.css.rowError);
                 };
                 Row.prototype.scrollIntoView = function (isUp) {
                     if (!!this._cells && this._cells.length > 0) {
                         this._cells[0].scrollIntoView(isUp);
                     }
-                };
-                Row.prototype._setState = function (css) {
-                    this.cells.forEach(function (cell) {
-                        if (cell instanceof DataCell) {
-                            cell._setState(css);
-                        }
-                    });
                 };
                 Row.prototype.toString = function () {
                     return 'Row';
@@ -11085,7 +11022,8 @@ var RIAPP;
                             this._isCurrent = v;
                             if (v) {
                                 $el.addClass(datagrid.css.rowHighlight);
-                            } else {
+                            }
+                            else {
                                 $el.removeClass(datagrid.css.rowHighlight);
                             }
                             this.raisePropertyChanged('isCurrent');
@@ -11116,7 +11054,8 @@ var RIAPP;
                         if (v !== this.isExpanded) {
                             if (!v && this.isExpanded) {
                                 this.grid._expandDetails(this, false);
-                            } else if (v) {
+                            }
+                            else if (v) {
                                 this.grid._expandDetails(this, true);
                             }
                         }
@@ -11152,7 +11091,8 @@ var RIAPP;
                             if (this._isDeleted) {
                                 this.isExpanded = false;
                                 global.$(this._el).addClass(datagrid.css.rowDeleted);
-                            } else
+                            }
+                            else
                                 global.$(this._el).removeClass(datagrid.css.rowDeleted);
                         }
                     },
@@ -11161,7 +11101,14 @@ var RIAPP;
                 });
                 Object.defineProperty(Row.prototype, "isEditing", {
                     get: function () {
-                        return !!this._item && this._item._isEditing;
+                        return !!this._item && this._item.isEditing;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(Row.prototype, "isHasStateField", {
+                    get: function () {
+                        return !!this._grid.options.rowStateField;
                     },
                     enumerable: true,
                     configurable: true
@@ -11169,7 +11116,6 @@ var RIAPP;
                 return Row;
             })(RIAPP.BaseObject);
             datagrid.Row = Row;
-
             var DefaultAnimation = (function (_super) {
                 __extends(DefaultAnimation, _super);
                 function DefaultAnimation() {
@@ -11201,19 +11147,20 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    try  {
+                    try {
                         this.stop();
-                    } finally {
+                    }
+                    finally {
                         _super.prototype.destroy.call(this);
                     }
                 };
                 return DefaultAnimation;
             })(RIAPP.BaseObject);
-
             var DetailsRow = (function (_super) {
                 __extends(DetailsRow, _super);
                 function DetailsRow(options) {
                     _super.call(this);
+                    var self = this;
                     this._grid = options.grid;
                     this._el = options.tr;
                     this._item = null;
@@ -11224,6 +11171,10 @@ var RIAPP;
                     this._createCell(options.details_id);
                     this._$el = global.$(this._el);
                     this._$el.addClass(datagrid.css.rowDetails);
+                    this._grid.addOnRowExpanded(function (sender, args) {
+                        if (!args.isExpanded && !!args.old_expandedRow)
+                            self._setParentRow(null);
+                    }, this._objId);
                 }
                 DetailsRow.prototype._createCell = function (details_id) {
                     var td = global.document.createElement('td');
@@ -11233,10 +11184,9 @@ var RIAPP;
                     var self = this;
                     this._item = null;
                     this._cell.item = null;
-
                     //don't use global.$(this._el).remove() here - or it will remove all jQuery plugins!
                     utils.removeNode(this._el);
-                    if (!row || row._isDestroyCalled) {
+                    if (!row || row.getIsDestroyCalled()) {
                         this._parentRow = null;
                         return;
                     }
@@ -11246,11 +11196,10 @@ var RIAPP;
                     if (this._isFirstShow)
                         this._initShow();
                     utils.insertAfter(row.el, this._el);
-
                     //var isLast = this.grid._getLastRow() === this._parentRow;
                     this._show(function () {
                         var row = self._parentRow;
-                        if (!row || row._isDestroyCalled)
+                        if (!row || row.getIsDestroyCalled())
                             return;
                         if (self.grid.options.isUseScrollIntoDetails)
                             row.scrollIntoView(true);
@@ -11275,6 +11224,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
+                    this._grid.removeNSHandlers(this._objId);
                     if (!!this._cell) {
                         this._cell.destroy();
                         this._cell = null;
@@ -11356,7 +11306,8 @@ var RIAPP;
                                 self._hide(function () {
                                     self._setParentRow(v);
                                 });
-                            } else {
+                            }
+                            else {
                                 self._setParentRow(v);
                             }
                         }
@@ -11367,7 +11318,6 @@ var RIAPP;
                 return DetailsRow;
             })(RIAPP.BaseObject);
             datagrid.DetailsRow = DetailsRow;
-
             var BaseColumn = (function (_super) {
                 __extends(BaseColumn, _super);
                 function BaseColumn(grid, options) {
@@ -11378,12 +11328,10 @@ var RIAPP;
                     this._options = options.colinfo;
                     this._isSelected = false;
                     this._objId = 'col' + utils.getNewID();
-
                     var extcolDiv = global.document.createElement('div');
                     this._$extcol = global.$(extcolDiv);
                     this._$extcol.addClass(datagrid.css.column);
                     this._grid._appendToHeader(extcolDiv);
-
                     var div = global.document.createElement('div');
                     this._$div = global.$(div);
                     this._$div.addClass(datagrid.css.cellDiv).click(function (e) {
@@ -11392,37 +11340,20 @@ var RIAPP;
                         grid._setCurrentColumn(self);
                         self._onColumnClicked();
                     });
-
                     extcolDiv.appendChild(div);
-
                     this.grid._$tableEl.on('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''), function (e) {
                         e.stopPropagation();
                         var $div = global.$(this), cell = $div.data('cell');
                         if (!!cell) {
                             global.currentSelectable = grid;
                             grid._setCurrentColumn(self);
-                            if (cell instanceof DataCell) {
-                                if (!!cell._clickTimeOut) {
-                                    clearTimeout(cell._clickTimeOut);
-                                    cell._clickTimeOut = null;
-                                    cell._onDblClicked();
-                                } else {
-                                    cell._onCellClicked();
-                                    cell._clickTimeOut = setTimeout(function () {
-                                        cell._clickTimeOut = null;
-                                    }, 350);
-                                }
-                            } else {
-                                cell._onCellClicked();
-                            }
+                            cell.click();
                         }
                     });
-
                     if (this._options.width) {
                         this._el.style.width = this._options.width;
                     }
                     this._init();
-
                     if (this._options.colCellCss) {
                         self._$div.addClass(this._options.colCellCss);
                     }
@@ -11512,7 +11443,8 @@ var RIAPP;
                             this._isSelected = v;
                             if (this._isSelected) {
                                 this._$div.addClass(datagrid.css.columnSelected);
-                            } else
+                            }
+                            else
                                 this._$div.removeClass(datagrid.css.columnSelected);
                         }
                     },
@@ -11522,12 +11454,10 @@ var RIAPP;
                 return BaseColumn;
             })(RIAPP.BaseObject);
             datagrid.BaseColumn = BaseColumn;
-
             var DataColumn = (function (_super) {
                 __extends(DataColumn, _super);
                 function DataColumn(grid, options) {
                     _super.call(this, grid, options);
-
                     //the DataCell caches here listbox (for the LookupContent)
                     //so not to create it for every cell
                     this._objCache = {};
@@ -11544,12 +11474,13 @@ var RIAPP;
                     if (this.isSortable && !!this.sortMemberName) {
                         var sortOrd = this._sortOrder;
                         this.grid._resetColumnsSort();
-
                         if (sortOrd == 0 /* ASC */) {
                             this.sortOrder = 1 /* DESC */;
-                        } else if (sortOrd == 1 /* DESC */) {
+                        }
+                        else if (sortOrd == 1 /* DESC */) {
                             this.sortOrder = 0 /* ASC */;
-                        } else
+                        }
+                        else
                             this.sortOrder = 0 /* ASC */;
                         this.grid.sortByColumn(this);
                     }
@@ -11559,6 +11490,18 @@ var RIAPP;
                 };
                 DataColumn.prototype._getCachedObject = function (key) {
                     return this._objCache[key];
+                };
+                DataColumn.prototype._getInitContentFn = function () {
+                    var self = this;
+                    return function (content) {
+                        content.addOnObjectCreated(function (sender, args) {
+                            self._cacheObject(args.objectKey, args.object);
+                            args.isCachedExternally = !!self._getCachedObject(args.objectKey);
+                        });
+                        content.addOnObjectNeeded(function (sender, args) {
+                            args.object = self._getCachedObject(args.objectKey);
+                        });
+                    };
                 };
                 DataColumn.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -11614,7 +11557,6 @@ var RIAPP;
                 return DataColumn;
             })(BaseColumn);
             datagrid.DataColumn = DataColumn;
-
             var ExpanderColumn = (function (_super) {
                 __extends(ExpanderColumn, _super);
                 function ExpanderColumn() {
@@ -11630,7 +11572,6 @@ var RIAPP;
                 return ExpanderColumn;
             })(BaseColumn);
             datagrid.ExpanderColumn = ExpanderColumn;
-
             var RowSelectorColumn = (function (_super) {
                 __extends(RowSelectorColumn, _super);
                 function RowSelectorColumn() {
@@ -11689,7 +11630,6 @@ var RIAPP;
                 return RowSelectorColumn;
             })(BaseColumn);
             datagrid.RowSelectorColumn = RowSelectorColumn;
-
             var ActionsColumn = (function (_super) {
                 __extends(ActionsColumn, _super);
                 function ActionsColumn() {
@@ -11721,28 +11661,44 @@ var RIAPP;
                                 break;
                         }
                     });
+                    this.grid.addOnRowAction(function (sender, args) {
+                        switch (args.action) {
+                            case 0 /* OK */:
+                                self._onOk(args.row.actionsCell);
+                                break;
+                            case 1 /* EDIT */:
+                                self._onEdit(args.row.actionsCell);
+                                break;
+                            case 2 /* CANCEL */:
+                                self._onCancel(args.row.actionsCell);
+                                break;
+                            case 3 /* DELETE */:
+                                self._onDelete(args.row.actionsCell);
+                                break;
+                        }
+                    }, this.uniqueID);
                 };
                 ActionsColumn.prototype._onOk = function (cell) {
-                    if (!cell._row)
+                    if (!cell.row)
                         return;
-                    cell._row.endEdit();
+                    cell.row.endEdit();
                     cell.update();
                 };
                 ActionsColumn.prototype._onCancel = function (cell) {
-                    if (!cell._row)
+                    if (!cell.row)
                         return;
-                    cell._row.cancelEdit();
+                    cell.row.cancelEdit();
                     cell.update();
                 };
                 ActionsColumn.prototype._onDelete = function (cell) {
-                    if (!cell._row)
+                    if (!cell.row)
                         return;
-                    cell._row.deleteRow();
+                    cell.row.deleteRow();
                 };
                 ActionsColumn.prototype._onEdit = function (cell) {
-                    if (!cell._row)
+                    if (!cell.row)
                         return;
-                    cell._row.beginEdit();
+                    cell.row.beginEdit();
                     cell.update();
                     this.grid.showEditDialog();
                 };
@@ -11754,12 +11710,12 @@ var RIAPP;
                         return;
                     this._isDestroyCalled = true;
                     this.grid._$tableEl.off("click", 'img[' + constsMOD.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]');
+                    this.grid.removeNSHandlers(this.uniqueID);
                     _super.prototype.destroy.call(this);
                 };
                 return ActionsColumn;
             })(BaseColumn);
             datagrid.ActionsColumn = ActionsColumn;
-
             var DataGrid = (function (_super) {
                 __extends(DataGrid, _super);
                 function DataGrid(options) {
@@ -11816,9 +11772,7 @@ var RIAPP;
                 }
                 DataGrid.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return [
-                        'row_expanded', 'row_selected', 'page_changed', 'row_state_changed',
-                        'cell_dblclicked'].concat(base_events);
+                    return ['row_expanded', 'row_selected', 'page_changed', 'row_state_changed', 'cell_dblclicked', 'row_action'].concat(base_events);
                 };
                 DataGrid.prototype.addOnRowExpanded = function (fn, namespace) {
                     this.addHandler('row_expanded', fn, namespace);
@@ -11850,6 +11804,12 @@ var RIAPP;
                 DataGrid.prototype.removeOnCellDblClicked = function (namespace) {
                     this.removeHandler('cell_dblclicked', namespace);
                 };
+                DataGrid.prototype.addOnRowAction = function (fn, namespace) {
+                    this.addHandler('row_action', fn, namespace);
+                };
+                DataGrid.prototype.removeOnRowAction = function (namespace) {
+                    this.removeHandler('row_action', namespace);
+                };
                 DataGrid.prototype._isRowExpanded = function (row) {
                     return this._expandedRow === row;
                 };
@@ -11863,6 +11823,185 @@ var RIAPP;
                     if (!!this._currentColumn)
                         this._currentColumn.isSelected = true;
                 };
+                DataGrid.prototype._onRowStateChanged = function (row, val) {
+                    var args = { row: row, val: val, css: null };
+                    this.raiseEvent('row_state_changed', args);
+                    return args.css;
+                };
+                DataGrid.prototype._onCellDblClicked = function (cell) {
+                    var args = { cell: cell };
+                    this.raiseEvent('cell_dblclicked', args);
+                };
+                DataGrid.prototype._onRowSelectionChanged = function (row) {
+                    this.raiseEvent('row_selected', { row: row });
+                };
+                DataGrid.prototype._resetColumnsSort = function () {
+                    this.columns.forEach(function (col) {
+                        if (col instanceof DataColumn) {
+                            col.sortOrder = null;
+                        }
+                    });
+                };
+                DataGrid.prototype._getLastRow = function () {
+                    if (this._rows.length === 0)
+                        return null;
+                    var i = this._rows.length - 1, row = this._rows[i];
+                    while (row.isDeleted && i > 0) {
+                        i -= 1;
+                        row = this._rows[i];
+                    }
+                    if (row.isDeleted)
+                        return null;
+                    else
+                        return row;
+                };
+                DataGrid.prototype._removeRow = function (row) {
+                    if (this._expandedRow === row) {
+                        this.collapseDetails();
+                    }
+                    if (this._rows.length === 0)
+                        return;
+                    var rowkey = row.itemKey, i = utils.removeFromArray(this._rows, row), oldRow;
+                    try {
+                        if (i > -1) {
+                            oldRow = row;
+                            if (!oldRow._isDestroyCalled)
+                                oldRow.destroy();
+                        }
+                    }
+                    finally {
+                        if (!!this._rowMap[rowkey])
+                            delete this._rowMap[rowkey];
+                    }
+                };
+                DataGrid.prototype._onKeyDown = function (key, event) {
+                    var ds = this.dataSource, Keys = constsMOD.KEYS, self = this;
+                    if (!ds)
+                        return;
+                    switch (key) {
+                        case 38 /* up */:
+                            event.preventDefault();
+                            if (ds.movePrev(true)) {
+                                if (self.isUseScrollInto) {
+                                    self._scrollToCurrent(false);
+                                }
+                            }
+                            break;
+                        case 40 /* down */:
+                            event.preventDefault();
+                            if (ds.moveNext(true)) {
+                                if (self.isUseScrollInto) {
+                                    self._scrollToCurrent(false);
+                                }
+                            }
+                            break;
+                        case 34 /* pageDown */:
+                            /*
+                             if (!!this._currentRow && !!this._currentRow.expanderCell && !this._currentRow.isExpanded) {
+                             this._currentRow.expanderCell._onCellClicked();
+                             event.preventDefault();
+                             }
+                             */
+                            if (ds.pageIndex > 0)
+                                ds.pageIndex = ds.pageIndex - 1;
+                            break;
+                        case 33 /* pageUp */:
+                            /*
+                             if (!!this._currentRow && !!this._currentRow.expanderCell && !!this._currentRow.isExpanded) {
+                             this._currentRow.expanderCell._onCellClicked();
+                             event.preventDefault();
+                             }
+                             */
+                            ds.pageIndex = ds.pageIndex + 1;
+                            break;
+                        case 13 /* enter */:
+                            if (!!this._currentRow && !!this._actionsCol) {
+                                if (this._currentRow.isEditing) {
+                                    event.preventDefault();
+                                }
+                                else {
+                                    event.preventDefault();
+                                }
+                            }
+                            break;
+                        case 27 /* esc */:
+                            if (!!this._currentRow && !!this._actionsCol) {
+                                if (this._currentRow.isEditing) {
+                                    event.preventDefault();
+                                }
+                            }
+                            break;
+                        case 32 /* space */:
+                            if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
+                                event.preventDefault();
+                            }
+                            break;
+                    }
+                };
+                DataGrid.prototype._onKeyUp = function (key, event) {
+                    var ds = this.dataSource, Keys = constsMOD.KEYS;
+                    if (!ds)
+                        return;
+                    switch (key) {
+                        case 13 /* enter */:
+                            if (!!this._currentRow && !!this._actionsCol) {
+                                if (this._currentRow.isEditing) {
+                                    this.raiseEvent('row_action', { row: this._currentRow, action: 0 /* OK */ });
+                                    event.preventDefault();
+                                }
+                                else {
+                                    this.raiseEvent('row_action', { row: this._currentRow, action: 1 /* EDIT */ });
+                                    event.preventDefault();
+                                }
+                            }
+                            break;
+                        case 27 /* esc */:
+                            if (!!this._currentRow && !!this._actionsCol) {
+                                if (this._currentRow.isEditing) {
+                                    this.raiseEvent('row_action', { row: this._currentRow, action: 2 /* CANCEL */ });
+                                    event.preventDefault();
+                                }
+                            }
+                            break;
+                        case 32 /* space */:
+                            if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
+                                event.preventDefault();
+                                this._currentRow.isSelected = !this._currentRow.isSelected;
+                            }
+                            break;
+                    }
+                };
+                DataGrid.prototype._expandDetails = function (parentRow, expanded) {
+                    if (!this._options.details)
+                        return;
+                    if (!this._details) {
+                        this._details = this._createDetails();
+                    }
+                    var old = this._expandedRow;
+                    if (old === parentRow) {
+                        if (!!old && expanded)
+                            return;
+                    }
+                    this._expandedRow = null;
+                    this._details.parentRow = null;
+                    if (expanded) {
+                        this._expandedRow = parentRow;
+                        this._details.parentRow = parentRow;
+                        this._expandedRow.expanderCell.toggleImage();
+                    }
+                    else {
+                        this._expandedRow = null;
+                        this._details.parentRow = null;
+                        if (!!old) {
+                            old.expanderCell.toggleImage();
+                        }
+                    }
+                    if (old !== parentRow) {
+                        if (!!old)
+                            old.expanderCell.toggleImage();
+                    }
+                    this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: parentRow, isExpanded: expanded });
+                };
                 DataGrid.prototype._parseColumnAttr = function (column_attr, content_attr) {
                     var defaultOp = {
                         type: COLUMN_TYPE.DATA,
@@ -11871,19 +12010,16 @@ var RIAPP;
                         sortMemberName: null,
                         content: null
                     }, options;
-
                     var temp_opts = global.parser.parseOptions(column_attr);
                     if (temp_opts.length > 0)
                         options = utils.extend(false, defaultOp, temp_opts[0]);
                     else
                         options = defaultOp;
-
                     if (!!content_attr) {
                         options.content = contentMOD.parseContentAttr(content_attr);
                         if (!options.sortMemberName && !!options.content.fieldName)
                             options.sortMemberName = options.content.fieldName;
                     }
-
                     return options;
                 };
                 DataGrid.prototype._findUndeleted = function (row, isUp) {
@@ -11891,7 +12027,6 @@ var RIAPP;
                         return null;
                     if (!row.isDeleted)
                         return row;
-
                     //find nearest nondeleted row (search up and down)
                     var delIndex = this.rows.indexOf(row), i = delIndex, len = this.rows.length;
                     if (!isUp) {
@@ -11905,7 +12040,8 @@ var RIAPP;
                         }
                         if (row.isDeleted)
                             row = null;
-                    } else {
+                    }
+                    else {
                         i += 1;
                         if (i < len)
                             row = this.rows[i];
@@ -11930,19 +12066,10 @@ var RIAPP;
                         row.scrollIntoView(isUp);
                     }
                 };
-                DataGrid.prototype._onRowStateChanged = function (row, val) {
-                    var args = { row: row, val: val, css: null };
-                    this.raiseEvent('row_state_changed', args);
-                    return args.css;
-                };
-                DataGrid.prototype._onCellDblClicked = function (cell) {
-                    var args = { cell: cell };
-                    this.raiseEvent('cell_dblclicked', args);
-                };
-                DataGrid.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                DataGrid.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return global._onError(error, source);
+                        return global.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -11976,7 +12103,7 @@ var RIAPP;
                             });
                             break;
                         case 3 /* REMAP_KEY */:
-                             {
+                            {
                                 row = self._rowMap[args.old_key];
                                 if (!!row) {
                                     delete self._rowMap[args.old_key];
@@ -11996,7 +12123,6 @@ var RIAPP;
                             self._refreshGrid();
                         else
                             self._appendItems(args.newItems);
-
                         if (!!args.isPageChanged) {
                             setTimeout(function () {
                                 if (self._isDestroyCalled)
@@ -12009,7 +12135,8 @@ var RIAPP;
                                 return;
                             self._updateColsDim();
                         }, 0);
-                    } else {
+                    }
+                    else {
                         self._isDSFilling = true;
                         if (!self._isSorting) {
                             if (!args.isPageChanged)
@@ -12031,7 +12158,8 @@ var RIAPP;
                     if (isBegin) {
                         row._onBeginEdit();
                         this._editingRow = row;
-                    } else {
+                    }
+                    else {
                         row._onEndEdit(isCanceled);
                         this._editingRow = null;
                     }
@@ -12042,7 +12170,6 @@ var RIAPP;
                     if (!row)
                         return;
                     this._updateCurrent(row, true);
-
                     //row.isExpanded = true;
                     if (this._options.isHandleAddNew && !args.isAddNewHandled) {
                         args.isAddNewHandled = this.showEditDialog();
@@ -12062,25 +12189,16 @@ var RIAPP;
                         if (!!row2) {
                             ds.currentItem = row2.item;
                         }
-                    } else if (oldChangeType === 3 /* DELETED */ && newChangeType !== 3 /* DELETED */) {
+                    }
+                    else if (oldChangeType === 3 /* DELETED */ && newChangeType !== 3 /* DELETED */) {
                         row.isDeleted = false;
                     }
-                };
-                DataGrid.prototype._onRowSelectionChanged = function (row) {
-                    this.raiseEvent('row_selected', { row: row });
                 };
                 DataGrid.prototype._onDSErrorsChanged = function (item) {
                     var row = this._rowMap[item._key];
                     if (!row)
                         return;
                     row.updateErrorState();
-                };
-                DataGrid.prototype._resetColumnsSort = function () {
-                    this.columns.forEach(function (col) {
-                        if (col instanceof DataColumn) {
-                            col.sortOrder = null;
-                        }
-                    });
                 };
                 DataGrid.prototype._bindDS = function () {
                     var self = this, ds = this.dataSource;
@@ -12114,7 +12232,6 @@ var RIAPP;
                             return;
                         self._onItemAdded(args);
                     }, self._objId);
-
                     //fills all rows
                     this._refreshGrid();
                     this._updateColsDim();
@@ -12126,42 +12243,11 @@ var RIAPP;
                         return;
                     ds.removeNSHandlers(self._objId);
                 };
-                DataGrid.prototype._getLastRow = function () {
-                    if (this._rows.length === 0)
-                        return null;
-                    var i = this._rows.length - 1, row = this._rows[i];
-                    while (row.isDeleted && i > 0) {
-                        i -= 1;
-                        row = this._rows[i];
-                    }
-                    if (row.isDeleted)
-                        return null;
-                    else
-                        return row;
-                };
-                DataGrid.prototype._removeRow = function (row) {
-                    if (this._expandedRow === row) {
-                        this.collapseDetails();
-                    }
-                    if (this._rows.length === 0)
-                        return;
-                    var rowkey = row.itemKey, i = utils.removeFromArray(this._rows, row), oldRow;
-                    try  {
-                        if (i > -1) {
-                            oldRow = row;
-                            if (!oldRow._isDestroyCalled)
-                                oldRow.destroy();
-                        }
-                    } finally {
-                        if (!!this._rowMap[rowkey])
-                            delete this._rowMap[rowkey];
-                    }
-                };
                 DataGrid.prototype._clearGrid = function () {
                     if (this._rows.length === 0)
                         return;
                     this._isClearing = true;
-                    try  {
+                    try {
                         this.collapseDetails();
                         var self = this, tbody = self._tBodyEl, newTbody = global.document.createElement('tbody');
                         this._tableEl.replaceChild(newTbody, tbody);
@@ -12171,7 +12257,8 @@ var RIAPP;
                         rows.forEach(function (row) {
                             row.destroy();
                         });
-                    } finally {
+                    }
+                    finally {
                         this._isClearing = false;
                     }
                     this._currentRow = null;
@@ -12188,23 +12275,18 @@ var RIAPP;
                 };
                 DataGrid.prototype._wrapTable = function () {
                     var $t = this._$tableEl, headerDiv, wrapDiv, container, self = this;
-
                     $t.wrap(global.$('<div></div>').addClass(datagrid.css.wrapDiv));
                     wrapDiv = $t.parent();
                     wrapDiv.wrap(global.$('<div></div>').addClass(datagrid.css.container));
                     container = wrapDiv.parent();
-
                     headerDiv = global.$('<div></div>').addClass(datagrid.css.headerDiv).insertBefore(wrapDiv);
                     global.$(this._tHeadRow).addClass(datagrid.css.columnInfo);
                     this._$wrapDiv = wrapDiv;
                     this._$headerDiv = headerDiv;
-
                     this._$contaner = container;
-
                     if (this._options.containerCss) {
                         container.addClass(this._options.containerCss);
                     }
-
                     if (this._options.wrapCss) {
                         wrapDiv.addClass(this._options.wrapCss);
                     }
@@ -12228,11 +12310,9 @@ var RIAPP;
                     };
                     this._$headerDiv.remove();
                     this._$headerDiv = null;
-
                     //remove wrapDiv
                     $t.unwrap();
                     this._$wrapDiv = null;
-
                     //remove container
                     $t.unwrap();
                     this._$contaner = null;
@@ -12245,7 +12325,6 @@ var RIAPP;
                         attr = this._parseColumnAttr(th.getAttribute(constsMOD.DATA_ATTR.DATA_COLUMN), th.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT));
                         cellInfo.push({ th: th, colinfo: attr });
                     }
-
                     cellInfo.forEach(function (inf) {
                         var col = self._createColumn(inf);
                         if (!!col)
@@ -12291,102 +12370,6 @@ var RIAPP;
                             self._createRowForItem(tbody, item);
                     }
                 };
-                DataGrid.prototype._onKeyDown = function (key, event) {
-                    var ds = this.dataSource, Keys = constsMOD.KEYS, self = this;
-                    if (!ds)
-                        return;
-                    switch (key) {
-                        case 38 /* up */:
-                            event.preventDefault();
-                            if (ds.movePrev(true)) {
-                                if (self.isUseScrollInto) {
-                                    self._scrollToCurrent(false);
-                                }
-                            }
-                            break;
-                        case 40 /* down */:
-                            event.preventDefault();
-                            if (ds.moveNext(true)) {
-                                if (self.isUseScrollInto) {
-                                    self._scrollToCurrent(false);
-                                }
-                            }
-                            break;
-                        case 34 /* pageDown */:
-                            /*
-                            if (!!this._currentRow && !!this._currentRow.expanderCell && !this._currentRow.isExpanded) {
-                            this._currentRow.expanderCell._onCellClicked();
-                            event.preventDefault();
-                            }
-                            */
-                            if (ds.pageIndex > 0)
-                                ds.pageIndex = ds.pageIndex - 1;
-                            break;
-                        case 33 /* pageUp */:
-                            /*
-                            if (!!this._currentRow && !!this._currentRow.expanderCell && !!this._currentRow.isExpanded) {
-                            this._currentRow.expanderCell._onCellClicked();
-                            event.preventDefault();
-                            }
-                            */
-                            ds.pageIndex = ds.pageIndex + 1;
-                            break;
-                        case 13 /* enter */:
-                            if (!!this._currentRow && !!this._actionsCol) {
-                                if (this._currentRow.isEditing) {
-                                    event.preventDefault();
-                                } else {
-                                    event.preventDefault();
-                                }
-                            }
-                            break;
-                        case 27 /* esc */:
-                            if (!!this._currentRow && !!this._actionsCol) {
-                                if (this._currentRow.isEditing) {
-                                    event.preventDefault();
-                                }
-                            }
-                            break;
-                        case 32 /* space */:
-                            if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
-                                event.preventDefault();
-                            }
-                            break;
-                    }
-                };
-                DataGrid.prototype._onKeyUp = function (key, event) {
-                    var ds = this.dataSource, Keys = constsMOD.KEYS;
-                    if (!ds)
-                        return;
-                    switch (key) {
-                        case 13 /* enter */:
-                            if (!!this._currentRow && !!this._actionsCol) {
-                                if (this._currentRow.isEditing) {
-                                    this._actionsCol._onOk(this._currentRow.actionsCell);
-                                    event.preventDefault();
-                                } else {
-                                    this._actionsCol._onEdit(this._currentRow.actionsCell);
-                                    event.preventDefault();
-                                }
-                            }
-                            break;
-                        case 27 /* esc */:
-                            if (!!this._currentRow && !!this._actionsCol) {
-                                if (this._currentRow.isEditing) {
-                                    this._actionsCol._onCancel(this._currentRow.actionsCell);
-                                    event.preventDefault();
-                                }
-                            }
-                            break;
-                        case 32 /* space */:
-                            if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
-                                event.preventDefault();
-                                this._currentRow.isSelected = !this._currentRow.isSelected;
-                            }
-                            break;
-                    }
-                };
-
                 //Full grid refresh
                 DataGrid.prototype._refreshGrid = function () {
                     var self = this, ds = this.dataSource;
@@ -12412,37 +12395,6 @@ var RIAPP;
                     var details_id = this._options.details.templateID;
                     var tr = global.document.createElement('tr');
                     return new DetailsRow({ grid: this, tr: tr, details_id: details_id });
-                };
-                DataGrid.prototype._expandDetails = function (parentRow, expanded) {
-                    if (!this._options.details)
-                        return;
-                    if (!this._details) {
-                        this._details = this._createDetails();
-                    }
-                    var old = this._expandedRow;
-                    if (old === parentRow) {
-                        if (!!old && expanded)
-                            return;
-                    }
-                    this._expandedRow = null;
-                    this._details.parentRow = null;
-
-                    if (expanded) {
-                        this._expandedRow = parentRow;
-                        this._details.parentRow = parentRow;
-                        this._expandedRow.expanderCell._toggleImage();
-                    } else {
-                        this._expandedRow = null;
-                        this._details.parentRow = null;
-                        if (!!old) {
-                            old.expanderCell._toggleImage();
-                        }
-                    }
-                    if (old !== parentRow) {
-                        if (!!old)
-                            old.expanderCell._toggleImage();
-                    }
-                    this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: parentRow, isExpanded: expanded });
                 };
                 DataGrid.prototype.sortByColumn = function (column) {
                     var self = this, ds = this.dataSource;
@@ -12472,7 +12424,6 @@ var RIAPP;
                     var old = this._expandedRow;
                     if (!!old) {
                         this._expandedRow = null;
-                        this._details._setParentRow(null);
                         this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: null, isExpanded: false });
                     }
                 };
@@ -12498,7 +12449,8 @@ var RIAPP;
                             dataContext: item
                         }, this._options.editor);
                         this._dialog = new MOD.datadialog.DataEditDialog(this.app, dialogOptions);
-                    } else
+                    }
+                    else
                         this._dialog.dataContext = item;
                     this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._isNew;
                     this._dialog.show();
@@ -12509,11 +12461,12 @@ var RIAPP;
                 };
                 DataGrid.prototype.addNew = function () {
                     var ds = this.dataSource;
-                    try  {
+                    try {
                         ds.addNew();
                         this.showEditDialog();
-                    } catch (ex) {
-                        global.reThrow(ex, this._onError(ex, this));
+                    }
+                    catch (ex) {
+                        global.reThrow(ex, this.handleError(ex, this));
                     }
                 };
                 DataGrid.prototype.destroy = function () {
@@ -12682,7 +12635,8 @@ var RIAPP;
                         if (!!row) {
                             if (row.item !== ds.currentItem)
                                 ds.currentItem = row.item;
-                        } else
+                        }
+                        else
                             ds.currentItem = null;
                         if (isChanged)
                             this.raisePropertyChanged('currentRow');
@@ -12748,7 +12702,6 @@ var RIAPP;
                 return DataGrid;
             })(RIAPP.BaseObject);
             datagrid.DataGrid = DataGrid;
-
             var GridElView = (function (_super) {
                 __extends(GridElView, _super);
                 function GridElView() {
@@ -12768,7 +12721,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._grid && !this._grid._isDestroyCalled) {
+                    if (!!this._grid && !this._grid.getIsDestroyCalled()) {
                         this._grid.destroy();
                     }
                     this._grid = null;
@@ -12877,33 +12830,30 @@ var RIAPP;
                 return GridElView;
             })(MOD.baseElView.BaseElView);
             datagrid.GridElView = GridElView;
-
             global.registerElView('table', GridElView);
             global.registerElView('datagrid', GridElView);
             global.onModuleLoaded('datagrid', datagrid);
-        })(MOD.datagrid || (MOD.datagrid = {}));
-        var datagrid = MOD.datagrid;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(datagrid = MOD.datagrid || (MOD.datagrid = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
-        (function (_pager) {
+        var pager;
+        (function (pager) {
             var collMOD = RIAPP.MOD.collection;
-
             var utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-            _pager.css = {
+            pager.css = {
                 pager: 'ria-data-pager',
                 info: 'pager-info',
                 currentPage: 'pager-current-page',
                 otherPage: 'pager-other-page'
             };
             var PAGER_TXT = RIAPP.localizable.PAGER;
-
             var Pager = (function (_super) {
                 __extends(Pager, _super);
                 function Pager(options) {
@@ -12929,7 +12879,7 @@ var RIAPP;
                     this._rowsPerPage = 0;
                     this._rowCount = 0;
                     this._currentPage = 1;
-                    this._$el.addClass(_pager.css.pager);
+                    this._$el.addClass(pager.css.pager);
                     if (!!this._options.dataSource) {
                         this._bindDS();
                     }
@@ -12940,11 +12890,9 @@ var RIAPP;
                 Pager.prototype._render = function () {
                     var $el = this._$el, rowCount, currentPage, pageCount;
                     this._clearContent();
-
                     if (this.rowsPerPage <= 0) {
                         return;
                     }
-
                     rowCount = this.rowCount;
                     if (rowCount == 0) {
                         return;
@@ -12953,68 +12901,55 @@ var RIAPP;
                     if (currentPage == 0) {
                         return;
                     }
-
                     pageCount = this.pageCount;
-
                     if (this.hideOnSinglePage && (pageCount == 1)) {
                         $el.hide();
-                    } else {
+                    }
+                    else {
                         $el.show();
-
                         if (this.showInfo) {
                             var $span = this._createElement('span');
                             var info = utils.format(PAGER_TXT.pageInfo, currentPage, pageCount);
-                            $span.addClass(_pager.css.info).text(info).appendTo($el);
+                            $span.addClass(pager.css.info).text(info).appendTo($el);
                         }
-
                         if (this.showFirstAndLast && (currentPage != 1)) {
                             $el.append(this._createFirst());
                         }
-
                         if (this.showPreviousAndNext && (currentPage != 1)) {
                             $el.append(this._createPrevious());
                         }
-
                         if (this.showNumbers) {
                             var start = 1, end = pageCount, sliderSize = this.sliderSize, half, above, below;
-
                             if (this.useSlider && (sliderSize > 0)) {
                                 half = Math.floor(((sliderSize - 1) / 2));
                                 above = (currentPage + half) + ((sliderSize - 1) % 2);
                                 below = (currentPage - half);
-
                                 if (below < 1) {
                                     above += (1 - below);
                                     below = 1;
                                 }
-
                                 if (above > pageCount) {
                                     below -= (above - pageCount);
-
                                     if (below < 1) {
                                         below = 1;
                                     }
-
                                     above = pageCount;
                                 }
-
                                 start = below;
                                 end = above;
                             }
-
                             for (var i = start; i <= end; i++) {
                                 if (i === currentPage) {
                                     $el.append(this._createCurrent());
-                                } else {
+                                }
+                                else {
                                     $el.append(this._createOther(i));
                                 }
                             }
                         }
-
                         if (this.showPreviousAndNext && (currentPage != pageCount)) {
                             $el.append(this._createNext());
                         }
-
                         if (this.showFirstAndLast && (currentPage != pageCount)) {
                             $el.append(this._createLast());
                         }
@@ -13038,7 +12973,7 @@ var RIAPP;
                     this._isDestroyCalled = true;
                     this._unbindDS();
                     this._clearContent();
-                    this._$el.removeClass(_pager.css.pager);
+                    this._$el.removeClass(pager.css.pager);
                     this._$el = null;
                     this._options = {};
                     _super.prototype.destroy.call(this);
@@ -13082,7 +13017,6 @@ var RIAPP;
                     var a = this._createElement('a'), self = this;
                     a.text('' + text);
                     a.attr('href', 'javascript:void(0)');
-
                     if (!!tip) {
                         utils.addToolTip(a, tip);
                     }
@@ -13091,80 +13025,69 @@ var RIAPP;
                         self._setDSPageIndex(page);
                         self.currentPage = page;
                     });
-
                     return a;
                 };
                 Pager.prototype._createFirst = function () {
                     var $span = this._createElement('span'), tip, a;
-
                     if (this.showTip) {
                         tip = PAGER_TXT.firstPageTip;
                     }
                     a = this._createLink(1, PAGER_TXT.firstText, tip);
-                    $span.addClass(_pager.css.otherPage).append(a);
+                    $span.addClass(pager.css.otherPage).append(a);
                     return $span;
                 };
                 Pager.prototype._createPrevious = function () {
                     var span = this._createElement('span'), previousPage = this.currentPage - 1, tip, a;
-
                     if (this.showTip) {
                         tip = utils.format(PAGER_TXT.prevPageTip, previousPage);
                     }
-
                     a = this._createLink(previousPage, PAGER_TXT.previousText, tip);
-                    span.addClass(_pager.css.otherPage).append(a);
+                    span.addClass(pager.css.otherPage).append(a);
                     return span;
                 };
                 Pager.prototype._createCurrent = function () {
                     var span = this._createElement('span'), currentPage = this.currentPage;
-
                     span.text('' + currentPage);
-
                     if (this.showTip) {
                         utils.addToolTip(span, this._buildTip(currentPage));
                     }
-
-                    span.addClass(_pager.css.currentPage);
+                    span.addClass(pager.css.currentPage);
                     return span;
                 };
                 Pager.prototype._createOther = function (page) {
                     var span = this._createElement('span'), tip, a;
-
                     if (this.showTip) {
                         tip = this._buildTip(page);
                     }
-
                     a = this._createLink(page, '' + page, tip);
-                    span.addClass(_pager.css.otherPage);
+                    span.addClass(pager.css.otherPage);
                     span.append(a);
                     return span;
                 };
                 Pager.prototype._createNext = function () {
                     var span = this._createElement('span'), nextPage = this.currentPage + 1, tip, a;
-
                     if (this.showTip) {
                         tip = utils.format(PAGER_TXT.nextPageTip, nextPage);
                     }
                     a = this._createLink(nextPage, PAGER_TXT.nextText, tip);
-                    span.addClass(_pager.css.otherPage).append(a);
+                    span.addClass(pager.css.otherPage).append(a);
                     return span;
                 };
                 Pager.prototype._createLast = function () {
                     var span = this._createElement('span'), tip, a;
-
                     if (this.showTip) {
                         tip = PAGER_TXT.lastPageTip;
                     }
                     a = this._createLink(this.pageCount, PAGER_TXT.lastText, tip);
-                    span.addClass(_pager.css.otherPage).append(a);
+                    span.addClass(pager.css.otherPage).append(a);
                     return span;
                 };
                 Pager.prototype._buildTip = function (page) {
                     var rowsPerPage = this.rowsPerPage, rowCount = this.rowCount, start = (((page - 1) * rowsPerPage) + 1), end = (page == this.pageCount) ? rowCount : (page * rowsPerPage), tip = '';
-
                     if (page == this.currentPage) {
                         tip = utils.format(PAGER_TXT.showingTip, start, end, rowCount);
-                    } else {
+                    }
+                    else {
                         tip = utils.format(PAGER_TXT.showTip, start, end, rowCount);
                     }
                     return tip;
@@ -13207,14 +13130,13 @@ var RIAPP;
                 Object.defineProperty(Pager.prototype, "pageCount", {
                     get: function () {
                         var rowCount = this.rowCount, rowsPerPage = this.rowsPerPage, result;
-
                         if ((rowCount === 0) || (rowsPerPage === 0)) {
                             return 0;
                         }
-
                         if ((rowCount % rowsPerPage) === 0) {
                             return (rowCount / rowsPerPage);
-                        } else {
+                        }
+                        else {
                             result = (rowCount / rowsPerPage);
                             result = Math.floor(result) + 1;
                             return result;
@@ -13370,15 +13292,13 @@ var RIAPP;
                 });
                 return Pager;
             })(RIAPP.BaseObject);
-            _pager.Pager = Pager;
-
+            pager.Pager = Pager;
             var PagerElView = (function (_super) {
                 __extends(PagerElView, _super);
                 function PagerElView(app, el, options) {
                     var self = this;
                     this._pager = null;
                     this._options = options;
-
                     var opts = utils.extend(false, {
                         app: app,
                         el: el,
@@ -13396,7 +13316,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._pager && !this._pager._isDestroyCalled) {
+                    if (!!this._pager && !this._pager.getIsDestroyCalled()) {
                         this._pager.destroy();
                     }
                     this._pager = null;
@@ -13431,33 +13351,29 @@ var RIAPP;
                 });
                 return PagerElView;
             })(MOD.baseElView.BaseElView);
-            _pager.PagerElView = PagerElView;
-
+            pager.PagerElView = PagerElView;
             RIAPP.global.registerElView('pager', PagerElView);
             RIAPP.global.onModuleLoaded('pager', pager);
-        })(MOD.pager || (MOD.pager = {}));
-        var pager = MOD.pager;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(pager = MOD.pager || (MOD.pager = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
-        (function (_stackpanel) {
+        var stackpanel;
+        (function (stackpanel) {
             var constsMOD = RIAPP.MOD.consts;
-
             var collMOD = RIAPP.MOD.collection;
-
             var utils, global = RIAPP.global;
             global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-            _stackpanel.css = {
+            stackpanel.css = {
                 stackpanel: 'ria-stackpanel',
                 item: 'stackpanel-item',
                 currentItem: 'current-item'
             };
-
             var StackPanel = (function (_super) {
                 __extends(StackPanel, _super);
                 function StackPanel(options) {
@@ -13479,9 +13395,8 @@ var RIAPP;
                     this._objId = 'pnl' + global.utils.getNewID();
                     this._isDSFilling = false;
                     this._currentItem = null;
-                    this._$el.addClass(_stackpanel.css.stackpanel);
+                    this._$el.addClass(stackpanel.css.stackpanel);
                     this._itemMap = {};
-
                     this._$el.on('click', ['div[', constsMOD.DATA_ATTR.DATA_EVENT_SCOPE, '="', this.uniqueID, '"]'].join(''), function (e) {
                         e.stopPropagation();
                         var $div = global.$(this), mappedItem = $div.data('data');
@@ -13530,7 +13445,8 @@ var RIAPP;
                                 }
                                 break;
                         }
-                    } else {
+                    }
+                    else {
                         switch (key) {
                             case 38 /* up */:
                                 event.preventDefault();
@@ -13556,13 +13472,13 @@ var RIAPP;
                         if (!!old) {
                             mappedItem = self._itemMap[old._key];
                             if (!!mappedItem) {
-                                global.$(mappedItem.div).removeClass(_stackpanel.css.currentItem);
+                                global.$(mappedItem.div).removeClass(stackpanel.css.currentItem);
                             }
                         }
                         if (!!item) {
                             mappedItem = self._itemMap[item._key];
                             if (!!mappedItem) {
-                                global.$(mappedItem.div).addClass(_stackpanel.css.currentItem);
+                                global.$(mappedItem.div).addClass(stackpanel.css.currentItem);
                                 if (withScroll)
                                     mappedItem.div.scrollIntoView(false);
                             }
@@ -13596,7 +13512,7 @@ var RIAPP;
                             });
                             break;
                         case 3 /* REMAP_KEY */:
-                             {
+                            {
                                 var mappedItem = self._itemMap[args.old_key];
                                 if (!!mappedItem) {
                                     delete self._itemMap[args.old_key];
@@ -13616,7 +13532,8 @@ var RIAPP;
                             this._refresh();
                         else
                             this._appendItems(args.newItems);
-                    } else {
+                    }
+                    else {
                         this._isDSFilling = true;
                     }
                 };
@@ -13627,7 +13544,8 @@ var RIAPP;
                         return;
                     if (newChangeType === 3 /* DELETED */) {
                         global.$(obj.div).hide();
-                    } else if (oldChangeType === 3 /* DELETED */ && newChangeType !== 3 /* DELETED */) {
+                    }
+                    else if (oldChangeType === 3 /* DELETED */ && newChangeType !== 3 /* DELETED */) {
                         global.$(obj.div).show();
                     }
                 };
@@ -13655,8 +13573,7 @@ var RIAPP;
                     if (!item._key)
                         return;
                     var self = this, $div = self._createElement('div'), div = $div.get(0);
-
-                    $div.addClass(_stackpanel.css.item);
+                    $div.addClass(stackpanel.css.item);
                     if (this.orientation == 'horizontal') {
                         $div.css('display', 'inline-block');
                     }
@@ -13715,7 +13632,7 @@ var RIAPP;
                     global._untrackSelectable(this);
                     this._unbindDS();
                     this._clearContent();
-                    this._$el.removeClass(_stackpanel.css.stackpanel);
+                    this._$el.removeClass(stackpanel.css.stackpanel);
                     this._$el = null;
                     this._currentItem = null;
                     this._itemMap = {};
@@ -13837,8 +13754,7 @@ var RIAPP;
                 });
                 return StackPanel;
             })(RIAPP.BaseObject);
-            _stackpanel.StackPanel = StackPanel;
-
+            stackpanel.StackPanel = StackPanel;
             var StackPanelElView = (function (_super) {
                 __extends(StackPanelElView, _super);
                 function StackPanelElView(app, el, options) {
@@ -13862,7 +13778,7 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._panel && !this._panel._isDestroyCalled) {
+                    if (!!this._panel && !this._panel.getIsDestroyCalled()) {
                         this._panel.destroy();
                     }
                     this._panel = null;
@@ -13897,31 +13813,27 @@ var RIAPP;
                 });
                 return StackPanelElView;
             })(MOD.baseElView.BaseElView);
-            _stackpanel.StackPanelElView = StackPanelElView;
-
+            stackpanel.StackPanelElView = StackPanelElView;
             global.registerElView('stackpanel', StackPanelElView);
             global.onModuleLoaded('stackpanel', stackpanel);
-        })(MOD.stackpanel || (MOD.stackpanel = {}));
-        var stackpanel = MOD.stackpanel;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(stackpanel = MOD.stackpanel || (MOD.stackpanel = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
+    var MOD;
     (function (MOD) {
+        var db;
         (function (_db) {
             var constsMOD = RIAPP.MOD.consts;
             var utilsMOD = RIAPP.MOD.utils;
             var collMod = RIAPP.MOD.collection;
-
             var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
-
             //local variables for optimization
             var ValidationError = RIAPP.MOD.errors.ValidationError, valueUtils = utilsMOD.valueUtils, baseUtils = RIAPP.baseUtils, utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-
             (function (FLAGS) {
                 FLAGS[FLAGS["None"] = 0] = "None";
                 FLAGS[FLAGS["Changed"] = 1] = "Changed";
@@ -13950,12 +13862,13 @@ var RIAPP;
                 DATA_OPER[DATA_OPER["INIT"] = 4] = "INIT";
             })(_db.DATA_OPER || (_db.DATA_OPER = {}));
             var DATA_OPER = _db.DATA_OPER;
-
             var DATA_SVC_METH = {
-                Invoke: 'invoke', LoadData: 'query', GetPermissions: 'permissions',
-                Submit: 'save', Refresh: 'refresh'
+                Invoke: 'invoke',
+                LoadData: 'query',
+                GetPermissions: 'permissions',
+                Submit: 'save',
+                Refresh: 'refresh'
             };
-
             var DataOperationError = (function (_super) {
                 __extends(DataOperationError, _super);
                 function DataOperationError(ex, operationName) {
@@ -13965,7 +13878,7 @@ var RIAPP;
                     if (!message)
                         message = '' + ex;
                     _super.call(this, message);
-                    this._origError = ex;
+                    this.origError = ex;
                     this._operationName = operationName;
                 }
                 Object.defineProperty(DataOperationError.prototype, "operationName", {
@@ -14006,7 +13919,7 @@ var RIAPP;
                 __extends(SubmitError, _super);
                 function SubmitError(origError, allSubmitted, notValidated) {
                     var message = origError.message || ('' + origError);
-                    this._origError = origError;
+                    this.origError = origError;
                     this._allSubmitted = allSubmitted || [];
                     this._notValidated = notValidated || [];
                     if (this._notValidated.length > 0) {
@@ -14035,7 +13948,6 @@ var RIAPP;
                 return SubmitError;
             })(DataOperationError);
             _db.SubmitError = SubmitError;
-
             function __checkError(svcError, oper) {
                 if (!svcError)
                     return;
@@ -14057,12 +13969,10 @@ var RIAPP;
                 }
             }
             ;
-
             //don't submit these types of fields to the server
             function fn_isNotSubmittable(fld) {
                 return (fld.fieldType == 1 /* ClientOnly */ || fld.fieldType == 3 /* Navigation */ || fld.fieldType == 2 /* Calculated */ || fld.fieldType == 6 /* ServerCalculated */);
             }
-
             function fn_traverseChanges(val, fn) {
                 function _fn_traverseChanges(name, val, fn) {
                     if (!!val.nested && val.nested.length > 0) {
@@ -14071,17 +13981,18 @@ var RIAPP;
                             prop = val.nested[i];
                             if (!!prop.nested && prop.nested.length > 0) {
                                 _fn_traverseChanges(name + '.' + prop.fieldName, prop, fn);
-                            } else {
+                            }
+                            else {
                                 fn(name + '.' + prop.fieldName, prop);
                             }
                         }
-                    } else {
+                    }
+                    else {
                         fn(name, val);
                     }
                 }
                 _fn_traverseChanges(val.fieldName, val, fn);
             }
-
             var DataCache = (function (_super) {
                 __extends(DataCache, _super);
                 function DataCache(query) {
@@ -14101,7 +14012,6 @@ var RIAPP;
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "res.length == 1"));
                     return res[0];
                 };
-
                 //reset items key index
                 DataCache.prototype.reindexCache = function () {
                     var self = this, page;
@@ -14136,20 +14046,16 @@ var RIAPP;
                     }
                     if (this._pageCount > this.loadPageCount && above > (this._pageCount - 1)) {
                         below -= (above - (this._pageCount - 1));
-
                         if (below < 0) {
                             below = 0;
                         }
-
                         above = this._pageCount - 1;
                     }
-
                     //once again check for previous cached range
                     if (below <= prev) {
                         above += (prev - below + 1);
                         below += (prev - below + 1);
                     }
-
                     var cnt = above - below + 1;
                     if (cnt < this.loadPageCount) {
                         above += this.loadPageCount - cnt;
@@ -14179,7 +14085,8 @@ var RIAPP;
                                 page.items.push(item);
                                 keyMap[item._key] = item;
                                 item._isCached = true;
-                            } else {
+                            }
+                            else {
                                 return;
                             }
                         }
@@ -14252,14 +14159,13 @@ var RIAPP;
                 Object.defineProperty(DataCache.prototype, "_pageCount", {
                     get: function () {
                         var rowCount = this.totalCount, rowPerPage = this.pageSize, result;
-
                         if ((rowCount === 0) || (rowPerPage === 0)) {
                             return 0;
                         }
-
                         if ((rowCount % rowPerPage) === 0) {
                             result = (rowCount / rowPerPage);
-                        } else {
+                        }
+                        else {
                             result = (rowCount / rowPerPage);
                             result = Math.floor(result) + 1;
                         }
@@ -14307,7 +14213,6 @@ var RIAPP;
                 return DataCache;
             })(RIAPP.BaseObject);
             _db.DataCache = DataCache;
-
             var TDataQuery = (function (_super) {
                 __extends(TDataQuery, _super);
                 function TDataQuery(dbSet, queryInfo) {
@@ -14330,14 +14235,12 @@ var RIAPP;
                     return this._dbSet.getFieldInfo(fieldName);
                 };
                 TDataQuery.prototype.getFieldNames = function () {
-                    var fldMap = this._dbSet._fieldMap;
-                    return utils.getProps(fldMap);
+                    return this._dbSet.getFieldNames();
                 };
                 TDataQuery.prototype._addSort = function (fieldName, sortOrder) {
                     var ord = 0 /* ASC */;
                     if (!utils.check.isNt(sortOrder))
                         ord = sortOrder;
-
                     var sortItem = { fieldName: fieldName, sortOrder: ord };
                     this._sortInfo.sortItems.push(sortItem);
                     this._cacheInvalidated = true;
@@ -14356,7 +14259,6 @@ var RIAPP;
                     vals = tmpVals.map(function (v) {
                         return valueUtils.stringifyValue(v, dcnv, fld.dataType, stz);
                     });
-
                     switch (operand) {
                         case 0 /* Equals */:
                         case 9 /* NotEq */:
@@ -14615,7 +14517,6 @@ var RIAPP;
                 return TDataQuery;
             })(RIAPP.BaseObject);
             _db.TDataQuery = TDataQuery;
-
             var DataQuery = (function (_super) {
                 __extends(DataQuery, _super);
                 function DataQuery() {
@@ -14624,7 +14525,6 @@ var RIAPP;
                 return DataQuery;
             })(TDataQuery);
             _db.DataQuery = DataQuery;
-
             var Entity = (function (_super) {
                 __extends(Entity, _super);
                 function Entity(dbSet, row, names) {
@@ -14634,7 +14534,6 @@ var RIAPP;
                     this.__changeType = 0 /* NONE */;
                     this.__isRefreshing = false;
                     this.__isCached = false;
-
                     this._srvRowKey = null;
                     this._origVals = null;
                     this._saveChangeType = null;
@@ -14643,7 +14542,8 @@ var RIAPP;
                         fld = fieldInfos[i];
                         if (fld.fieldType != 5 /* Object */) {
                             self._vals[fld.fieldName] = null;
-                        } else {
+                        }
+                        else {
                             //object field
                             collMod.fn_traverseField(fld, function (name, f) {
                                 if (f.fieldType == 5 /* Object */)
@@ -14655,10 +14555,6 @@ var RIAPP;
                     }
                     this._initRowInfo(row, names);
                 }
-                Entity.prototype._updateKeys = function (srvKey) {
-                    this._srvRowKey = srvKey;
-                    this._key = srvKey;
-                };
                 Entity.prototype._initRowInfo = function (row, names) {
                     if (!row)
                         return;
@@ -14672,21 +14568,140 @@ var RIAPP;
                         var name = names[index], fieldName = path + name.n, fld = self._dbSet.getFieldInfo(fieldName), val;
                         if (!fld)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fieldName));
-
                         if (fld.fieldType == 5 /* Object */) {
                             //for object fields the value should be an array of values - recursive processing
                             self._processValues(fieldName + '.', value, name.p);
-                        } else {
+                        }
+                        else {
                             //for other fields the value is a string, which is parsed to a typed value
                             val = valueUtils.parseValue(value, fld.dataType, fld.dateConversion, stz);
                             if (!path) {
                                 //not nested field
                                 self._vals[fieldName] = val;
-                            } else {
+                            }
+                            else {
                                 baseUtils.setValue(self._vals, fieldName, val, false);
                             }
                         }
                     });
+                };
+                Entity.prototype._onFieldChanged = function (fieldName, fieldInfo) {
+                    var self = this;
+                    self.raisePropertyChanged(fieldName);
+                    if (!!fieldInfo.dependents && fieldInfo.dependents.length > 0) {
+                        fieldInfo.dependents.forEach(function (d) {
+                            self.raisePropertyChanged(d);
+                        });
+                    }
+                };
+                Entity.prototype._getValueChange = function (fullName, fld, changedOnly) {
+                    var self = this, dbSet = self._dbSet, res, i, len, tmp;
+                    if (fn_isNotSubmittable(fld))
+                        return null;
+                    if (fld.fieldType == 5 /* Object */) {
+                        res = { fieldName: fld.fieldName, val: null, orig: null, flags: 0 /* None */, nested: [] };
+                        len = fld.nested.length;
+                        for (i = 0; i < len; i += 1) {
+                            tmp = self._getValueChange(fullName + '.' + fld.nested[i].fieldName, fld.nested[i], changedOnly);
+                            if (!!tmp) {
+                                res.nested.push(tmp);
+                            }
+                        }
+                    }
+                    else {
+                        var newVal = dbSet._getStrValue(baseUtils.getValue(self._vals, fullName), fld), oldV = self._origVals === null ? newVal : dbSet._getStrValue(baseUtils.getValue(self._origVals, fullName), fld), isChanged = (oldV !== newVal);
+                        if (isChanged)
+                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: (1 /* Changed */ | 2 /* Setted */), nested: null };
+                        else if (fld.isPrimaryKey > 0 || fld.fieldType == 4 /* RowTimeStamp */ || fld.isNeedOriginal)
+                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: 2 /* Setted */, nested: null };
+                        else
+                            res = { fieldName: fld.fieldName, val: null, orig: null, flags: 0 /* None */, nested: null };
+                    }
+                    if (changedOnly) {
+                        if (fld.fieldType == 5 /* Object */) {
+                            if (res.nested.length > 0)
+                                return res;
+                            else
+                                return null;
+                        }
+                        else if ((res.flags & 1 /* Changed */) === 1 /* Changed */)
+                            return res;
+                        else
+                            return null;
+                    }
+                    else {
+                        return res;
+                    }
+                };
+                Entity.prototype._getValueChanges = function (changedOnly) {
+                    var self = this, flds = this._dbSet.getFieldInfos();
+                    var res = flds.map(function (fld) {
+                        return self._getValueChange(fld.fieldName, fld, changedOnly);
+                    });
+                    //remove nulls
+                    var res2 = res.filter(function (vc) {
+                        return !!vc;
+                    });
+                    return res2;
+                };
+                Entity.prototype._fldChanging = function (fieldName, fieldInfo, oldV, newV) {
+                    if (!this._origVals) {
+                        this._origVals = utils.cloneObj(this._vals);
+                    }
+                    return true;
+                };
+                Entity.prototype._fldChanged = function (fieldName, fieldInfo, oldV, newV) {
+                    if (!(fieldInfo.fieldType == 1 /* ClientOnly */ || fieldInfo.fieldType == 6 /* ServerCalculated */)) {
+                        switch (this._changeType) {
+                            case 0 /* NONE */:
+                                this._changeType = 2 /* UPDATED */;
+                                break;
+                        }
+                    }
+                    this._onFieldChanged(fieldName, fieldInfo);
+                    return true;
+                };
+                Entity.prototype._skipValidate = function (fieldInfo, val) {
+                    var childToParentNames = this._dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
+                    if (!!childToParentNames && val === null) {
+                        for (var i = 0, len = childToParentNames.length; i < len; i += 1) {
+                            res = !!this._getFieldVal(childToParentNames[i]);
+                            if (res)
+                                break;
+                        }
+                    }
+                    return res;
+                };
+                Entity.prototype._beginEdit = function () {
+                    if (!_super.prototype._beginEdit.call(this))
+                        return false;
+                    this._saveChangeType = this._changeType;
+                    return true;
+                };
+                Entity.prototype._endEdit = function () {
+                    if (!_super.prototype._endEdit.call(this))
+                        return false;
+                    this._saveChangeType = null;
+                    return true;
+                };
+                Entity.prototype._getCalcFieldVal = function (fieldName) {
+                    if (this._isDestroyCalled)
+                        return null;
+                    return this._dbSet._getCalcFieldVal(fieldName, this);
+                };
+                Entity.prototype._getNavFieldVal = function (fieldName) {
+                    if (this._isDestroyCalled) {
+                        return null;
+                    }
+                    return this._dbSet._getNavFieldVal(fieldName, this);
+                };
+                Entity.prototype._setNavFieldVal = function (fieldName, value) {
+                    var dbSet = this._dbSet;
+                    this._dbSet._setNavFieldVal(fieldName, this, value);
+                };
+                Entity.prototype._updateKeys = function (srvKey) {
+                    this._srvRowKey = srvKey;
+                    this._key = srvKey;
                 };
                 Entity.prototype._checkCanRefresh = function () {
                     if (this._key === null || this._changeType === 1 /* ADDED */) {
@@ -14702,7 +14717,7 @@ var RIAPP;
                     oldVal = baseUtils.getValue(self._vals, fullName);
                     switch (refreshMode) {
                         case 3 /* CommitChanges */:
-                             {
+                            {
                                 if (!valueUtils.compareVals(newVal, oldVal, dataType)) {
                                     baseUtils.setValue(self._vals, fullName, newVal, false);
                                     self._onFieldChanged(fullName, fld);
@@ -14710,7 +14725,7 @@ var RIAPP;
                             }
                             break;
                         case 1 /* RefreshCurrent */:
-                             {
+                            {
                                 if (!!self._origVals) {
                                     baseUtils.setValue(self._origVals, fullName, newVal, false);
                                 }
@@ -14724,7 +14739,7 @@ var RIAPP;
                             }
                             break;
                         case 2 /* MergeIntoCurrent */:
-                             {
+                            {
                                 if (!!self._origVals) {
                                     oldValOrig = baseUtils.getValue(self._origVals, fullName);
                                     baseUtils.setValue(self._origVals, fullName, newVal, false);
@@ -14755,7 +14770,6 @@ var RIAPP;
                                 self._refreshValue(vc.val, fullName, refreshMode);
                             });
                         });
-
                         if (oldCT === 2 /* UPDATED */) {
                             var changes = this._getValueChanges(true);
                             if (changes.length === 0) {
@@ -14764,65 +14778,6 @@ var RIAPP;
                             }
                         }
                     }
-                };
-                Entity.prototype._onFieldChanged = function (fieldName, fieldInfo) {
-                    var self = this;
-                    self.raisePropertyChanged(fieldName);
-                    if (!!fieldInfo.dependents && fieldInfo.dependents.length > 0) {
-                        fieldInfo.dependents.forEach(function (d) {
-                            self.raisePropertyChanged(d);
-                        });
-                    }
-                };
-                Entity.prototype._getValueChange = function (fullName, fld, changedOnly) {
-                    var self = this, dbSet = self._dbSet, res, i, len, tmp;
-                    if (fn_isNotSubmittable(fld))
-                        return null;
-
-                    if (fld.fieldType == 5 /* Object */) {
-                        res = { fieldName: fld.fieldName, val: null, orig: null, flags: 0 /* None */, nested: [] };
-                        len = fld.nested.length;
-                        for (i = 0; i < len; i += 1) {
-                            tmp = self._getValueChange(fullName + '.' + fld.nested[i].fieldName, fld.nested[i], changedOnly);
-                            if (!!tmp) {
-                                res.nested.push(tmp);
-                            }
-                        }
-                    } else {
-                        var newVal = dbSet._getStrValue(baseUtils.getValue(self._vals, fullName), fld), oldV = self._origVals === null ? newVal : dbSet._getStrValue(baseUtils.getValue(self._origVals, fullName), fld), isChanged = (oldV !== newVal);
-                        if (isChanged)
-                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: (1 /* Changed */ | 2 /* Setted */), nested: null };
-                        else if (fld.isPrimaryKey > 0 || fld.fieldType == 4 /* RowTimeStamp */ || fld.isNeedOriginal)
-                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: 2 /* Setted */, nested: null };
-                        else
-                            res = { fieldName: fld.fieldName, val: null, orig: null, flags: 0 /* None */, nested: null };
-                    }
-
-                    if (changedOnly) {
-                        if (fld.fieldType == 5 /* Object */) {
-                            if (res.nested.length > 0)
-                                return res;
-                            else
-                                return null;
-                        } else if ((res.flags & 1 /* Changed */) === 1 /* Changed */)
-                            return res;
-                        else
-                            return null;
-                    } else {
-                        return res;
-                    }
-                };
-                Entity.prototype._getValueChanges = function (changedOnly) {
-                    var self = this, flds = this._dbSet.getFieldInfos();
-                    var res = flds.map(function (fld) {
-                        return self._getValueChange(fld.fieldName, fld, changedOnly);
-                    });
-
-                    //remove nulls
-                    var res2 = res.filter(function (vc) {
-                        return !!vc;
-                    });
-                    return res2;
                 };
                 Entity.prototype._getRowInfo = function () {
                     var res = {
@@ -14834,36 +14789,8 @@ var RIAPP;
                     };
                     return res;
                 };
-                Entity.prototype._fldChanging = function (fieldName, fieldInfo, oldV, newV) {
-                    if (!this._origVals) {
-                        this._origVals = utils.cloneObj(this._vals);
-                    }
-                    return true;
-                };
-                Entity.prototype._fldChanged = function (fieldName, fieldInfo, oldV, newV) {
-                    if (!(fieldInfo.fieldType == 1 /* ClientOnly */ || fieldInfo.fieldType == 6 /* ServerCalculated */)) {
-                        switch (this._changeType) {
-                            case 0 /* NONE */:
-                                this._changeType = 2 /* UPDATED */;
-                                break;
-                        }
-                    }
-                    this._onFieldChanged(fieldName, fieldInfo);
-                    return true;
-                };
                 Entity.prototype._clearFieldVal = function (fieldName) {
                     baseUtils.setValue(this._vals, fieldName, null, false);
-                };
-                Entity.prototype._skipValidate = function (fieldInfo, val) {
-                    var childToParentNames = this._dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
-                    if (!!childToParentNames && val === null) {
-                        for (var i = 0, len = childToParentNames.length; i < len; i += 1) {
-                            res = !!this._getFieldVal(childToParentNames[i]);
-                            if (res)
-                                break;
-                        }
-                    }
-                    return res;
                 };
                 Entity.prototype._getFieldVal = function (fieldName) {
                     if (this._isDestroyCalled)
@@ -14876,7 +14803,7 @@ var RIAPP;
                         throw new Error(baseUtils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
                     if (!this._isEditing && !this._isUpdating)
                         this.beginEdit();
-                    try  {
+                    try {
                         newV = this._checkVal(fld, newV);
                         if (oldV != newV) {
                             if (this._fldChanging(fieldName, fld, oldV, newV)) {
@@ -14890,10 +14817,12 @@ var RIAPP;
                         if (!!validation_error) {
                             throw new ValidationError([validation_error], this);
                         }
-                    } catch (ex) {
+                    }
+                    catch (ex) {
                         if (ex instanceof ValidationError) {
                             error = ex;
-                        } else {
+                        }
+                        else {
                             error = new ValidationError([
                                 { fieldName: fieldName, errors: [ex.message] }
                             ], this);
@@ -14902,23 +14831,6 @@ var RIAPP;
                         throw error;
                     }
                     return res;
-                };
-                Entity.prototype._getCalcFieldVal = function (fieldName) {
-                    if (this._isDestroyCalled)
-                        return null;
-                    var dbSet = this._dbSet;
-                    return baseUtils.getValue(dbSet._calcfldMap, fieldName).getFunc.call(this);
-                };
-                Entity.prototype._getNavFieldVal = function (fieldName) {
-                    if (this._isDestroyCalled) {
-                        return null;
-                    }
-                    var dbSet = this._dbSet;
-                    return baseUtils.getValue(dbSet._navfldMap, fieldName).getFunc.call(this);
-                };
-                Entity.prototype._setNavFieldVal = function (fieldName, value) {
-                    var dbSet = this._dbSet;
-                    baseUtils.getValue(dbSet._navfldMap, fieldName).setFunc.call(this, value);
                 };
                 Entity.prototype._onAttaching = function () {
                     _super.prototype._onAttaching.call(this);
@@ -14929,18 +14841,6 @@ var RIAPP;
                     if (this._key === null)
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     this._dbSet._addToChanged(this);
-                };
-                Entity.prototype._beginEdit = function () {
-                    if (!_super.prototype._beginEdit.call(this))
-                        return false;
-                    this._saveChangeType = this._changeType;
-                    return true;
-                };
-                Entity.prototype._endEdit = function () {
-                    if (!_super.prototype._endEdit.call(this))
-                        return false;
-                    this._saveChangeType = null;
-                    return true;
                 };
                 Entity.prototype.deleteItem = function () {
                     return this.deleteOnSubmit();
@@ -14989,7 +14889,6 @@ var RIAPP;
                             eset.removeItem(this);
                             return;
                         }
-
                         var changes = self._getValueChanges(true);
                         if (!!self._origVals) {
                             self._vals = utils.cloneObj(self._origVals);
@@ -15019,7 +14918,6 @@ var RIAPP;
                             }
                         }
                     }, uniqueID);
-
                     var promise = dbContext.submitChanges();
                     promise.always(function () {
                         dbContext.removeOnSubmitError(uniqueID);
@@ -15185,7 +15083,6 @@ var RIAPP;
                 return Entity;
             })(collMod.CollectionItem);
             _db.Entity = Entity;
-
             var DbSet = (function (_super) {
                 __extends(DbSet, _super);
                 function DbSet(opts, entityType) {
@@ -15201,20 +15098,15 @@ var RIAPP;
                     this._navfldMap = {};
                     this._calcfldMap = {};
                     this._fieldInfos = fieldInfos;
-
                     //association infos maped by name
                     //we should track changes in navigation properties for this associations
                     this._trackAssoc = {};
-
                     //map childToParentName by childField as a key
                     this._trackAssocMap = {};
-
                     //map association infos by childToParent fieldname
                     this._childAssocMap = {};
-
                     //map association infos by parentToChildren fieldname
                     this._parentAssocMap = {};
-
                     this._changeCount = 0;
                     this._changeCache = {};
                     this._ignorePageChanged = false;
@@ -15225,47 +15117,23 @@ var RIAPP;
                             fld.fullName = fullName;
                         });
                     });
-
                     fieldInfos.forEach(function (f) {
                         collMod.fn_traverseField(f, function (fullName, fld) {
                             if (fld.fieldType == 3 /* Navigation */) {
                                 //navigation fields can NOT be on nested fields
                                 self._navfldMap[fld.fieldName] = self._doNavigationField(opts, fld);
-                            } else if (fld.fieldType == 2 /* Calculated */) {
+                            }
+                            else if (fld.fieldType == 2 /* Calculated */) {
                                 //calculated fields can be on nested fields
                                 baseUtils.setValue(self._calcfldMap, fullName, self._doCalculatedField(opts, fld), true);
                             }
                         });
                     });
-
                     self._mapAssocFields();
                     Object.freeze(this._perms);
                 }
-                DbSet.prototype.getFieldInfo = function (fieldName) {
-                    var assoc, parentDB, parts = fieldName.split('.');
-                    var fld = this._fieldMap[parts[0]];
-                    if (parts.length == 1) {
-                        return fld;
-                    }
-
-                    if (fld.fieldType == 5 /* Object */) {
-                        for (var i = 1; i < parts.length; i += 1) {
-                            fld = collMod.fn_getPropertyByName(parts[i], fld.nested);
-                        }
-                        return fld;
-                    } else if (fld.fieldType == 3 /* Navigation */) {
-                        //for example Customer.Name
-                        assoc = this._childAssocMap[fld.fieldName];
-                        if (!!assoc) {
-                            parentDB = this.dbContext.getDbSet(assoc.parentDbSetName);
-                            return parentDB.getFieldInfo(parts.slice(1).join('.'));
-                        }
-                    }
-
-                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
-                };
-                DbSet.prototype._onError = function (error, source) {
-                    return this.dbContext._onError(error, source);
+                DbSet.prototype.handleError = function (error, source) {
+                    return this.dbContext.handleError(error, source);
                 };
                 DbSet.prototype._mapAssocFields = function () {
                     var trackAssoc = this._trackAssoc, assoc, tasKeys = Object.keys(trackAssoc), frel, trackAssocMap = this._trackAssocMap;
@@ -15275,39 +15143,28 @@ var RIAPP;
                             frel = assoc.fieldRels[j];
                             if (!utils.check.isArray(trackAssocMap[frel.childField])) {
                                 trackAssocMap[frel.childField] = [assoc.childToParentName];
-                            } else {
+                            }
+                            else {
                                 trackAssocMap[frel.childField].push(assoc.childToParentName);
                             }
                         }
                     }
                 };
-                DbSet.prototype._updatePermissions = function (perms) {
-                    this._perms = perms;
-                };
-                DbSet.prototype._getChildToParentNames = function (childFieldName) {
-                    return this._trackAssocMap[childFieldName];
-                };
-                DbSet.prototype._getStrValue = function (val, fieldInfo) {
-                    var dcnv = fieldInfo.dateConversion, stz = this.dbContext.serverTimezone;
-                    return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
-                };
                 DbSet.prototype._doNavigationField = function (opts, fInfo) {
                     var self = this, isChild = true, result = { getFunc: function () {
-                            throw new Error('Function is not implemented');
-                        }, setFunc: function (v) {
-                            throw new Error('Function is not implemented');
-                        } };
+                        throw new Error('Function is not implemented');
+                    }, setFunc: function (v) {
+                        throw new Error('Function is not implemented');
+                    } };
                     var assocs = opts.childAssoc.filter(function (a) {
                         return a.childToParentName == fInfo.fieldName;
                     });
-
                     if (assocs.length === 0) {
                         assocs = opts.parentAssoc.filter(function (a) {
                             return a.parentToChildrenName == fInfo.fieldName;
                         });
                         isChild = false;
                     }
-
                     if (assocs.length != 1)
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'assocs', 'Array'));
                     var assocName = assocs[0].name;
@@ -15321,30 +15178,28 @@ var RIAPP;
                                 fInfo.isReadOnly = true;
                             }
                         });
-
                         //this property should return parent
                         result.getFunc = function () {
                             var assoc = self.dbContext.getAssociation(assocName);
                             return assoc.getParentItem(this);
                         };
-
                         if (!fInfo.isReadOnly) {
                             //should track this association for new items parent - child relationship changes
                             self._trackAssoc[assocName] = assocs[0];
-
                             result.setFunc = function (v) {
                                 var entity = this, i, len, assoc = self.dbContext.getAssociation(assocName);
                                 if (!!v && !(v instanceof assoc.parentDS.entityType)) {
                                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'value', assoc.parentDS.dbSetName));
                                 }
-
                                 if (!!v && v._isNew) {
                                     entity._setFieldVal(fInfo.fieldName, v._key);
-                                } else if (!!v) {
+                                }
+                                else if (!!v) {
                                     for (i = 0, len = assoc.childFldInfos.length; i < len; i += 1) {
                                         entity[assoc.childFldInfos[i].fieldName] = v[assoc.parentFldInfos[i].fieldName];
                                     }
-                                } else {
+                                }
+                                else {
                                     var oldKey = entity._getFieldVal(fInfo.fieldName);
                                     if (!!oldKey) {
                                         entity._setFieldVal(fInfo.fieldName, null);
@@ -15355,9 +15210,9 @@ var RIAPP;
                                 }
                             };
                         }
-                    } else {
+                    }
+                    else {
                         self._parentAssocMap[assocs[0].parentToChildrenName] = assocs[0];
-
                         //return children
                         result.getFunc = function () {
                             return self.dbContext.getAssociation(assocName).getChildItems(this);
@@ -15367,8 +15222,8 @@ var RIAPP;
                 };
                 DbSet.prototype._doCalculatedField = function (opts, fInfo) {
                     var self = this, result = { getFunc: function () {
-                            throw new Error(utils.format("Calculated field:'{0}' is not initialized", fInfo.fieldName));
-                        } };
+                        throw new Error(utils.format("Calculated field:'{0}' is not initialized", fInfo.fieldName));
+                    } };
                     function doDependences(f) {
                         if (!f.dependentOn)
                             return;
@@ -15397,215 +15252,21 @@ var RIAPP;
                         var name = names[index], fieldName = path + name.n, fld = self.getFieldInfo(fieldName);
                         if (!fld)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self.dbSetName, fieldName));
-
                         if (fld.fieldType == 5 /* Object */) {
                             //for object fields the value should be an array of values - recursive processing
                             self._refreshValues(fieldName + '.', item, value, name.p, rm);
-                        } else {
+                        }
+                        else {
                             //for other fields the value is a string
                             item._refreshValue(value, fieldName, rm);
                         }
                     });
-                };
-                DbSet.prototype._fillFromService = function (data) {
-                    data = utils.extend(false, {
-                        res: { names: [], rows: [], pageIndex: null, pageCount: null, dbSetName: this.dbSetName, totalCount: null },
-                        isPageChanged: false,
-                        fn_beforeFillEnd: null
-                    }, data);
-
-                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length, entityType = this._entityType, newItems = [], positions = [], created_items = [], fetchedItems = [], isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache;
-
-                    this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
-                    try  {
-                        if (!!query) {
-                            clearAll = query.isClearPrevData;
-                            if (query.isClearCacheOnEveryLoad)
-                                query._clearCache();
-                            if (clearAll)
-                                this.clear();
-                            query._reindexCache();
-                            if (query.loadPageCount > 1 && isPagingEnabled) {
-                                dataCache = query._getCache();
-                                if (query.isIncludeTotalCount && !utils.check.isNt(res.totalCount))
-                                    dataCache.totalCount = res.totalCount;
-                            }
-                        }
-
-                        created_items = rows.map(function (row) {
-                            //row.key already a string value generated on server (no need to convert to string)
-                            var key = row.k;
-                            if (!key)
-                                throw new Error(RIAPP.ERRS.ERR_KEY_IS_EMPTY);
-
-                            var item = self._itemsByKey[key];
-                            if (!item) {
-                                if (!!dataCache) {
-                                    item = dataCache.getItemByKey(key);
-                                }
-                                if (!item)
-                                    item = new entityType(self, row, fieldNames);
-                                else {
-                                    self._refreshValues('', item, row.v, fieldNames, 1 /* RefreshCurrent */);
-                                }
-                            } else {
-                                self._refreshValues('', item, row.v, fieldNames, 1 /* RefreshCurrent */);
-                            }
-                            return item;
-                        });
-
-                        if (!!query) {
-                            if (query.isIncludeTotalCount && !utils.check.isNt(res.totalCount)) {
-                                this.totalCount = res.totalCount;
-                            }
-
-                            if (query.loadPageCount > 1 && isPagingEnabled) {
-                                dataCache.fillCache(res.pageIndex, created_items);
-                                var pg = dataCache.getCachedPage(query.pageIndex);
-                                if (!!pg)
-                                    created_items = pg.items;
-                                else
-                                    created_items = [];
-                            }
-                        }
-
-                        created_items.forEach(function (item) {
-                            var oldItem = self._itemsByKey[item._key];
-                            if (!oldItem) {
-                                self._items.push(item);
-                                positions.push(self._items.length - 1);
-                                self._itemsByKey[item._key] = item;
-                                newItems.push(item);
-                                fetchedItems.push(item);
-                            } else
-                                fetchedItems.push(oldItem);
-                        });
-
-                        if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
-                            this.raisePropertyChanged('count');
-                        }
-
-                        if (!!data.fn_beforeFillEnd) {
-                            data.fn_beforeFillEnd();
-                        }
-                    } finally {
-                        this._onFillEnd({
-                            isBegin: false, rowCount: fetchedItems.length, time: new Date(), resetUI: clearAll,
-                            fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged
-                        });
-                    }
-                    this.moveFirst();
-                    return { fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
-                };
-                DbSet.prototype._fillFromCache = function (data) {
-                    data = utils.extend(false, {
-                        isPageChanged: false,
-                        fn_beforeFillEnd: null
-                    }, data);
-                    var self = this, positions = [], fetchedItems = [], query = this.query;
-                    if (!query)
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'query is not null'));
-                    var dataCache = query._getCache(), cachedPage = dataCache.getCachedPage(query.pageIndex), items = !cachedPage ? [] : cachedPage.items;
-
-                    this._onFillStart({ isBegin: true, rowCount: items.length, time: new Date(), isPageChanged: data.isPageChanged });
-                    try  {
-                        this.clear();
-                        this._items = items;
-
-                        items.forEach(function (item, index) {
-                            self._itemsByKey[item._key] = item;
-                            positions.push(index);
-                            fetchedItems.push(item);
-                        });
-
-                        if (!!data.fn_beforeFillEnd) {
-                            data.fn_beforeFillEnd();
-                        }
-
-                        if (fetchedItems.length > 0) {
-                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: fetchedItems, pos: positions });
-                            this.raisePropertyChanged('count');
-                        }
-                    } finally {
-                        this._onFillEnd({
-                            isBegin: false, rowCount: fetchedItems.length, time: new Date(), resetUI: true,
-                            fetchedItems: fetchedItems, newItems: fetchedItems, isPageChanged: data.isPageChanged
-                        });
-                    }
-                    this.moveFirst();
-                    return { fetchedItems: fetchedItems, newItems: fetchedItems, isPageChanged: data.isPageChanged, outOfBandData: null };
-                };
-                DbSet.prototype._commitChanges = function (rows) {
-                    var self = this;
-
-                    rows.forEach(function (rowInfo) {
-                        var key = rowInfo.clientKey, item = self._itemsByKey[key];
-                        if (!item) {
-                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, key));
-                        }
-                        var itemCT = item._changeType;
-                        item.acceptChanges(rowInfo);
-                        if (itemCT === 1 /* ADDED */) {
-                            //on insert
-                            delete self._itemsByKey[key];
-                            item._updateKeys(rowInfo.serverKey);
-                            self._itemsByKey[item._key] = item;
-                            self._onItemsChanged({
-                                change_type: 3 /* REMAP_KEY */,
-                                items: [item],
-                                old_key: key,
-                                new_key: item._key
-                            });
-                        }
-                    });
-                };
-                DbSet.prototype._setItemInvalid = function (row) {
-                    var keyMap = this._itemsByKey, item = keyMap[row.clientKey];
-                    var errors = {};
-                    row.invalid.forEach(function (err) {
-                        if (!err.fieldName)
-                            err.fieldName = '*';
-                        if (!!errors[err.fieldName]) {
-                            errors[err.fieldName].push(err.message);
-                        } else
-                            errors[err.fieldName] = [err.message];
-                    });
-                    var res = [];
-                    utils.forEachProp(errors, function (fieldName) {
-                        res.push({ fieldName: fieldName, errors: errors[fieldName] });
-                    });
-                    this._addErrors(item, res);
-                    return item;
                 };
                 DbSet.prototype._setCurrentItem = function (v) {
                     if (!!v && !(v instanceof this._entityType)) {
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', this._options.dbSetName));
                     }
                     _super.prototype._setCurrentItem.call(this, v);
-                };
-                DbSet.prototype._getChanges = function () {
-                    var changes = [];
-                    var csh = this._changeCache;
-                    utils.forEachProp(csh, function (key) {
-                        var item = csh[key];
-                        changes.push(item._getRowInfo());
-                    });
-                    return changes;
-                };
-                DbSet.prototype._getTrackAssocInfo = function () {
-                    var self = this, res = [];
-                    var csh = this._changeCache, assocNames = Object.keys(self._trackAssoc);
-                    utils.forEachProp(csh, function (key) {
-                        var item = csh[key];
-                        assocNames.forEach(function (assocName) {
-                            var assocInfo = self._trackAssoc[assocName], parentKey = item._getFieldVal(assocInfo.childToParentName), childKey = item._key;
-                            if (!!parentKey && !!childKey) {
-                                res.push({ assocName: assocName, parentKey: parentKey, childKey: childKey });
-                            }
-                        });
-                    });
-                    return res;
                 };
                 DbSet.prototype._getNewKey = function (item) {
                     //client's item ID
@@ -15618,44 +15279,12 @@ var RIAPP;
                     item._key = this._getNewKey(item);
                     return item;
                 };
-                DbSet.prototype._addToChanged = function (item) {
-                    if (item._key === null)
-                        return;
-                    if (!this._changeCache[item._key]) {
-                        this._changeCache[item._key] = item;
-                        this._changeCount += 1;
-                        if (this._changeCount === 1)
-                            this.raisePropertyChanged('hasChanges');
-                    }
-                };
-                DbSet.prototype._removeFromChanged = function (key) {
-                    if (key === null)
-                        return;
-                    if (!!this._changeCache[key]) {
-                        delete this._changeCache[key];
-                        this._changeCount -= 1;
-                        if (this._changeCount === 0)
-                            this.raisePropertyChanged('hasChanges');
-                    }
-                };
                 DbSet.prototype._clearChangeCache = function () {
                     var old = this._changeCount;
                     this._changeCache = {};
                     this._changeCount = 0;
                     if (old !== this._changeCount)
                         this.raisePropertyChanged('hasChanges');
-                };
-
-                //occurs when item changeType Changed (not used in simple collections)
-                DbSet.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    _super.prototype._onItemStatusChanged.call(this, item, oldChangeType);
-                    if (item._isDeleted && this.isSubmitOnDelete) {
-                        this.dbContext.submitChanges();
-                    }
-                };
-                DbSet.prototype._onRemoved = function (item, pos) {
-                    this._removeFromChanged(item._key);
-                    _super.prototype._onRemoved.call(this, item, pos);
                 };
                 DbSet.prototype._onPageChanging = function () {
                     var res = _super.prototype._onPageChanging.call(this);
@@ -15695,6 +15324,304 @@ var RIAPP;
                     }
                     calcDef.getFunc = getFunc;
                 };
+                DbSet.prototype._getCalcFieldVal = function (fieldName, item) {
+                    return baseUtils.getValue(this._calcfldMap, fieldName).getFunc.call(item);
+                };
+                DbSet.prototype._getNavFieldVal = function (fieldName, item) {
+                    return baseUtils.getValue(this._navfldMap, fieldName).getFunc.call(item);
+                };
+                DbSet.prototype._setNavFieldVal = function (fieldName, item, value) {
+                    baseUtils.getValue(this._navfldMap, fieldName).setFunc.call(item, value);
+                };
+                DbSet.prototype._beforeLoad = function (query, oldQuery) {
+                    if (query && oldQuery !== query) {
+                        this._query = query;
+                        this.pageIndex = 0;
+                    }
+                    if (!!oldQuery && oldQuery !== query) {
+                        oldQuery.destroy();
+                    }
+                    if (query.pageSize !== this.pageSize) {
+                        this._ignorePageChanged = true;
+                        try {
+                            this.pageIndex = 0;
+                            this.pageSize = query.pageSize;
+                        }
+                        finally {
+                            this._ignorePageChanged = false;
+                        }
+                    }
+                    if (query.pageIndex !== this.pageIndex) {
+                        this._ignorePageChanged = true;
+                        try {
+                            this.pageIndex = query.pageIndex;
+                        }
+                        finally {
+                            this._ignorePageChanged = false;
+                        }
+                    }
+                    if (!query.isCacheValid) {
+                        query._clearCache();
+                    }
+                };
+                DbSet.prototype._updatePermissions = function (perms) {
+                    this._perms = perms;
+                };
+                DbSet.prototype._getChildToParentNames = function (childFieldName) {
+                    return this._trackAssocMap[childFieldName];
+                };
+                DbSet.prototype._getStrValue = function (val, fieldInfo) {
+                    var dcnv = fieldInfo.dateConversion, stz = this.dbContext.serverTimezone;
+                    return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
+                };
+                DbSet.prototype._fillFromService = function (data) {
+                    data = utils.extend(false, {
+                        res: { names: [], rows: [], pageIndex: null, pageCount: null, dbSetName: this.dbSetName, totalCount: null },
+                        isPageChanged: false,
+                        fn_beforeFillEnd: null
+                    }, data);
+                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length, entityType = this._entityType, newItems = [], positions = [], created_items = [], fetchedItems = [], isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache;
+                    this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
+                    try {
+                        if (!!query) {
+                            clearAll = query.isClearPrevData;
+                            if (query.isClearCacheOnEveryLoad)
+                                query._clearCache();
+                            if (clearAll)
+                                this.clear();
+                            query._reindexCache();
+                            if (query.loadPageCount > 1 && isPagingEnabled) {
+                                dataCache = query._getCache();
+                                if (query.isIncludeTotalCount && !utils.check.isNt(res.totalCount))
+                                    dataCache.totalCount = res.totalCount;
+                            }
+                        }
+                        created_items = rows.map(function (row) {
+                            //row.key already a string value generated on server (no need to convert to string)
+                            var key = row.k;
+                            if (!key)
+                                throw new Error(RIAPP.ERRS.ERR_KEY_IS_EMPTY);
+                            var item = self._itemsByKey[key];
+                            if (!item) {
+                                if (!!dataCache) {
+                                    item = dataCache.getItemByKey(key);
+                                }
+                                if (!item)
+                                    item = new entityType(self, row, fieldNames);
+                                else {
+                                    self._refreshValues('', item, row.v, fieldNames, 1 /* RefreshCurrent */);
+                                }
+                            }
+                            else {
+                                self._refreshValues('', item, row.v, fieldNames, 1 /* RefreshCurrent */);
+                            }
+                            return item;
+                        });
+                        if (!!query) {
+                            if (query.isIncludeTotalCount && !utils.check.isNt(res.totalCount)) {
+                                this.totalCount = res.totalCount;
+                            }
+                            if (query.loadPageCount > 1 && isPagingEnabled) {
+                                dataCache.fillCache(res.pageIndex, created_items);
+                                var pg = dataCache.getCachedPage(query.pageIndex);
+                                if (!!pg)
+                                    created_items = pg.items;
+                                else
+                                    created_items = [];
+                            }
+                        }
+                        created_items.forEach(function (item) {
+                            var oldItem = self._itemsByKey[item._key];
+                            if (!oldItem) {
+                                self._items.push(item);
+                                positions.push(self._items.length - 1);
+                                self._itemsByKey[item._key] = item;
+                                newItems.push(item);
+                                fetchedItems.push(item);
+                            }
+                            else
+                                fetchedItems.push(oldItem);
+                        });
+                        if (newItems.length > 0) {
+                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
+                            this.raisePropertyChanged('count');
+                        }
+                        if (!!data.fn_beforeFillEnd) {
+                            data.fn_beforeFillEnd();
+                        }
+                    }
+                    finally {
+                        this._onFillEnd({
+                            isBegin: false,
+                            rowCount: fetchedItems.length,
+                            time: new Date(),
+                            resetUI: clearAll,
+                            fetchedItems: fetchedItems,
+                            newItems: newItems,
+                            isPageChanged: data.isPageChanged
+                        });
+                    }
+                    this.moveFirst();
+                    return { fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
+                };
+                DbSet.prototype._fillFromCache = function (data) {
+                    data = utils.extend(false, {
+                        isPageChanged: false,
+                        fn_beforeFillEnd: null
+                    }, data);
+                    var self = this, positions = [], fetchedItems = [], query = this.query;
+                    if (!query)
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'query is not null'));
+                    var dataCache = query._getCache(), cachedPage = dataCache.getCachedPage(query.pageIndex), items = !cachedPage ? [] : cachedPage.items;
+                    this._onFillStart({ isBegin: true, rowCount: items.length, time: new Date(), isPageChanged: data.isPageChanged });
+                    try {
+                        this.clear();
+                        this._items = items;
+                        items.forEach(function (item, index) {
+                            self._itemsByKey[item._key] = item;
+                            positions.push(index);
+                            fetchedItems.push(item);
+                        });
+                        if (!!data.fn_beforeFillEnd) {
+                            data.fn_beforeFillEnd();
+                        }
+                        if (fetchedItems.length > 0) {
+                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: fetchedItems, pos: positions });
+                            this.raisePropertyChanged('count');
+                        }
+                    }
+                    finally {
+                        this._onFillEnd({
+                            isBegin: false,
+                            rowCount: fetchedItems.length,
+                            time: new Date(),
+                            resetUI: true,
+                            fetchedItems: fetchedItems,
+                            newItems: fetchedItems,
+                            isPageChanged: data.isPageChanged
+                        });
+                    }
+                    this.moveFirst();
+                    return { fetchedItems: fetchedItems, newItems: fetchedItems, isPageChanged: data.isPageChanged, outOfBandData: null };
+                };
+                DbSet.prototype._commitChanges = function (rows) {
+                    var self = this;
+                    rows.forEach(function (rowInfo) {
+                        var key = rowInfo.clientKey, item = self._itemsByKey[key];
+                        if (!item) {
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, key));
+                        }
+                        var itemCT = item._changeType;
+                        item.acceptChanges(rowInfo);
+                        if (itemCT === 1 /* ADDED */) {
+                            //on insert
+                            delete self._itemsByKey[key];
+                            item._updateKeys(rowInfo.serverKey);
+                            self._itemsByKey[item._key] = item;
+                            self._onItemsChanged({
+                                change_type: 3 /* REMAP_KEY */,
+                                items: [item],
+                                old_key: key,
+                                new_key: item._key
+                            });
+                        }
+                    });
+                };
+                DbSet.prototype._setItemInvalid = function (row) {
+                    var keyMap = this._itemsByKey, item = keyMap[row.clientKey];
+                    var errors = {};
+                    row.invalid.forEach(function (err) {
+                        if (!err.fieldName)
+                            err.fieldName = '*';
+                        if (!!errors[err.fieldName]) {
+                            errors[err.fieldName].push(err.message);
+                        }
+                        else
+                            errors[err.fieldName] = [err.message];
+                    });
+                    var res = [];
+                    utils.forEachProp(errors, function (fieldName) {
+                        res.push({ fieldName: fieldName, errors: errors[fieldName] });
+                    });
+                    this._addErrors(item, res);
+                    return item;
+                };
+                DbSet.prototype._getChanges = function () {
+                    var changes = [];
+                    var csh = this._changeCache;
+                    utils.forEachProp(csh, function (key) {
+                        var item = csh[key];
+                        changes.push(item._getRowInfo());
+                    });
+                    return changes;
+                };
+                DbSet.prototype._getTrackAssocInfo = function () {
+                    var self = this, res = [];
+                    var csh = this._changeCache, assocNames = Object.keys(self._trackAssoc);
+                    utils.forEachProp(csh, function (key) {
+                        var item = csh[key];
+                        assocNames.forEach(function (assocName) {
+                            var assocInfo = self._trackAssoc[assocName], parentKey = item._getFieldVal(assocInfo.childToParentName), childKey = item._key;
+                            if (!!parentKey && !!childKey) {
+                                res.push({ assocName: assocName, parentKey: parentKey, childKey: childKey });
+                            }
+                        });
+                    });
+                    return res;
+                };
+                DbSet.prototype._addToChanged = function (item) {
+                    if (item._key === null)
+                        return;
+                    if (!this._changeCache[item._key]) {
+                        this._changeCache[item._key] = item;
+                        this._changeCount += 1;
+                        if (this._changeCount === 1)
+                            this.raisePropertyChanged('hasChanges');
+                    }
+                };
+                DbSet.prototype._removeFromChanged = function (key) {
+                    if (key === null)
+                        return;
+                    if (!!this._changeCache[key]) {
+                        delete this._changeCache[key];
+                        this._changeCount -= 1;
+                        if (this._changeCount === 0)
+                            this.raisePropertyChanged('hasChanges');
+                    }
+                };
+                //occurs when item changeType Changed (not used in simple collections)
+                DbSet.prototype._onItemStatusChanged = function (item, oldChangeType) {
+                    _super.prototype._onItemStatusChanged.call(this, item, oldChangeType);
+                    if (item._isDeleted && this.isSubmitOnDelete) {
+                        this.dbContext.submitChanges();
+                    }
+                };
+                DbSet.prototype._onRemoved = function (item, pos) {
+                    this._removeFromChanged(item._key);
+                    _super.prototype._onRemoved.call(this, item, pos);
+                };
+                DbSet.prototype.getFieldInfo = function (fieldName) {
+                    var assoc, parentDB, parts = fieldName.split('.');
+                    var fld = this._fieldMap[parts[0]];
+                    if (parts.length == 1) {
+                        return fld;
+                    }
+                    if (fld.fieldType == 5 /* Object */) {
+                        for (var i = 1; i < parts.length; i += 1) {
+                            fld = collMod.fn_getPropertyByName(parts[i], fld.nested);
+                        }
+                        return fld;
+                    }
+                    else if (fld.fieldType == 3 /* Navigation */) {
+                        //for example Customer.Name
+                        assoc = this._childAssocMap[fld.fieldName];
+                        if (!!assoc) {
+                            parentDB = this.dbContext.getDbSet(assoc.parentDbSetName);
+                            return parentDB.getFieldInfo(parts.slice(1).join('.'));
+                        }
+                    }
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
+                };
                 DbSet.prototype.sort = function (fieldNames, sortOrder) {
                     var ds = this, query = ds.query;
                     if (!!query) {
@@ -15705,15 +15632,14 @@ var RIAPP;
                             else
                                 query.thenBy(fieldNames[i], sortOrder);
                         }
-
                         query.isClearPrevData = true;
                         query.pageIndex = 0;
                         return ds.dbContext.load(query);
-                    } else {
+                    }
+                    else {
                         return _super.prototype.sort.call(this, fieldNames, sortOrder);
                     }
                 };
-
                 //manually fill data from result when page is first loaded
                 //from data stored inside page (without ajax request)
                 //convenient for loading classifiers (for lookup data)
@@ -15730,7 +15656,6 @@ var RIAPP;
                         error: null,
                         included: []
                     }, data);
-
                     var filldata = {
                         res: res,
                         isPageChanged: false,
@@ -15859,7 +15784,6 @@ var RIAPP;
                 return DbSet;
             })(collMod.BaseCollection);
             _db.DbSet = DbSet;
-
             //implements lazy initialization pattern for creating DbSet's instances
             var DbSets = (function (_super) {
                 __extends(DbSets, _super);
@@ -15921,7 +15845,6 @@ var RIAPP;
                 return DbSets;
             })(RIAPP.BaseObject);
             _db.DbSets = DbSets;
-
             var DbContext = (function (_super) {
                 __extends(DbContext, _super);
                 function DbContext() {
@@ -15944,17 +15867,8 @@ var RIAPP;
                     var base_events = _super.prototype._getEventNames.call(this);
                     return ['submit_error'].concat(base_events);
                 };
-                DbContext.prototype.addOnSubmitError = function (fn, namespace) {
-                    this.addHandler('submit_error', fn, namespace);
-                };
-                DbContext.prototype.removeOnSubmitError = function (namespace) {
-                    this.removeHandler('submit_error', namespace);
-                };
                 DbContext.prototype._onGetCalcField = function (args) {
                     this.raiseEvent('define_calc', args);
-                };
-                DbContext.prototype._getQueryInfo = function (name) {
-                    return this._queryInf[name];
                 };
                 DbContext.prototype._initDbSets = function () {
                     if (this._isInitialized)
@@ -15984,24 +15898,6 @@ var RIAPP;
                         self.getDbSet(perms.dbSetName)._updatePermissions(perms);
                     });
                 };
-                DbContext.prototype._onDbSetHasChangesChanged = function (eSet) {
-                    var old = this._hasChanges, test;
-                    this._hasChanges = false;
-                    if (eSet.hasChanges) {
-                        this._hasChanges = true;
-                    } else {
-                        for (var i = 0, len = this._dbSets.arrDbSets.length; i < len; i += 1) {
-                            test = this._dbSets.arrDbSets[i];
-                            if (test.hasChanges) {
-                                this._hasChanges = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (this._hasChanges !== old) {
-                        this.raisePropertyChanged('hasChanges');
-                    }
-                };
                 DbContext.prototype._initAssociation = function (assoc) {
                     var self = this, options = {
                         dbContext: self,
@@ -16019,7 +15915,6 @@ var RIAPP;
                         name: assoc.name
                     };
                     var name = "get" + assoc.name;
-
                     //lazy initialization pattern
                     this._assoc[name] = function () {
                         var t = new Association(options);
@@ -16033,28 +15928,27 @@ var RIAPP;
                 };
                 DbContext.prototype._initMethod = function (methodInfo) {
                     var self = this;
-
                     //function expects method parameters
                     this._svcMethods[methodInfo.methodName] = function (args) {
                         var deferred = utils.createDeferred();
                         var callback = function (res) {
                             if (!res.error) {
                                 deferred.resolve(res.result);
-                            } else {
+                            }
+                            else {
                                 deferred.reject();
                             }
                         };
-
-                        try  {
+                        try {
                             var data = self._getMethodParams(methodInfo, args);
                             self._invokeMethod(methodInfo, data, callback);
-                        } catch (ex) {
+                        }
+                        catch (ex) {
                             if (!RIAPP.global._checkIsDummy(ex)) {
-                                self._onError(ex, self);
+                                self.handleError(ex, self);
                                 callback({ result: null, error: ex });
                             }
                         }
-
                         return deferred.promise();
                     };
                 };
@@ -16076,34 +15970,34 @@ var RIAPP;
                             val = [val];
                         }
                         value = null;
-
                         //byte arrays are optimized for serialization
                         if (pinfo.dataType == 10 /* Binary */ && utils.check.isArray(val)) {
                             value = JSON.stringify(val);
-                        } else if (utils.check.isArray(val)) {
+                        }
+                        else if (utils.check.isArray(val)) {
                             var arr = new Array(val.length);
                             for (var k = 0; k < val.length; k += 1) {
                                 //first convert all values to string
                                 arr[k] = valueUtils.stringifyValue(val[k], pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
                             }
                             value = JSON.stringify(arr);
-                        } else
+                        }
+                        else
                             value = valueUtils.stringifyValue(val, pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
-
                         data.paramInfo.parameters.push({ name: pinfo.name, value: value });
                     }
-
                     return data;
                 };
                 DbContext.prototype._invokeMethod = function (methodInfo, data, callback) {
                     var self = this, operType = 2 /* INVOKE */, postData, invokeUrl;
                     var fn_onComplete = function (res) {
-                        try  {
+                        try {
                             if (!res)
                                 throw new Error(utils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'operation result is undefined'));
                             __checkError(res.error, operType);
                             callback({ result: res.result, error: null });
-                        } catch (ex) {
+                        }
+                        catch (ex) {
                             if (RIAPP.global._checkIsDummy(ex)) {
                                 return;
                             }
@@ -16111,9 +16005,8 @@ var RIAPP;
                             callback({ result: null, error: ex });
                         }
                     };
-
                     this.isBusy = true;
-                    try  {
+                    try {
                         postData = JSON.stringify(data);
                         invokeUrl = this._getUrl(DATA_SVC_METH.Invoke);
                         utils.performAjaxCall(invokeUrl, postData, true, function (res) {
@@ -16123,7 +16016,8 @@ var RIAPP;
                             fn_onComplete({ result: null, error: er });
                             self.isBusy = false;
                         }, null);
-                    } catch (ex) {
+                    }
+                    catch (ex) {
                         if (RIAPP.global._checkIsDummy(ex)) {
                             RIAPP.global._throwDummy(ex);
                         }
@@ -16134,10 +16028,11 @@ var RIAPP;
                     }
                 };
                 DbContext.prototype._loadFromCache = function (query, isPageChanged) {
-                    var operType = 1 /* LOAD */, dbSet = query._dbSet, methRes;
-                    try  {
+                    var operType = 1 /* LOAD */, dbSet = query.dbSet, methRes;
+                    try {
                         methRes = dbSet._fillFromCache({ isPageChanged: isPageChanged, fn_beforeFillEnd: null });
-                    } catch (ex) {
+                    }
+                    catch (ex) {
                         if (RIAPP.global._checkIsDummy(ex)) {
                             RIAPP.global._throwDummy(ex);
                         }
@@ -16157,7 +16052,7 @@ var RIAPP;
                 };
                 DbContext.prototype._onLoaded = function (res, isPageChanged) {
                     var self = this, operType = 1 /* LOAD */, dbSetName, dbSet, loadRes;
-                    try  {
+                    try {
                         if (!res)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'null result'));
                         dbSetName = res.dbSetName;
@@ -16172,7 +16067,8 @@ var RIAPP;
                                 self._loadIncluded(res);
                             }
                         });
-                    } catch (ex) {
+                    }
+                    catch (ex) {
                         if (RIAPP.global._checkIsDummy(ex)) {
                             RIAPP.global._throwDummy(ex);
                         }
@@ -16183,10 +16079,11 @@ var RIAPP;
                 };
                 DbContext.prototype._dataSaved = function (res) {
                     var self = this, submitted = [], notvalid = [];
-                    try  {
-                        try  {
+                    try {
+                        try {
                             __checkError(res.error, 0 /* SUBMIT */);
-                        } catch (ex) {
+                        }
+                        catch (ex) {
                             res.dbSets.forEach(function (jsDB) {
                                 var eSet = self._dbSets.getDbSet(jsDB.dbSetName);
                                 jsDB.rows.forEach(function (row) {
@@ -16203,11 +16100,11 @@ var RIAPP;
                             });
                             throw new SubmitError(ex, submitted, notvalid);
                         }
-
                         res.dbSets.forEach(function (jsDB) {
                             self._dbSets.getDbSet(jsDB.dbSetName)._commitChanges(jsDB.rows);
                         });
-                    } catch (ex) {
+                    }
+                    catch (ex) {
                         if (RIAPP.global._checkIsDummy(ex)) {
                             RIAPP.global._throwDummy(ex);
                         }
@@ -16222,7 +16119,6 @@ var RIAPP;
                         var changes = eSet._getChanges();
                         if (changes.length === 0)
                             return;
-
                         //it needs to apply updates in parent-child relationship order on the server
                         //and provides child to parent map of the keys for the new entities
                         var trackAssoc = eSet._getTrackAssocInfo();
@@ -16239,81 +16135,10 @@ var RIAPP;
                     loadUrl = loadUrl + [action, ''].join('/');
                     return loadUrl;
                 };
-                DbContext.prototype._onItemRefreshed = function (res, item) {
-                    var operType = 3 /* REFRESH */;
-                    try  {
-                        __checkError(res.error, operType);
-                        if (!res.rowInfo) {
-                            item._dbSet.removeItem(item);
-                            item.destroy();
-                            throw new Error(RIAPP.ERRS.ERR_ITEM_DELETED_BY_ANOTHER_USER);
-                        } else
-                            item._refreshValues(res.rowInfo, 2 /* MergeIntoCurrent */);
-                    } catch (ex) {
-                        if (RIAPP.global._checkIsDummy(ex)) {
-                            RIAPP.global._throwDummy(ex);
-                        }
-                        this._onDataOperError(ex, operType);
-                        RIAPP.global._throwDummy(ex);
-                    }
-                };
-                DbContext.prototype._refreshItem = function (item) {
-                    var deferred = utils.createDeferred(), callback = function (isOk) {
-                        if (isOk) {
-                            deferred.resolve(item);
-                        } else {
-                            deferred.reject();
-                        }
-                    };
-                    var url = this._getUrl(DATA_SVC_METH.Refresh), dbSet = item._dbSet;
-                    var self = this;
-                    this.waitForNotSubmiting(function () {
-                        dbSet.waitForNotLoading(function () {
-                            var args, postData, operType = 3 /* REFRESH */;
-                            var fn_onEnd = function () {
-                                self.isBusy = false;
-                                dbSet.isLoading = false;
-                                item._isRefreshing = false;
-                            }, fn_onErr = function (ex) {
-                                fn_onEnd();
-                                self._onDataOperError(ex, operType);
-                            }, fn_onOK = function (res) {
-                                self._onItemRefreshed(res, item);
-                                fn_onEnd();
-                            };
-
-                            item._isRefreshing = true;
-                            self.isBusy = true;
-                            dbSet.isLoading = true;
-                            try  {
-                                var request = { dbSetName: item._dbSetName, rowInfo: item._getRowInfo(), error: null };
-                                item._checkCanRefresh();
-                                postData = JSON.stringify(request);
-                                utils.performAjaxCall(url, postData, true, function (res) {
-                                    try  {
-                                        fn_onOK(JSON.parse(res));
-                                        callback(true);
-                                    } catch (ex) {
-                                        fn_onErr(ex);
-                                        callback(false);
-                                    }
-                                }, function (er) {
-                                    fn_onEnd();
-                                    self._onDataOperError(er, operType);
-                                    callback(false);
-                                }, null);
-                            } catch (ex) {
-                                fn_onErr(ex);
-                                callback(false);
-                            }
-                        }, [], true, null);
-                    }, [], null);
-                    return deferred.promise();
-                };
-                DbContext.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                DbContext.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return RIAPP.global._onError(error, source);
+                        return RIAPP.global.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -16325,7 +16150,7 @@ var RIAPP;
                         er = ex;
                     else
                         er = new DataOperationError(ex, oper);
-                    return this._onError(er, this);
+                    return this.handleError(er, this);
                 };
                 DbContext.prototype._onSubmitError = function (error) {
                     var args = { error: error, isHandled: false };
@@ -16333,318 +16158,6 @@ var RIAPP;
                     if (!args.isHandled) {
                         this.rejectChanges();
                         this._onDataOperError(error, 0 /* SUBMIT */);
-                    }
-                };
-                DbContext.prototype._beforeLoad = function (query, oldQuery, dbSet) {
-                    if (query && oldQuery !== query) {
-                        dbSet._query = query;
-                        dbSet.pageIndex = 0;
-                    }
-                    if (!!oldQuery && oldQuery !== query) {
-                        oldQuery.destroy();
-                    }
-
-                    if (query.pageSize !== dbSet.pageSize) {
-                        dbSet._ignorePageChanged = true;
-                        try  {
-                            dbSet.pageIndex = 0;
-                            dbSet.pageSize = query.pageSize;
-                        } finally {
-                            dbSet._ignorePageChanged = false;
-                        }
-                    }
-
-                    if (query.pageIndex !== dbSet.pageIndex) {
-                        dbSet._ignorePageChanged = true;
-                        try  {
-                            dbSet.pageIndex = query.pageIndex;
-                        } finally {
-                            dbSet._ignorePageChanged = false;
-                        }
-                    }
-
-                    if (!query.isCacheValid) {
-                        query._clearCache();
-                    }
-                };
-                DbContext.prototype._load = function (query, isPageChanged) {
-                    if (!query) {
-                        throw new Error(RIAPP.ERRS.ERR_DB_LOAD_NO_QUERY);
-                    }
-                    var self = this, deferred = utils.createDeferred();
-                    var fn_onComplete = function (isOk, res) {
-                        if (isOk) {
-                            deferred.resolve(res);
-                        } else {
-                            deferred.reject();
-                        }
-                    };
-
-                    var loadPageCount = query.loadPageCount, pageIndex = query.pageIndex, isPagingEnabled = query.isPagingEnabled, dbSetName = query.dbSetName, dbSet = this.getDbSet(dbSetName);
-
-                    //this wait is asynchronous
-                    this.waitForNotSubmiting(function () {
-                        dbSet.waitForNotLoading(function () {
-                            var oldQuery = dbSet.query;
-                            var loadUrl = self._getUrl(DATA_SVC_METH.LoadData), requestInfo, postData, operType = 1 /* LOAD */, fn_onEnd = function () {
-                                dbSet.isLoading = false;
-                                self.isBusy = false;
-                            }, fn_onOK = function (res) {
-                                fn_onEnd();
-                                fn_onComplete(true, res);
-                            }, fn_onErr = function (ex) {
-                                fn_onEnd();
-                                self._onDataOperError(ex, operType);
-                                fn_onComplete(false, null);
-                            }, fn_onErr2 = function (ex) {
-                                fn_onEnd();
-                                self._onDataOperError(ex, operType);
-                                fn_onComplete(false, null);
-                            }, loadRes, range, pageCount = 1;
-
-                            dbSet.isLoading = true;
-                            self.isBusy = true;
-                            try  {
-                                //restore pageIndex
-                                query.pageIndex = pageIndex;
-                                self._beforeLoad(query, oldQuery, dbSet);
-
-                                if (loadPageCount > 1 && isPagingEnabled) {
-                                    if (query._isPageCached(pageIndex)) {
-                                        loadRes = self._loadFromCache(query, isPageChanged);
-                                        fn_onOK(loadRes);
-                                        return;
-                                    } else {
-                                        range = query._getCache().getNextRange(pageIndex);
-                                        pageIndex = range.start;
-                                        pageCount = range.cnt;
-                                    }
-                                }
-
-                                requestInfo = {
-                                    dbSetName: dbSetName,
-                                    pageIndex: pageIndex,
-                                    pageSize: query.pageSize,
-                                    pageCount: pageCount,
-                                    isIncludeTotalCount: query.isIncludeTotalCount,
-                                    filterInfo: query.filterInfo,
-                                    sortInfo: query.sortInfo,
-                                    paramInfo: self._getMethodParams(query._queryInfo, query.params).paramInfo,
-                                    queryName: query.queryName
-                                };
-
-                                postData = JSON.stringify(requestInfo);
-                                utils.performAjaxCall(loadUrl, postData, true, function (res) {
-                                    var parts = [], matches, header_size;
-                                    try  {
-                                        matches = res.match(HEAD_MARK_RX);
-                                        if (!!matches) {
-                                            header_size = parseInt(matches[1]);
-
-                                            //the first item is getDataResult
-                                            parts.push(res.substr(matches[0].length, header_size));
-
-                                            //the rest is rows
-                                            parts.push(res.substr(matches[0].length + header_size));
-                                        } else {
-                                            //all the response is serialized as a getDataResult
-                                            parts.push(res);
-                                        }
-
-                                        var data = parts.map(function (txt) {
-                                            return JSON.parse(txt);
-                                        });
-                                        parts = null;
-
-                                        //let the UI some time, then do the rest of the work
-                                        setTimeout(function () {
-                                            //first item is GetDataResult
-                                            var allRows, getDataResult = data[0];
-                                            var hasIncluded = !!getDataResult.included && getDataResult.included.length > 0;
-                                            try  {
-                                                //rows was loaded separately from GetDataResult
-                                                if (data.length > 1) {
-                                                    allRows = data[1];
-                                                    if (allRows && allRows.length > 0) {
-                                                        if (hasIncluded) {
-                                                            getDataResult.included.forEach(function (subset) {
-                                                                subset.rows = allRows.splice(0, subset.rowCount);
-                                                                if (subset.rowCount != subset.rows.length) {
-                                                                    throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'subset.rowCount == subset.rows.length'));
-                                                                }
-                                                            });
-                                                        }
-                                                        getDataResult.rows = allRows;
-                                                        if (getDataResult.rowCount != getDataResult.rows.length) {
-                                                            throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'getDataResult.rowCount == getDataResult.rows.length'));
-                                                        }
-                                                    }
-                                                }
-                                                loadRes = self._onLoaded(getDataResult, isPageChanged);
-                                                fn_onOK(loadRes);
-                                            } catch (ex) {
-                                                fn_onErr(ex);
-                                            }
-                                        }, 0);
-                                    } catch (ex) {
-                                        fn_onErr(ex);
-                                    }
-                                }, function (er) {
-                                    fn_onErr2(er);
-                                }, null);
-                            } catch (ex) {
-                                fn_onErr(ex);
-                            }
-                        }, [], true, isPageChanged ? 'paging' : null);
-                    }, [], isPageChanged ? 'paging' : null);
-
-                    return deferred.promise();
-                };
-                DbContext.prototype.getDbSet = function (name) {
-                    return this._dbSets.getDbSet(name);
-                };
-                DbContext.prototype.getAssociation = function (name) {
-                    var name2 = "get" + name;
-                    var f = this._assoc[name2];
-                    if (!f)
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_ASSOC_NAME_INVALID, name));
-                    return f();
-                };
-
-                //returns promise
-                DbContext.prototype.submitChanges = function () {
-                    //don't submit when the submit is already in the queue
-                    if (!!this._pendingSubmit) {
-                        //return a promise for the already enqueued submit
-                        return this._pendingSubmit.deferred.promise();
-                    }
-
-                    var self = this, submitState = { deferred: utils.createDeferred() };
-                    var callback = function (isOk) {
-                        if (isOk) {
-                            submitState.deferred.resolve();
-                        } else {
-                            submitState.deferred.reject();
-                        }
-                    };
-
-                    this._pendingSubmit = submitState;
-
-                    //this wait is asynchronous
-                    this.waitForNotBusy(function () {
-                        var url, postData, operType = 0 /* SUBMIT */, changeSet;
-                        var fn_onEnd = function () {
-                            self.isBusy = false;
-                            self.isSubmiting = false;
-                        }, fn_onErr = function (ex) {
-                            fn_onEnd();
-                            self._onDataOperError(ex, operType);
-                            callback(false);
-                        };
-
-                        try  {
-                            self.isBusy = true;
-                            self.isSubmiting = true;
-                            self._pendingSubmit = null; //allow to post new submit
-                            url = self._getUrl(DATA_SVC_METH.Submit);
-                            changeSet = self._getChanges();
-
-                            if (changeSet.dbSets.length === 0) {
-                                fn_onEnd();
-                                callback(true);
-                                return;
-                            }
-                        } catch (ex) {
-                            fn_onErr(ex);
-                            return;
-                        }
-
-                        try  {
-                            postData = JSON.stringify(changeSet);
-                            utils.performAjaxCall(url, postData, true, function (res) {
-                                try  {
-                                    self._dataSaved(JSON.parse(res));
-                                    fn_onEnd();
-                                    callback(true);
-                                } catch (ex) {
-                                    fn_onErr(ex);
-                                }
-                            }, function (er) {
-                                fn_onEnd();
-                                self._onSubmitError(er);
-                                callback(false);
-                            }, null);
-                        } catch (ex) {
-                            fn_onErr(ex);
-                        }
-                    }, []);
-                    return submitState.deferred.promise();
-                };
-
-                //returns promise
-                DbContext.prototype.load = function (query) {
-                    return this._load(query, false);
-                };
-                DbContext.prototype.acceptChanges = function () {
-                    this._dbSets.arrDbSets.forEach(function (eSet) {
-                        eSet.acceptChanges();
-                    });
-                };
-                DbContext.prototype.rejectChanges = function () {
-                    this._dbSets.arrDbSets.forEach(function (eSet) {
-                        eSet.rejectChanges();
-                    });
-                };
-                DbContext.prototype.initialize = function (options) {
-                    if (this._isInitialized)
-                        return;
-                    var self = this, opts = utils.extend(false, {
-                        serviceUrl: null,
-                        permissions: null
-                    }, options), loadUrl, operType;
-
-                    try  {
-                        if (!utils.check.isString(opts.serviceUrl)) {
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, "serviceUrl", opts.serviceUrl));
-                        }
-                        this._serviceUrl = opts.serviceUrl;
-                        this._initDbSets();
-
-                        if (!!opts.permissions) {
-                            self._updatePermissions(opts.permissions);
-                            self._isInitialized = true;
-                            self.raisePropertyChanged('isInitialized');
-                            return;
-                        }
-
-                        //initialize by obtaining metadata from the data service by ajax call
-                        loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = 4 /* INIT */;
-                    } catch (ex) {
-                        this._onError(ex, this);
-                        RIAPP.global._throwDummy(ex);
-                    }
-
-                    try  {
-                        this.isBusy = true;
-                        utils.performAjaxGet(loadUrl).done(function (permissions) {
-                            try  {
-                                self._updatePermissions(JSON.parse(permissions));
-                                self.isBusy = false;
-                                self._isInitialized = true;
-                                self.raisePropertyChanged('isInitialized');
-                            } catch (ex) {
-                                self.isBusy = false;
-                                self._onDataOperError(ex, operType);
-                                RIAPP.global._throwDummy(ex);
-                            }
-                        }).fail(function (er) {
-                            self.isBusy = false;
-                            self._onDataOperError(er, operType);
-                        });
-                    } catch (ex) {
-                        this.isBusy = false;
-                        this._onDataOperError(ex, operType);
-                        RIAPP.global._throwDummy(ex);
                     }
                 };
                 DbContext.prototype.waitForNotBusy = function (callback, callbackArgs) {
@@ -16679,6 +16192,379 @@ var RIAPP;
                         },
                         action: callback,
                         actionArgs: callbackArgs
+                    });
+                };
+                DbContext.prototype.initialize = function (options) {
+                    if (this._isInitialized)
+                        return;
+                    var self = this, opts = utils.extend(false, {
+                        serviceUrl: null,
+                        permissions: null
+                    }, options), loadUrl, operType;
+                    try {
+                        if (!utils.check.isString(opts.serviceUrl)) {
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, "serviceUrl", opts.serviceUrl));
+                        }
+                        this._serviceUrl = opts.serviceUrl;
+                        this._initDbSets();
+                        if (!!opts.permissions) {
+                            self._updatePermissions(opts.permissions);
+                            self._isInitialized = true;
+                            self.raisePropertyChanged('isInitialized');
+                            return;
+                        }
+                        //initialize by obtaining metadata from the data service by ajax call
+                        loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = 4 /* INIT */;
+                    }
+                    catch (ex) {
+                        this.handleError(ex, this);
+                        RIAPP.global._throwDummy(ex);
+                    }
+                    try {
+                        this.isBusy = true;
+                        utils.performAjaxGet(loadUrl).done(function (permissions) {
+                            try {
+                                self._updatePermissions(JSON.parse(permissions));
+                                self.isBusy = false;
+                                self._isInitialized = true;
+                                self.raisePropertyChanged('isInitialized');
+                            }
+                            catch (ex) {
+                                self.isBusy = false;
+                                self._onDataOperError(ex, operType);
+                                RIAPP.global._throwDummy(ex);
+                            }
+                        }).fail(function (er) {
+                            self.isBusy = false;
+                            self._onDataOperError(er, operType);
+                        });
+                    }
+                    catch (ex) {
+                        this.isBusy = false;
+                        this._onDataOperError(ex, operType);
+                        RIAPP.global._throwDummy(ex);
+                    }
+                };
+                DbContext.prototype.addOnSubmitError = function (fn, namespace) {
+                    this.addHandler('submit_error', fn, namespace);
+                };
+                DbContext.prototype.removeOnSubmitError = function (namespace) {
+                    this.removeHandler('submit_error', namespace);
+                };
+                DbContext.prototype._onItemRefreshed = function (res, item) {
+                    var operType = 3 /* REFRESH */;
+                    try {
+                        __checkError(res.error, operType);
+                        if (!res.rowInfo) {
+                            item._dbSet.removeItem(item);
+                            item.destroy();
+                            throw new Error(RIAPP.ERRS.ERR_ITEM_DELETED_BY_ANOTHER_USER);
+                        }
+                        else
+                            item._refreshValues(res.rowInfo, 2 /* MergeIntoCurrent */);
+                    }
+                    catch (ex) {
+                        if (RIAPP.global._checkIsDummy(ex)) {
+                            RIAPP.global._throwDummy(ex);
+                        }
+                        this._onDataOperError(ex, operType);
+                        RIAPP.global._throwDummy(ex);
+                    }
+                };
+                DbContext.prototype._refreshItem = function (item) {
+                    var deferred = utils.createDeferred(), callback = function (isOk) {
+                        if (isOk) {
+                            deferred.resolve(item);
+                        }
+                        else {
+                            deferred.reject();
+                        }
+                    };
+                    var url = this._getUrl(DATA_SVC_METH.Refresh), dbSet = item._dbSet;
+                    var self = this;
+                    this.waitForNotSubmiting(function () {
+                        dbSet.waitForNotLoading(function () {
+                            var args, postData, operType = 3 /* REFRESH */;
+                            var fn_onEnd = function () {
+                                self.isBusy = false;
+                                dbSet.isLoading = false;
+                                item._isRefreshing = false;
+                            }, fn_onErr = function (ex) {
+                                fn_onEnd();
+                                self._onDataOperError(ex, operType);
+                            }, fn_onOK = function (res) {
+                                self._onItemRefreshed(res, item);
+                                fn_onEnd();
+                            };
+                            item._isRefreshing = true;
+                            self.isBusy = true;
+                            dbSet.isLoading = true;
+                            try {
+                                var request = { dbSetName: item._dbSetName, rowInfo: item._getRowInfo(), error: null };
+                                item._checkCanRefresh();
+                                postData = JSON.stringify(request);
+                                utils.performAjaxCall(url, postData, true, function (res) {
+                                    try {
+                                        fn_onOK(JSON.parse(res));
+                                        callback(true);
+                                    }
+                                    catch (ex) {
+                                        fn_onErr(ex);
+                                        callback(false);
+                                    }
+                                }, function (er) {
+                                    fn_onEnd();
+                                    self._onDataOperError(er, operType);
+                                    callback(false);
+                                }, null);
+                            }
+                            catch (ex) {
+                                fn_onErr(ex);
+                                callback(false);
+                            }
+                        }, [], true, null);
+                    }, [], null);
+                    return deferred.promise();
+                };
+                DbContext.prototype._getQueryInfo = function (name) {
+                    return this._queryInf[name];
+                };
+                DbContext.prototype._onDbSetHasChangesChanged = function (eSet) {
+                    var old = this._hasChanges, test;
+                    this._hasChanges = false;
+                    if (eSet.hasChanges) {
+                        this._hasChanges = true;
+                    }
+                    else {
+                        for (var i = 0, len = this._dbSets.arrDbSets.length; i < len; i += 1) {
+                            test = this._dbSets.arrDbSets[i];
+                            if (test.hasChanges) {
+                                this._hasChanges = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (this._hasChanges !== old) {
+                        this.raisePropertyChanged('hasChanges');
+                    }
+                };
+                DbContext.prototype._load = function (query, isPageChanged) {
+                    if (!query) {
+                        throw new Error(RIAPP.ERRS.ERR_DB_LOAD_NO_QUERY);
+                    }
+                    var self = this, deferred = utils.createDeferred();
+                    var fn_onComplete = function (isOk, res) {
+                        if (isOk) {
+                            deferred.resolve(res);
+                        }
+                        else {
+                            deferred.reject();
+                        }
+                    };
+                    var loadPageCount = query.loadPageCount, pageIndex = query.pageIndex, isPagingEnabled = query.isPagingEnabled, dbSetName = query.dbSetName, dbSet = this.getDbSet(dbSetName);
+                    //this wait is asynchronous
+                    this.waitForNotSubmiting(function () {
+                        dbSet.waitForNotLoading(function () {
+                            var oldQuery = dbSet.query;
+                            var loadUrl = self._getUrl(DATA_SVC_METH.LoadData), requestInfo, postData, operType = 1 /* LOAD */, fn_onEnd = function () {
+                                dbSet.isLoading = false;
+                                self.isBusy = false;
+                            }, fn_onOK = function (res) {
+                                fn_onEnd();
+                                fn_onComplete(true, res);
+                            }, fn_onErr = function (ex) {
+                                fn_onEnd();
+                                self._onDataOperError(ex, operType);
+                                fn_onComplete(false, null);
+                            }, fn_onErr2 = function (ex) {
+                                fn_onEnd();
+                                self._onDataOperError(ex, operType);
+                                fn_onComplete(false, null);
+                            }, loadRes, range, pageCount = 1;
+                            dbSet.isLoading = true;
+                            self.isBusy = true;
+                            try {
+                                //restore pageIndex
+                                query.pageIndex = pageIndex;
+                                dbSet._beforeLoad(query, oldQuery);
+                                if (loadPageCount > 1 && isPagingEnabled) {
+                                    if (query._isPageCached(pageIndex)) {
+                                        loadRes = self._loadFromCache(query, isPageChanged);
+                                        fn_onOK(loadRes);
+                                        return;
+                                    }
+                                    else {
+                                        range = query._getCache().getNextRange(pageIndex);
+                                        pageIndex = range.start;
+                                        pageCount = range.cnt;
+                                    }
+                                }
+                                requestInfo = {
+                                    dbSetName: dbSetName,
+                                    pageIndex: pageIndex,
+                                    pageSize: query.pageSize,
+                                    pageCount: pageCount,
+                                    isIncludeTotalCount: query.isIncludeTotalCount,
+                                    filterInfo: query.filterInfo,
+                                    sortInfo: query.sortInfo,
+                                    paramInfo: self._getMethodParams(query._queryInfo, query.params).paramInfo,
+                                    queryName: query.queryName
+                                };
+                                postData = JSON.stringify(requestInfo);
+                                utils.performAjaxCall(loadUrl, postData, true, function (res) {
+                                    var parts = [], matches, header_size;
+                                    try {
+                                        matches = res.match(HEAD_MARK_RX);
+                                        if (!!matches) {
+                                            header_size = parseInt(matches[1]);
+                                            //the first item is getDataResult
+                                            parts.push(res.substr(matches[0].length, header_size));
+                                            //the rest is rows
+                                            parts.push(res.substr(matches[0].length + header_size));
+                                        }
+                                        else {
+                                            //all the response is serialized as a getDataResult
+                                            parts.push(res);
+                                        }
+                                        var data = parts.map(function (txt) {
+                                            return JSON.parse(txt);
+                                        });
+                                        parts = null;
+                                        //let the UI some time, then do the rest of the work
+                                        setTimeout(function () {
+                                            //first item is GetDataResult
+                                            var allRows, getDataResult = data[0];
+                                            var hasIncluded = !!getDataResult.included && getDataResult.included.length > 0;
+                                            try {
+                                                //rows was loaded separately from GetDataResult
+                                                if (data.length > 1) {
+                                                    allRows = data[1];
+                                                    if (allRows && allRows.length > 0) {
+                                                        if (hasIncluded) {
+                                                            getDataResult.included.forEach(function (subset) {
+                                                                subset.rows = allRows.splice(0, subset.rowCount);
+                                                                if (subset.rowCount != subset.rows.length) {
+                                                                    throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'subset.rowCount == subset.rows.length'));
+                                                                }
+                                                            });
+                                                        }
+                                                        getDataResult.rows = allRows;
+                                                        if (getDataResult.rowCount != getDataResult.rows.length) {
+                                                            throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'getDataResult.rowCount == getDataResult.rows.length'));
+                                                        }
+                                                    }
+                                                }
+                                                loadRes = self._onLoaded(getDataResult, isPageChanged);
+                                                fn_onOK(loadRes);
+                                            }
+                                            catch (ex) {
+                                                fn_onErr(ex);
+                                            }
+                                        }, 0);
+                                    }
+                                    catch (ex) {
+                                        fn_onErr(ex);
+                                    }
+                                }, function (er) {
+                                    fn_onErr2(er);
+                                }, null);
+                            }
+                            catch (ex) {
+                                fn_onErr(ex);
+                            }
+                        }, [], true, isPageChanged ? 'paging' : null);
+                    }, [], isPageChanged ? 'paging' : null);
+                    return deferred.promise();
+                };
+                DbContext.prototype.getDbSet = function (name) {
+                    return this._dbSets.getDbSet(name);
+                };
+                DbContext.prototype.getAssociation = function (name) {
+                    var name2 = "get" + name;
+                    var f = this._assoc[name2];
+                    if (!f)
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_ASSOC_NAME_INVALID, name));
+                    return f();
+                };
+                //returns promise
+                DbContext.prototype.submitChanges = function () {
+                    //don't submit when the submit is already in the queue
+                    if (!!this._pendingSubmit) {
+                        //return a promise for the already enqueued submit
+                        return this._pendingSubmit.deferred.promise();
+                    }
+                    var self = this, submitState = { deferred: utils.createDeferred() };
+                    var callback = function (isOk) {
+                        if (isOk) {
+                            submitState.deferred.resolve();
+                        }
+                        else {
+                            submitState.deferred.reject();
+                        }
+                    };
+                    this._pendingSubmit = submitState;
+                    //this wait is asynchronous
+                    this.waitForNotBusy(function () {
+                        var url, postData, operType = 0 /* SUBMIT */, changeSet;
+                        var fn_onEnd = function () {
+                            self.isBusy = false;
+                            self.isSubmiting = false;
+                        }, fn_onErr = function (ex) {
+                            fn_onEnd();
+                            self._onDataOperError(ex, operType);
+                            callback(false);
+                        };
+                        try {
+                            self.isBusy = true;
+                            self.isSubmiting = true;
+                            self._pendingSubmit = null; //allow to post new submit
+                            url = self._getUrl(DATA_SVC_METH.Submit);
+                            changeSet = self._getChanges();
+                            if (changeSet.dbSets.length === 0) {
+                                fn_onEnd();
+                                callback(true);
+                                return;
+                            }
+                        }
+                        catch (ex) {
+                            fn_onErr(ex);
+                            return;
+                        }
+                        try {
+                            postData = JSON.stringify(changeSet);
+                            utils.performAjaxCall(url, postData, true, function (res) {
+                                try {
+                                    self._dataSaved(JSON.parse(res));
+                                    fn_onEnd();
+                                    callback(true);
+                                }
+                                catch (ex) {
+                                    fn_onErr(ex);
+                                }
+                            }, function (er) {
+                                fn_onEnd();
+                                self._onSubmitError(er);
+                                callback(false);
+                            }, null);
+                        }
+                        catch (ex) {
+                            fn_onErr(ex);
+                        }
+                    }, []);
+                    return submitState.deferred.promise();
+                };
+                //returns promise
+                DbContext.prototype.load = function (query) {
+                    return this._load(query, false);
+                };
+                DbContext.prototype.acceptChanges = function () {
+                    this._dbSets.arrDbSets.forEach(function (eSet) {
+                        eSet.acceptChanges();
+                    });
+                };
+                DbContext.prototype.rejectChanges = function () {
+                    this._dbSets.arrDbSets.forEach(function (eSet) {
+                        eSet.rejectChanges();
                     });
                 };
                 DbContext.prototype.destroy = function () {
@@ -16727,7 +16613,8 @@ var RIAPP;
                             this._isBusy -= 1;
                             if (this._isBusy < 0)
                                 this._isBusy = 0;
-                        } else {
+                        }
+                        else {
                             this._isBusy += 1;
                         }
                         cur = this._isBusy > 0;
@@ -16782,7 +16669,6 @@ var RIAPP;
                 return DbContext;
             })(RIAPP.BaseObject);
             _db.DbContext = DbContext;
-
             var Association = (function (_super) {
                 __extends(Association, _super);
                 function Association(options) {
@@ -16800,7 +16686,6 @@ var RIAPP;
                         name: this._objId,
                         onDeleteAction: 0 /* NoAction */
                     }, options);
-
                     this._name = opts.name;
                     this._dbContext = opts.dbContext;
                     this._onDeleteAction = opts.onDeleteAction;
@@ -16829,10 +16714,10 @@ var RIAPP;
                     self._notifyParentChanged(changed1);
                     self._notifyChildrenChanged(changed2);
                 }
-                Association.prototype._onError = function (error, source) {
-                    var isHandled = _super.prototype._onError.call(this, error, source);
+                Association.prototype.handleError = function (error, source) {
+                    var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return RIAPP.global._onError(error, source);
+                        return RIAPP.global.handleError(error, source);
                     }
                     return isHandled;
                 };
@@ -16840,34 +16725,34 @@ var RIAPP;
                     var self = this, ds = this._parentDS;
                     if (!ds)
                         return;
-                    ds._addHandler('coll_changed', function (sender, args) {
+                    ds.addHandler('coll_changed', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onParentCollChanged(args);
                     }, self._objId, true);
-                    ds._addHandler('fill', function (sender, args) {
+                    ds.addHandler('fill', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onParentFill(args);
                     }, self._objId, true);
-                    ds._addHandler('begin_edit', function (sender, args) {
+                    ds.addHandler('begin_edit', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onParentEdit(args.item, true, undefined);
                     }, self._objId, true);
-                    ds._addHandler('end_edit', function (sender, args) {
+                    ds.addHandler('end_edit', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onParentEdit(args.item, false, args.isCanceled);
                     }, self._objId, true);
-                    ds._addHandler('item_deleting', function (sender, args) {
+                    ds.addHandler('item_deleting', function (sender, args) {
                     }, self._objId, true);
-                    ds._addHandler('status_changed', function (sender, args) {
+                    ds.addHandler('status_changed', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onParentStatusChanged(args.item, args.oldChangeType);
                     }, self._objId, true);
-                    ds._addHandler('commit_changes', function (sender, args) {
+                    ds.addHandler('commit_changes', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onParentCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
@@ -16877,32 +16762,32 @@ var RIAPP;
                     var self = this, ds = this._childDS;
                     if (!ds)
                         return;
-                    ds._addHandler('coll_changed', function (sender, args) {
+                    ds.addHandler('coll_changed', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onChildCollChanged(args);
                     }, self._objId, true);
-                    ds._addHandler('fill', function (sender, args) {
+                    ds.addHandler('fill', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onChildFill(args);
                     }, self._objId, true);
-                    ds._addHandler('begin_edit', function (sender, args) {
+                    ds.addHandler('begin_edit', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onChildEdit(args.item, true, undefined);
                     }, self._objId, true);
-                    ds._addHandler('end_edit', function (sender, args) {
+                    ds.addHandler('end_edit', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onChildEdit(args.item, false, args.isCanceled);
                     }, self._objId, true);
-                    ds._addHandler('status_changed', function (sender, args) {
+                    ds.addHandler('status_changed', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onChildStatusChanged(args.item, args.oldChangeType);
                     }, self._objId, true);
-                    ds._addHandler('commit_changes', function (sender, args) {
+                    ds.addHandler('commit_changes', function (sender, args) {
                         if (ds !== sender)
                             return;
                         self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
@@ -16929,7 +16814,7 @@ var RIAPP;
                             changed = Object.keys(changedKeys);
                             break;
                         case 3 /* REMAP_KEY */:
-                             {
+                            {
                                 if (!!args.old_key) {
                                     item = this._parentMap[args.old_key];
                                     if (!!item) {
@@ -16950,10 +16835,12 @@ var RIAPP;
                         self._isParentFilling = false;
                         if (args.resetUI) {
                             changed = self.refreshParentMap();
-                        } else
+                        }
+                        else
                             changed = self._mapParentItems(args.newItems);
                         self._notifyParentChanged(changed);
-                    } else {
+                    }
+                    else {
                         self._isParentFilling = true;
                     }
                 };
@@ -16961,7 +16848,8 @@ var RIAPP;
                     var self = this;
                     if (isBegin) {
                         self._storeParentFKey(item);
-                    } else {
+                    }
+                    else {
                         if (!isCanceled)
                             self._checkParentFKey(item);
                         else
@@ -16976,15 +16864,16 @@ var RIAPP;
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
                             return;
-                        } else if (!isRejected && changeType === 3 /* DELETED */) {
+                        }
+                        else if (!isRejected && changeType === 3 /* DELETED */) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
                             return;
                         }
-
                         self._storeParentFKey(item);
-                    } else {
+                    }
+                    else {
                         self._checkParentFKey(item);
                     }
                 };
@@ -17004,7 +16893,6 @@ var RIAPP;
                             self._notifyChildrenChanged([savedKey]);
                             self._notifyParentChanged([savedKey]);
                         }
-
                         if (!!fkey) {
                             self._mapParentItems([item]);
                             self._notifyChildrenChanged([fkey]);
@@ -17031,13 +16919,14 @@ var RIAPP;
                                     var isEdit = child.isEditing;
                                     if (!isEdit)
                                         child.beginEdit();
-                                    try  {
+                                    try {
                                         self._childFldInfos.forEach(function (f) {
                                             child[f.fieldName] = null;
                                         });
                                         if (!isEdit)
                                             child.endEdit();
-                                    } finally {
+                                    }
+                                    finally {
                                         if (!isEdit)
                                             child.cancelEdit();
                                     }
@@ -17070,7 +16959,7 @@ var RIAPP;
                             changed = Object.keys(changedKeys);
                             break;
                         case 3 /* REMAP_KEY */:
-                             {
+                            {
                                 if (!!args.old_key) {
                                     item = items[0];
                                     if (!!item) {
@@ -17114,7 +17003,6 @@ var RIAPP;
                                 res = res | 2;
                             self._changed[key] = res;
                         });
-
                         if (!this._changedTimeout) {
                             this._changedTimeout = setTimeout(function () {
                                 if (self._isDestroyCalled)
@@ -17142,10 +17030,12 @@ var RIAPP;
                         self._isChildFilling = false;
                         if (args.resetUI) {
                             changed = self.refreshChildMap();
-                        } else
+                        }
+                        else
                             changed = self._mapChildren(args.newItems);
                         self._notifyChildrenChanged(changed);
-                    } else {
+                    }
+                    else {
                         self._isChildFilling = true;
                     }
                 };
@@ -17153,7 +17043,8 @@ var RIAPP;
                     var self = this;
                     if (isBegin) {
                         self._storeChildFKey(item);
-                    } else {
+                    }
+                    else {
                         if (!isCanceled)
                             self._checkChildFKey(item);
                         else {
@@ -17169,15 +17060,16 @@ var RIAPP;
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
                             return;
-                        } else if (!isRejected && changeType === 3 /* DELETED */) {
+                        }
+                        else if (!isRejected && changeType === 3 /* DELETED */) {
                             fkey = self._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
                             return;
                         }
-
                         self._storeChildFKey(item);
-                    } else {
+                    }
+                    else {
                         self._checkChildFKey(item);
                     }
                 };
@@ -17355,11 +17247,9 @@ var RIAPP;
                             return parentKey;
                         }
                     }
-
                     //if keys are permanent (stored to the server), then return normal foreign keys
                     return this._getItemKey(this._childFldInfos, this._childDS, item);
                 };
-
                 //get all childrens for parent item
                 Association.prototype.getChildItems = function (item) {
                     if (!item)
@@ -17369,7 +17259,6 @@ var RIAPP;
                         return [];
                     return arr;
                 };
-
                 //get the parent for child item
                 Association.prototype.getParentItem = function (item) {
                     if (!item)
@@ -17466,7 +17355,6 @@ var RIAPP;
                 return Association;
             })(RIAPP.BaseObject);
             _db.Association = Association;
-
             var DataView = (function (_super) {
                 __extends(DataView, _super);
                 function DataView(options) {
@@ -17477,7 +17365,6 @@ var RIAPP;
                         fn_sort: null,
                         fn_itemsProvider: null
                     }, options);
-
                     if (!opts.dataSource || !(opts.dataSource instanceof collMod.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_DATASRC_INVALID);
                     if (!opts.fn_filter || !utils.check.isFunction(opts.fn_filter))
@@ -17545,7 +17432,8 @@ var RIAPP;
                     }
                     if (!!this._fn_itemsProvider) {
                         items = this._fn_itemsProvider(ds);
-                    } else
+                    }
+                    else
                         items = ds.items;
                     if (!!this._fn_filter) {
                         items = items.filter(this._fn_filter);
@@ -17565,14 +17453,14 @@ var RIAPP;
                     }, data);
                     var self = this, items, newItems = [], positions = [], fetchedItems = [];
                     this._onFillStart({ isBegin: true, rowCount: data.items.length, time: new Date(), isPageChanged: data.isPageChanged });
-                    try  {
+                    try {
                         if (!!data.clear)
                             this._clear(data.isPageChanged);
                         if (this.isPagingEnabled && !data.isAppend) {
                             items = this._filterForPaging(data.items);
-                        } else
+                        }
+                        else
                             items = data.items;
-
                         items.forEach(function (item) {
                             var oldItem = self._itemsByKey[item._key];
                             if (!oldItem) {
@@ -17581,19 +17469,25 @@ var RIAPP;
                                 positions.push(self._items.length - 1);
                                 self._items.push(item);
                                 fetchedItems.push(item);
-                            } else {
+                            }
+                            else {
                                 fetchedItems.push(oldItem);
                             }
                         });
-
                         if (newItems.length > 0) {
                             this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
-                    } finally {
+                    }
+                    finally {
                         this._onFillEnd({
-                            isBegin: false, rowCount: fetchedItems.length, time: new Date(), resetUI: !!data.clear,
-                            fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged
+                            isBegin: false,
+                            rowCount: fetchedItems.length,
+                            time: new Date(),
+                            resetUI: !!data.clear,
+                            fetchedItems: fetchedItems,
+                            newItems: newItems,
+                            isPageChanged: data.isPageChanged
                         });
                     }
                     if (!!data.clear)
@@ -17628,7 +17522,7 @@ var RIAPP;
                             });
                             break;
                         case 3 /* REMAP_KEY */:
-                             {
+                            {
                                 item = self._itemsByKey[args.old_key];
                                 if (!!item) {
                                     delete self._itemsByKey[args.old_key];
@@ -17653,7 +17547,8 @@ var RIAPP;
                             }
                             self.appendItems(items);
                         }
-                    } else {
+                    }
+                    else {
                         this._isDSFilling = true;
                     }
                 };
@@ -17661,14 +17556,14 @@ var RIAPP;
                     var self = this, item = args.item, key = args.key, oldChangeType = args.oldChangeType, isOk, canFilter = !!self._fn_filter;
                     if (!!self._itemsByKey[key]) {
                         self._onItemStatusChanged(item, oldChangeType);
-
                         if (canFilter) {
                             isOk = self._fn_filter(item);
                             if (!isOk) {
                                 self.removeItem(item);
                             }
                         }
-                    } else {
+                    }
+                    else {
                         if (canFilter) {
                             isOk = self._fn_filter(item);
                             if (isOk) {
@@ -17709,7 +17604,8 @@ var RIAPP;
                                 if (!isOk)
                                     self.removeItem(item);
                             }
-                        } else {
+                        }
+                        else {
                             if (!args.isCanceled && canFilter) {
                                 isOk = self._fn_filter(item);
                                 if (isOk) {
@@ -17730,7 +17626,6 @@ var RIAPP;
                             return;
                         self._onDSStatusChanged(args);
                     }, self._objId);
-
                     ds.addHandler('item_deleting', function (sender, args) {
                         if (ds !== sender)
                             return;
@@ -17764,25 +17659,26 @@ var RIAPP;
                         return;
                     ds.removeNSHandlers(self._objId);
                 };
-                DataView.prototype._getStrValue = function (val, fieldInfo) {
-                    return this._dataSource._getStrValue(val, fieldInfo);
-                };
                 DataView.prototype._onCurrentChanging = function (newCurrent) {
                     var ds = this._dataSource;
-                    try  {
-                        if (!!ds._EditingItem && newCurrent !== ds._EditingItem)
+                    try {
+                        if (!!ds._getEditingItem() && newCurrent !== ds._getEditingItem())
                             ds.endEdit();
-                    } catch (ex) {
-                        ds.cancelEdit();
-                        RIAPP.global.reThrow(ex, this._onError(ex, this));
                     }
+                    catch (ex) {
+                        ds.cancelEdit();
+                        RIAPP.global.reThrow(ex, this.handleError(ex, this));
+                    }
+                };
+                DataView.prototype._onPageChanged = function () {
+                    this._refresh(true);
+                };
+                DataView.prototype._getStrValue = function (val, fieldInfo) {
+                    return this._dataSource._getStrValue(val, fieldInfo);
                 };
                 DataView.prototype._getErrors = function (item) {
                     var ds = this._dataSource;
                     return ds._getErrors(item);
-                };
-                DataView.prototype._onPageChanged = function () {
-                    this._refresh(true);
                 };
                 DataView.prototype.getItemsWithErrors = function () {
                     var ds = this._dataSource;
@@ -17796,9 +17692,10 @@ var RIAPP;
                 DataView.prototype.addNew = function () {
                     var item;
                     this._isAddingNew = true;
-                    try  {
+                    try {
                         item = this._dataSource.addNew();
-                    } finally {
+                    }
+                    finally {
                         this._isAddingNew = false;
                     }
                     return item;
@@ -17818,7 +17715,6 @@ var RIAPP;
                     this.totalCount = this.totalCount - 1;
                     this._onRemoved(item, oldPos);
                     var test = this.getItemByPos(oldPos), curPos = this._currentPos;
-
                     //if detached item was current item
                     if (curPos === oldPos) {
                         if (!test) {
@@ -17826,7 +17722,6 @@ var RIAPP;
                         }
                         this._onCurrentChanged();
                     }
-
                     if (curPos > oldPos) {
                         this._currentPos = curPos - 1;
                         this._onCurrentChanged();
@@ -17848,18 +17743,18 @@ var RIAPP;
                                 res = mult;
                             else
                                 res = 0;
-
                             if (res !== 0)
                                 return res;
                         }
                         return res;
                     };
-                    try  {
+                    try {
                         this.fn_sort = fn_sort;
                         deffered.resolve();
-                    } catch (ex) {
+                    }
+                    catch (ex) {
                         deffered.reject(ex);
-                        this._onError(ex, this);
+                        this.handleError(ex, this);
                         RIAPP.global._throwDummy(ex);
                     }
                     return deffered.promise();
@@ -17953,7 +17848,6 @@ var RIAPP;
                 return DataView;
             })(collMod.BaseCollection);
             _db.DataView = DataView;
-
             var ChildDataView = (function (_super) {
                 __extends(ChildDataView, _super);
                 function ChildDataView(options) {
@@ -17966,7 +17860,6 @@ var RIAPP;
                         fn_sort: null,
                         fn_itemsProvider: null
                     }, options);
-
                     var self = this, assoc = this._association, save_fn_filter = options.fn_filter;
                     opts.fn_filter = function (item) {
                         if (!self._parentItem)
@@ -17987,16 +17880,16 @@ var RIAPP;
                     _super.call(this, opts);
                 }
                 ChildDataView.prototype._refresh = function (isPageChanged) {
-                    var self = this, ds = this._dataSource;
+                    var self = this, ds = this.dataSource;
                     if (!ds) {
                         return;
                     }
                     var items = self._association.getChildItems(self._parentItem);
-                    if (!!self._fn_filter) {
-                        items = items.filter(self._fn_filter);
+                    if (!!self.fn_filter) {
+                        items = items.filter(self.fn_filter);
                     }
-                    if (!!self._fn_sort) {
-                        items = items.sort(self._fn_sort);
+                    if (!!self.fn_sort) {
+                        items = items.sort(self.fn_sort);
                     }
                     self._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
                     self._onViewRefreshed({});
@@ -18049,7 +17942,6 @@ var RIAPP;
                 return ChildDataView;
             })(DataView);
             _db.ChildDataView = ChildDataView;
-
             var TDbSet = (function (_super) {
                 __extends(TDbSet, _super);
                 function TDbSet() {
@@ -18074,7 +17966,6 @@ var RIAPP;
                 return TChildDataView;
             })(ChildDataView);
             _db.TChildDataView = TChildDataView;
-
             var BaseComplexProperty = (function (_super) {
                 __extends(BaseComplexProperty, _super);
                 function BaseComplexProperty(name) {
@@ -18135,7 +18026,6 @@ var RIAPP;
                 return BaseComplexProperty;
             })(RIAPP.BaseObject);
             _db.BaseComplexProperty = BaseComplexProperty;
-
             var RootComplexProperty = (function (_super) {
                 __extends(RootComplexProperty, _super);
                 function RootComplexProperty(name, owner) {
@@ -18166,7 +18056,6 @@ var RIAPP;
                 return RootComplexProperty;
             })(BaseComplexProperty);
             _db.RootComplexProperty = RootComplexProperty;
-
             var ChildComplexProperty = (function (_super) {
                 __extends(ChildComplexProperty, _super);
                 function ChildComplexProperty(name, parent) {
@@ -18210,13 +18099,10 @@ var RIAPP;
                 return ChildComplexProperty;
             })(BaseComplexProperty);
             _db.ChildComplexProperty = ChildComplexProperty;
-
-            //MUST NOTIFY THE GLOBAL
+            //MUST NOTIFY THE GLOBAL 
             RIAPP.global.onModuleLoaded('db', db);
-        })(MOD.db || (MOD.db = {}));
-        var db = MOD.db;
-    })(RIAPP.MOD || (RIAPP.MOD = {}));
-    var MOD = RIAPP.MOD;
+        })(db = MOD.db || (MOD.db = {}));
+    })(MOD = RIAPP.MOD || (RIAPP.MOD = {}));
 })(RIAPP || (RIAPP = {}));
 /// <reference path="..\thirdparty\jquery.d.ts" />
 /// <reference path="..\thirdparty\moment.d.ts" />
@@ -18252,16 +18138,12 @@ var RIAPP;
     var constsMOD = RIAPP.MOD.consts;
     var utilsMOD = RIAPP.MOD.utils;
     var bindMOD = RIAPP.MOD.binding;
-
     var contentMOD = RIAPP.MOD.baseContent;
     var formMOD = RIAPP.MOD.dataform;
-
     //ALL CORE MODULES are LOADED, INITIALIZE THE Global
     RIAPP.global._initialize();
-
     //local variable for optimization
     var utils = RIAPP.global.utils, parser = RIAPP.global.parser;
-
     var Application = (function (_super) {
         __extends(Application, _super);
         function Application(options) {
@@ -18279,7 +18161,6 @@ var RIAPP;
                 throw new Error(utils.format(RIAPP.ERRS.ERR_APP_NAME_NOT_UNIQUE, app_name));
             this._app_name = app_name;
             this._objId = 'app:' + utils.getNewID();
-
             //lifetime object to store references to the bindings and element views created by this application
             this._objLifeTime = null;
             this._ELV_STORE_KEY = constsMOD.DATA_ATTR.EL_VIEW_KEY + Application._newInstanceNum;
@@ -18287,17 +18168,13 @@ var RIAPP;
             this._contentFactory = null;
             this._contentFactories = [];
             this._objMaps = [];
-
             //registered exported types
             this._exports = {};
-
             //loaded  moodules
             this._modules = {};
-
             //each Element view created by application stored in this hash map
             //it keeps them alive until they are destroyed
             this._elViewStore = {};
-
             //used to create sequential keys to store new element views
             this._nextElViewStoreKey = 0;
             this._userCode = {};
@@ -18325,7 +18202,6 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-
         Application.prototype._getEventNames = function () {
             var base_events = _super.prototype._getEventNames.call(this);
             return ['startup'].concat(base_events);
@@ -18336,7 +18212,7 @@ var RIAPP;
                 utils.forEachProp(objMap, function (name) {
                     var obj = objMap[name];
                     if (obj instanceof RIAPP.BaseObject) {
-                        if (!obj._isDestroyed) {
+                        if (!obj.getIsDestroyed()) {
                             obj.removeNSHandlers(self.uniqueID);
                         }
                     }
@@ -18386,73 +18262,23 @@ var RIAPP;
             }
             return { name: view_name, options: vw_options };
         };
-        Application.prototype._onError = function (error, source) {
+        Application.prototype.handleError = function (error, source) {
             if (RIAPP.global._checkIsDummy(error)) {
                 return true;
             }
-            var isHandled = _super.prototype._onError.call(this, error, source);
+            var isHandled = _super.prototype.handleError.call(this, error, source);
             if (!isHandled) {
-                return RIAPP.global._onError(error, source);
+                return RIAPP.global.handleError(error, source);
             }
             return isHandled;
         };
-
-        //get element view associated with HTML element(if any)
-        Application.prototype._getElView = function (el) {
-            var storeID = el.getAttribute(this._ELV_STORE_KEY);
-            if (!!storeID) {
-                return this._elViewStore[storeID];
+        Application.prototype._getElViewType = function (name) {
+            var name2 = 'elvws.' + name, global = this.global;
+            var res = global._getObject(this, name2);
+            if (!res) {
+                res = global._getObject(global, name2);
             }
-            return null;
-        };
-        Application.prototype._createElementView = function (el, view_info) {
-            var viewType, elView;
-
-            if (!!view_info.name) {
-                viewType = this._getElViewType(view_info.name);
-                if (!viewType)
-                    throw new Error(utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_REGISTERED, view_info.name));
-            }
-            if (!viewType) {
-                var nodeNm = el.nodeName.toLowerCase(), type;
-                switch (nodeNm) {
-                    case 'input':
-                         {
-                            type = el.getAttribute('type');
-                            nodeNm = nodeNm + ':' + type;
-                            viewType = this._getElViewType(nodeNm);
-                        }
-                        break;
-                    default:
-                        viewType = this._getElViewType(nodeNm);
-                }
-
-                if (!viewType)
-                    throw new Error(utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_CREATED, nodeNm));
-            }
-
-            elView = new viewType(this, el, view_info.options || {});
-            return elView;
-        };
-
-        //store association of HTML element with its element View
-        Application.prototype._setElView = function (el, view) {
-            var storeID = el.getAttribute(this._ELV_STORE_KEY);
-            if (!storeID) {
-                if (!view)
-                    return;
-                storeID = 's_' + this._nextElViewStoreKey;
-                this._nextElViewStoreKey += 1;
-                el.setAttribute(this._ELV_STORE_KEY, storeID);
-                this._elViewStore[storeID] = view;
-            } else {
-                if (!view) {
-                    el.removeAttribute(this._ELV_STORE_KEY);
-                    delete this._elViewStore[storeID];
-                } else {
-                    this._elViewStore[storeID] = view;
-                }
-            }
+            return res;
         };
         Application.prototype._checkBindableElement = function (el) {
             var val, allAttrs = el.attributes, attr, res = { el: el, dataView: null, dataForm: null, expressions: [] };
@@ -18486,16 +18312,68 @@ var RIAPP;
                 if (!!res)
                     result.push(res);
             });
-
             return result;
+        };
+        //get element view associated with HTML element(if any)
+        Application.prototype._getElView = function (el) {
+            var storeID = el.getAttribute(this._ELV_STORE_KEY);
+            if (!!storeID) {
+                return this._elViewStore[storeID];
+            }
+            return null;
+        };
+        Application.prototype._createElementView = function (el, view_info) {
+            var viewType, elView;
+            if (!!view_info.name) {
+                viewType = this._getElViewType(view_info.name);
+                if (!viewType)
+                    throw new Error(utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_REGISTERED, view_info.name));
+            }
+            if (!viewType) {
+                var nodeNm = el.nodeName.toLowerCase(), type;
+                switch (nodeNm) {
+                    case 'input':
+                        {
+                            type = el.getAttribute('type');
+                            nodeNm = nodeNm + ':' + type;
+                            viewType = this._getElViewType(nodeNm);
+                        }
+                        break;
+                    default:
+                        viewType = this._getElViewType(nodeNm);
+                }
+                if (!viewType)
+                    throw new Error(utils.format(RIAPP.ERRS.ERR_ELVIEW_NOT_CREATED, nodeNm));
+            }
+            elView = new viewType(this, el, view_info.options || {});
+            return elView;
+        };
+        //store association of HTML element with its element View
+        Application.prototype._setElView = function (el, view) {
+            var storeID = el.getAttribute(this._ELV_STORE_KEY);
+            if (!storeID) {
+                if (!view)
+                    return;
+                storeID = 's_' + this._nextElViewStoreKey;
+                this._nextElViewStoreKey += 1;
+                el.setAttribute(this._ELV_STORE_KEY, storeID);
+                this._elViewStore[storeID] = view;
+            }
+            else {
+                if (!view) {
+                    el.removeAttribute(this._ELV_STORE_KEY);
+                    delete this._elViewStore[storeID];
+                }
+                else {
+                    this._elViewStore[storeID] = view;
+                }
+            }
         };
         Application.prototype._bindTemplateElements = function (templateEl) {
             var self = this, global = self.global, selectedElem = this._getAllBindableHtmlElements(templateEl), lftm = new utilsMOD.LifeTimeScope(), checks = utils.check, DATA_FORM = constsMOD.DATA_ATTR.DATA_FORM, res = self._checkBindableElement(templateEl);
-
             if (res) {
                 selectedElem.push(res);
             }
-
             //mark all dataforms for easier checking that the element is a dataform
             selectedElem.forEach(function (bindElem) {
                 if (!bindElem.dataForm && checks.isDataForm(bindElem.el)) {
@@ -18503,38 +18381,33 @@ var RIAPP;
                     bindElem.dataForm = 'yes';
                 }
             });
-
             //select all dataforms inside the scope
             var forms = selectedElem.filter(function (bindElem, index, arr) {
                 return !!bindElem.dataForm;
             }).map(function (bindElem, index, arr) {
                 return bindElem.el;
             });
-
             if (!!res && !!res.dataForm) {
                 //in this case process only this element
                 selectedElem = [res];
             }
-
             selectedElem.forEach(function (bindElem) {
                 var op, binding, bind_attr, temp_opts, elView, j, len;
-
                 //if element inside a dataform return
                 if (checks.isInNestedForm(templateEl, forms, bindElem.el)) {
                     return;
                 }
-
-                try  {
+                try {
                     //first create element view
                     elView = self.getElementView(bindElem.el);
-                } catch (ex) {
-                    global.reThrow(ex, self._onError(ex, self));
+                }
+                catch (ex) {
+                    global.reThrow(ex, self.handleError(ex, self));
                 }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
                     elView.form.isInsideTemplate = true;
                 }
-
                 //then create databinding if element has data-bind attribute
                 bind_attr = bindElem.expressions.join('');
                 if (!!bind_attr) {
@@ -18547,14 +18420,11 @@ var RIAPP;
                     }
                 }
             });
-
             return lftm;
         };
         Application.prototype._bindElements = function (scope, dctx, isDataFormBind, isInsideTemplate) {
             var self = this, global = self.global, checks = utils.check, DATA_FORM = constsMOD.DATA_ATTR.DATA_FORM;
-
             scope = scope || global.document;
-
             //select all elements with binding attributes
             var selectedElem = this._getAllBindableHtmlElements(scope);
             var lftm = new utilsMOD.LifeTimeScope();
@@ -18567,34 +18437,30 @@ var RIAPP;
                     }
                 });
             }
-
             //select all dataforms inside the scope
             var forms = selectedElem.filter(function (bindElem, index, arr) {
                 return !!bindElem.dataForm;
             }).map(function (bindElem, index, arr) {
                 return bindElem.el;
             });
-
             selectedElem.forEach(function (bindElem) {
                 var bind_attr = "", temp_opts, bind_op, elView, i, len;
-
                 //return if the current element is inside a dataform
                 if (checks.isInNestedForm(scope, forms, bindElem.el)) {
                     return;
                 }
-
-                try  {
+                try {
                     //first create element view
                     elView = self.getElementView(bindElem.el);
-                } catch (ex) {
-                    global.reThrow(ex, self._onError(ex, self));
+                }
+                catch (ex) {
+                    global.reThrow(ex, self.handleError(ex, self));
                 }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
                     elView.form.isInsideTemplate = isInsideTemplate;
                 }
                 bind_attr = bindElem.expressions.join('');
-
                 //if it has data-bind attribute then proceed to create binding
                 if (!!bind_attr) {
                     temp_opts = parser.parseOptions(bind_attr);
@@ -18606,18 +18472,9 @@ var RIAPP;
             });
             return lftm;
         };
-
         //used to select contentType based on content options
         Application.prototype._getContentType = function (options) {
             return this.contentFactory.getContentType(options);
-        };
-        Application.prototype._getElViewType = function (name) {
-            var name2 = 'elvws.' + name, global = this.global;
-            var res = global._getObject(this, name2);
-            if (!res) {
-                res = global._getObject(global, name2);
-            }
-            return res;
         };
         Application.prototype.addOnStartUp = function (fn, namespace) {
             this.addHandler('startup', fn, namespace);
@@ -18632,14 +18489,13 @@ var RIAPP;
             var name2 = 'elvws.' + name, global = this.global;
             if (!global._getObject(this, name2)) {
                 global._registerObject(this, name2, type);
-            } else
+            }
+            else
                 throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         };
-
         //checks if the element already has created and attached ElView, if no then it creates and attaches ElView for the element
         Application.prototype.getElementView = function (el) {
             var elView = this._getElView(el);
-
             //check if element view is already created for this element
             if (!!elView)
                 return elView;
@@ -18656,7 +18512,8 @@ var RIAPP;
             var name2 = 'converters.' + name;
             if (!RIAPP.global._getObject(this, name2)) {
                 RIAPP.global._registerObject(this, name2, obj);
-            } else
+            }
+            else
                 throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         };
         Application.prototype.getConverter = function (name) {
@@ -18681,7 +18538,6 @@ var RIAPP;
             }
             return res;
         };
-
         //registers instances of objects, so they can be retrieved later anywhere in the application's code
         //very similar to a dependency injection container - you can later obtain the registerd object with the getObject function
         Application.prototype.registerObject = function (name, obj) {
@@ -18701,48 +18557,44 @@ var RIAPP;
             var res = RIAPP.global._getObject(this, name2);
             return res;
         };
-
         //can override this method in derived classes
         Application.prototype.onStartUp = function () {
         };
-
         //set up application - use fn_sandbox callback to setUp handlers on objects, create viewModels and etc.
         Application.prototype.startUp = function (fn_sandbox) {
             var self = this, fn_init = function () {
-                try  {
+                try {
                     self.onStartUp();
                     self.raiseEvent('startup', {});
                     if (!!fn_sandbox)
                         fn_sandbox.apply(self, [self]);
                     self._setUpBindings();
-                } catch (ex) {
-                    RIAPP.global.reThrow(ex, this._onError(ex, this));
+                }
+                catch (ex) {
+                    RIAPP.global.reThrow(ex, this.handleError(ex, this));
                 }
             };
-
-            try  {
+            try {
                 if (!!fn_sandbox && !utils.check.isFunction(fn_sandbox))
                     throw new Error(RIAPP.ERRS.ERR_APP_SETUP_INVALID);
                 RIAPP.global._waitForNotLoading(fn_init, null);
-            } catch (ex) {
-                RIAPP.global.reThrow(ex, self._onError(ex, self));
+            }
+            catch (ex) {
+                RIAPP.global.reThrow(ex, self.handleError(ex, self));
             }
         };
-
         //loads a group of templates from the server
         Application.prototype.loadTemplates = function (url) {
             this.loadTemplatesAsync(function () {
                 return utils.performAjaxGet(url);
             });
         };
-
         //loads a group of templates from the server
         Application.prototype.loadTemplatesAsync = function (fn_loader) {
             RIAPP.global._loadTemplatesAsync(fn_loader, this);
         };
-
         /*
-        fn_loader must load template and return promise which resolves with loaded HTML string
+            fn_loader must load template and return promise which resolves with loaded HTML string
         */
         Application.prototype.registerTemplateLoader = function (name, fn_loader) {
             RIAPP.global._registerTemplateLoader(this.appName + '.' + name, {
@@ -18770,7 +18622,7 @@ var RIAPP;
                 return;
             this._isDestroyCalled = true;
             var self = this;
-            try  {
+            try {
                 self._contentFactories = [];
                 RIAPP.global._unregisterApp(self);
                 self._destroyBindings();
@@ -18782,7 +18634,8 @@ var RIAPP;
                 self._viewModels = {};
                 self._contentFactory = null;
                 self._options = null;
-            } finally {
+            }
+            finally {
                 _super.prototype.destroy.call(this);
             }
         };
@@ -18826,7 +18679,6 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-
         Object.defineProperty(Application.prototype, "modules", {
             //loaded app modules which are mapped by their name
             get: function () {
@@ -18842,7 +18694,6 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-
         Object.defineProperty(Application.prototype, "UC", {
             //Namespace for attaching custom user code (functions and objects)
             get: function () {
@@ -18851,7 +18702,6 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-
         Object.defineProperty(Application.prototype, "VM", {
             //Namespace for attaching application view models
             get: function () {

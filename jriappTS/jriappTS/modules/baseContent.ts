@@ -155,7 +155,7 @@
                             bindingOpts.target = defaultTarget;
                         else {
                             //if no fixed target, then target evaluation starts from this app
-                            bindingOpts.target = parser.resolveBindingSource(app, parser._getPathParts(fixedTarget));
+                            bindingOpts.target = parser.resolveBindingSource(app, parser.getPathParts(fixedTarget));
                         }
                     }
                     else
@@ -174,7 +174,7 @@
                         }
                         else {
                             //source evaluation starts from this app
-                            bindingOpts.source = parser.resolveBindingSource(app, parser._getPathParts(fixedSource));
+                            bindingOpts.source = parser.resolveBindingSource(app, parser.getPathParts(fixedSource));
                         }
                     }
                     else
@@ -185,16 +185,16 @@
             };
 
             export class BindingContent extends RIAPP.BaseObject implements IContent {
-                _parentEl: HTMLElement;
-                _el: HTMLElement;
-                _options: IContentOptions;
-                _isReadOnly: boolean;
-                _isEditing: boolean;
-                _dataContext: any;
-                _lfScope: utilsMOD.LifeTimeScope;
+                protected _parentEl: HTMLElement;
+                protected _el: HTMLElement;
+                protected _options: IContentOptions;
+                protected _isReadOnly: boolean;
+                protected _isEditing: boolean;
+                protected _dataContext: any;
+                protected _lfScope: utilsMOD.LifeTimeScope;
                 //the target of dataBinding
-                _target: elviewMOD.BaseElView;
-                _app: RIAPP.Application;
+                protected _target: elviewMOD.BaseElView;
+                protected _app: RIAPP.Application;
 
                 constructor(app: RIAPP.Application, options: IConstructorContentOptions) {
                     super();
@@ -220,15 +220,15 @@
                     this._init();
                     this.update();
                 }
-                _init() { }
-                _onError(error, source): boolean {
-                    var isHandled = super._onError(error, source);
+                protected _init() { }
+                handleError(error, source): boolean {
+                    var isHandled = super.handleError(error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 }
-                _updateCss() {
+                protected _updateCss() {
                     var displayInfo = this._getDisplayInfo(), $p = global.$(this._parentEl), fieldInfo = this.getFieldInfo();
                     if (this._isEditing && this._canBeEdited()) {
                         if (!!displayInfo) {
@@ -257,7 +257,7 @@
                         }
                     }
                 }
-                _canBeEdited() {
+                protected _canBeEdited() {
                     if (this._isReadOnly)
                         return false;
                     var finf = this.getFieldInfo();
@@ -266,7 +266,7 @@
                     var editable = !!this._dataContext && !!this._dataContext.beginEdit;
                     return editable && !finf.isReadOnly && finf.fieldType != collMOD.FIELD_TYPE.Calculated;
                 }
-                _createTargetElement(): elviewMOD.BaseElView {
+                protected _createTargetElement(): elviewMOD.BaseElView {
                     var el: HTMLElement, doc = global.document, info: { name: string; options: any; } = { name: null, options: null };
                     if (this._isEditing && this._canBeEdited()) {
                         el = doc.createElement('input');
@@ -280,7 +280,7 @@
                     this._el = el;
                     return this._getElementView(this._el, info);
                 }
-                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, target: RIAPP.BaseObject, dataContext:any, targetPath:string) {
+                protected _getBindingOption(bindingInfo: bindMOD.IBindingInfo, target: RIAPP.BaseObject, dataContext:any, targetPath:string) {
                     var options = getBindingOptions(this.app,bindingInfo, target, dataContext);
                     if (this.isEditing && this._canBeEdited())
                         options.mode = bindMOD.BINDING_MODE.TwoWay;
@@ -290,7 +290,7 @@
                         options.targetPath = targetPath;
                     return options;
                 }
-                _getBindings(): bindMOD.Binding[] {
+                protected _getBindings(): bindMOD.Binding[] {
                     if (!this._lfScope)
                         return [];
                     var arr = this._lfScope.getObjs(), res = [];
@@ -300,7 +300,7 @@
                     }
                     return res;
                 }
-                _updateBindingSource() {
+                protected _updateBindingSource() {
                     var i: number, len: number, binding: bindMOD.Binding, bindings = this._getBindings();
                     for (i = 0, len = bindings.length; i < len; i += 1) {
                         binding = bindings[i];
@@ -308,7 +308,7 @@
                             binding.source = this._dataContext;
                     }
                 }
-                _cleanUp() {
+                protected _cleanUp() {
                     if (!!this._lfScope) {
                         this._lfScope.destroy();
                         this._lfScope = null;
@@ -322,13 +322,13 @@
                 getFieldInfo() {
                     return this._options.fieldInfo;
                 }
-                _getBindingInfo() {
+                protected _getBindingInfo() {
                     return this._options.bindingInfo;
                 }
-                _getDisplayInfo() {
+                protected _getDisplayInfo() {
                     return this._options.displayInfo;
                 }
-                _getElementView(el: HTMLElement, view_info: { name: string; options: any; }): elviewMOD.BaseElView {
+                protected _getElementView(el: HTMLElement, view_info: { name: string; options: any; }): elviewMOD.BaseElView {
                     var elView = this.app._getElView(el);
                     if (!!elView)
                         return elView;
@@ -350,7 +350,7 @@
                     }
                     catch (ex)
                     {
-                        global.reThrow(ex, this._onError(ex, this));
+                        global.reThrow(ex, this.handleError(ex, this));
                     }
                 }
                 destroy() {
@@ -424,10 +424,10 @@
                     $p.addClass(css.content);
                     this.update();
                 }
-                _onError(error, source): boolean {
-                    var isHandled = super._onError(error, source);
+                handleError(error, source): boolean {
+                    var isHandled = super.handleError(error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 }
@@ -471,10 +471,10 @@
                             this._parentEl.appendChild(this._template.el);
                         }
                     } catch (ex) {
-                        global.reThrow(ex, this._onError(ex, this));
+                        global.reThrow(ex, this.handleError(ex, this));
                     }
                 }
-                _cleanUp() {
+                protected _cleanUp() {
                     if (!!this._template) {
                         this._template.destroy();
                         this._template = null;
@@ -518,7 +518,7 @@
             }
 
             export class BoolContent extends BindingContent{
-                _init() {
+                protected _init() {
                     this._target = this._createTargetElement();
                     var bindingInfo = this._getBindingInfo();
                     if (!!bindingInfo) {
@@ -529,15 +529,15 @@
                         this._lfScope.addObj(this.app.bind(options));
                     }
                 }
-                _cleanUp() {
+                protected _cleanUp() {
                 }
-                _createCheckBoxView() {
+                protected _createCheckBoxView() {
                     var el = global.document.createElement('input');
                     el.setAttribute('type', 'checkbox');
                     var chbxView = new elviewMOD.CheckBoxElView(this.app, el, {});
                     return chbxView;
                 }
-                _createTargetElement(): elviewMOD.BaseElView {
+                protected _createTargetElement(): elviewMOD.BaseElView {
                     var tgt = this._target;
                     if (!tgt) {
                         tgt = this._createCheckBoxView();
@@ -546,7 +546,7 @@
                     this._parentEl.appendChild(this._el);
                     return tgt;
                 }
-                _updateCss() {
+                protected _updateCss() {
                     super._updateCss();
                     var el = <HTMLInputElement>this._el;
                     if (this._isEditing && this._canBeEdited()) {
@@ -590,12 +590,12 @@
                     super(app, options);
                     this._fn_cleanup = null;
                 }
-                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx:any, targetPath:string) {
+                protected _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx:any, targetPath:string) {
                     var options =super._getBindingOption(bindingInfo, tgt, dctx, targetPath);
                     options.converter = this.app.getConverter('dateConverter');
                     return options;
                 }
-                _createTargetElement(): elviewMOD.BaseElView {
+                protected _createTargetElement(): elviewMOD.BaseElView {
                     var el: HTMLElement, doc = global.document, info: { name: string; options: any; } = { name: null, options: null };
                     if (this._isEditing && this._canBeEdited()) {
                         el = doc.createElement('input');
@@ -616,7 +616,7 @@
             }
 
             export class DateTimeContent extends BindingContent {
-                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx, targetPath: string) {
+                protected _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx, targetPath: string) {
                     var options = super._getBindingOption(bindingInfo, tgt, dctx, targetPath);
                     options.converter = this.app.getConverter('dateTimeConverter');
                     var finf = this.getFieldInfo(), defaults = global.defaults;
@@ -650,7 +650,7 @@
                     }
                     return NumberContent.__allowedKeys;
                 }
-                _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx, targetPath: string) {
+                protected _getBindingOption(bindingInfo: bindMOD.IBindingInfo, tgt: RIAPP.BaseObject, dctx, targetPath: string) {
                     var options = super._getBindingOption(bindingInfo, tgt, dctx, targetPath);
                     var finf = this.getFieldInfo();
                     switch (finf.dataType) {
@@ -675,7 +675,7 @@
                         });
                     }
                 }
-                _previewKeyPress(keyCode:number, value:string) {
+                protected _previewKeyPress(keyCode:number, value:string) {
                     var ch = String.fromCharCode(keyCode), digits = "1234567890", defaults = global.defaults, notAllowedChars = "~@#$%^&*()+=_";
                     if (notAllowedChars.indexOf(ch) > -1)
                         return false;
@@ -717,7 +717,7 @@
                         });
                     }
                 }
-                _previewKeyPress(fieldInfo: collMOD.IFieldInfo, keyCode: number, value: string) {
+                protected _previewKeyPress(fieldInfo: collMOD.IFieldInfo, keyCode: number, value: string) {
                     if (this._allowedKeys.indexOf(keyCode) > -1)
                         return true;
                     return !(fieldInfo.maxLength > 0 && value.length >= fieldInfo.maxLength);
@@ -743,7 +743,7 @@
                     }
                     super(app, options);
                 }
-                _createTargetElement(): elviewMOD.BaseElView {
+                protected _createTargetElement(): elviewMOD.BaseElView {
                     var el: HTMLElement, info: { name: string; options: any; } = { name: null, options: null };
                     if (this._isEditing && this._canBeEdited()) {
                         el = global.document.createElement('textarea');
@@ -767,7 +767,7 @@
                         });
                     }
                 }
-                _previewKeyPress(fieldInfo: collMOD.IFieldInfo, keyCode: number, value: string) {
+                protected _previewKeyPress(fieldInfo: collMOD.IFieldInfo, keyCode: number, value: string) {
                     if (this._allowedKeys.indexOf(keyCode) > -1)
                         return true;
                     return !(fieldInfo.maxLength > 0 && value.length >= fieldInfo.maxLength);
@@ -779,8 +779,8 @@
 
             //base content factory
             export class ContentFactory implements IContentFactory {
-                _app: RIAPP.Application;
-                _nextFactory: IContentFactory;
+                private _app: RIAPP.Application;
+                private _nextFactory: IContentFactory;
 
                 constructor(app: RIAPP.Application, nextFactory?: IContentFactory) {
                     this._app = app;

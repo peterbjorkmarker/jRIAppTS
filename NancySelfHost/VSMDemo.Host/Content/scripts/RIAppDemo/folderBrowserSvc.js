@@ -1,4 +1,4 @@
-﻿/// <reference path="..\jriapp.d.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -7,11 +7,9 @@ var __extends = this.__extends || function (d, b) {
 };
 var RIAPP;
 (function (RIAPP) {
+    var FOLDERBROWSER_SVC;
     (function (FOLDERBROWSER_SVC) {
         'use strict';
-
-        
-
         var FileSystemObject = (function (_super) {
             __extends(FileSystemObject, _super);
             function FileSystemObject(dbSet, row, names) {
@@ -83,7 +81,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             FileSystemObject.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -109,7 +106,6 @@ var RIAPP;
             return FileSystemObject;
         })(RIAPP.MOD.db.Entity);
         FOLDERBROWSER_SVC.FileSystemObject = FileSystemObject;
-
         var FileSystemObjectDb = (function (_super) {
             __extends(FileSystemObjectDb, _super);
             function FileSystemObjectDb(dbContext) {
@@ -135,11 +131,9 @@ var RIAPP;
                 query.params = args;
                 return query;
             };
-
             FileSystemObjectDb.prototype.definefullPathField = function (getFunc) {
                 this._defineCalculatedField('fullPath', getFunc);
             };
-
             Object.defineProperty(FileSystemObjectDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -150,7 +144,6 @@ var RIAPP;
             return FileSystemObjectDb;
         })(RIAPP.MOD.db.DbSet);
         FOLDERBROWSER_SVC.FileSystemObjectDb = FileSystemObjectDb;
-
         var DbSets = (function (_super) {
             __extends(DbSets, _super);
             function DbSets(dbContext) {
@@ -168,7 +161,6 @@ var RIAPP;
             return DbSets;
         })(RIAPP.MOD.db.DbSets);
         FOLDERBROWSER_SVC.DbSets = DbSets;
-
         var DbContext = (function (_super) {
             __extends(DbContext, _super);
             function DbContext() {
@@ -206,7 +198,6 @@ var RIAPP;
             return DbContext;
         })(RIAPP.MOD.db.DbContext);
         FOLDERBROWSER_SVC.DbContext = DbContext;
-    })(RIAPP.FOLDERBROWSER_SVC || (RIAPP.FOLDERBROWSER_SVC = {}));
-    var FOLDERBROWSER_SVC = RIAPP.FOLDERBROWSER_SVC;
+    })(FOLDERBROWSER_SVC = RIAPP.FOLDERBROWSER_SVC || (RIAPP.FOLDERBROWSER_SVC = {}));
 })(RIAPP || (RIAPP = {}));
 //# sourceMappingURL=folderBrowserSvc.js.map

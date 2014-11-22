@@ -1,4 +1,4 @@
-﻿var __extends = this.__extends || function (d, b) {
+var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -7,24 +7,27 @@
 /// <reference path="..\jriapp.d.ts"/>
 var RIAPP;
 (function (RIAPP) {
+    var AUTOCOMPLETE;
     (function (AUTOCOMPLETE) {
         'use strict';
         var constsMOD = RIAPP.MOD.consts;
         var global = RIAPP.global, utils = global.utils;
-
         function addTextQuery(query, fldName, val) {
             var tmp;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 4 /* Contains */, [tmp]);
-                } else if (utils.str.startsWith(val, '%')) {
+                }
+                else if (utils.str.startsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 3 /* EndsWith */, [tmp]);
-                } else if (utils.str.endsWith(val, '%')) {
+                }
+                else if (utils.str.endsWith(val, '%')) {
                     tmp = utils.str.trim(val, '% ');
                     query.where(fldName, 2 /* StartsWith */, [tmp]);
-                } else {
+                }
+                else {
                     tmp = utils.str.trim(val);
                     query.where(fldName, 0 /* Equals */, [tmp]);
                 }
@@ -32,7 +35,6 @@ var RIAPP;
             return query;
         }
         ;
-
         var AutoCompleteElView = (function (_super) {
             __extends(AutoCompleteElView, _super);
             function AutoCompleteElView() {
@@ -40,7 +42,6 @@ var RIAPP;
             }
             AutoCompleteElView.prototype._init = function (options) {
                 var self = this;
-
                 //debugger;
                 _super.prototype._init.call(this, options);
                 this._templateId = options.templateId;
@@ -62,7 +63,6 @@ var RIAPP;
                 this._height = options.height || '300px';
                 this._$dlg = null;
                 var $el = this.$el;
-
                 $el.on('change.' + this._objId, function (e) {
                     e.stopPropagation();
                     self._onTextChange();
@@ -76,7 +76,6 @@ var RIAPP;
                     e.stopPropagation();
                     self._onKeyPress(e.which);
                 });
-
                 this._isOpen = false;
                 this._createGridDataSource();
                 this._template = this._createTemplate();
@@ -154,7 +153,6 @@ var RIAPP;
                     this._loadTimeout = setTimeout(function () {
                         if (self._isDestroyCalled)
                             return;
-
                         if (self._prevText != text) {
                             self._prevText = text;
                             if (!self._isOpen)
@@ -162,7 +160,8 @@ var RIAPP;
                             self.load(text);
                         }
                     }, 500);
-                } else
+                }
+                else
                     self.gridDataSource.clear();
             };
             AutoCompleteElView.prototype._onKeyPress = function (keyCode) {
@@ -197,7 +196,6 @@ var RIAPP;
                 if (this._isOpen)
                     return;
                 var self = this;
-
                 this._$dlg = this.$el.closest(".ui-dialog");
                 var ns = "dialogdrag." + this._objId;
                 this._$dlg.on(ns, null, function (event) {
@@ -206,17 +204,14 @@ var RIAPP;
                     self._updatePosition();
                     return null;
                 });
-
                 this._updatePosition();
                 this._$dropDown.css({ visibility: "visible", display: "none" });
                 this._$dropDown.slideDown('medium');
-
                 if (!!this._lookupGrid) {
                     this._lookupGrid.addHandler('cell_dblclicked', function (s, a) {
                         self._updateSelection();
                         self._hide();
                     }, this._objId);
-
                     global.$(global.document).on('keyup.' + this._objId, function (e) {
                         e.stopPropagation();
                         if (global.currentSelectable === self._lookupGrid)
@@ -232,11 +227,9 @@ var RIAPP;
                     return;
                 global.$(global.document).off('.' + this._objId);
                 this._$dlg.off('.' + this._objId);
-
                 if (!!this._lookupGrid) {
                     this._lookupGrid.removeNSHandlers(this._objId);
                 }
-
                 this._$dropDown.slideUp('medium', function () {
                     if (self._isDestroyCalled)
                         return;
@@ -276,7 +269,6 @@ var RIAPP;
                 this._dataContext = null;
                 _super.prototype.destroy.call(this);
             };
-
             Object.defineProperty(AutoCompleteElView.prototype, "fieldName", {
                 //field name for lookup in dbSet
                 get: function () {
@@ -302,7 +294,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             Object.defineProperty(AutoCompleteElView.prototype, "template", {
                 //template instance of drop down area (which contains datagrid) under textbox
                 get: function () {
@@ -311,7 +302,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             Object.defineProperty(AutoCompleteElView.prototype, "dataContext", {
                 //Entity which is databound to the textbox
                 get: function () {
@@ -326,7 +316,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             Object.defineProperty(AutoCompleteElView.prototype, "gridDataSource", {
                 //dbSet for a datagrid's dataSource (for lookup values)
                 get: function () {
@@ -368,7 +357,6 @@ var RIAPP;
             return AutoCompleteElView;
         })(RIAPP.MOD.baseElView.InputElView);
         AUTOCOMPLETE.AutoCompleteElView = AutoCompleteElView;
-
         //this function is executed when an application which uses this module is created
         function initModule(app) {
             app.registerElView('autocomplete', AutoCompleteElView);
@@ -376,7 +364,6 @@ var RIAPP;
         }
         AUTOCOMPLETE.initModule = initModule;
         ;
-    })(RIAPP.AUTOCOMPLETE || (RIAPP.AUTOCOMPLETE = {}));
-    var AUTOCOMPLETE = RIAPP.AUTOCOMPLETE;
+    })(AUTOCOMPLETE = RIAPP.AUTOCOMPLETE || (RIAPP.AUTOCOMPLETE = {}));
 })(RIAPP || (RIAPP = {}));
 //# sourceMappingURL=autocomplete.js.map

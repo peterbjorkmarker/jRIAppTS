@@ -71,7 +71,7 @@
                     }
                     global._trackSelectable(this);
                 }
-                _getEventNames() {
+                protected _getEventNames() {
                     var base_events = super._getEventNames();
                     return ['item_clicked'].concat(base_events);
                 }
@@ -129,7 +129,7 @@
                 }
                 _onKeyUp(key:number, event: Event) {
                 }
-                _updateCurrent(item: collMOD.CollectionItem, withScroll:boolean) {
+                protected _updateCurrent(item: collMOD.CollectionItem, withScroll:boolean) {
                     var self = this, old = self._currentItem, mappedItem: IMappedItem;
                     if (old !== item) {
                         this._currentItem = item;
@@ -150,7 +150,7 @@
                         this.raisePropertyChanged('currentItem');
                     }
                 }
-                _onDSCurrentChanged() {
+                protected _onDSCurrentChanged() {
                     var ds = this.dataSource, cur = ds.currentItem;
                     if (!cur)
                         this._updateCurrent(null, false);
@@ -158,7 +158,7 @@
                         this._updateCurrent(cur, true);
                     }
                 }
-                _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>) {
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>) {
                     var self = this, items = args.items;
                     switch (args.change_type) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
@@ -188,7 +188,7 @@
                             throw new Error(global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
-                _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>) {
+                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -201,7 +201,7 @@
                         this._isDSFilling = true;
                     }
                 }
-                _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType:number) {
+                protected _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType:number) {
                     var newChangeType =item._changeType;
                     var obj = this._itemMap[item._key];
                     if (!obj)
@@ -213,7 +213,7 @@
                         global.$(obj.div).show();
                     }
                 }
-                _createTemplate(item: collMOD.CollectionItem) {
+                protected _createTemplate(item: collMOD.CollectionItem) {
                     var t = new template.Template({
                         app: this.app,
                         templateID: this.templateID,
@@ -222,7 +222,7 @@
                     });
                     return t;
                 }
-                _appendItems(newItems: collMOD.CollectionItem[]) {
+                protected _appendItems(newItems: collMOD.CollectionItem[]) {
                     if (this._isDestroyCalled)
                         return;
                     var self = this;
@@ -233,7 +233,7 @@
                         self._appendItem(item);
                     });
                 }
-                _appendItem(item: collMOD.CollectionItem) {
+                protected _appendItem(item: collMOD.CollectionItem) {
                     if (!item._key)
                         return;
                     var self = this,
@@ -252,7 +252,7 @@
                     mappedItem.template = self._createTemplate(item);
                     mappedItem.div.appendChild(mappedItem.template.el);
                 }
-                _bindDS() {
+                protected _bindDS() {
                     var self = this, ds = this.dataSource;
                     if (!ds) return;
                     ds.addOnCollChanged(function (sender, args) {
@@ -273,15 +273,15 @@
                     }, self._objId);
                     this._refresh();
                 }
-                _unbindDS() {
+                protected _unbindDS() {
                     var self = this, ds = this.dataSource;
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
-                _createElement(tag:string) {
+                protected _createElement(tag:string) {
                     return global.$(global.document.createElement(tag));
                 }
-                _onItemClicked(div: HTMLElement, item: collMOD.CollectionItem) {
+                protected _onItemClicked(div: HTMLElement, item: collMOD.CollectionItem) {
                     this._updateCurrent(item, false);
                     this.dataSource.currentItem = item;
                     this.raiseEvent('item_clicked', { item: item });
@@ -300,14 +300,14 @@
                     this._options = <any>{};
                     super.destroy();
                 }
-                _clearContent() {
+                protected _clearContent() {
                     var self = this;
                     self._$el.empty();
                     global.utils.forEachProp(self._itemMap, function (key) {
                         self._removeItemByKey(key);
                     });
                 }
-                _removeItemByKey(key:string) {
+                protected _removeItemByKey(key:string) {
                     var self = this, mappedItem = self._itemMap[key];
                     if (!mappedItem)
                         return;
@@ -317,10 +317,10 @@
                     global.$(mappedItem.div).removeData('data');
                     global.$(mappedItem.div).remove();
                 }
-                _removeItem(item: collMOD.CollectionItem) {
+                protected _removeItem(item: collMOD.CollectionItem) {
                     this._removeItemByKey(item._key);
                 }
-                _refresh() {
+                protected _refresh() {
                     var ds = this.dataSource, self = this;
                     this._clearContent();
                     if (!ds)
@@ -395,7 +395,7 @@
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._panel && !this._panel._isDestroyCalled) {
+                    if (!!this._panel && !this._panel.getIsDestroyCalled()) {
                         this._panel.destroy();
                     }
                     this._panel = null;

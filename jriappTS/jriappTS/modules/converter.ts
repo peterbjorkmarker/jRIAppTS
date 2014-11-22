@@ -3,11 +3,6 @@
         export module converter {
             export var NUM_CONV = { None: 0, Integer: 1, Decimal: 2, Float: 3, SmallInt: 4 };
 
-            export interface IConverter {
-                convertToSource(val, param, dataContext): any;
-                convertToTarget(val, param, dataContext): any;
-            }
-
             export class BaseConverter implements IConverter{
                 convertToSource(val, param, dataContext) {
                     return val;

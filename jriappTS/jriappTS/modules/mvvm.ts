@@ -8,10 +8,10 @@
             }
 
             export class Command extends RIAPP.BaseObject implements ICommand {
-                _action: (sender, param) => void;
-                _thisObj: any;
-                _canExecute: (sender, param) => boolean;
-                _objId: string;
+                private _action: (sender, param) => void;
+                private _thisObj: any;
+                private _canExecute: (sender, param) => boolean;
+                private _objId: string;
 
                 constructor(fn_action: (sender, param) => void , thisObj, fn_canExecute: (sender, param) => boolean) {
                     super();
@@ -21,7 +21,7 @@
                     this._canExecute = fn_canExecute;
                     this._objId = 'cmd' + utils.getNewID();
                 }
-                _getEventNames() {
+                protected _getEventNames() {
                     var base_events = super._getEventNames();
                     return ['canExecute_changed'].concat(base_events);
                 }
@@ -59,18 +59,18 @@
             }
 
             export class BaseViewModel extends RIAPP.BaseObject {
-                _objId: string;
-                _app: Application;
+                private _objId: string;
+                protected _app: Application;
 
                 constructor(app: Application) {
                     super();
                     this._app = app;
                     this._objId = 'vm' + global.utils.getNewID();
                 }
-                _onError(error, source):boolean {
-                    var isHandled = super._onError(error, source);
+                handleError(error, source):boolean {
+                    var isHandled = super.handleError(error, source);
                     if (!isHandled) {
-                        return this._app._onError(error, source);
+                        return this._app.handleError(error, source);
                     }
                     return isHandled;
                 }

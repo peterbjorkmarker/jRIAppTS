@@ -8,13 +8,13 @@
                 private _tabsEventCommand: mvvmMOD.ICommand;
                 private _tabOpts: any;
 
-                _init(options) {
+                protected _init(options) {
                     super._init(options);
                     this._tabsEventCommand = null;
                     this._tabOpts = options;
                     this._createTabs();
                 }
-                _createTabs() {
+                protected _createTabs() {
                     var $el = this.$el, self = this, tabOpts = {
                         activate: function (e, tab) {
                             var active = (<any>$el).tabs("option", "active");
@@ -38,7 +38,7 @@
                         self.raisePropertyChanged('tabIndex');
                     }, 100);
                 }
-                _destroyTabs() {
+                protected _destroyTabs() {
                     var $el = this.$el;
                     RIAPP.global.utils.destroyJQueryPlugin($el, 'tabs');
                 }

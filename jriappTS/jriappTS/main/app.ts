@@ -34,7 +34,6 @@ module RIAPP {
     import elviewMOD = MOD.baseElView;
     import contentMOD = RIAPP.MOD.baseContent;
     import formMOD = RIAPP.MOD.dataform;
-    import convertMOD = RIAPP.MOD.converter;
     import templMOD = RIAPP.MOD.template;
 
     export interface IBindableElement {
@@ -71,7 +70,7 @@ module RIAPP {
         private _objId: string;
         private _objMaps: any[];
         private _exports: { [name: string]: any; }; 
-        _options: IAppOptions;
+        protected _options: IAppOptions;
         
         constructor(options?: IAppOptions) {
             super();
@@ -115,7 +114,7 @@ module RIAPP {
             this._contentFactory = nextFactory;
             global._registerApp(this);
         }
-        _getEventNames() {
+        protected _getEventNames() {
             var base_events = super._getEventNames();
             return ['startup'].concat(base_events);
         }
@@ -125,7 +124,7 @@ module RIAPP {
                 utils.forEachProp(objMap, (name) => {
                     var obj = objMap[name];
                     if (obj instanceof BaseObject) {
-                        if (!(<BaseObject>obj)._isDestroyed) {
+                        if (!(<BaseObject>obj).getIsDestroyed()) {
                             (<BaseObject>obj).removeNSHandlers(self.uniqueID);
                         }
                     }
@@ -175,15 +174,58 @@ module RIAPP {
             }
             return { name: view_name, options: vw_options };
         }
-        _onError(error, source):boolean {
+        handleError(error, source):boolean {
             if (global._checkIsDummy(error)) {
                 return true;
             }
-            var isHandled = super._onError(error, source);
+            var isHandled = super.handleError(error, source);
             if (!isHandled) {
-                return global._onError(error, source);
+                return global.handleError(error, source);
             }
             return isHandled;
+        }
+        protected _getElViewType(name: string): elviewMOD.IViewType {
+            var name2 = 'elvws.' + name, global = this.global;
+            var res = global._getObject(this, name2);
+            if (!res) {
+                res = global._getObject(global, name2);
+            }
+            return res;
+        }
+        protected _checkBindableElement(el: HTMLElement): IBindableElement {
+            var val: string, allAttrs = el.attributes, attr: Attr, res: IBindableElement = { el: el, dataView: null, dataForm: null, expressions: [] };
+            for (var i = 0, n = allAttrs.length; i < n; i++) {
+                attr = allAttrs[i];
+                if (utils.str.startsWith(attr.name, constsMOD.DATA_ATTR.DATA_BIND)) {
+                    val = attr.value.trim();
+                    if (!val) {
+                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, attr.name, "empty"));
+                    }
+                    if (val[0] != "{" && val[val.length - 1] != "}")
+                        val = "{" + val + "}";
+                    res.expressions.push(val);
+                }
+                if (utils.str.startsWith(attr.name, constsMOD.DATA_ATTR.DATA_FORM)) {
+                    res.dataForm = attr.value.trim();
+                }
+                if (utils.str.startsWith(attr.name, constsMOD.DATA_ATTR.DATA_VIEW)) {
+                    res.dataView = attr.value.trim();
+                }
+            }
+            if (!!res.dataView || res.expressions.length > 0)
+                return res;
+            else
+                return null;
+        }
+        protected _getAllBindableHtmlElements(scope: { querySelectorAll: (selectors: string) => NodeList; }): IBindableElement[] {
+            var self = this, result: IBindableElement[] = [], selectedElem: HTMLElement[] = ArrayHelper.fromList(scope.querySelectorAll("*"));
+            selectedElem.forEach(function (el) {
+                var res = self._checkBindableElement(el);
+                if (!!res)
+                    result.push(res);
+            });
+
+            return result;
         }
         //get element view associated with HTML element(if any)
         _getElView(el: HTMLElement): elviewMOD.BaseElView {
@@ -243,41 +285,6 @@ module RIAPP {
                 }
             }
         }
-        _checkBindableElement(el: HTMLElement): IBindableElement {
-            var val: string, allAttrs = el.attributes, attr: Attr, res: IBindableElement = { el: el, dataView: null, dataForm: null, expressions: [] };
-            for (var i = 0, n = allAttrs.length; i < n; i++) {
-                attr = allAttrs[i];
-                if (utils.str.startsWith(attr.name, constsMOD.DATA_ATTR.DATA_BIND)) {
-                    val = attr.value.trim();
-                    if (!val) {
-                        throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, attr.name, "empty"));
-                    }
-                    if (val[0] != "{" && val[val.length - 1] != "}")
-                        val = "{" + val + "}";
-                    res.expressions.push(val);
-                }
-                if (utils.str.startsWith(attr.name, constsMOD.DATA_ATTR.DATA_FORM)) {
-                    res.dataForm = attr.value.trim();
-                }
-                if (utils.str.startsWith(attr.name, constsMOD.DATA_ATTR.DATA_VIEW)) {
-                    res.dataView = attr.value.trim();
-                }
-            }
-            if (!!res.dataView || res.expressions.length > 0)
-                return res;
-            else
-                return null;
-        }
-        _getAllBindableHtmlElements(scope: { querySelectorAll: (selectors: string) => NodeList; }): IBindableElement[] {
-            var self= this, result: IBindableElement[] = [], selectedElem: HTMLElement[] = ArrayHelper.fromList(scope.querySelectorAll("*"));
-            selectedElem.forEach(function (el) {
-                var res = self._checkBindableElement(el);
-                if (!!res)
-                    result.push(res);
-            });
-
-            return result;
-        }
         _bindTemplateElements(templateEl: HTMLElement) {
             var self = this, global = self.global,
                 selectedElem: IBindableElement[] = this._getAllBindableHtmlElements(templateEl),
@@ -322,7 +329,7 @@ module RIAPP {
                     elView = self.getElementView(bindElem.el);
                 }
                 catch (ex) {
-                    global.reThrow(ex, self._onError(ex, self));
+                    global.reThrow(ex, self.handleError(ex, self));
                 }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
@@ -383,7 +390,7 @@ module RIAPP {
                     elView = self.getElementView(bindElem.el);
                 }
                 catch (ex) {
-                    global.reThrow(ex, self._onError(ex, self));
+                    global.reThrow(ex, self.handleError(ex, self));
                 }
                 lftm.addObj(elView);
                 if (elView instanceof formMOD.DataFormElView) {
@@ -404,14 +411,6 @@ module RIAPP {
         //used to select contentType based on content options
         _getContentType(options: contentMOD.IContentOptions): contentMOD.IContentType {
             return this.contentFactory.getContentType(options);
-        }
-        _getElViewType(name: string): elviewMOD.IViewType {
-            var name2 = 'elvws.' + name, global = this.global;
-            var res = global._getObject(this, name2);
-            if (!res) {
-                res = global._getObject(global, name2);
-            }
-            return res;
         }
         addOnStartUp(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string) {
             this.addHandler('startup', fn, namespace);
@@ -445,7 +444,7 @@ module RIAPP {
         registerContentFactory(fn: (nextFactory?: contentMOD.IContentFactory) => contentMOD.IContentFactory) {
             this._contentFactories.push(fn);
         }
-        registerConverter(name: string, obj: convertMOD.IConverter) {
+        registerConverter(name: string, obj: RIAPP.IConverter) {
             var name2 = 'converters.' + name;
             if (!global._getObject(this, name2)) {
                 global._registerObject(this, name2, obj);
@@ -453,7 +452,7 @@ module RIAPP {
             else
                 throw new Error(utils.format(RIAPP.ERRS.ERR_OBJ_ALREADY_REGISTERED, name));
         }
-        getConverter(name: string): convertMOD.IConverter {
+        getConverter(name: string): RIAPP.IConverter {
             var name2 = 'converters.' + name;
             var res = global._getObject(this, name2);
             if (!res) {
@@ -509,7 +508,7 @@ module RIAPP {
                 }
                 catch (ex)
                 {
-                    global.reThrow(ex, this._onError(ex, this));
+                    global.reThrow(ex, this.handleError(ex, this));
                 }
             };
 
@@ -519,7 +518,7 @@ module RIAPP {
                 global._waitForNotLoading(fn_init, null);
             }
             catch (ex) {
-                global.reThrow(ex, self._onError(ex, self));
+                global.reThrow(ex, self.handleError(ex, self));
             }
         }
         //loads a group of templates from the server

@@ -1,4 +1,4 @@
-﻿/// <reference path="..\jriapp.d.ts"/>
+/// <reference path="..\jriapp.d.ts"/>
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -7,13 +7,9 @@ var __extends = this.__extends || function (d, b) {
 };
 var RIAPP;
 (function (RIAPP) {
+    var DEMODB;
     (function (DEMODB) {
         'use strict';
-
-        
-
-        
-
         (function (TestEnum) {
             TestEnum[TestEnum["None"] = 0] = "None";
             TestEnum[TestEnum["OK"] = 1] = "OK";
@@ -21,13 +17,8 @@ var RIAPP;
             TestEnum[TestEnum["Loading"] = 3] = "Loading";
         })(DEMODB.TestEnum || (DEMODB.TestEnum = {}));
         var TestEnum = DEMODB.TestEnum;
-
-        
-
-        
-
         /*
-        An enum for testing of conversion C# types to typescript
+            An enum for testing of conversion C# types to typescript
         */
         (function (TestEnum2) {
             TestEnum2[TestEnum2["None"] = 0] = "None";
@@ -36,9 +27,6 @@ var RIAPP;
             TestEnum2[TestEnum2["Three"] = 3] = "Three";
         })(DEMODB.TestEnum2 || (DEMODB.TestEnum2 = {}));
         var TestEnum2 = DEMODB.TestEnum2;
-
-        
-
         //******BEGIN LISTS REGION******
         var TestModelListItem = (function (_super) {
             __extends(TestModelListItem, _super);
@@ -111,7 +99,6 @@ var RIAPP;
             return TestModelListItem;
         })(RIAPP.MOD.collection.ListItem);
         DEMODB.TestModelListItem = TestModelListItem;
-
         var TestDictionary = (function (_super) {
             __extends(TestDictionary, _super);
             function TestDictionary() {
@@ -131,7 +118,6 @@ var RIAPP;
             return TestDictionary;
         })(RIAPP.MOD.collection.BaseDictionary);
         DEMODB.TestDictionary = TestDictionary;
-
         var TestList = (function (_super) {
             __extends(TestList, _super);
             function TestList() {
@@ -148,7 +134,6 @@ var RIAPP;
             return TestList;
         })(RIAPP.MOD.collection.BaseList);
         DEMODB.TestList = TestList;
-
         var KeyValListItem = (function (_super) {
             __extends(KeyValListItem, _super);
             function KeyValListItem(coll, obj) {
@@ -180,7 +165,6 @@ var RIAPP;
             return KeyValListItem;
         })(RIAPP.MOD.collection.ListItem);
         DEMODB.KeyValListItem = KeyValListItem;
-
         var KeyValDictionary = (function (_super) {
             __extends(KeyValDictionary, _super);
             function KeyValDictionary() {
@@ -200,7 +184,6 @@ var RIAPP;
             return KeyValDictionary;
         })(RIAPP.MOD.collection.BaseDictionary);
         DEMODB.KeyValDictionary = KeyValDictionary;
-
         var HistoryItemListItem = (function (_super) {
             __extends(HistoryItemListItem, _super);
             function HistoryItemListItem(coll, obj) {
@@ -232,7 +215,6 @@ var RIAPP;
             return HistoryItemListItem;
         })(RIAPP.MOD.collection.ListItem);
         DEMODB.HistoryItemListItem = HistoryItemListItem;
-
         var HistoryList = (function (_super) {
             __extends(HistoryList, _super);
             function HistoryList() {
@@ -249,7 +231,6 @@ var RIAPP;
             return HistoryList;
         })(RIAPP.MOD.collection.BaseList);
         DEMODB.HistoryList = HistoryList;
-
         //******END LISTS REGION******
         //******BEGIN COMPLEX TYPES REGION*****
         var Customer_ComplexProp1 = (function (_super) {
@@ -277,14 +258,12 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             Customer_ComplexProp1.prototype.toString = function () {
                 return 'Customer_ComplexProp1';
             };
             return Customer_ComplexProp1;
         })(RIAPP.MOD.db.ChildComplexProperty);
         DEMODB.Customer_ComplexProp1 = Customer_ComplexProp1;
-
         var Customer_ComplexProp = (function (_super) {
             __extends(Customer_ComplexProp, _super);
             function Customer_ComplexProp(name, owner) {
@@ -338,16 +317,12 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             Customer_ComplexProp.prototype.toString = function () {
                 return 'Customer_ComplexProp';
             };
             return Customer_ComplexProp;
         })(RIAPP.MOD.db.RootComplexProperty);
         DEMODB.Customer_ComplexProp = Customer_ComplexProp;
-
-        
-
         var Customer = (function (_super) {
             __extends(Customer, _super);
             function Customer(dbSet, row, names) {
@@ -466,7 +441,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             Customer.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -492,7 +466,6 @@ var RIAPP;
             return Customer;
         })(RIAPP.MOD.db.Entity);
         DEMODB.Customer = Customer;
-
         var CustomerDb = (function (_super) {
             __extends(CustomerDb, _super);
             function CustomerDb(dbContext) {
@@ -513,11 +486,9 @@ var RIAPP;
                 query.params = args;
                 return query;
             };
-
             CustomerDb.prototype.defineComplexProp_NameField = function (getFunc) {
                 this._defineCalculatedField('ComplexProp.Name', getFunc);
             };
-
             Object.defineProperty(CustomerDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -528,7 +499,6 @@ var RIAPP;
             return CustomerDb;
         })(RIAPP.MOD.db.DbSet);
         DEMODB.CustomerDb = CustomerDb;
-
         var CustomerAddress = (function (_super) {
             __extends(CustomerAddress, _super);
             function CustomerAddress(dbSet, row, names) {
@@ -608,7 +578,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             CustomerAddress.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -634,7 +603,6 @@ var RIAPP;
             return CustomerAddress;
         })(RIAPP.MOD.db.Entity);
         DEMODB.CustomerAddress = CustomerAddress;
-
         var CustomerAddressDb = (function (_super) {
             __extends(CustomerAddressDb, _super);
             function CustomerAddressDb(dbContext) {
@@ -658,7 +626,6 @@ var RIAPP;
                 query.params = args;
                 return query;
             };
-
             Object.defineProperty(CustomerAddressDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -669,7 +636,6 @@ var RIAPP;
             return CustomerAddressDb;
         })(RIAPP.MOD.db.DbSet);
         DEMODB.CustomerAddressDb = CustomerAddressDb;
-
         var Address = (function (_super) {
             __extends(Address, _super);
             function Address(dbSet, row, names) {
@@ -763,7 +729,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             Address.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -789,7 +754,6 @@ var RIAPP;
             return Address;
         })(RIAPP.MOD.db.Entity);
         DEMODB.Address = Address;
-
         var AddressDb = (function (_super) {
             __extends(AddressDb, _super);
             function AddressDb(dbContext) {
@@ -813,7 +777,6 @@ var RIAPP;
                 query.params = args;
                 return query;
             };
-
             Object.defineProperty(AddressDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -824,7 +787,6 @@ var RIAPP;
             return AddressDb;
         })(RIAPP.MOD.db.DbSet);
         DEMODB.AddressDb = AddressDb;
-
         var Product = (function (_super) {
             __extends(Product, _super);
             function Product(dbSet, row, names) {
@@ -995,7 +957,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             Product.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -1021,7 +982,6 @@ var RIAPP;
             return Product;
         })(RIAPP.MOD.db.Entity);
         DEMODB.Product = Product;
-
         var ProductDb = (function (_super) {
             __extends(ProductDb, _super);
             function ProductDb(dbContext) {
@@ -1047,11 +1007,9 @@ var RIAPP;
                 query.params = args;
                 return query;
             };
-
             ProductDb.prototype.defineIsActiveField = function (getFunc) {
                 this._defineCalculatedField('IsActive', getFunc);
             };
-
             Object.defineProperty(ProductDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -1062,7 +1020,6 @@ var RIAPP;
             return ProductDb;
         })(RIAPP.MOD.db.DbSet);
         DEMODB.ProductDb = ProductDb;
-
         var ProductModel = (function (_super) {
             __extends(ProductModel, _super);
             function ProductModel(dbSet, row, names) {
@@ -1085,7 +1042,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             ProductModel.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -1111,7 +1067,6 @@ var RIAPP;
             return ProductModel;
         })(RIAPP.MOD.db.Entity);
         DEMODB.ProductModel = ProductModel;
-
         var ProductModelDb = (function (_super) {
             __extends(ProductModelDb, _super);
             function ProductModelDb(dbContext) {
@@ -1130,7 +1085,6 @@ var RIAPP;
             ProductModelDb.prototype.createReadProductModelQuery = function () {
                 return this.createQuery('ReadProductModel');
             };
-
             Object.defineProperty(ProductModelDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -1141,7 +1095,6 @@ var RIAPP;
             return ProductModelDb;
         })(RIAPP.MOD.db.DbSet);
         DEMODB.ProductModelDb = ProductModelDb;
-
         var SalesOrderHeader = (function (_super) {
             __extends(SalesOrderHeader, _super);
             function SalesOrderHeader(dbSet, row, names) {
@@ -1371,7 +1324,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             SalesOrderHeader.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -1397,7 +1349,6 @@ var RIAPP;
             return SalesOrderHeader;
         })(RIAPP.MOD.db.Entity);
         DEMODB.SalesOrderHeader = SalesOrderHeader;
-
         var SalesOrderHeaderDb = (function (_super) {
             __extends(SalesOrderHeaderDb, _super);
             function SalesOrderHeaderDb(dbContext) {
@@ -1416,7 +1367,6 @@ var RIAPP;
             SalesOrderHeaderDb.prototype.createReadSalesOrderHeaderQuery = function () {
                 return this.createQuery('ReadSalesOrderHeader');
             };
-
             Object.defineProperty(SalesOrderHeaderDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -1427,7 +1377,6 @@ var RIAPP;
             return SalesOrderHeaderDb;
         })(RIAPP.MOD.db.DbSet);
         DEMODB.SalesOrderHeaderDb = SalesOrderHeaderDb;
-
         var SalesOrderDetail = (function (_super) {
             __extends(SalesOrderDetail, _super);
             function SalesOrderDetail(dbSet, row, names) {
@@ -1525,7 +1474,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             SalesOrderDetail.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -1551,7 +1499,6 @@ var RIAPP;
             return SalesOrderDetail;
         })(RIAPP.MOD.db.Entity);
         DEMODB.SalesOrderDetail = SalesOrderDetail;
-
         var SalesOrderDetailDb = (function (_super) {
             __extends(SalesOrderDetailDb, _super);
             function SalesOrderDetailDb(dbContext) {
@@ -1570,7 +1517,6 @@ var RIAPP;
             SalesOrderDetailDb.prototype.createReadSalesOrderDetailQuery = function () {
                 return this.createQuery('ReadSalesOrderDetail');
             };
-
             Object.defineProperty(SalesOrderDetailDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -1581,7 +1527,6 @@ var RIAPP;
             return SalesOrderDetailDb;
         })(RIAPP.MOD.db.DbSet);
         DEMODB.SalesOrderDetailDb = SalesOrderDetailDb;
-
         var ProductCategory = (function (_super) {
             __extends(ProductCategory, _super);
             function ProductCategory(dbSet, row, names) {
@@ -1634,7 +1579,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             ProductCategory.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -1660,7 +1604,6 @@ var RIAPP;
             return ProductCategory;
         })(RIAPP.MOD.db.Entity);
         DEMODB.ProductCategory = ProductCategory;
-
         var ProductCategoryDb = (function (_super) {
             __extends(ProductCategoryDb, _super);
             function ProductCategoryDb(dbContext) {
@@ -1679,7 +1622,6 @@ var RIAPP;
             ProductCategoryDb.prototype.createReadProductCategoryQuery = function () {
                 return this.createQuery('ReadProductCategory');
             };
-
             Object.defineProperty(ProductCategoryDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -1690,7 +1632,6 @@ var RIAPP;
             return ProductCategoryDb;
         })(RIAPP.MOD.db.DbSet);
         DEMODB.ProductCategoryDb = ProductCategoryDb;
-
         var SalesInfo = (function (_super) {
             __extends(SalesInfo, _super);
             function SalesInfo(dbSet, row, names) {
@@ -1706,7 +1647,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             SalesInfo.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -1732,7 +1672,6 @@ var RIAPP;
             return SalesInfo;
         })(RIAPP.MOD.db.Entity);
         DEMODB.SalesInfo = SalesInfo;
-
         var SalesInfoDb = (function (_super) {
             __extends(SalesInfoDb, _super);
             function SalesInfoDb(dbContext) {
@@ -1751,7 +1690,6 @@ var RIAPP;
             SalesInfoDb.prototype.createReadSalesInfoQuery = function () {
                 return this.createQuery('ReadSalesInfo');
             };
-
             Object.defineProperty(SalesInfoDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -1762,7 +1700,6 @@ var RIAPP;
             return SalesInfoDb;
         })(RIAPP.MOD.db.DbSet);
         DEMODB.SalesInfoDb = SalesInfoDb;
-
         var LookUpProduct = (function (_super) {
             __extends(LookUpProduct, _super);
             function LookUpProduct(dbSet, row, names) {
@@ -1788,7 +1725,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             LookUpProduct.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -1814,7 +1750,6 @@ var RIAPP;
             return LookUpProduct;
         })(RIAPP.MOD.db.Entity);
         DEMODB.LookUpProduct = LookUpProduct;
-
         var LookUpProductDb = (function (_super) {
             __extends(LookUpProductDb, _super);
             function LookUpProductDb(dbContext) {
@@ -1833,7 +1768,6 @@ var RIAPP;
             LookUpProductDb.prototype.createReadProductLookUpQuery = function () {
                 return this.createQuery('ReadProductLookUp');
             };
-
             Object.defineProperty(LookUpProductDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -1844,7 +1778,6 @@ var RIAPP;
             return LookUpProductDb;
         })(RIAPP.MOD.db.DbSet);
         DEMODB.LookUpProductDb = LookUpProductDb;
-
         var AddressInfo = (function (_super) {
             __extends(AddressInfo, _super);
             function AddressInfo(dbSet, row, names) {
@@ -1892,7 +1825,6 @@ var RIAPP;
                 enumerable: true,
                 configurable: true
             });
-
             AddressInfo.prototype.getDbContext = function () {
                 return _super.prototype.getDbContext.call(this);
             };
@@ -1918,7 +1850,6 @@ var RIAPP;
             return AddressInfo;
         })(RIAPP.MOD.db.Entity);
         DEMODB.AddressInfo = AddressInfo;
-
         var AddressInfoDb = (function (_super) {
             __extends(AddressInfoDb, _super);
             function AddressInfoDb(dbContext) {
@@ -1937,7 +1868,6 @@ var RIAPP;
             AddressInfoDb.prototype.createReadAddressInfoQuery = function () {
                 return this.createQuery('ReadAddressInfo');
             };
-
             Object.defineProperty(AddressInfoDb.prototype, "items2", {
                 get: function () {
                     return this.items;
@@ -1948,7 +1878,6 @@ var RIAPP;
             return AddressInfoDb;
         })(RIAPP.MOD.db.DbSet);
         DEMODB.AddressInfoDb = AddressInfoDb;
-
         var DbSets = (function (_super) {
             __extends(DbSets, _super);
             function DbSets(dbContext) {
@@ -2046,7 +1975,6 @@ var RIAPP;
             return DbSets;
         })(RIAPP.MOD.db.DbSets);
         DEMODB.DbSets = DbSets;
-
         var DbContext = (function (_super) {
             __extends(DbContext, _super);
             function DbContext() {
@@ -2084,7 +2012,6 @@ var RIAPP;
             return DbContext;
         })(RIAPP.MOD.db.DbContext);
         DEMODB.DbContext = DbContext;
-    })(RIAPP.DEMODB || (RIAPP.DEMODB = {}));
-    var DEMODB = RIAPP.DEMODB;
+    })(DEMODB = RIAPP.DEMODB || (RIAPP.DEMODB = {}));
 })(RIAPP || (RIAPP = {}));
 //# sourceMappingURL=demoDB.js.map

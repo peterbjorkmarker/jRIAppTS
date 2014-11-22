@@ -126,17 +126,11 @@ namespace RIAppDemo.Controllers
                 string path2 = Path.GetFullPath(Path.Combine(path1, string.Format("{0}.html", name)));
                 if (!path2.StartsWith(path1))
                     return Request.CreateResponse(HttpStatusCode.NotFound);
-
-                var args = new RIAPP.DataService.ServiceArgs(new Serializer(), this.User);
-                RIAppDemoService svc = new RIAppDemoService(args);
-                using (svc)
-                {
-                    HttpResponseMessage result = new HttpResponseMessage(HttpStatusCode.OK);
-                    var stream = File.OpenRead(path2);
-                    result.Content = new StreamContent(stream);
-                    result.Content.Headers.ContentType = new MediaTypeHeaderValue(System.Net.Mime.MediaTypeNames.Text.Plain);
-                    return result;
-                }
+                HttpResponseMessage result = new HttpResponseMessage(HttpStatusCode.OK);
+                var stream = File.OpenRead(path2);
+                result.Content = new StreamContent(stream);
+                result.Content.Headers.ContentType = new MediaTypeHeaderValue(System.Net.Mime.MediaTypeNames.Text.Plain);
+                return result;
             }
             catch (Exception ex)
             {

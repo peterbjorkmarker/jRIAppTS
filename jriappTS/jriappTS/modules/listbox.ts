@@ -89,7 +89,7 @@
                     this._options = <any>{};
                     super.destroy();
                 }
-                _onChanged() {
+                protected _onChanged() {
                     var op = null, key: string, data: IMappedItem;
                     if (this.el.selectedIndex >= 0) {
                         op = this.el.options[this.el.selectedIndex];
@@ -104,13 +104,13 @@
                         this.selectedItem = data.item;
                     }
                 }
-                _getStringValue(item: collMOD.CollectionItem):string {
+                protected _getStringValue(item: collMOD.CollectionItem):string {
                     var v = this._getValue(item);
                     if (utils.check.isNt(v))
                         return '';
                     return '' + v;
                 }
-                _getValue(item: collMOD.CollectionItem):any {
+                protected _getValue(item: collMOD.CollectionItem):any {
                     if (!item)
                         return null;
                     if (!!this._options.valuePath) {
@@ -119,7 +119,7 @@
                     else
                         return undefined;
                 }
-                _getText(item: collMOD.CollectionItem):string {
+                protected _getText(item: collMOD.CollectionItem):string {
                     if (!item)
                         return '';
                     if (!!this._options.textPath) {
@@ -131,7 +131,7 @@
                     else
                         return this._getStringValue(item);
                 }
-                _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>) {
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>) {
                     var self = this, data;
                     switch (args.change_type) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
@@ -162,7 +162,7 @@
                             }
                     }
                 }
-                _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>) {
+                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -172,7 +172,7 @@
                         this._isDSFilling = true;
                     }
                 }
-                _onEdit(item: collMOD.CollectionItem, isBegin:boolean, isCanceled:boolean) {
+                protected _onEdit(item: collMOD.CollectionItem, isBegin:boolean, isCanceled:boolean) {
                     var self = this, key:string, data: IMappedItem, oldVal:string, val:string;
                     if (isBegin) {
                         this._savedValue = this._getStringValue(item);
@@ -203,13 +203,13 @@
                         }
                     }
                 }
-                _onStatusChanged(item: collMOD.CollectionItem, oldChangeType:number) {
+                protected _onStatusChanged(item: collMOD.CollectionItem, oldChangeType:number) {
                     var newChangeType = item._changeType;
                     if (newChangeType === collMOD.STATUS.DELETED) {
                         this._removeOption(item);
                     }
                 }
-                _onCommitChanges(item: collMOD.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS) {
+                protected _onCommitChanges(item: collMOD.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS) {
                     var self = this, oldVal, val, data;
                     if (isBegin) {
                         if (isRejected && changeType === collMOD.STATUS.ADDED) {
@@ -393,10 +393,10 @@
                         return 0;
                     return data.op.index;
                 }
-                _setIsEnabled(el: HTMLSelectElement, v:boolean) {
+                protected _setIsEnabled(el: HTMLSelectElement, v:boolean) {
                     el.disabled = !v;
                 }
-                _getIsEnabled(el: HTMLSelectElement) {
+                protected _getIsEnabled(el: HTMLSelectElement) {
                     return !el.disabled;
                 }
                 clear() {
@@ -543,7 +543,7 @@
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._listBox && !this._listBox._isDestroyCalled) {
+                    if (!!this._listBox && !this._listBox.getIsDestroyCalled()) {
                         this._listBox.destroy();
                     }
                     this._listBox = null;
@@ -626,12 +626,12 @@
                     this._value = null;
                     super(app, options);
                 }
-                _init() {
+                protected _init() {
                     if (!!this._options.initContentFn) {
                         this._options.initContentFn(this);
                     }
                 }
-                _getEventNames() {
+                protected _getEventNames() {
                     var base_events = super._getEventNames();
                     return ['object_created', 'object_needed'].concat(base_events);
                 }
@@ -647,7 +647,7 @@
                 removeOnObjectNeeded(namespace?: string) {
                     this.removeHandler('object_needed', namespace);
                 }
-                _getSelectView(): SelectElView {
+                protected _getSelectView(): SelectElView {
                     if (!!this._selectView)
                         return this._selectView;
                     var lookUpOptions: ILookupOptions = this._options.options;
@@ -674,7 +674,7 @@
                     this._selectView = selectElView;
                     return this._selectView;
                 }
-                _createSelectElView(el: HTMLSelectElement, options: ISelectViewOptions): SelectElView {
+                protected _createSelectElView(el: HTMLSelectElement, options: ISelectViewOptions): SelectElView {
                     var elView;
                     elView = this.app._getElView(el);
                     if (!!elView)
@@ -682,15 +682,15 @@
                     elView =  new SelectElView(this.app, el, options);
                     return elView;
                 }
-                _updateTextValue() {
+                protected _updateTextValue() {
                     var spanView = this._getSpanView();
                     spanView.value = this._getLookupText();
                 }
-                _getLookupText() {
+                protected _getLookupText() {
                     var listBoxView = this._getSelectView();
                     return listBoxView.listBox.getTextByValue(this.value);
                 }
-                _getSpanView() {
+                protected _getSpanView() {
                     if (!!this._spanView) {
                         return this._spanView;
                     }
@@ -709,7 +709,7 @@
                     this._createTargetElement();
                     this._parentEl.appendChild(this._el);
                 }
-                _createTargetElement(): elviewMOD.BaseElView {
+                protected _createTargetElement(): elviewMOD.BaseElView {
                     var tgt: elviewMOD.BaseElView, el: HTMLElement, selectView: SelectElView, spanView: elviewMOD.SpanElView;
                     if (this._isEditing && this._canBeEdited()) {
                         selectView = this._getSelectView();
@@ -725,7 +725,7 @@
                     this._updateCss();
                     return tgt;
                 }
-                _cleanUp() {
+                protected _cleanUp() {
                     if (!!this._el) {
                         utils.removeNode(this._el);
                         this._el = null;
@@ -743,7 +743,7 @@
                         this._selectView = null;
                     }
                 }
-                _updateBindingSource() {
+                protected _updateBindingSource() {
                     if (!!this._valBinding) {
                         this._valBinding.source = this._dataContext;
                     }
@@ -751,7 +751,7 @@
                         this._listBinding.source = this._dataContext;
                     }
                 }
-                _bindToValue() {
+                protected _bindToValue() {
                     if (!this._options.fieldName)
                         return null;
 
@@ -763,7 +763,7 @@
                     };
                     return this.app.bind(options);
                 }
-                _bindToList(selectView: SelectElView) {
+                protected _bindToList(selectView: SelectElView) {
                     if (!this._options.fieldName)
                         return null;
 

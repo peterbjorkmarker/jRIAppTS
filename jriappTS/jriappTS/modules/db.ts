@@ -26,7 +26,7 @@
             };
 
             export class DataOperationError extends MOD.errors.BaseError {
-                _operationName: DATA_OPER;
+                private _operationName: DATA_OPER;
                 constructor(ex, operationName: DATA_OPER) {
                     var message;
                     if (!!ex)
@@ -34,7 +34,7 @@
                     if (!message)
                         message = '' + ex;
                     super(message);
-                    this._origError = ex;
+                    this.origError = ex;
                     this._operationName = operationName;
                 }
                 get operationName() { return this._operationName; }
@@ -43,12 +43,12 @@
             export class ConcurrencyError extends DataOperationError { }
             export class SvcValidationError extends DataOperationError { }
             export class SubmitError extends DataOperationError {
-                _allSubmitted: Entity[];
-                _notValidated: Entity[];
+                private _allSubmitted: Entity[];
+                private _notValidated: Entity[];
 
                 constructor(origError, allSubmitted: Entity[], notValidated: Entity[]) {
                     var message = origError.message || ('' + origError);
-                    this._origError = origError;
+                    this.origError = origError;
                     this._allSubmitted = allSubmitted || [];
                     this._notValidated = notValidated || [];
                     if (this._notValidated.length > 0) {
@@ -264,10 +264,10 @@
             }
 
             export class DataCache extends RIAPP.BaseObject {
-                _query: TDataQuery<Entity>;
-                _cache: ICachedPage[];
-                _totalCount: number;
-                _itemsByKey: { [key: string]: Entity; };
+                private _query: TDataQuery<Entity>;
+                private _cache: ICachedPage[];
+                private _totalCount: number;
+                private _itemsByKey: { [key: string]: Entity; };
 
                 constructor(query: TDataQuery<Entity>) {
                     super();
@@ -464,19 +464,19 @@
             }
 
             export class TDataQuery<TEntity extends Entity> extends RIAPP.BaseObject {
-                _dbSet: DbSet<TEntity>;
-                __queryInfo: IQueryInfo;
-                _filterInfo: IFilterInfo;
-                _sortInfo: ISortInfo;
-                _isIncludeTotalCount: boolean;
-                _isClearPrevData: boolean;
-                _pageSize: number;
-                _pageIndex: number;
-                _params: any; //{ [name: string]: any; };
-                _loadPageCount: number;
-                _isClearCacheOnEveryLoad: boolean;
-                _dataCache: DataCache;
-                _cacheInvalidated: boolean;
+                private _dbSet: DbSet<TEntity>;
+                private __queryInfo: IQueryInfo;
+                private _filterInfo: IFilterInfo;
+                private _sortInfo: ISortInfo;
+                private _isIncludeTotalCount: boolean;
+                private _isClearPrevData: boolean;
+                private _pageSize: number;
+                private _pageIndex: number;
+                private _params: { [name: string]: any; };
+                private _loadPageCount: number;
+                private _isClearCacheOnEveryLoad: boolean;
+                private _dataCache: DataCache;
+                private _cacheInvalidated: boolean;
 
                 constructor(dbSet: DbSet<TEntity>, queryInfo: IQueryInfo) {
                     super();
@@ -498,8 +498,7 @@
                     return this._dbSet.getFieldInfo(fieldName);
                 }
                 getFieldNames() {
-                    var fldMap = this._dbSet._fieldMap;
-                    return utils.getProps(fldMap);
+                    return this._dbSet.getFieldNames();
                 }
                 private _addSort(fieldName: string, sortOrder: collMod.SORT_ORDER) {
                     var ord = collMod.SORT_ORDER.ASC;
@@ -605,7 +604,7 @@
                     }
                     return this._dataCache.hasPage(pageIndex);
                 }
-                _resetCacheInvalidated() {
+                protected _resetCacheInvalidated() {
                     this._cacheInvalidated = false;
                 }
                 load(): IPromise<IQueryResult<TEntity>> {
@@ -719,18 +718,14 @@
                     }
                     this._initRowInfo(row, names);
                 }
-                _updateKeys(srvKey: string) {
-                    this._srvRowKey = srvKey;
-                    this._key = srvKey;
-                }
-                _initRowInfo(row: IRowData, names: IFieldName[]) {
+                protected _initRowInfo(row: IRowData, names: IFieldName[]) {
                     if (!row)
                         return;
                     this._srvRowKey = row.k;
                     this._key = row.k;
                     this._processValues('', row.v, names);
                 }
-                _processValues(path: string, values:any[], names:IFieldName[]) {
+                protected _processValues(path: string, values: any[], names: IFieldName[]) {
                     var self = this, stz = self._serverTimezone;
                     values.forEach(function (value, index) {
                         var name: IFieldName = names[index], fieldName = path + name.n, fld = self._dbSet.getFieldInfo(fieldName), val;
@@ -753,6 +748,129 @@
                             }
                         }
                     });
+                }
+                protected _onFieldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo) {
+                    var self = this;
+                    self.raisePropertyChanged(fieldName);
+                    if (!!fieldInfo.dependents && fieldInfo.dependents.length > 0) {
+                        fieldInfo.dependents.forEach(function (d) {
+                            self.raisePropertyChanged(d);
+                        });
+                    }
+                }
+                protected _getValueChange(fullName: string, fld: collMod.IFieldInfo, changedOnly: boolean): IValueChange {
+                    var self = this, dbSet = self._dbSet, res: IValueChange, i: number, len: number, tmp: IValueChange;
+                    if (fn_isNotSubmittable(fld))
+                        return <IValueChange>null;
+
+                    if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                        res = { fieldName: fld.fieldName, val: null, orig: null, flags: FLAGS.None, nested: [] };
+                        len = fld.nested.length;
+                        for (i = 0; i < len; i += 1) {
+                            tmp = self._getValueChange(fullName + '.' + fld.nested[i].fieldName, fld.nested[i], changedOnly);
+                            if (!!tmp) {
+                                res.nested.push(tmp);
+                            }
+                        }
+                    }
+                    else {
+                        var newVal = dbSet._getStrValue(baseUtils.getValue(self._vals, fullName), fld),
+                            oldV = self._origVals === null ? newVal : dbSet._getStrValue(baseUtils.getValue(self._origVals, fullName), fld),
+                            isChanged = (oldV !== newVal);
+                        if (isChanged)
+                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: (FLAGS.Changed | FLAGS.Setted), nested: null };
+                        else if (fld.isPrimaryKey > 0 || fld.fieldType == collMod.FIELD_TYPE.RowTimeStamp || fld.isNeedOriginal)
+                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: FLAGS.Setted, nested: null };
+                        else
+                            res = { fieldName: fld.fieldName, val: null, orig: null, flags: FLAGS.None, nested: null };
+                    }
+
+                    if (changedOnly) {
+                        if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                            if (res.nested.length > 0)
+                                return res;
+                            else
+                                return null;
+                        }
+                        else if ((res.flags & FLAGS.Changed) === FLAGS.Changed)
+                            return res;
+                        else
+                            return null;
+                    }
+                    else {
+                        return res;
+                    }
+                }
+                protected _getValueChanges(changedOnly: boolean): IValueChange[] {
+                    var self = this, flds = this._dbSet.getFieldInfos();
+                    var res = flds.map((fld) => {
+                        return self._getValueChange(fld.fieldName, fld, changedOnly);
+                    });
+
+                    //remove nulls
+                    var res2 = res.filter((vc) => {
+                        return !!vc;
+                    });
+                    return res2;
+                }
+                protected _fldChanging(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV, newV) {
+                    if (!this._origVals) {
+                        this._origVals = utils.cloneObj(this._vals);
+                    }
+                    return true;
+                }
+                protected _fldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV, newV) {
+                    if (!(fieldInfo.fieldType == collMod.FIELD_TYPE.ClientOnly || fieldInfo.fieldType == collMod.FIELD_TYPE.ServerCalculated)) {
+                        switch (this._changeType) {
+                            case collMod.STATUS.NONE:
+                                this._changeType = collMod.STATUS.UPDATED;
+                                break;
+                        }
+                    }
+                    this._onFieldChanged(fieldName, fieldInfo);
+                    return true;
+                }
+                protected _skipValidate(fieldInfo: collMod.IFieldInfo, val) {
+                    var childToParentNames = this._dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
+                    if (!!childToParentNames && val === null) {
+                        for (var i = 0, len = childToParentNames.length; i < len; i += 1) {
+                            res = !!this._getFieldVal(childToParentNames[i]);
+                            if (res)
+                                break;
+                        }
+                    }
+                    return res;
+                }
+                protected _beginEdit() {
+                    if (!super._beginEdit())
+                        return false;
+                    this._saveChangeType = this._changeType;
+                    return true;
+                }
+                protected _endEdit() {
+                    if (!super._endEdit())
+                        return false;
+                    this._saveChangeType = null;
+                    return true;
+                }
+                _getCalcFieldVal(fieldName: string) {
+                    if (this._isDestroyCalled)
+                        return null;
+                    return this._dbSet._getCalcFieldVal(fieldName, this);
+                }
+                _getNavFieldVal(fieldName: string) {
+                    if (this._isDestroyCalled) {
+                        return null;
+                    }
+                    return this._dbSet._getNavFieldVal(fieldName, this);
+                }
+                _setNavFieldVal(fieldName: string, value: any) {
+                    var dbSet = this._dbSet
+                    this._dbSet._setNavFieldVal(fieldName, this, value)
+                }
+                _updateKeys(srvKey: string) {
+                    this._srvRowKey = srvKey;
+                    this._key = srvKey;
                 }
                 _checkCanRefresh() {
                     if (this._key === null || this._changeType === collMod.STATUS.ADDED) {
@@ -831,70 +949,6 @@
                         }
                     }
                 }
-                _onFieldChanged(fieldName:string, fieldInfo: collMod.IFieldInfo) {
-                    var self = this;
-                    self.raisePropertyChanged(fieldName);
-                    if (!!fieldInfo.dependents && fieldInfo.dependents.length > 0) {
-                        fieldInfo.dependents.forEach(function (d) {
-                            self.raisePropertyChanged(d);
-                        });
-                    }
-                }
-                _getValueChange(fullName: string, fld: collMod.IFieldInfo, changedOnly: boolean): IValueChange {
-                    var self = this, dbSet = self._dbSet, res: IValueChange, i: number, len: number, tmp: IValueChange;
-                    if (fn_isNotSubmittable(fld))
-                        return <IValueChange>null;
-
-                    if (fld.fieldType == collMod.FIELD_TYPE.Object) {
-                        res = { fieldName: fld.fieldName, val: null, orig: null, flags: FLAGS.None, nested: [] };
-                        len = fld.nested.length;
-                        for (i = 0; i < len; i += 1) {
-                            tmp = self._getValueChange(fullName + '.' + fld.nested[i].fieldName, fld.nested[i], changedOnly);
-                            if (!!tmp) {
-                                res.nested.push(tmp);
-                            }
-                        }
-                    }
-                    else {
-                        var newVal = dbSet._getStrValue(baseUtils.getValue(self._vals, fullName), fld),
-                            oldV = self._origVals === null ? newVal : dbSet._getStrValue(baseUtils.getValue(self._origVals, fullName), fld),
-                            isChanged = (oldV !== newVal);
-                        if (isChanged)
-                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: (FLAGS.Changed | FLAGS.Setted), nested: null };
-                        else if (fld.isPrimaryKey > 0 || fld.fieldType == collMod.FIELD_TYPE.RowTimeStamp || fld.isNeedOriginal)
-                            res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: FLAGS.Setted, nested: null };
-                        else
-                            res = { fieldName: fld.fieldName, val: null, orig: null, flags: FLAGS.None, nested: null };
-                    }
-
-                    if (changedOnly) {
-                        if (fld.fieldType == collMod.FIELD_TYPE.Object) {
-                            if (res.nested.length > 0)
-                                return res;
-                            else
-                                return null;
-                        }
-                        else if ((res.flags & FLAGS.Changed) === FLAGS.Changed)
-                            return res;
-                        else
-                            return null;
-                    }
-                    else {
-                        return res;
-                    }
-                }
-                _getValueChanges(changedOnly: boolean): IValueChange[] {
-                    var self = this, flds = this._dbSet.getFieldInfos();
-                    var res = flds.map((fld) => {
-                        return self._getValueChange(fld.fieldName, fld, changedOnly);
-                    });
-
-                    //remove nulls
-                    var res2 = res.filter((vc) => {
-                        return !!vc;
-                    });
-                    return res2;
-                }
                 _getRowInfo() {
                     var res: IRowInfo = {
                         values: this._getValueChanges(false),
@@ -905,36 +959,8 @@
                     };
                     return res;
                 }
-                _fldChanging(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV, newV) {
-                    if (!this._origVals) {
-                        this._origVals = utils.cloneObj(this._vals);
-                    }
-                    return true;
-                }
-                _fldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV, newV) {
-                    if (!(fieldInfo.fieldType == collMod.FIELD_TYPE.ClientOnly || fieldInfo.fieldType == collMod.FIELD_TYPE.ServerCalculated)) {
-                        switch (this._changeType) {
-                            case collMod.STATUS.NONE:
-                                this._changeType = collMod.STATUS.UPDATED;
-                                break;
-                        }
-                    }
-                    this._onFieldChanged(fieldName, fieldInfo);
-                    return true;
-                }
                 _clearFieldVal(fieldName: string) {
                     baseUtils.setValue(this._vals, fieldName, null, false);
-                }
-                _skipValidate(fieldInfo: collMod.IFieldInfo, val) {
-                    var childToParentNames = this._dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
-                    if (!!childToParentNames && val === null) {
-                        for (var i = 0, len = childToParentNames.length; i < len; i += 1) {
-                            res = !!this._getFieldVal(childToParentNames[i]);
-                            if (res)
-                                break;
-                        }
-                    }
-                    return res;
                 }
                 _getFieldVal(fieldName: string) {
                     if (this._isDestroyCalled)
@@ -977,23 +1003,6 @@
                     }
                     return res;
                 }
-                _getCalcFieldVal(fieldName: string) {
-                    if (this._isDestroyCalled)
-                        return null;
-                    var dbSet = this._dbSet
-                    return baseUtils.getValue(dbSet._calcfldMap, fieldName).getFunc.call(this);
-                }
-                _getNavFieldVal(fieldName: string) {
-                    if (this._isDestroyCalled) {
-                        return null;
-                    }
-                    var dbSet = this._dbSet
-                    return baseUtils.getValue(dbSet._navfldMap, fieldName).getFunc.call(this);
-                }
-                _setNavFieldVal(fieldName: string, value:any) {
-                    var dbSet = this._dbSet
-                    baseUtils.getValue(dbSet._navfldMap, fieldName).setFunc.call(this, value);
-                }
                 _onAttaching() {
                     super._onAttaching();
                     this.__changeType = collMod.STATUS.ADDED;
@@ -1003,18 +1012,6 @@
                     if (this._key === null)
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     this._dbSet._addToChanged(this);
-                }
-                _beginEdit() {
-                    if (!super._beginEdit())
-                        return false;
-                    this._saveChangeType = this._changeType;
-                    return true;
-                }
-                _endEdit() {
-                    if (!super._endEdit())
-                        return false;
-                    this._saveChangeType = null;
-                    return true;
                 }
                 deleteItem() {
                     return this.deleteOnSubmit();
@@ -1187,13 +1184,13 @@
                 private _parentAssocMap: { [fieldName: string]: IAssociationInfo; };
                 private _changeCount: number;
                 private _changeCache: { [key: string]: TEntity; };
-                _options: IDbSetOptions;
-                _navfldMap: { [fieldName: string]: { getFunc: () => any; setFunc: (v: any) => void; }; };
-                _calcfldMap: { [fieldName: string]: { getFunc: () => any; }; };
-                _itemsByKey: { [key: string]: TEntity; };
-                _entityType: IEntityConstructor;
-                _ignorePageChanged: boolean;
-                _query: TDataQuery<TEntity>;
+                protected _options: IDbSetOptions;
+                protected _navfldMap: { [fieldName: string]: { getFunc: () => any; setFunc: (v: any) => void; }; };
+                protected _calcfldMap: { [fieldName: string]: { getFunc: () => any; }; };
+                protected _itemsByKey: { [key: string]: TEntity; };
+                protected _entityType: IEntityConstructor;
+                protected _ignorePageChanged: boolean;
+                protected _query: TDataQuery<TEntity>;
 
                 constructor(opts: IDbSetConstuctorOptions, entityType: IEntityConstructor) {
                     super();
@@ -1246,34 +1243,10 @@
                     self._mapAssocFields();
                     Object.freeze(this._perms);
                 }
-                getFieldInfo(fieldName: string): collMod.IFieldInfo {
-                    var assoc: IAssociationInfo, parentDB: DbSet<Entity>, parts = fieldName.split('.');
-                    var fld = this._fieldMap[parts[0]];
-                    if (parts.length == 1) {
-                        return fld;
-                    }
-                    
-                    if (fld.fieldType == collMod.FIELD_TYPE.Object) {
-                        for (var i = 1; i < parts.length; i += 1) {
-                            fld = collMod.fn_getPropertyByName(parts[i], fld.nested);
-                        }
-                        return fld;
-                    }
-                    else if (fld.fieldType == collMod.FIELD_TYPE.Navigation) {
-                        //for example Customer.Name
-                        assoc = this._childAssocMap[fld.fieldName];
-                        if (!!assoc) {
-                            parentDB = this.dbContext.getDbSet(assoc.parentDbSetName);
-                            return parentDB.getFieldInfo(parts.slice(1).join('.'));
-                        }
-                    }
-                    
-                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
+                handleError(error, source): boolean {
+                    return this.dbContext.handleError(error, source);
                 }
-                _onError(error, source): boolean {
-                    return this.dbContext._onError(error, source);
-                }
-                _mapAssocFields() {
+                protected _mapAssocFields() {
                     var trackAssoc = this._trackAssoc, assoc: IAssociationInfo, tasKeys = Object.keys(trackAssoc),
                         frel: { childField: string; parentField: string; },
                         trackAssocMap = this._trackAssocMap;
@@ -1290,15 +1263,7 @@
                         }
                     }
                 }
-                _updatePermissions(perms: IPermissions) {
-                    this._perms = perms;
-                }
-                _getChildToParentNames(childFieldName: string) { return this._trackAssocMap[childFieldName]; }
-                _getStrValue(val: any, fieldInfo: collMod.IFieldInfo) {
-                    var dcnv = fieldInfo.dateConversion, stz = this.dbContext.serverTimezone;
-                    return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
-                }
-                _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo) {
+                protected _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo) {
                     var self = this, isChild = true, result: { getFunc: () => any; setFunc: (v: any) => void; } = { getFunc: () => { throw new Error('Function is not implemented'); }, setFunc: function (v: any) { throw new Error('Function is not implemented'); } };
                     var assocs = opts.childAssoc.filter(function (a) {
                         return a.childToParentName == fInfo.fieldName;
@@ -1335,7 +1300,7 @@
                             self._trackAssoc[assocName] = assocs[0];
 
                             result.setFunc = function (v) {
-                                var entity: Entity = this, i:number, len:number, assoc = self.dbContext.getAssociation(assocName);
+                                var entity: Entity = this, i: number, len: number, assoc = self.dbContext.getAssociation(assocName);
                                 if (!!v && !(v instanceof assoc.parentDS.entityType)) {
                                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'value', assoc.parentDS.dbSetName));
                                 }
@@ -1369,7 +1334,7 @@
                     }
                     return result;
                 }
-                _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo) {
+                protected _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo) {
                     var self = this, result: { getFunc: () => any; } = { getFunc: () => { throw new Error(utils.format("Calculated field:'{0}' is not initialized", fInfo.fieldName)); } };
                     function doDependences(f: collMod.IFieldInfo) {
                         if (!f.dependentOn)
@@ -1392,7 +1357,7 @@
                     }
                     return result;
                 }
-                _refreshValues(path: string, item: Entity, values: any[], names: IFieldName[], rm:REFRESH_MODE) {
+                protected _refreshValues(path: string, item: Entity, values: any[], names: IFieldName[], rm: REFRESH_MODE) {
                     var self = this;
                     values.forEach(function (value, index) {
                         var name: IFieldName = names[index], fieldName = path + name.n, fld = self.getFieldInfo(fieldName);
@@ -1408,6 +1373,119 @@
                             item._refreshValue(value, fieldName, rm);
                         }
                     });
+                }
+                protected _setCurrentItem(v: TEntity) {
+                    if (!!v && !(v instanceof this._entityType)) {
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', this._options.dbSetName));
+                    }
+                    super._setCurrentItem(v);
+                }
+                protected _getNewKey(item: TEntity) {
+                    //client's item ID
+                    var key = 'clkey_' + this._newKey;
+                    this._newKey += 1;
+                    return key;
+                }
+                protected _createNew() {
+                    var item = <TEntity>new this._entityType(this, null, null);
+                    item._key = this._getNewKey(item);
+                    return item;
+                }
+                protected _clearChangeCache() {
+                    var old = this._changeCount;
+                    this._changeCache = {};
+                    this._changeCount = 0;
+                    if (old !== this._changeCount)
+                        this.raisePropertyChanged('hasChanges');
+                }
+                protected _onPageChanging() {
+                    var res = super._onPageChanging();
+                    if (!res) {
+                        return res;
+                    }
+                    if (this.hasChanges) {
+                        this.rejectChanges();
+                    }
+                    return res;
+                }
+                protected _onPageChanged() {
+                    this.cancelEdit();
+                    super._onPageChanged();
+                    if (this._ignorePageChanged)
+                        return;
+                    this.query.pageIndex = this.pageIndex;
+                    this.dbContext._load(this.query, true);
+                }
+                protected _onPageSizeChanged() {
+                    super._onPageSizeChanged();
+                    if (!!this._query)
+                        this._query.pageSize = this.pageSize;
+                }
+                protected _destroyItems() {
+                    this._items.forEach(function (item) {
+                        if (item._isCached)
+                            item.removeHandler(null, null);
+                        else
+                            item.destroy();
+                    });
+                }
+                protected _defineCalculatedField(fullName: string, getFunc: () => any) {
+                    var calcDef = baseUtils.getValue(this._calcfldMap, fullName);
+                    if (!calcDef) {
+                        throw new Error(baseUtils.format(ERRS.ERR_PARAM_INVALID, 'calculated fieldName', fullName));
+                    }
+                    calcDef.getFunc = getFunc;
+                }
+                _getCalcFieldVal(fieldName: string, item: Entity): any {
+                    return baseUtils.getValue(this._calcfldMap, fieldName).getFunc.call(item);
+                }
+                _getNavFieldVal(fieldName: string, item: Entity): any {
+                    return baseUtils.getValue(this._navfldMap, fieldName).getFunc.call(item);
+                }
+                _setNavFieldVal(fieldName: string, item: Entity, value: any): any {
+                    baseUtils.getValue(this._navfldMap, fieldName).setFunc.call(item, value);
+                }
+                _beforeLoad(query: TDataQuery<TEntity>, oldQuery: TDataQuery<TEntity>) {
+                    if (query && oldQuery !== query) {
+                        this._query = query;
+                        this.pageIndex = 0;
+                    }
+                    if (!!oldQuery && oldQuery !== query) {
+                        oldQuery.destroy();
+                    }
+
+                    if (query.pageSize !== this.pageSize) {
+                        this._ignorePageChanged = true;
+                        try {
+                            this.pageIndex = 0;
+                            this.pageSize = query.pageSize;
+                        }
+                        finally {
+                            this._ignorePageChanged = false;
+                        }
+                    }
+
+                    if (query.pageIndex !== this.pageIndex) {
+                        this._ignorePageChanged = true;
+                        try {
+                            this.pageIndex = query.pageIndex;
+                        }
+                        finally {
+                            this._ignorePageChanged = false;
+                        }
+                    }
+
+                    if (!query.isCacheValid) {
+                        query._clearCache();
+                    }
+                }
+                _updatePermissions(perms: IPermissions) {
+                    this._perms = perms;
+                }
+                _getChildToParentNames(childFieldName: string) { return this._trackAssocMap[childFieldName]; }
+                _getStrValue(val: any, fieldInfo: collMod.IFieldInfo) {
+                    var dcnv = fieldInfo.dateConversion, stz = this.dbContext.serverTimezone;
+                    return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
                 }
                 _fillFromService(data: { res: IQueryResponse; isPageChanged: boolean; fn_beforeFillEnd: () => void; }): IQueryResult<TEntity> {
                     data = utils.extend(false, {
@@ -1590,12 +1668,6 @@
                     this._addErrors(item, res);
                     return item;
                 }
-                _setCurrentItem(v: TEntity) {
-                    if (!!v && !(v instanceof this._entityType)) {
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', this._options.dbSetName));
-                    }
-                    super._setCurrentItem(v);
-                }
                 _getChanges() {
                     var changes: IRowInfo[] = [];
                     var csh = this._changeCache;
@@ -1621,17 +1693,6 @@
                     });
                     return res;
                 }
-                _getNewKey(item: TEntity) {
-                    //client's item ID
-                    var key = 'clkey_' + this._newKey;
-                    this._newKey += 1;
-                    return key;
-                }
-                _createNew() {
-                    var item = <TEntity><any>new this._entityType(this, null, null);
-                    item._key = this._getNewKey(item);
-                    return item;
-                }
                 _addToChanged(item: TEntity) {
                     if (item._key === null)
                         return;
@@ -1652,13 +1713,6 @@
                             this.raisePropertyChanged('hasChanges');
                     }
                 }
-                _clearChangeCache() {
-                    var old = this._changeCount;
-                    this._changeCache = {};
-                    this._changeCount = 0;
-                    if (old !== this._changeCount)
-                        this.raisePropertyChanged('hasChanges');
-                }
                 //occurs when item changeType Changed (not used in simple collections)
                 _onItemStatusChanged(item: TEntity, oldChangeType: number) {
                     super._onItemStatusChanged(item, oldChangeType);
@@ -1670,43 +1724,29 @@
                     this._removeFromChanged(item._key);
                     super._onRemoved(item, pos);
                 }
-                _onPageChanging() {
-                    var res = super._onPageChanging();
-                    if (!res) {
-                        return res;
+                getFieldInfo(fieldName: string): collMod.IFieldInfo {
+                    var assoc: IAssociationInfo, parentDB: DbSet<Entity>, parts = fieldName.split('.');
+                    var fld = this._fieldMap[parts[0]];
+                    if (parts.length == 1) {
+                        return fld;
                     }
-                    if (this.hasChanges) {
-                        this.rejectChanges();
+
+                    if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                        for (var i = 1; i < parts.length; i += 1) {
+                            fld = collMod.fn_getPropertyByName(parts[i], fld.nested);
+                        }
+                        return fld;
                     }
-                    return res;
-                }
-                _onPageChanged() {
-                    this.cancelEdit();
-                    super._onPageChanged();
-                    if (this._ignorePageChanged)
-                        return;
-                    this.query.pageIndex = this.pageIndex;
-                    this.dbContext._load(this.query, true);
-                }
-                _onPageSizeChanged() {
-                    super._onPageSizeChanged();
-                    if (!!this._query)
-                        this._query.pageSize = this.pageSize;
-                }
-                _destroyItems() {
-                    this._items.forEach(function (item) {
-                        if (item._isCached)
-                            item.removeHandler(null, null);
-                        else
-                            item.destroy();
-                    });
-                }
-                _defineCalculatedField(fullName: string, getFunc: () => any) {
-                    var calcDef = baseUtils.getValue(this._calcfldMap, fullName);
-                    if (!calcDef) {
-                        throw new Error(baseUtils.format(ERRS.ERR_PARAM_INVALID, 'calculated fieldName', fullName));
+                    else if (fld.fieldType == collMod.FIELD_TYPE.Navigation) {
+                        //for example Customer.Name
+                        assoc = this._childAssocMap[fld.fieldName];
+                        if (!!assoc) {
+                            parentDB = this.dbContext.getDbSet(assoc.parentDbSetName);
+                            return parentDB.getFieldInfo(parts.slice(1).join('.'));
+                        }
                     }
-                    calcDef.getFunc = getFunc;
+
+                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
                 }
                 sort(fieldNames: string[], sortOrder: collMod.SORT_ORDER) {
                     var ds = this, query = ds.query;
@@ -1832,7 +1872,7 @@
 
             //implements lazy initialization pattern for creating DbSet's instances
             export class DbSets extends RIAPP.BaseObject {
-                _dbSetNames: string[];
+                protected _dbSetNames: string[];
                 private _dbContext: DbContext;
                 private _dbSets: { [name: string]: () => DbSet<Entity>; };
                 private _arrDbSets: DbSet<Entity>[];
@@ -1844,14 +1884,14 @@
                     this._dbSets = {};
                     this._dbSetNames = [];
                 }
-                _dbSetCreated(dbSet: DbSet<Entity>) {
+                protected _dbSetCreated(dbSet: DbSet<Entity>) {
                     var self = this;
                     this._arrDbSets.push(dbSet);
                     dbSet.addOnPropertyChange('hasChanges', function (sender, args) {
                         self._dbContext._onDbSetHasChangesChanged(sender);
                     }, null);
                 }
-                _createDbSet(name: string, dbSetType: IDbSetConstructor) {
+                protected _createDbSet(name: string, dbSetType: IDbSetConstructor) {
                     var self = this, dbContext = this._dbContext;
                     self._dbSets[name] = function () {
                         var t = new dbSetType(dbContext);
@@ -1887,21 +1927,21 @@
             }
 
             export class DbContext extends RIAPP.BaseObject {
-                _isInitialized: boolean;
-                _dbSets: DbSets;
-                //_svcMethods: {[methodName: string]: (args: { [paramName: string]: any; }) => IPromise<any>; };
-                _svcMethods: any;
-                //_assoc: { [getname: string]: () => Association; };
-                _assoc: any;
-                _arrAssoc: Association[];
-                _queryInf: { [queryName: string]: IQueryInfo; };
-                _serviceUrl: string;
-                _isBusy: number;
-                _isSubmiting: boolean;
-                _hasChanges: boolean;
-                _pendingSubmit: { deferred: IDeferred<any>; };
-                _serverTimezone: number;
-                _waitQueue: utilsMOD.WaitQueue;
+                protected _isInitialized: boolean;
+                protected _dbSets: DbSets;
+                //_svcMethods: { [methodName: string]: (args: { [paramName: string]: any; }) => IPromise<any>; };
+                protected _svcMethods: any;
+                //_assoc:  { [getname: string]: () => Association; }
+                protected _assoc: any;
+                private _arrAssoc: Association[];
+                private _queryInf: { [queryName: string]: IQueryInfo; };
+                private _serviceUrl: string;
+                private _isBusy: number;
+                private _isSubmiting: boolean;
+                private _hasChanges: boolean;
+                private _pendingSubmit: { deferred: IDeferred<any>; };
+                private _serverTimezone: number;
+                private _waitQueue: utilsMOD.WaitQueue;
 
                 constructor() {
                     super();
@@ -1919,33 +1959,24 @@
                     this._serverTimezone = utils.get_timeZoneOffset();
                     this._waitQueue = new utilsMOD.WaitQueue(this);
                 }
-                _getEventNames() {
+                protected _getEventNames() {
                     var base_events = super._getEventNames();
                     return ['submit_error'].concat(base_events);
                 }
-                addOnSubmitError(fn: (sender: DbContext, args: { error: any; isHandled: boolean; }) => void, namespace?: string) {
-                    this.addHandler('submit_error', fn, namespace);
-                }
-                removeOnSubmitError(namespace?: string) {
-                    this.removeHandler('submit_error', namespace);
-                }
-                _onGetCalcField(args: { dbSetName: string; fieldName: string; getFunc: () => any; }) {
+                protected _onGetCalcField(args: { dbSetName: string; fieldName: string; getFunc: () => any; }) {
                     this.raiseEvent('define_calc', args);
                 }
-                _getQueryInfo(name: string): IQueryInfo {
-                    return this._queryInf[name];
-                }
-                _initDbSets() {
+                protected _initDbSets() {
                     if (this._isInitialized)
                         throw new Error(RIAPP.ERRS.ERR_DOMAIN_CONTEXT_INITIALIZED);
                 }
-                _initAssociations(associations: IAssociationInfo[]) {
+                protected _initAssociations(associations: IAssociationInfo[]) {
                     var self = this;
                     associations.forEach(function (assoc) {
                         self._initAssociation(assoc);
                     });
                 }
-                _initMethods(methods: IQueryInfo[]) {
+                protected _initMethods(methods: IQueryInfo[]) {
                     var self = this;
                     methods.forEach(function (info) {
                         if (info.isQuery)
@@ -1956,33 +1987,14 @@
                         }
                     });
                 }
-                _updatePermissions(info: IPermissionsInfo) {
+                protected _updatePermissions(info: IPermissionsInfo) {
                     var self = this;
                     this._serverTimezone = info.serverTimezone;
                     info.permissions.forEach(function (perms) {
                         self.getDbSet(perms.dbSetName)._updatePermissions(perms);
                     });
                 }
-                _onDbSetHasChangesChanged(eSet: DbSet<Entity>) {
-                    var old = this._hasChanges, test: DbSet<Entity>;
-                    this._hasChanges = false;
-                    if (eSet.hasChanges) {
-                        this._hasChanges = true;
-                    }
-                    else {
-                        for (var i = 0, len = this._dbSets.arrDbSets.length; i < len; i += 1) {
-                            test = this._dbSets.arrDbSets[i];
-                            if (test.hasChanges) {
-                                this._hasChanges = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (this._hasChanges !== old) {
-                        this.raisePropertyChanged('hasChanges');
-                    }
-                }
-                _initAssociation(assoc: IAssociationInfo) {
+                protected _initAssociation(assoc: IAssociationInfo) {
                     var self = this, options: IAssocConstructorOptions = {
                         dbContext: self,
                         parentName: assoc.parentDbSetName,
@@ -2012,7 +2024,7 @@
                     };
 
                 }
-                _initMethod(methodInfo: IQueryInfo) {
+                protected _initMethod(methodInfo: IQueryInfo) {
                     var self = this;
                     //function expects method parameters
                     this._svcMethods[methodInfo.methodName] = function (args: { [paramName: string]: any; }) {
@@ -2031,7 +2043,7 @@
                             self._invokeMethod(methodInfo, data, callback);
                         } catch (ex) {
                             if (!global._checkIsDummy(ex)) {
-                                self._onError(ex, self);
+                                self.handleError(ex, self);
                                 callback({ result: null, error: ex });
                             }
                         }
@@ -2039,7 +2051,7 @@
                         return deferred.promise();
                     };
                 }
-                _getMethodParams(methodInfo: IQueryInfo, args: { [paramName: string]: any; }): IInvokeRequest {
+                protected _getMethodParams(methodInfo: IQueryInfo, args: { [paramName: string]: any; }): IInvokeRequest {
                     var self = this, methodName: string = methodInfo.methodName,
                         data: IInvokeRequest = { methodName: methodName, paramInfo: { parameters: [] } };
                     var i, parameterInfos = methodInfo.parameters, len = parameterInfos.length, pinfo: IQueryParamInfo, val, value;
@@ -2078,7 +2090,7 @@
 
                     return data;
                 }
-                _invokeMethod(methodInfo: IQueryInfo, data: IInvokeRequest, callback: (res: { result: any; error: any; }) => void) {
+                protected _invokeMethod(methodInfo: IQueryInfo, data: IInvokeRequest, callback: (res: { result: any; error: any; }) => void) {
                     var self = this, operType = DATA_OPER.INVOKE, postData: string, invokeUrl: string;
                     var fn_onComplete = function (res: IInvokeResponse) {
                         try {
@@ -2122,8 +2134,8 @@
                         global._throwDummy(ex);
                     }
                 }
-                _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): IQueryResult<Entity> {
-                    var operType = DATA_OPER.LOAD, dbSet = query._dbSet, methRes: IQueryResult<Entity>;
+                protected _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): IQueryResult<Entity> {
+                    var operType = DATA_OPER.LOAD, dbSet = query.dbSet, methRes: IQueryResult<Entity>;
                     try {
                         methRes = dbSet._fillFromCache({ isPageChanged: isPageChanged, fn_beforeFillEnd: null });
                     } catch (ex) {
@@ -2135,7 +2147,7 @@
                     }
                     return methRes;
                 }
-                _loadIncluded(res: IQueryResponse) {
+                protected _loadIncluded(res: IQueryResponse) {
                     var self = this, hasIncluded = !!res.included && res.included.length > 0;
                     if (!hasIncluded)
                         return;
@@ -2144,7 +2156,7 @@
                         dbSet.fillItems(subset);
                     });
                 }
-                _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<Entity> {
+                protected _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<Entity> {
                     var self = this, operType = DATA_OPER.LOAD, dbSetName, dbSet: DbSet<Entity>, loadRes: IQueryResult<Entity>;
                     try {
                         if (!res)
@@ -2171,7 +2183,7 @@
                     }
                     return loadRes;
                 }
-                _dataSaved(res: IChangeSet) {
+                protected _dataSaved(res: IChangeSet) {
                     var self = this, submitted: Entity[] = [], notvalid: Entity[] = [];
                     try {
                         try {
@@ -2207,7 +2219,7 @@
                         global._throwDummy(ex);
                     }
                 }
-                _getChanges(): IChangeSet {
+                protected _getChanges(): IChangeSet {
                     var changeSet: IChangeSet = { dbSets: [], error: null, trackAssocs: [] };
                     this._dbSets.arrDbSets.forEach(function (eSet) {
                         eSet.endEdit();
@@ -2223,12 +2235,135 @@
                     });
                     return changeSet;
                 }
-                _getUrl(action):string {
+                protected _getUrl(action):string {
                     var loadUrl = this.service_url;
                     if (!utils.str.endsWith(loadUrl, '/'))
                         loadUrl = loadUrl + '/';
                     loadUrl = loadUrl + [action, ''].join('/');
                     return loadUrl;
+                }
+                handleError(error, source): boolean {
+                    var isHandled = super.handleError(error, source);
+                    if (!isHandled) {
+                        return global.handleError(error, source);
+                    }
+                    return isHandled;
+                }
+                protected _onDataOperError(ex, oper): boolean {
+                    if (global._checkIsDummy(ex))
+                        return true;
+                    var er;
+                    if (ex instanceof DataOperationError)
+                        er = ex;
+                    else
+                        er = new DataOperationError(ex, oper);
+                    return this.handleError(er, this);
+                }
+                protected _onSubmitError(error) {
+                    var args = { error: error, isHandled: false };
+                    this.raiseEvent('submit_error', args);
+                    if (!args.isHandled) {
+                        this.rejectChanges();
+                        this._onDataOperError(error, DATA_OPER.SUBMIT);
+                    }
+                }
+                protected waitForNotBusy(callback, callbackArgs) {
+                    this._waitQueue.enQueue({
+                        prop: 'isBusy',
+                        groupName: null,
+                        predicate: function (val) {
+                            return !val;
+                        },
+                        action: callback,
+                        actionArgs: callbackArgs
+                    });
+                }
+                protected waitForNotSubmiting(callback, callbackArgs, groupName) {
+                    this._waitQueue.enQueue({
+                        prop: 'isSubmiting',
+                        predicate: function (val) {
+                            return !val;
+                        },
+                        action: callback,
+                        actionArgs: callbackArgs,
+                        groupName: groupName,
+                        lastWins: !!groupName
+                    });
+                }
+                protected waitForInitialized(callback, callbackArgs) {
+                    this._waitQueue.enQueue({
+                        prop: 'isInitialized',
+                        groupName: 'dbContext',
+                        predicate: function (val) {
+                            return !!val;
+                        },
+                        action: callback,
+                        actionArgs: callbackArgs
+                    });
+                }
+                initialize(options: { serviceUrl: string; permissions?: IPermissionsInfo; }) {
+                    if (this._isInitialized)
+                        return;
+                    var self = this, opts: {
+                        serviceUrl: string;
+                        permissions: IPermissionsInfo;
+                    } = utils.extend(false, {
+                            serviceUrl: null,
+                            permissions: null
+                        }, options), loadUrl, operType;
+
+                    try {
+                        if (!utils.check.isString(opts.serviceUrl)) {
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, "serviceUrl", opts.serviceUrl));
+                        }
+                        this._serviceUrl = opts.serviceUrl;
+                        this._initDbSets();
+
+                        if (!!opts.permissions) {
+                            self._updatePermissions(opts.permissions);
+                            self._isInitialized = true;
+                            self.raisePropertyChanged('isInitialized');
+                            return;
+                        }
+
+                        //initialize by obtaining metadata from the data service by ajax call
+                        loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = DATA_OPER.INIT;
+                    }
+                    catch (ex) {
+                        this.handleError(ex, this);
+                        global._throwDummy(ex);
+                    }
+
+                    try {
+                        this.isBusy = true;
+                        utils.performAjaxGet(loadUrl).done((permissions: string) => {
+                            try {
+                                self._updatePermissions(JSON.parse(permissions));
+                                self.isBusy = false;
+                                self._isInitialized = true;
+                                self.raisePropertyChanged('isInitialized');
+                            }
+                            catch (ex) {
+                                self.isBusy = false;
+                                self._onDataOperError(ex, operType);
+                                global._throwDummy(ex);
+                            }
+                        }).fail((er) => {
+                                self.isBusy = false;
+                                self._onDataOperError(er, operType);
+                            });
+                    }
+                    catch (ex) {
+                        this.isBusy = false;
+                        this._onDataOperError(ex, operType);
+                        global._throwDummy(ex);
+                    }
+                }
+                addOnSubmitError(fn: (sender: DbContext, args: { error: any; isHandled: boolean; }) => void, namespace?: string) {
+                    this.addHandler('submit_error', fn, namespace);
+                }
+                removeOnSubmitError(namespace?: string) {
+                    this.removeHandler('submit_error', namespace);
                 }
                 _onItemRefreshed(res: IRefreshRowInfo, item: Entity) {
                     var operType = DATA_OPER.REFRESH;
@@ -2313,62 +2448,26 @@
                     }, [], null);
                     return deferred.promise();
                 }
-                _onError(error, source): boolean {
-                    var isHandled = super._onError(error, source);
-                    if (!isHandled) {
-                        return global._onError(error, source);
-                    }
-                    return isHandled;
+                _getQueryInfo(name: string): IQueryInfo {
+                    return this._queryInf[name];
                 }
-                _onDataOperError(ex, oper): boolean {
-                    if (global._checkIsDummy(ex))
-                        return true;
-                    var er;
-                    if (ex instanceof DataOperationError)
-                        er = ex;
-                    else
-                        er = new DataOperationError(ex, oper);
-                    return this._onError(er, this);
-                }
-                _onSubmitError(error) {
-                    var args = { error: error, isHandled: false };
-                    this.raiseEvent('submit_error', args);
-                    if (!args.isHandled) {
-                        this.rejectChanges();
-                        this._onDataOperError(error, DATA_OPER.SUBMIT);
+                _onDbSetHasChangesChanged(eSet: DbSet<Entity>) {
+                    var old = this._hasChanges, test: DbSet<Entity>;
+                    this._hasChanges = false;
+                    if (eSet.hasChanges) {
+                        this._hasChanges = true;
                     }
-                }
-                _beforeLoad(query: TDataQuery<Entity>, oldQuery: TDataQuery<Entity>, dbSet: DbSet<Entity>) {
-                    if (query && oldQuery !== query) {
-                        dbSet._query = query;
-                        dbSet.pageIndex = 0;
-                    }
-                    if (!!oldQuery && oldQuery !== query) {
-                        oldQuery.destroy();
-                    }
-
-                    if (query.pageSize !== dbSet.pageSize) {
-                        dbSet._ignorePageChanged = true;
-                        try {
-                            dbSet.pageIndex = 0;
-                            dbSet.pageSize = query.pageSize;
-                        } finally {
-                            dbSet._ignorePageChanged = false;
+                    else {
+                        for (var i = 0, len = this._dbSets.arrDbSets.length; i < len; i += 1) {
+                            test = this._dbSets.arrDbSets[i];
+                            if (test.hasChanges) {
+                                this._hasChanges = true;
+                                break;
+                            }
                         }
                     }
-
-                    if (query.pageIndex !== dbSet.pageIndex) {
-                        dbSet._ignorePageChanged = true;
-                        try {
-                            dbSet.pageIndex = query.pageIndex;
-                        }
-                        finally {
-                            dbSet._ignorePageChanged = false;
-                        }
-                    }
-
-                    if (!query.isCacheValid) {
-                        query._clearCache();
+                    if (this._hasChanges !== old) {
+                        this.raisePropertyChanged('hasChanges');
                     }
                 }
                 _load(query: TDataQuery<Entity>, isPageChanged: boolean): IPromise<IQueryResult<Entity>> {
@@ -2417,9 +2516,9 @@
                             self.isBusy = true;
                             try {
                                 //restore pageIndex
-                                query.pageIndex = pageIndex;
-                                self._beforeLoad(query, oldQuery, dbSet);
-
+                            query.pageIndex = pageIndex;
+                            dbSet._beforeLoad(query, oldQuery);
+                    
                                 if (loadPageCount > 1 && isPagingEnabled) {
                                     if (query._isPageCached(pageIndex)) {
                                         loadRes = self._loadFromCache(query, isPageChanged);
@@ -2624,98 +2723,6 @@
                         eSet.rejectChanges();
                     });
                 }
-                initialize(options: { serviceUrl: string; permissions?: IPermissionsInfo; }) {
-                    if (this._isInitialized)
-                        return;
-                    var self = this, opts: {
-                        serviceUrl: string;
-                        permissions: IPermissionsInfo;
-                    } = utils.extend(false, {
-                            serviceUrl: null,
-                            permissions: null
-                        }, options), loadUrl, operType;
-
-                    try {
-                        if (!utils.check.isString(opts.serviceUrl)) {
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, "serviceUrl", opts.serviceUrl));
-                        }
-                        this._serviceUrl = opts.serviceUrl;
-                        this._initDbSets();
-
-                        if (!!opts.permissions) {
-                            self._updatePermissions(opts.permissions);
-                            self._isInitialized = true;
-                            self.raisePropertyChanged('isInitialized');
-                            return;
-                        }
-
-                        //initialize by obtaining metadata from the data service by ajax call
-                        loadUrl = this._getUrl(DATA_SVC_METH.GetPermissions), operType = DATA_OPER.INIT;
-                    }
-                    catch (ex) {
-                        this._onError(ex, this);
-                        global._throwDummy(ex);
-                    }
-
-                    try {
-                        this.isBusy = true;
-                        utils.performAjaxGet(loadUrl).done((permissions: string) => {
-                            try {
-                                self._updatePermissions(JSON.parse(permissions));
-                                self.isBusy = false;
-                                self._isInitialized = true;
-                                self.raisePropertyChanged('isInitialized');
-                            }
-                            catch (ex) {
-                                self.isBusy = false;
-                                self._onDataOperError(ex, operType);
-                                global._throwDummy(ex);
-                            }
-                        }).fail((er) => {
-                                self.isBusy = false;
-                                self._onDataOperError(er, operType);
-                        });
-                    }
-                    catch (ex) {
-                        this.isBusy = false;
-                        this._onDataOperError(ex, operType);
-                        global._throwDummy(ex);
-                    }
-                }
-                waitForNotBusy(callback, callbackArgs) {
-                    this._waitQueue.enQueue({
-                        prop: 'isBusy',
-                        groupName: null,
-                        predicate: function (val) {
-                            return !val;
-                        },
-                        action: callback,
-                        actionArgs: callbackArgs
-                    });
-                }
-                waitForNotSubmiting(callback, callbackArgs, groupName) {
-                    this._waitQueue.enQueue({
-                        prop: 'isSubmiting',
-                        predicate: function (val) {
-                            return !val;
-                        },
-                        action: callback,
-                        actionArgs: callbackArgs,
-                        groupName: groupName,
-                        lastWins: !!groupName
-                    });
-                }
-                waitForInitialized(callback, callbackArgs) {
-                    this._waitQueue.enQueue({
-                        prop: 'isInitialized',
-                        groupName: 'dbContext',
-                        predicate: function (val) {
-                            return !!val;
-                        },
-                        action: callback,
-                        actionArgs: callbackArgs
-                    });
-                }
                 destroy() {
                     if (this._isDestroyed)
                         return;
@@ -2770,24 +2777,24 @@
             }
 
             export class Association extends RIAPP.BaseObject {
-                _objId: string;
-                _name: string;
-                _dbContext: DbContext;
-                _onDeleteAction: DELETE_ACTION;
-                _parentDS: DbSet<Entity>;
-                _childDS: DbSet<Entity>;
-                _parentFldInfos: collMod.IFieldInfo[];
-                _childFldInfos: collMod.IFieldInfo[];
-                _parentToChildrenName: string;
-                _childToParentName: string;
-                _parentMap: { [key: string]: Entity; };
-                _childMap: { [key: string]: Entity[]; };
-                _isParentFilling: boolean;
-                _isChildFilling: boolean;
-                _saveParentFKey: string;
-                _saveChildFKey: string;
-                _changedTimeout: number;
-                _changed: { [key: string]: number; };
+                private _objId: string;
+                private _name: string;
+                private _dbContext: DbContext;
+                private _onDeleteAction: DELETE_ACTION;
+                private _parentDS: DbSet<Entity>;
+                private _childDS: DbSet<Entity>;
+                private _parentFldInfos: collMod.IFieldInfo[];
+                private _childFldInfos: collMod.IFieldInfo[];
+                private _parentToChildrenName: string;
+                private _childToParentName: string;
+                private _parentMap: { [key: string]: Entity; };
+                private _childMap: { [key: string]: Entity[]; };
+                private _isParentFilling: boolean;
+                private _isChildFilling: boolean;
+                private _saveParentFKey: string;
+                private _saveChildFKey: string;
+                private _changedTimeout: number;
+                private _changed: { [key: string]: number; };
 
                 constructor(options: IAssocConstructorOptions) {
                     super();
@@ -2833,72 +2840,72 @@
                     self._notifyParentChanged(changed1);
                     self._notifyChildrenChanged(changed2);
                 }
-                _onError(error, source): boolean {
-                    var isHandled = super._onError(error, source);
+                handleError(error, source): boolean {
+                    var isHandled = super.handleError(error, source);
                     if (!isHandled) {
-                        return global._onError(error, source);
+                        return global.handleError(error, source);
                     }
                     return isHandled;
                 }
-                _bindParentDS() {
+                protected _bindParentDS() {
                     var self = this, ds = this._parentDS;
                     if (!ds) return;
-                    ds._addHandler('coll_changed', function (sender, args) {
+                    ds.addHandler('coll_changed', function (sender, args) {
                         if (ds !== sender) return;
                         self._onParentCollChanged(args);
                     }, self._objId, true);
-                    ds._addHandler('fill', function (sender, args) {
+                    ds.addHandler('fill', function (sender, args) {
                         if (ds !== sender) return;
                         self._onParentFill(args);
                     }, self._objId, true);
-                    ds._addHandler('begin_edit', function (sender, args) {
+                    ds.addHandler('begin_edit', function (sender, args) {
                         if (ds !== sender) return;
                         self._onParentEdit(args.item, true, undefined);
                     }, self._objId, true);
-                    ds._addHandler('end_edit', function (sender, args) {
+                    ds.addHandler('end_edit', function (sender, args) {
                         if (ds !== sender) return;
                         self._onParentEdit(args.item, false, args.isCanceled);
                     }, self._objId, true);
-                    ds._addHandler('item_deleting', function (sender, args) {
+                    ds.addHandler('item_deleting', function (sender, args) {
                     }, self._objId, true);
-                    ds._addHandler('status_changed', function (sender, args) {
+                    ds.addHandler('status_changed', function (sender, args) {
                         if (ds !== sender) return;
                         self._onParentStatusChanged(args.item, args.oldChangeType);
                     }, self._objId, true);
-                    ds._addHandler('commit_changes', function (sender, args) {
+                    ds.addHandler('commit_changes', function (sender, args) {
                         if (ds !== sender) return;
                         self._onParentCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId, true);
                 }
-                _bindChildDS() {
+                protected _bindChildDS() {
                     var self = this, ds = this._childDS;
                     if (!ds) return;
-                    ds._addHandler('coll_changed', function (sender, args) {
+                    ds.addHandler('coll_changed', function (sender, args) {
                         if (ds !== sender) return;
                         self._onChildCollChanged(args);
                     }, self._objId, true);
-                    ds._addHandler('fill', function (sender, args) {
+                    ds.addHandler('fill', function (sender, args) {
                         if (ds !== sender) return;
                         self._onChildFill(args);
                     }, self._objId, true);
-                    ds._addHandler('begin_edit', function (sender, args) {
+                    ds.addHandler('begin_edit', function (sender, args) {
                         if (ds !== sender) return;
                         self._onChildEdit(args.item, true, undefined);
                     }, self._objId, true);
-                    ds._addHandler('end_edit', function (sender, args) {
+                    ds.addHandler('end_edit', function (sender, args) {
                         if (ds !== sender) return;
                         self._onChildEdit(args.item, false, args.isCanceled);
                     }, self._objId, true);
-                    ds._addHandler('status_changed', function (sender, args) {
+                    ds.addHandler('status_changed', function (sender, args) {
                         if (ds !== sender) return;
                         self._onChildStatusChanged(args.item, args.oldChangeType);
                     }, self._objId, true);
-                    ds._addHandler('commit_changes', function (sender, args) {
+                    ds.addHandler('commit_changes', function (sender, args) {
                         if (ds !== sender) return;
                         self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId, true);
                 }
-                _onParentCollChanged(args: collMod.ICollChangedArgs<Entity>) {
+                protected _onParentCollChanged(args: collMod.ICollChangedArgs<Entity>) {
                     var self = this, item: Entity, items = <Entity[]>args.items, changed: string[] = [], changedKeys = {};
                     switch (args.change_type) {
                         case collMod.COLL_CHANGE_TYPE.RESET:
@@ -2934,7 +2941,7 @@
                     }
                     self._notifyParentChanged(changed);
                 }
-                _onParentFill(args: collMod.ICollFillArgs<Entity>) {
+                protected _onParentFill(args: collMod.ICollFillArgs<Entity>) {
                     var isEnd = !args.isBegin, self = this, changed;
                     if (isEnd) {
                         self._isParentFilling = false;
@@ -2949,7 +2956,7 @@
                         self._isParentFilling = true;
                     }
                 }
-                _onParentEdit(item: Entity, isBegin: boolean, isCanceled: boolean) {
+                protected _onParentEdit(item: Entity, isBegin: boolean, isCanceled: boolean) {
                     var self = this;
                     if (isBegin) {
                         self._storeParentFKey(item);
@@ -2961,7 +2968,7 @@
                             self._saveParentFKey = null;
                     }
                 }
-                _onParentCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
+                protected _onParentCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
                     var self = this, fkey;
                     if (isBegin) {
                         if (isRejected && changeType === collMod.STATUS.ADDED) {
@@ -2983,13 +2990,13 @@
                         self._checkParentFKey(item);
                     }
                 }
-                _storeParentFKey(item: Entity) {
+                protected _storeParentFKey(item: Entity) {
                     var self = this, fkey = self.getParentFKey(item);
                     if (fkey !== null && !!self._parentMap[fkey]) {
                         self._saveParentFKey = fkey;
                     }
                 }
-                _checkParentFKey(item: Entity) {
+                protected _checkParentFKey(item: Entity) {
                     var self = this, fkey: string, savedKey = self._saveParentFKey;
                     self._saveParentFKey = null;
                     fkey = self.getParentFKey(item);
@@ -3007,7 +3014,7 @@
                         }
                     }
                 }
-                _onParentStatusChanged(item: Entity, oldChangeType: collMod.STATUS) {
+                protected _onParentStatusChanged(item: Entity, oldChangeType: collMod.STATUS) {
                     var self = this, newChangeType = item._changeType, fkey:string;
                     var children:Entity[];
                     if (newChangeType === collMod.STATUS.DELETED) {
@@ -3046,7 +3053,7 @@
                         }
                     }
                 }
-                _onChildCollChanged(args: collMod.ICollChangedArgs<Entity>) {
+                protected _onChildCollChanged(args: collMod.ICollChangedArgs<Entity>) {
                     var self = this, item: Entity, items = args.items, changed: string[] = [], changedKeys = {};
                     switch (args.change_type) {
                         case collMod.COLL_CHANGE_TYPE.RESET:
@@ -3086,13 +3093,13 @@
                     }
                     self._notifyChildrenChanged(changed);
                 }
-                _notifyChildrenChanged(changed: string[]) {
+                protected _notifyChildrenChanged(changed: string[]) {
                     this._notifyChanged([], changed);
                 }
-                _notifyParentChanged(changed: string[]) {
+                protected _notifyParentChanged(changed: string[]) {
                     this._notifyChanged(changed, []);
                 }
-                _notifyChanged(changed_pkeys: string[], changed_ckeys: string[]) {
+                protected _notifyChanged(changed_pkeys: string[], changed_ckeys: string[]) {
                     var self = this;
                     if (changed_pkeys.length > 0 || changed_ckeys.length > 0) {
                         changed_pkeys.forEach(function (key) {
@@ -3133,7 +3140,7 @@
                         }
                     }
                 }
-                _onChildFill(args: collMod.ICollFillArgs<Entity>) {
+                protected _onChildFill(args: collMod.ICollFillArgs<Entity>) {
                     var isEnd = !args.isBegin, self = this, changed;
                     if (isEnd) {
                         self._isChildFilling = false;
@@ -3148,7 +3155,7 @@
                         self._isChildFilling = true;
                     }
                 }
-                _onChildEdit(item: Entity, isBegin: boolean, isCanceled: boolean) {
+                protected _onChildEdit(item: Entity, isBegin: boolean, isCanceled: boolean) {
                     var self = this;
                     if (isBegin) {
                         self._storeChildFKey(item);
@@ -3161,7 +3168,7 @@
                         }
                     }
                 }
-                _onChildCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
+                protected _onChildCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
                     var self = this, fkey: string;
                     if (isBegin) {
                         if (isRejected && changeType === collMod.STATUS.ADDED) {
@@ -3183,7 +3190,7 @@
                         self._checkChildFKey(item);
                     }
                 }
-                _storeChildFKey(item: Entity) {
+                protected _storeChildFKey(item: Entity) {
                     var self = this, fkey = self.getChildFKey(item), arr: Entity[];
                     if (!!fkey) {
                         arr = self._childMap[fkey];
@@ -3192,7 +3199,7 @@
                         }
                     }
                 }
-                _checkChildFKey(item: Entity) {
+                protected _checkChildFKey(item: Entity) {
                     var self = this, savedKey = self._saveChildFKey, fkey: string, arr: Entity[];
                     self._saveChildFKey = null;
                     fkey = self.getChildFKey(item);
@@ -3213,7 +3220,7 @@
                         }
                     }
                 }
-                _onChildStatusChanged(item: Entity, oldChangeType: collMod.STATUS) {
+                protected _onChildStatusChanged(item: Entity, oldChangeType: collMod.STATUS) {
                     var self = this, newChangeType = item._changeType;
                     var fkey = self.getChildFKey(item);
                     if (!fkey)
@@ -3224,7 +3231,7 @@
                             self._notifyChildrenChanged([fkey]);
                     }
                 }
-                _getItemKey(finf: collMod.IFieldInfo[], ds: DbSet<Entity>, item: Entity) {
+                protected _getItemKey(finf: collMod.IFieldInfo[], ds: DbSet<Entity>, item: Entity) {
                     var arr = [], val, strval: string;
                     for (var i = 0, len = finf.length; i < len; i += 1) {
                         val = item[finf[i].fieldName];
@@ -3235,17 +3242,17 @@
                     }
                     return arr.join(';');
                 }
-                _resetChildMap() {
+                protected _resetChildMap() {
                     var self = this, fkeys = Object.keys(this._childMap);
                     this._childMap = {};
                     self._notifyChildrenChanged(fkeys);
                 }
-                _resetParentMap() {
+                protected _resetParentMap() {
                     var self = this, fkeys = Object.keys(this._parentMap);
                     this._parentMap = {};
                     self._notifyParentChanged(fkeys);
                 }
-                _unMapChildItem(item: Entity) {
+                protected _unMapChildItem(item: Entity) {
                     var fkey, arr: Entity[], idx: number, changedKey = null;
                     fkey = this.getChildFKey(item);
                     if (!!fkey) {
@@ -3261,7 +3268,7 @@
                     }
                     return changedKey;
                 }
-                _unMapParentItem(item: Entity) {
+                protected _unMapParentItem(item: Entity) {
                     var fkey: string, changedKey = null;
                     fkey = this.getParentFKey(item);
                     if (!!fkey && !!this._parentMap[fkey]) {
@@ -3270,7 +3277,7 @@
                     }
                     return changedKey;
                 }
-                _mapParentItems(items: Entity[]) {
+                protected _mapParentItems(items: Entity[]) {
                     var item: Entity, fkey: string, chngType: number, old: Entity, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
@@ -3289,7 +3296,7 @@
                     }
                     return Object.keys(chngedKeys);
                 }
-                _onChildrenChanged(fkey: string) {
+                protected _onChildrenChanged(fkey: string) {
                     if (!!fkey && !!this._parentToChildrenName) {
                         var obj = this._parentMap[fkey];
                         if (!!obj) {
@@ -3297,7 +3304,7 @@
                         }
                     }
                 }
-                _onParentChanged(fkey: string) {
+                protected _onParentChanged(fkey: string) {
                     var self = this, arr: Entity[];
                     if (!!fkey && !!this._childToParentName) {
                         arr = this._childMap[fkey];
@@ -3308,7 +3315,7 @@
                         }
                     }
                 }
-                _mapChildren(items: Entity[]) {
+                protected _mapChildren(items: Entity[]) {
                     var item: Entity, fkey: string, arr: Entity[], chngType, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
@@ -3331,12 +3338,12 @@
                     }
                     return Object.keys(chngedKeys);
                 }
-                _unbindParentDS() {
+                protected _unbindParentDS() {
                     var self = this, ds = this.parentDS;
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
-                _unbindChildDS() {
+                protected _unbindChildDS() {
                     var self = this, ds = this.childDS;
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
@@ -3415,13 +3422,13 @@
             }
 
             export class DataView<TItem extends collMod.CollectionItem> extends collMod.BaseCollection<TItem> {
-                _dataSource: collMod.BaseCollection<TItem>;
-                _fn_filter: (item: TItem) => boolean;
-                _fn_sort: (item1: TItem, item2: TItem) => number;
-                _fn_itemsProvider: (ds: collMod.BaseCollection<TItem>) => TItem[];
-                _isDSFilling: boolean;
-                _isAddingNew: boolean;
-                _objId: string;
+                private _dataSource: collMod.BaseCollection<TItem>;
+                private _fn_filter: (item: TItem) => boolean;
+                private _fn_sort: (item1: TItem, item2: TItem) => number;
+                private _fn_itemsProvider: (ds: collMod.BaseCollection<TItem>) => TItem[];
+                private _isDSFilling: boolean;
+                private _isAddingNew: boolean;
+                private _objId: string;
 
                 constructor(options: {
                     dataSource: collMod.BaseCollection<TItem>;
@@ -3454,7 +3461,7 @@
                     });
                     this._bindDS();
                 }
-                _getEventNames() {
+                protected _getEventNames() {
                     var base_events = super._getEventNames();
                     return ['view_refreshed'].concat(base_events);
                 }
@@ -3464,7 +3471,7 @@
                 removeOnViewRefreshed(namespace?: string) {
                     this.removeHandler('view_refreshed', namespace);
                 }
-                _filterForPaging(items: TItem[]) {
+                protected _filterForPaging(items: TItem[]) {
                     var skip = 0, take = 0, pos = -1, cnt = -1, result: TItem[] = [];
                     skip = this.pageSize * this.pageIndex;
                     take = this.pageSize;
@@ -3480,10 +3487,10 @@
                     });
                     return result;
                 }
-                _onViewRefreshed(args: {}) {
+                protected _onViewRefreshed(args: {}) {
                     this.raiseEvent('view_refreshed', args);
                 }
-                _clear(isPageChanged: boolean) {
+                protected _clear(isPageChanged: boolean) {
                     this.cancelEdit();
                     this._EditingItem = null;
                     this._newKey = 0;
@@ -3496,7 +3503,7 @@
                         this.pageIndex = 0;
                     this.raisePropertyChanged('count');
                 }
-                _refresh(isPageChanged: boolean): void {
+                protected _refresh(isPageChanged: boolean): void {
                     var items;
                     var ds = this._dataSource;
                     if (!ds) {
@@ -3516,7 +3523,7 @@
                     this._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
                     this._onViewRefreshed({});
                 }
-                _fillItems(data: {
+                protected _fillItems(data: {
                     items: TItem[];
                     isPageChanged: boolean;
                     clear: boolean;
@@ -3570,7 +3577,7 @@
                     this.moveFirst();
                     return newItems;
                 }
-                _onDSCollectionChanged(args: collMod.ICollChangedArgs<TItem>) {
+                protected _onDSCollectionChanged(args: collMod.ICollChangedArgs<TItem>) {
                     var self = this, item: collMod.CollectionItem, items = args.items;
                     switch (args.change_type) {
                         case collMod.COLL_CHANGE_TYPE.RESET:
@@ -3608,7 +3615,7 @@
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
-                _onDSFill(args: collMod.ICollFillArgs<TItem>) {
+                protected _onDSFill(args: collMod.ICollFillArgs<TItem>) {
                     var self = this, items = args.fetchedItems, isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -3625,7 +3632,7 @@
                         this._isDSFilling = true;
                     }
                 }
-                _onDSStatusChanged(args: collMod.ICollItemStatusArgs<TItem>) {
+                protected _onDSStatusChanged(args: collMod.ICollItemStatusArgs<TItem>) {
                     var self = this, item = args.item, key = args.key, oldChangeType = args.oldChangeType, isOk, canFilter = !!self._fn_filter;
                     if (!!self._itemsByKey[key]) {
                         self._onItemStatusChanged(item, oldChangeType);
@@ -3646,7 +3653,7 @@
                         }
                     }
                 }
-                _bindDS() {
+                protected _bindDS() {
                     var self = this, ds = this._dataSource;
                     if (!ds) return;
                     ds.addHandler('coll_changed', function (sender, args) {
@@ -3718,31 +3725,31 @@
                         }
                     }, self._objId);
                 }
-                _unbindDS() {
+                protected _unbindDS() {
                     var self = this, ds = this._dataSource;
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
-                _getStrValue(val, fieldInfo) {
-                    return this._dataSource._getStrValue(val, fieldInfo);
-                }
-                _onCurrentChanging(newCurrent: TItem) {
+                protected _onCurrentChanging(newCurrent: TItem) {
                     var ds = this._dataSource;
                     try {
-                        if (!!ds._EditingItem && newCurrent !== ds._EditingItem)
+                        if (!!ds._getEditingItem() && newCurrent !== ds._getEditingItem())
                             ds.endEdit();
                     }
                     catch (ex) {
                         ds.cancelEdit();
-                        global.reThrow(ex, this._onError(ex, this));
+                        global.reThrow(ex, this.handleError(ex, this));
                     }
+                }
+                protected _onPageChanged() {
+                    this._refresh(true);
+                }
+                _getStrValue(val, fieldInfo) {
+                    return this._dataSource._getStrValue(val, fieldInfo);
                 }
                 _getErrors(item: TItem) {
                     var ds = this._dataSource;
                     return ds._getErrors(item);
-                }
-                _onPageChanged() {
-                    this._refresh(true);
                 }
                 getItemsWithErrors() {
                     var ds = this._dataSource;
@@ -3818,7 +3825,7 @@
                         deffered.resolve();
                     } catch (ex) {
                         deffered.reject(ex);
-                        this._onError(ex, this);
+                        this.handleError(ex, this);
                         global._throwDummy(ex);
                     }
                     return deffered.promise();
@@ -3919,17 +3926,17 @@
                     };
                     super(opts);
                 }
-                _refresh(isPageChanged: boolean) : void {
-                    var self = this, ds = this._dataSource;
+                protected _refresh(isPageChanged: boolean) : void {
+                    var self = this, ds = this.dataSource;
                     if (!ds) {
                         return;
                     }
                     var items = <TEntity[]>self._association.getChildItems(self._parentItem);
-                    if (!!self._fn_filter) {
-                        items = items.filter(self._fn_filter);
+                    if (!!self.fn_filter) {
+                        items = items.filter(self.fn_filter);
                     }
-                    if (!!self._fn_sort) {
-                        items = items.sort(self._fn_sort);
+                    if (!!self.fn_sort) {
+                        items = items.sort(self.fn_sort);
                     }
                     self._fillItems({ items: items, isPageChanged: !!isPageChanged, clear: true, isAppend: false });
                     self._onViewRefreshed({});
@@ -3977,7 +3984,7 @@
             }
             
             export class BaseComplexProperty extends RIAPP.BaseObject implements RIAPP.IErrorNotification {
-                _name: string;
+                private _name: string;
 
                 constructor(name: string) {
                     super();

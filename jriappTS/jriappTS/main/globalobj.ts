@@ -6,6 +6,11 @@
         Source= 0, Target= 1
     }
 
+    export interface IConverter {
+        convertToSource(val, param, dataContext): any;
+        convertToTarget(val, param, dataContext): any;
+    }
+
     export interface ISelectable {
         containerEl: HTMLElement;
         uniqueID: string;
@@ -38,7 +43,7 @@
     }
 
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.3.0';
+        public static vesion = '2.4.0';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;
@@ -147,7 +152,7 @@
         private _getTemplateLoaderCore(name: string): ITemplateLoaderInfo {
             return RIAPP.baseUtils.getValue(this._templateLoaders, name);
         }
-        _getEventNames() {
+        protected _getEventNames() {
             var base_events = super._getEventNames();
             return ['load', 'unload','initialize', 'unresolvedBind'].concat(base_events);
         }
@@ -176,7 +181,7 @@
             self.raiseEvent('initialize', {});
             setTimeout(function () { self.removeHandler('initialize', null); }, 0);
         }
-        _addHandler(name: string, fn: (sender, args) => void , namespace?: string, prepend?: boolean) {
+        protected _addHandler(name: string, fn: (sender, args) => void , namespace?: string, prepend?: boolean) {
             var self = this;
             if ((name == 'load' && self._isReady) || (name == 'initialize' && self._isInitialized)) {
                  //when already is ready, immediately raise the event
@@ -259,7 +264,7 @@
                     deferred.resolve();
                 }
                 catch (ex) {
-                    self._onError(ex, self);
+                    self.handleError(ex, self);
                     deferred.reject();
                 }
                 if (!self.isLoading)
@@ -270,13 +275,13 @@
                     self.raisePropertyChanged('isLoading');
                 deferred.reject();
                 if (!!err && !!err.message) {
-                    self._onError(err, self);
+                    self.handleError(err, self);
                 }
                 else if (!!err && !!err.responseText) {
-                    self._onError(new Error(err.responseText), self);
+                    self.handleError(new Error(err.responseText), self);
                 }
                 else
-                    self._onError(new Error('Failed to load templates'), self);
+                    self.handleError(new Error('Failed to load templates'), self);
             });
             return deferred.promise();
         }
@@ -404,7 +409,7 @@
                 actionArgs: callbackArgs
             });
         }
-        _getConverter(name: string): MOD.converter.IConverter {
+        _getConverter(name: string): IConverter {
             var name2 = 'converters.' + name;
             var res = this._getObject(this, name2);
             if (!res)
@@ -482,7 +487,7 @@
             var name2 = 'types.' + name;
             return this._getObject(this, name2);
         }
-        registerConverter(name:string, obj: MOD.converter.IConverter) {
+        registerConverter(name:string, obj: IConverter) {
             var name2 = 'converters.' + name;
             if (!this._getObject(this, name2)) {
                 this._registerObject(this, name2, obj);

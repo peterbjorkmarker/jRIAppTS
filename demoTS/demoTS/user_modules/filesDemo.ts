@@ -133,7 +133,7 @@ module RIAPP
                     }
                 }
                 catch (ex) {
-                    self._onError(ex, self);
+                    self.handleError(ex, self);
                     global._throwDummy(ex);
                 }
             }
@@ -243,7 +243,7 @@ module RIAPP
                     try {
                         self.showDialog();
                     } catch (ex) {
-                        self._onError(ex, this);
+                        self.handleError(ex, this);
                     }
                 }, self, function (sender, param) {
                         return true;
