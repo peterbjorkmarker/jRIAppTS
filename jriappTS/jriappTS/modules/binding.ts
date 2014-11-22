@@ -47,13 +47,19 @@
             }
 
          
+            interface IBindingState
+            {
+                source: any;
+                target: any;
+            }
+
             export class Binding extends RIAPP.BaseObject{
-                private _state:any;
+                private _state: IBindingState;
                 private _mode: BINDING_MODE;
                 private _converter: RIAPP.IConverter;
                 private _converterParam: any;
-                private _srcPath:string[];
-                private _tgtPath:string[];
+                private _srcPath: string[];
+                private _tgtPath: string[];
                 private _isSourceFixed: boolean;
                 private _pathItems: { [key: string]: BaseObject; };
                 private _objId: string;
@@ -185,14 +191,18 @@
                     return fn;
                 }
                 private _parseSrcPath(obj, path: string[], lvl: number) {
-                    var self = this;
+                    var self = this, isDestroyed= false;
                     self._sourceObj = null;
                     if (path.length === 0) {
                         self._sourceObj = obj;
                     }
                     else
                         self._parseSrcPath2(obj, path, lvl);
-                    if (!!self._targetObj)
+
+                    if (utils.check.isBaseObj(self._targetObj)) {
+                        isDestroyed = (<BaseObject>self._targetObj).getIsDestroyCalled();
+                    }
+                    if (!!self._targetObj && !isDestroyed)
                         self._updateTarget();
                 }
                 private _parseSrcPath2(obj, path:string[], lvl:number) {
@@ -332,23 +342,23 @@
                         }
                     }
                 }
-                private _onTgtDestroyed(sender,args) {
+                private _onTgtDestroyed(sender, args) {
                     if (this._isDestroyCalled)
                         return;
-                    this.target = null;
+                    this._setTarget(null);
                 }
                 private _onSrcDestroyed(sender, args) {
                     var self = this;
                     if (self._isDestroyCalled)
                         return;
                     if (sender === self.source)
-                        self.source = null;
+                        self._setSource(null);
                     else {
                         self._setPathItem(null, BindTo.Source, 0, self._srcPath);
                         setTimeout(function () {
                             if (self._isDestroyCalled)
                                 return;
-                            //rebind after source destroy fully completed
+                            //rebind after the source destroy is fully completed
                             self._bindToSource();
                         }, 0);
                     }
@@ -400,6 +410,46 @@
                         this._ignoreSrcChange = false;
                     }
                 }
+                protected _setTarget(value: any) {
+                    var isDestroyed = false;
+                    if (utils.check.isBaseObj(this._targetObj)) {
+                        isDestroyed = (<BaseObject>this._targetObj).getIsDestroyCalled();
+                    }
+
+                    if (!!this._state) {
+                        this._state.target = value;
+                        return;
+                    }
+                    if (this._target !== value) {
+                        if (!!this._targetObj && !isDestroyed) {
+                            this._ignoreTgtChange = true;
+                            try {
+                                this.targetValue = null;
+                            }
+                            finally {
+                                this._ignoreTgtChange = false;
+                            }
+                        }
+                        this._setPathItem(null, BindTo.Target, 0, this._tgtPath);
+                        if (!!value && !utils.check.isBaseObj(value))
+                            throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
+                        this._target = value;
+                        this._bindToTarget();
+                        if (!!this._target && !this._targetObj)
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, this._tgtPath.join('.')));
+                    }
+                }
+                protected _setSource(value: any) {
+                    if (!!this._state) {
+                        this._state.source = value;
+                        return;
+                    }
+                    if (this._source !== value) {
+                        this._setPathItem(null, BindTo.Source, 0, this._srcPath);
+                        this._source = value;
+                        this._bindToSource();
+                    }
+                }
                 handleError(error: any, source: any): boolean {
                     var isHandled = super.handleError(error, source);
                     if (!isHandled) {
@@ -421,8 +471,8 @@
                         old.removeNSHandlers(self._objId);
                     });
                     this._pathItems = {};
-                    this.source = null;
-                    this.target = null;
+                    this._setSource(null);
+                    this._setTarget(null);
                     this._state = null;
                     this._converter = null;
                     this._converterParam = null;
@@ -443,40 +493,11 @@
                 }
                 get target() { return this._target; }
                 set target(v: BaseObject) {
-                    if (!!this._state) {
-                        this._state.target = v;
-                        return;
-                    }
-                    if (this._target !== v) {
-                        if (!!this._targetObj && !this._targetObj._isDestroyCalled) {
-                            this._ignoreTgtChange = true;
-                            try {
-                                this.targetValue = null;
-                            }
-                            finally {
-                                this._ignoreTgtChange = false;
-                            }
-                        }
-                        this._setPathItem(null, BindTo.Target, 0, this._tgtPath);
-                        if (!!v && !utils.check.isBaseObj(v))
-                            throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
-                        this._target = v;
-                        this._bindToTarget();
-                        if (!!this._target && !this._targetObj)
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, this._tgtPath.join('.')));
-                    }
+                    this._setTarget(v);
                 }
                 get source() { return this._source; }
                 set source(v) {
-                    if (!!this._state) {
-                        this._state.source = v;
-                        return;
-                    }
-                    if (this._source !== v) {
-                        this._setPathItem(null, BindTo.Source, 0, this._srcPath);
-                        this._source = v;
-                        this._bindToSource();
-                    }
+                    this._setSource(v);
                 }
                 get targetPath() { return this._tgtPath; }
                 get sourcePath() { return this._srcPath; }
@@ -521,7 +542,7 @@
                 get isSourceFixed() { return this._isSourceFixed; }
                 get isDisabled() { return !!this._state; }
                 set isDisabled(v) {
-                    var s;
+                    var s: IBindingState;
                     v = !!v;
                     if (this.isDisabled != v) {
                         if (v) {
@@ -536,10 +557,11 @@
                             }
                         }
                         else {
+                            //restoring from disabled state
                             s = this._state;
                             this._state = null;
-                            this.target = s.target;
-                            this.source = s.source;
+                            this._setTarget(s.target);
+                            this._setSource(s.source);
                         }
                     }
                 }

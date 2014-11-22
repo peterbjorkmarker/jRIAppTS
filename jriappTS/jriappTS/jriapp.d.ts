@@ -938,6 +938,8 @@ declare module RIAPP {
                 private _bindToTarget();
                 private _updateTarget();
                 private _updateSource();
+                protected _setTarget(value: any): void;
+                protected _setSource(value: any): void;
                 handleError(error: any, source: any): boolean;
                 destroy(): void;
                 toString(): string;

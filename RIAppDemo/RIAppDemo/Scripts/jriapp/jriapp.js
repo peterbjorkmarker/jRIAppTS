@@ -1,12 +1,12 @@
 /*!
- * jRIAppTS framework v2.4.0
+ * jRIAppTS framework v2.4.1
  * https://github.com/BBGONE/jRIAppTS
  *
  * Copyright 2013, 2014 Maxim V. Tsapov
  * Released under the MIT license
  * https://github.com/BBGONE/jRIAppTS/blob/generics/LICENSE.txt
  *
- * Date: 2014-11-20T21:00Z
+ * Date: 2014-11-21T15:13Z
  */
 'use strict';
 var RIAPP;
@@ -1105,7 +1105,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.4.0';
+        Global.vesion = '2.4.1';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -4678,14 +4678,17 @@ var RIAPP;
                     return fn;
                 };
                 Binding.prototype._parseSrcPath = function (obj, path, lvl) {
-                    var self = this;
+                    var self = this, isDestroyed = false;
                     self._sourceObj = null;
                     if (path.length === 0) {
                         self._sourceObj = obj;
                     }
                     else
                         self._parseSrcPath2(obj, path, lvl);
-                    if (!!self._targetObj)
+                    if (utils.check.isBaseObj(self._targetObj)) {
+                        isDestroyed = self._targetObj.getIsDestroyCalled();
+                    }
+                    if (!!self._targetObj && !isDestroyed)
                         self._updateTarget();
                 };
                 Binding.prototype._parseSrcPath2 = function (obj, path, lvl) {
@@ -4818,20 +4821,20 @@ var RIAPP;
                 Binding.prototype._onTgtDestroyed = function (sender, args) {
                     if (this._isDestroyCalled)
                         return;
-                    this.target = null;
+                    this._setTarget(null);
                 };
                 Binding.prototype._onSrcDestroyed = function (sender, args) {
                     var self = this;
                     if (self._isDestroyCalled)
                         return;
                     if (sender === self.source)
-                        self.source = null;
+                        self._setSource(null);
                     else {
                         self._setPathItem(null, 0 /* Source */, 0, self._srcPath);
                         setTimeout(function () {
                             if (self._isDestroyCalled)
                                 return;
-                            //rebind after source destroy fully completed
+                            //rebind after the source destroy is fully completed
                             self._bindToSource();
                         }, 0);
                     }
@@ -4883,6 +4886,45 @@ var RIAPP;
                         this._ignoreSrcChange = false;
                     }
                 };
+                Binding.prototype._setTarget = function (value) {
+                    var isDestroyed = false;
+                    if (utils.check.isBaseObj(this._targetObj)) {
+                        isDestroyed = this._targetObj.getIsDestroyCalled();
+                    }
+                    if (!!this._state) {
+                        this._state.target = value;
+                        return;
+                    }
+                    if (this._target !== value) {
+                        if (!!this._targetObj && !isDestroyed) {
+                            this._ignoreTgtChange = true;
+                            try {
+                                this.targetValue = null;
+                            }
+                            finally {
+                                this._ignoreTgtChange = false;
+                            }
+                        }
+                        this._setPathItem(null, 1 /* Target */, 0, this._tgtPath);
+                        if (!!value && !utils.check.isBaseObj(value))
+                            throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
+                        this._target = value;
+                        this._bindToTarget();
+                        if (!!this._target && !this._targetObj)
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, this._tgtPath.join('.')));
+                    }
+                };
+                Binding.prototype._setSource = function (value) {
+                    if (!!this._state) {
+                        this._state.source = value;
+                        return;
+                    }
+                    if (this._source !== value) {
+                        this._setPathItem(null, 0 /* Source */, 0, this._srcPath);
+                        this._source = value;
+                        this._bindToSource();
+                    }
+                };
                 Binding.prototype.handleError = function (error, source) {
                     var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
@@ -4904,8 +4946,8 @@ var RIAPP;
                         old.removeNSHandlers(self._objId);
                     });
                     this._pathItems = {};
-                    this.source = null;
-                    this.target = null;
+                    this._setSource(null);
+                    this._setTarget(null);
                     this._state = null;
                     this._converter = null;
                     this._converterParam = null;
@@ -4932,28 +4974,7 @@ var RIAPP;
                         return this._target;
                     },
                     set: function (v) {
-                        if (!!this._state) {
-                            this._state.target = v;
-                            return;
-                        }
-                        if (this._target !== v) {
-                            if (!!this._targetObj && !this._targetObj._isDestroyCalled) {
-                                this._ignoreTgtChange = true;
-                                try {
-                                    this.targetValue = null;
-                                }
-                                finally {
-                                    this._ignoreTgtChange = false;
-                                }
-                            }
-                            this._setPathItem(null, 1 /* Target */, 0, this._tgtPath);
-                            if (!!v && !utils.check.isBaseObj(v))
-                                throw new Error(RIAPP.ERRS.ERR_BIND_TARGET_INVALID);
-                            this._target = v;
-                            this._bindToTarget();
-                            if (!!this._target && !this._targetObj)
-                                throw new Error(utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, this._tgtPath.join('.')));
-                        }
+                        this._setTarget(v);
                     },
                     enumerable: true,
                     configurable: true
@@ -4963,15 +4984,7 @@ var RIAPP;
                         return this._source;
                     },
                     set: function (v) {
-                        if (!!this._state) {
-                            this._state.source = v;
-                            return;
-                        }
-                        if (this._source !== v) {
-                            this._setPathItem(null, 0 /* Source */, 0, this._srcPath);
-                            this._source = v;
-                            this._bindToSource();
-                        }
+                        this._setSource(v);
                     },
                     enumerable: true,
                     configurable: true
@@ -5085,10 +5098,11 @@ var RIAPP;
                                 }
                             }
                             else {
+                                //restoring from disabled state
                                 s = this._state;
                                 this._state = null;
-                                this.target = s.target;
-                                this.source = s.source;
+                                this._setTarget(s.target);
+                                this._setSource(s.source);
                             }
                         }
                     },
