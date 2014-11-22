@@ -9,7 +9,7 @@
 
 export class DbContext extends RIAPP.MOD.db.DbContext
 {
-	_initDbSets(){
+	protected _initDbSets(){
 		super._initDbSets();
 		this._dbSets = new DbSets(this);
 		var associations ={{ASSOCIATIONS}};
