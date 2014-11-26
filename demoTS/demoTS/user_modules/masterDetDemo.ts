@@ -334,7 +334,7 @@ module RIAPP
             load() {
                 //explicitly clear before every load
                 this.clear();
-                if (!this.currentCustomer || this.currentCustomer.getIsNew()) {
+                if (!this.currentCustomer || this.currentCustomer._aspect.getIsNew()) {
                     var deferred = utils.createDeferred();
                     deferred.reject();
                     return deferred.promise();
@@ -414,7 +414,7 @@ module RIAPP
             load() {
                 this.clear();
 
-                if (!this.currentOrder || this.currentOrder.getIsNew()) {
+                if (!this.currentOrder || this.currentOrder._aspect.getIsNew()) {
                     var deferred = utils.createDeferred();
                     deferred.reject();
                     return deferred.promise();

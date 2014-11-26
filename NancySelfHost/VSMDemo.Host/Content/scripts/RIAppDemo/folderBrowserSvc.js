@@ -12,100 +12,116 @@ var RIAPP;
         'use strict';
         var FileSystemObject = (function (_super) {
             __extends(FileSystemObject, _super);
-            function FileSystemObject(dbSet, row, names) {
-                _super.call(this, dbSet, row, names);
+            function FileSystemObject(aspect) {
+                _super.call(this);
+                this.f_aspect = aspect;
             }
+            FileSystemObject.prototype.destroy = function () {
+                if (this._isDestroyed)
+                    return;
+                this._isDestroyCalled = true;
+                if (!!this._aspect && !this._aspect.getIsDestroyCalled()) {
+                    this._aspect.destroy();
+                }
+                _super.prototype.destroy.call(this);
+            };
+            FileSystemObject.prototype.toString = function () {
+                return 'FileSystemObject';
+            };
+            Object.defineProperty(FileSystemObject.prototype, "_aspect", {
+                get: function () {
+                    return this.f_aspect;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(FileSystemObject.prototype, "_key", {
+                get: function () {
+                    return !!this.f_aspect ? this.f_aspect._key : null;
+                },
+                enumerable: true,
+                configurable: true
+            });
             Object.defineProperty(FileSystemObject.prototype, "Key", {
                 get: function () {
-                    return this._getFieldVal('Key');
+                    return this.f_aspect._getFieldVal('Key');
                 },
                 enumerable: true,
                 configurable: true
             });
             Object.defineProperty(FileSystemObject.prototype, "ParentKey", {
                 get: function () {
-                    return this._getFieldVal('ParentKey');
+                    return this.f_aspect._getFieldVal('ParentKey');
                 },
                 enumerable: true,
                 configurable: true
             });
             Object.defineProperty(FileSystemObject.prototype, "Name", {
                 get: function () {
-                    return this._getFieldVal('Name');
+                    return this.f_aspect._getFieldVal('Name');
                 },
                 enumerable: true,
                 configurable: true
             });
             Object.defineProperty(FileSystemObject.prototype, "Level", {
                 get: function () {
-                    return this._getFieldVal('Level');
+                    return this.f_aspect._getFieldVal('Level');
                 },
                 enumerable: true,
                 configurable: true
             });
             Object.defineProperty(FileSystemObject.prototype, "HasSubDirs", {
                 get: function () {
-                    return this._getFieldVal('HasSubDirs');
+                    return this.f_aspect._getFieldVal('HasSubDirs');
                 },
                 enumerable: true,
                 configurable: true
             });
             Object.defineProperty(FileSystemObject.prototype, "IsFolder", {
                 get: function () {
-                    return this._getFieldVal('IsFolder');
+                    return this.f_aspect._getFieldVal('IsFolder');
                 },
                 enumerable: true,
                 configurable: true
             });
             Object.defineProperty(FileSystemObject.prototype, "fullPath", {
                 get: function () {
-                    return this._getCalcFieldVal('fullPath');
+                    return this.f_aspect._getCalcFieldVal('fullPath');
                 },
                 enumerable: true,
                 configurable: true
             });
             Object.defineProperty(FileSystemObject.prototype, "Parent", {
                 get: function () {
-                    return this._getNavFieldVal('Parent');
+                    return this.f_aspect._getNavFieldVal('Parent');
                 },
                 set: function (v) {
-                    this._setNavFieldVal('Parent', v);
+                    this.f_aspect._setNavFieldVal('Parent', v);
                 },
                 enumerable: true,
                 configurable: true
             });
             Object.defineProperty(FileSystemObject.prototype, "Children", {
                 get: function () {
-                    return this._getNavFieldVal('Children');
+                    return this.f_aspect._getNavFieldVal('Children');
                 },
                 enumerable: true,
                 configurable: true
             });
-            FileSystemObject.prototype.getDbContext = function () {
-                return _super.prototype.getDbContext.call(this);
-            };
-            FileSystemObject.prototype.getDbSet = function () {
-                return _super.prototype.getDbSet.call(this);
-            };
-            Object.defineProperty(FileSystemObject.prototype, "_dbSet", {
-                get: function () {
-                    return this.getDbSet();
-                },
-                enumerable: true,
-                configurable: true
-            });
-            FileSystemObject.prototype.toString = function () {
-                return 'FileSystemObjectEntity';
-            };
-            FileSystemObject.prototype.asEntity = function () {
-                return this;
-            };
-            FileSystemObject.prototype.asInterface = function () {
-                return this;
-            };
             return FileSystemObject;
-        })(RIAPP.MOD.db.Entity);
+        })(RIAPP.BaseObject);
         FOLDERBROWSER_SVC.FileSystemObject = FileSystemObject;
+        var FileSystemObjectAspect = (function (_super) {
+            __extends(FileSystemObjectAspect, _super);
+            function FileSystemObjectAspect(dbSet, row, names) {
+                _super.call(this, dbSet, row, names);
+                this._item = new FileSystemObject(this);
+            }
+            FileSystemObjectAspect.prototype.toString = function () {
+                return 'FileSystemObjectAspect';
+            };
+            return FileSystemObjectAspect;
+        })(RIAPP.MOD.db.EntityAspect);
         var FileSystemObjectDb = (function (_super) {
             __extends(FileSystemObjectDb, _super);
             function FileSystemObjectDb(dbContext) {
@@ -116,10 +132,13 @@ var RIAPP;
                     parentAssoc: ([{ "name": "ChildToParent", "parentDbSetName": "FileSystemObject", "childDbSetName": "FileSystemObject", "childToParentName": "Parent", "parentToChildrenName": "Children", "onDeleteAction": 1, "fieldRels": [{ "parentField": "Key", "childField": "ParentKey" }] }])
                 }, utils = RIAPP.global.utils;
                 opts.dbSetInfo.fieldInfos = ([{ "fieldName": "Key", "isPrimaryKey": 1, "dataType": 1, "isNullable": false, "isReadOnly": true, "isAutoGenerated": true, "isNeedOriginal": true, "maxLength": 255, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "ParentKey", "isPrimaryKey": 0, "dataType": 1, "isNullable": true, "isReadOnly": true, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": 255, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "Name", "isPrimaryKey": 0, "dataType": 1, "isNullable": false, "isReadOnly": true, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": 255, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "Level", "isPrimaryKey": 0, "dataType": 3, "isNullable": false, "isReadOnly": true, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "HasSubDirs", "isPrimaryKey": 0, "dataType": 2, "isNullable": false, "isReadOnly": true, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "IsFolder", "isPrimaryKey": 0, "dataType": 2, "isNullable": false, "isReadOnly": true, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "fullPath", "isPrimaryKey": 0, "dataType": 1, "isNullable": true, "isReadOnly": false, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 2, "dependentOn": "", "nested": null }, { "fieldName": "Parent", "isPrimaryKey": 0, "dataType": 0, "isNullable": true, "isReadOnly": false, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 3, "dependentOn": "ParentKey", "nested": null }, { "fieldName": "Children", "isPrimaryKey": 0, "dataType": 0, "isNullable": true, "isReadOnly": false, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 3, "dependentOn": "", "nested": null }]);
-                _super.call(this, opts, FileSystemObject);
+                _super.call(this, opts, FileSystemObjectAspect, FileSystemObject);
             }
             FileSystemObjectDb.prototype.findEntity = function (key) {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
+            };
+            FileSystemObjectDb.prototype.toString = function () {
+                return 'FileSystemObjectDb';
             };
             FileSystemObjectDb.prototype.createReadRootQuery = function (args) {
                 var query = this.createQuery('ReadRoot');
@@ -134,13 +153,6 @@ var RIAPP;
             FileSystemObjectDb.prototype.definefullPathField = function (getFunc) {
                 this._defineCalculatedField('fullPath', getFunc);
             };
-            Object.defineProperty(FileSystemObjectDb.prototype, "items2", {
-                get: function () {
-                    return this.items;
-                },
-                enumerable: true,
-                configurable: true
-            });
             return FileSystemObjectDb;
         })(RIAPP.MOD.db.DbSet);
         FOLDERBROWSER_SVC.FileSystemObjectDb = FileSystemObjectDb;

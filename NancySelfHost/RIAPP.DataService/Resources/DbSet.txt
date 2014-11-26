@@ -8,12 +8,14 @@
 			parentAssoc: ({{PARENT_ASSOC}}) 
 		}, utils=RIAPP.global.utils;
 		opts.dbSetInfo.fieldInfos = ({{FIELD_INFOS}});
-		super(opts, {{ENTITY_TYPE}});
+		super(opts, {{ENTITY_TYPE}}Aspect, {{ENTITY_TYPE}});
 	}
 	findEntity({{PK_VALS}}): {{ENTITY_TYPE}} {
 		return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
 	}
+	toString() {
+		return '{{DBSET_TYPE}}';
+	}
 {{QUERIES}}
 {{CALC_FIELDS}}
-	get items2()  { return <{{ENTITY_INTERFACE}}[]>this.items; }
 }

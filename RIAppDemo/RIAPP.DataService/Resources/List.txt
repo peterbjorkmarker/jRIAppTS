@@ -1,7 +1,8 @@
-﻿export class {{LIST_NAME}} extends RIAPP.MOD.collection.BaseList<{{ITEM_TYPE_NAME}},{{INTERF_TYPE_NAME}}> {
+﻿export class {{LIST_NAME}} extends RIAPP.MOD.collection.BaseList<{{ITEM_TYPE_NAME}},{{INTERFACE_NAME}}> {
 	constructor() {
-		super({{ITEM_TYPE_NAME}},{{PROPS}});
-		this._type_name = '{{LIST_NAME}}';
+		super({{ASPECT_NAME}},{{PROP_INFOS}});
 	}
-	get items2()  { return <{{INTERF_TYPE_NAME}}[]>this.items; }
+	toString() {
+		return '{{LIST_NAME}}';
+	}
 }

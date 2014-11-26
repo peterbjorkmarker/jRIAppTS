@@ -60,7 +60,7 @@
                 private _fn_OnCancel: (dialog: DataEditDialog) => number;
                 private _fn_OnTemplateCreated: (template: templMOD.Template) => void;
                 private _fn_OnTemplateDestroy: (template: templMOD.Template) => void;
-                private _isEditable: boolean;
+                private _isEditable: RIAPP.IEditable;
                 private _template: templMOD.Template;
                 private _$template: JQuery;
                 private _result: string;
@@ -104,18 +104,18 @@
                     this._fn_OnTemplateCreated = options.fn_OnTemplateCreated;
                     this._fn_OnTemplateDestroy = options.fn_OnTemplateDestroy;
 
-                    this._isEditable = false;
+                    this._isEditable = null;
                     this._template = null;
                     this._$template = null;
                     this._result = null;
                     this._currentSelectable = null;
                     this._fn_submitOnOK = function () {
-                       if (!self._dataContext._isCanSubmit) {
-                          //signals immediatly
-                           return utils.createDeferred().resolve().promise();
-                       }
-                       var dctxt: RIAPP.ISubmittable = self._dataContext;
-                       return dctxt.submitChanges();
+                        var iSubmittable = utils.getSubmittable(self._dataContext);
+                        if (!iSubmittable || !iSubmittable._isCanSubmit) {
+                            //signals immediatly
+                            return utils.createDeferred().resolve().promise();
+                        }
+                        return iSubmittable.submitChanges();
                     };
                     this._updateIsEditable();
                     this._options = {
@@ -152,7 +152,7 @@
                     this.removeHandler('refresh', namespace);
                 }
                 protected _updateIsEditable() {
-                    this._isEditable = utils.check.isEditable(this._dataContext);
+                    this._isEditable = utils.getEditable(this._dataContext);
                 }
                 protected _createDialog() {
                     if (this._dialogCreated)
@@ -265,8 +265,8 @@
                         return;
                     }
 
-                    if (this._isEditable)
-                        canCommit = this._dataContext.endEdit();
+                    if (!!this._isEditable)
+                        canCommit = this._isEditable.endEdit();
                     else
                         canCommit = true;
 
@@ -286,8 +286,8 @@
                             });
                             promise.fail(function () {
                                 //resume editing if fn_onEndEdit callback returns false in isOk argument
-                                if (self._isEditable) {
-                                    if (!self._dataContext.beginEdit()) {
+                                if (!!self._isEditable) {
+                                    if (!self._isEditable.beginEdit()) {
                                         self._result = 'cancel';
                                         self.hide();
                                     }
@@ -307,8 +307,8 @@
                     }
                     if (action == DIALOG_ACTION.StayOpen)
                         return;
-                    if (this._isEditable)
-                        this._dataContext.cancelEdit();
+                    if (!!this._isEditable)
+                        this._isEditable.cancelEdit();
                     this._result = 'cancel';
                     this.hide();
                 }
@@ -317,17 +317,25 @@
                     this.raiseEvent('refresh', args);
                     if (args.isHandled)
                         return;
-                    if (!!this._dataContext && utils.check.isFunction(this._dataContext.refresh)) {
-                        this._dataContext.refresh();
+                    var dctx = this._dataContext;
+                    if (!!dctx) {
+                        if (utils.check.isFunction(dctx.refresh)) {
+                            dctx.refresh();
+                        }
+                        else if (!!dctx._aspect && utils.check.isFunction(dctx._aspect.refresh)) {
+                            dctx._aspect.refresh();
+                        }
                     }
                 }
                 protected _onClose() {
                     try {
                         if (this._result != 'ok' && !!this._dataContext) {
-                            if (this._isEditable)
-                                this._dataContext.cancelEdit();
-                            if (this._submitOnOK && utils.check.isFunction(this._dataContext.rejectChanges)) {
-                                this._dataContext.rejectChanges();
+                            if (!!this._isEditable)
+                                this._isEditable.cancelEdit();
+                            if (this._submitOnOK) {
+                                var subm = utils.getSubmittable(this._dataContext);
+                                if (!!subm)
+                                    subm.rejectChanges();
                             }
                         }
                         if (!!this._fn_OnClose)
@@ -381,6 +389,7 @@
                     this._dialogCreated = false;
                     this._dataContext = null;
                     this._fn_submitOnOK = null;
+                    this._isEditable = null;
                     this._app = null;
                     super.destroy();
                 }

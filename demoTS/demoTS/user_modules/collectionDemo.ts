@@ -18,7 +18,7 @@ module RIAPP
 
         export class RadioDemoVM extends MOD.mvvm.BaseViewModel {
             _radioValue: string;
-            _radioValues: MOD.collection.Dictionary;
+            _radioValues: DEMODB.RadioValDictionary;
             _testDict: DEMODB.TestDictionary;
 
             constructor(app: DemoApplication) {
@@ -26,7 +26,7 @@ module RIAPP
                 var self = this;
                 this._radioValue = 'radioValue1';
                 //one property in a dictionary  must be unique and used as key (its name does not matter )
-                this._radioValues = new MOD.collection.Dictionary('RadioValueType', ['key', 'value', 'comment'], 'key');
+                this._radioValues = new DEMODB.RadioValDictionary();
                 this._radioValues.fillItems([{ key: 'radioValue1', value: 'This is some text value #1', comment: 'This is some comment for value #1' },
                     { key: 'radioValue2', value: 'This is some text value #2', comment: 'This is some comment for value #2' },
                     { key: 'radioValue3', value: 'This is some text value #3', comment: 'This is some comment for value #3' },
@@ -87,7 +87,7 @@ module RIAPP
                 var item = this._historyList.addNew();
                 item.radioValue = this.radioValue;
                 item.time = new Date();
-                item.endEdit();
+                item._aspect.endEdit();
             }
             clearList() {
                 this._historyList.clear();

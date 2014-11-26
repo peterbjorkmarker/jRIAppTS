@@ -3,7 +3,7 @@
         export module db {
             import constsMOD = RIAPP.MOD.consts;
             import utilsMOD = RIAPP.MOD.utils;
-            import collMod = RIAPP.MOD.collection;
+            import collMOD = RIAPP.MOD.collection;
 
             var HEAD_MARK_RX = /^<head:(\d{1,6})>/;
             //local variables for optimization
@@ -43,10 +43,10 @@
             export class ConcurrencyError extends DataOperationError { }
             export class SvcValidationError extends DataOperationError { }
             export class SubmitError extends DataOperationError {
-                private _allSubmitted: Entity[];
-                private _notValidated: Entity[];
+                private _allSubmitted: IEntityItem[];
+                private _notValidated: IEntityItem[];
 
-                constructor(origError, allSubmitted: Entity[], notValidated: Entity[]) {
+                constructor(origError, allSubmitted: IEntityItem[], notValidated: IEntityItem[]) {
                     var message = origError.message || ('' + origError);
                     this.origError = origError;
                     this._allSubmitted = allSubmitted || [];
@@ -54,7 +54,7 @@
                     if (this._notValidated.length > 0) {
                         var res = [message + ':'];
                         this._notValidated.forEach(function (item) {
-                            res.push(baseUtils.format('item key:{0} errors:{1}', item._key, item.getErrorString()));
+                            res.push(baseUtils.format('item key:{0} errors:{1}', item._aspect._key, item._aspect.getErrorString()));
                         });
                         message = res.join('\r\n');
                     }
@@ -91,7 +91,7 @@
                 n: string; //field's name
                 p: IFieldName[]; //for object field contains its properties, for others is null
             }
-            export interface ICachedPage { items: Entity[]; pageIndex: number; }
+            export interface ICachedPage { items: IEntityItem[]; pageIndex: number; }
             export interface IQueryParamInfo {
                 dataType: constsMOD.DATA_TYPE;
                 dateConversion: constsMOD.DATE_CONVERSION;
@@ -106,11 +106,8 @@
                 methodResult: boolean;
                 parameters: IQueryParamInfo[];
             }
-            export interface IFilterInfo { filterItems: { fieldName: string; kind: collMod.FILTER_TYPE; values: any[]; }[]; }
-            export interface ISortInfo { sortItems: { fieldName: string; sortOrder: collMod.SORT_ORDER; }[]; }
-            export interface IEntityConstructor {
-                new (dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]): Entity;
-            }
+            export interface IFilterInfo { filterItems: { fieldName: string; kind: collMOD.FILTER_TYPE; values: any[]; }[]; }
+            export interface ISortInfo { sortItems: { fieldName: string; sortOrder: collMOD.SORT_ORDER; }[]; }
             export interface IValueChange {
                 val: any;
                 orig: any;
@@ -130,7 +127,7 @@
                 error: string;
                 invalid?: IValidationErrorInfo[];
             }
-            export interface IPermissions extends collMod.IPermissions { dbSetName: string; }
+            export interface IPermissions extends collMOD.IPermissions { dbSetName: string; }
             export interface IPermissionsInfo {
                 serverTimezone: number;
                 permissions: IPermissions[];
@@ -147,7 +144,7 @@
                 dbSetName: string;
                 enablePaging: boolean;
                 pageSize: number;
-                fieldInfos: collMod.IFieldInfo[];
+                fieldInfos: collMOD.IFieldInfo[];
             }
             export interface IRefreshRowInfo {
                 dbSetName: string;
@@ -180,7 +177,7 @@
                 parentToChildrenName: string;
                 fieldRels: { childField: string; parentField: string; }[];
             }
-            export interface IDbSetOptions extends collMod.ICollectionOptions {
+            export interface IDbSetOptions extends collMOD.ICollectionOptions {
                 dbSetName: string;
             }
           
@@ -214,7 +211,7 @@
             export interface IRowData {
                 k: string; v: any[]; //key and values
             }
-            export interface IQueryResult<TEntity extends Entity> { fetchedItems: TEntity[]; newItems: TEntity[]; isPageChanged: boolean; outOfBandData: any; }
+            export interface IQueryResult<TItem extends IEntityItem> { fetchedItems: TItem[]; newItems: TItem[]; isPageChanged: boolean; outOfBandData: any; }
             export interface IIncludedResult {
                 names: IFieldName[];
                 rows: IRowData[];
@@ -233,13 +230,22 @@
                 error: IErrorInfo;
                 included: IIncludedResult[];
             }
-            export interface IDbSetConstructor {
-                new (dbContext: DbContext): DbSet<Entity>;
+            export interface IEntityAspectConstructor<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem>, TDbContext extends DbContext> {
+                new (dbSet: DbSet<TItem>, row: IRowData, names: IFieldName[]): EntityAspect<TItem, TDBSet, TDbContext>;
+            }
+            export interface IEntityConstructor<TItem extends IEntityItem> {
+                new (aspect: EntityAspect<TItem, DbSet<IEntityItem>, DbContext>): TItem;
+            }
+            export interface IDbSetConstructor<TItem extends IEntityItem> {
+                new (dbContext: DbContext): DbSet<TItem>;
+            }
+            export interface IEntityItem extends collMOD.ICollectionItem {
+                _aspect: EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
             }
 
             //don't submit these types of fields to the server
-            function fn_isNotSubmittable(fld: collMod.IFieldInfo) {
-                return (fld.fieldType == collMod.FIELD_TYPE.ClientOnly || fld.fieldType == collMod.FIELD_TYPE.Navigation || fld.fieldType == collMod.FIELD_TYPE.Calculated || fld.fieldType == collMod.FIELD_TYPE.ServerCalculated);
+            function fn_isNotSubmittable(fld: collMOD.IFieldInfo) {
+                return (fld.fieldType == collMOD.FIELD_TYPE.ClientOnly || fld.fieldType == collMOD.FIELD_TYPE.Navigation || fld.fieldType == collMOD.FIELD_TYPE.Calculated || fld.fieldType == collMOD.FIELD_TYPE.ServerCalculated);
             }
 
             function fn_traverseChanges(val: IValueChange, fn: (name: string, val: IValueChange) => void): void {
@@ -264,12 +270,12 @@
             }
 
             export class DataCache extends RIAPP.BaseObject {
-                private _query: TDataQuery<Entity>;
+                private _query: TDataQuery<IEntityItem>;
                 private _cache: ICachedPage[];
                 private _totalCount: number;
-                private _itemsByKey: { [key: string]: Entity; };
+                private _itemsByKey: { [key: string]: IEntityItem; };
 
-                constructor(query: TDataQuery<Entity>) {
+                constructor(query: TDataQuery<IEntityItem>) {
                     super();
                     this._query = query;
                     this._cache = [];
@@ -293,7 +299,7 @@
                     for (var i = 0; i < this._cache.length; i += 1) {
                         page = this._cache[i];
                         page.items.forEach(function (item) {
-                            self._itemsByKey[item._key] = item;
+                            self._itemsByKey[item._aspect._key] = item;
                         });
                     }
                 }
@@ -342,8 +348,8 @@
                     var end = above;
                     return { start: start, end: end, cnt: cnt };
                 }
-                fillCache(start: number, items: Entity[]) {
-                    var item: Entity, keyMap = this._itemsByKey;
+                fillCache(start: number, items: IEntityItem[]) {
+                    var item: IEntityItem, keyMap = this._itemsByKey;
                     var i: number, j: number, k: number, len = items.length, pageIndex, page: ICachedPage, pageSize = this.pageSize;
                     for (i = 0; i < this.loadPageCount; i += 1) {
                         pageIndex = start + i;
@@ -356,12 +362,12 @@
                             k = (i * pageSize) + j;
                             if (k < len) {
                                 item = items[k];
-                                if (!!keyMap[item._key]) {
+                                if (!!keyMap[item._aspect._key]) {
                                     continue;
                                 }
                                 page.items.push(item);
-                                keyMap[item._key] = item;
-                                item._isCached = true;
+                                keyMap[item._aspect._key] = item;
+                                item._aspect._isCached = true;
                             }
                             else {
                                 return;
@@ -370,15 +376,15 @@
                     }
                 }
                 clear() {
-                    var i: number, j: number, items: Entity[], item: Entity, dbSet = this._query.dbSet;
+                    var i: number, j: number, items: IEntityItem[], item: IEntityItem, dbSet = this._query.dbSet;
                     for (i = 0; i < this._cache.length; i += 1) {
                         items = this._cache[i].items;
                         for (j = 0; j < items.length; j += 1) {
                             item = items[j];
-                            if (!!item && item._key !== null) {
-                                item._isCached = false;
-                                if (!dbSet.getItemByKey(item._key))
-                                    item.destroy();
+                            if (!!item && item._aspect._key !== null) {
+                                item._aspect._isCached = false;
+                                if (!dbSet.getItemByKey(item._aspect._key))
+                                    item._aspect.destroy();
                             }
                         }
                     }
@@ -389,15 +395,15 @@
                     var page: ICachedPage = this.getCachedPage(pageIndex), dbSet = this._query.dbSet;
                     if (!page)
                         return;
-                    var j: number, items: Entity[], item: Entity, index = this._cache.indexOf(page);
+                    var j: number, items: IEntityItem[], item: IEntityItem, index = this._cache.indexOf(page);
                     items = page.items;
                     for (j = 0; j < items.length; j += 1) {
                         item = items[j];
-                        if (!!item && item._key !== null) {
-                            delete this._itemsByKey[item._key];
-                            item._isCached = false;
-                            if (!dbSet.getItemByKey(item._key))
-                                item.destroy();
+                        if (!!item && item._aspect._key !== null) {
+                            delete this._itemsByKey[item._aspect._key];
+                            item._aspect._isCached = false;
+                            if (!dbSet.getItemByKey(item._aspect._key))
+                                item._aspect.destroy();
                         }
                     }
                     this._cache.splice(index, 1);
@@ -412,8 +418,8 @@
                 getItemByKey(key: string) {
                     return this._itemsByKey[key];
                 }
-                getPageByItem(item: Entity) {
-                    item = this._itemsByKey[item._key];
+                getPageByItem(item: IEntityItem) {
+                    item = this._itemsByKey[item._aspect._key];
                     if (!item)
                         return -1;
                     for (var i = 0; i < this._cache.length; i += 1) {
@@ -463,8 +469,8 @@
                 get cacheSize() { return this._cache.length; }
             }
 
-            export class TDataQuery<TEntity extends Entity> extends RIAPP.BaseObject {
-                private _dbSet: DbSet<TEntity>;
+            export class TDataQuery<TItem extends IEntityItem> extends RIAPP.BaseObject {
+                private _dbSet: DbSet<TItem>;
                 private __queryInfo: IQueryInfo;
                 private _filterInfo: IFilterInfo;
                 private _sortInfo: ISortInfo;
@@ -478,7 +484,7 @@
                 private _dataCache: DataCache;
                 private _cacheInvalidated: boolean;
 
-                constructor(dbSet: DbSet<TEntity>, queryInfo: IQueryInfo) {
+                constructor(dbSet: DbSet<TItem>, queryInfo: IQueryInfo) {
                     super();
                     this._dbSet = dbSet;
                     this.__queryInfo = queryInfo;
@@ -500,8 +506,8 @@
                 getFieldNames() {
                     return this._dbSet.getFieldNames();
                 }
-                private _addSort(fieldName: string, sortOrder: collMod.SORT_ORDER) {
-                    var ord = collMod.SORT_ORDER.ASC;
+                private _addSort(fieldName: string, sortOrder: collMOD.SORT_ORDER) {
+                    var ord = collMOD.SORT_ORDER.ASC;
                     if (!utils.check.isNt(sortOrder))
                         ord = sortOrder;
 
@@ -509,8 +515,8 @@
                     this._sortInfo.sortItems.push(sortItem);
                     this._cacheInvalidated = true;
                 }
-                private _addFilterItem(fieldName: string, operand: collMod.FILTER_TYPE, value: any[]) {
-                    var fkind = collMod.FILTER_TYPE.Equals;
+                private _addFilterItem(fieldName: string, operand: collMOD.FILTER_TYPE, value: any[]) {
+                    var fkind = collMOD.FILTER_TYPE.Equals;
                     var fld = this.getFieldInfo(fieldName);
                     if (!fld)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
@@ -525,18 +531,18 @@
                     });
 
                     switch (operand) {
-                        case collMod.FILTER_TYPE.Equals:
-                        case collMod.FILTER_TYPE.NotEq:
-                        case collMod.FILTER_TYPE.StartsWith:
-                        case collMod.FILTER_TYPE.EndsWith:
-                        case collMod.FILTER_TYPE.Contains:
-                        case collMod.FILTER_TYPE.Gt:
-                        case collMod.FILTER_TYPE.GtEq:
-                        case collMod.FILTER_TYPE.Lt:
-                        case collMod.FILTER_TYPE.LtEq:
+                        case collMOD.FILTER_TYPE.Equals:
+                        case collMOD.FILTER_TYPE.NotEq:
+                        case collMOD.FILTER_TYPE.StartsWith:
+                        case collMOD.FILTER_TYPE.EndsWith:
+                        case collMOD.FILTER_TYPE.Contains:
+                        case collMOD.FILTER_TYPE.Gt:
+                        case collMOD.FILTER_TYPE.GtEq:
+                        case collMOD.FILTER_TYPE.Lt:
+                        case collMOD.FILTER_TYPE.LtEq:
                             fkind = operand;
                             break;
-                        case collMod.FILTER_TYPE.Between:
+                        case collMOD.FILTER_TYPE.Between:
                             fkind = operand;
                             if (value.length != 2)
                                 throw new Error(RIAPP.ERRS.ERR_QUERY_BETWEEN);
@@ -548,19 +554,19 @@
                     this._filterInfo.filterItems.push(filterItem);
                     this._cacheInvalidated = true;
                 }
-                where(fieldName: string, operand: collMod.FILTER_TYPE, value:any) {
+                where(fieldName: string, operand: collMOD.FILTER_TYPE, value:any) {
                     this._addFilterItem(fieldName, operand, value);
                     return this;
                 }
-                and(fieldName: string, operand: collMod.FILTER_TYPE, value:any) {
+                and(fieldName: string, operand: collMOD.FILTER_TYPE, value:any) {
                     this._addFilterItem(fieldName, operand, value);
                     return this;
                 }
-                orderBy(fieldName: string, sortOrder?: collMod.SORT_ORDER) {
+                orderBy(fieldName: string, sortOrder?: collMOD.SORT_ORDER) {
                     this._addSort(fieldName, sortOrder);
                     return this;
                 }
-                thenBy(fieldName: string, sortOrder?: collMod.SORT_ORDER) {
+                thenBy(fieldName: string, sortOrder?: collMOD.SORT_ORDER) {
                     this._addSort(fieldName, sortOrder);
                     return this;
                 }
@@ -607,8 +613,8 @@
                 protected _resetCacheInvalidated() {
                     this._cacheInvalidated = false;
                 }
-                load(): IPromise<IQueryResult<TEntity>> {
-                    return <IPromise<IQueryResult<TEntity>>>this.dbSet.dbContext.load(this);
+                load(): IPromise<IQueryResult<TItem>> {
+                    return <IPromise<IQueryResult<TItem>>>this.dbSet.dbContext.load(this);
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -675,40 +681,41 @@
                 get isCacheValid() { return !!this._dataCache && !this._cacheInvalidated; }
             }
 
-            export class DataQuery extends TDataQuery<Entity>{
+            export class DataQuery extends TDataQuery<IEntityItem>{
             }
 
-            export class Entity extends collMod.CollectionItem {
-                private __changeType: collMod.STATUS;
+            export class EntityAspect<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem>, TDbContext extends DbContext> extends collMOD.ItemAspect<TItem> {
+                private __changeType: collMOD.STATUS;
                 private __isRefreshing: boolean;
                 private __isCached: boolean;
-                private __dbSet: DbSet<Entity>;
+                private __dbSet: TDBSet;
                 private _srvRowKey: string;
                 private _origVals: { [name: string]: any; };
-                private _saveChangeType: collMod.STATUS;
+                private _saveChangeType: collMOD.STATUS;
+                protected _item: TItem;
 
-                constructor(dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]) {
+                constructor(dbSet: TDBSet, row: IRowData, names: IFieldName[]) {
                     this.__dbSet = dbSet;
                     super();
                     var self = this;
-                    this.__changeType = collMod.STATUS.NONE;
+                    this.__changeType = collMOD.STATUS.NONE;
                     this.__isRefreshing = false;
                     this.__isCached = false;
 
                     this._srvRowKey = null;
                     this._origVals = null;
                     this._saveChangeType = null;
-                    var fieldInfos = this._dbSet.getFieldInfos(), fld: collMod.IFieldInfo;
+                    var fieldInfos = this._dbSet.getFieldInfos(), fld: collMOD.IFieldInfo;
                     for (var i = 0, len = fieldInfos.length; i < len; i += 1)
                     {
                         fld = fieldInfos[i];
-                        if (fld.fieldType != collMod.FIELD_TYPE.Object) {
+                        if (fld.fieldType != collMOD.FIELD_TYPE.Object) {
                             self._vals[fld.fieldName] = null;
                         }
                         else {
                             //object field
-                            collMod.fn_traverseField(fld, (name, f) => {
-                                if (f.fieldType == collMod.FIELD_TYPE.Object)
+                            collMOD.fn_traverseField(fld, (name, f) => {
+                                if (f.fieldType == collMOD.FIELD_TYPE.Object)
                                     baseUtils.setValue(self._vals, name, {}, false);
                                 else
                                     baseUtils.setValue(self._vals, name, null, false);
@@ -732,7 +739,7 @@
                         if (!fld)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fieldName));
 
-                        if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                        if (fld.fieldType == collMOD.FIELD_TYPE.Object) {
                             //for object fields the value should be an array of values - recursive processing
                             self._processValues(fieldName + '.', <any[]>value, name.p);
                         }
@@ -749,21 +756,23 @@
                         }
                     });
                 }
-                protected _onFieldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo) {
+                protected _onFieldChanged(fieldName: string, fieldInfo: collMOD.IFieldInfo) {
                     var self = this;
-                    self.raisePropertyChanged(fieldName);
+                    if (this._isDestroyCalled)
+                        return;
+                    self.getItem().raisePropertyChanged(fieldName);
                     if (!!fieldInfo.dependents && fieldInfo.dependents.length > 0) {
                         fieldInfo.dependents.forEach(function (d) {
-                            self.raisePropertyChanged(d);
+                            self.getItem().raisePropertyChanged(d);
                         });
                     }
                 }
-                protected _getValueChange(fullName: string, fld: collMod.IFieldInfo, changedOnly: boolean): IValueChange {
+                protected _getValueChange(fullName: string, fld: collMOD.IFieldInfo, changedOnly: boolean): IValueChange {
                     var self = this, dbSet = self._dbSet, res: IValueChange, i: number, len: number, tmp: IValueChange;
                     if (fn_isNotSubmittable(fld))
                         return <IValueChange>null;
 
-                    if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                    if (fld.fieldType == collMOD.FIELD_TYPE.Object) {
                         res = { fieldName: fld.fieldName, val: null, orig: null, flags: FLAGS.None, nested: [] };
                         len = fld.nested.length;
                         for (i = 0; i < len; i += 1) {
@@ -779,14 +788,14 @@
                             isChanged = (oldV !== newVal);
                         if (isChanged)
                             res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: (FLAGS.Changed | FLAGS.Setted), nested: null };
-                        else if (fld.isPrimaryKey > 0 || fld.fieldType == collMod.FIELD_TYPE.RowTimeStamp || fld.isNeedOriginal)
+                        else if (fld.isPrimaryKey > 0 || fld.fieldType == collMOD.FIELD_TYPE.RowTimeStamp || fld.isNeedOriginal)
                             res = { fieldName: fld.fieldName, val: newVal, orig: oldV, flags: FLAGS.Setted, nested: null };
                         else
                             res = { fieldName: fld.fieldName, val: null, orig: null, flags: FLAGS.None, nested: null };
                     }
 
                     if (changedOnly) {
-                        if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                        if (fld.fieldType == collMOD.FIELD_TYPE.Object) {
                             if (res.nested.length > 0)
                                 return res;
                             else
@@ -813,24 +822,24 @@
                     });
                     return res2;
                 }
-                protected _fldChanging(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV, newV) {
+                protected _fldChanging(fieldName: string, fieldInfo: collMOD.IFieldInfo, oldV, newV) {
                     if (!this._origVals) {
                         this._origVals = utils.cloneObj(this._vals);
                     }
                     return true;
                 }
-                protected _fldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV, newV) {
-                    if (!(fieldInfo.fieldType == collMod.FIELD_TYPE.ClientOnly || fieldInfo.fieldType == collMod.FIELD_TYPE.ServerCalculated)) {
+                protected _fldChanged(fieldName: string, fieldInfo: collMOD.IFieldInfo, oldV, newV) {
+                    if (!(fieldInfo.fieldType == collMOD.FIELD_TYPE.ClientOnly || fieldInfo.fieldType == collMOD.FIELD_TYPE.ServerCalculated)) {
                         switch (this._changeType) {
-                            case collMod.STATUS.NONE:
-                                this._changeType = collMod.STATUS.UPDATED;
+                            case collMOD.STATUS.NONE:
+                                this._changeType = collMOD.STATUS.UPDATED;
                                 break;
                         }
                     }
                     this._onFieldChanged(fieldName, fieldInfo);
                     return true;
                 }
-                protected _skipValidate(fieldInfo: collMod.IFieldInfo, val) {
+                protected _skipValidate(fieldInfo: collMOD.IFieldInfo, val) {
                     var childToParentNames = this._dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
                     if (!!childToParentNames && val === null) {
                         for (var i = 0, len = childToParentNames.length; i < len; i += 1) {
@@ -856,24 +865,24 @@
                 _getCalcFieldVal(fieldName: string) {
                     if (this._isDestroyCalled)
                         return null;
-                    return this._dbSet._getCalcFieldVal(fieldName, this);
+                    return this._dbSet._getCalcFieldVal(fieldName, this.getItem());
                 }
                 _getNavFieldVal(fieldName: string) {
                     if (this._isDestroyCalled) {
                         return null;
                     }
-                    return this._dbSet._getNavFieldVal(fieldName, this);
+                    return this._dbSet._getNavFieldVal(fieldName, this.getItem());
                 }
                 _setNavFieldVal(fieldName: string, value: any) {
                     var dbSet = this._dbSet
-                    this._dbSet._setNavFieldVal(fieldName, this, value)
+                    this._dbSet._setNavFieldVal(fieldName, this.getItem(), value)
                 }
                 _updateKeys(srvKey: string) {
                     this._srvRowKey = srvKey;
                     this._key = srvKey;
                 }
                 _checkCanRefresh() {
-                    if (this._key === null || this._changeType === collMod.STATUS.ADDED) {
+                    if (this._key === null || this._changeType === collMOD.STATUS.ADDED) {
                         throw new Error(RIAPP.ERRS.ERR_OPER_REFRESH_INVALID);
                     }
                 }
@@ -940,11 +949,11 @@
                             });
                         });
 
-                        if (oldCT === collMod.STATUS.UPDATED) {
+                        if (oldCT === collMOD.STATUS.UPDATED) {
                             var changes = this._getValueChanges(true);
                             if (changes.length === 0) {
                                 this._origVals = null;
-                                this._changeType = collMod.STATUS.NONE;
+                                this._changeType = collMOD.STATUS.NONE;
                             }
                         }
                     }
@@ -984,7 +993,7 @@
                                 res = true;
                             }
                         }
-                        dbSet._removeError(this, fieldName);
+                        dbSet._removeError(this.getItem(), fieldName);
                         validation_error = this._validateField(fieldName);
                         if (!!validation_error) {
                             throw new ValidationError([validation_error], this);
@@ -998,66 +1007,66 @@
                                 { fieldName: fieldName, errors: [ex.message] }
                             ], this);
                         }
-                        dbSet._addError(this, fieldName, error.errors[0].errors);
+                        dbSet._addError(this.getItem(), fieldName, error.errors[0].errors);
                         throw error;
                     }
                     return res;
                 }
                 _onAttaching() {
                     super._onAttaching();
-                    this.__changeType = collMod.STATUS.ADDED;
+                    this.__changeType = collMOD.STATUS.ADDED;
                 }
                 _onAttach() {
                     super._onAttach();
                     if (this._key === null)
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
-                    this._dbSet._addToChanged(this);
+                    this._dbSet._addToChanged(this.getItem());
                 }
                 deleteItem() {
                     return this.deleteOnSubmit();
                 }
                 deleteOnSubmit() {
                     var oldCT = this._changeType, eset = this._dbSet;
-                    if (!eset._onItemDeleting(this)) {
+                    if (!eset._onItemDeleting(this.getItem())) {
                         return false;
                     }
                     if (this._key === null)
                         return false;
-                    if (oldCT === collMod.STATUS.ADDED) {
-                        eset.removeItem(this);
+                    if (oldCT === collMOD.STATUS.ADDED) {
+                        eset.removeItem(this.getItem());
                         return true;
                     }
-                    this._changeType = collMod.STATUS.DELETED;
+                    this._changeType = collMOD.STATUS.DELETED;
                     return true;
                 }
                 acceptChanges(rowInfo?: IRowInfo) {
                     var oldCT = this._changeType, eset = this._dbSet;
                     if (this._key === null)
                         return;
-                    if (oldCT !== collMod.STATUS.NONE) {
-                        eset._onCommitChanges(this, true, false, oldCT);
-                        if (oldCT === collMod.STATUS.DELETED) {
-                            eset.removeItem(this);
+                    if (oldCT !== collMOD.STATUS.NONE) {
+                        eset._onCommitChanges(this.getItem(), true, false, oldCT);
+                        if (oldCT === collMOD.STATUS.DELETED) {
+                            eset.removeItem(this.getItem());
                             return;
                         }
                         this._origVals = null;
                         if (!!this._saveVals)
                             this._saveVals = utils.cloneObj(this._vals);
-                        this._changeType = collMod.STATUS.NONE;
-                        eset._removeAllErrors(this);
+                        this._changeType = collMOD.STATUS.NONE;
+                        eset._removeAllErrors(this.getItem());
                         if (!!rowInfo)
                             this._refreshValues(rowInfo, REFRESH_MODE.CommitChanges);
-                        eset._onCommitChanges(this, false, false, oldCT);
+                        eset._onCommitChanges(this.getItem(), false, false, oldCT);
                     }
                 }
                 rejectChanges() {
                     var self = this, oldCT = self._changeType, eset = self._dbSet;
                     if (!self._key)
                         return;
-                    if (oldCT !== collMod.STATUS.NONE) {
-                        eset._onCommitChanges(self, true, true, oldCT);
-                        if (oldCT === collMod.STATUS.ADDED) {
-                            eset.removeItem(this);
+                    if (oldCT !== collMOD.STATUS.NONE) {
+                        eset._onCommitChanges(self.getItem(), true, true, oldCT);
+                        if (oldCT === collMOD.STATUS.ADDED) {
+                            eset.removeItem(this.getItem());
                             return;
                         }
 
@@ -1069,14 +1078,14 @@
                                 self._saveVals = utils.cloneObj(self._vals);
                             }
                         }
-                        self._changeType = collMod.STATUS.NONE;
-                        eset._removeAllErrors(this);
+                        self._changeType = collMOD.STATUS.NONE;
+                        eset._removeAllErrors(this.getItem());
                         changes.forEach(function (v) {
                             fn_traverseChanges(v, (fullName, vc) => {
                                 self._onFieldChanged(fullName, eset.getFieldInfo(fullName));
                             });
                         });
-                        eset._onCommitChanges(this, false, true, oldCT);
+                        eset._onCommitChanges(this.getItem(), false, true, oldCT);
                     }
                 }
                 submitChanges(): IVoidPromise {
@@ -1097,9 +1106,9 @@
                     });
                     return promise;
                 }
-                refresh(): IPromise<Entity> {
+                refresh(): IPromise<TItem> {
                     var db = this.getDbContext();
-                    return db._refreshItem(this);
+                    return db._refreshItem(this.getItem());
                 }
                 cancelEdit() {
                     if (!this._isEditing)
@@ -1110,25 +1119,28 @@
                     this._saveVals = null;
                     this._changeType = this._saveChangeType;
                     this._saveChangeType = null;
-                    coll._removeAllErrors(this);
+                    coll._removeAllErrors(this.getItem());
                     changes.forEach(function (v) {
                         self.raisePropertyChanged(v.fieldName);
                     });
                     if (isNew && this._notEdited) {
-                        coll.removeItem(this);
+                        coll.removeItem(this.getItem());
                     }
-                    coll._onEditing(this, false, true);
+                    coll._onEditing(this.getItem(), false, true);
                     this.raisePropertyChanged('isEditing');
                     return true;
                 }
                 getDbContext(): DbContext {
-                    return this.__dbSet.dbContext;
+                    return <TDbContext>this.__dbSet.dbContext;
                 }
-                getDbSet() {
+                protected getDbSet() {
                     return this.__dbSet;
                 }
+                getItem():TItem {
+                    return this._item;
+                }
                 toString() {
-                    return 'Entity';
+                    return 'EntityAspect';
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -1140,6 +1152,10 @@
                     this._saveChangeType = null;
                     this.__isRefreshing = false;
                     this.__isCached = false;
+                    if (!!this._item && !this._item.getIsDestroyCalled()) {
+                        this._item.destroy();
+                    }
+                    this._item = null;
                     super.destroy();
                 }
                 get _isCanSubmit() { return true; }
@@ -1148,20 +1164,20 @@
                     if (this.__changeType !== v) {
                         var oldChangeType = this.__changeType;
                         this.__changeType = v;
-                        if (v !== collMod.STATUS.NONE)
-                            this._dbSet._addToChanged(this);
+                        if (v !== collMOD.STATUS.NONE)
+                            this._dbSet._addToChanged(this.getItem());
                         else
                             this._dbSet._removeFromChanged(this._key);
-                        this._dbSet._onItemStatusChanged(this, oldChangeType);
+                        this._dbSet._onItemStatusChanged(this.getItem(), oldChangeType);
                     }
                 }
-                get _isNew() { return this.__changeType === collMod.STATUS.ADDED; }
-                get _isDeleted() { return this.__changeType === collMod.STATUS.DELETED; }
+                get _isNew() { return this.__changeType === collMOD.STATUS.ADDED; }
+                get _isDeleted() { return this.__changeType === collMOD.STATUS.DELETED; }
                 get _entityType() { return this.__dbSet.entityType; }
                 get _srvKey() { return this._srvRowKey; }
                 get _dbSetName() { return this.__dbSet.dbSetName; }
                 get _serverTimezone() { return this.getDbContext().serverTimezone; }
-                get _collection() { return <collMod.BaseCollection<Entity>>this.__dbSet; }
+                get _collection() { return this.__dbSet; }
                 get _dbSet() { return this.__dbSet; }
                 get _isRefreshing() { return this.__isRefreshing; }
                 set _isRefreshing(v) {
@@ -1172,10 +1188,10 @@
                 }
                 get _isCached() { return this.__isCached; }
                 set _isCached(v) { this.__isCached = v; }
-                get isHasChanges() { return this.__changeType !== collMod.STATUS.NONE; }
+                get isHasChanges() { return this.__changeType !== collMOD.STATUS.NONE; }
             }
 
-            export class DbSet<TEntity extends Entity> extends collMod.BaseCollection<TEntity> {
+            export class DbSet<TItem extends IEntityItem> extends collMOD.BaseCollection<TItem> {
                 private _dbContext: DbContext;
                 private _isSubmitOnDelete: boolean;
                 private _trackAssoc: { [name: string]: IAssociationInfo; };
@@ -1183,16 +1199,17 @@
                 private _childAssocMap: { [fieldName: string]: IAssociationInfo; };
                 private _parentAssocMap: { [fieldName: string]: IAssociationInfo; };
                 private _changeCount: number;
-                private _changeCache: { [key: string]: TEntity; };
+                private _changeCache: { [key: string]: TItem; };
                 protected _options: IDbSetOptions;
                 protected _navfldMap: { [fieldName: string]: { getFunc: () => any; setFunc: (v: any) => void; }; };
                 protected _calcfldMap: { [fieldName: string]: { getFunc: () => any; }; };
-                protected _itemsByKey: { [key: string]: TEntity; };
-                protected _entityType: IEntityConstructor;
+                protected _itemsByKey: { [key: string]: TItem; };
+                protected _aspectType: IEntityAspectConstructor<TItem, DbSet<TItem>, DbContext>;
+                protected _entityType: IEntityConstructor<TItem>;
                 protected _ignorePageChanged: boolean;
-                protected _query: TDataQuery<TEntity>;
+                protected _query: TDataQuery<TItem>;
 
-                constructor(opts: IDbSetConstuctorOptions, entityType: IEntityConstructor) {
+                constructor(opts: IDbSetConstuctorOptions, aspectType: IEntityAspectConstructor<TItem, DbSet<TItem>, DbContext>, entityType: IEntityConstructor<TItem>) {
                     super();
                     var self = this, dbContext = opts.dbContext, dbSetInfo = opts.dbSetInfo, fieldInfos = dbSetInfo.fieldInfos;
                     this._dbContext = dbContext;
@@ -1200,6 +1217,7 @@
                     this._options.enablePaging = dbSetInfo.enablePaging;
                     this._options.pageSize = dbSetInfo.pageSize;
                     this._query = null;
+                    this._aspectType = aspectType;
                     this._entityType = entityType;
                     this._isSubmitOnDelete = false;
                     this._navfldMap = {};
@@ -1221,19 +1239,19 @@
                     this._ignorePageChanged = false;
                     fieldInfos.forEach(function (f) {
                         self._fieldMap[f.fieldName] = f;
-                        collMod.fn_traverseField(f, (fullName, fld) => {
+                        collMOD.fn_traverseField(f, (fullName, fld) => {
                             fld.dependents = [];
                             fld.fullName = fullName;
                         });
                     });
 
                     fieldInfos.forEach(function (f) {
-                        collMod.fn_traverseField(f, (fullName, fld) => {
-                            if (fld.fieldType == collMod.FIELD_TYPE.Navigation) {
+                        collMOD.fn_traverseField(f, (fullName, fld) => {
+                            if (fld.fieldType == collMOD.FIELD_TYPE.Navigation) {
                                 //navigation fields can NOT be on nested fields
                                 self._navfldMap[fld.fieldName] = self._doNavigationField(opts, fld);
                             }
-                            else if (fld.fieldType == collMod.FIELD_TYPE.Calculated) {
+                            else if (fld.fieldType == collMOD.FIELD_TYPE.Calculated) {
                                 //calculated fields can be on nested fields
                                 baseUtils.setValue(self._calcfldMap, fullName, self._doCalculatedField(opts, fld), true);
                             }
@@ -1263,7 +1281,7 @@
                         }
                     }
                 }
-                protected _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo) {
+                protected _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collMOD.IFieldInfo) {
                     var self = this, isChild = true, result: { getFunc: () => any; setFunc: (v: any) => void; } = { getFunc: () => { throw new Error('Function is not implemented'); }, setFunc: function (v: any) { throw new Error('Function is not implemented'); } };
                     var assocs = opts.childAssoc.filter(function (a) {
                         return a.childToParentName == fInfo.fieldName;
@@ -1300,13 +1318,12 @@
                             self._trackAssoc[assocName] = assocs[0];
 
                             result.setFunc = function (v) {
-                                var entity: Entity = this, i: number, len: number, assoc = self.dbContext.getAssociation(assocName);
+                                var entity: IEntityItem = this, i: number, len: number, assoc = self.dbContext.getAssociation(assocName);
                                 if (!!v && !(v instanceof assoc.parentDS.entityType)) {
                                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'value', assoc.parentDS.dbSetName));
                                 }
-
-                                if (!!v && v._isNew) {
-                                    entity._setFieldVal(fInfo.fieldName, v._key);
+                                if (!!v && !!v._aspect && (<IEntityItem>v)._aspect.getIsNew()) {
+                                    entity._aspect._setFieldVal(fInfo.fieldName, (<IEntityItem>v)._aspect._key);
                                 }
                                 else if (!!v) {
                                     for (i = 0, len = assoc.childFldInfos.length; i < len; i += 1) {
@@ -1314,9 +1331,9 @@
                                     }
                                 }
                                 else {
-                                    var oldKey = entity._getFieldVal(fInfo.fieldName);
+                                    var oldKey = entity._aspect._getFieldVal(fInfo.fieldName);
                                     if (!!oldKey) {
-                                        entity._setFieldVal(fInfo.fieldName, null);
+                                        entity._aspect._setFieldVal(fInfo.fieldName, null);
                                     }
                                     for (i = 0, len = assoc.childFldInfos.length; i < len; i += 1) {
                                         entity[assoc.childFldInfos[i].fieldName] = null;
@@ -1334,9 +1351,9 @@
                     }
                     return result;
                 }
-                protected _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo) {
+                protected _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: collMOD.IFieldInfo) {
                     var self = this, result: { getFunc: () => any; } = { getFunc: () => { throw new Error(utils.format("Calculated field:'{0}' is not initialized", fInfo.fieldName)); } };
-                    function doDependences(f: collMod.IFieldInfo) {
+                    function doDependences(f: collMOD.IFieldInfo) {
                         if (!f.dependentOn)
                             return;
                         var deps: string[] = f.dependentOn.split(',');
@@ -1357,38 +1374,39 @@
                     }
                     return result;
                 }
-                protected _refreshValues(path: string, item: Entity, values: any[], names: IFieldName[], rm: REFRESH_MODE) {
+                protected _refreshValues(path: string, item: IEntityItem, values: any[], names: IFieldName[], rm: REFRESH_MODE) {
                     var self = this;
                     values.forEach(function (value, index) {
                         var name: IFieldName = names[index], fieldName = path + name.n, fld = self.getFieldInfo(fieldName);
                         if (!fld)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self.dbSetName, fieldName));
 
-                        if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                        if (fld.fieldType == collMOD.FIELD_TYPE.Object) {
                             //for object fields the value should be an array of values - recursive processing
                             self._refreshValues(fieldName + '.', item, <any[]>value, name.p, rm);
                         }
                         else {
                             //for other fields the value is a string
-                            item._refreshValue(value, fieldName, rm);
+                            item._aspect._refreshValue(value, fieldName, rm);
                         }
                     });
                 }
-                protected _setCurrentItem(v: TEntity) {
+                protected _setCurrentItem(v: TItem) {
                     if (!!v && !(v instanceof this._entityType)) {
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'currentItem', this._options.dbSetName));
                     }
                     super._setCurrentItem(v);
                 }
-                protected _getNewKey(item: TEntity) {
+                protected _getNewKey(item: TItem) {
                     //client's item ID
                     var key = 'clkey_' + this._newKey;
                     this._newKey += 1;
                     return key;
                 }
                 protected _createNew() {
-                    var item = <TEntity>new this._entityType(this, null, null);
-                    item._key = this._getNewKey(item);
+                    var entity: EntityAspect<TItem, DbSet<TItem>, DbContext> = new this._aspectType(this, null, null);
+                    var item = entity.getItem();
+                    item._aspect._key = this._getNewKey(item);
                     return item;
                 }
                 protected _clearChangeCache() {
@@ -1423,10 +1441,10 @@
                 }
                 protected _destroyItems() {
                     this._items.forEach(function (item) {
-                        if (item._isCached)
-                            item.removeHandler(null, null);
+                        if (item._aspect._isCached)
+                            item._aspect.removeNSHandlers(null);
                         else
-                            item.destroy();
+                            item._aspect.destroy();
                     });
                 }
                 protected _defineCalculatedField(fullName: string, getFunc: () => any) {
@@ -1436,16 +1454,16 @@
                     }
                     calcDef.getFunc = getFunc;
                 }
-                _getCalcFieldVal(fieldName: string, item: Entity): any {
+                _getCalcFieldVal(fieldName: string, item: IEntityItem): any {
                     return baseUtils.getValue(this._calcfldMap, fieldName).getFunc.call(item);
                 }
-                _getNavFieldVal(fieldName: string, item: Entity): any {
+                _getNavFieldVal(fieldName: string, item: IEntityItem): any {
                     return baseUtils.getValue(this._navfldMap, fieldName).getFunc.call(item);
                 }
-                _setNavFieldVal(fieldName: string, item: Entity, value: any): any {
+                _setNavFieldVal(fieldName: string, item: IEntityItem, value: any): any {
                     baseUtils.getValue(this._navfldMap, fieldName).setFunc.call(item, value);
                 }
-                _beforeLoad(query: TDataQuery<TEntity>, oldQuery: TDataQuery<TEntity>) {
+                _beforeLoad(query: TDataQuery<TItem>, oldQuery: TDataQuery<TItem>) {
                     if (query && oldQuery !== query) {
                         this._query = query;
                         this.pageIndex = 0;
@@ -1483,11 +1501,11 @@
                     this._perms = perms;
                 }
                 _getChildToParentNames(childFieldName: string) { return this._trackAssocMap[childFieldName]; }
-                _getStrValue(val: any, fieldInfo: collMod.IFieldInfo) {
+                _getStrValue(val: any, fieldInfo: collMOD.IFieldInfo) {
                     var dcnv = fieldInfo.dateConversion, stz = this.dbContext.serverTimezone;
                     return valueUtils.stringifyValue(val, dcnv, fieldInfo.dataType, stz);
                 }
-                _fillFromService(data: { res: IQueryResponse; isPageChanged: boolean; fn_beforeFillEnd: () => void; }): IQueryResult<TEntity> {
+                _fillFromService(data: { res: IQueryResponse; isPageChanged: boolean; fn_beforeFillEnd: () => void; }): IQueryResult<TItem> {
                     data = utils.extend(false, {
                         res: { names: [], rows: [], pageIndex: null, pageCount: null, dbSetName: this.dbSetName, totalCount: null },
                         isPageChanged: false,
@@ -1495,7 +1513,7 @@
                     }, data);
 
                     var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length,
-                        entityType = this._entityType, newItems: TEntity[] = [], positions: number[] = [], created_items: TEntity[] = [], fetchedItems: TEntity[] = [],
+                        entityType = this._aspectType, newItems: TItem[] = [], positions: number[] = [], created_items: TItem[] = [], fetchedItems: TItem[] = [],
                         isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache: DataCache;
 
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
@@ -1521,13 +1539,16 @@
                             if (!key)
                                 throw new Error(RIAPP.ERRS.ERR_KEY_IS_EMPTY);
 
-                            var item = self._itemsByKey[key];
+                            var item = self._itemsByKey[key], entity: EntityAspect<TItem, DbSet<TItem>, DbContext>;
                             if (!item) {
                                 if (!!dataCache) {
-                                    item = <TEntity>dataCache.getItemByKey(key);
+                                    item = <TItem>dataCache.getItemByKey(key);
                                 }
                                 if (!item)
-                                    item = <TEntity>new entityType(self, row, fieldNames);
+                                {
+                                    entity = new entityType(self, row, fieldNames);
+                                    item = entity.getItem();
+                                }
                                 else
                                 {
                                     self._refreshValues('', item, row.v, fieldNames, REFRESH_MODE.RefreshCurrent);
@@ -1546,20 +1567,20 @@
 
                             if (query.loadPageCount > 1 && isPagingEnabled) {
                                 dataCache.fillCache(res.pageIndex, created_items);
-                                var pg = dataCache.getCachedPage(query.pageIndex);
-                                if (!!pg)
-                                    created_items = <TEntity[]>pg.items;
-                                else
+                                var page = dataCache.getCachedPage(query.pageIndex);
+                                if (!page)
                                     created_items = [];
+                                else
+                                    created_items = <TItem[]>page.items;
                             }
                         }
 
                         created_items.forEach(function (item) {
-                            var oldItem = self._itemsByKey[item._key];
+                            var oldItem = self._itemsByKey[item._aspect._key];
                             if (!oldItem) {
                                 self._items.push(item);
                                 positions.push(self._items.length - 1);
-                                self._itemsByKey[item._key] = item;
+                                self._itemsByKey[item._aspect._key] = item;
                                 newItems.push(item);
                                 fetchedItems.push(item);
                             }
@@ -1568,7 +1589,7 @@
                         });
 
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
+                            this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
 
@@ -1583,18 +1604,18 @@
                         });
                     }
                     this.moveFirst();
-                    return <IQueryResult<TEntity>>{ fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
+                    return <IQueryResult<TItem>>{ fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
                 }
-                _fillFromCache(data: { isPageChanged: boolean; fn_beforeFillEnd: () => void; }): IQueryResult<TEntity> {
+                _fillFromCache(data: { isPageChanged: boolean; fn_beforeFillEnd: () => void; }): IQueryResult<TItem> {
                     data = utils.extend(false, {
                         isPageChanged: false,
                         fn_beforeFillEnd: null
                     }, data);
-                    var self = this, positions:number[] = [], fetchedItems:TEntity[] = [], query = this.query;
+                    var self = this, positions:number[] = [], fetchedItems:TItem[] = [], query = this.query;
                     if (!query)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, 'query is not null'));
                     var dataCache = query._getCache(), cachedPage = dataCache.getCachedPage(query.pageIndex),
-                        items = !cachedPage ? <TEntity[]>[] : <TEntity[]>cachedPage.items;
+                        items = !cachedPage ? <TItem[]>[] : <TItem[]>cachedPage.items;
 
                     this._onFillStart({ isBegin: true, rowCount: items.length, time: new Date(), isPageChanged: data.isPageChanged });
                     try {
@@ -1602,7 +1623,7 @@
                         this._items = items;
 
                         items.forEach(function (item, index) {
-                            self._itemsByKey[item._key] = item;
+                            self._itemsByKey[item._aspect._key] = item;
                             positions.push(index);
                             fetchedItems.push(item);
                         });
@@ -1612,7 +1633,7 @@
                         }
 
                         if (fetchedItems.length > 0) {
-                            this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.ADDED, items: fetchedItems, pos: positions });
+                            this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.ADDED, items: fetchedItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
                     }
@@ -1629,28 +1650,28 @@
                     var self = this;
 
                     rows.forEach(function (rowInfo) {
-                        var key = rowInfo.clientKey, item: TEntity = self._itemsByKey[key];
+                        var key = rowInfo.clientKey, item: TItem = self._itemsByKey[key];
                         if (!item) {
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, key));
                         }
-                        var itemCT = item._changeType;
-                        item.acceptChanges(rowInfo);
-                        if (itemCT === collMod.STATUS.ADDED) {
+                        var itemCT = item._aspect._changeType;
+                        item._aspect.acceptChanges(rowInfo);
+                        if (itemCT === collMOD.STATUS.ADDED) {
                             //on insert
                             delete self._itemsByKey[key];
-                            item._updateKeys(rowInfo.serverKey);
-                            self._itemsByKey[item._key] = item;
+                            item._aspect._updateKeys(rowInfo.serverKey);
+                            self._itemsByKey[item._aspect._key] = item;
                             self._onItemsChanged({
-                                change_type: collMod.COLL_CHANGE_TYPE.REMAP_KEY,
+                                change_type: collMOD.COLL_CHANGE_TYPE.REMAP_KEY,
                                 items: [item],
                                 old_key: key,
-                                new_key: item._key
+                                new_key: item._aspect._key
                             })
                         }
                     });
                 }
                 _setItemInvalid(row: IRowInfo) {
-                    var keyMap = this._itemsByKey, item: TEntity = keyMap[row.clientKey];
+                    var keyMap = this._itemsByKey, item: TItem = keyMap[row.clientKey];
                     var errors = {};
                     row.invalid.forEach(function (err) {
                         if (!err.fieldName)
@@ -1673,19 +1694,19 @@
                     var csh = this._changeCache;
                     utils.forEachProp(csh, function (key) {
                         var item = csh[key];
-                        changes.push(item._getRowInfo());
+                        changes.push(item._aspect._getRowInfo());
                     });
                     return changes;
                 }
                 _getTrackAssocInfo() {
                     var self = this, res: ITrackAssoc[] = [];
-                    var csh: { [key: string]: Entity; } = this._changeCache, assocNames = Object.keys(self._trackAssoc);
+                    var csh: { [key: string]: IEntityItem; } = this._changeCache, assocNames = Object.keys(self._trackAssoc);
                     utils.forEachProp(csh, function (key) {
                         var item = csh[key];
                         assocNames.forEach(function (assocName) {
                             var assocInfo = self._trackAssoc[assocName],
-                                parentKey = item._getFieldVal(assocInfo.childToParentName),
-                                childKey = item._key;
+                                parentKey = item._aspect._getFieldVal(assocInfo.childToParentName),
+                                childKey = item._aspect._key;
                             if (!!parentKey && !!childKey) {
                                 res.push({ assocName: assocName, parentKey: parentKey, childKey: childKey });
                             }
@@ -1693,11 +1714,11 @@
                     });
                     return res;
                 }
-                _addToChanged(item: TEntity) {
-                    if (item._key === null)
+                _addToChanged(item: TItem) {
+                    if (item._aspect._key === null)
                         return;
-                    if (!this._changeCache[item._key]) {
-                        this._changeCache[item._key] = item;
+                    if (!this._changeCache[item._aspect._key]) {
+                        this._changeCache[item._aspect._key] = item;
                         this._changeCount += 1;
                         if (this._changeCount === 1)
                             this.raisePropertyChanged('hasChanges');
@@ -1714,30 +1735,30 @@
                     }
                 }
                 //occurs when item changeType Changed (not used in simple collections)
-                _onItemStatusChanged(item: TEntity, oldChangeType: number) {
+                _onItemStatusChanged(item: TItem, oldChangeType: number) {
                     super._onItemStatusChanged(item, oldChangeType);
-                    if (item._isDeleted && this.isSubmitOnDelete) {
+                    if (item._aspect._isDeleted && this.isSubmitOnDelete) {
                         this.dbContext.submitChanges();
                     }
                 }
-                _onRemoved(item: TEntity, pos: number) {
-                    this._removeFromChanged(item._key);
+                _onRemoved(item: TItem, pos: number) {
+                    this._removeFromChanged(item._aspect._key);
                     super._onRemoved(item, pos);
                 }
-                getFieldInfo(fieldName: string): collMod.IFieldInfo {
-                    var assoc: IAssociationInfo, parentDB: DbSet<Entity>, parts = fieldName.split('.');
+                getFieldInfo(fieldName: string): collMOD.IFieldInfo {
+                    var assoc: IAssociationInfo, parentDB: DbSet<IEntityItem>, parts = fieldName.split('.');
                     var fld = this._fieldMap[parts[0]];
                     if (parts.length == 1) {
                         return fld;
                     }
 
-                    if (fld.fieldType == collMod.FIELD_TYPE.Object) {
+                    if (fld.fieldType == collMOD.FIELD_TYPE.Object) {
                         for (var i = 1; i < parts.length; i += 1) {
-                            fld = collMod.fn_getPropertyByName(parts[i], fld.nested);
+                            fld = collMOD.fn_getPropertyByName(parts[i], fld.nested);
                         }
                         return fld;
                     }
-                    else if (fld.fieldType == collMod.FIELD_TYPE.Navigation) {
+                    else if (fld.fieldType == collMOD.FIELD_TYPE.Navigation) {
                         //for example Customer.Name
                         assoc = this._childAssocMap[fld.fieldName];
                         if (!!assoc) {
@@ -1748,7 +1769,7 @@
 
                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
                 }
-                sort(fieldNames: string[], sortOrder: collMod.SORT_ORDER) {
+                sort(fieldNames: string[], sortOrder: collMOD.SORT_ORDER) {
                     var ds = this, query = ds.query;
                     if (!!query) {
                         query.clearSort();
@@ -1798,7 +1819,7 @@
                     var csh = this._changeCache;
                     utils.forEachProp(csh, function (key) {
                         var item = csh[key];
-                        item.acceptChanges(null);
+                        item._aspect.acceptChanges(null);
                     });
                     this._changeCount = 0;
                 }
@@ -1806,22 +1827,22 @@
                     var csh = this._changeCache;
                     utils.forEachProp(csh, function (key) {
                         var item = csh[key];
-                        item.rejectChanges();
+                        item._aspect.rejectChanges();
                     });
                 }
-                deleteOnSubmit(item: TEntity) {
-                    item.deleteOnSubmit();
+                deleteOnSubmit(item: TItem) {
+                    item._aspect.deleteOnSubmit();
                 }
                 clear() {
                     this._clearChangeCache();
                     super.clear();
                 }
-                createQuery(name: string): TDataQuery<TEntity> {
+                createQuery(name: string): TDataQuery<TItem> {
                     var queryInfo = this.dbContext._getQueryInfo(name);
                     if (!queryInfo) {
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_QUERY_NAME_NOTFOUND, name));
                     }
-                    return new TDataQuery<TEntity>(this, queryInfo);
+                    return new TDataQuery<TItem>(this, queryInfo);
                 }
                 clearCache() {
                     var query = this._query;
@@ -1870,12 +1891,12 @@
                 }
             }
 
-            //implements lazy initialization pattern for creating DbSet's instances
+            //implements a lazy initialization pattern for creation of DbSet's instances
             export class DbSets extends RIAPP.BaseObject {
                 protected _dbSetNames: string[];
                 private _dbContext: DbContext;
-                private _dbSets: { [name: string]: () => DbSet<Entity>; };
-                private _arrDbSets: DbSet<Entity>[];
+                private _dbSets: { [name: string]: () => DbSet<IEntityItem>; };
+                private _arrDbSets: DbSet<IEntityItem>[];
 
                 constructor(dbContext: DbContext) {
                     super();
@@ -1884,14 +1905,14 @@
                     this._dbSets = {};
                     this._dbSetNames = [];
                 }
-                protected _dbSetCreated(dbSet: DbSet<Entity>) {
+                protected _dbSetCreated(dbSet: DbSet<IEntityItem>) {
                     var self = this;
                     this._arrDbSets.push(dbSet);
                     dbSet.addOnPropertyChange('hasChanges', function (sender, args) {
                         self._dbContext._onDbSetHasChangesChanged(sender);
                     }, null);
                 }
-                protected _createDbSet(name: string, dbSetType: IDbSetConstructor) {
+                protected _createDbSet(name: string, dbSetType: IDbSetConstructor<IEntityItem>) {
                     var self = this, dbContext = this._dbContext;
                     self._dbSets[name] = function () {
                         var t = new dbSetType(dbContext);
@@ -2134,8 +2155,8 @@
                         global._throwDummy(ex);
                     }
                 }
-                protected _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): IQueryResult<Entity> {
-                    var operType = DATA_OPER.LOAD, dbSet = query.dbSet, methRes: IQueryResult<Entity>;
+                protected _loadFromCache(query: TDataQuery<IEntityItem>, isPageChanged: boolean): IQueryResult<IEntityItem> {
+                    var operType = DATA_OPER.LOAD, dbSet = query.dbSet, methRes: IQueryResult<IEntityItem>;
                     try {
                         methRes = dbSet._fillFromCache({ isPageChanged: isPageChanged, fn_beforeFillEnd: null });
                     } catch (ex) {
@@ -2156,8 +2177,8 @@
                         dbSet.fillItems(subset);
                     });
                 }
-                protected _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<Entity> {
-                    var self = this, operType = DATA_OPER.LOAD, dbSetName, dbSet: DbSet<Entity>, loadRes: IQueryResult<Entity>;
+                protected _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<IEntityItem> {
+                    var self = this, operType = DATA_OPER.LOAD, dbSetName, dbSet: DbSet<IEntityItem>, loadRes: IQueryResult<IEntityItem>;
                     try {
                         if (!res)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'null result'));
@@ -2184,7 +2205,7 @@
                     return loadRes;
                 }
                 protected _dataSaved(res: IChangeSet) {
-                    var self = this, submitted: Entity[] = [], notvalid: Entity[] = [];
+                    var self = this, submitted: IEntityItem[] = [], notvalid: IEntityItem[] = [];
                     try {
                         try {
                             __checkError(res.error, DATA_OPER.SUBMIT);
@@ -2365,17 +2386,17 @@
                 removeOnSubmitError(namespace?: string) {
                     this.removeHandler('submit_error', namespace);
                 }
-                _onItemRefreshed(res: IRefreshRowInfo, item: Entity) {
+                _onItemRefreshed(res: IRefreshRowInfo, item: IEntityItem) {
                     var operType = DATA_OPER.REFRESH;
                     try {
                         __checkError(res.error, operType);
                         if (!res.rowInfo) {
-                            item._dbSet.removeItem(item);
-                            item.destroy();
+                            item._aspect._dbSet.removeItem(item);
+                            item._aspect.destroy();
                             throw new Error(RIAPP.ERRS.ERR_ITEM_DELETED_BY_ANOTHER_USER);
                         }
                         else
-                            item._refreshValues(res.rowInfo, REFRESH_MODE.MergeIntoCurrent);
+                            item._aspect._refreshValues(res.rowInfo, REFRESH_MODE.MergeIntoCurrent);
                     }
                     catch (ex) {
                         if (global._checkIsDummy(ex)) {
@@ -2385,7 +2406,7 @@
                         global._throwDummy(ex);
                     }
                 }
-                _refreshItem(item: Entity): IPromise<Entity> {
+                _refreshItem(item: IEntityItem): IPromise<IEntityItem> {
                     var deferred = utils.createDeferred(), callback = function (isOk) {
                         if (isOk) {
                             deferred.resolve(item);
@@ -2394,7 +2415,7 @@
                             deferred.reject();
                         }
                     };
-                    var url = this._getUrl(DATA_SVC_METH.Refresh), dbSet = item._dbSet;
+                    var url = this._getUrl(DATA_SVC_METH.Refresh), dbSet = item._aspect._dbSet;
                     var self = this;
                     this.waitForNotSubmiting(function () {
                         dbSet.waitForNotLoading(function () {
@@ -2402,7 +2423,7 @@
                             var fn_onEnd = function () {
                                 self.isBusy = false;
                                 dbSet.isLoading = false;
-                                item._isRefreshing = false;
+                                item._aspect._isRefreshing = false;
                             },
                                 fn_onErr = function (ex) {
                                     fn_onEnd();
@@ -2413,12 +2434,12 @@
                                     fn_onEnd();
                                 };
 
-                            item._isRefreshing = true;
+                            item._aspect._isRefreshing = true;
                             self.isBusy = true;
                             dbSet.isLoading = true;
                             try {
-                                var request: IRefreshRowInfo = { dbSetName: item._dbSetName, rowInfo: item._getRowInfo(), error: null };
-                                item._checkCanRefresh();
+                                var request: IRefreshRowInfo = { dbSetName: item._aspect._dbSetName, rowInfo: item._aspect._getRowInfo(), error: null };
+                                item._aspect._checkCanRefresh();
                                 postData = JSON.stringify(request);
                                 utils.performAjaxCall(
                                     url,
@@ -2451,8 +2472,8 @@
                 _getQueryInfo(name: string): IQueryInfo {
                     return this._queryInf[name];
                 }
-                _onDbSetHasChangesChanged(eSet: DbSet<Entity>) {
-                    var old = this._hasChanges, test: DbSet<Entity>;
+                _onDbSetHasChangesChanged(eSet: DbSet<IEntityItem>) {
+                    var old = this._hasChanges, test: DbSet<IEntityItem>;
                     this._hasChanges = false;
                     if (eSet.hasChanges) {
                         this._hasChanges = true;
@@ -2470,12 +2491,12 @@
                         this.raisePropertyChanged('hasChanges');
                     }
                 }
-                _load(query: TDataQuery<Entity>, isPageChanged: boolean): IPromise<IQueryResult<Entity>> {
+                _load(query: TDataQuery<IEntityItem>, isPageChanged: boolean): IPromise<IQueryResult<IEntityItem>> {
                     if (!query) {
                         throw new Error(RIAPP.ERRS.ERR_DB_LOAD_NO_QUERY);
                     }
                     var self = this, deferred = utils.createDeferred();
-                    var fn_onComplete = function (isOk: boolean, res: IQueryResult<Entity>) {
+                    var fn_onComplete = function (isOk: boolean, res: IQueryResult<IEntityItem>) {
                         if (isOk) {
                             deferred.resolve(res);
                         }
@@ -2510,7 +2531,7 @@
                                     fn_onEnd();
                                     self._onDataOperError(ex, operType);
                                     fn_onComplete(false, null);
-                                }, loadRes: IQueryResult<Entity>, range: { start: number; end: number; cnt: number; }, pageCount = 1;
+                                }, loadRes: IQueryResult<IEntityItem>, range: { start: number; end: number; cnt: number; }, pageCount = 1;
 
                             dbSet.isLoading = true;
                             self.isBusy = true;
@@ -2710,7 +2731,7 @@
                     return submitState.deferred.promise();
                 }
                 //returns promise
-                load(query: TDataQuery<Entity>): IPromise<IQueryResult<Entity>> {
+                load(query: TDataQuery<IEntityItem>): IPromise<IQueryResult<IEntityItem>> {
                     return this._load(query, false);
                 }
                 acceptChanges() {
@@ -2781,14 +2802,14 @@
                 private _name: string;
                 private _dbContext: DbContext;
                 private _onDeleteAction: DELETE_ACTION;
-                private _parentDS: DbSet<Entity>;
-                private _childDS: DbSet<Entity>;
-                private _parentFldInfos: collMod.IFieldInfo[];
-                private _childFldInfos: collMod.IFieldInfo[];
+                private _parentDS: DbSet<IEntityItem>;
+                private _childDS: DbSet<IEntityItem>;
+                private _parentFldInfos: collMOD.IFieldInfo[];
+                private _childFldInfos: collMOD.IFieldInfo[];
                 private _parentToChildrenName: string;
                 private _childToParentName: string;
-                private _parentMap: { [key: string]: Entity; };
-                private _childMap: { [key: string]: Entity[]; };
+                private _parentMap: { [key: string]: IEntityItem; };
+                private _childMap: { [key: string]: IEntityItem[]; };
                 private _isParentFilling: boolean;
                 private _isChildFilling: boolean;
                 private _saveParentFKey: string;
@@ -2905,18 +2926,18 @@
                         self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId, true);
                 }
-                protected _onParentCollChanged(args: collMod.ICollChangedArgs<Entity>) {
-                    var self = this, item: Entity, items = <Entity[]>args.items, changed: string[] = [], changedKeys = {};
+                protected _onParentCollChanged(args: collMOD.ICollChangedArgs<IEntityItem>) {
+                    var self = this, item: IEntityItem, items = args.items, changed: string[] = [], changedKeys = {};
                     switch (args.change_type) {
-                        case collMod.COLL_CHANGE_TYPE.RESET:
+                        case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!self._isParentFilling)
                                 changed = self.refreshParentMap();
                             break;
-                        case collMod.COLL_CHANGE_TYPE.ADDED:
+                        case collMOD.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isParentFilling) //if items are filling then it will be appended when fill ends
                                 changed = self._mapParentItems(items);
                             break;
-                        case collMod.COLL_CHANGE_TYPE.REMOVE:
+                        case collMOD.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 var key = self._unMapParentItem(item);
                                 if (!!key) {
@@ -2925,7 +2946,7 @@
                             });
                             changed = Object.keys(changedKeys);
                             break;
-                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
+                        case collMOD.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 if (!!args.old_key) {
                                     item = this._parentMap[args.old_key];
@@ -2941,7 +2962,7 @@
                     }
                     self._notifyParentChanged(changed);
                 }
-                protected _onParentFill(args: collMod.ICollFillArgs<Entity>) {
+                protected _onParentFill(args: collMOD.ICollFillArgs<IEntityItem>) {
                     var isEnd = !args.isBegin, self = this, changed;
                     if (isEnd) {
                         self._isParentFilling = false;
@@ -2949,14 +2970,14 @@
                             changed = self.refreshParentMap();
                         }
                         else
-                            changed = self._mapParentItems(<Entity[]>args.newItems);
+                            changed = self._mapParentItems(<IEntityItem[]>args.newItems);
                         self._notifyParentChanged(changed);
                     }
                     else {
                         self._isParentFilling = true;
                     }
                 }
-                protected _onParentEdit(item: Entity, isBegin: boolean, isCanceled: boolean) {
+                protected _onParentEdit(item: IEntityItem, isBegin: boolean, isCanceled: boolean) {
                     var self = this;
                     if (isBegin) {
                         self._storeParentFKey(item);
@@ -2968,16 +2989,16 @@
                             self._saveParentFKey = null;
                     }
                 }
-                protected _onParentCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
+                protected _onParentCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS) {
                     var self = this, fkey;
                     if (isBegin) {
-                        if (isRejected && changeType === collMod.STATUS.ADDED) {
+                        if (isRejected && changeType === collMOD.STATUS.ADDED) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
                             return;
                         }
-                        else if (!isRejected && changeType === collMod.STATUS.DELETED) {
+                        else if (!isRejected && changeType === collMOD.STATUS.DELETED) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
@@ -2990,13 +3011,13 @@
                         self._checkParentFKey(item);
                     }
                 }
-                protected _storeParentFKey(item: Entity) {
+                protected _storeParentFKey(item: IEntityItem) {
                     var self = this, fkey = self.getParentFKey(item);
                     if (fkey !== null && !!self._parentMap[fkey]) {
                         self._saveParentFKey = fkey;
                     }
                 }
-                protected _checkParentFKey(item: Entity) {
+                protected _checkParentFKey(item: IEntityItem) {
                     var self = this, fkey: string, savedKey = self._saveParentFKey;
                     self._saveParentFKey = null;
                     fkey = self.getParentFKey(item);
@@ -3014,10 +3035,10 @@
                         }
                     }
                 }
-                protected _onParentStatusChanged(item: Entity, oldChangeType: collMod.STATUS) {
-                    var self = this, newChangeType = item._changeType, fkey:string;
-                    var children:Entity[];
-                    if (newChangeType === collMod.STATUS.DELETED) {
+                protected _onParentStatusChanged(item: IEntityItem, oldChangeType: collMOD.STATUS) {
+                    var self = this, newChangeType = item._aspect._changeType, fkey:string;
+                    var children: IEntityItem[];
+                    if (newChangeType === collMOD.STATUS.DELETED) {
                         children = self.getChildItems(item);
                         fkey = this._unMapParentItem(item);
                         switch (self.onDeleteAction) {
@@ -3026,24 +3047,24 @@
                                 break;
                             case DELETE_ACTION.Cascade:
                                 children.forEach(function (child) {
-                                    child.deleteItem();
+                                    child._aspect.deleteItem();
                                 });
                                 break;
                             case DELETE_ACTION.SetNulls:
                                 children.forEach(function (child) {
-                                    var isEdit = child.isEditing;
+                                    var isEdit = child._aspect.isEditing;
                                     if (!isEdit)
-                                        child.beginEdit();
+                                        child._aspect.beginEdit();
                                     try {
                                         self._childFldInfos.forEach(function (f) {
                                             child[f.fieldName] = null;
                                         });
                                         if (!isEdit)
-                                            child.endEdit();
+                                            child._aspect.endEdit();
                                     }
                                     finally {
                                         if (!isEdit)
-                                            child.cancelEdit();
+                                            child._aspect.cancelEdit();
                                     }
                                 });
                                 break;
@@ -3053,18 +3074,18 @@
                         }
                     }
                 }
-                protected _onChildCollChanged(args: collMod.ICollChangedArgs<Entity>) {
-                    var self = this, item: Entity, items = args.items, changed: string[] = [], changedKeys = {};
+                protected _onChildCollChanged(args: collMOD.ICollChangedArgs<IEntityItem>) {
+                    var self = this, item: IEntityItem, items = args.items, changed: string[] = [], changedKeys = {};
                     switch (args.change_type) {
-                        case collMod.COLL_CHANGE_TYPE.RESET:
+                        case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!self._isChildFilling)
                                 changed = self.refreshChildMap();
                             break;
-                        case collMod.COLL_CHANGE_TYPE.ADDED:
+                        case collMOD.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isChildFilling) //if items are filling then it will be appended when fill ends
                                 changed = self._mapChildren(items);
                             break;
-                        case collMod.COLL_CHANGE_TYPE.REMOVE:
+                        case collMOD.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
                                 var key = self._unMapChildItem(item);
                                 if (!!key) {
@@ -3073,15 +3094,15 @@
                             });
                             changed = Object.keys(changedKeys);
                             break;
-                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
+                        case collMOD.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 if (!!args.old_key) {
                                     item = items[0];
                                     if (!!item) {
-                                        var parentKey = item._getFieldVal(this._childToParentName);
+                                        var parentKey = item._aspect._getFieldVal(this._childToParentName);
                                         if (!!parentKey) {
                                             delete this._childMap[parentKey];
-                                            item._clearFieldVal(this._childToParentName);
+                                            item._aspect._clearFieldVal(this._childToParentName);
                                         }
                                         changed = this._mapChildren([item]);
                                     }
@@ -3140,7 +3161,7 @@
                         }
                     }
                 }
-                protected _onChildFill(args: collMod.ICollFillArgs<Entity>) {
+                protected _onChildFill(args: collMOD.ICollFillArgs<IEntityItem>) {
                     var isEnd = !args.isBegin, self = this, changed;
                     if (isEnd) {
                         self._isChildFilling = false;
@@ -3148,14 +3169,14 @@
                             changed = self.refreshChildMap();
                         }
                         else
-                            changed = self._mapChildren(<Entity[]>args.newItems);
+                            changed = self._mapChildren(<IEntityItem[]>args.newItems);
                         self._notifyChildrenChanged(changed);
                     }
                     else {
                         self._isChildFilling = true;
                     }
                 }
-                protected _onChildEdit(item: Entity, isBegin: boolean, isCanceled: boolean) {
+                protected _onChildEdit(item: IEntityItem, isBegin: boolean, isCanceled: boolean) {
                     var self = this;
                     if (isBegin) {
                         self._storeChildFKey(item);
@@ -3168,16 +3189,16 @@
                         }
                     }
                 }
-                protected _onChildCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS) {
+                protected _onChildCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS) {
                     var self = this, fkey: string;
                     if (isBegin) {
-                        if (isRejected && changeType === collMod.STATUS.ADDED) {
+                        if (isRejected && changeType === collMOD.STATUS.ADDED) {
                             fkey = this._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
                             return;
                         }
-                        else if (!isRejected && changeType === collMod.STATUS.DELETED) {
+                        else if (!isRejected && changeType === collMOD.STATUS.DELETED) {
                             fkey = self._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
@@ -3190,8 +3211,8 @@
                         self._checkChildFKey(item);
                     }
                 }
-                protected _storeChildFKey(item: Entity) {
-                    var self = this, fkey = self.getChildFKey(item), arr: Entity[];
+                protected _storeChildFKey(item: IEntityItem) {
+                    var self = this, fkey = self.getChildFKey(item), arr: IEntityItem[];
                     if (!!fkey) {
                         arr = self._childMap[fkey];
                         if (!!arr && arr.indexOf(item) > -1) {
@@ -3199,8 +3220,8 @@
                         }
                     }
                 }
-                protected _checkChildFKey(item: Entity) {
-                    var self = this, savedKey = self._saveChildFKey, fkey: string, arr: Entity[];
+                protected _checkChildFKey(item: IEntityItem) {
+                    var self = this, savedKey = self._saveChildFKey, fkey: string, arr: IEntityItem[];
                     self._saveChildFKey = null;
                     fkey = self.getChildFKey(item);
                     if (fkey !== savedKey) {
@@ -3220,18 +3241,18 @@
                         }
                     }
                 }
-                protected _onChildStatusChanged(item: Entity, oldChangeType: collMod.STATUS) {
-                    var self = this, newChangeType = item._changeType;
+                protected _onChildStatusChanged(item: IEntityItem, oldChangeType: collMOD.STATUS) {
+                    var self = this, newChangeType = item._aspect._changeType;
                     var fkey = self.getChildFKey(item);
                     if (!fkey)
                         return;
-                    if (newChangeType === collMod.STATUS.DELETED) {
+                    if (newChangeType === collMOD.STATUS.DELETED) {
                         fkey = self._unMapChildItem(item);
                         if (!!fkey)
                             self._notifyChildrenChanged([fkey]);
                     }
                 }
-                protected _getItemKey(finf: collMod.IFieldInfo[], ds: DbSet<Entity>, item: Entity) {
+                protected _getItemKey(finf: collMOD.IFieldInfo[], ds: DbSet<IEntityItem>, item: IEntityItem) {
                     var arr = [], val, strval: string;
                     for (var i = 0, len = finf.length; i < len; i += 1) {
                         val = item[finf[i].fieldName];
@@ -3252,8 +3273,8 @@
                     this._parentMap = {};
                     self._notifyParentChanged(fkeys);
                 }
-                protected _unMapChildItem(item: Entity) {
-                    var fkey, arr: Entity[], idx: number, changedKey = null;
+                protected _unMapChildItem(item: IEntityItem) {
+                    var fkey, arr: IEntityItem[], idx: number, changedKey = null;
                     fkey = this.getChildFKey(item);
                     if (!!fkey) {
                         arr = this._childMap[fkey];
@@ -3268,7 +3289,7 @@
                     }
                     return changedKey;
                 }
-                protected _unMapParentItem(item: Entity) {
+                protected _unMapParentItem(item: IEntityItem) {
                     var fkey: string, changedKey = null;
                     fkey = this.getParentFKey(item);
                     if (!!fkey && !!this._parentMap[fkey]) {
@@ -3277,12 +3298,12 @@
                     }
                     return changedKey;
                 }
-                protected _mapParentItems(items: Entity[]) {
-                    var item: Entity, fkey: string, chngType: number, old: Entity, chngedKeys = {};
+                protected _mapParentItems(items: IEntityItem[]) {
+                    var item: IEntityItem, fkey: string, chngType: number, old: IEntityItem, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
-                        chngType = item._changeType;
-                        if (chngType === collMod.STATUS.DELETED)
+                        chngType = item._aspect._changeType;
+                        if (chngType === collMOD.STATUS.DELETED)
                             continue;
                         fkey = this.getParentFKey(item);
                         if (!!fkey) {
@@ -3305,7 +3326,7 @@
                     }
                 }
                 protected _onParentChanged(fkey: string) {
-                    var self = this, arr: Entity[];
+                    var self = this, arr: IEntityItem[];
                     if (!!fkey && !!this._childToParentName) {
                         arr = this._childMap[fkey];
                         if (!!arr) {
@@ -3315,12 +3336,12 @@
                         }
                     }
                 }
-                protected _mapChildren(items: Entity[]) {
-                    var item: Entity, fkey: string, arr: Entity[], chngType, chngedKeys = {};
+                protected _mapChildren(items: IEntityItem[]) {
+                    var item: IEntityItem, fkey: string, arr: IEntityItem[], chngType, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
-                        chngType = item._changeType;
-                        if (chngType === collMod.STATUS.DELETED)
+                        chngType = item._aspect._changeType;
+                        if (chngType === collMOD.STATUS.DELETED)
                             continue;
                         fkey = this.getChildFKey(item);
                         if (!!fkey) {
@@ -3348,16 +3369,16 @@
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
-                getParentFKey(item: Entity) {
-                    if (!!item && item._isNew)
-                        return item._key;
+                getParentFKey(item: IEntityItem) {
+                    if (!!item && item._aspect._isNew)
+                        return item._aspect._key;
                     return this._getItemKey(this._parentFldInfos, this._parentDS, item);
                 }
-                getChildFKey(item: Entity) {
+                getChildFKey(item: IEntityItem) {
                     if (!!item && !!this._childToParentName) {
                         //_getFieldVal for childToParentName can store temporary parent's key (which is generated on the client)
                         // we first check if it returns it
-                        var parentKey = item._getFieldVal(this._childToParentName);
+                        var parentKey = item._aspect._getFieldVal(this._childToParentName);
                         if (!!parentKey) {
                             return parentKey;
                         }
@@ -3366,7 +3387,7 @@
                     return this._getItemKey(this._childFldInfos, this._childDS, item);
                 }
                 //get all childrens for parent item
-                getChildItems(item: Entity):Entity[] {
+                getChildItems(item: IEntityItem): IEntityItem[] {
                     if (!item)
                         return [];
                     var fkey = this.getParentFKey(item), arr = this._childMap[fkey];
@@ -3375,7 +3396,7 @@
                     return arr;
                 }
                 //get the parent for child item
-                getParentItem(item: Entity):Entity {
+                getParentItem(item: IEntityItem): IEntityItem {
                     if (!item)
                         return null;
                     var fkey = this.getChildFKey(item);
@@ -3421,20 +3442,20 @@
                 get onDeleteAction() { return this._onDeleteAction; }
             }
 
-            export class DataView<TItem extends collMod.CollectionItem> extends collMod.BaseCollection<TItem> {
-                private _dataSource: collMod.BaseCollection<TItem>;
+            export class DataView<TItem extends collMOD.ICollectionItem> extends collMOD.BaseCollection<TItem> {
+                private _dataSource: collMOD.BaseCollection<TItem>;
                 private _fn_filter: (item: TItem) => boolean;
                 private _fn_sort: (item1: TItem, item2: TItem) => number;
-                private _fn_itemsProvider: (ds: collMod.BaseCollection<TItem>) => TItem[];
+                private _fn_itemsProvider: (ds: collMOD.BaseCollection<TItem>) => TItem[];
                 private _isDSFilling: boolean;
                 private _isAddingNew: boolean;
                 private _objId: string;
 
                 constructor(options: {
-                    dataSource: collMod.BaseCollection<TItem>;
+                    dataSource: collMOD.BaseCollection<TItem>;
                     fn_filter?: (item: TItem) => boolean;
                     fn_sort?: (item1: TItem, item2: TItem) => number;
-                    fn_itemsProvider?: (ds: collMod.BaseCollection<TItem>) => TItem[];
+                    fn_itemsProvider?: (ds: collMOD.BaseCollection<TItem>) => TItem[];
                 }) {
                     super();
                     var opts: typeof options = utils.extend(false, {
@@ -3444,7 +3465,7 @@
                             fn_itemsProvider: null
                         }, options);
 
-                    if (!opts.dataSource || !(opts.dataSource instanceof collMod.BaseCollection))
+                    if (!opts.dataSource || !(opts.dataSource instanceof collMOD.BaseCollection))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_DATASRC_INVALID);
                     if (!opts.fn_filter || !utils.check.isFunction(opts.fn_filter))
                         throw new Error(RIAPP.ERRS.ERR_DATAVIEW_FILTER_INVALID);
@@ -3498,7 +3519,7 @@
                     this._items = [];
                     this._itemsByKey = {};
                     this._errors = {};
-                    this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.RESET, items: [] });
+                    this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.RESET, items: [] });
                     if (!isPageChanged)
                         this.pageIndex = 0;
                     this.raisePropertyChanged('count');
@@ -3547,9 +3568,9 @@
                             items = data.items;
 
                         items.forEach(function (item) {
-                            var oldItem = self._itemsByKey[item._key];
+                            var oldItem = self._itemsByKey[item._aspect._key];
                             if (!oldItem) {
-                                self._itemsByKey[item._key] = item;
+                                self._itemsByKey[item._aspect._key] = item;
                                 newItems.push(item);
                                 positions.push(self._items.length - 1);
                                 self._items.push(item);
@@ -3561,7 +3582,7 @@
                         });
 
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: collMod.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
+                            this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
                             this.raisePropertyChanged('count');
                         }
                     } finally {
@@ -3577,14 +3598,14 @@
                     this.moveFirst();
                     return newItems;
                 }
-                protected _onDSCollectionChanged(args: collMod.ICollChangedArgs<TItem>) {
-                    var self = this, item: collMod.CollectionItem, items = args.items;
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<TItem>) {
+                    var self = this, item: collMOD.ICollectionItem, items = args.items;
                     switch (args.change_type) {
-                        case collMod.COLL_CHANGE_TYPE.RESET:
+                        case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh(false);
                             break;
-                        case collMod.COLL_CHANGE_TYPE.ADDED:
+                        case collMOD.COLL_CHANGE_TYPE.ADDED:
                             if (!this._isAddingNew && !this._isDSFilling) {
                                 if (!!self._fn_filter) {
                                     items = items.filter(self._fn_filter);
@@ -3592,16 +3613,16 @@
                                 self.appendItems(items);
                             }
                             break;
-                        case collMod.COLL_CHANGE_TYPE.REMOVE:
+                        case collMOD.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
-                                var key = item._key;
-                                item = <any>self._itemsByKey[key];
+                                var key = item._aspect._key;
+                                item = self._itemsByKey[key];
                                 if (!!item) {
                                     self.removeItem(item);
                                 }
                             });
                             break;
-                        case collMod.COLL_CHANGE_TYPE.REMAP_KEY:
+                        case collMOD.COLL_CHANGE_TYPE.REMAP_KEY:
                             {
                                 item = self._itemsByKey[args.old_key];
                                 if (!!item) {
@@ -3615,7 +3636,7 @@
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
-                protected _onDSFill(args: collMod.ICollFillArgs<TItem>) {
+                protected _onDSFill(args: collMOD.ICollFillArgs<TItem>) {
                     var self = this, items = args.fetchedItems, isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -3632,7 +3653,7 @@
                         this._isDSFilling = true;
                     }
                 }
-                protected _onDSStatusChanged(args: collMod.ICollItemStatusArgs<TItem>) {
+                protected _onDSStatusChanged(args: collMOD.ICollItemStatusArgs<TItem>) {
                     var self = this, item = args.item, key = args.key, oldChangeType = args.oldChangeType, isOk, canFilter = !!self._fn_filter;
                     if (!!self._itemsByKey[key]) {
                         self._onItemStatusChanged(item, oldChangeType);
@@ -3771,17 +3792,17 @@
                     return item;
                 }
                 removeItem(item: TItem) {
-                    if (item._key === null) {
+                    if (item._aspect._key === null) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     }
-                    if (!this._itemsByKey[item._key])
+                    if (!this._itemsByKey[item._aspect._key])
                         return;
                     var oldPos = utils.removeFromArray(this._items, item);
                     if (oldPos < 0) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
                     }
-                    delete this._itemsByKey[item._key];
-                    delete this._errors[item._key];
+                    delete this._itemsByKey[item._aspect._key];
+                    delete this._errors[item._aspect._key];
                     this.totalCount = this.totalCount - 1;
                     this._onRemoved(item, oldPos);
                     var test = this.getItemByPos(oldPos), curPos = this._currentPos;
@@ -3798,9 +3819,9 @@
                         this._onCurrentChanged();
                     }
                 }
-                sortLocal(fieldNames: string[], sortOrder: collMod.SORT_ORDER): IPromise<any> {
+                sortLocal(fieldNames: string[], sortOrder: collMOD.SORT_ORDER): IPromise<any> {
                     var mult = 1, parser = global.parser, deffered = utils.createDeferred();
-                    if (sortOrder === collMod.SORT_ORDER.DESC)
+                    if (sortOrder === collMOD.SORT_ORDER.DESC)
                         mult = -1;
                     var fn_sort = function (a, b) {
                         var res = 0, i, len, af, bf, fieldName;
@@ -3874,7 +3895,7 @@
                     }
                 }
                 get fn_itemsProvider() { return this._fn_itemsProvider; }
-                set fn_itemsProvider(v: (ds: collMod.BaseCollection<TItem>) => TItem[]) {
+                set fn_itemsProvider(v: (ds: collMOD.BaseCollection<TItem>) => TItem[]) {
                     if (this._fn_itemsProvider !== v) {
                         this._fn_itemsProvider = v;
                         this._refresh(false);
@@ -3882,24 +3903,24 @@
                 }
             }
 
-            export class ChildDataView<TEntity extends Entity> extends DataView<TEntity> {
-                private _parentItem: Entity;
+            export class ChildDataView<TItem extends IEntityItem> extends DataView<TItem> {
+                private _parentItem: IEntityItem;
                 private _refreshTimeout: number;
                 private _association: Association;
 
                 constructor(options: {
                     association: Association;
-                    fn_filter?: (item: TEntity) => boolean;
-                    fn_sort?: (item1: TEntity, item2: TEntity) => number;
+                    fn_filter?: (item: TItem) => boolean;
+                    fn_sort?: (item1: TItem, item2: TItem) => number;
                 }) {
                     this._parentItem = null;
                     this._refreshTimeout = null;
                     this._association = options.association;
                     var opts: {
-                        dataSource: collMod.BaseCollection<TEntity>;
-                        fn_filter?: (item: TEntity) => boolean;
-                        fn_sort?: (item1: TEntity, item2: TEntity) => number;
-                        fn_itemsProvider?: (ds: collMod.BaseCollection<TEntity>) => TEntity[];
+                        dataSource: collMOD.BaseCollection<TItem>;
+                        fn_filter?: (item: TItem) => boolean;
+                        fn_sort?: (item1: TItem, item2: TItem) => number;
+                        fn_itemsProvider?: (ds: collMOD.BaseCollection<TItem>) => TItem[];
                     } = utils.extend(false, {
                             dataSource: this._association.childDS,
                             fn_filter: null,
@@ -3931,7 +3952,7 @@
                     if (!ds) {
                         return;
                     }
-                    var items = <TEntity[]>self._association.getChildItems(self._parentItem);
+                    var items = <TItem[]>self._association.getChildItems(self._parentItem);
                     if (!!self.fn_filter) {
                         items = items.filter(self.fn_filter);
                     }
@@ -3955,7 +3976,7 @@
                     return 'ChildDataView';
                 }
                 get parentItem() { return this._parentItem; }
-                set parentItem(v: Entity) {
+                set parentItem(v: IEntityItem) {
                     if (this._parentItem !== v) {
                         this._parentItem = v;
                         this.raisePropertyChanged('parentItem');
@@ -3976,13 +3997,6 @@
                 get association() { return this._association; }
             }
 
-            export class TDbSet extends DbSet<Entity>{
-            }
-            export class TDataView extends DataView<Entity>{
-            }
-            export class TChildDataView extends ChildDataView<Entity>{
-            }
-            
             export class BaseComplexProperty extends RIAPP.BaseObject implements RIAPP.IErrorNotification {
                 private _name: string;
 
@@ -4002,19 +4016,19 @@
                 getValue(fullName: string): any {
                     throw new Error('Not Implemented');
                 }
-                getFieldInfo(): collMod.IFieldInfo {
+                getFieldInfo(): collMOD.IFieldInfo {
                     throw new Error('Not Implemented');
                 }
-                getProperties(): collMod.IFieldInfo[] {
+                getProperties(): collMOD.IFieldInfo[] {
                     throw new Error('Not Implemented');
                 }
                 getFullPath(name: string): string {
                     throw new Error('Not Implemented');
                 }
-                getEntity(): Entity {
+                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext> {
                     throw new Error('Not Implemented');
                 }
-                getPropertyByName(name: string): collMod.IFieldInfo {
+                getPropertyByName(name: string): collMOD.IFieldInfo {
                     var arrProps = this.getProperties().filter((f) => { return f.fieldName == name; });
                     if (!arrProps || arrProps.length != 1)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_ASSERTION_FAILED, "arrProps.length == 1"));
@@ -4042,9 +4056,9 @@
             }
 
             export class RootComplexProperty extends BaseComplexProperty {
-                private _entity: Entity;
+                private _entity: EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
 
-                constructor(name: string, owner: Entity) {
+                constructor(name: string, owner: EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>) {
                     super(name);
                     this._entity = owner;
                 }
@@ -4057,10 +4071,10 @@
                 getValue(fullName: string): any {
                     return this._entity._getFieldVal(fullName);
                 }
-                getFieldInfo(): collMod.IFieldInfo {
+                getFieldInfo(): collMOD.IFieldInfo {
                     return this._entity.getFieldInfo(this.getName());
                 }
-                getProperties(): collMod.IFieldInfo[] {
+                getProperties(): collMOD.IFieldInfo[] {
                     return this.getFieldInfo().nested;
                 }
                 getEntity() {
@@ -4087,11 +4101,11 @@
                 getValue(fullName: string) {
                     return this.getEntity()._getFieldVal(fullName);
                 }
-                getFieldInfo(): collMod.IFieldInfo {
+                getFieldInfo(): collMOD.IFieldInfo {
                     var name = this.getName();
                     return this._parent.getPropertyByName(name);
                 }
-                getProperties(): collMod.IFieldInfo[] {
+                getProperties(): collMOD.IFieldInfo[] {
                     return this.getFieldInfo().nested;
                 }
                 getParent(): BaseComplexProperty {
@@ -4113,6 +4127,7 @@
                     return this.getRootProperty().getEntity();
                 }
             }
+
 
             //MUST NOTIFY THE GLOBAL 
             global.onModuleLoaded('db', db);

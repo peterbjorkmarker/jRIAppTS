@@ -3,9 +3,10 @@
         export module collection {
             import constsMOD = RIAPP.MOD.consts;
             import utilsMOD = RIAPP.MOD.utils;
+            import errorsMOD = RIAPP.MOD.errors;
             
             //local variables for optimization
-            var ValidationError = RIAPP.MOD.errors.ValidationError,
+            var ValidationError = errorsMOD.ValidationError,
                 DATA_TYPE = constsMOD.DATA_TYPE, valueUtils = utilsMOD.valueUtils, baseUtils = RIAPP.baseUtils, utils: utilsMOD.Utils;
             RIAPP.global.addOnInitialize((s, args) => {
                 utils = s.utils;
@@ -71,7 +72,7 @@
                 _fn_traverseField(fld.fieldName, fld, fn);
             }
          
-            export class CollectionItem extends RIAPP.BaseObject implements IErrorNotification, RIAPP.IEditable, RIAPP.ISubmittable {
+            export class ItemAspect<TItem extends ICollectionItem> extends RIAPP.BaseObject implements IErrorNotification, RIAPP.IEditable, RIAPP.ISubmittable {
                 protected _fkey: string;
                 protected _isEditing: boolean;
                 protected _saveVals: { [fieldName: string]: any; };
@@ -104,17 +105,17 @@
                     var coll = this._collection, isHandled: boolean;
                     if (coll.isEditing) {
                         var eitem = coll._getEditingItem();
-                        if (eitem === this)
+                        if (eitem._aspect === this)
                             return false;
                         try {
-                            eitem.endEdit();
-                            if (eitem.getIsHasErrors()) {
-                                this.handleError(new ValidationError(eitem.getAllErrors(), eitem), eitem);
-                                eitem.cancelEdit();
+                            eitem._aspect.endEdit();
+                            if (eitem._aspect.getIsHasErrors()) {
+                                this.handleError(new ValidationError(eitem._aspect.getAllErrors(), eitem), eitem);
+                                eitem._aspect.cancelEdit();
                             }
                         } catch (ex) {
                             isHandled = this.handleError(ex, eitem);
-                            eitem.cancelEdit();
+                            eitem._aspect.cancelEdit();
                             global.reThrow(ex, isHandled);
                         }
                     }
@@ -122,7 +123,7 @@
                         return false;
                     this._isEditing = true;
                     this._saveVals = utils.cloneObj(this._vals);
-                    this._collection.currentItem = this;
+                    this._collection.currentItem = this.getItem();
                     return true;
                 }
                 protected _endEdit(): boolean {
@@ -132,10 +133,10 @@
                     if (this.getIsHasErrors()) {
                         return false;
                     }
-                    coll._removeAllErrors(this); //revalidate all
+                    coll._removeAllErrors(this.getItem()); //revalidate all
                     var validation_errors = this._validateAll();
                     if (validation_errors.length > 0) {
-                        coll._addErrors(self, validation_errors);
+                        coll._addErrors(self.getItem(), validation_errors);
                     }
                     if (this.getIsHasErrors()) {
                         return false;
@@ -145,7 +146,7 @@
                     return true;
                 }
                 protected _validate(): RIAPP.IValidationInfo {
-                    return this._collection._validateItem(this);
+                    return this._collection._validateItem(this.getItem());
                 }
                 protected _skipValidate(fieldInfo: IFieldInfo, val) {
                     return false;
@@ -167,7 +168,7 @@
                     } catch (ex) {
                         res = { fieldName: fieldName, errors: [ex.message] };
                     }
-                    var tmp = this._collection._validateItemField(this, fieldName);
+                    var tmp = this._collection._validateItemField(this.getItem(), fieldName);
                     if (!!res && !!tmp) {
                         res.errors = res.errors.concat(tmp.errors);
                     }
@@ -286,7 +287,7 @@
                     return this._collection.getFieldNames();
                 }
                 getFieldErrors(fieldName): RIAPP.IValidationInfo[] {
-                    var itemErrors = this._collection._getErrors(this);
+                    var itemErrors = this._collection._getErrors(this.getItem());
                     if (!itemErrors)
                         return [];
                     var name = fieldName;
@@ -301,7 +302,7 @@
                     ];
                 }
                 getAllErrors(): RIAPP.IValidationInfo[] {
-                    var itemErrors = this._collection._getErrors(this);
+                    var itemErrors = this._collection._getErrors(this.getItem());
                     if (!itemErrors)
                         return [];
                     var res: RIAPP.IValidationInfo[] = [];
@@ -315,7 +316,7 @@
                     return res;
                 }
                 getErrorString() {
-                    var itemErrors = this._collection._getErrors(this);
+                    var itemErrors = this._collection._getErrors(this.getItem());
                     if (!itemErrors)
                         return '';
                     var res = [];
@@ -329,11 +330,13 @@
                     deffered.reject();
                     return deffered.promise();
                 }
+                rejectChanges(): void {
+                }
                 beginEdit() {
                     var coll = this._collection;
                     if (!this._beginEdit())
                         return false;
-                    coll._onEditing(this, true, false);
+                    coll._onEditing(this.getItem(), true, false);
                     this.raisePropertyChanged('isEditing');
                     return true;
                 }
@@ -341,7 +344,7 @@
                     var coll = this._collection;
                     if (!this._endEdit())
                         return false;
-                    coll._onEditing(this, false, false);
+                    coll._onEditing(this.getItem(), false, false);
                     this._notEdited = false;
                     this.raisePropertyChanged('isEditing');
                     return true;
@@ -353,7 +356,7 @@
                     var changes = this._saveVals;
                     this._vals = this._saveVals;
                     this._saveVals = null;
-                    coll._removeAllErrors(this);
+                    coll._removeAllErrors(this.getItem());
                     //refresh User interface when values restored
                     coll.getFieldNames().forEach(function (name) {
                         if (changes[name] !== this._vals[name])
@@ -361,10 +364,10 @@
                     }, this);
 
                     if (isNew && this._notEdited)
-                        coll.removeItem(this);
+                        coll.removeItem(this.getItem());
 
                     this._isEditing = false;
-                    coll._onEditing(this, false, true);
+                    coll._onEditing(this.getItem(), false, true);
                     this.raisePropertyChanged('isEditing');
                     return true;
                 }
@@ -372,10 +375,10 @@
                     var coll = this._collection;
                     if (this._key === null)
                         return false;
-                    if (!coll._onItemDeleting(this)) {
+                    if (!coll._onItemDeleting(this.getItem())) {
                         return false;
                     }
-                    coll.removeItem(this);
+                    coll.removeItem(this.getItem());
                     return true;
                 }
                 getIsNew() {
@@ -394,7 +397,7 @@
                     return this._isEditing;
                 }
                 getIsHasErrors() {
-                    var itemErrors = this._collection._getErrors(this);
+                    var itemErrors = this._collection._getErrors(this.getItem());
                     return !!itemErrors;
                 }
                 getIErrorNotification(): IErrorNotification {
@@ -405,7 +408,7 @@
                         return;
                     this._isDestroyCalled = true;
                     if (!!this._fkey && !!this._collection && !this._collection.getIsClearing()) {
-                        this._collection.removeItem(this);
+                        this._collection.removeItem(this.getItem());
                     }
                     this._fkey = null;
                     this._saveVals = null;
@@ -414,7 +417,10 @@
                     super.destroy();
                 }
                 toString() {
-                    return 'CollectionItem';
+                    return 'ItemAspect';
+                }
+                getItem(): TItem {
+                    throw new Error('Not implemented');
                 }
                 get _isCanSubmit() { return false; }
                 get _changeType() { return STATUS.NONE; }
@@ -428,7 +434,7 @@
                         v = '' + v;
                     this._fkey = v;
                 }
-                get _collection(): Collection { return null; }
+                get _collection(): BaseCollection<ICollectionItem> { return null; }
                 get _isUpdating() {
                     var coll = this._collection;
                     if (!coll)
@@ -441,14 +447,25 @@
             export interface ICollectionOptions {
                 enablePaging: boolean; pageSize: number;
             }
+            export interface ICollectionItem {
+                raisePropertyChanged(name: string): void;
+                addOnPropertyChange(prop: string, fn: (sender, args: { property: string; }) => void, namespace?: string): void;
+                removeOnPropertyChange(prop?: string, namespace?: string): void;
+                removeNSHandlers(namespace?: string): void;
+                getIsDestroyed(): boolean;
+                getIsDestroyCalled(): boolean;
+                destroy(): void;
+                _aspect: ItemAspect<ICollectionItem>;
+                _key: string;
+            }
+            export interface ICollChangedArgs<TItem extends ICollectionItem> { change_type: COLL_CHANGE_TYPE; items: TItem[]; pos?: number[]; old_key?: string; new_key?: string; }
+            export interface ICollFillArgs<TItem extends ICollectionItem> { isBegin: boolean; rowCount: number; time: Date; isPageChanged: boolean; resetUI?: boolean; fetchedItems?: TItem[]; newItems?: TItem[]; }
+            export interface ICollValidateArgs<TItem extends ICollectionItem> { item: TItem; fieldName: string; errors: string[]; }
+            export interface ICollItemStatusArgs<TItem extends ICollectionItem> { item: TItem; oldChangeType: STATUS; key: string; }
+            export interface ICollItemAddedArgs<TItem extends ICollectionItem> { item: TItem; isAddNewHandled: boolean; }
 
-            export interface ICollChangedArgs<TItem extends CollectionItem> { change_type: COLL_CHANGE_TYPE; items: TItem[]; pos?: number[]; old_key?: string; new_key?: string; }
-            export interface ICollFillArgs<TItem extends CollectionItem> { isBegin: boolean; rowCount: number; time: Date; isPageChanged: boolean; resetUI?: boolean; fetchedItems?: TItem[]; newItems?: TItem[]; }
-            export interface ICollValidateArgs<TItem extends CollectionItem> { item: TItem; fieldName: string; errors: string[]; }
-            export interface ICollItemStatusArgs<TItem extends CollectionItem> { item: TItem; oldChangeType: STATUS; key: string; }
-            export interface ICollItemAddedArgs<TItem extends CollectionItem> { item: TItem; isAddNewHandled: boolean; }
-
-            export class BaseCollection<TItem extends CollectionItem> extends RIAPP.BaseObject {
+          
+            export class BaseCollection<TItem extends ICollectionItem> extends RIAPP.BaseObject {
                 protected _options: ICollectionOptions;
                 protected _isLoading: boolean;
                 protected _EditingItem: TItem;
@@ -644,7 +661,7 @@
                 }
                 //occurs when item changeType Changed (not used in simple collections)
                 protected _onItemStatusChanged(item: TItem, oldChangeType: number) {
-                    this.raiseEvent('status_changed', { item: item, oldChangeType: oldChangeType, key: item._key });
+                    this.raiseEvent('status_changed', { item: item, oldChangeType: oldChangeType, key: item._aspect._key });
                 }
                 protected _onFillStart(args: { isBegin: boolean; rowCount: number; time: Date; isPageChanged: boolean; }) {
                     this.raiseEvent('fill', args);
@@ -671,7 +688,7 @@
                     throw new Error('_createNew Not implemented');
                 }
                 protected _attach(item: TItem, itemPos?: number) {
-                    if (!!this._itemsByKey[item._key]) {
+                    if (!!this._itemsByKey[item._aspect._key]) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_ATTACHED);
                     }
                     try {
@@ -680,7 +697,7 @@
                         global.reThrow(ex, this.handleError(ex, this));
                     }
                     var pos;
-                    item._onAttaching();
+                    item._aspect._onAttaching();
                     if (utils.check.isNt(itemPos)) {
                         pos = this._items.length;
                         this._items.push(item);
@@ -689,9 +706,9 @@
                         pos = itemPos;
                         utils.insertIntoArray(this._items, item, pos);
                     }
-                    this._itemsByKey[item._key] = item;
+                    this._itemsByKey[item._aspect._key] = item;
                     this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: [item], pos: [pos] });
-                    item._onAttach();
+                    item._aspect._onAttach();
                     this.raisePropertyChanged('count');
                     this._onCurrentChanging(item);
                     this._currentPos = pos;
@@ -732,9 +749,9 @@
                         }
                         return;
                     }
-                    if (!v._key)
+                    if (!v._aspect._key)
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
-                    var oldItem, pos, item = self.getItemByKey(v._key);
+                    var oldItem, pos, item = self.getItemByKey(v._aspect._key);
                     if (!item) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
                     }
@@ -750,7 +767,7 @@
                 }
                 protected _destroyItems() {
                     this._items.forEach(function (item) {
-                        item.destroy();
+                        item._aspect.destroy();
                     });
                 }
                 protected _isHasProp(prop: string) {
@@ -819,15 +836,15 @@
                         this._removeError(item, fieldName);
                         return;
                     }
-                    if (!this._errors[item._key])
-                        this._errors[item._key] = {};
-                    var itemErrors = this._errors[item._key];
+                    if (!this._errors[item._aspect._key])
+                        this._errors[item._aspect._key] = {};
+                    var itemErrors = this._errors[item._aspect._key];
                     itemErrors[fieldName] = errors;
                     if (!this._ignoreChangeErrors)
                         this._onErrorsChanged(item);
                 }
                 _removeError(item: TItem, fieldName: string) {
-                    var itemErrors = this._errors[item._key];
+                    var itemErrors = this._errors[item._aspect._key];
                     if (!itemErrors)
                         return;
                     if (!fieldName)
@@ -836,24 +853,24 @@
                         return;
                     delete itemErrors[fieldName];
                     if (utils.getProps(itemErrors).length === 0) {
-                        delete this._errors[item._key];
+                        delete this._errors[item._aspect._key];
                     }
                     this._onErrorsChanged(item);
                 }
                 _removeAllErrors(item: TItem) {
-                    var self = this, itemErrors = this._errors[item._key];
+                    var self = this, itemErrors = this._errors[item._aspect._key];
                     if (!itemErrors)
                         return;
-                    delete this._errors[item._key];
+                    delete this._errors[item._aspect._key];
                     self._onErrorsChanged(item);
                 }
                 _getErrors(item: TItem): { [fieldName: string]: string[]; } {
-                    return this._errors[item._key];
+                    return this._errors[item._aspect._key];
                 }
                 _onErrorsChanged(item: TItem) {
                     var args = { item: item };
                     this.raiseEvent('errors_changed', args);
-                    item.raiseErrorsChanged({});
+                    item._aspect.raiseErrorsChanged({});
                 }
                 _onItemDeleting(item: TItem) {
                     var args = { item: item, isCancel: false };
@@ -886,7 +903,7 @@
                 }
                 cancelEdit() {
                     if (this.isEditing)
-                        this._EditingItem.cancelEdit();
+                        this._EditingItem._aspect.cancelEdit();
                 }
                 endEdit() {
                     var EditingItem;
@@ -913,12 +930,12 @@
                     this._attach(item, null);
                     try {
                         this.currentItem = item;
-                        item.beginEdit();
+                        item._aspect.beginEdit();
                         this._onItemAdded(item);
                     }
                     catch (ex) {
                         isHandled = this.handleError(ex, this);
-                        item.cancelEdit();
+                        item._aspect.cancelEdit();
                         global.reThrow(ex, isHandled);
                     }
                     return item;
@@ -961,7 +978,7 @@
                     if (!item)
                         return false;
                     if (!!skipDeleted) {
-                        if (item._isDeleted) {
+                        if (item._aspect._isDeleted) {
                             return this.moveNext(true);
                         }
                     }
@@ -981,7 +998,7 @@
                     if (!item)
                         return false;
                     if (!!skipDeleted) {
-                        if (item._isDeleted) {
+                        if (item._aspect._isDeleted) {
                             this._currentPos = pos;
                             return this.movePrev(true);
                         }
@@ -1002,7 +1019,7 @@
                     if (!item)
                         return false;
                     if (!!skipDeleted) {
-                        if (item._isDeleted) {
+                        if (item._aspect._isDeleted) {
                             this._currentPos = pos;
                             return this.moveNext(true);
                         }
@@ -1020,7 +1037,7 @@
                     if (!item)
                         return false;
                     if (!!skipDeleted) {
-                        if (item._isDeleted) {
+                        if (item._aspect._isDeleted) {
                             return this.movePrev(true);
                         }
                     }
@@ -1045,20 +1062,20 @@
                     this._items.forEach(callback, thisObj);
                 }
                 removeItem(item: TItem) {
-                    if (item._key === null) {
+                    if (item._aspect._key === null) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     }
-                    if (!this._itemsByKey[item._key])
+                    if (!this._itemsByKey[item._aspect._key])
                         return;
                     var oldPos = utils.removeFromArray(this._items, item);
                     if (oldPos < 0) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
                     }
-                    delete this._itemsByKey[item._key];
-                    delete this._errors[item._key];
+                    delete this._itemsByKey[item._aspect._key];
+                    delete this._errors[item._aspect._key];
                     this._onRemoved(item, oldPos);
-                    item._key = null;
-                    item.removeHandler(null, null);
+                    item._aspect._key = null;
+                    item._aspect.removeNSHandlers(null);
                     var test = this.getItemByPos(oldPos), curPos = this._currentPos;
 
                     //if detached item was current item
@@ -1241,48 +1258,59 @@
                 }
             }
 
-            export class Collection extends BaseCollection<CollectionItem> { }
-
+            export interface IListItem extends ICollectionItem {
+                _aspect: ListItemAspect<IListItem, any>;
+            }
+            export interface IListItemAspectConstructor<TItem extends IListItem, TObj> {
+                new (coll: BaseList<TItem, TObj>, obj?: TObj): ListItemAspect<TItem, TObj>;
+            }
             export interface IPropInfo { name: string; dtype: number; }
-
-            export class ListItem extends CollectionItem {
+           
+            export class ListItemAspect<TItem extends IListItem, TObj> extends ItemAspect<TItem> {
                 protected __isNew: boolean;
-                protected __coll: Collection;
-                constructor(coll: BaseList<ListItem, any>, obj?: any) {
+                protected __coll: BaseList<IListItem, TObj>;
+                protected _item: TItem;
+              
+                constructor(coll: BaseList<IListItem, TObj>, obj?: TObj) {
                     super();
                     var self = this;
                     this.__coll = coll;
-                    this.__isNew = !obj;
-                    //if an object provided then all properties are exposed from the object
+                    this.__isNew = !obj ? true : false;
+                    this._item = null;
                     if (!!obj)
-                        this._vals = obj;
-
-                    if (!obj) { 
+                        this._vals = <any>obj;
+                    else
+                        this._vals = ListItemAspect._initVals(coll, obj);
+                }
+                protected static _initVals(coll: BaseList<IListItem, any>, obj?: any): any {
+                    var vals = obj || {};
+                    if (!!obj) {
                         //if no object then set all values to nulls
-                        var fieldInfos = this.__coll.getFieldInfos();
+                        var fieldInfos = coll.getFieldInfos();
                         fieldInfos.forEach(function (fld) {
                             if (fld.fieldType != FIELD_TYPE.Object) {
-                                self._vals[fld.fieldName] = null;
+                                vals[fld.fieldName] = null;
                             }
                             else {
                                 //object field
                                 fn_traverseField(fld, (name, fld) => {
                                     if (fld.fieldType == FIELD_TYPE.Object)
-                                        baseUtils.setValue(self._vals, name, {}, false);
+                                        baseUtils.setValue(vals, name, {}, false);
                                     else
-                                        baseUtils.setValue(self._vals, name, null, false);
+                                        baseUtils.setValue(vals, name, null, false);
                                 });
                             }
                         });
                     }
+                    return vals;
                 }
-                protected _setProp(name: string, val) {
-                    var validation_error: RIAPP.IValidationInfo, error, coll = this._collection;
+                _setProp(name: string, val) {
+                    var validation_error: RIAPP.IValidationInfo, error: errorsMOD.ValidationError, coll = this._collection;
                     if (this._getProp(name) !== val) {
                         try {
                             baseUtils.setValue(this._vals, name, val, false);
-                            this.raisePropertyChanged(name);
-                            coll._removeError(this, name);
+                            this.getItem().raisePropertyChanged(name);
+                            coll._removeError(this.getItem(), name);
                             validation_error = this._validateField(name);
                             if (!!validation_error) {
                                 throw new ValidationError([validation_error], this);
@@ -1296,35 +1324,43 @@
                                     { fieldName: name, errors: [ex.message] }
                                 ], this);
                             }
-                            coll._addError(this, name, error.errors[0].errors);
+                            coll._addError(this.getItem(), name, error.errors[0].errors);
                             throw error;
                         }
                     }
                 }
-                protected _getProp(name: string) {
+                _getProp(name: string) {
                     return baseUtils.getValue(this._vals, name);
                 }
                 _resetIsNew() {
                     this.__isNew = false;
                 }
+                destroy() {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this._item) {
+                        this._item.destroy();
+                        this._item = null;
+                    }
+                    super.destroy();
+                }
+                getItem(): TItem {
+                    return this._item;
+                }
                 toString() {
                     return this._collection.toString() + 'Item';
                 }
+                get vals() { return this._vals; }
                 get _isNew() { return this.__isNew; }
                 get _collection() { return this.__coll; }
             }
 
-            export interface IListItemConstructor<TItem extends ListItem, TObj> {
-                new (coll: BaseList<TItem, TObj>, obj?: TObj): TItem;
-            }
+            export class BaseList<TItem extends IListItem, TObj> extends BaseCollection<TItem> {
+                protected _itemType: IListItemAspectConstructor<TItem, TObj>;
 
-            export class BaseList<TItem extends ListItem, TObj> extends BaseCollection<TItem> {
-                protected _type_name: string;
-                protected _itemType: IListItemConstructor<TItem, TObj>;
-
-                constructor(itemType: IListItemConstructor<TItem, TObj>, props: IPropInfo[]) {
+                constructor(itemType: IListItemAspectConstructor<TItem, TObj>, props: IPropInfo[]) {
                     super();
-                    this._type_name = 'BaseList';
                     this._itemType = itemType;
                     if (!!props)
                         this._updateFieldMap(props);
@@ -1355,10 +1391,11 @@
                     }
                     return super._attach(item);
                 }
-                protected _createNew() {
-                    var item: TItem = new this._itemType(this, null);
-                    item._key = this._getNewKey(null); //client item ID
-                    return item;
+                protected _createNew(): TItem {
+                    var listItem: ListItemAspect<TItem, TObj> = new this._itemType(this, null);
+                    //a new client item ID
+                    listItem._key = this._getNewKey(null);
+                    return listItem.getItem();
                 }
                 //here item parameter is not used, but can be used in descendants
                 protected _getNewKey(item) {
@@ -1374,12 +1411,13 @@
                     try {
                         if (!!clearAll) this.clear();
                         objArray.forEach(function (obj) {
-                            var item = new self._itemType(self,obj);
-                            item._key = self._getNewKey(item);
-                            var oldItem = self._itemsByKey[item._key];
+                            var listItem: ListItemAspect<TItem, TObj> = new self._itemType(self, obj);
+                            var item = listItem.getItem();
+                            listItem._key = self._getNewKey(item);
+                            var oldItem = self._itemsByKey[listItem._key];
                             if (!oldItem) {
                                 self._items.push(item);
-                                self._itemsByKey[item._key] = item;
+                                self._itemsByKey[listItem._key] = item;
                                 newItems.push(item);
                                 positions.push(self._items.length - 1);
                                 fetchedItems.push(item);
@@ -1402,24 +1440,29 @@
                     }
                     this.moveFirst();
                 }
+                toArray() {
+                    return this.items.map((item, index, arr) => {
+                        return <TObj>utils.cloneObj(item._aspect.vals);
+                    });
+                }
                 getNewObjects() {
                     return this._items.filter(function (item) {
-                        return item._isNew;
+                        return item._aspect._isNew;
                     });
                 }
                 resetNewObjects() {
                     this._items.forEach(function (item) {
-                        item._resetIsNew();
+                        item._aspect._resetIsNew();
                     });
                 }
                 toString() {
-                    return this._type_name;
+                    return 'BaseList';
                 }
             }
 
-            export class BaseDictionary<TItem extends ListItem, TObj> extends BaseList<TItem, TObj>{
+            export class BaseDictionary<TItem extends IListItem, TObj> extends BaseList<TItem, TObj>{
                 private _keyName: string;
-                constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]) {
+                constructor(itemType: IListItemAspectConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]) {
                     if (!keyName)
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
                     this._keyName = keyName;
@@ -1450,76 +1493,6 @@
                 }
                 get keyName() {
                     return this._keyName;
-                }
-            }
-   
-            //private helper functions
-            function getItemType(fieldNames: string[]): IListItemConstructor<ListItem, any> {
-                var propDescriptors = {};
-                //create field accessor descriptor for each field
-                fieldNames.forEach(function (name) {
-                    propDescriptors[name] = {
-                        set: function (x) {
-                            this._setProp(name, x);
-                        },
-                        get: function () {
-                            return this._getProp(name);
-                        }
-                    };
-                });
-
-                return <any>utilsMOD.__extendType(ListItem, {}, propDescriptors);
-            }
-
-            function getPropInfos(properties: any): IPropInfo[]{
-                var props: IPropInfo[] = null;
-                if (utils.check.isArray(properties)) {
-                    props = (<string[]>properties).map(function (p) {
-                        return { name: p, dtype: 0 };
-                    });
-                }
-                else if (properties instanceof CollectionItem) {
-                    props = (<CollectionItem>properties).getFieldNames().map(function (p) {
-                        var fldInfo = (<CollectionItem>properties).getFieldInfo(p);
-                        return { name: p, dtype: fldInfo.dataType };
-                    });
-                }
-                else if (!!properties) {
-                    props = Object.keys(properties).map(function (p) {
-                        return { name: p, dtype: 0 };
-                    });
-                }
-                else
-                    throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'properties', properties));
-                return props;
-            }
-
-            export class List extends BaseList<ListItem, any> {
-                constructor(type_name: string, properties: any) {
-                    var props: IPropInfo[] = getPropInfos(properties);
-                    var fieldNames: string[] = props.map(function (p) { return p.name; });
-                    var itemType = getItemType(fieldNames);
-                    super(itemType, props);
-                    this._type_name = type_name;
-                }
-            }
-
-            export class Dictionary extends BaseDictionary<ListItem, any> {
-                constructor(type_name: string, properties: any, keyName: string) {
-                    var props: IPropInfo[] = getPropInfos(properties);
-                    var fieldNames: string[] = props.map(function (p) { return p.name; });
-                    var itemType = getItemType(fieldNames);
-                    super(itemType, keyName, props);
-                    this._type_name = type_name;
-                }
-                protected _getNewKey(item: ListItem) {
-                    if (!item) {
-                        return super._getNewKey(null);
-                    }
-                    var key = item[this.keyName];
-                    if (utils.check.isNt(key))
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DICTKEY_IS_EMPTY, this.keyName));
-                    return '' + key;
                 }
             }
 

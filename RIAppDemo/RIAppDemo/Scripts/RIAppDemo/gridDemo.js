@@ -487,14 +487,14 @@ var RIAPP;
                 if (!item)
                     return;
                 if (isSelected) {
-                    if (!this._selected[item._key]) {
-                        this._selected[item._key] = item;
+                    if (!this._selected[item._aspect._key]) {
+                        this._selected[item._aspect._key] = item;
                         this.selectedCount += 1;
                     }
                 }
                 else {
-                    if (!!this._selected[item._key]) {
-                        delete this._selected[item._key];
+                    if (!!this._selected[item._aspect._key]) {
+                        delete this._selected[item._aspect._key];
                         this.selectedCount -= 1;
                     }
                 }
@@ -875,7 +875,7 @@ var RIAPP;
                     try {
                         //using command parameter to provide the product item
                         self._product = param;
-                        self.id = self._product.ProductID;
+                        self.id = self._product.ProductID.toString();
                         self._dialogVM.showDialog('uploadDialog', self);
                     }
                     catch (ex) {
@@ -990,7 +990,7 @@ var RIAPP;
                 //adding event handler for our custom event
                 this._uploadVM.addOnFilesUploaded(function (s, a) {
                     //need to update ThumbnailPhotoFileName
-                    a.product.refresh();
+                    a.product._aspect.refresh();
                 });
                 if (!!options.modelData && !!options.categoryData) {
                     //the data was embedded into HTML page as json, just use it

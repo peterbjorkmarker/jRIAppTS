@@ -1,30 +1,37 @@
-﻿export interface {{ENTITY_INTERFACE}} extends RIAPP.IEditable, RIAPP.ISubmittable
+﻿export class {{ENTITY_TYPE}} extends RIAPP.BaseObject implements RIAPP.MOD.db.IEntityItem 
 {
-{{INTERFACE_FIELDS}}
-	getDbContext():DbContext;
-	getDbSet(): RIAPP.MOD.db.DbSet<{{ENTITY_TYPE}}>;
-	_dbSet: RIAPP.MOD.db.DbSet<{{ENTITY_TYPE}}>;
-	asEntity(): {{ENTITY_TYPE}};
-}
-
-export class {{ENTITY_TYPE}} extends RIAPP.MOD.db.Entity implements {{ENTITY_INTERFACE}}
-{
+	private f_aspect: {{ENTITY_TYPE}}Aspect;
 {{FIELDS_DEF}}
-	constructor(dbSet: {{DBSET_TYPE}}, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
-		super(dbSet,row,names);
+	constructor(aspect: {{ENTITY_TYPE}}Aspect) {
+		super();
+		this.f_aspect = aspect;
 {{FIELDS_INIT}}
 	}
-{{ENTITY_FIELDS}}
-	getDbContext() {
-		return <DbContext>super.getDbContext();
+	destroy() {
+		if (this._isDestroyed)
+			return;
+		this._isDestroyCalled = true;
+		if (!!this._aspect && !this._aspect.getIsDestroyCalled()) {
+				this._aspect.destroy();
+			}
+		super.destroy();
 	}
-	getDbSet() {
-		return <RIAPP.MOD.db.DbSet<{{ENTITY_TYPE}}>>super.getDbSet();
-	}
-	get _dbSet() { return this.getDbSet(); }
 	toString() {
-		return '{{ENTITY_NAME}}';
+		return '{{ENTITY_TYPE}}';
+	}         
+	get _aspect() { return this.f_aspect; }
+	get _key() { return !!this.f_aspect ? this.f_aspect._key : null; }
+{{ENTITY_FIELDS}}              
+}
+
+class {{ENTITY_TYPE}}Aspect extends RIAPP.MOD.db.EntityAspect<{{ENTITY_TYPE}},{{DBSET_TYPE}},DbContext> 
+{
+	constructor(dbSet: RIAPP.MOD.db.DbSet<{{ENTITY_TYPE}}>, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) 
+	{
+		super(dbSet, row, names);
+		this._item = new {{ENTITY_TYPE}}(this);
 	}
-	asEntity() { return this; }
-	asInterface() { return <{{ENTITY_INTERFACE}}>this; }
+	toString() {
+		return '{{ENTITY_TYPE}}Aspect';
+	}         
 }

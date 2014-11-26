@@ -176,7 +176,7 @@
                 protected _init() {
                     var options = this.column.options.content;
                     if (!options.fieldInfo && !!options.fieldName) {
-                        options.fieldInfo = this.item.getFieldInfo(options.fieldName);
+                        options.fieldInfo = this.item._aspect.getFieldInfo(options.fieldName);
                         if (!options.fieldInfo) {
                             throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, '', options.fieldName));
                         }
@@ -188,7 +188,7 @@
                         if (app.contentFactory.isExternallyCachable(contentType)) {
                             options.initContentFn = this.column._getInitContentFn();
                         }
-                        this._content = new contentType(app, { parentEl: this._div, contentOptions: options, dataContext: this.item, isEditing: this.item.isEditing });
+                        this._content = new contentType(app, { parentEl: this._div, contentOptions: options, dataContext: this.item, isEditing: this.item._aspect.isEditing });
                     }
                     finally {
                         delete options.initContentFn;
@@ -316,6 +316,7 @@
                         img_edit: 'txtEdit',
                         img_delete: 'txtDelete'
                     };
+                   
                     $div.empty();
                     var opts = self._column.options,
                         fn_setUpImages = function ($images) {
@@ -458,7 +459,7 @@
             export class Row extends RIAPP.BaseObject {
                 private _grid: DataGrid;
                 private _el: HTMLElement;
-                private _item: collMOD.CollectionItem;
+                private _item: collMOD.ICollectionItem;
                 private _cells: BaseCell[];
                 private _objId: string;
                 private _expanderCell: ExpanderCell;
@@ -468,7 +469,7 @@
                 private _isDeleted: boolean;
                 private _isSelected: boolean;
 
-                constructor(grid: DataGrid, options: { tr: HTMLElement; item: collMOD.CollectionItem; }) {
+                constructor(grid: DataGrid, options: { tr: HTMLElement; item: collMOD.ICollectionItem; }) {
                     var self = this;
                     super();
                     this._grid = grid;
@@ -483,7 +484,7 @@
                     this._isDeleted = false;
                     this._isSelected = false;
                     this._createCells();
-                    this.isDeleted = this._item._isDeleted;
+                    this.isDeleted = this._item._aspect._isDeleted;
                     var fn_state = ()=>{
                         var css = self._grid._onRowStateChanged(self, self._item[self._grid.options.rowStateField]);
                         self._setState(css);
@@ -557,13 +558,13 @@
                         this._actionsCell.update();
                 }
                 beginEdit() {
-                    return this._item.beginEdit();
+                    return this._item._aspect.beginEdit();
                 }
                 endEdit() {
-                    return this._item.endEdit();
+                    return this._item._aspect.endEdit();
                 }
                 cancelEdit() {
-                    return this._item.cancelEdit();
+                    return this._item._aspect.cancelEdit();
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -593,11 +594,11 @@
                     super.destroy();
                 }
                 deleteRow() {
-                    this._item.deleteItem();
+                    this._item._aspect.deleteItem();
                 }
                 updateErrorState() {
                     //TODO: add implementation to show explanation of error
-                    var hasErrors = this._item.getIsHasErrors();
+                    var hasErrors = this._item._aspect.getIsHasErrors();
                     var $el = global.$(this._el);
                     if (hasErrors) {
                         $el.addClass(css.rowError);
@@ -622,7 +623,7 @@
                 get itemKey() {
                     if (!this._item)
                         return null;
-                    return this._item._key;
+                    return this._item._aspect._key;
                 }
                 get isCurrent() { return this._isCurrent; }
                 set isCurrent(v) {
@@ -678,7 +679,7 @@
                             global.$(this._el).removeClass(css.rowDeleted);
                     }
                 }
-                get isEditing() { return !!this._item && this._item.isEditing; }
+                get isEditing() { return !!this._item && this._item._aspect.isEditing; }
                 get isHasStateField() { return !!this._grid.options.rowStateField; }
             }
 
@@ -1210,7 +1211,7 @@
             export interface IGridConstructorOptions extends IGridOptions {
                 app: Application;
                 el: HTMLTableElement;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
                 animation: RIAPP.IAnimation;
             }
 
@@ -1601,16 +1602,16 @@
                     return isHandled;
                 }
                 protected _onDSCurrentChanged() {
-                    var ds = this.dataSource, cur: collMOD.CollectionItem;
+                    var ds = this.dataSource, cur: collMOD.ICollectionItem;
                     if (!!ds)
                         cur = ds.currentItem;
                     if (!cur)
                         this._updateCurrent(null, false);
                     else {
-                        this._updateCurrent(this._rowMap[cur._key], false);
+                        this._updateCurrent(this._rowMap[cur._aspect._key], false);
                     }
                 }
-                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>) {
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
                     var self = this, row: Row, items = args.items;
                     switch (args.change_type) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
@@ -1623,7 +1624,7 @@
                             break;
                         case collMOD.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
-                                var row = self._rowMap[item._key];
+                                var row = self._rowMap[item._aspect._key];
                                 if (!!row) {
                                     self._removeRow(row);
                                 }
@@ -1642,7 +1643,7 @@
                             throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
-                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>) {
+                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.ICollectionItem>) {
                     var isEnd = !args.isBegin, self = this;
                     if (isEnd) {
                         self._isDSFilling = false;
@@ -1679,8 +1680,8 @@
                     this._scrollToCurrent(false);
                     this.raiseEvent('page_changed', {});
                 }
-                protected _onItemEdit(item, isBegin, isCanceled) {
-                    var row = this._rowMap[item._key];
+                protected _onItemEdit(item: collMOD.ICollectionItem, isBegin:boolean, isCanceled: boolean) {
+                    var row = this._rowMap[item._aspect._key];
                     if (!row)
                         return;
                     if (isBegin) {
@@ -1693,8 +1694,8 @@
                     }
                     this.raisePropertyChanged('editingRow');
                 }
-                protected _onItemAdded(args: collMOD.ICollItemAddedArgs<collMOD.CollectionItem>) {
-                    var item = args.item, row = this._rowMap[item._key];
+                protected _onItemAdded(args: collMOD.ICollItemAddedArgs<collMOD.ICollectionItem>) {
+                    var item = args.item, row = this._rowMap[item._aspect._key];
                     if (!row)
                         return;
                     this._updateCurrent(row, true);
@@ -1703,9 +1704,9 @@
                         args.isAddNewHandled = this.showEditDialog();
                     }
                 }
-                protected _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType: collMOD.STATUS) {
-                    var newChangeType = item._changeType, ds = this.dataSource;
-                    var row = this._rowMap[item._key];
+                protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldChangeType: collMOD.STATUS) {
+                    var newChangeType = item._aspect._changeType, ds = this.dataSource;
+                    var row = this._rowMap[item._aspect._key];
                     if (!row)
                         return;
                     if (newChangeType === collMOD.STATUS.DELETED) {
@@ -1722,8 +1723,8 @@
                         row.isDeleted = false;
                     }
                 }
-                protected _onDSErrorsChanged(item: collMOD.CollectionItem) {
-                    var row = this._rowMap[item._key];
+                protected _onDSErrorsChanged(item: collMOD.ICollectionItem) {
+                    var row = this._rowMap[item._aspect._key];
                     if (!row)
                         return;
                     row.updateErrorState();
@@ -1889,7 +1890,7 @@
                     }
                     return col;
                 }
-                protected _appendItems(newItems: collMOD.CollectionItem[]) {
+                protected _appendItems(newItems: collMOD.ICollectionItem[]) {
                     if (this._isDestroyCalled)
                         return;
                     var self = this, item, tbody = this._tBodyEl;
@@ -1911,10 +1912,10 @@
                     newTbody.appendChild(docFr);
                     self._tableEl.replaceChild(newTbody, oldTbody);
                 }
-                protected _createRowForItem(parent, item, pos?:number) {
+                protected _createRowForItem(parent: Node, item: collMOD.ICollectionItem , pos?:number) {
                     var self = this, tr = global.document.createElement('tr');
                     var gridRow = new Row(self, { tr: tr, item: item });
-                    self._rowMap[item._key] = gridRow;
+                    self._rowMap[item._aspect._key] = gridRow;
                     self._rows.push(gridRow);
                     parent.appendChild(gridRow.el);
                     return gridRow;
@@ -1940,8 +1941,8 @@
                         row.isSelected = isSelect;
                     });
                 }
-                findRowByItem(item: collMOD.CollectionItem) {
-                    var row = this._rowMap[item._key];
+                findRowByItem(item: collMOD.ICollectionItem) {
+                    var row = this._rowMap[item._aspect._key];
                     if (!row)
                         return null;
                     return row;
@@ -1971,8 +1972,8 @@
                         return false;
                     var dialogOptions: datadialog.IDialogConstructorOptions,
                         item = this._editingRow.item;
-                    if (!item.isEditing)
-                        item.beginEdit();
+                    if (!item._aspect.isEditing)
+                        item._aspect.beginEdit();
                     if (!this._dialog) {
                         dialogOptions = utils.extend(false, {
                             dataContext: item
@@ -1981,7 +1982,7 @@
                     }
                     else
                         this._dialog.dataContext = item;
-                    this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._isNew;
+                    this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._aspect._isNew;
                     this._dialog.show();
                     return true;
                 }
@@ -2049,7 +2050,7 @@
                 get uniqueID() { return this._objId; }
                 get name() { return this._name; }
                 get dataSource() { return this._options.dataSource; }
-                set dataSource(v: collMOD.BaseCollection<collMOD.CollectionItem>) {
+                set dataSource(v: collMOD.BaseCollection<collMOD.ICollectionItem>) {
                     if (v === this.dataSource)
                         return;
                     if (!!this.dataSource) {

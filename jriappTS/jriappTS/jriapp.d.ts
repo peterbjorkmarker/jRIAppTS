@@ -63,6 +63,7 @@ declare module RIAPP {
     }
     interface ISubmittable {
         submitChanges(): IVoidPromise;
+        rejectChanges(): void;
         _isCanSubmit: boolean;
     }
     interface IValidationInfo {
@@ -343,8 +344,6 @@ declare module RIAPP {
                 toolTip: string;
                 toolTipError: string;
             };
-            function defineProps(proto: any, props?: any, propertyDescriptors?: any): any;
-            function __extendType(_super: any, pds: any, props: any): () => void;
             class Checks {
                 static isNull: typeof baseUtils.isNull;
                 static isUndefined: typeof baseUtils.isUndefined;
@@ -366,7 +365,9 @@ declare module RIAPP {
                 static isElView(obj: any): boolean;
                 static isTemplateElView(obj: any): boolean;
                 static isEditable(obj: any): boolean;
+                static isSubmittable(obj: any): boolean;
                 static isDataForm(el: HTMLElement): boolean;
+                static isErrorNotification(obj: any): boolean;
                 static isInsideDataForm(el: HTMLElement): any;
                 static isInNestedForm(root: any, forms: HTMLElement[], el: HTMLElement): boolean;
             }
@@ -458,6 +459,9 @@ declare module RIAPP {
                 mergeObj(obj: any, mergeIntoObj: any): any;
                 removeFromArray(array: any[], obj: any): number;
                 insertIntoArray(array: any[], obj: any, pos: number): void;
+                getErrorNotification(obj: any): IErrorNotification;
+                getEditable(obj: any): IEditable;
+                getSubmittable(obj: any): ISubmittable;
                 destroyJQueryPlugin($el: JQuery, name: string): void;
                 uuid: (len?: number, radix?: number) => string;
             }
@@ -900,7 +904,6 @@ declare module RIAPP {
                 source?: any;
                 isSourceFixed?: boolean;
             }
-            function _checkIsErrorNotification(obj: any): boolean;
             class Binding extends BaseObject {
                 private _state;
                 private _mode;
@@ -924,7 +927,7 @@ declare module RIAPP {
                 private _getUpdTgtProxy();
                 private _getUpdSrcProxy();
                 private _getSrcErrChangedProxy();
-                private _onSrcErrorsChanged();
+                private _onSrcErrorsChanged(err_notif);
                 private _getTgtChangedFn(self, obj, prop, restPath, lvl);
                 private _getSrcChangedFn(self, obj, prop, restPath, lvl);
                 private _parseSrcPath(obj, path, lvl);
@@ -932,6 +935,7 @@ declare module RIAPP {
                 private _parseTgtPath(obj, path, lvl);
                 private _parseTgtPath2(obj, path, lvl);
                 private _setPathItem(newObj, bindingTo, lvl, path);
+                private _cleanUpObj(oldObj);
                 private _onTgtDestroyed(sender, args);
                 private _onSrcDestroyed(sender, args);
                 private _bindToSource();
@@ -1029,7 +1033,7 @@ declare module RIAPP {
             }
             function fn_getPropertyByName(name: string, props: IFieldInfo[]): IFieldInfo;
             function fn_traverseField(fld: IFieldInfo, fn: (name: string, fld: IFieldInfo) => void): void;
-            class CollectionItem extends BaseObject implements IErrorNotification, IEditable, ISubmittable {
+            class ItemAspect<TItem extends ICollectionItem> extends BaseObject implements IErrorNotification, IEditable, ISubmittable {
                 protected _fkey: string;
                 protected _isEditing: boolean;
                 protected _saveVals: {
@@ -1062,6 +1066,7 @@ declare module RIAPP {
                 getAllErrors(): IValidationInfo[];
                 getErrorString(): string;
                 submitChanges(): IVoidPromise;
+                rejectChanges(): void;
                 beginEdit(): boolean;
                 endEdit(): boolean;
                 cancelEdit(): boolean;
@@ -1069,18 +1074,19 @@ declare module RIAPP {
                 getIsNew(): boolean;
                 getIsDeleted(): boolean;
                 getKey(): string;
-                getCollection(): Collection;
+                getCollection(): BaseCollection<ICollectionItem>;
                 getIsEditing(): boolean;
                 getIsHasErrors(): boolean;
                 getIErrorNotification(): IErrorNotification;
                 destroy(): void;
                 toString(): string;
+                getItem(): TItem;
                 _isCanSubmit: boolean;
                 _changeType: STATUS;
                 _isNew: boolean;
                 _isDeleted: boolean;
                 _key: string;
-                _collection: Collection;
+                _collection: BaseCollection<ICollectionItem>;
                 _isUpdating: boolean;
                 isEditing: boolean;
             }
@@ -1088,14 +1094,27 @@ declare module RIAPP {
                 enablePaging: boolean;
                 pageSize: number;
             }
-            interface ICollChangedArgs<TItem extends CollectionItem> {
+            interface ICollectionItem {
+                raisePropertyChanged(name: string): void;
+                addOnPropertyChange(prop: string, fn: (sender: any, args: {
+                    property: string;
+                }) => void, namespace?: string): void;
+                removeOnPropertyChange(prop?: string, namespace?: string): void;
+                removeNSHandlers(namespace?: string): void;
+                getIsDestroyed(): boolean;
+                getIsDestroyCalled(): boolean;
+                destroy(): void;
+                _aspect: ItemAspect<ICollectionItem>;
+                _key: string;
+            }
+            interface ICollChangedArgs<TItem extends ICollectionItem> {
                 change_type: COLL_CHANGE_TYPE;
                 items: TItem[];
                 pos?: number[];
                 old_key?: string;
                 new_key?: string;
             }
-            interface ICollFillArgs<TItem extends CollectionItem> {
+            interface ICollFillArgs<TItem extends ICollectionItem> {
                 isBegin: boolean;
                 rowCount: number;
                 time: Date;
@@ -1104,21 +1123,21 @@ declare module RIAPP {
                 fetchedItems?: TItem[];
                 newItems?: TItem[];
             }
-            interface ICollValidateArgs<TItem extends CollectionItem> {
+            interface ICollValidateArgs<TItem extends ICollectionItem> {
                 item: TItem;
                 fieldName: string;
                 errors: string[];
             }
-            interface ICollItemStatusArgs<TItem extends CollectionItem> {
+            interface ICollItemStatusArgs<TItem extends ICollectionItem> {
                 item: TItem;
                 oldChangeType: STATUS;
                 key: string;
             }
-            interface ICollItemAddedArgs<TItem extends CollectionItem> {
+            interface ICollItemAddedArgs<TItem extends ICollectionItem> {
                 item: TItem;
                 isAddNewHandled: boolean;
             }
-            class BaseCollection<TItem extends CollectionItem> extends BaseObject {
+            class BaseCollection<TItem extends ICollectionItem> extends BaseObject {
                 protected _options: ICollectionOptions;
                 protected _isLoading: boolean;
                 protected _EditingItem: TItem;
@@ -1297,53 +1316,54 @@ declare module RIAPP {
                 isUpdating: boolean;
                 pageCount: number;
             }
-            class Collection extends BaseCollection<CollectionItem> {
+            interface IListItem extends ICollectionItem {
+                _aspect: ListItemAspect<IListItem, any>;
+            }
+            interface IListItemAspectConstructor<TItem extends IListItem, TObj> {
+                new (coll: BaseList<TItem, TObj>, obj?: TObj): ListItemAspect<TItem, TObj>;
             }
             interface IPropInfo {
                 name: string;
                 dtype: number;
             }
-            class ListItem extends CollectionItem {
+            class ListItemAspect<TItem extends IListItem, TObj> extends ItemAspect<TItem> {
                 protected __isNew: boolean;
-                protected __coll: Collection;
-                constructor(coll: BaseList<ListItem, any>, obj?: any);
-                protected _setProp(name: string, val: any): void;
-                protected _getProp(name: string): any;
+                protected __coll: BaseList<IListItem, TObj>;
+                protected _item: TItem;
+                constructor(coll: BaseList<IListItem, TObj>, obj?: TObj);
+                protected static _initVals(coll: BaseList<IListItem, any>, obj?: any): any;
+                _setProp(name: string, val: any): void;
+                _getProp(name: string): any;
                 _resetIsNew(): void;
+                destroy(): void;
+                getItem(): TItem;
                 toString(): string;
+                vals: {
+                    [x: string]: any;
+                };
                 _isNew: boolean;
-                _collection: Collection;
+                _collection: BaseList<IListItem, TObj>;
             }
-            interface IListItemConstructor<TItem extends ListItem, TObj> {
-                new (coll: BaseList<TItem, TObj>, obj?: TObj): TItem;
-            }
-            class BaseList<TItem extends ListItem, TObj> extends BaseCollection<TItem> {
-                protected _type_name: string;
-                protected _itemType: IListItemConstructor<TItem, TObj>;
-                constructor(itemType: IListItemConstructor<TItem, TObj>, props: IPropInfo[]);
+            class BaseList<TItem extends IListItem, TObj> extends BaseCollection<TItem> {
+                protected _itemType: IListItemAspectConstructor<TItem, TObj>;
+                constructor(itemType: IListItemAspectConstructor<TItem, TObj>, props: IPropInfo[]);
                 private _updateFieldMap(props);
                 protected _attach(item: TItem): any;
                 protected _createNew(): TItem;
                 protected _getNewKey(item: any): string;
                 fillItems(objArray: TObj[], clearAll?: boolean): void;
+                toArray(): TObj[];
                 getNewObjects(): TItem[];
                 resetNewObjects(): void;
                 toString(): string;
             }
-            class BaseDictionary<TItem extends ListItem, TObj> extends BaseList<TItem, TObj> {
+            class BaseDictionary<TItem extends IListItem, TObj> extends BaseList<TItem, TObj> {
                 private _keyName;
-                constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]);
+                constructor(itemType: IListItemAspectConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]);
                 protected _getNewKey(item: TItem): string;
                 protected _onItemAdded(item: TItem): void;
                 protected _onRemoved(item: TItem, pos: number): void;
                 keyName: string;
-            }
-            class List extends BaseList<ListItem, any> {
-                constructor(type_name: string, properties: any);
-            }
-            class Dictionary extends BaseDictionary<ListItem, any> {
-                constructor(type_name: string, properties: any, keyName: string);
-                protected _getNewKey(item: ListItem): string;
             }
         }
     }
@@ -1776,10 +1796,10 @@ declare module RIAPP {
             interface IListBoxConstructorOptions extends IListBoxOptions {
                 app: Application;
                 el: HTMLSelectElement;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
             }
             interface IMappedItem {
-                item: collMOD.CollectionItem;
+                item: collMOD.ICollectionItem;
                 op: {
                     text: string;
                     value: any;
@@ -1801,14 +1821,14 @@ declare module RIAPP {
                 constructor(options: IListBoxConstructorOptions);
                 destroy(): void;
                 protected _onChanged(): void;
-                protected _getStringValue(item: collMOD.CollectionItem): string;
-                protected _getValue(item: collMOD.CollectionItem): any;
-                protected _getText(item: collMOD.CollectionItem): string;
-                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>): void;
-                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>): void;
-                protected _onEdit(item: collMOD.CollectionItem, isBegin: boolean, isCanceled: boolean): void;
-                protected _onStatusChanged(item: collMOD.CollectionItem, oldChangeType: number): void;
-                protected _onCommitChanges(item: collMOD.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS): void;
+                protected _getStringValue(item: collMOD.ICollectionItem): string;
+                protected _getValue(item: collMOD.ICollectionItem): any;
+                protected _getText(item: collMOD.ICollectionItem): string;
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>): void;
+                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.ICollectionItem>): void;
+                protected _onEdit(item: collMOD.ICollectionItem, isBegin: boolean, isCanceled: boolean): void;
+                protected _onStatusChanged(item: collMOD.ICollectionItem, oldChangeType: number): void;
+                protected _onCommitChanges(item: collMOD.ICollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS): void;
                 private _bindDS();
                 private _unbindDS();
                 private _addOption(item, first);
@@ -1821,12 +1841,12 @@ declare module RIAPP {
                 protected _setIsEnabled(el: HTMLSelectElement, v: boolean): void;
                 protected _getIsEnabled(el: HTMLSelectElement): boolean;
                 clear(): void;
-                findItemByValue(val: any): collMOD.CollectionItem;
+                findItemByValue(val: any): collMOD.ICollectionItem;
                 getTextByValue(val: any): string;
                 toString(): string;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
                 selectedValue: any;
-                selectedItem: collMOD.CollectionItem;
+                selectedItem: collMOD.ICollectionItem;
                 valuePath: string;
                 textPath: string;
                 isEnabled: boolean;
@@ -1842,9 +1862,9 @@ declare module RIAPP {
                 toString(): string;
                 isEnabled: boolean;
                 el: HTMLSelectElement;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
                 selectedValue: any;
-                selectedItem: collMOD.CollectionItem;
+                selectedItem: collMOD.ICollectionItem;
                 listBox: ListBox;
             }
             interface ILookupOptions {
@@ -2066,7 +2086,7 @@ declare module RIAPP {
                 row: Row;
                 column: BaseColumn;
                 grid: DataGrid;
-                item: collMOD.CollectionItem;
+                item: collMOD.ICollectionItem;
                 uniqueID: string;
                 num: number;
             }
@@ -2144,7 +2164,7 @@ declare module RIAPP {
                 private _isSelected;
                 constructor(grid: DataGrid, options: {
                     tr: HTMLElement;
-                    item: collMOD.CollectionItem;
+                    item: collMOD.ICollectionItem;
                 });
                 handleError(error: any, source: any): boolean;
                 private _createCells();
@@ -2162,7 +2182,7 @@ declare module RIAPP {
                 toString(): string;
                 el: HTMLElement;
                 grid: DataGrid;
-                item: collMOD.CollectionItem;
+                item: collMOD.ICollectionItem;
                 cells: BaseCell[];
                 columns: BaseColumn[];
                 uniqueID: string;
@@ -2306,7 +2326,7 @@ declare module RIAPP {
             interface IGridConstructorOptions extends IGridOptions {
                 app: Application;
                 el: HTMLTableElement;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
                 animation: IAnimation;
             }
             class DataGrid extends BaseObject implements ISelectable {
@@ -2381,13 +2401,13 @@ declare module RIAPP {
                 protected _scrollToCurrent(isUp: boolean): void;
                 handleError(error: any, source: any): boolean;
                 protected _onDSCurrentChanged(): void;
-                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>): void;
-                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>): void;
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>): void;
+                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.ICollectionItem>): void;
                 protected _onPageChanged(): void;
-                protected _onItemEdit(item: any, isBegin: any, isCanceled: any): void;
-                protected _onItemAdded(args: collMOD.ICollItemAddedArgs<collMOD.CollectionItem>): void;
-                protected _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType: collMOD.STATUS): void;
-                protected _onDSErrorsChanged(item: collMOD.CollectionItem): void;
+                protected _onItemEdit(item: collMOD.ICollectionItem, isBegin: boolean, isCanceled: boolean): void;
+                protected _onItemAdded(args: collMOD.ICollItemAddedArgs<collMOD.ICollectionItem>): void;
+                protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldChangeType: collMOD.STATUS): void;
+                protected _onDSErrorsChanged(item: collMOD.ICollectionItem): void;
                 protected _bindDS(): void;
                 protected _unbindDS(): void;
                 protected _clearGrid(): void;
@@ -2399,13 +2419,13 @@ declare module RIAPP {
                     th: HTMLTableHeaderCellElement;
                     colinfo: IColumnInfo;
                 }): BaseColumn;
-                protected _appendItems(newItems: collMOD.CollectionItem[]): void;
+                protected _appendItems(newItems: collMOD.ICollectionItem[]): void;
                 protected _refreshGrid(): void;
-                protected _createRowForItem(parent: any, item: any, pos?: number): Row;
+                protected _createRowForItem(parent: Node, item: collMOD.ICollectionItem, pos?: number): Row;
                 protected _createDetails(): DetailsRow;
                 sortByColumn(column: DataColumn): void;
                 selectRows(isSelect: boolean): void;
-                findRowByItem(item: collMOD.CollectionItem): Row;
+                findRowByItem(item: collMOD.ICollectionItem): Row;
                 collapseDetails(): void;
                 getSelectedRows(): any[];
                 showEditDialog(): boolean;
@@ -2423,7 +2443,7 @@ declare module RIAPP {
                 containerEl: HTMLElement;
                 uniqueID: string;
                 name: string;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
                 rows: Row[];
                 columns: BaseColumn[];
                 currentRow: Row;
@@ -2446,7 +2466,7 @@ declare module RIAPP {
                 private _createGrid();
                 private _bindGridEvents();
                 invokeGridEvent(eventName: any, args: any): void;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
                 grid: DataGrid;
                 gridEventCommand: mvvm.ICommand;
                 animation: IAnimation;
@@ -2477,7 +2497,7 @@ declare module RIAPP {
             interface IPagerConstructorOptions extends IPagerOptions {
                 app: Application;
                 el: HTMLElement;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
             }
             class Pager extends BaseObject {
                 private _$el;
@@ -2490,9 +2510,9 @@ declare module RIAPP {
                 protected _createElement(tag: string): JQuery;
                 protected _render(): void;
                 protected _setDSPageIndex(page: number): void;
-                protected _onPageSizeChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>): void;
-                protected _onPageIndexChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>): void;
-                protected _onTotalCountChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>): void;
+                protected _onPageSizeChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>): void;
+                protected _onPageIndexChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>): void;
+                protected _onTotalCountChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>): void;
                 destroy(): void;
                 protected _bindDS(): void;
                 protected _unbindDS(): void;
@@ -2508,7 +2528,7 @@ declare module RIAPP {
                 toString(): string;
                 app: Application;
                 el: HTMLElement;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
                 pageCount: any;
                 rowCount: number;
                 rowsPerPage: number;
@@ -2530,7 +2550,7 @@ declare module RIAPP {
                 constructor(app: Application, el: HTMLElement, options: IPagerViewOptions);
                 destroy(): void;
                 toString(): string;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
                 pager: Pager;
             }
         }
@@ -2553,7 +2573,7 @@ declare module RIAPP {
             interface IStackPanelConstructorOptions extends IStackPanelOptions {
                 app: Application;
                 el: HTMLElement;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
             }
             class StackPanel extends BaseObject implements ISelectable, templMOD.ITemplateEvents {
                 private _$el;
@@ -2568,30 +2588,30 @@ declare module RIAPP {
                 templateLoaded(template: templMOD.Template): void;
                 templateUnLoading(template: templMOD.Template): void;
                 addOnItemClicked(fn: (sender: StackPanel, args: {
-                    item: collMOD.CollectionItem;
+                    item: collMOD.ICollectionItem;
                 }) => void, namespace?: string): void;
                 removeOnItemClicked(namespace?: string): void;
                 _onKeyDown(key: number, event: Event): void;
                 _onKeyUp(key: number, event: Event): void;
-                protected _updateCurrent(item: collMOD.CollectionItem, withScroll: boolean): void;
+                protected _updateCurrent(item: collMOD.ICollectionItem, withScroll: boolean): void;
                 protected _onDSCurrentChanged(): void;
-                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>): void;
-                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>): void;
-                protected _onItemStatusChanged(item: collMOD.CollectionItem, oldChangeType: number): void;
-                protected _createTemplate(item: collMOD.CollectionItem): templMOD.Template;
-                protected _appendItems(newItems: collMOD.CollectionItem[]): void;
-                protected _appendItem(item: collMOD.CollectionItem): void;
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>): void;
+                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.ICollectionItem>): void;
+                protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldChangeType: number): void;
+                protected _createTemplate(item: collMOD.ICollectionItem): templMOD.Template;
+                protected _appendItems(newItems: collMOD.ICollectionItem[]): void;
+                protected _appendItem(item: collMOD.ICollectionItem): void;
                 protected _bindDS(): void;
                 protected _unbindDS(): void;
                 protected _createElement(tag: string): JQuery;
-                protected _onItemClicked(div: HTMLElement, item: collMOD.CollectionItem): void;
+                protected _onItemClicked(div: HTMLElement, item: collMOD.ICollectionItem): void;
                 destroy(): void;
                 protected _clearContent(): void;
                 protected _removeItemByKey(key: string): void;
-                protected _removeItem(item: collMOD.CollectionItem): void;
+                protected _removeItem(item: collMOD.ICollectionItem): void;
                 protected _refresh(): void;
-                scrollIntoView(item: collMOD.CollectionItem): void;
-                getDivElementByItem(item: collMOD.CollectionItem): HTMLDivElement;
+                scrollIntoView(item: collMOD.ICollectionItem): void;
+                getDivElementByItem(item: collMOD.ICollectionItem): HTMLDivElement;
                 toString(): string;
                 app: Application;
                 el: HTMLElement;
@@ -2599,8 +2619,8 @@ declare module RIAPP {
                 uniqueID: string;
                 orientation: string;
                 templateID: string;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
-                currentItem: collMOD.CollectionItem;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
+                currentItem: collMOD.ICollectionItem;
             }
             interface IStackPanelViewOptions extends IStackPanelOptions, baseElView.IViewOptions {
             }
@@ -2610,7 +2630,7 @@ declare module RIAPP {
                 constructor(app: Application, el: HTMLElement, options: IStackPanelViewOptions);
                 destroy(): void;
                 toString(): string;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
                 panel: StackPanel;
             }
         }
@@ -2620,7 +2640,7 @@ declare module RIAPP {
     module MOD {
         module db {
             import constsMOD = RIAPP.MOD.consts;
-            import collMod = RIAPP.MOD.collection;
+            import collMOD = RIAPP.MOD.collection;
             enum FLAGS {
                 None = 0,
                 Changed = 1,
@@ -2659,16 +2679,16 @@ declare module RIAPP {
             class SubmitError extends DataOperationError {
                 private _allSubmitted;
                 private _notValidated;
-                constructor(origError: any, allSubmitted: Entity[], notValidated: Entity[]);
-                allSubmitted: Entity[];
-                notValidated: Entity[];
+                constructor(origError: any, allSubmitted: IEntityItem[], notValidated: IEntityItem[]);
+                allSubmitted: IEntityItem[];
+                notValidated: IEntityItem[];
             }
             interface IFieldName {
                 n: string;
                 p: IFieldName[];
             }
             interface ICachedPage {
-                items: Entity[];
+                items: IEntityItem[];
                 pageIndex: number;
             }
             interface IQueryParamInfo {
@@ -2688,18 +2708,15 @@ declare module RIAPP {
             interface IFilterInfo {
                 filterItems: {
                     fieldName: string;
-                    kind: collMod.FILTER_TYPE;
+                    kind: collMOD.FILTER_TYPE;
                     values: any[];
                 }[];
             }
             interface ISortInfo {
                 sortItems: {
                     fieldName: string;
-                    sortOrder: collMod.SORT_ORDER;
+                    sortOrder: collMOD.SORT_ORDER;
                 }[];
-            }
-            interface IEntityConstructor {
-                new (dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]): Entity;
             }
             interface IValueChange {
                 val: any;
@@ -2720,7 +2737,7 @@ declare module RIAPP {
                 error: string;
                 invalid?: IValidationErrorInfo[];
             }
-            interface IPermissions extends collMod.IPermissions {
+            interface IPermissions extends collMOD.IPermissions {
                 dbSetName: string;
             }
             interface IPermissionsInfo {
@@ -2749,7 +2766,7 @@ declare module RIAPP {
                 dbSetName: string;
                 enablePaging: boolean;
                 pageSize: number;
-                fieldInfos: collMod.IFieldInfo[];
+                fieldInfos: collMOD.IFieldInfo[];
             }
             interface IRefreshRowInfo {
                 dbSetName: string;
@@ -2788,7 +2805,7 @@ declare module RIAPP {
                     parentField: string;
                 }[];
             }
-            interface IDbSetOptions extends collMod.ICollectionOptions {
+            interface IDbSetOptions extends collMOD.ICollectionOptions {
                 dbSetName: string;
             }
             interface IMetadata {
@@ -2828,9 +2845,9 @@ declare module RIAPP {
                 k: string;
                 v: any[];
             }
-            interface IQueryResult<TEntity extends Entity> {
-                fetchedItems: TEntity[];
-                newItems: TEntity[];
+            interface IQueryResult<TItem extends IEntityItem> {
+                fetchedItems: TItem[];
+                newItems: TItem[];
                 isPageChanged: boolean;
                 outOfBandData: any;
             }
@@ -2852,15 +2869,24 @@ declare module RIAPP {
                 error: IErrorInfo;
                 included: IIncludedResult[];
             }
-            interface IDbSetConstructor {
-                new (dbContext: DbContext): DbSet<Entity>;
+            interface IEntityAspectConstructor<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem>, TDbContext extends DbContext> {
+                new (dbSet: DbSet<TItem>, row: IRowData, names: IFieldName[]): EntityAspect<TItem, TDBSet, TDbContext>;
+            }
+            interface IEntityConstructor<TItem extends IEntityItem> {
+                new (aspect: EntityAspect<TItem, DbSet<IEntityItem>, DbContext>): TItem;
+            }
+            interface IDbSetConstructor<TItem extends IEntityItem> {
+                new (dbContext: DbContext): DbSet<TItem>;
+            }
+            interface IEntityItem extends collMOD.ICollectionItem {
+                _aspect: EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
             }
             class DataCache extends BaseObject {
                 private _query;
                 private _cache;
                 private _totalCount;
                 private _itemsByKey;
-                constructor(query: TDataQuery<Entity>);
+                constructor(query: TDataQuery<IEntityItem>);
                 getCachedPage(pageIndex: number): ICachedPage;
                 reindexCache(): void;
                 getPrevCachedPageIndex(currentPageIndex: number): number;
@@ -2869,12 +2895,12 @@ declare module RIAPP {
                     end: number;
                     cnt: number;
                 };
-                fillCache(start: number, items: Entity[]): void;
+                fillCache(start: number, items: IEntityItem[]): void;
                 clear(): void;
                 clearCacheForPage(pageIndex: number): void;
                 hasPage(pageIndex: number): boolean;
-                getItemByKey(key: string): Entity;
-                getPageByItem(item: Entity): number;
+                getItemByKey(key: string): IEntityItem;
+                getPageByItem(item: IEntityItem): number;
                 destroy(): void;
                 toString(): string;
                 _pageCount: number;
@@ -2883,7 +2909,7 @@ declare module RIAPP {
                 totalCount: number;
                 cacheSize: number;
             }
-            class TDataQuery<TEntity extends Entity> extends BaseObject {
+            class TDataQuery<TItem extends IEntityItem> extends BaseObject {
                 private _dbSet;
                 private __queryInfo;
                 private _filterInfo;
@@ -2897,30 +2923,30 @@ declare module RIAPP {
                 private _isClearCacheOnEveryLoad;
                 private _dataCache;
                 private _cacheInvalidated;
-                constructor(dbSet: DbSet<TEntity>, queryInfo: IQueryInfo);
-                getFieldInfo(fieldName: string): collMod.IFieldInfo;
+                constructor(dbSet: DbSet<TItem>, queryInfo: IQueryInfo);
+                getFieldInfo(fieldName: string): collMOD.IFieldInfo;
                 getFieldNames(): string[];
                 private _addSort(fieldName, sortOrder);
                 private _addFilterItem(fieldName, operand, value);
-                where(fieldName: string, operand: collMod.FILTER_TYPE, value: any): TDataQuery<TEntity>;
-                and(fieldName: string, operand: collMod.FILTER_TYPE, value: any): TDataQuery<TEntity>;
-                orderBy(fieldName: string, sortOrder?: collMod.SORT_ORDER): TDataQuery<TEntity>;
-                thenBy(fieldName: string, sortOrder?: collMod.SORT_ORDER): TDataQuery<TEntity>;
-                clearSort(): TDataQuery<TEntity>;
-                clearFilter(): TDataQuery<TEntity>;
-                clearParams(): TDataQuery<TEntity>;
+                where(fieldName: string, operand: collMOD.FILTER_TYPE, value: any): TDataQuery<TItem>;
+                and(fieldName: string, operand: collMOD.FILTER_TYPE, value: any): TDataQuery<TItem>;
+                orderBy(fieldName: string, sortOrder?: collMOD.SORT_ORDER): TDataQuery<TItem>;
+                thenBy(fieldName: string, sortOrder?: collMOD.SORT_ORDER): TDataQuery<TItem>;
+                clearSort(): TDataQuery<TItem>;
+                clearFilter(): TDataQuery<TItem>;
+                clearParams(): TDataQuery<TItem>;
                 _clearCache(): void;
                 _getCache(): DataCache;
                 _reindexCache(): void;
                 _isPageCached(pageIndex: number): boolean;
                 protected _resetCacheInvalidated(): void;
-                load(): IPromise<IQueryResult<TEntity>>;
+                load(): IPromise<IQueryResult<TItem>>;
                 destroy(): void;
                 toString(): string;
                 _queryInfo: IQueryInfo;
                 _serverTimezone: number;
-                entityType: IEntityConstructor;
-                dbSet: DbSet<TEntity>;
+                entityType: IEntityConstructor<TItem>;
+                dbSet: DbSet<TItem>;
                 dbSetName: string;
                 queryName: string;
                 filterInfo: IFilterInfo;
@@ -2935,9 +2961,9 @@ declare module RIAPP {
                 isClearCacheOnEveryLoad: boolean;
                 isCacheValid: boolean;
             }
-            class DataQuery extends TDataQuery<Entity> {
+            class DataQuery extends TDataQuery<IEntityItem> {
             }
-            class Entity extends collMod.CollectionItem {
+            class EntityAspect<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem>, TDbContext extends DbContext> extends collMOD.ItemAspect<TItem> {
                 private __changeType;
                 private __isRefreshing;
                 private __isCached;
@@ -2945,15 +2971,16 @@ declare module RIAPP {
                 private _srvRowKey;
                 private _origVals;
                 private _saveChangeType;
-                constructor(dbSet: DbSet<Entity>, row: IRowData, names: IFieldName[]);
+                protected _item: TItem;
+                constructor(dbSet: TDBSet, row: IRowData, names: IFieldName[]);
                 protected _initRowInfo(row: IRowData, names: IFieldName[]): void;
                 protected _processValues(path: string, values: any[], names: IFieldName[]): void;
-                protected _onFieldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo): void;
-                protected _getValueChange(fullName: string, fld: collMod.IFieldInfo, changedOnly: boolean): IValueChange;
+                protected _onFieldChanged(fieldName: string, fieldInfo: collMOD.IFieldInfo): void;
+                protected _getValueChange(fullName: string, fld: collMOD.IFieldInfo, changedOnly: boolean): IValueChange;
                 protected _getValueChanges(changedOnly: boolean): IValueChange[];
-                protected _fldChanging(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV: any, newV: any): boolean;
-                protected _fldChanged(fieldName: string, fieldInfo: collMod.IFieldInfo, oldV: any, newV: any): boolean;
-                protected _skipValidate(fieldInfo: collMod.IFieldInfo, val: any): boolean;
+                protected _fldChanging(fieldName: string, fieldInfo: collMOD.IFieldInfo, oldV: any, newV: any): boolean;
+                protected _fldChanged(fieldName: string, fieldInfo: collMOD.IFieldInfo, oldV: any, newV: any): boolean;
+                protected _skipValidate(fieldInfo: collMOD.IFieldInfo, val: any): boolean;
                 protected _beginEdit(): boolean;
                 protected _endEdit(): boolean;
                 _getCalcFieldVal(fieldName: string): any;
@@ -2974,27 +3001,28 @@ declare module RIAPP {
                 acceptChanges(rowInfo?: IRowInfo): void;
                 rejectChanges(): void;
                 submitChanges(): IVoidPromise;
-                refresh(): IPromise<Entity>;
+                refresh(): IPromise<TItem>;
                 cancelEdit(): boolean;
                 getDbContext(): DbContext;
-                getDbSet(): DbSet<Entity>;
+                protected getDbSet(): TDBSet;
+                getItem(): TItem;
                 toString(): string;
                 destroy(): void;
                 _isCanSubmit: boolean;
-                _changeType: collMod.STATUS;
+                _changeType: collMOD.STATUS;
                 _isNew: boolean;
                 _isDeleted: boolean;
-                _entityType: IEntityConstructor;
+                _entityType: IEntityConstructor<IEntityItem>;
                 _srvKey: string;
                 _dbSetName: string;
                 _serverTimezone: number;
-                _collection: collMod.BaseCollection<Entity>;
-                _dbSet: DbSet<Entity>;
+                _collection: TDBSet;
+                _dbSet: TDBSet;
                 _isRefreshing: boolean;
                 _isCached: boolean;
                 isHasChanges: boolean;
             }
-            class DbSet<TEntity extends Entity> extends collMod.BaseCollection<TEntity> {
+            class DbSet<TItem extends IEntityItem> extends collMOD.BaseCollection<TItem> {
                 private _dbContext;
                 private _isSubmitOnDelete;
                 private _trackAssoc;
@@ -3016,74 +3044,75 @@ declare module RIAPP {
                     };
                 };
                 protected _itemsByKey: {
-                    [x: string]: TEntity;
+                    [x: string]: TItem;
                 };
-                protected _entityType: IEntityConstructor;
+                protected _aspectType: IEntityAspectConstructor<TItem, DbSet<TItem>, DbContext>;
+                protected _entityType: IEntityConstructor<TItem>;
                 protected _ignorePageChanged: boolean;
-                protected _query: TDataQuery<TEntity>;
-                constructor(opts: IDbSetConstuctorOptions, entityType: IEntityConstructor);
+                protected _query: TDataQuery<TItem>;
+                constructor(opts: IDbSetConstuctorOptions, aspectType: IEntityAspectConstructor<TItem, DbSet<TItem>, DbContext>, entityType: IEntityConstructor<TItem>);
                 handleError(error: any, source: any): boolean;
                 protected _mapAssocFields(): void;
-                protected _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo): {
+                protected _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collMOD.IFieldInfo): {
                     getFunc: () => any;
                     setFunc: (v: any) => void;
                 };
-                protected _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: collMod.IFieldInfo): {
+                protected _doCalculatedField(opts: IDbSetConstuctorOptions, fInfo: collMOD.IFieldInfo): {
                     getFunc: () => any;
                 };
-                protected _refreshValues(path: string, item: Entity, values: any[], names: IFieldName[], rm: REFRESH_MODE): void;
-                protected _setCurrentItem(v: TEntity): void;
-                protected _getNewKey(item: TEntity): string;
-                protected _createNew(): TEntity;
+                protected _refreshValues(path: string, item: IEntityItem, values: any[], names: IFieldName[], rm: REFRESH_MODE): void;
+                protected _setCurrentItem(v: TItem): void;
+                protected _getNewKey(item: TItem): string;
+                protected _createNew(): TItem;
                 protected _clearChangeCache(): void;
                 protected _onPageChanging(): boolean;
                 protected _onPageChanged(): void;
                 protected _onPageSizeChanged(): void;
                 protected _destroyItems(): void;
                 protected _defineCalculatedField(fullName: string, getFunc: () => any): void;
-                _getCalcFieldVal(fieldName: string, item: Entity): any;
-                _getNavFieldVal(fieldName: string, item: Entity): any;
-                _setNavFieldVal(fieldName: string, item: Entity, value: any): any;
-                _beforeLoad(query: TDataQuery<TEntity>, oldQuery: TDataQuery<TEntity>): void;
+                _getCalcFieldVal(fieldName: string, item: IEntityItem): any;
+                _getNavFieldVal(fieldName: string, item: IEntityItem): any;
+                _setNavFieldVal(fieldName: string, item: IEntityItem, value: any): any;
+                _beforeLoad(query: TDataQuery<TItem>, oldQuery: TDataQuery<TItem>): void;
                 _updatePermissions(perms: IPermissions): void;
                 _getChildToParentNames(childFieldName: string): string[];
-                _getStrValue(val: any, fieldInfo: collMod.IFieldInfo): string;
+                _getStrValue(val: any, fieldInfo: collMOD.IFieldInfo): string;
                 _fillFromService(data: {
                     res: IQueryResponse;
                     isPageChanged: boolean;
                     fn_beforeFillEnd: () => void;
-                }): IQueryResult<TEntity>;
+                }): IQueryResult<TItem>;
                 _fillFromCache(data: {
                     isPageChanged: boolean;
                     fn_beforeFillEnd: () => void;
-                }): IQueryResult<TEntity>;
+                }): IQueryResult<TItem>;
                 _commitChanges(rows: IRowInfo[]): void;
-                _setItemInvalid(row: IRowInfo): TEntity;
+                _setItemInvalid(row: IRowInfo): TItem;
                 _getChanges(): IRowInfo[];
                 _getTrackAssocInfo(): ITrackAssoc[];
-                _addToChanged(item: TEntity): void;
+                _addToChanged(item: TItem): void;
                 _removeFromChanged(key: string): void;
-                _onItemStatusChanged(item: TEntity, oldChangeType: number): void;
-                _onRemoved(item: TEntity, pos: number): void;
-                getFieldInfo(fieldName: string): collMod.IFieldInfo;
-                sort(fieldNames: string[], sortOrder: collMod.SORT_ORDER): IPromise<IQueryResult<Entity>>;
+                _onItemStatusChanged(item: TItem, oldChangeType: number): void;
+                _onRemoved(item: TItem, pos: number): void;
+                getFieldInfo(fieldName: string): collMOD.IFieldInfo;
+                sort(fieldNames: string[], sortOrder: collMOD.SORT_ORDER): IPromise<IQueryResult<IEntityItem>>;
                 fillItems(data: {
                     names: IFieldName[];
                     rows: IRowData[];
                 }): void;
                 acceptChanges(): void;
                 rejectChanges(): void;
-                deleteOnSubmit(item: TEntity): void;
+                deleteOnSubmit(item: TItem): void;
                 clear(): void;
-                createQuery(name: string): TDataQuery<TEntity>;
+                createQuery(name: string): TDataQuery<TItem>;
                 clearCache(): void;
                 destroy(): void;
                 toString(): string;
-                items: TEntity[];
+                items: TItem[];
                 dbContext: DbContext;
                 dbSetName: string;
-                entityType: IEntityConstructor;
-                query: TDataQuery<TEntity>;
+                entityType: IEntityConstructor<TItem>;
+                query: TDataQuery<TItem>;
                 hasChanges: boolean;
                 cacheSize: number;
                 isSubmitOnDelete: boolean;
@@ -3094,11 +3123,11 @@ declare module RIAPP {
                 private _dbSets;
                 private _arrDbSets;
                 constructor(dbContext: DbContext);
-                protected _dbSetCreated(dbSet: DbSet<Entity>): void;
-                protected _createDbSet(name: string, dbSetType: IDbSetConstructor): void;
+                protected _dbSetCreated(dbSet: DbSet<IEntityItem>): void;
+                protected _createDbSet(name: string, dbSetType: IDbSetConstructor<IEntityItem>): void;
                 dbSetNames: string[];
-                arrDbSets: DbSet<Entity>[];
-                getDbSet(name: string): DbSet<Entity>;
+                arrDbSets: DbSet<IEntityItem>[];
+                getDbSet(name: string): DbSet<IEntityItem>;
                 destroy(): void;
             }
             class DbContext extends BaseObject {
@@ -3135,9 +3164,9 @@ declare module RIAPP {
                     result: any;
                     error: any;
                 }) => void): void;
-                protected _loadFromCache(query: TDataQuery<Entity>, isPageChanged: boolean): IQueryResult<Entity>;
+                protected _loadFromCache(query: TDataQuery<IEntityItem>, isPageChanged: boolean): IQueryResult<IEntityItem>;
                 protected _loadIncluded(res: IQueryResponse): void;
-                protected _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<Entity>;
+                protected _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<IEntityItem>;
                 protected _dataSaved(res: IChangeSet): void;
                 protected _getChanges(): IChangeSet;
                 protected _getUrl(action: any): string;
@@ -3156,15 +3185,15 @@ declare module RIAPP {
                     isHandled: boolean;
                 }) => void, namespace?: string): void;
                 removeOnSubmitError(namespace?: string): void;
-                _onItemRefreshed(res: IRefreshRowInfo, item: Entity): void;
-                _refreshItem(item: Entity): IPromise<Entity>;
+                _onItemRefreshed(res: IRefreshRowInfo, item: IEntityItem): void;
+                _refreshItem(item: IEntityItem): IPromise<IEntityItem>;
                 _getQueryInfo(name: string): IQueryInfo;
-                _onDbSetHasChangesChanged(eSet: DbSet<Entity>): void;
-                _load(query: TDataQuery<Entity>, isPageChanged: boolean): IPromise<IQueryResult<Entity>>;
-                getDbSet(name: string): DbSet<Entity>;
+                _onDbSetHasChangesChanged(eSet: DbSet<IEntityItem>): void;
+                _load(query: TDataQuery<IEntityItem>, isPageChanged: boolean): IPromise<IQueryResult<IEntityItem>>;
+                getDbSet(name: string): DbSet<IEntityItem>;
                 getAssociation(name: string): Association;
                 submitChanges(): IVoidPromise;
-                load(query: TDataQuery<Entity>): IPromise<IQueryResult<Entity>>;
+                load(query: TDataQuery<IEntityItem>): IPromise<IQueryResult<IEntityItem>>;
                 acceptChanges(): void;
                 rejectChanges(): void;
                 destroy(): void;
@@ -3200,38 +3229,38 @@ declare module RIAPP {
                 handleError(error: any, source: any): boolean;
                 protected _bindParentDS(): void;
                 protected _bindChildDS(): void;
-                protected _onParentCollChanged(args: collMod.ICollChangedArgs<Entity>): void;
-                protected _onParentFill(args: collMod.ICollFillArgs<Entity>): void;
-                protected _onParentEdit(item: Entity, isBegin: boolean, isCanceled: boolean): void;
-                protected _onParentCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS): void;
-                protected _storeParentFKey(item: Entity): void;
-                protected _checkParentFKey(item: Entity): void;
-                protected _onParentStatusChanged(item: Entity, oldChangeType: collMod.STATUS): void;
-                protected _onChildCollChanged(args: collMod.ICollChangedArgs<Entity>): void;
+                protected _onParentCollChanged(args: collMOD.ICollChangedArgs<IEntityItem>): void;
+                protected _onParentFill(args: collMOD.ICollFillArgs<IEntityItem>): void;
+                protected _onParentEdit(item: IEntityItem, isBegin: boolean, isCanceled: boolean): void;
+                protected _onParentCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS): void;
+                protected _storeParentFKey(item: IEntityItem): void;
+                protected _checkParentFKey(item: IEntityItem): void;
+                protected _onParentStatusChanged(item: IEntityItem, oldChangeType: collMOD.STATUS): void;
+                protected _onChildCollChanged(args: collMOD.ICollChangedArgs<IEntityItem>): void;
                 protected _notifyChildrenChanged(changed: string[]): void;
                 protected _notifyParentChanged(changed: string[]): void;
                 protected _notifyChanged(changed_pkeys: string[], changed_ckeys: string[]): void;
-                protected _onChildFill(args: collMod.ICollFillArgs<Entity>): void;
-                protected _onChildEdit(item: Entity, isBegin: boolean, isCanceled: boolean): void;
-                protected _onChildCommitChanges(item: Entity, isBegin: boolean, isRejected: boolean, changeType: collMod.STATUS): void;
-                protected _storeChildFKey(item: Entity): void;
-                protected _checkChildFKey(item: Entity): void;
-                protected _onChildStatusChanged(item: Entity, oldChangeType: collMod.STATUS): void;
-                protected _getItemKey(finf: collMod.IFieldInfo[], ds: DbSet<Entity>, item: Entity): string;
+                protected _onChildFill(args: collMOD.ICollFillArgs<IEntityItem>): void;
+                protected _onChildEdit(item: IEntityItem, isBegin: boolean, isCanceled: boolean): void;
+                protected _onChildCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS): void;
+                protected _storeChildFKey(item: IEntityItem): void;
+                protected _checkChildFKey(item: IEntityItem): void;
+                protected _onChildStatusChanged(item: IEntityItem, oldChangeType: collMOD.STATUS): void;
+                protected _getItemKey(finf: collMOD.IFieldInfo[], ds: DbSet<IEntityItem>, item: IEntityItem): string;
                 protected _resetChildMap(): void;
                 protected _resetParentMap(): void;
-                protected _unMapChildItem(item: Entity): any;
-                protected _unMapParentItem(item: Entity): any;
-                protected _mapParentItems(items: Entity[]): string[];
+                protected _unMapChildItem(item: IEntityItem): any;
+                protected _unMapParentItem(item: IEntityItem): any;
+                protected _mapParentItems(items: IEntityItem[]): string[];
                 protected _onChildrenChanged(fkey: string): void;
                 protected _onParentChanged(fkey: string): void;
-                protected _mapChildren(items: Entity[]): string[];
+                protected _mapChildren(items: IEntityItem[]): string[];
                 protected _unbindParentDS(): void;
                 protected _unbindChildDS(): void;
-                getParentFKey(item: Entity): string;
-                getChildFKey(item: Entity): any;
-                getChildItems(item: Entity): Entity[];
-                getParentItem(item: Entity): Entity;
+                getParentFKey(item: IEntityItem): string;
+                getChildFKey(item: IEntityItem): any;
+                getChildItems(item: IEntityItem): IEntityItem[];
+                getParentItem(item: IEntityItem): IEntityItem;
                 refreshParentMap(): string[];
                 refreshChildMap(): string[];
                 destroy(): void;
@@ -3239,13 +3268,13 @@ declare module RIAPP {
                 name: string;
                 parentToChildrenName: string;
                 childToParentName: string;
-                parentDS: DbSet<Entity>;
-                childDS: DbSet<Entity>;
-                parentFldInfos: collMod.IFieldInfo[];
-                childFldInfos: collMod.IFieldInfo[];
+                parentDS: DbSet<IEntityItem>;
+                childDS: DbSet<IEntityItem>;
+                parentFldInfos: collMOD.IFieldInfo[];
+                childFldInfos: collMOD.IFieldInfo[];
                 onDeleteAction: DELETE_ACTION;
             }
-            class DataView<TItem extends collMod.CollectionItem> extends collMod.BaseCollection<TItem> {
+            class DataView<TItem extends collMOD.ICollectionItem> extends collMOD.BaseCollection<TItem> {
                 private _dataSource;
                 private _fn_filter;
                 private _fn_sort;
@@ -3254,10 +3283,10 @@ declare module RIAPP {
                 private _isAddingNew;
                 private _objId;
                 constructor(options: {
-                    dataSource: collMod.BaseCollection<TItem>;
+                    dataSource: collMOD.BaseCollection<TItem>;
                     fn_filter?: (item: TItem) => boolean;
                     fn_sort?: (item1: TItem, item2: TItem) => number;
-                    fn_itemsProvider?: (ds: collMod.BaseCollection<TItem>) => TItem[];
+                    fn_itemsProvider?: (ds: collMOD.BaseCollection<TItem>) => TItem[];
                 });
                 protected _getEventNames(): string[];
                 addOnViewRefreshed(fn: (sender: DataView<TItem>, args: {}) => void, namespace?: string): void;
@@ -3272,9 +3301,9 @@ declare module RIAPP {
                     clear: boolean;
                     isAppend: boolean;
                 }): TItem[];
-                protected _onDSCollectionChanged(args: collMod.ICollChangedArgs<TItem>): void;
-                protected _onDSFill(args: collMod.ICollFillArgs<TItem>): void;
-                protected _onDSStatusChanged(args: collMod.ICollItemStatusArgs<TItem>): void;
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<TItem>): void;
+                protected _onDSFill(args: collMOD.ICollFillArgs<TItem>): void;
+                protected _onDSStatusChanged(args: collMOD.ICollItemStatusArgs<TItem>): void;
                 protected _bindDS(): void;
                 protected _unbindDS(): void;
                 protected _onCurrentChanging(newCurrent: TItem): void;
@@ -3287,38 +3316,32 @@ declare module RIAPP {
                 appendItems(items: TItem[]): TItem[];
                 addNew(): TItem;
                 removeItem(item: TItem): void;
-                sortLocal(fieldNames: string[], sortOrder: collMod.SORT_ORDER): IPromise<any>;
+                sortLocal(fieldNames: string[], sortOrder: collMOD.SORT_ORDER): IPromise<any>;
                 getIsHasErrors(): boolean;
                 clear(): void;
                 refresh(): void;
                 destroy(): void;
-                dataSource: collMod.BaseCollection<TItem>;
+                dataSource: collMOD.BaseCollection<TItem>;
                 isPagingEnabled: boolean;
-                permissions: collMod.IPermissions;
+                permissions: collMOD.IPermissions;
                 fn_filter: (item: TItem) => boolean;
                 fn_sort: (item1: TItem, item2: TItem) => number;
-                fn_itemsProvider: (ds: collMod.BaseCollection<TItem>) => TItem[];
+                fn_itemsProvider: (ds: collMOD.BaseCollection<TItem>) => TItem[];
             }
-            class ChildDataView<TEntity extends Entity> extends DataView<TEntity> {
+            class ChildDataView<TItem extends IEntityItem> extends DataView<TItem> {
                 private _parentItem;
                 private _refreshTimeout;
                 private _association;
                 constructor(options: {
                     association: Association;
-                    fn_filter?: (item: TEntity) => boolean;
-                    fn_sort?: (item1: TEntity, item2: TEntity) => number;
+                    fn_filter?: (item: TItem) => boolean;
+                    fn_sort?: (item1: TItem, item2: TItem) => number;
                 });
                 protected _refresh(isPageChanged: boolean): void;
                 destroy(): void;
                 toString(): string;
-                parentItem: Entity;
+                parentItem: IEntityItem;
                 association: Association;
-            }
-            class TDbSet extends DbSet<Entity> {
-            }
-            class TDataView extends DataView<Entity> {
-            }
-            class TChildDataView extends ChildDataView<Entity> {
             }
             class BaseComplexProperty extends BaseObject implements IErrorNotification {
                 private _name;
@@ -3327,11 +3350,11 @@ declare module RIAPP {
                 getName(): string;
                 setValue(fullName: string, value: any): void;
                 getValue(fullName: string): any;
-                getFieldInfo(): collMod.IFieldInfo;
-                getProperties(): collMod.IFieldInfo[];
+                getFieldInfo(): collMOD.IFieldInfo;
+                getProperties(): collMOD.IFieldInfo[];
                 getFullPath(name: string): string;
-                getEntity(): Entity;
-                getPropertyByName(name: string): collMod.IFieldInfo;
+                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
+                getPropertyByName(name: string): collMOD.IFieldInfo;
                 getIsHasErrors(): boolean;
                 addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
                 removeOnErrorsChanged(namespace?: string): void;
@@ -3341,13 +3364,13 @@ declare module RIAPP {
             }
             class RootComplexProperty extends BaseComplexProperty {
                 private _entity;
-                constructor(name: string, owner: Entity);
+                constructor(name: string, owner: EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>);
                 _getFullPath(path: any): string;
                 setValue(fullName: string, value: any): void;
                 getValue(fullName: string): any;
-                getFieldInfo(): collMod.IFieldInfo;
-                getProperties(): collMod.IFieldInfo[];
-                getEntity(): Entity;
+                getFieldInfo(): collMOD.IFieldInfo;
+                getProperties(): collMOD.IFieldInfo[];
+                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
                 getFullPath(name: string): string;
             }
             class ChildComplexProperty extends BaseComplexProperty {
@@ -3356,12 +3379,12 @@ declare module RIAPP {
                 _getFullPath(path: string): string;
                 setValue(fullName: string, value: any): void;
                 getValue(fullName: string): any;
-                getFieldInfo(): collMod.IFieldInfo;
-                getProperties(): collMod.IFieldInfo[];
+                getFieldInfo(): collMOD.IFieldInfo;
+                getProperties(): collMOD.IFieldInfo[];
                 getParent(): BaseComplexProperty;
                 getRootProperty(): RootComplexProperty;
                 getFullPath(name: string): string;
-                getEntity(): Entity;
+                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
             }
         }
     }

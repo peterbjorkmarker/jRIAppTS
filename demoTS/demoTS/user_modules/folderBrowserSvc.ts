@@ -5,59 +5,57 @@ module RIAPP
     export module FOLDERBROWSER_SVC {
         'use strict';
         /*
-            Generated from: /FolderBrowserService/code?lang=ts on 2014-11-21 15:51 at 15:51
+            Generated from: /FolderBrowserService/code?lang=ts on 2014-11-26 16:45 at 16:45
             Don't make manual changes here, because they will be lost when this db interface will be regenerated!
         */
 
         export interface ISvcMethods {
         }
 
-        export interface IFileSystemObjectEntity extends RIAPP.IEditable, RIAPP.ISubmittable {
-            Key: string;
-            ParentKey: string;
-            Name: string;
-            Level: number;
-            HasSubDirs: boolean;
-            IsFolder: boolean;
-            fullPath: string;
-            Parent: FileSystemObject;
-            Children: FileSystemObject[];
+        export class FileSystemObject extends RIAPP.BaseObject implements RIAPP.MOD.db.IEntityItem {
+            private f_aspect: FileSystemObjectAspect;
 
-            getDbContext(): DbContext;
-            getDbSet(): RIAPP.MOD.db.DbSet<FileSystemObject>;
-            _dbSet: RIAPP.MOD.db.DbSet<FileSystemObject>;
-            asEntity(): FileSystemObject;
+            constructor(aspect: FileSystemObjectAspect) {
+                super();
+                this.f_aspect = aspect;
+
+            }
+            destroy() {
+                if (this._isDestroyed)
+                    return;
+                this._isDestroyCalled = true;
+                if (!!this._aspect && !this._aspect.getIsDestroyCalled()) {
+                    this._aspect.destroy();
+                }
+                super.destroy();
+            }
+            toString() {
+                return 'FileSystemObject';
+            }
+            get _aspect() { return this.f_aspect; }
+            get _key() { return !!this.f_aspect ? this.f_aspect._key : null; }
+            get Key(): string { return this.f_aspect._getFieldVal('Key'); }
+            get ParentKey(): string { return this.f_aspect._getFieldVal('ParentKey'); }
+            get Name(): string { return this.f_aspect._getFieldVal('Name'); }
+            get Level(): number { return this.f_aspect._getFieldVal('Level'); }
+            get HasSubDirs(): boolean { return this.f_aspect._getFieldVal('HasSubDirs'); }
+            get IsFolder(): boolean { return this.f_aspect._getFieldVal('IsFolder'); }
+            get fullPath(): string { return this.f_aspect._getCalcFieldVal('fullPath'); }
+            get Parent(): FileSystemObject { return this.f_aspect._getNavFieldVal('Parent'); }
+            set Parent(v: FileSystemObject) { this.f_aspect._setNavFieldVal('Parent', v); }
+            get Children(): FileSystemObject[] { return this.f_aspect._getNavFieldVal('Children'); }
+
         }
 
-        export class FileSystemObject extends RIAPP.MOD.db.Entity implements IFileSystemObjectEntity {
-
-            constructor(dbSet: FileSystemObjectDb, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
+        class FileSystemObjectAspect extends RIAPP.MOD.db.EntityAspect<FileSystemObject, FileSystemObjectDb, DbContext>
+        {
+            constructor(dbSet: RIAPP.MOD.db.DbSet<FileSystemObject>, row: RIAPP.MOD.db.IRowData, names: RIAPP.MOD.db.IFieldName[]) {
                 super(dbSet, row, names);
-
+                this._item = new FileSystemObject(this);
             }
-            get Key(): string { return this._getFieldVal('Key'); }
-            get ParentKey(): string { return this._getFieldVal('ParentKey'); }
-            get Name(): string { return this._getFieldVal('Name'); }
-            get Level(): number { return this._getFieldVal('Level'); }
-            get HasSubDirs(): boolean { return this._getFieldVal('HasSubDirs'); }
-            get IsFolder(): boolean { return this._getFieldVal('IsFolder'); }
-            get fullPath(): string { return this._getCalcFieldVal('fullPath'); }
-            get Parent(): FileSystemObject { return this._getNavFieldVal('Parent'); }
-            set Parent(v: FileSystemObject) { this._setNavFieldVal('Parent', v); }
-            get Children(): FileSystemObject[] { return this._getNavFieldVal('Children'); }
-
-            getDbContext() {
-                return <DbContext>super.getDbContext();
-            }
-            getDbSet() {
-                return <RIAPP.MOD.db.DbSet<FileSystemObject>>super.getDbSet();
-            }
-            get _dbSet() { return this.getDbSet(); }
             toString() {
-                return 'FileSystemObjectEntity';
+                return 'FileSystemObjectAspect';
             }
-            asEntity() { return this; }
-            asInterface() { return <IFileSystemObjectEntity>this; }
         }
 
         export class FileSystemObjectDb extends RIAPP.MOD.db.DbSet<FileSystemObject>
@@ -70,10 +68,13 @@ module RIAPP
                     parentAssoc: ([{ "name": "ChildToParent", "parentDbSetName": "FileSystemObject", "childDbSetName": "FileSystemObject", "childToParentName": "Parent", "parentToChildrenName": "Children", "onDeleteAction": 1, "fieldRels": [{ "parentField": "Key", "childField": "ParentKey" }] }])
                 }, utils = RIAPP.global.utils;
                 opts.dbSetInfo.fieldInfos = ([{ "fieldName": "Key", "isPrimaryKey": 1, "dataType": 1, "isNullable": false, "isReadOnly": true, "isAutoGenerated": true, "isNeedOriginal": true, "maxLength": 255, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "ParentKey", "isPrimaryKey": 0, "dataType": 1, "isNullable": true, "isReadOnly": true, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": 255, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "Name", "isPrimaryKey": 0, "dataType": 1, "isNullable": false, "isReadOnly": true, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": 255, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "Level", "isPrimaryKey": 0, "dataType": 3, "isNullable": false, "isReadOnly": true, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "HasSubDirs", "isPrimaryKey": 0, "dataType": 2, "isNullable": false, "isReadOnly": true, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "IsFolder", "isPrimaryKey": 0, "dataType": 2, "isNullable": false, "isReadOnly": true, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 0, "dependentOn": "", "nested": null }, { "fieldName": "fullPath", "isPrimaryKey": 0, "dataType": 1, "isNullable": true, "isReadOnly": false, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 2, "dependentOn": "", "nested": null }, { "fieldName": "Parent", "isPrimaryKey": 0, "dataType": 0, "isNullable": true, "isReadOnly": false, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 3, "dependentOn": "ParentKey", "nested": null }, { "fieldName": "Children", "isPrimaryKey": 0, "dataType": 0, "isNullable": true, "isReadOnly": false, "isAutoGenerated": false, "isNeedOriginal": true, "maxLength": -1, "dateConversion": 0, "allowClientDefault": false, "range": "", "regex": "", "fieldType": 3, "dependentOn": "", "nested": null }]);
-                super(opts, FileSystemObject);
+                super(opts, FileSystemObjectAspect, FileSystemObject);
             }
             findEntity(key: string): FileSystemObject {
                 return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));
+            }
+            toString() {
+                return 'FileSystemObjectDb';
             }
             createReadRootQuery(args?: {
                 includeFiles: boolean;
@@ -97,7 +98,6 @@ module RIAPP
 
             definefullPathField(getFunc: () => string) { this._defineCalculatedField('fullPath', getFunc); }
 
-            get items2() { return <IFileSystemObjectEntity[]>this.items; }
         }
 
         export interface IAssocs {

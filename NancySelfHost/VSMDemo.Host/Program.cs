@@ -41,6 +41,8 @@ namespace VSMDemo.Host
                 }
 
                 Console.WriteLine("The program is running...");
+                Console.WriteLine("enter " + uri + " in a browser to access application");
+                Console.WriteLine("");
                 Console.WriteLine("Press any key to exit");
                 Console.ReadKey();
                 nancyHost.Stop();

@@ -6,6 +6,7 @@
             import bindMOD = RIAPP.MOD.binding;
             import elviewMOD = RIAPP.MOD.baseElView;
             import contentMOD = RIAPP.MOD.baseContent;
+            import collMOD = RIAPP.MOD.collection;
             export var css = {
                 dataform: 'ria-dataform'
             };
@@ -19,6 +20,19 @@
                 el: HTMLElement;
             }
 
+            function getFieldInfo(obj, fieldName: string): collMOD.IFieldInfo {
+                if (!obj)
+                    return null;
+                if (!!obj._aspect && utils.check.isFunction(obj._aspect.getFieldInfo)) {
+                    return obj._aspect.getFieldInfo(fieldName);
+                }
+                else if (utils.check.isFunction(obj.getFieldInfo)) {
+                    return obj.getFieldInfo(fieldName);
+                }
+                else
+                    return null;
+            }
+
             export class DataForm extends RIAPP.BaseObject {
                 private get _DATA_CONTENT_SELECTOR() { return '*[' + constsMOD.DATA_ATTR.DATA_CONTENT + ']:not([' + constsMOD.DATA_ATTR.DATA_COLUMN + '])'; }
                 private _el: HTMLElement;
@@ -29,8 +43,8 @@
                 private _content: contentMOD.IContent[];
                 private _lfTime: utilsMOD.LifeTimeScope;
                 private _contentCreated: boolean;
-                private _supportEdit: boolean;
-                private _supportErrNotify: boolean;
+                private _supportEdit: RIAPP.IEditable;
+                private _supportErrNotify: RIAPP.IErrorNotification;
                 private _parentDataForm: elviewMOD.BaseElView;
                 private _errors: RIAPP.IValidationInfo[];
                 private _app: RIAPP.Application;
@@ -54,8 +68,8 @@
                     this._content = [];
                     this._lfTime = null;
                     this._contentCreated = false;
-                    this._supportEdit = false;
-                    this._supportErrNotify = false;
+                    this._supportEdit = null;
+                    this._supportErrNotify = null;
                     this._parentDataForm = null;
                     this._errors = null;
                     parent = utils.getParentDataForm(null, this._el);
@@ -102,8 +116,6 @@
                     if (!dctx) {
                         return;
                     }
-                    var supportsGetFieldInfo = utils.check.isFunction(dctx.getFieldInfo);
-
                     var elements: HTMLElement[] = ArrayHelper.fromList(this._el.querySelectorAll(self._DATA_CONTENT_SELECTOR)),
                         isEditing = this.isEditing;
 
@@ -118,10 +130,7 @@
                         var attr = el.getAttribute(constsMOD.DATA_ATTR.DATA_CONTENT),
                             op = contentMOD.parseContentAttr(attr);
                         if (!!op.fieldName && !op.fieldInfo) {
-                            if (!supportsGetFieldInfo) {
-                                throw new Error(RIAPP.ERRS.ERR_DCTX_HAS_NO_FIELDINFO);
-                            }
-                            op.fieldInfo = dctx.getFieldInfo(op.fieldName);
+                            op.fieldInfo = getFieldInfo(dctx,op.fieldName);
                             if (!op.fieldInfo) {
                                 throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, '', op.fieldName));
                             }
@@ -165,25 +174,30 @@
                     }
                 }
                 private _onDSErrorsChanged() {
-                    var dataContext: IErrorNotification = <any>this._dataContext;
-                    this.validationErrors = dataContext.getAllErrors();
+                    if (!!this._supportErrNotify)
+                        this.validationErrors = this._supportErrNotify.getAllErrors();
                 }
                 private _bindDS() {
-                    var dataContext:any = this._dataContext, self = this;
+                    var dataContext = this._dataContext, self = this;
                     if (!dataContext)
                         return;
+                    if (!!dataContext) {
+                        this._supportEdit = utils.getEditable(dataContext);
+                        this._supportErrNotify = utils.getErrorNotification(dataContext);
+                    }
+
                     dataContext.addOnDestroyed(function (s, a) {
                         self.dataContext = null;
                     }, self._objId);
 
-                    if (this._supportEdit) {
-                        dataContext.addOnPropertyChange('isEditing', function (sender, args) {
-                            self.isEditing = sender.isEditing;
+                    if (!!this._supportEdit) {
+                        (<any>this._supportEdit).addOnPropertyChange('isEditing', function (sender, args) {
+                            self.isEditing = self._supportEdit.isEditing;
                         }, self._objId);
                     }
 
-                    if (this._supportErrNotify) {
-                        (<IErrorNotification>dataContext).addOnErrorsChanged(function (sender, args) {
+                    if (!!this._supportErrNotify) {
+                        this._supportErrNotify.addOnErrorsChanged(function (sender, args) {
                             self._onDSErrorsChanged();
                         }, self._objId);
                     }
@@ -193,7 +207,15 @@
                     this.validationErrors = null;
                     if (!!dataContext && !dataContext.getIsDestroyCalled()) {
                         dataContext.removeNSHandlers(this._objId);
+                        if (!!this._supportEdit) {
+                            (<any>this._supportEdit).removeNSHandlers(this._objId);
+                        }
+                        if (!!this._supportErrNotify) {
+                            this._supportErrNotify.removeOnErrorsChanged(this._objId);
+                        }
                     }
+                    this._supportEdit = null;
+                    this._supportErrNotify = null;
                 }
                 private _clearContent() {
                     this._content.forEach(function (content) {
@@ -232,7 +254,6 @@
                 get el() { return this._el; }
                 get dataContext() { return this._dataContext; }
                 set dataContext(v) {
-                    var dataContext:any;
                     try {
                         if (v === this._dataContext)
                             return;
@@ -240,23 +261,15 @@
                             throw new Error(RIAPP.ERRS.ERR_DATAFRM_DCTX_INVALID);
                         }
                         this._unbindDS();
-                        this._supportEdit = false;
-                        this._supportErrNotify = false;
                         this._dataContext = v;
-                        dataContext = this._dataContext;
-
-                        if (!!dataContext) {
-                            this._supportEdit = utils.check.isEditable(dataContext);
-                            this._supportErrNotify = bindMOD._checkIsErrorNotification(dataContext);
-                        }
                         this._bindDS();
                         this._updateContent();
                         this.raisePropertyChanged('dataContext');
-                        if (!!dataContext) {
-                            if (this._supportEdit && this._isEditing !== (<RIAPP.IEditable>dataContext).isEditing) {
-                                this.isEditing = (<RIAPP.IEditable>dataContext).isEditing;
+                        if (!!this._dataContext) {
+                            if (!!this._supportEdit && this._isEditing !== this._supportEdit.isEditing) {
+                                this.isEditing = this._supportEdit.isEditing;
                             }
-                            if (this._supportErrNotify) {
+                            if (!!this._supportErrNotify) {
                                 this._onDSErrorsChanged();
                             }
                         }
@@ -271,17 +284,18 @@
                         return;
                     var isEditing = this._isEditing, editable: RIAPP.IEditable;
 
-                    if (!this._supportEdit && v !== isEditing) {
+                    if (!!this._supportEdit)
+                        editable = this._supportEdit;
+
+                    if (!editable && v !== isEditing) {
                         this._isEditing = v;
                         this._updateContent();
                         this.raisePropertyChanged('isEditing');
                         return;
                     }
 
-                    if (this._supportEdit)
-                        editable = <RIAPP.IEditable>dataContext;
-
-                    if (v !== isEditing) {
+                    
+                    if (v !== isEditing && !!editable) {
                         try {
                             if (v) {
                                 editable.beginEdit();
@@ -295,7 +309,7 @@
                         }
                     }
 
-                    if (this._supportEdit && editable.isEditing !== isEditing) {
+                    if (!!editable && editable.isEditing !== isEditing) {
                         this._isEditing = editable.isEditing;
                         this._updateContent();
                         this.raisePropertyChanged('isEditing');

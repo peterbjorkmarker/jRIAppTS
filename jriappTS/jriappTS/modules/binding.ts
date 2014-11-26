@@ -37,16 +37,6 @@
                 isSourceFixed?: boolean;
             }
 
-            export function _checkIsErrorNotification(obj) {
-                if (!obj)
-                    return false;
-                if (!utils.check.isFunction(obj.getIErrorNotification))
-                    return false;
-                var tmp = obj.getIErrorNotification();
-                return !!tmp && utils.check.isFunction(tmp.getIErrorNotification);
-            }
-
-         
             interface IBindingState
             {
                 source: any;
@@ -125,10 +115,9 @@
                     this._target = null;
                     this.target = opts.target;
                     this.source = opts.source;
-                     if (!!this._sourceObj && utils.check.isFunction(this._sourceObj.getIErrorNotification)) {
-                        if ((<IErrorNotification>this._sourceObj).getIsHasErrors())
-                            this._onSrcErrorsChanged();
-                    }
+                    var err_notif = utils.getErrorNotification(this._sourceObj);
+                    if (!!err_notif && err_notif.getIsHasErrors())
+                        this._onSrcErrorsChanged(err_notif);
                  }
                 private _getOnTgtDestroyedProxy() {
                     var self = this;
@@ -156,16 +145,16 @@
                 }
                 private _getSrcErrChangedProxy() {
                     var self = this;
-                    return function (s, a) {
-                        self._onSrcErrorsChanged();
+                    return function (err_notif: IErrorNotification, args) {
+                        self._onSrcErrorsChanged(err_notif);
                     };
                 }
-                private _onSrcErrorsChanged() {
+                private _onSrcErrorsChanged(err_notif: IErrorNotification) {
                     var errors:IValidationInfo[] = [], tgt = this._targetObj, src = this._sourceObj, srcPath = this._srcPath;
                     if (!!tgt && utils.check.isElView(tgt)) {
                         if (!!src && srcPath.length > 0) {
                             var prop = srcPath[srcPath.length - 1];
-                            errors = (<IErrorNotification>src).getFieldErrors(prop);
+                            errors = err_notif.getFieldErrors(prop);
                         }
                         (<elviewMOD.BaseElView>tgt).validationErrors = errors;
                     }
@@ -245,8 +234,9 @@
                             if (updateOnChange) {
                                 (<BaseObject>obj).addOnPropertyChange(path[0], self._getUpdTgtProxy(), self._objId);
                             }
-                            if (!!obj && utils.check.isFunction(obj.getIErrorNotification)) {
-                                (<IErrorNotification>obj).addOnErrorsChanged(self._getSrcErrChangedProxy(), self._objId);
+                            var err_notif = utils.getErrorNotification(obj);
+                            if (!!err_notif) {
+                                err_notif.addOnErrorsChanged(self._getSrcErrChangedProxy(), self._objId);
                             }
                             self._sourceObj = obj;
                         }
@@ -333,12 +323,21 @@
 
                         oldObj = this._pathItems[key];
                         if (!!oldObj) {
-                            oldObj.removeNSHandlers(this._objId);
+                            this._cleanUpObj(oldObj);
                             delete this._pathItems[key];
                         }
 
                         if (!!newObj && i == lvl) {
                             this._pathItems[key] = newObj;
+                        }
+                    }
+                }
+                private _cleanUpObj(oldObj: RIAPP.BaseObject) {
+                    if (!!oldObj) {
+                        oldObj.removeNSHandlers(this._objId);
+                        var err_notif = utils.getErrorNotification(oldObj);
+                        if (!!err_notif) {
+                            err_notif.removeOnErrorsChanged(this._objId);
                         }
                     }
                 }
@@ -468,7 +467,7 @@
                     var self = this;
                     utils.forEachProp(this._pathItems, function (key) {
                         var old = self._pathItems[key];
-                        old.removeNSHandlers(self._objId);
+                        self._cleanUpObj(old);
                     });
                     this._pathItems = {};
                     this._setSource(null);

@@ -219,7 +219,7 @@ export class CustomerVM extends MOD.mvvm.BaseViewModel {
         });
 
         this._editCommand = new MOD.mvvm.Command(function (sender, param) {
-            self.currentItem.beginEdit();
+            self.currentItem._aspect.beginEdit();
         }, self,
             function (sender, param) {
                 return !!self.currentItem;
@@ -227,7 +227,7 @@ export class CustomerVM extends MOD.mvvm.BaseViewModel {
 
 
         this._endEditCommand = new MOD.mvvm.Command(function (sender, param) {
-            if (self.currentItem.endEdit())
+            if (self.currentItem._aspect.endEdit())
                 self.dbContext.submitChanges();
         }, self,
             function (sender, param) {
@@ -235,7 +235,7 @@ export class CustomerVM extends MOD.mvvm.BaseViewModel {
             });
 
         this._cancelEditCommand = new MOD.mvvm.Command(function (sender, param) {
-            self.currentItem.cancelEdit();
+            self.currentItem._aspect.cancelEdit();
             self.dbContext.rejectChanges();
         }, self,
             function (sender, param) {
@@ -471,7 +471,7 @@ export class OrderVM extends MOD.mvvm.BaseViewModel {
 
 
         this._dbSet.addOnItemAdded(function (sender, args) {
-            var item: DEMODB.ISalesOrderHeaderEntity = args.item;
+            var item = args.item;
             item.Customer = self.currentCustomer;
             item.OrderDate = moment().toDate();
             item.DueDate = moment().add('days', 7).toDate();
@@ -535,7 +535,7 @@ export class OrderVM extends MOD.mvvm.BaseViewModel {
     load() {
         //explicitly clear before every load
         this.clear();
-        if (!this.currentCustomer || this.currentCustomer.getIsNew()) {
+        if (!this.currentCustomer || this.currentCustomer._aspect.getIsNew()) {
             var deferred = utils.createDeferred();
             deferred.reject();
             return deferred.promise();
@@ -614,7 +614,7 @@ export class OrderDetailVM extends MOD.mvvm.BaseViewModel {
     load() {
         this.clear();
 
-        if (!this.currentOrder || this.currentOrder.getIsNew()) {
+        if (!this.currentOrder || this.currentOrder._aspect.getIsNew()) {
             var deferred = utils.createDeferred();
             deferred.reject();
             return deferred.promise();
@@ -886,12 +886,12 @@ export class CustomerAddressVM extends MOD.mvvm.BaseViewModel {
         }, self.uniqueID);
 
         this._custAdressDb.addOnBeginEdit(function (sender, args) {
-            var item = args.item.asInterface();
+            var item = args.item;
             //start editing Address entity, when CustomerAddress begins editing
             //p.s.- Address is navigation property
             var address = item.Address;
             if (!!address)
-                address.beginEdit();
+                address._aspect.beginEdit();
         }, self.uniqueID);
 
         this._custAdressDb.addOnEndEdit(function (sender, args) {
@@ -899,11 +899,11 @@ export class CustomerAddressVM extends MOD.mvvm.BaseViewModel {
             var address = item.Address;
             if (!args.isCanceled) {
                 if (!!address)
-                    address.endEdit();
+                    address._aspect.endEdit();
             }
             else {
                 if (address)
-                    address.cancelEdit();
+                    address._aspect.cancelEdit();
             }
         }, self.uniqueID);
 
@@ -969,7 +969,7 @@ export class CustomerAddressVM extends MOD.mvvm.BaseViewModel {
         //create relationship with the address
         //if the address is new, then the primary keys will be aquired when the data is submitted to the server
         ca.Address = address;
-        ca.endEdit();
+        ca._aspect.endEdit();
         return ca;
     }
     load(customers: DEMODB.Customer[]) {
@@ -1079,10 +1079,10 @@ export class AddAddressVM extends MOD.mvvm.BaseViewModel implements RIAPP.ISubmi
                     //allow to close the dialog
                     return DIALOG_ACTION.Default;
                 }
-                if (!self._newAddress.endEdit())
+                if (!self._newAddress._aspect.endEdit())
                     return DIALOG_ACTION.StayOpen;
                 var custAdress = self._customerAddressVM._addNewCustAddress(self._newAddress);
-                custAdress.endEdit();
+                custAdress._aspect.endEdit();
                 self._newAddress = null;
                 self.uiViewVM.goToLinkAdr();
                 self.raisePropertyChanged('newAddress');
@@ -1181,8 +1181,8 @@ export class AddAddressVM extends MOD.mvvm.BaseViewModel implements RIAPP.ISubmi
     }
     _cancelAddNewAddress() {
         var self = this;
-        self._newAddress.cancelEdit();
-        self._newAddress.rejectChanges();
+        self._newAddress._aspect.cancelEdit();
+        self._newAddress._aspect.rejectChanges();
         self._newAddress = null;
         self.uiViewVM.goToLinkAdr();
         self.raisePropertyChanged('newAddress');
@@ -1234,7 +1234,7 @@ export class AddAddressVM extends MOD.mvvm.BaseViewModel implements RIAPP.ISubmi
         }
         var id = item.AddressID;
         //delete it from the left panel
-        if (item.deleteItem())
+        if (item._aspect.deleteItem())
             //and then add the address to the right panel (really adds an addressInfo, not the address entity)
             this._addAddressRP(id);
     }
@@ -1278,6 +1278,7 @@ export class AddAddressVM extends MOD.mvvm.BaseViewModel implements RIAPP.ISubmi
         }
     }
     submitChanges(): RIAPP.IPromise<any> { return this.dbContext.submitChanges(); }
+    rejectChanges() { }
     destroy() {
         if (this._isDestroyed)
             return;

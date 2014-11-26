@@ -26,9 +26,9 @@ module RIAPP
             _testProperty2: string;
             _testCommand: MOD.mvvm.ICommand;
             _month: number;
-            _months: MOD.collection.Dictionary;
+            _months: DEMODB.KeyValDictionary;
             _format: string;
-            _formats: MOD.collection.Dictionary;
+            _formats: DEMODB.StrKeyValDictionary;
 
             constructor(initPropValue: string) {
                 super();
@@ -44,14 +44,14 @@ module RIAPP
                  });
 
                 this._month = new Date().getMonth() + 1;
-                this._months = new MOD.collection.Dictionary('MonthType', { key: 0, val: '' }, 'key');
+                this._months = new DEMODB.KeyValDictionary();
                 this._months.fillItems([{ key: 1, val: 'January' }, { key: 2, val: 'February' }, { key: 3, val: 'March' },
                     { key: 4, val: 'April' }, { key: 5, val: 'May' }, { key: 6, val: 'June' },
                     { key: 7, val: 'July' }, { key: 8, val: 'August' }, { key: 9, val: 'September' }, { key: 10, val: 'October' },
                     { key: 11, val: 'November' }, { key: 12, val: 'December' }], true);
 
                 this._format = 'PDF';
-                this._formats = new MOD.collection.Dictionary('format', { key: 0, val: '' }, 'key');
+                this._formats = new DEMODB.StrKeyValDictionary();
                 this._formats.fillItems([{ key: 'PDF', val: 'Acrobat Reader PDF' }, { key: 'WORD', val: 'MS Word DOC' }, { key: 'EXCEL', val: 'MS Excel XLS' }], true);
             }
             _onTestCommandExecuted() {

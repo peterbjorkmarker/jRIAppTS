@@ -578,7 +578,7 @@ namespace RIAppDemo.BLL.DataServices
         /// <returns></returns>
         protected override IEnumerable<Type> GetClientTypes()
         {
-            return new Type[] { typeof(TestModel), typeof(KeyVal), typeof(HistoryItem), typeof(TestEnum2) };
+            return new Type[] { typeof(TestModel), typeof(KeyVal), typeof(StrKeyVal), typeof(RadioVal), typeof(HistoryItem), typeof(TestEnum2) };
         }
 
         /// <summary>

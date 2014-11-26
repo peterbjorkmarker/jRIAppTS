@@ -80,7 +80,7 @@ namespace RIAPP.DataService.Utils
             string isvcMethods = this.createISvcMethods();
 
             //create typed Lists and Dictionaries
-            string listTypes = this.createListTypes();
+            string listTypes = this.createClientTypes();
             //get interface declarations for all client types
             string sbInterfaceDefs = this._dotNet2TS.GetInterfaceDeclarations();
 
@@ -242,19 +242,19 @@ namespace RIAPP.DataService.Utils
             return sbISvcMeth.ToString().TrimEnd('\r','\n');
         }
 
-        private string createListTypes()
+        private string createClientTypes()
         {
             var sb = new StringBuilder(1024);
             for (int i = 0; i< this._clientTypes.Count();++i)
             {
                 Type type = this._clientTypes[i];
-                sb.Append(this.createListType(type));
+                sb.Append(this.createClientType(type));
             }
 
             return sb.ToString().TrimEnd('\r','\n');
         }
 
-        private string createDictionary(string name, string keyName, string itemName, string interfaceName, string properties, List<System.Reflection.PropertyInfo> propList)
+        private string createDictionary(string name, string keyName, string itemName, string aspectName, string interfaceName, string properties, List<System.Reflection.PropertyInfo> propList)
         {
             var sbDict = new StringBuilder(512);
             var pkProp = propList.Where((propInfo) => keyName == propInfo.Name).SingleOrDefault();
@@ -279,8 +279,11 @@ namespace RIAPP.DataService.Utils
                         case "ITEM_TYPE_NAME":
                             sbDict.Append(itemName);
                             break;
-                        case "INTERF_TYPE_NAME":
+                        case "INTERFACE_NAME":
                             sbDict.Append(interfaceName);
+                            break;
+                        case "ASPECT_NAME":
+                            sbDict.Append(aspectName);
                             break;
                         case "KEY_NAME":
                             sbDict.Append(keyName);
@@ -299,7 +302,7 @@ namespace RIAPP.DataService.Utils
             return sbDict.ToString();
         }
 
-        private string createList(string name, string itemName, string interfaceName, string properties)
+        private string createList(string name, string itemName, string aspectName,  string interfaceName, string properties)
         {
             var sbList = new StringBuilder(512);
 
@@ -319,10 +322,13 @@ namespace RIAPP.DataService.Utils
                         case "ITEM_TYPE_NAME":
                             sbList.Append(itemName);
                             break;
-                        case "INTERF_TYPE_NAME":
+                        case "INTERFACE_NAME":
                             sbList.Append(interfaceName);
                             break;
-                        case "PROPS":
+                        case "ASPECT_NAME":
+                            sbList.Append(aspectName);
+                            break;
+                        case "PROP_INFOS":
                             {
                                 sbList.Append(properties);
                             }
@@ -334,7 +340,50 @@ namespace RIAPP.DataService.Utils
             return sbList.ToString();
         }
 
-        private string createListType(Type type)
+        private string createListItem(string itemName, string aspectName,  string interfaceName, List<System.Reflection.PropertyInfo> propInfos)
+        {
+            var sbProps = new StringBuilder(512);
+            propInfos.ForEach((propInfo) =>
+            {
+                sbProps.AppendLine(string.Format("\tget {0}():{1} {{ return <{1}>this.f_aspect._getProp('{0}'); }}", propInfo.Name, this._dotNet2TS.GetTSTypeName(propInfo.PropertyType)));
+                sbProps.AppendLine(string.Format("\tset {0}(v:{1}) {{ this.f_aspect._setProp('{0}', v); }}", propInfo.Name, this._dotNet2TS.GetTSTypeName(propInfo.PropertyType)));
+            });
+
+            var sbListItem = new StringBuilder(512);
+
+            (new TemplateParser("ListItem.txt")).ProcessParts((part) =>
+            {
+                if (!part.isPlaceHolder)
+                {
+                    sbListItem.Append(part.value);
+                }
+                else
+                {
+                    switch (part.value)
+                    {
+                        case "LIST_ITEM_NAME":
+                            sbListItem.Append(itemName);
+                            break;
+                        case "INTERFACE_NAME":
+                            sbListItem.Append(interfaceName);
+                            break;
+                        case "ASPECT_NAME":
+                            sbListItem.Append(aspectName);
+                            break;
+                        case "ITEM_PROPS":
+                            {
+                                sbListItem.Append(sbProps.ToString());
+                            }
+                            break;
+                    }
+                }
+            });
+
+            sbListItem.AppendLine();
+            return sbListItem.ToString();
+        }
+
+        private string createClientType(Type type)
         {
             var dictAttr = type.GetCustomAttributes(typeof(DictionaryAttribute), false).OfType<DictionaryAttribute>().FirstOrDefault();
             var listAttr = type.GetCustomAttributes(typeof(ListAttribute), false).OfType<ListAttribute>().FirstOrDefault();
@@ -354,27 +403,10 @@ namespace RIAPP.DataService.Utils
             if (!type.IsClass || !isListItem)
                 return sb.ToString();
 
-
             string listItemName = string.Format("{0}ListItem", type.Name);
+            string itemAspectName = string.Format("{0}Aspect", listItemName);
             var propInfos = type.GetProperties().ToList();
-
-            #region Create ListItem
-            sb.AppendLine(string.Format("export class {0} extends RIAPP.MOD.collection.ListItem implements {1}", listItemName, interfaceName));
-            sb.AppendLine("{");
-            sb.AppendLine(string.Format("\tconstructor(coll: RIAPP.MOD.collection.BaseList<{0}, {1}>, obj?: {1})", listItemName, interfaceName));
-            sb.AppendLine("\t{");
-            sb.AppendLine("\t\tsuper(coll,obj);");
-            sb.AppendLine("\t}");
-            propInfos.ForEach((propInfo) =>
-            {
-                sb.AppendLine(string.Format("\tget {0}():{1} {{ return <{1}>this._getProp('{0}'); }}", propInfo.Name, this._dotNet2TS.GetTSTypeName(propInfo.PropertyType)));
-                sb.AppendLine(string.Format("\tset {0}(v:{1}) {{ this._setProp('{0}', v); }}", propInfo.Name, this._dotNet2TS.GetTSTypeName(propInfo.PropertyType)));
-            });
-            sb.AppendFormat("\tasInterface() {{ return <{0}>this; }}", interfaceName);
-            sb.AppendLine();
-            sb.AppendLine("}");
-            sb.AppendLine();
-            #endregion
+            string list_properties = string.Empty;
 
             #region Define fn_Properties
             Func<List<System.Reflection.PropertyInfo>, string> fn_Properties = (props) =>
@@ -410,17 +442,23 @@ namespace RIAPP.DataService.Utils
             };
             #endregion
 
-            string properties = fn_Properties(propInfos);
+            if (dictAttr != null || listAttr != null)
+            {
+                string listItem = this.createListItem(listItemName, itemAspectName, interfaceName, propInfos);
+                sb.AppendLine(listItem);
+
+                list_properties = fn_Properties(propInfos);
+            }
 
             if (dictAttr != null)
             {
-                sb.AppendLine(this.createDictionary(dictName, dictAttr.KeyName, listItemName, interfaceName, properties, propInfos));
+                sb.AppendLine(this.createDictionary(dictName, dictAttr.KeyName, listItemName, itemAspectName, interfaceName, list_properties, propInfos));
                 sb.AppendLine();
             }
 
             if (listAttr != null)
             {
-                sb.AppendLine(this.createList(listName, listItemName, interfaceName, properties));
+                sb.AppendLine(this.createList(listName, listItemName, itemAspectName, interfaceName, list_properties));
                 sb.AppendLine();
             }
 
@@ -657,13 +695,13 @@ namespace RIAPP.DataService.Utils
             var sbFieldsDef = new StringBuilder();
             var sbFieldsInit = new StringBuilder();
 
-            if (this._dotNet2TS.IsTypeNameRegistered(entityInterfaceName))
+            if (this._dotNet2TS.IsTypeNameRegistered(entityType))
                 throw new ApplicationException(string.Format("Names collision. Name '{0}' can not be used for an entity type's name because this name is used for a client's type.", entityInterfaceName));
 
             Action<Field> AddCalculatedField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
-                sbFields.AppendFormat("\tget {0}(): {1} {{ return this._getCalcFieldVal('{0}'); }}", f.fieldName, dataType);
+                sbFields.AppendFormat("\tget {0}(): {1} {{ return this.f_aspect._getCalcFieldVal('{0}'); }}", f.fieldName, dataType);
                 sbFields.AppendLine();
 
                 sbFields2.AppendFormat("\t{0}: {1};", f.fieldName, dataType);
@@ -673,12 +711,12 @@ namespace RIAPP.DataService.Utils
             Action<Field> AddNavigationField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
-                sbFields.AppendFormat("\tget {0}(): {1} {{ return this._getNavFieldVal('{0}'); }}", f.fieldName, dataType);
+                sbFields.AppendFormat("\tget {0}(): {1} {{ return this.f_aspect._getNavFieldVal('{0}'); }}", f.fieldName, dataType);
                 sbFields.AppendLine();
                 //no writable properties to ParentToChildren navigation fields
                 if (!dataType.EndsWith("[]"))
                 {
-                    sbFields.AppendFormat("\tset {0}(v: {1}) {{ this._setNavFieldVal('{0}',v); }}", f.fieldName, dataType);
+                    sbFields.AppendFormat("\tset {0}(v: {1}) {{ this.f_aspect._setNavFieldVal('{0}',v); }}", f.fieldName, dataType);
                     sbFields.AppendLine();
                 }
 
@@ -690,7 +728,7 @@ namespace RIAPP.DataService.Utils
             Action<Field> AddComplexTypeField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
-                sbFields.AppendFormat("\tget {0}(): {1} {{ if (!this._{0}) {{this._{0} = new {1}('{0}', this);}} return this._{0}; }}", f.fieldName, dataType);
+                sbFields.AppendFormat("\tget {0}(): {1} {{ if (!this._{0}) {{this._{0} = new {1}('{0}', this.f_aspect);}} return this._{0}; }}", f.fieldName, dataType);
                 sbFields.AppendLine();
                 sbFieldsDef.AppendFormat("\tprivate _{0}: {1};", f.fieldName, dataType);
                 sbFieldsDef.AppendLine();
@@ -703,11 +741,11 @@ namespace RIAPP.DataService.Utils
             Action<Field> AddSimpleField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
-                sbFields.AppendFormat("\tget {0}(): {1} {{ return this._getFieldVal('{0}'); }}", f.fieldName, dataType);
+                sbFields.AppendFormat("\tget {0}(): {1} {{ return this.f_aspect._getFieldVal('{0}'); }}", f.fieldName, dataType);
                 sbFields.AppendLine();
                 if (!f.isReadOnly)
                 {
-                    sbFields.AppendFormat("\tset {0}(v: {1}) {{ this._setFieldVal('{0}',v); }}", f.fieldName, dataType);
+                    sbFields.AppendFormat("\tset {0}(v: {1}) {{ this.f_aspect._setFieldVal('{0}',v); }}", f.fieldName, dataType);
                     sbFields.AppendLine();
                 }
 

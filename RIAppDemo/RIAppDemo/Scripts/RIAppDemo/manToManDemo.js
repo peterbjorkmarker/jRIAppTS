@@ -233,23 +233,23 @@ var RIAPP;
                         args.isCancel = true;
                 }, self.uniqueID);
                 this._custAdressDb.addOnBeginEdit(function (sender, args) {
-                    var item = args.item.asInterface();
+                    var item = args.item;
                     //start editing Address entity, when CustomerAddress begins editing
                     //p.s.- Address is navigation property
                     var address = item.Address;
                     if (!!address)
-                        address.beginEdit();
+                        address._aspect.beginEdit();
                 }, self.uniqueID);
                 this._custAdressDb.addOnEndEdit(function (sender, args) {
                     var item = args.item;
                     var address = item.Address;
                     if (!args.isCanceled) {
                         if (!!address)
-                            address.endEdit();
+                            address._aspect.endEdit();
                     }
                     else {
                         if (address)
-                            address.cancelEdit();
+                            address._aspect.cancelEdit();
                     }
                 }, self.uniqueID);
                 this._addressesDb.addOnItemDeleting(function (sender, args) {
@@ -325,7 +325,7 @@ var RIAPP;
                 //create relationship with the address
                 //if the address is new, then the primary keys will be aquired when the data is submitted to the server
                 ca.Address = address;
-                ca.endEdit();
+                ca._aspect.endEdit();
                 return ca;
             };
             CustomerAddressVM.prototype.load = function (customers) {
@@ -471,10 +471,10 @@ var RIAPP;
                             //allow to close the dialog
                             return 0 /* Default */;
                         }
-                        if (!self._newAddress.endEdit())
+                        if (!self._newAddress._aspect.endEdit())
                             return 1 /* StayOpen */;
                         var custAdress = self._customerAddressVM._addNewCustAddress(self._newAddress);
-                        custAdress.endEdit();
+                        custAdress._aspect.endEdit();
                         self._newAddress = null;
                         self._isAddingNew = false;
                         self.raisePropertyChanged('newAddress');
@@ -572,10 +572,12 @@ var RIAPP;
             AddAddressVM.prototype.submitChanges = function () {
                 return this.dbContext.submitChanges();
             };
+            AddAddressVM.prototype.rejectChanges = function () {
+            };
             AddAddressVM.prototype._cancelAddNewAddress = function () {
                 var self = this;
-                self._newAddress.cancelEdit();
-                self._newAddress.rejectChanges();
+                self._newAddress._aspect.cancelEdit();
+                self._newAddress._aspect.rejectChanges();
                 self._newAddress = null;
                 self._isAddingNew = false;
                 self.raisePropertyChanged('newAddress');
@@ -627,7 +629,7 @@ var RIAPP;
                 }
                 var id = item.AddressID;
                 //delete it from the left panel
-                if (item.deleteItem())
+                if (item._aspect.deleteItem())
                     //and then add the address to the right panel (really adds an addressInfo, not the address entity)
                     this._addAddressRP(id);
             };

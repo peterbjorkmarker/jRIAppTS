@@ -405,18 +405,18 @@ module RIAPP
             }
             //when product is selected (unselected) by the user in the grid (clicking checkboxes)
             //we store the entities keys in the map (it survives going to another page and return back)
-            _productSelected(item: MOD.collection.CollectionItem, isSelected:boolean) {
+            _productSelected(item: MOD.collection.ICollectionItem, isSelected:boolean) {
                 if (!item)
                     return;
                 if (isSelected) {
-                    if (!this._selected[item._key]) {
-                        this._selected[item._key] = item;
+                    if (!this._selected[item._aspect._key]) {
+                        this._selected[item._aspect._key] = item;
                         this.selectedCount += 1;
                     }
                 }
                 else {
-                    if (!!this._selected[item._key]) {
-                        delete this._selected[item._key];
+                    if (!!this._selected[item._aspect._key]) {
+                        delete this._selected[item._aspect._key];
                         this.selectedCount -= 1;
                     }
                 }
@@ -649,7 +649,7 @@ module RIAPP
         };
 
         export class UploadThumbnailVM extends BaseUploadVM {
-            _product: any;
+            _product: DEMODB.Product;
             _dialogVM: COMMON.DialogVM;
             _dialogCommand: MOD.mvvm.ICommand;
             _templateCommand: MOD.mvvm.ICommand;
@@ -714,7 +714,7 @@ module RIAPP
                     try {
                         //using command parameter to provide the product item
                         self._product = param;
-                        self.id = self._product.ProductID;
+                        self.id = self._product.ProductID.toString();
                         self._dialogVM.showDialog('uploadDialog', self);
                     } catch (ex) {
                         self.handleError(ex, this);
@@ -755,7 +755,7 @@ module RIAPP
                 var base_events = super._getEventNames();
                 return ['files_uploaded'].concat(base_events);
             }
-            addOnFilesUploaded(fn: (sender: UploadThumbnailVM, args: { id: string; product: MOD.db.Entity; }) => void , namespace?: string) {
+            addOnFilesUploaded(fn: (sender: UploadThumbnailVM, args: { id: string; product: MOD.db.IEntityItem; }) => void , namespace?: string) {
                 this.addHandler('files_uploaded', fn, namespace);
             }
             removeOnFilesUploaded(namespace?: string) {
@@ -833,7 +833,7 @@ module RIAPP
                 //adding event handler for our custom event
                 this._uploadVM.addOnFilesUploaded(function (s, a) {
                     //need to update ThumbnailPhotoFileName
-                    a.product.refresh();
+                    a.product._aspect.refresh();
                 });
 
                 if (!!options.modelData && !!options.categoryData) {

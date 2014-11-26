@@ -20,10 +20,10 @@
             export interface IListBoxConstructorOptions extends IListBoxOptions {
                 app: Application;
                 el: HTMLSelectElement;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
             }
             export interface IMappedItem {
-                item: collMOD.CollectionItem;
+                item: collMOD.ICollectionItem;
                 op: { text: string; value: any; index: number; }; 
             }
 
@@ -32,8 +32,8 @@
                 private _objId: string;
                 private _isRefreshing: boolean;
                 private _isDSFilling: boolean;
-                private _selectedItem: collMOD.CollectionItem;
-                private _prevSelected: collMOD.CollectionItem;
+                private _selectedItem: collMOD.ICollectionItem;
+                private _prevSelected: collMOD.ICollectionItem;
                 private _keyMap: { [key: string]: IMappedItem; };
                 private _valMap: { [val: string]: IMappedItem; };
                 private _savedValue: string;
@@ -104,13 +104,13 @@
                         this.selectedItem = data.item;
                     }
                 }
-                protected _getStringValue(item: collMOD.CollectionItem):string {
+                protected _getStringValue(item: collMOD.ICollectionItem):string {
                     var v = this._getValue(item);
                     if (utils.check.isNt(v))
                         return '';
                     return '' + v;
                 }
-                protected _getValue(item: collMOD.CollectionItem):any {
+                protected _getValue(item: collMOD.ICollectionItem):any {
                     if (!item)
                         return null;
                     if (!!this._options.valuePath) {
@@ -119,7 +119,7 @@
                     else
                         return undefined;
                 }
-                protected _getText(item: collMOD.CollectionItem):string {
+                protected _getText(item: collMOD.ICollectionItem):string {
                     if (!item)
                         return '';
                     if (!!this._options.textPath) {
@@ -131,7 +131,7 @@
                     else
                         return this._getStringValue(item);
                 }
-                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.CollectionItem>) {
+                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
                     var self = this, data;
                     switch (args.change_type) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
@@ -142,7 +142,7 @@
                             if (!this._isDSFilling) //if items are filling then it will be appended when fill ends
                             {
                                 args.items.forEach(function (item) {
-                                    self._addOption(item, item._isNew);
+                                    self._addOption(item, item._aspect._isNew);
                                 });
                             }
                             break;
@@ -162,7 +162,7 @@
                             }
                     }
                 }
-                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.CollectionItem>) {
+                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.ICollectionItem>) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -172,7 +172,7 @@
                         this._isDSFilling = true;
                     }
                 }
-                protected _onEdit(item: collMOD.CollectionItem, isBegin:boolean, isCanceled:boolean) {
+                protected _onEdit(item: collMOD.ICollectionItem, isBegin:boolean, isCanceled:boolean) {
                     var self = this, key:string, data: IMappedItem, oldVal:string, val:string;
                     if (isBegin) {
                         this._savedValue = this._getStringValue(item);
@@ -181,7 +181,7 @@
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
                         if (!isCanceled) {
-                            key = item._key;
+                            key = item._aspect._key;
                             data = self._keyMap[key];
                             if (!!data) {
                                 data.op.text = self._getText(item);
@@ -203,13 +203,13 @@
                         }
                     }
                 }
-                protected _onStatusChanged(item: collMOD.CollectionItem, oldChangeType:number) {
-                    var newChangeType = item._changeType;
+                protected _onStatusChanged(item: collMOD.ICollectionItem, oldChangeType:number) {
+                    var newChangeType = item._aspect._changeType;
                     if (newChangeType === collMOD.STATUS.DELETED) {
                         this._removeOption(item);
                     }
                 }
-                protected _onCommitChanges(item: collMOD.CollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS) {
+                protected _onCommitChanges(item: collMOD.ICollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS) {
                     var self = this, oldVal, val, data;
                     if (isBegin) {
                         if (isRejected && changeType === collMOD.STATUS.ADDED) {
@@ -230,7 +230,7 @@
                             return;
                         }
                         val = this._getStringValue(item);
-                        data = self._keyMap[item._key];
+                        data = self._keyMap[item._aspect._key];
                         if (oldVal !== val) {
                             if (oldVal !== '') {
                                 delete self._valMap[oldVal];
@@ -277,12 +277,12 @@
                     if (!ds) return;
                     ds.removeNSHandlers(self._objId);
                 }
-                private _addOption(item: collMOD.CollectionItem, first:boolean) {
+                private _addOption(item: collMOD.ICollectionItem, first:boolean) {
                     if (this._isDestroyCalled)
                         return null;
                     var oOption: HTMLOptionElement, key = '', val: string, text: string;
                     if (!!item) {
-                        key = item._key;
+                        key = item._aspect._key;
                     }
                     if (!!this._keyMap[key]) {
                         return null;
@@ -323,12 +323,12 @@
                         data.op.text = self._getText(data.item); 
                     });
                 }
-                private _removeOption(item: collMOD.CollectionItem) {
+                private _removeOption(item: collMOD.ICollectionItem) {
                     if (this._isDestroyCalled)
                         return;
                     var key = '', data: IMappedItem, val: string;
                     if (!!item) {
-                        key = item._key;
+                        key = item._aspect._key;
                         data = this._keyMap[key];
                         if (!data) {
                             return;
@@ -385,10 +385,10 @@
                     }
                     self._onChanged();
                 }
-                private _findItemIndex(item: collMOD.CollectionItem) {
+                private _findItemIndex(item: collMOD.ICollectionItem) {
                     if (!item)
                         return 0;
-                    var data:IMappedItem = this._keyMap[item._key];
+                    var data: IMappedItem = this._keyMap[item._aspect._key];
                     if (!data)
                         return 0;
                     return data.op.index;
@@ -402,7 +402,7 @@
                 clear() {
                     this._clear(false);
                 }
-                findItemByValue(val): collMOD.CollectionItem {
+                findItemByValue(val): collMOD.ICollectionItem {
                     if (utils.check.isNt(val))
                         return null;
                     val = '' + val;
@@ -476,7 +476,7 @@
                     else
                         return undefined;
                 }
-                set selectedItem(v: collMOD.CollectionItem) {
+                set selectedItem(v: collMOD.ICollectionItem) {
                     if (this._selectedItem !== v) {
                         if (!!this._selectedItem) {
                             this._prevSelected = this._selectedItem;
@@ -593,7 +593,7 @@
                         return undefined;
                     return this._listBox.selectedItem;
                 }
-                set selectedItem(v: collMOD.CollectionItem) {
+                set selectedItem(v: collMOD.ICollectionItem) {
                     if (this._isDestroyCalled)
                         return;
                     this._listBox.selectedItem = v;

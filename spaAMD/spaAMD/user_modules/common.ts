@@ -9,9 +9,9 @@ var global = RIAPP.global, utils = global.utils;
 export interface IGridEvents {
     regFocusGridFunc(doFocus:()=> void);
     onDataPageChanged();
-    onRowSelected(item: MOD.collection.CollectionItem);
-    onRowExpanded(item: MOD.collection.CollectionItem);
-    onRowCollapsed(item: MOD.collection.CollectionItem);
+    onRowSelected(item: MOD.collection.ICollectionItem);
+    onRowExpanded(item: MOD.collection.ICollectionItem);
+    onRowCollapsed(item: MOD.collection.ICollectionItem);
 }
 
 

@@ -263,8 +263,8 @@
                     var finf = this.getFieldInfo();
                     if (!finf)
                         return false;
-                    var editable = !!this._dataContext && !!this._dataContext.beginEdit;
-                    return editable && !finf.isReadOnly && finf.fieldType != collMOD.FIELD_TYPE.Calculated;
+                    var editable =  utils.getEditable(this._dataContext);
+                    return !!editable && !finf.isReadOnly && finf.fieldType != collMOD.FIELD_TYPE.Calculated;
                 }
                 protected _createTargetElement(): elviewMOD.BaseElView {
                     var el: HTMLElement, doc = global.document, info: { name: string; options: any; } = { name: null, options: null };

@@ -30,7 +30,7 @@
             export interface IPagerConstructorOptions extends IPagerOptions {
                 app: Application;
                 el: HTMLElement;
-                dataSource: collMOD.BaseCollection<collMOD.CollectionItem>;
+                dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
             }
 
             export class Pager extends RIAPP.BaseObject {
@@ -161,13 +161,13 @@
                 protected _setDSPageIndex(page:number) {
                     this.dataSource.pageIndex = page - 1;
                 }
-                protected _onPageSizeChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
+                protected _onPageSizeChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>) {
                     this.rowsPerPage = ds.pageSize;
                 }
-                protected _onPageIndexChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
+                protected _onPageIndexChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>) {
                     this.currentPage = ds.pageIndex + 1;
                 }
-                protected _onTotalCountChanged(ds: collMOD.BaseCollection<collMOD.CollectionItem>) {
+                protected _onTotalCountChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>) {
                     this.rowCount = ds.totalCount;
                 }
                 destroy() {

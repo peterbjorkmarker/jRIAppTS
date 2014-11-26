@@ -11,7 +11,8 @@
         protected _isDestroyCalled: boolean;
         private _events: { [name: string]: IListNode; };
         /*
-        private _stringEvents(text: string): string {
+        //used for events testing
+        private _stringifyEvents(text: string): string {
             if (!this._events)
                 return text +'- empty';
             var ev = this._events, keys = Object.keys(ev), res = '';
@@ -19,7 +20,7 @@
                 res += ',' + n + ':' + countNodes(ev[n]);
             });
             res = text+ '- '+res.substr(1);
-            console.log(res);
+            //console.log(res);
             return res;
         }
         */
@@ -112,7 +113,7 @@
         protected _getEventNames(): string[] {
             return ['error', 'destroyed'];
         }
-        protected _addHandler(name: string, fn: (sender,args)=>void, namespace?: string, prepend?: boolean) {
+        protected _addHandler(name: string, fn: (sender,args)=>void, namespace?: string, prepend?: boolean):void {
             if (this._isDestroyed)
                 return;
             if (!RIAPP.baseUtils.isFunc(fn))
@@ -143,7 +144,7 @@
                 ev[n] = BaseObject.prependNode(list, newNode);
             }
         }
-        protected _removeHandler(name?: string, namespace?: string) {
+        protected _removeHandler(name?: string, namespace?: string):void {
             var self = this, ev = self._events, n = name, ns = '*';
             if (!ev)
                 return;
@@ -187,7 +188,7 @@
             //no arguments supplied
             self._events = null;
         }
-        protected _raiseEvent(name: string, args: any) {
+        protected _raiseEvent(name: string, args: any):void {
             var self = this, ev = self._events;
             if (ev === null)
                 return;
@@ -209,7 +210,7 @@
                 }
             }
         }
-        protected _checkEventName(name: string) {
+        protected _checkEventName(name: string):void {
             if (this._getEventNames().indexOf(name) === -1) {
                 if (DebugLevel == DEBUG_LEVEL.HIGH) {
                     debugger;
@@ -217,7 +218,7 @@
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
             }
         }
-        protected _isHasProp(prop: string) {
+        protected _isHasProp(prop: string):boolean {
             return baseUtils.hasProp(this, prop);
         }
         handleError(error: any, source: any): boolean {
@@ -232,7 +233,7 @@
             return args.isHandled;
         }
        
-        raisePropertyChanged(name: string) {
+        raisePropertyChanged(name: string):void {
             var data = { property: name };
             var parts = name.split('.'), lastPropName = parts[parts.length - 1];
             if (parts.length > 1) {
@@ -257,38 +258,38 @@
                 this._raiseEvent('0' + lastPropName, data);
             }
         }
-        addHandler(name: string, fn: (sender, args) => void, namespace?: string, prepend?: boolean) {
+        addHandler(name: string, fn: (sender, args) => void, namespace?: string, prepend?: boolean):void {
             this._checkEventName(name);
             this._addHandler(name, fn, namespace, !!prepend);
         }
-        removeHandler(name?: string, namespace?: string) {
+        removeHandler(name?: string, namespace?: string):void {
             if (!!name) {
                 this._checkEventName(name);
             }
             this._removeHandler(name, namespace);
         }
-        addOnDestroyed(fn: (sender, args: {})=>void, namespace?: string) {
+        addOnDestroyed(fn: (sender, args: {})=>void, namespace?: string):void {
             this._addHandler('destroyed', fn, namespace, false);
         }
-        removeOnDestroyed(namespace?: string) {
+        removeOnDestroyed(namespace?: string):void {
             this._removeHandler('destroyed', namespace);
         }
-        addOnError(fn: (sender, args: { error: any; source: any; isHandled: boolean; }) => void , namespace?: string) {
+        addOnError(fn: (sender, args: { error: any; source: any; isHandled: boolean; }) => void , namespace?: string): void {
             this._addHandler('error', fn, namespace, false);
         }
-        removeOnError(namespace?: string) {
+        removeOnError(namespace?: string):void {
             this.removeHandler('error', namespace);
         }
         //remove event handlers by namespace
-        removeNSHandlers(namespace?: string) {
+        removeNSHandlers(namespace?: string) :void {
             this._removeHandler(null, namespace);
         }
-        raiseEvent(name: string, args: any) {
+        raiseEvent(name: string, args: any):void {
             this._checkEventName(name);
             this._raiseEvent(name, args);
         }
         //to subscribe for changes on all properties, pass in the prop parameter: '*'
-        addOnPropertyChange(prop: string, fn: (sender, args: { property: string; })=>void, namespace?: string) {
+        addOnPropertyChange(prop: string, fn: (sender, args: { property: string; })=>void, namespace?: string):void {
             if (!prop)
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);
             if (DebugLevel > DEBUG_LEVEL.NONE && prop != '*' && !this._isHasProp(prop)) {
@@ -300,7 +301,7 @@
             prop = '0' + prop;
             this._addHandler(prop, fn, namespace, false);
         }
-        removeOnPropertyChange(prop?: string, namespace?: string) {
+        removeOnPropertyChange(prop?: string, namespace?: string):void {
             if (!!prop) {
                 if (DebugLevel > DEBUG_LEVEL.NONE && prop != '*' && !this._isHasProp(prop)) {
                     if (DebugLevel == DEBUG_LEVEL.HIGH) {
@@ -312,13 +313,13 @@
             }
             this._removeHandler(prop, namespace);
         }
-        getIsDestroyed() {
+        getIsDestroyed(): boolean {
             return this._isDestroyed;
         }
         getIsDestroyCalled(): boolean {
             return this._isDestroyCalled;
         }
-        destroy() {
+        destroy(): void {
             if (this._isDestroyed)
                 return;
             this._isDestroyed = true;

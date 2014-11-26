@@ -7,7 +7,9 @@
                 toolTip: 'qtip',
                 toolTipError: 'qtip-red'
             };
-            //adds new properties to some prototype
+            
+/*
+            //adds new properties to some prototype (not used now)
             export function defineProps(proto, props?: any, propertyDescriptors?:any) {
                 var pds = propertyDescriptors || {}, propertyName;
                 var pdsProperties = Object.getOwnPropertyNames(pds);
@@ -52,6 +54,7 @@
                 defineProps(fn.prototype, pds, props);
                 return fn;
             };
+*/
 
             export class Checks {
                 static isNull = base_utils.isNull;
@@ -101,8 +104,11 @@
                 static isTemplateElView(obj) {
                     return !!obj && obj instanceof MOD.template.TemplateElView;
                 }
-                static isEditable(obj) {
+                static isEditable(obj:any) {
                     return !!obj && !!obj.beginEdit && !!obj.endEdit && !!obj.cancelEdit && global.utils.hasProp(obj,'isEditing');
+                }
+                static isSubmittable(obj: any) {
+                    return !!obj && !!obj.submitChanges && !!obj.rejectChanges && global.utils.hasProp(obj, '_isCanSubmit');
                 }
                 static isDataForm(el: HTMLElement) {
                     if (!el)
@@ -115,6 +121,14 @@
                     }
                     var opts = global.parser.parseOptions(attr);
                     return (opts.length > 0 && opts[0].name === constsMOD.ELVIEW_NM.DATAFORM);
+                }
+                static isErrorNotification(obj: any) {
+                    if (!obj)
+                        return false;
+                    if (!Checks.isFunction(obj.getIErrorNotification))
+                        return false;
+                    var tmp = obj.getIErrorNotification();
+                    return !!tmp && Checks.isFunction(tmp.getIErrorNotification);
                 }
                 //check if element is placed inside DataForm
                 static isInsideDataForm(el:HTMLElement) {
@@ -928,6 +942,40 @@
                 }
                 insertIntoArray(array:any[], obj:any, pos:number) {
                     array.splice(pos, 0, obj);
+                }
+                getErrorNotification(obj: any): IErrorNotification {
+                    if (!obj)
+                        return null;
+                    if (!!obj._aspect && Checks.isErrorNotification(obj._aspect))
+                        return <IErrorNotification>obj._aspect.getIErrorNotification();
+                    else if (Checks.isErrorNotification(obj))
+                        return <IErrorNotification>obj.getIErrorNotification();
+                    else
+                        return null;
+                }
+                getEditable(obj): IEditable {
+                    if (!obj)
+                        return null;
+                    if (!!obj._aspect && Checks.isEditable(obj._aspect)) {
+                        return <IEditable>obj._aspect;
+                    }
+                    else if (Checks.isEditable(obj)) {
+                        return <IEditable>obj;
+                    }
+                    else
+                        return null;
+                }
+                getSubmittable(obj): ISubmittable {
+                    if (!obj)
+                        return null;
+                    if (!!obj._aspect && Checks.isSubmittable(obj._aspect)) {
+                        return <ISubmittable>obj._aspect;
+                    }
+                    else if (Checks.isSubmittable(obj)) {
+                        return <ISubmittable>obj;
+                    }
+                    else
+                        return null;
                 }
                 destroyJQueryPlugin($el:JQuery, name:string) {
                     var plugin = $el.data(name);
