@@ -341,6 +341,14 @@ var RIAPP;
             }
             return firstNode;
         };
+        BaseObject.toEventArray = function (list) {
+            var res = [], curNode = list;
+            while (!!curNode) {
+                res.push(curNode);
+                curNode = curNode.next;
+            }
+            return res;
+        };
         BaseObject.prototype._getEventNames = function () {
             return ['error', 'destroyed'];
         };
@@ -422,10 +430,9 @@ var RIAPP;
                     //notify all those who subscribed for all property changes
                     this._raiseEvent('0*', args);
                 }
-                var curNode = ev[name];
-                while (!!curNode) {
-                    curNode.fn.apply(self, [self, args]);
-                    curNode = curNode.next;
+                var events = BaseObject.toEventArray(ev[name]);
+                for (var i = 0; i < events.length; i++) {
+                    events[i].fn.apply(self, [self, args]);
                 }
             }
         };

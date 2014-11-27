@@ -130,6 +130,7 @@ declare module RIAPP {
         private static prependNode(list, node);
         private static appendNode(list, node);
         private static removeNodes(list, ns);
+        private static toEventArray(list);
         constructor();
         protected _getEventNames(): string[];
         protected _addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string, prepend?: boolean): void;
