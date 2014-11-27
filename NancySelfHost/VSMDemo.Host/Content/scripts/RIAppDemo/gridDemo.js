@@ -875,7 +875,7 @@ var RIAPP;
                     try {
                         //using command parameter to provide the product item
                         self._product = param;
-                        self.id = self._product.ProductID;
+                        self.id = self._product.ProductID.toString();
                         self._dialogVM.showDialog('uploadDialog', self);
                     }
                     catch (ex) {

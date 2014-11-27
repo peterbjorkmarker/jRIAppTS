@@ -54,7 +54,7 @@
                     if (this._notValidated.length > 0) {
                         var res = [message + ':'];
                         this._notValidated.forEach(function (item) {
-                            res.push(baseUtils.format('item key:{0} errors:{1}', item._aspect._key, item._aspect.getErrorString()));
+                            res.push(baseUtils.format('item key:{0} errors:{1}', item._key, item._aspect.getErrorString()));
                         });
                         message = res.join('\r\n');
                     }
@@ -230,17 +230,17 @@
                 error: IErrorInfo;
                 included: IIncludedResult[];
             }
-            export interface IEntityAspectConstructor<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem>, TDbContext extends DbContext> {
-                new (dbSet: DbSet<TItem>, row: IRowData, names: IFieldName[]): EntityAspect<TItem, TDBSet, TDbContext>;
+            export interface IEntityAspectConstructor<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem, DbContext>, TDbContext extends DbContext> {
+                new (itemType: IEntityConstructor<TItem>, dbSet: DbSet<TItem, DbContext>, row: IRowData, names: IFieldName[]): EntityAspect<TItem, TDBSet, TDbContext>;
             }
             export interface IEntityConstructor<TItem extends IEntityItem> {
-                new (aspect: EntityAspect<TItem, DbSet<IEntityItem>, DbContext>): TItem;
+                new (aspect: EntityAspect<TItem, DbSet<IEntityItem, DbContext>, DbContext>): TItem;
             }
             export interface IDbSetConstructor<TItem extends IEntityItem> {
-                new (dbContext: DbContext): DbSet<TItem>;
+                new (dbContext: DbContext): DbSet<TItem, DbContext>;
             }
             export interface IEntityItem extends collMOD.ICollectionItem {
-                _aspect: EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
+                _aspect: EntityAspect<IEntityItem, DbSet<IEntityItem, DbContext>, DbContext>;
             }
 
             //don't submit these types of fields to the server
@@ -270,12 +270,12 @@
             }
 
             export class DataCache extends RIAPP.BaseObject {
-                private _query: TDataQuery<IEntityItem>;
+                private _query: DataQuery<IEntityItem>;
                 private _cache: ICachedPage[];
                 private _totalCount: number;
                 private _itemsByKey: { [key: string]: IEntityItem; };
 
-                constructor(query: TDataQuery<IEntityItem>) {
+                constructor(query: DataQuery<IEntityItem>) {
                     super();
                     this._query = query;
                     this._cache = [];
@@ -299,7 +299,7 @@
                     for (var i = 0; i < this._cache.length; i += 1) {
                         page = this._cache[i];
                         page.items.forEach(function (item) {
-                            self._itemsByKey[item._aspect._key] = item;
+                            self._itemsByKey[item._key] = item;
                         });
                     }
                 }
@@ -362,11 +362,11 @@
                             k = (i * pageSize) + j;
                             if (k < len) {
                                 item = items[k];
-                                if (!!keyMap[item._aspect._key]) {
+                                if (!!keyMap[item._key]) {
                                     continue;
                                 }
                                 page.items.push(item);
-                                keyMap[item._aspect._key] = item;
+                                keyMap[item._key] = item;
                                 item._aspect._isCached = true;
                             }
                             else {
@@ -381,9 +381,9 @@
                         items = this._cache[i].items;
                         for (j = 0; j < items.length; j += 1) {
                             item = items[j];
-                            if (!!item && item._aspect._key !== null) {
+                            if (!!item && item._key !== null) {
                                 item._aspect._isCached = false;
-                                if (!dbSet.getItemByKey(item._aspect._key))
+                                if (!dbSet.getItemByKey(item._key))
                                     item._aspect.destroy();
                             }
                         }
@@ -399,10 +399,10 @@
                     items = page.items;
                     for (j = 0; j < items.length; j += 1) {
                         item = items[j];
-                        if (!!item && item._aspect._key !== null) {
-                            delete this._itemsByKey[item._aspect._key];
+                        if (!!item && item._key !== null) {
+                            delete this._itemsByKey[item._key];
                             item._aspect._isCached = false;
-                            if (!dbSet.getItemByKey(item._aspect._key))
+                            if (!dbSet.getItemByKey(item._key))
                                 item._aspect.destroy();
                         }
                     }
@@ -419,7 +419,7 @@
                     return this._itemsByKey[key];
                 }
                 getPageByItem(item: IEntityItem) {
-                    item = this._itemsByKey[item._aspect._key];
+                    item = this._itemsByKey[item._key];
                     if (!item)
                         return -1;
                     for (var i = 0; i < this._cache.length; i += 1) {
@@ -469,8 +469,8 @@
                 get cacheSize() { return this._cache.length; }
             }
 
-            export class TDataQuery<TItem extends IEntityItem> extends RIAPP.BaseObject {
-                private _dbSet: DbSet<TItem>;
+            export class DataQuery<TItem extends IEntityItem> extends RIAPP.BaseObject {
+                private _dbSet: DbSet<TItem, DbContext>;
                 private __queryInfo: IQueryInfo;
                 private _filterInfo: IFilterInfo;
                 private _sortInfo: ISortInfo;
@@ -484,7 +484,7 @@
                 private _dataCache: DataCache;
                 private _cacheInvalidated: boolean;
 
-                constructor(dbSet: DbSet<TItem>, queryInfo: IQueryInfo) {
+                constructor(dbSet: DbSet<TItem, DbContext>, queryInfo: IQueryInfo) {
                     super();
                     this._dbSet = dbSet;
                     this.__queryInfo = queryInfo;
@@ -681,10 +681,10 @@
                 get isCacheValid() { return !!this._dataCache && !this._cacheInvalidated; }
             }
 
-            export class DataQuery extends TDataQuery<IEntityItem>{
+            export class TDataQuery extends DataQuery<IEntityItem>{
             }
 
-            export class EntityAspect<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem>, TDbContext extends DbContext> extends collMOD.ItemAspect<TItem> {
+            export class EntityAspect<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem, DbContext>, TDbContext extends DbContext> extends collMOD.ItemAspect<TItem> {
                 private __changeType: collMOD.STATUS;
                 private __isRefreshing: boolean;
                 private __isCached: boolean;
@@ -694,7 +694,7 @@
                 private _saveChangeType: collMOD.STATUS;
                 protected _item: TItem;
 
-                constructor(dbSet: TDBSet, row: IRowData, names: IFieldName[]) {
+                constructor(itemType: IEntityConstructor<TItem>, dbSet: TDBSet, row: IRowData, names: IFieldName[]) {
                     this.__dbSet = dbSet;
                     super();
                     var self = this;
@@ -724,6 +724,7 @@
 
                     }
                     this._initRowInfo(row, names);
+                    this._item = new itemType(this);
                 }
                 protected _initRowInfo(row: IRowData, names: IFieldName[]) {
                     if (!row)
@@ -1191,8 +1192,8 @@
                 get isHasChanges() { return this.__changeType !== collMOD.STATUS.NONE; }
             }
 
-            export class DbSet<TItem extends IEntityItem> extends collMOD.BaseCollection<TItem> {
-                private _dbContext: DbContext;
+            export class DbSet<TItem extends IEntityItem, TDbContext extends DbContext> extends collMOD.BaseCollection<TItem> {
+                private _dbContext: TDbContext;
                 private _isSubmitOnDelete: boolean;
                 private _trackAssoc: { [name: string]: IAssociationInfo; };
                 private _trackAssocMap: { [childFieldName: string]: string[]; };
@@ -1204,20 +1205,18 @@
                 protected _navfldMap: { [fieldName: string]: { getFunc: () => any; setFunc: (v: any) => void; }; };
                 protected _calcfldMap: { [fieldName: string]: { getFunc: () => any; }; };
                 protected _itemsByKey: { [key: string]: TItem; };
-                protected _aspectType: IEntityAspectConstructor<TItem, DbSet<TItem>, DbContext>;
                 protected _entityType: IEntityConstructor<TItem>;
                 protected _ignorePageChanged: boolean;
-                protected _query: TDataQuery<TItem>;
+                protected _query: DataQuery<TItem>;
 
-                constructor(opts: IDbSetConstuctorOptions, aspectType: IEntityAspectConstructor<TItem, DbSet<TItem>, DbContext>, entityType: IEntityConstructor<TItem>) {
+                constructor(opts: IDbSetConstuctorOptions, entityType: IEntityConstructor<TItem>) {
                     super();
                     var self = this, dbContext = opts.dbContext, dbSetInfo = opts.dbSetInfo, fieldInfos = dbSetInfo.fieldInfos;
-                    this._dbContext = dbContext;
+                    this._dbContext = <TDbContext>dbContext;
                     this._options.dbSetName = dbSetInfo.dbSetName;
                     this._options.enablePaging = dbSetInfo.enablePaging;
                     this._options.pageSize = dbSetInfo.pageSize;
                     this._query = null;
-                    this._aspectType = aspectType;
                     this._entityType = entityType;
                     this._isSubmitOnDelete = false;
                     this._navfldMap = {};
@@ -1323,7 +1322,7 @@
                                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'value', assoc.parentDS.dbSetName));
                                 }
                                 if (!!v && !!v._aspect && (<IEntityItem>v)._aspect.getIsNew()) {
-                                    entity._aspect._setFieldVal(fInfo.fieldName, (<IEntityItem>v)._aspect._key);
+                                    entity._aspect._setFieldVal(fInfo.fieldName, (<IEntityItem>v)._key);
                                 }
                                 else if (!!v) {
                                     for (i = 0, len = assoc.childFldInfos.length; i < len; i += 1) {
@@ -1404,9 +1403,9 @@
                     return key;
                 }
                 protected _createNew() {
-                    var entity: EntityAspect<TItem, DbSet<TItem>, DbContext> = new this._aspectType(this, null, null);
-                    var item = entity.getItem();
-                    item._aspect._key = this._getNewKey(item);
+                    var aspect = new EntityAspect<TItem, DbSet<TItem, DbContext>, DbContext>(this._entityType, this, null, null);
+                    var item = aspect.getItem();
+                    aspect._key = this._getNewKey(item);
                     return item;
                 }
                 protected _clearChangeCache() {
@@ -1463,7 +1462,7 @@
                 _setNavFieldVal(fieldName: string, item: IEntityItem, value: any): any {
                     baseUtils.getValue(this._navfldMap, fieldName).setFunc.call(item, value);
                 }
-                _beforeLoad(query: TDataQuery<TItem>, oldQuery: TDataQuery<TItem>) {
+                _beforeLoad(query: DataQuery<TItem>, oldQuery: DataQuery<TItem>) {
                     if (query && oldQuery !== query) {
                         this._query = query;
                         this.pageIndex = 0;
@@ -1513,7 +1512,7 @@
                     }, data);
 
                     var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length,
-                        entityType = this._aspectType, newItems: TItem[] = [], positions: number[] = [], created_items: TItem[] = [], fetchedItems: TItem[] = [],
+                        newItems: TItem[] = [], positions: number[] = [], created_items: TItem[] = [], fetchedItems: TItem[] = [],
                         isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache: DataCache;
 
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
@@ -1539,15 +1538,15 @@
                             if (!key)
                                 throw new Error(RIAPP.ERRS.ERR_KEY_IS_EMPTY);
 
-                            var item = self._itemsByKey[key], entity: EntityAspect<TItem, DbSet<TItem>, DbContext>;
+                            var item = self._itemsByKey[key], aspect: EntityAspect<TItem, DbSet<TItem, DbContext>, DbContext>;
                             if (!item) {
                                 if (!!dataCache) {
                                     item = <TItem>dataCache.getItemByKey(key);
                                 }
                                 if (!item)
                                 {
-                                    entity = new entityType(self, row, fieldNames);
-                                    item = entity.getItem();
+                                    aspect = new EntityAspect<TItem, DbSet<TItem, DbContext>, DbContext>(self._entityType, self, row, fieldNames);
+                                    item = aspect.getItem();
                                 }
                                 else
                                 {
@@ -1576,11 +1575,11 @@
                         }
 
                         created_items.forEach(function (item) {
-                            var oldItem = self._itemsByKey[item._aspect._key];
+                            var oldItem = self._itemsByKey[item._key];
                             if (!oldItem) {
                                 self._items.push(item);
                                 positions.push(self._items.length - 1);
-                                self._itemsByKey[item._aspect._key] = item;
+                                self._itemsByKey[item._key] = item;
                                 newItems.push(item);
                                 fetchedItems.push(item);
                             }
@@ -1623,7 +1622,7 @@
                         this._items = items;
 
                         items.forEach(function (item, index) {
-                            self._itemsByKey[item._aspect._key] = item;
+                            self._itemsByKey[item._key] = item;
                             positions.push(index);
                             fetchedItems.push(item);
                         });
@@ -1660,12 +1659,12 @@
                             //on insert
                             delete self._itemsByKey[key];
                             item._aspect._updateKeys(rowInfo.serverKey);
-                            self._itemsByKey[item._aspect._key] = item;
+                            self._itemsByKey[item._key] = item;
                             self._onItemsChanged({
                                 change_type: collMOD.COLL_CHANGE_TYPE.REMAP_KEY,
                                 items: [item],
                                 old_key: key,
-                                new_key: item._aspect._key
+                                new_key: item._key
                             })
                         }
                     });
@@ -1706,7 +1705,7 @@
                         assocNames.forEach(function (assocName) {
                             var assocInfo = self._trackAssoc[assocName],
                                 parentKey = item._aspect._getFieldVal(assocInfo.childToParentName),
-                                childKey = item._aspect._key;
+                                childKey = item._key;
                             if (!!parentKey && !!childKey) {
                                 res.push({ assocName: assocName, parentKey: parentKey, childKey: childKey });
                             }
@@ -1715,10 +1714,10 @@
                     return res;
                 }
                 _addToChanged(item: TItem) {
-                    if (item._aspect._key === null)
+                    if (item._key === null)
                         return;
-                    if (!this._changeCache[item._aspect._key]) {
-                        this._changeCache[item._aspect._key] = item;
+                    if (!this._changeCache[item._key]) {
+                        this._changeCache[item._key] = item;
                         this._changeCount += 1;
                         if (this._changeCount === 1)
                             this.raisePropertyChanged('hasChanges');
@@ -1742,11 +1741,11 @@
                     }
                 }
                 _onRemoved(item: TItem, pos: number) {
-                    this._removeFromChanged(item._aspect._key);
+                    this._removeFromChanged(item._key);
                     super._onRemoved(item, pos);
                 }
                 getFieldInfo(fieldName: string): collMOD.IFieldInfo {
-                    var assoc: IAssociationInfo, parentDB: DbSet<IEntityItem>, parts = fieldName.split('.');
+                    var assoc: IAssociationInfo, parentDB: DbSet<IEntityItem, DbContext>, parts = fieldName.split('.');
                     var fld = this._fieldMap[parts[0]];
                     if (parts.length == 1) {
                         return fld;
@@ -1837,12 +1836,12 @@
                     this._clearChangeCache();
                     super.clear();
                 }
-                createQuery(name: string): TDataQuery<TItem> {
+                createQuery(name: string): DataQuery<TItem> {
                     var queryInfo = this.dbContext._getQueryInfo(name);
                     if (!queryInfo) {
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_QUERY_NAME_NOTFOUND, name));
                     }
-                    return new TDataQuery<TItem>(this, queryInfo);
+                    return new DataQuery<TItem>(this, queryInfo);
                 }
                 clearCache() {
                     var query = this._query;
@@ -1891,12 +1890,15 @@
                 }
             }
 
+            export class TDbSet extends DbSet<IEntityItem, DbContext>{
+            }
+
             //implements a lazy initialization pattern for creation of DbSet's instances
             export class DbSets extends RIAPP.BaseObject {
                 protected _dbSetNames: string[];
                 private _dbContext: DbContext;
-                private _dbSets: { [name: string]: () => DbSet<IEntityItem>; };
-                private _arrDbSets: DbSet<IEntityItem>[];
+                private _dbSets: { [name: string]: () => DbSet<IEntityItem, DbContext>; };
+                private _arrDbSets: DbSet<IEntityItem, DbContext>[];
 
                 constructor(dbContext: DbContext) {
                     super();
@@ -1905,7 +1907,7 @@
                     this._dbSets = {};
                     this._dbSetNames = [];
                 }
-                protected _dbSetCreated(dbSet: DbSet<IEntityItem>) {
+                protected _dbSetCreated(dbSet: DbSet<IEntityItem, DbContext>) {
                     var self = this;
                     this._arrDbSets.push(dbSet);
                     dbSet.addOnPropertyChange('hasChanges', function (sender, args) {
@@ -2155,7 +2157,7 @@
                         global._throwDummy(ex);
                     }
                 }
-                protected _loadFromCache(query: TDataQuery<IEntityItem>, isPageChanged: boolean): IQueryResult<IEntityItem> {
+                protected _loadFromCache(query: DataQuery<IEntityItem>, isPageChanged: boolean): IQueryResult<IEntityItem> {
                     var operType = DATA_OPER.LOAD, dbSet = query.dbSet, methRes: IQueryResult<IEntityItem>;
                     try {
                         methRes = dbSet._fillFromCache({ isPageChanged: isPageChanged, fn_beforeFillEnd: null });
@@ -2178,7 +2180,7 @@
                     });
                 }
                 protected _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<IEntityItem> {
-                    var self = this, operType = DATA_OPER.LOAD, dbSetName, dbSet: DbSet<IEntityItem>, loadRes: IQueryResult<IEntityItem>;
+                    var self = this, operType = DATA_OPER.LOAD, dbSetName, dbSet: DbSet<IEntityItem, DbContext>, loadRes: IQueryResult<IEntityItem>;
                     try {
                         if (!res)
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_UNEXPECTED_SVC_ERROR, 'null result'));
@@ -2472,8 +2474,8 @@
                 _getQueryInfo(name: string): IQueryInfo {
                     return this._queryInf[name];
                 }
-                _onDbSetHasChangesChanged(eSet: DbSet<IEntityItem>) {
-                    var old = this._hasChanges, test: DbSet<IEntityItem>;
+                _onDbSetHasChangesChanged(eSet: DbSet<IEntityItem, DbContext>) {
+                    var old = this._hasChanges, test: DbSet<IEntityItem, DbContext>;
                     this._hasChanges = false;
                     if (eSet.hasChanges) {
                         this._hasChanges = true;
@@ -2491,7 +2493,7 @@
                         this.raisePropertyChanged('hasChanges');
                     }
                 }
-                _load(query: TDataQuery<IEntityItem>, isPageChanged: boolean): IPromise<IQueryResult<IEntityItem>> {
+                _load(query: DataQuery<IEntityItem>, isPageChanged: boolean): IPromise<IQueryResult<IEntityItem>> {
                     if (!query) {
                         throw new Error(RIAPP.ERRS.ERR_DB_LOAD_NO_QUERY);
                     }
@@ -2731,7 +2733,7 @@
                     return submitState.deferred.promise();
                 }
                 //returns promise
-                load(query: TDataQuery<IEntityItem>): IPromise<IQueryResult<IEntityItem>> {
+                load(query: DataQuery<IEntityItem>): IPromise<IQueryResult<IEntityItem>> {
                     return this._load(query, false);
                 }
                 acceptChanges() {
@@ -2802,8 +2804,8 @@
                 private _name: string;
                 private _dbContext: DbContext;
                 private _onDeleteAction: DELETE_ACTION;
-                private _parentDS: DbSet<IEntityItem>;
-                private _childDS: DbSet<IEntityItem>;
+                private _parentDS: DbSet<IEntityItem, DbContext>;
+                private _childDS: DbSet<IEntityItem, DbContext>;
                 private _parentFldInfos: collMOD.IFieldInfo[];
                 private _childFldInfos: collMOD.IFieldInfo[];
                 private _parentToChildrenName: string;
@@ -3252,7 +3254,7 @@
                             self._notifyChildrenChanged([fkey]);
                     }
                 }
-                protected _getItemKey(finf: collMOD.IFieldInfo[], ds: DbSet<IEntityItem>, item: IEntityItem) {
+                protected _getItemKey(finf: collMOD.IFieldInfo[], ds: DbSet<IEntityItem, DbContext>, item: IEntityItem) {
                     var arr = [], val, strval: string;
                     for (var i = 0, len = finf.length; i < len; i += 1) {
                         val = item[finf[i].fieldName];
@@ -3371,7 +3373,7 @@
                 }
                 getParentFKey(item: IEntityItem) {
                     if (!!item && item._aspect._isNew)
-                        return item._aspect._key;
+                        return item._key;
                     return this._getItemKey(this._parentFldInfos, this._parentDS, item);
                 }
                 getChildFKey(item: IEntityItem) {
@@ -3568,9 +3570,9 @@
                             items = data.items;
 
                         items.forEach(function (item) {
-                            var oldItem = self._itemsByKey[item._aspect._key];
+                            var oldItem = self._itemsByKey[item._key];
                             if (!oldItem) {
-                                self._itemsByKey[item._aspect._key] = item;
+                                self._itemsByKey[item._key] = item;
                                 newItems.push(item);
                                 positions.push(self._items.length - 1);
                                 self._items.push(item);
@@ -3615,7 +3617,7 @@
                             break;
                         case collMOD.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
-                                var key = item._aspect._key;
+                                var key = item._key;
                                 item = self._itemsByKey[key];
                                 if (!!item) {
                                     self.removeItem(item);
@@ -3792,17 +3794,17 @@
                     return item;
                 }
                 removeItem(item: TItem) {
-                    if (item._aspect._key === null) {
+                    if (item._key === null) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     }
-                    if (!this._itemsByKey[item._aspect._key])
+                    if (!this._itemsByKey[item._key])
                         return;
                     var oldPos = utils.removeFromArray(this._items, item);
                     if (oldPos < 0) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
                     }
-                    delete this._itemsByKey[item._aspect._key];
-                    delete this._errors[item._aspect._key];
+                    delete this._itemsByKey[item._key];
+                    delete this._errors[item._key];
                     this.totalCount = this.totalCount - 1;
                     this._onRemoved(item, oldPos);
                     var test = this.getItemByPos(oldPos), curPos = this._currentPos;
@@ -3903,6 +3905,9 @@
                 }
             }
 
+            export class TDataView extends DataView<collMOD.ICollectionItem>{
+            }
+
             export class ChildDataView<TItem extends IEntityItem> extends DataView<TItem> {
                 private _parentItem: IEntityItem;
                 private _refreshTimeout: number;
@@ -3997,6 +4002,9 @@
                 get association() { return this._association; }
             }
 
+            export class TChildDataView extends ChildDataView<IEntityItem>{
+            }
+
             export class BaseComplexProperty extends RIAPP.BaseObject implements RIAPP.IErrorNotification {
                 private _name: string;
 
@@ -4025,7 +4033,7 @@
                 getFullPath(name: string): string {
                     throw new Error('Not Implemented');
                 }
-                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext> {
+                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem, DbContext>, DbContext> {
                     throw new Error('Not Implemented');
                 }
                 getPropertyByName(name: string): collMOD.IFieldInfo {
@@ -4056,9 +4064,9 @@
             }
 
             export class RootComplexProperty extends BaseComplexProperty {
-                private _entity: EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
+                private _entity: EntityAspect<IEntityItem, DbSet<IEntityItem, DbContext>, DbContext>;
 
-                constructor(name: string, owner: EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>) {
+                constructor(name: string, owner: EntityAspect<IEntityItem, DbSet<IEntityItem, DbContext>, DbContext>) {
                     super(name);
                     this._entity = owner;
                 }

@@ -1,7 +1,7 @@
 ﻿export class {{TYPE_NAME}} extends RIAPP.MOD.db.RootComplexProperty
 {
 {{FIELDS_DEF}}
-	constructor(name: string, owner: RIAPP.MOD.db.EntityAspect<RIAPP.MOD.db.IEntityItem, RIAPP.MOD.db.DbSet<RIAPP.MOD.db.IEntityItem>, DbContext>) {
+	constructor(name: string, owner: RIAPP.MOD.db.EntityAspect<RIAPP.MOD.db.IEntityItem, RIAPP.MOD.db.DbSet<RIAPP.MOD.db.IEntityItem, DbContext>, DbContext>) {
 		super(name, owner);
 {{FIELDS_INIT}}
 	}

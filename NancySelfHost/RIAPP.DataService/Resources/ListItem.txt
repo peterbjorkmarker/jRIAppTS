@@ -1,24 +1,6 @@
-﻿export class {{LIST_ITEM_NAME}} extends RIAPP.BaseObject implements RIAPP.MOD.collection.IListItem, {{INTERFACE_NAME}} {
-	private f_aspect: {{ASPECT_NAME}};
-	constructor(aspect: {{ASPECT_NAME}}) {
-		super();
-		this.f_aspect = aspect;
-	}
-	get _aspect() { return this.f_aspect; }
-	get _key() { return !!this.f_aspect ? this.f_aspect._key : null; }
+﻿export class {{LIST_ITEM_NAME}} extends RIAPP.MOD.collection.CollectionItem<RIAPP.MOD.collection.ListItemAspect<{{LIST_ITEM_NAME}}, {{INTERFACE_NAME}}>> implements RIAPP.MOD.collection.IListItem, {{INTERFACE_NAME}} {
 {{ITEM_PROPS}}
 	toString() {
 		return '{{LIST_ITEM_NAME}}';
-	}
-}
-
-class {{ASPECT_NAME}} extends RIAPP.MOD.collection.ListItemAspect<{{LIST_ITEM_NAME}}, {{INTERFACE_NAME}}>
-{
-	constructor(coll: RIAPP.MOD.collection.BaseList<{{LIST_ITEM_NAME}}, {{INTERFACE_NAME}}>, vals?: {{INTERFACE_NAME}}) {
-		super(coll, vals);
-		this._item = new {{LIST_ITEM_NAME}}(this);
-	}
-	toString() {
-		return '{{ASPECT_NAME}}';
 	}
 }

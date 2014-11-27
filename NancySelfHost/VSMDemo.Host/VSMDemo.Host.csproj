@@ -80,9 +80,13 @@
     <Compile Include="ViewModels\UploadedFile.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Content\scripts\qtip\jquery.qtip.min.map" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\images\Misc\note.png" />

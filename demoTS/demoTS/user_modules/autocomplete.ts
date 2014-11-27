@@ -6,7 +6,7 @@ module RIAPP
         import constsMOD = RIAPP.MOD.consts;
         var global = RIAPP.global, utils = global.utils;
         
-        function addTextQuery(query: MOD.db.DataQuery, fldName: string, val) {
+        function addTextQuery(query: MOD.db.TDataQuery, fldName: string, val) {
             var tmp;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {
@@ -272,7 +272,7 @@ module RIAPP
                 this._onHide();
             }
             load(str:string) {
-                var self = this, query = (<MOD.db.DbSet<MOD.db.IEntityItem>>this.gridDataSource).createQuery(this._queryName);
+                var self = this, query = (<MOD.db.TDbSet>this.gridDataSource).createQuery(this._queryName);
                 query.pageSize = 50;
                 query.isClearPrevData = true;
                 addTextQuery(query, this._fieldName, str + '%');

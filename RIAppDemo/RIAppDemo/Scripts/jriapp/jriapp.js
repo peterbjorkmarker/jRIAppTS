@@ -1,16 +1,6 @@
-/*!
- * jRIAppTS framework v2.5.0
- * https://github.com/BBGONE/jRIAppTS
- *
- * Copyright 2013, 2014 Maxim V. Tsapov
- * Released under the MIT license
- * https://github.com/BBGONE/jRIAppTS/blob/generics/LICENSE.txt
- *
- * Date: 2014-11-26T12:30Z
- */
-'use strict';
 var RIAPP;
 (function (RIAPP) {
+    'use strict';
     (function (DEBUG_LEVEL) {
         DEBUG_LEVEL[DEBUG_LEVEL["NONE"] = 0] = "NONE";
         DEBUG_LEVEL[DEBUG_LEVEL["NORMAL"] = 1] = "NORMAL";
@@ -1106,7 +1096,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.0';
+        Global.vesion = '2.5.1';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -5841,7 +5831,7 @@ var RIAPP;
                 };
                 //occurs when item changeType Changed (not used in simple collections)
                 BaseCollection.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    this.raiseEvent('status_changed', { item: item, oldChangeType: oldChangeType, key: item._aspect._key });
+                    this.raiseEvent('status_changed', { item: item, oldChangeType: oldChangeType, key: item._key });
                 };
                 BaseCollection.prototype._onFillStart = function (args) {
                     this.raiseEvent('fill', args);
@@ -5868,7 +5858,7 @@ var RIAPP;
                     throw new Error('_createNew Not implemented');
                 };
                 BaseCollection.prototype._attach = function (item, itemPos) {
-                    if (!!this._itemsByKey[item._aspect._key]) {
+                    if (!!this._itemsByKey[item._key]) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_ATTACHED);
                     }
                     try {
@@ -5887,7 +5877,7 @@ var RIAPP;
                         pos = itemPos;
                         utils.insertIntoArray(this._items, item, pos);
                     }
-                    this._itemsByKey[item._aspect._key] = item;
+                    this._itemsByKey[item._key] = item;
                     this._onItemsChanged({ change_type: 1 /* ADDED */, items: [item], pos: [pos] });
                     item._aspect._onAttach();
                     this.raisePropertyChanged('count');
@@ -5931,9 +5921,9 @@ var RIAPP;
                         }
                         return;
                     }
-                    if (!v._aspect._key)
+                    if (!v._key)
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
-                    var oldItem, pos, item = self.getItemByKey(v._aspect._key);
+                    var oldItem, pos, item = self.getItemByKey(v._key);
                     if (!item) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
                     }
@@ -6019,15 +6009,15 @@ var RIAPP;
                         this._removeError(item, fieldName);
                         return;
                     }
-                    if (!this._errors[item._aspect._key])
-                        this._errors[item._aspect._key] = {};
-                    var itemErrors = this._errors[item._aspect._key];
+                    if (!this._errors[item._key])
+                        this._errors[item._key] = {};
+                    var itemErrors = this._errors[item._key];
                     itemErrors[fieldName] = errors;
                     if (!this._ignoreChangeErrors)
                         this._onErrorsChanged(item);
                 };
                 BaseCollection.prototype._removeError = function (item, fieldName) {
-                    var itemErrors = this._errors[item._aspect._key];
+                    var itemErrors = this._errors[item._key];
                     if (!itemErrors)
                         return;
                     if (!fieldName)
@@ -6036,19 +6026,19 @@ var RIAPP;
                         return;
                     delete itemErrors[fieldName];
                     if (utils.getProps(itemErrors).length === 0) {
-                        delete this._errors[item._aspect._key];
+                        delete this._errors[item._key];
                     }
                     this._onErrorsChanged(item);
                 };
                 BaseCollection.prototype._removeAllErrors = function (item) {
-                    var self = this, itemErrors = this._errors[item._aspect._key];
+                    var self = this, itemErrors = this._errors[item._key];
                     if (!itemErrors)
                         return;
-                    delete this._errors[item._aspect._key];
+                    delete this._errors[item._key];
                     self._onErrorsChanged(item);
                 };
                 BaseCollection.prototype._getErrors = function (item) {
-                    return this._errors[item._aspect._key];
+                    return this._errors[item._key];
                 };
                 BaseCollection.prototype._onErrorsChanged = function (item) {
                     var args = { item: item };
@@ -6248,19 +6238,19 @@ var RIAPP;
                     this._items.forEach(callback, thisObj);
                 };
                 BaseCollection.prototype.removeItem = function (item) {
-                    if (item._aspect._key === null) {
+                    if (item._key === null) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     }
-                    if (!this._itemsByKey[item._aspect._key])
+                    if (!this._itemsByKey[item._key])
                         return;
                     var oldPos = utils.removeFromArray(this._items, item);
                     if (oldPos < 0) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
                     }
-                    delete this._itemsByKey[item._aspect._key];
-                    delete this._errors[item._aspect._key];
+                    delete this._itemsByKey[item._key];
+                    delete this._errors[item._key];
                     this._onRemoved(item, oldPos);
-                    item._aspect._key = null;
+                    item._key = null;
                     item._aspect.removeNSHandlers(null);
                     var test = this.getItemByPos(oldPos), curPos = this._currentPos;
                     //if detached item was current item
@@ -6518,9 +6508,45 @@ var RIAPP;
                 return BaseCollection;
             })(RIAPP.BaseObject);
             collection.BaseCollection = BaseCollection;
+            var CollectionItem = (function (_super) {
+                __extends(CollectionItem, _super);
+                function CollectionItem(aspect) {
+                    _super.call(this);
+                    this.f_aspect = aspect;
+                }
+                Object.defineProperty(CollectionItem.prototype, "_aspect", {
+                    get: function () {
+                        return this.f_aspect;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(CollectionItem.prototype, "_key", {
+                    get: function () {
+                        return !!this.f_aspect ? this.f_aspect._key : null;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                CollectionItem.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this.f_aspect && !this.f_aspect.getIsDestroyCalled()) {
+                        this.f_aspect.destroy();
+                    }
+                    //this.f_aspect = null;
+                    _super.prototype.destroy.call(this);
+                };
+                CollectionItem.prototype.toString = function () {
+                    return 'CollectionItem';
+                };
+                return CollectionItem;
+            })(RIAPP.BaseObject);
+            collection.CollectionItem = CollectionItem;
             var ListItemAspect = (function (_super) {
                 __extends(ListItemAspect, _super);
-                function ListItemAspect(coll, obj) {
+                function ListItemAspect(coll, itemType, obj) {
                     _super.call(this);
                     var self = this;
                     this.__coll = coll;
@@ -6530,6 +6556,7 @@ var RIAPP;
                         this._vals = obj;
                     else
                         this._vals = ListItemAspect._initVals(coll, obj);
+                    this._item = new itemType(this);
                 }
                 ListItemAspect._initVals = function (coll, obj) {
                     var vals = obj || {};
@@ -6589,17 +6616,19 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._item) {
+                    if (!!this._item && !this._item.getIsDestroyCalled()) {
                         this._item.destroy();
-                        this._item = null;
                     }
+                    this._item = null;
                     _super.prototype.destroy.call(this);
                 };
                 ListItemAspect.prototype.getItem = function () {
                     return this._item;
                 };
                 ListItemAspect.prototype.toString = function () {
-                    return this._collection.toString() + 'Item';
+                    if (!this._item)
+                        return 'ListItemAspect';
+                    return this._item.toString() + 'Aspect';
                 };
                 Object.defineProperty(ListItemAspect.prototype, "vals", {
                     get: function () {
@@ -6660,16 +6689,24 @@ var RIAPP;
                     return _super.prototype._attach.call(this, item);
                 };
                 BaseList.prototype._createNew = function () {
-                    var listItem = new this._itemType(this, null);
+                    var aspect = new ListItemAspect(this, this._itemType, null);
                     //a new client item ID
-                    listItem._key = this._getNewKey(null);
-                    return listItem.getItem();
+                    aspect._key = this._getNewKey(null);
+                    return aspect.getItem();
                 };
-                //here item parameter is not used, but can be used in descendants
+                //the item parameter is not used here, but can be used in descendants
                 BaseList.prototype._getNewKey = function (item) {
-                    var key = 'clkey_' + this._newKey; //client's item ID
+                    //client's item ID
+                    var key = 'clkey_' + this._newKey;
                     this._newKey += 1;
                     return key;
+                };
+                BaseList.prototype.destroy = function () {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this._itemType = null;
+                    _super.prototype.destroy.call(this);
                 };
                 BaseList.prototype.fillItems = function (objArray, clearAll) {
                     var self = this, newItems = [], positions = [], fetchedItems = [];
@@ -6680,7 +6717,7 @@ var RIAPP;
                         if (!!clearAll)
                             this.clear();
                         objArray.forEach(function (obj) {
-                            var listItem = new self._itemType(self, obj);
+                            var listItem = new ListItemAspect(self, self._itemType, obj);
                             var item = listItem.getItem();
                             listItem._key = self._getNewKey(item);
                             var oldItem = self._itemsByKey[listItem._key];
@@ -6772,6 +6809,9 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
+                BaseDictionary.prototype.toString = function () {
+                    return 'BaseDictionary';
+                };
                 return BaseDictionary;
             })(BaseList);
             collection.BaseDictionary = BaseDictionary;
@@ -9085,7 +9125,7 @@ var RIAPP;
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
                         if (!isCanceled) {
-                            key = item._aspect._key;
+                            key = item._key;
                             data = self._keyMap[key];
                             if (!!data) {
                                 data.op.text = self._getText(item);
@@ -9132,7 +9172,7 @@ var RIAPP;
                             return;
                         }
                         val = this._getStringValue(item);
-                        data = self._keyMap[item._aspect._key];
+                        data = self._keyMap[item._key];
                         if (oldVal !== val) {
                             if (oldVal !== '') {
                                 delete self._valMap[oldVal];
@@ -9192,7 +9232,7 @@ var RIAPP;
                         return null;
                     var oOption, key = '', val, text;
                     if (!!item) {
-                        key = item._aspect._key;
+                        key = item._key;
                     }
                     if (!!this._keyMap[key]) {
                         return null;
@@ -9238,7 +9278,7 @@ var RIAPP;
                         return;
                     var key = '', data, val;
                     if (!!item) {
-                        key = item._aspect._key;
+                        key = item._key;
                         data = this._keyMap[key];
                         if (!data) {
                             return;
@@ -9296,9 +9336,9 @@ var RIAPP;
                     self._onChanged();
                 };
                 ListBox.prototype._findItemIndex = function (item) {
-                    if (!item)
+                    if (!item || item.getIsDestroyCalled())
                         return 0;
-                    var data = this._keyMap[item._aspect._key];
+                    var data = this._keyMap[item._key];
                     if (!data)
                         return 0;
                     return data.op.index;
@@ -11039,7 +11079,7 @@ var RIAPP;
                     get: function () {
                         if (!this._item)
                             return null;
-                        return this._item._aspect._key;
+                        return this._item._key;
                     },
                     enumerable: true,
                     configurable: true
@@ -12113,7 +12153,7 @@ var RIAPP;
                     if (!cur)
                         this._updateCurrent(null, false);
                     else {
-                        this._updateCurrent(this._rowMap[cur._aspect._key], false);
+                        this._updateCurrent(this._rowMap[cur._key], false);
                     }
                 };
                 DataGrid.prototype._onDSCollectionChanged = function (args) {
@@ -12129,7 +12169,7 @@ var RIAPP;
                             break;
                         case 0 /* REMOVE */:
                             items.forEach(function (item) {
-                                var row = self._rowMap[item._aspect._key];
+                                var row = self._rowMap[item._key];
                                 if (!!row) {
                                     self._removeRow(row);
                                 }
@@ -12185,7 +12225,7 @@ var RIAPP;
                     this.raiseEvent('page_changed', {});
                 };
                 DataGrid.prototype._onItemEdit = function (item, isBegin, isCanceled) {
-                    var row = this._rowMap[item._aspect._key];
+                    var row = this._rowMap[item._key];
                     if (!row)
                         return;
                     if (isBegin) {
@@ -12199,7 +12239,7 @@ var RIAPP;
                     this.raisePropertyChanged('editingRow');
                 };
                 DataGrid.prototype._onItemAdded = function (args) {
-                    var item = args.item, row = this._rowMap[item._aspect._key];
+                    var item = args.item, row = this._rowMap[item._key];
                     if (!row)
                         return;
                     this._updateCurrent(row, true);
@@ -12210,7 +12250,7 @@ var RIAPP;
                 };
                 DataGrid.prototype._onItemStatusChanged = function (item, oldChangeType) {
                     var newChangeType = item._aspect._changeType, ds = this.dataSource;
-                    var row = this._rowMap[item._aspect._key];
+                    var row = this._rowMap[item._key];
                     if (!row)
                         return;
                     if (newChangeType === 3 /* DELETED */) {
@@ -12228,7 +12268,7 @@ var RIAPP;
                     }
                 };
                 DataGrid.prototype._onDSErrorsChanged = function (item) {
-                    var row = this._rowMap[item._aspect._key];
+                    var row = this._rowMap[item._key];
                     if (!row)
                         return;
                     row.updateErrorState();
@@ -12419,7 +12459,7 @@ var RIAPP;
                 DataGrid.prototype._createRowForItem = function (parent, item, pos) {
                     var self = this, tr = global.document.createElement('tr');
                     var gridRow = new Row(self, { tr: tr, item: item });
-                    self._rowMap[item._aspect._key] = gridRow;
+                    self._rowMap[item._key] = gridRow;
                     self._rows.push(gridRow);
                     parent.appendChild(gridRow.el);
                     return gridRow;
@@ -12446,7 +12486,7 @@ var RIAPP;
                     });
                 };
                 DataGrid.prototype.findRowByItem = function (item) {
-                    var row = this._rowMap[item._aspect._key];
+                    var row = this._rowMap[item._key];
                     if (!row)
                         return null;
                     return row;
@@ -13503,13 +13543,13 @@ var RIAPP;
                     if (old !== item) {
                         this._currentItem = item;
                         if (!!old) {
-                            mappedItem = self._itemMap[old._aspect._key];
+                            mappedItem = self._itemMap[old._key];
                             if (!!mappedItem) {
                                 global.$(mappedItem.div).removeClass(stackpanel.css.currentItem);
                             }
                         }
                         if (!!item) {
-                            mappedItem = self._itemMap[item._aspect._key];
+                            mappedItem = self._itemMap[item._key];
                             if (!!mappedItem) {
                                 global.$(mappedItem.div).addClass(stackpanel.css.currentItem);
                                 if (withScroll)
@@ -13572,7 +13612,7 @@ var RIAPP;
                 };
                 StackPanel.prototype._onItemStatusChanged = function (item, oldChangeType) {
                     var newChangeType = item._aspect._changeType;
-                    var obj = this._itemMap[item._aspect._key];
+                    var obj = this._itemMap[item._key];
                     if (!obj)
                         return;
                     if (newChangeType === 3 /* DELETED */) {
@@ -13597,13 +13637,13 @@ var RIAPP;
                     var self = this;
                     newItems.forEach(function (item) {
                         //a row for item already exists
-                        if (!!self._itemMap[item._aspect._key])
+                        if (!!self._itemMap[item._key])
                             return;
                         self._appendItem(item);
                     });
                 };
                 StackPanel.prototype._appendItem = function (item) {
-                    if (!item._aspect._key)
+                    if (!item._key)
                         return;
                     var self = this, $div = self._createElement('div'), div = $div.get(0);
                     $div.addClass(stackpanel.css.item);
@@ -13614,7 +13654,7 @@ var RIAPP;
                     self._$el.append($div);
                     var mappedItem = { div: div, template: null, item: item };
                     $div.data('data', mappedItem);
-                    self._itemMap[item._aspect._key] = mappedItem;
+                    self._itemMap[item._key] = mappedItem;
                     mappedItem.template = self._createTemplate(item);
                     mappedItem.div.appendChild(mappedItem.template.el);
                 };
@@ -13690,7 +13730,7 @@ var RIAPP;
                     global.$(mappedItem.div).remove();
                 };
                 StackPanel.prototype._removeItem = function (item) {
-                    this._removeItemByKey(item._aspect._key);
+                    this._removeItemByKey(item._key);
                 };
                 StackPanel.prototype._refresh = function () {
                     var ds = this.dataSource, self = this;
@@ -13704,13 +13744,13 @@ var RIAPP;
                 StackPanel.prototype.scrollIntoView = function (item) {
                     if (!item)
                         return;
-                    var mappedItem = this._itemMap[item._aspect._key];
+                    var mappedItem = this._itemMap[item._key];
                     if (!!mappedItem) {
                         mappedItem.div.scrollIntoView(false);
                     }
                 };
                 StackPanel.prototype.getDivElementByItem = function (item) {
-                    var mappedItem = this._itemMap[item._aspect._key];
+                    var mappedItem = this._itemMap[item._key];
                     if (!mappedItem)
                         return null;
                     return mappedItem.div;
@@ -13958,7 +13998,7 @@ var RIAPP;
                     if (this._notValidated.length > 0) {
                         var res = [message + ':'];
                         this._notValidated.forEach(function (item) {
-                            res.push(baseUtils.format('item key:{0} errors:{1}', item._aspect._key, item._aspect.getErrorString()));
+                            res.push(baseUtils.format('item key:{0} errors:{1}', item._key, item._aspect.getErrorString()));
                         });
                         message = res.join('\r\n');
                     }
@@ -14052,7 +14092,7 @@ var RIAPP;
                     for (var i = 0; i < this._cache.length; i += 1) {
                         page = this._cache[i];
                         page.items.forEach(function (item) {
-                            self._itemsByKey[item._aspect._key] = item;
+                            self._itemsByKey[item._key] = item;
                         });
                     }
                 };
@@ -14112,11 +14152,11 @@ var RIAPP;
                             k = (i * pageSize) + j;
                             if (k < len) {
                                 item = items[k];
-                                if (!!keyMap[item._aspect._key]) {
+                                if (!!keyMap[item._key]) {
                                     continue;
                                 }
                                 page.items.push(item);
-                                keyMap[item._aspect._key] = item;
+                                keyMap[item._key] = item;
                                 item._aspect._isCached = true;
                             }
                             else {
@@ -14131,9 +14171,9 @@ var RIAPP;
                         items = this._cache[i].items;
                         for (j = 0; j < items.length; j += 1) {
                             item = items[j];
-                            if (!!item && item._aspect._key !== null) {
+                            if (!!item && item._key !== null) {
                                 item._aspect._isCached = false;
-                                if (!dbSet.getItemByKey(item._aspect._key))
+                                if (!dbSet.getItemByKey(item._key))
                                     item._aspect.destroy();
                             }
                         }
@@ -14149,10 +14189,10 @@ var RIAPP;
                     items = page.items;
                     for (j = 0; j < items.length; j += 1) {
                         item = items[j];
-                        if (!!item && item._aspect._key !== null) {
-                            delete this._itemsByKey[item._aspect._key];
+                        if (!!item && item._key !== null) {
+                            delete this._itemsByKey[item._key];
                             item._aspect._isCached = false;
-                            if (!dbSet.getItemByKey(item._aspect._key))
+                            if (!dbSet.getItemByKey(item._key))
                                 item._aspect.destroy();
                         }
                     }
@@ -14169,7 +14209,7 @@ var RIAPP;
                     return this._itemsByKey[key];
                 };
                 DataCache.prototype.getPageByItem = function (item) {
-                    item = this._itemsByKey[item._aspect._key];
+                    item = this._itemsByKey[item._key];
                     if (!item)
                         return -1;
                     for (var i = 0; i < this._cache.length; i += 1) {
@@ -14246,9 +14286,9 @@ var RIAPP;
                 return DataCache;
             })(RIAPP.BaseObject);
             _db.DataCache = DataCache;
-            var TDataQuery = (function (_super) {
-                __extends(TDataQuery, _super);
-                function TDataQuery(dbSet, queryInfo) {
+            var DataQuery = (function (_super) {
+                __extends(DataQuery, _super);
+                function DataQuery(dbSet, queryInfo) {
                     _super.call(this);
                     this._dbSet = dbSet;
                     this.__queryInfo = queryInfo;
@@ -14264,13 +14304,13 @@ var RIAPP;
                     this._dataCache = null;
                     this._cacheInvalidated = false;
                 }
-                TDataQuery.prototype.getFieldInfo = function (fieldName) {
+                DataQuery.prototype.getFieldInfo = function (fieldName) {
                     return this._dbSet.getFieldInfo(fieldName);
                 };
-                TDataQuery.prototype.getFieldNames = function () {
+                DataQuery.prototype.getFieldNames = function () {
                     return this._dbSet.getFieldNames();
                 };
-                TDataQuery.prototype._addSort = function (fieldName, sortOrder) {
+                DataQuery.prototype._addSort = function (fieldName, sortOrder) {
                     var ord = 0 /* ASC */;
                     if (!utils.check.isNt(sortOrder))
                         ord = sortOrder;
@@ -14278,7 +14318,7 @@ var RIAPP;
                     this._sortInfo.sortItems.push(sortItem);
                     this._cacheInvalidated = true;
                 };
-                TDataQuery.prototype._addFilterItem = function (fieldName, operand, value) {
+                DataQuery.prototype._addFilterItem = function (fieldName, operand, value) {
                     var fkind = 0 /* Equals */;
                     var fld = this.getFieldInfo(fieldName);
                     if (!fld)
@@ -14316,135 +14356,135 @@ var RIAPP;
                     this._filterInfo.filterItems.push(filterItem);
                     this._cacheInvalidated = true;
                 };
-                TDataQuery.prototype.where = function (fieldName, operand, value) {
+                DataQuery.prototype.where = function (fieldName, operand, value) {
                     this._addFilterItem(fieldName, operand, value);
                     return this;
                 };
-                TDataQuery.prototype.and = function (fieldName, operand, value) {
+                DataQuery.prototype.and = function (fieldName, operand, value) {
                     this._addFilterItem(fieldName, operand, value);
                     return this;
                 };
-                TDataQuery.prototype.orderBy = function (fieldName, sortOrder) {
+                DataQuery.prototype.orderBy = function (fieldName, sortOrder) {
                     this._addSort(fieldName, sortOrder);
                     return this;
                 };
-                TDataQuery.prototype.thenBy = function (fieldName, sortOrder) {
+                DataQuery.prototype.thenBy = function (fieldName, sortOrder) {
                     this._addSort(fieldName, sortOrder);
                     return this;
                 };
-                TDataQuery.prototype.clearSort = function () {
+                DataQuery.prototype.clearSort = function () {
                     this._sortInfo.sortItems = [];
                     this._cacheInvalidated = true;
                     return this;
                 };
-                TDataQuery.prototype.clearFilter = function () {
+                DataQuery.prototype.clearFilter = function () {
                     this._filterInfo.filterItems = [];
                     this._cacheInvalidated = true;
                     return this;
                 };
-                TDataQuery.prototype.clearParams = function () {
+                DataQuery.prototype.clearParams = function () {
                     this._params = {};
                     this._cacheInvalidated = true;
                     return this;
                 };
-                TDataQuery.prototype._clearCache = function () {
+                DataQuery.prototype._clearCache = function () {
                     if (!!this._dataCache) {
                         this._dataCache.destroy();
                         this._dataCache = null;
                     }
                     this._resetCacheInvalidated();
                 };
-                TDataQuery.prototype._getCache = function () {
+                DataQuery.prototype._getCache = function () {
                     if (!this._dataCache) {
                         this._dataCache = new DataCache(this);
                     }
                     return this._dataCache;
                 };
-                TDataQuery.prototype._reindexCache = function () {
+                DataQuery.prototype._reindexCache = function () {
                     if (!this._dataCache) {
                         return;
                     }
                     this._dataCache.reindexCache();
                 };
-                TDataQuery.prototype._isPageCached = function (pageIndex) {
+                DataQuery.prototype._isPageCached = function (pageIndex) {
                     if (!this._dataCache) {
                         return false;
                     }
                     return this._dataCache.hasPage(pageIndex);
                 };
-                TDataQuery.prototype._resetCacheInvalidated = function () {
+                DataQuery.prototype._resetCacheInvalidated = function () {
                     this._cacheInvalidated = false;
                 };
-                TDataQuery.prototype.load = function () {
+                DataQuery.prototype.load = function () {
                     return this.dbSet.dbContext.load(this);
                 };
-                TDataQuery.prototype.destroy = function () {
+                DataQuery.prototype.destroy = function () {
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
                     this._clearCache();
                     _super.prototype.destroy.call(this);
                 };
-                TDataQuery.prototype.toString = function () {
+                DataQuery.prototype.toString = function () {
                     return 'DataQuery';
                 };
-                Object.defineProperty(TDataQuery.prototype, "_queryInfo", {
+                Object.defineProperty(DataQuery.prototype, "_queryInfo", {
                     get: function () {
                         return this.__queryInfo;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "_serverTimezone", {
+                Object.defineProperty(DataQuery.prototype, "_serverTimezone", {
                     get: function () {
                         return this._dbSet.dbContext.serverTimezone;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "entityType", {
+                Object.defineProperty(DataQuery.prototype, "entityType", {
                     get: function () {
                         return this._dbSet.entityType;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "dbSet", {
+                Object.defineProperty(DataQuery.prototype, "dbSet", {
                     get: function () {
                         return this._dbSet;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "dbSetName", {
+                Object.defineProperty(DataQuery.prototype, "dbSetName", {
                     get: function () {
                         return this._dbSet.dbSetName;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "queryName", {
+                Object.defineProperty(DataQuery.prototype, "queryName", {
                     get: function () {
                         return this.__queryInfo.methodName;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "filterInfo", {
+                Object.defineProperty(DataQuery.prototype, "filterInfo", {
                     get: function () {
                         return this._filterInfo;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "sortInfo", {
+                Object.defineProperty(DataQuery.prototype, "sortInfo", {
                     get: function () {
                         return this._sortInfo;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "isIncludeTotalCount", {
+                Object.defineProperty(DataQuery.prototype, "isIncludeTotalCount", {
                     get: function () {
                         return this._isIncludeTotalCount;
                     },
@@ -14454,7 +14494,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "isClearPrevData", {
+                Object.defineProperty(DataQuery.prototype, "isClearPrevData", {
                     get: function () {
                         return this._isClearPrevData;
                     },
@@ -14464,7 +14504,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "pageSize", {
+                Object.defineProperty(DataQuery.prototype, "pageSize", {
                     get: function () {
                         return this._pageSize;
                     },
@@ -14476,7 +14516,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "pageIndex", {
+                Object.defineProperty(DataQuery.prototype, "pageIndex", {
                     get: function () {
                         return this._pageIndex;
                     },
@@ -14488,7 +14528,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "params", {
+                Object.defineProperty(DataQuery.prototype, "params", {
                     get: function () {
                         return this._params;
                     },
@@ -14501,14 +14541,14 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "isPagingEnabled", {
+                Object.defineProperty(DataQuery.prototype, "isPagingEnabled", {
                     get: function () {
                         return this._dbSet.isPagingEnabled;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "loadPageCount", {
+                Object.defineProperty(DataQuery.prototype, "loadPageCount", {
                     get: function () {
                         return this._loadPageCount;
                     },
@@ -14527,7 +14567,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "isClearCacheOnEveryLoad", {
+                Object.defineProperty(DataQuery.prototype, "isClearCacheOnEveryLoad", {
                     get: function () {
                         return this._isClearCacheOnEveryLoad;
                     },
@@ -14540,27 +14580,27 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(TDataQuery.prototype, "isCacheValid", {
+                Object.defineProperty(DataQuery.prototype, "isCacheValid", {
                     get: function () {
                         return !!this._dataCache && !this._cacheInvalidated;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                return TDataQuery;
+                return DataQuery;
             })(RIAPP.BaseObject);
-            _db.TDataQuery = TDataQuery;
-            var DataQuery = (function (_super) {
-                __extends(DataQuery, _super);
-                function DataQuery() {
+            _db.DataQuery = DataQuery;
+            var TDataQuery = (function (_super) {
+                __extends(TDataQuery, _super);
+                function TDataQuery() {
                     _super.apply(this, arguments);
                 }
-                return DataQuery;
-            })(TDataQuery);
-            _db.DataQuery = DataQuery;
+                return TDataQuery;
+            })(DataQuery);
+            _db.TDataQuery = TDataQuery;
             var EntityAspect = (function (_super) {
                 __extends(EntityAspect, _super);
-                function EntityAspect(dbSet, row, names) {
+                function EntityAspect(itemType, dbSet, row, names) {
                     this.__dbSet = dbSet;
                     _super.call(this);
                     var self = this;
@@ -14587,6 +14627,7 @@ var RIAPP;
                         }
                     }
                     this._initRowInfo(row, names);
+                    this._item = new itemType(this);
                 }
                 EntityAspect.prototype._initRowInfo = function (row, names) {
                     if (!row)
@@ -15127,7 +15168,7 @@ var RIAPP;
             _db.EntityAspect = EntityAspect;
             var DbSet = (function (_super) {
                 __extends(DbSet, _super);
-                function DbSet(opts, aspectType, entityType) {
+                function DbSet(opts, entityType) {
                     _super.call(this);
                     var self = this, dbContext = opts.dbContext, dbSetInfo = opts.dbSetInfo, fieldInfos = dbSetInfo.fieldInfos;
                     this._dbContext = dbContext;
@@ -15135,7 +15176,6 @@ var RIAPP;
                     this._options.enablePaging = dbSetInfo.enablePaging;
                     this._options.pageSize = dbSetInfo.pageSize;
                     this._query = null;
-                    this._aspectType = aspectType;
                     this._entityType = entityType;
                     this._isSubmitOnDelete = false;
                     this._navfldMap = {};
@@ -15235,7 +15275,7 @@ var RIAPP;
                                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID_TYPE, 'value', assoc.parentDS.dbSetName));
                                 }
                                 if (!!v && !!v._aspect && v._aspect.getIsNew()) {
-                                    entity._aspect._setFieldVal(fInfo.fieldName, v._aspect._key);
+                                    entity._aspect._setFieldVal(fInfo.fieldName, v._key);
                                 }
                                 else if (!!v) {
                                     for (i = 0, len = assoc.childFldInfos.length; i < len; i += 1) {
@@ -15318,9 +15358,9 @@ var RIAPP;
                     return key;
                 };
                 DbSet.prototype._createNew = function () {
-                    var entity = new this._aspectType(this, null, null);
-                    var item = entity.getItem();
-                    item._aspect._key = this._getNewKey(item);
+                    var aspect = new EntityAspect(this._entityType, this, null, null);
+                    var item = aspect.getItem();
+                    aspect._key = this._getNewKey(item);
                     return item;
                 };
                 DbSet.prototype._clearChangeCache = function () {
@@ -15424,7 +15464,7 @@ var RIAPP;
                         isPageChanged: false,
                         fn_beforeFillEnd: null
                     }, data);
-                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length, entityType = this._aspectType, newItems = [], positions = [], created_items = [], fetchedItems = [], isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache;
+                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length, newItems = [], positions = [], created_items = [], fetchedItems = [], isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache;
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
                     try {
                         if (!!query) {
@@ -15445,14 +15485,14 @@ var RIAPP;
                             var key = row.k;
                             if (!key)
                                 throw new Error(RIAPP.ERRS.ERR_KEY_IS_EMPTY);
-                            var item = self._itemsByKey[key], entity;
+                            var item = self._itemsByKey[key], aspect;
                             if (!item) {
                                 if (!!dataCache) {
                                     item = dataCache.getItemByKey(key);
                                 }
                                 if (!item) {
-                                    entity = new entityType(self, row, fieldNames);
-                                    item = entity.getItem();
+                                    aspect = new EntityAspect(self._entityType, self, row, fieldNames);
+                                    item = aspect.getItem();
                                 }
                                 else {
                                     self._refreshValues('', item, row.v, fieldNames, 1 /* RefreshCurrent */);
@@ -15477,11 +15517,11 @@ var RIAPP;
                             }
                         }
                         created_items.forEach(function (item) {
-                            var oldItem = self._itemsByKey[item._aspect._key];
+                            var oldItem = self._itemsByKey[item._key];
                             if (!oldItem) {
                                 self._items.push(item);
                                 positions.push(self._items.length - 1);
-                                self._itemsByKey[item._aspect._key] = item;
+                                self._itemsByKey[item._key] = item;
                                 newItems.push(item);
                                 fetchedItems.push(item);
                             }
@@ -15524,7 +15564,7 @@ var RIAPP;
                         this.clear();
                         this._items = items;
                         items.forEach(function (item, index) {
-                            self._itemsByKey[item._aspect._key] = item;
+                            self._itemsByKey[item._key] = item;
                             positions.push(index);
                             fetchedItems.push(item);
                         });
@@ -15563,12 +15603,12 @@ var RIAPP;
                             //on insert
                             delete self._itemsByKey[key];
                             item._aspect._updateKeys(rowInfo.serverKey);
-                            self._itemsByKey[item._aspect._key] = item;
+                            self._itemsByKey[item._key] = item;
                             self._onItemsChanged({
                                 change_type: 3 /* REMAP_KEY */,
                                 items: [item],
                                 old_key: key,
-                                new_key: item._aspect._key
+                                new_key: item._key
                             });
                         }
                     });
@@ -15607,7 +15647,7 @@ var RIAPP;
                     utils.forEachProp(csh, function (key) {
                         var item = csh[key];
                         assocNames.forEach(function (assocName) {
-                            var assocInfo = self._trackAssoc[assocName], parentKey = item._aspect._getFieldVal(assocInfo.childToParentName), childKey = item._aspect._key;
+                            var assocInfo = self._trackAssoc[assocName], parentKey = item._aspect._getFieldVal(assocInfo.childToParentName), childKey = item._key;
                             if (!!parentKey && !!childKey) {
                                 res.push({ assocName: assocName, parentKey: parentKey, childKey: childKey });
                             }
@@ -15616,10 +15656,10 @@ var RIAPP;
                     return res;
                 };
                 DbSet.prototype._addToChanged = function (item) {
-                    if (item._aspect._key === null)
+                    if (item._key === null)
                         return;
-                    if (!this._changeCache[item._aspect._key]) {
-                        this._changeCache[item._aspect._key] = item;
+                    if (!this._changeCache[item._key]) {
+                        this._changeCache[item._key] = item;
                         this._changeCount += 1;
                         if (this._changeCount === 1)
                             this.raisePropertyChanged('hasChanges');
@@ -15643,7 +15683,7 @@ var RIAPP;
                     }
                 };
                 DbSet.prototype._onRemoved = function (item, pos) {
-                    this._removeFromChanged(item._aspect._key);
+                    this._removeFromChanged(item._key);
                     _super.prototype._onRemoved.call(this, item, pos);
                 };
                 DbSet.prototype.getFieldInfo = function (fieldName) {
@@ -15736,7 +15776,7 @@ var RIAPP;
                     if (!queryInfo) {
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_QUERY_NAME_NOTFOUND, name));
                     }
-                    return new TDataQuery(this, queryInfo);
+                    return new DataQuery(this, queryInfo);
                 };
                 DbSet.prototype.clearCache = function () {
                     var query = this._query;
@@ -15830,6 +15870,14 @@ var RIAPP;
                 return DbSet;
             })(collMOD.BaseCollection);
             _db.DbSet = DbSet;
+            var TDbSet = (function (_super) {
+                __extends(TDbSet, _super);
+                function TDbSet() {
+                    _super.apply(this, arguments);
+                }
+                return TDbSet;
+            })(DbSet);
+            _db.TDbSet = TDbSet;
             //implements a lazy initialization pattern for creation of DbSet's instances
             var DbSets = (function (_super) {
                 __extends(DbSets, _super);
@@ -17281,7 +17329,7 @@ var RIAPP;
                 };
                 Association.prototype.getParentFKey = function (item) {
                     if (!!item && item._aspect._isNew)
-                        return item._aspect._key;
+                        return item._key;
                     return this._getItemKey(this._parentFldInfos, this._parentDS, item);
                 };
                 Association.prototype.getChildFKey = function (item) {
@@ -17508,9 +17556,9 @@ var RIAPP;
                         else
                             items = data.items;
                         items.forEach(function (item) {
-                            var oldItem = self._itemsByKey[item._aspect._key];
+                            var oldItem = self._itemsByKey[item._key];
                             if (!oldItem) {
-                                self._itemsByKey[item._aspect._key] = item;
+                                self._itemsByKey[item._key] = item;
                                 newItems.push(item);
                                 positions.push(self._items.length - 1);
                                 self._items.push(item);
@@ -17560,7 +17608,7 @@ var RIAPP;
                             break;
                         case 0 /* REMOVE */:
                             items.forEach(function (item) {
-                                var key = item._aspect._key;
+                                var key = item._key;
                                 item = self._itemsByKey[key];
                                 if (!!item) {
                                     self.removeItem(item);
@@ -17747,17 +17795,17 @@ var RIAPP;
                     return item;
                 };
                 DataView.prototype.removeItem = function (item) {
-                    if (item._aspect._key === null) {
+                    if (item._key === null) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     }
-                    if (!this._itemsByKey[item._aspect._key])
+                    if (!this._itemsByKey[item._key])
                         return;
                     var oldPos = utils.removeFromArray(this._items, item);
                     if (oldPos < 0) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
                     }
-                    delete this._itemsByKey[item._aspect._key];
-                    delete this._errors[item._aspect._key];
+                    delete this._itemsByKey[item._key];
+                    delete this._errors[item._key];
                     this.totalCount = this.totalCount - 1;
                     this._onRemoved(item, oldPos);
                     var test = this.getItemByPos(oldPos), curPos = this._currentPos;
@@ -17894,6 +17942,14 @@ var RIAPP;
                 return DataView;
             })(collMOD.BaseCollection);
             _db.DataView = DataView;
+            var TDataView = (function (_super) {
+                __extends(TDataView, _super);
+                function TDataView() {
+                    _super.apply(this, arguments);
+                }
+                return TDataView;
+            })(DataView);
+            _db.TDataView = TDataView;
             var ChildDataView = (function (_super) {
                 __extends(ChildDataView, _super);
                 function ChildDataView(options) {
@@ -17988,6 +18044,14 @@ var RIAPP;
                 return ChildDataView;
             })(DataView);
             _db.ChildDataView = ChildDataView;
+            var TChildDataView = (function (_super) {
+                __extends(TChildDataView, _super);
+                function TChildDataView() {
+                    _super.apply(this, arguments);
+                }
+                return TChildDataView;
+            })(ChildDataView);
+            _db.TChildDataView = TChildDataView;
             var BaseComplexProperty = (function (_super) {
                 __extends(BaseComplexProperty, _super);
                 function BaseComplexProperty(name) {

@@ -181,7 +181,7 @@
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
                         if (!isCanceled) {
-                            key = item._aspect._key;
+                            key = item._key;
                             data = self._keyMap[key];
                             if (!!data) {
                                 data.op.text = self._getText(item);
@@ -230,7 +230,7 @@
                             return;
                         }
                         val = this._getStringValue(item);
-                        data = self._keyMap[item._aspect._key];
+                        data = self._keyMap[item._key];
                         if (oldVal !== val) {
                             if (oldVal !== '') {
                                 delete self._valMap[oldVal];
@@ -282,7 +282,7 @@
                         return null;
                     var oOption: HTMLOptionElement, key = '', val: string, text: string;
                     if (!!item) {
-                        key = item._aspect._key;
+                        key = item._key;
                     }
                     if (!!this._keyMap[key]) {
                         return null;
@@ -328,7 +328,7 @@
                         return;
                     var key = '', data: IMappedItem, val: string;
                     if (!!item) {
-                        key = item._aspect._key;
+                        key = item._key;
                         data = this._keyMap[key];
                         if (!data) {
                             return;
@@ -386,9 +386,9 @@
                     self._onChanged();
                 }
                 private _findItemIndex(item: collMOD.ICollectionItem) {
-                    if (!item)
+                    if (!item || item.getIsDestroyCalled())
                         return 0;
-                    var data: IMappedItem = this._keyMap[item._aspect._key];
+                    var data: IMappedItem = this._keyMap[item._key];
                     if (!data)
                         return 0;
                     return data.op.index;

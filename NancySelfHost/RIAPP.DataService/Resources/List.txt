@@ -1,6 +1,6 @@
 ﻿export class {{LIST_NAME}} extends RIAPP.MOD.collection.BaseList<{{ITEM_TYPE_NAME}},{{INTERFACE_NAME}}> {
 	constructor() {
-		super({{ASPECT_NAME}},{{PROP_INFOS}});
+		super({{ITEM_TYPE_NAME}},{{PROP_INFOS}});
 	}
 	toString() {
 		return '{{LIST_NAME}}';

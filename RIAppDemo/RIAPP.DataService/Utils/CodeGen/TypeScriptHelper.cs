@@ -345,8 +345,8 @@ namespace RIAPP.DataService.Utils
             var sbProps = new StringBuilder(512);
             propInfos.ForEach((propInfo) =>
             {
-                sbProps.AppendLine(string.Format("\tget {0}():{1} {{ return <{1}>this.f_aspect._getProp('{0}'); }}", propInfo.Name, this._dotNet2TS.GetTSTypeName(propInfo.PropertyType)));
-                sbProps.AppendLine(string.Format("\tset {0}(v:{1}) {{ this.f_aspect._setProp('{0}', v); }}", propInfo.Name, this._dotNet2TS.GetTSTypeName(propInfo.PropertyType)));
+                sbProps.AppendLine(string.Format("\tget {0}():{1} {{ return <{1}>this._aspect._getProp('{0}'); }}", propInfo.Name, this._dotNet2TS.GetTSTypeName(propInfo.PropertyType)));
+                sbProps.AppendLine(string.Format("\tset {0}(v:{1}) {{ this._aspect._setProp('{0}', v); }}", propInfo.Name, this._dotNet2TS.GetTSTypeName(propInfo.PropertyType)));
             });
 
             var sbListItem = new StringBuilder(512);
@@ -701,7 +701,7 @@ namespace RIAPP.DataService.Utils
             Action<Field> AddCalculatedField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
-                sbFields.AppendFormat("\tget {0}(): {1} {{ return this.f_aspect._getCalcFieldVal('{0}'); }}", f.fieldName, dataType);
+                sbFields.AppendFormat("\tget {0}(): {1} {{ return this._aspect._getCalcFieldVal('{0}'); }}", f.fieldName, dataType);
                 sbFields.AppendLine();
 
                 sbFields2.AppendFormat("\t{0}: {1};", f.fieldName, dataType);
@@ -711,12 +711,12 @@ namespace RIAPP.DataService.Utils
             Action<Field> AddNavigationField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
-                sbFields.AppendFormat("\tget {0}(): {1} {{ return this.f_aspect._getNavFieldVal('{0}'); }}", f.fieldName, dataType);
+                sbFields.AppendFormat("\tget {0}(): {1} {{ return this._aspect._getNavFieldVal('{0}'); }}", f.fieldName, dataType);
                 sbFields.AppendLine();
                 //no writable properties to ParentToChildren navigation fields
                 if (!dataType.EndsWith("[]"))
                 {
-                    sbFields.AppendFormat("\tset {0}(v: {1}) {{ this.f_aspect._setNavFieldVal('{0}',v); }}", f.fieldName, dataType);
+                    sbFields.AppendFormat("\tset {0}(v: {1}) {{ this._aspect._setNavFieldVal('{0}',v); }}", f.fieldName, dataType);
                     sbFields.AppendLine();
                 }
 
@@ -728,7 +728,7 @@ namespace RIAPP.DataService.Utils
             Action<Field> AddComplexTypeField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
-                sbFields.AppendFormat("\tget {0}(): {1} {{ if (!this._{0}) {{this._{0} = new {1}('{0}', this.f_aspect);}} return this._{0}; }}", f.fieldName, dataType);
+                sbFields.AppendFormat("\tget {0}(): {1} {{ if (!this._{0}) {{this._{0} = new {1}('{0}', this._aspect);}} return this._{0}; }}", f.fieldName, dataType);
                 sbFields.AppendLine();
                 sbFieldsDef.AppendFormat("\tprivate _{0}: {1};", f.fieldName, dataType);
                 sbFieldsDef.AppendLine();
@@ -741,11 +741,11 @@ namespace RIAPP.DataService.Utils
             Action<Field> AddSimpleField = (Field f) =>
             {
                 string dataType = this.GetFieldDataType(f);
-                sbFields.AppendFormat("\tget {0}(): {1} {{ return this.f_aspect._getFieldVal('{0}'); }}", f.fieldName, dataType);
+                sbFields.AppendFormat("\tget {0}(): {1} {{ return this._aspect._getFieldVal('{0}'); }}", f.fieldName, dataType);
                 sbFields.AppendLine();
                 if (!f.isReadOnly)
                 {
-                    sbFields.AppendFormat("\tset {0}(v: {1}) {{ this.f_aspect._setFieldVal('{0}',v); }}", f.fieldName, dataType);
+                    sbFields.AppendFormat("\tset {0}(v: {1}) {{ this._aspect._setFieldVal('{0}',v); }}", f.fieldName, dataType);
                     sbFields.AppendLine();
                 }
 

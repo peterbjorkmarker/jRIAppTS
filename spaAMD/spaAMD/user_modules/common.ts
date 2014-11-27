@@ -25,7 +25,7 @@ export class NotConverter extends MOD.converter.BaseConverter {
 }
 
 //a  helper function
-export function addTextQuery(query: MOD.db.DataQuery, fldName: string, val) {
+export function addTextQuery(query: MOD.db.TDataQuery, fldName: string, val) {
     var tmp;
     if (!!val) {
         if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {

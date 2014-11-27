@@ -1,4 +1,4 @@
-﻿export class {{DBSET_TYPE}} extends RIAPP.MOD.db.DbSet<{{ENTITY_TYPE}}>
+﻿export class {{DBSET_TYPE}} extends RIAPP.MOD.db.DbSet<{{ENTITY_TYPE}}, DbContext>
 {
 	constructor(dbContext: DbContext) {
 		var self =this, opts: RIAPP.MOD.db.IDbSetConstuctorOptions = {
@@ -8,7 +8,7 @@
 			parentAssoc: ({{PARENT_ASSOC}}) 
 		}, utils=RIAPP.global.utils;
 		opts.dbSetInfo.fieldInfos = ({{FIELD_INFOS}});
-		super(opts, {{ENTITY_TYPE}}Aspect, {{ENTITY_TYPE}});
+		super(opts, {{ENTITY_TYPE}});
 	}
 	findEntity({{PK_VALS}}): {{ENTITY_TYPE}} {
 		return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));

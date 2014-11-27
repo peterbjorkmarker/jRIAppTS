@@ -623,7 +623,7 @@
                 get itemKey() {
                     if (!this._item)
                         return null;
-                    return this._item._aspect._key;
+                    return this._item._key;
                 }
                 get isCurrent() { return this._isCurrent; }
                 set isCurrent(v) {
@@ -1608,7 +1608,7 @@
                     if (!cur)
                         this._updateCurrent(null, false);
                     else {
-                        this._updateCurrent(this._rowMap[cur._aspect._key], false);
+                        this._updateCurrent(this._rowMap[cur._key], false);
                     }
                 }
                 protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
@@ -1624,7 +1624,7 @@
                             break;
                         case collMOD.COLL_CHANGE_TYPE.REMOVE:
                             items.forEach(function (item) {
-                                var row = self._rowMap[item._aspect._key];
+                                var row = self._rowMap[item._key];
                                 if (!!row) {
                                     self._removeRow(row);
                                 }
@@ -1681,7 +1681,7 @@
                     this.raiseEvent('page_changed', {});
                 }
                 protected _onItemEdit(item: collMOD.ICollectionItem, isBegin:boolean, isCanceled: boolean) {
-                    var row = this._rowMap[item._aspect._key];
+                    var row = this._rowMap[item._key];
                     if (!row)
                         return;
                     if (isBegin) {
@@ -1695,7 +1695,7 @@
                     this.raisePropertyChanged('editingRow');
                 }
                 protected _onItemAdded(args: collMOD.ICollItemAddedArgs<collMOD.ICollectionItem>) {
-                    var item = args.item, row = this._rowMap[item._aspect._key];
+                    var item = args.item, row = this._rowMap[item._key];
                     if (!row)
                         return;
                     this._updateCurrent(row, true);
@@ -1706,7 +1706,7 @@
                 }
                 protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldChangeType: collMOD.STATUS) {
                     var newChangeType = item._aspect._changeType, ds = this.dataSource;
-                    var row = this._rowMap[item._aspect._key];
+                    var row = this._rowMap[item._key];
                     if (!row)
                         return;
                     if (newChangeType === collMOD.STATUS.DELETED) {
@@ -1724,7 +1724,7 @@
                     }
                 }
                 protected _onDSErrorsChanged(item: collMOD.ICollectionItem) {
-                    var row = this._rowMap[item._aspect._key];
+                    var row = this._rowMap[item._key];
                     if (!row)
                         return;
                     row.updateErrorState();
@@ -1915,7 +1915,7 @@
                 protected _createRowForItem(parent: Node, item: collMOD.ICollectionItem , pos?:number) {
                     var self = this, tr = global.document.createElement('tr');
                     var gridRow = new Row(self, { tr: tr, item: item });
-                    self._rowMap[item._aspect._key] = gridRow;
+                    self._rowMap[item._key] = gridRow;
                     self._rows.push(gridRow);
                     parent.appendChild(gridRow.el);
                     return gridRow;
@@ -1942,7 +1942,7 @@
                     });
                 }
                 findRowByItem(item: collMOD.ICollectionItem) {
-                    var row = this._rowMap[item._aspect._key];
+                    var row = this._rowMap[item._key];
                     if (!row)
                         return null;
                     return row;

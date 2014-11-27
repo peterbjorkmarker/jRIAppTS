@@ -8,7 +8,7 @@ module RIAPP
         'use strict';
         var global = RIAPP.global, utils = global.utils;
          //private helper function (used inside this module only)
-        function addTextQuery(query: MOD.db.DataQuery, fldName: string, val) {
+        function addTextQuery(query: MOD.db.TDataQuery, fldName: string, val) {
             var tmp;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {

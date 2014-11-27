@@ -10,7 +10,7 @@ module RIAPP
         var global = RIAPP.global, utils = global.utils;
         import collMod = MOD.collection;
 
-        function addTextQuery(query: MOD.db.DataQuery, fldName: string, val) {
+        function addTextQuery(query: MOD.db.TDataQuery, fldName: string, val) {
             var tmp;
             if (!!val) {
                 if (utils.str.startsWith(val, '%') && utils.str.endsWith(val, '%')) {

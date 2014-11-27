@@ -661,7 +661,7 @@
                 }
                 //occurs when item changeType Changed (not used in simple collections)
                 protected _onItemStatusChanged(item: TItem, oldChangeType: number) {
-                    this.raiseEvent('status_changed', { item: item, oldChangeType: oldChangeType, key: item._aspect._key });
+                    this.raiseEvent('status_changed', { item: item, oldChangeType: oldChangeType, key: item._key });
                 }
                 protected _onFillStart(args: { isBegin: boolean; rowCount: number; time: Date; isPageChanged: boolean; }) {
                     this.raiseEvent('fill', args);
@@ -688,7 +688,7 @@
                     throw new Error('_createNew Not implemented');
                 }
                 protected _attach(item: TItem, itemPos?: number) {
-                    if (!!this._itemsByKey[item._aspect._key]) {
+                    if (!!this._itemsByKey[item._key]) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_ATTACHED);
                     }
                     try {
@@ -706,7 +706,7 @@
                         pos = itemPos;
                         utils.insertIntoArray(this._items, item, pos);
                     }
-                    this._itemsByKey[item._aspect._key] = item;
+                    this._itemsByKey[item._key] = item;
                     this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: [item], pos: [pos] });
                     item._aspect._onAttach();
                     this.raisePropertyChanged('count');
@@ -749,9 +749,9 @@
                         }
                         return;
                     }
-                    if (!v._aspect._key)
+                    if (!v._key)
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
-                    var oldItem, pos, item = self.getItemByKey(v._aspect._key);
+                    var oldItem, pos, item = self.getItemByKey(v._key);
                     if (!item) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
                     }
@@ -836,15 +836,15 @@
                         this._removeError(item, fieldName);
                         return;
                     }
-                    if (!this._errors[item._aspect._key])
-                        this._errors[item._aspect._key] = {};
-                    var itemErrors = this._errors[item._aspect._key];
+                    if (!this._errors[item._key])
+                        this._errors[item._key] = {};
+                    var itemErrors = this._errors[item._key];
                     itemErrors[fieldName] = errors;
                     if (!this._ignoreChangeErrors)
                         this._onErrorsChanged(item);
                 }
                 _removeError(item: TItem, fieldName: string) {
-                    var itemErrors = this._errors[item._aspect._key];
+                    var itemErrors = this._errors[item._key];
                     if (!itemErrors)
                         return;
                     if (!fieldName)
@@ -853,19 +853,19 @@
                         return;
                     delete itemErrors[fieldName];
                     if (utils.getProps(itemErrors).length === 0) {
-                        delete this._errors[item._aspect._key];
+                        delete this._errors[item._key];
                     }
                     this._onErrorsChanged(item);
                 }
                 _removeAllErrors(item: TItem) {
-                    var self = this, itemErrors = this._errors[item._aspect._key];
+                    var self = this, itemErrors = this._errors[item._key];
                     if (!itemErrors)
                         return;
-                    delete this._errors[item._aspect._key];
+                    delete this._errors[item._key];
                     self._onErrorsChanged(item);
                 }
                 _getErrors(item: TItem): { [fieldName: string]: string[]; } {
-                    return this._errors[item._aspect._key];
+                    return this._errors[item._key];
                 }
                 _onErrorsChanged(item: TItem) {
                     var args = { item: item };
@@ -1062,19 +1062,19 @@
                     this._items.forEach(callback, thisObj);
                 }
                 removeItem(item: TItem) {
-                    if (item._aspect._key === null) {
+                    if (item._key === null) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
                     }
-                    if (!this._itemsByKey[item._aspect._key])
+                    if (!this._itemsByKey[item._key])
                         return;
                     var oldPos = utils.removeFromArray(this._items, item);
                     if (oldPos < 0) {
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_NOTFOUND);
                     }
-                    delete this._itemsByKey[item._aspect._key];
-                    delete this._errors[item._aspect._key];
+                    delete this._itemsByKey[item._key];
+                    delete this._errors[item._key];
                     this._onRemoved(item, oldPos);
-                    item._aspect._key = null;
+                    item._key = null;
                     item._aspect.removeNSHandlers(null);
                     var test = this.getItemByPos(oldPos), curPos = this._currentPos;
 
@@ -1262,16 +1262,42 @@
                 _aspect: ListItemAspect<IListItem, any>;
             }
             export interface IListItemAspectConstructor<TItem extends IListItem, TObj> {
-                new (coll: BaseList<TItem, TObj>, obj?: TObj): ListItemAspect<TItem, TObj>;
+                new (coll: BaseList<TItem, TObj>, itemType: IListItemConstructor<TItem, TObj>,  obj?: TObj): ListItemAspect<TItem, TObj>;
+            }
+            export interface IListItemConstructor<TItem extends IListItem, TObj> {
+                new (aspect: ListItemAspect<TItem, TObj>): TItem;
             }
             export interface IPropInfo { name: string; dtype: number; }
-           
+
+            export class CollectionItem<TAspect extends ItemAspect<ICollectionItem>> extends RIAPP.BaseObject implements ICollectionItem {
+                private f_aspect: TAspect;
+                constructor(aspect:TAspect) {
+                    super();
+                    this.f_aspect = aspect;
+                }
+                get _aspect() { return this.f_aspect; }
+                get _key() { return !!this.f_aspect ? this.f_aspect._key : null; }
+                destroy() {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    if (!!this.f_aspect && !this.f_aspect.getIsDestroyCalled()) {
+                        this.f_aspect.destroy();
+                    }
+                    //this.f_aspect = null;
+                    super.destroy();
+                }
+                toString() {
+                    return 'CollectionItem';
+                }
+            }
+
             export class ListItemAspect<TItem extends IListItem, TObj> extends ItemAspect<TItem> {
                 protected __isNew: boolean;
                 protected __coll: BaseList<IListItem, TObj>;
                 protected _item: TItem;
               
-                constructor(coll: BaseList<IListItem, TObj>, obj?: TObj) {
+                constructor(coll: BaseList<IListItem, TObj>, itemType: IListItemConstructor<TItem, TObj>, obj?: TObj) {
                     super();
                     var self = this;
                     this.__coll = coll;
@@ -1281,6 +1307,7 @@
                         this._vals = <any>obj;
                     else
                         this._vals = ListItemAspect._initVals(coll, obj);
+                    this._item = new itemType(this);
                 }
                 protected static _initVals(coll: BaseList<IListItem, any>, obj?: any): any {
                     var vals = obj || {};
@@ -1339,17 +1366,19 @@
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._item) {
+                    if (!!this._item && !this._item.getIsDestroyCalled()) {
                         this._item.destroy();
-                        this._item = null;
                     }
+                    this._item = null;
                     super.destroy();
                 }
                 getItem(): TItem {
                     return this._item;
                 }
                 toString() {
-                    return this._collection.toString() + 'Item';
+                    if (!this._item)
+                        return 'ListItemAspect';
+                    return this._item.toString() + 'Aspect';
                 }
                 get vals() { return this._vals; }
                 get _isNew() { return this.__isNew; }
@@ -1357,9 +1386,8 @@
             }
 
             export class BaseList<TItem extends IListItem, TObj> extends BaseCollection<TItem> {
-                protected _itemType: IListItemAspectConstructor<TItem, TObj>;
-
-                constructor(itemType: IListItemAspectConstructor<TItem, TObj>, props: IPropInfo[]) {
+                protected _itemType: IListItemConstructor<TItem, TObj>;
+                constructor(itemType: IListItemConstructor<TItem, TObj>, props: IPropInfo[]) {
                     super();
                     this._itemType = itemType;
                     if (!!props)
@@ -1392,16 +1420,24 @@
                     return super._attach(item);
                 }
                 protected _createNew(): TItem {
-                    var listItem: ListItemAspect<TItem, TObj> = new this._itemType(this, null);
+                    var aspect = new ListItemAspect<TItem, TObj>(this, this._itemType, null);
                     //a new client item ID
-                    listItem._key = this._getNewKey(null);
-                    return listItem.getItem();
+                    aspect._key = this._getNewKey(null);
+                    return aspect.getItem();
                 }
-                //here item parameter is not used, but can be used in descendants
+                //the item parameter is not used here, but can be used in descendants
                 protected _getNewKey(item) {
-                    var key = 'clkey_' + this._newKey; //client's item ID
+                    //client's item ID
+                    var key = 'clkey_' + this._newKey; 
                     this._newKey += 1;
                     return key;
+                }
+                destroy() {
+                    if (this._isDestroyed)
+                        return;
+                    this._isDestroyCalled = true;
+                    this._itemType = null;
+                    super.destroy();
                 }
                 fillItems(objArray: TObj[], clearAll?: boolean) {
                     var self = this, newItems:TItem[] = [], positions:number[] = [], fetchedItems:TItem[] = [];
@@ -1411,7 +1447,7 @@
                     try {
                         if (!!clearAll) this.clear();
                         objArray.forEach(function (obj) {
-                            var listItem: ListItemAspect<TItem, TObj> = new self._itemType(self, obj);
+                            var listItem: ListItemAspect<TItem, TObj> = new ListItemAspect<TItem, TObj>(self, self._itemType, obj);
                             var item = listItem.getItem();
                             listItem._key = self._getNewKey(item);
                             var oldItem = self._itemsByKey[listItem._key];
@@ -1462,7 +1498,7 @@
 
             export class BaseDictionary<TItem extends IListItem, TObj> extends BaseList<TItem, TObj>{
                 private _keyName: string;
-                constructor(itemType: IListItemAspectConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]) {
+                constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]) {
                     if (!keyName)
                         throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'keyName', keyName));
                     this._keyName = keyName;
@@ -1493,6 +1529,9 @@
                 }
                 get keyName() {
                     return this._keyName;
+                }
+                toString() {
+                    return 'BaseDictionary';
                 }
             }
 

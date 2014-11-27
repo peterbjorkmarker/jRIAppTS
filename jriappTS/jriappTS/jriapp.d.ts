@@ -1320,17 +1320,28 @@ declare module RIAPP {
                 _aspect: ListItemAspect<IListItem, any>;
             }
             interface IListItemAspectConstructor<TItem extends IListItem, TObj> {
-                new (coll: BaseList<TItem, TObj>, obj?: TObj): ListItemAspect<TItem, TObj>;
+                new (coll: BaseList<TItem, TObj>, itemType: IListItemConstructor<TItem, TObj>, obj?: TObj): ListItemAspect<TItem, TObj>;
+            }
+            interface IListItemConstructor<TItem extends IListItem, TObj> {
+                new (aspect: ListItemAspect<TItem, TObj>): TItem;
             }
             interface IPropInfo {
                 name: string;
                 dtype: number;
             }
+            class CollectionItem<TAspect extends ItemAspect<ICollectionItem>> extends BaseObject implements ICollectionItem {
+                private f_aspect;
+                constructor(aspect: TAspect);
+                _aspect: TAspect;
+                _key: string;
+                destroy(): void;
+                toString(): string;
+            }
             class ListItemAspect<TItem extends IListItem, TObj> extends ItemAspect<TItem> {
                 protected __isNew: boolean;
                 protected __coll: BaseList<IListItem, TObj>;
                 protected _item: TItem;
-                constructor(coll: BaseList<IListItem, TObj>, obj?: TObj);
+                constructor(coll: BaseList<IListItem, TObj>, itemType: IListItemConstructor<TItem, TObj>, obj?: TObj);
                 protected static _initVals(coll: BaseList<IListItem, any>, obj?: any): any;
                 _setProp(name: string, val: any): void;
                 _getProp(name: string): any;
@@ -1345,12 +1356,13 @@ declare module RIAPP {
                 _collection: BaseList<IListItem, TObj>;
             }
             class BaseList<TItem extends IListItem, TObj> extends BaseCollection<TItem> {
-                protected _itemType: IListItemAspectConstructor<TItem, TObj>;
-                constructor(itemType: IListItemAspectConstructor<TItem, TObj>, props: IPropInfo[]);
+                protected _itemType: IListItemConstructor<TItem, TObj>;
+                constructor(itemType: IListItemConstructor<TItem, TObj>, props: IPropInfo[]);
                 private _updateFieldMap(props);
                 protected _attach(item: TItem): any;
                 protected _createNew(): TItem;
                 protected _getNewKey(item: any): string;
+                destroy(): void;
                 fillItems(objArray: TObj[], clearAll?: boolean): void;
                 toArray(): TObj[];
                 getNewObjects(): TItem[];
@@ -1359,11 +1371,12 @@ declare module RIAPP {
             }
             class BaseDictionary<TItem extends IListItem, TObj> extends BaseList<TItem, TObj> {
                 private _keyName;
-                constructor(itemType: IListItemAspectConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]);
+                constructor(itemType: IListItemConstructor<TItem, TObj>, keyName: string, props: IPropInfo[]);
                 protected _getNewKey(item: TItem): string;
                 protected _onItemAdded(item: TItem): void;
                 protected _onRemoved(item: TItem, pos: number): void;
                 keyName: string;
+                toString(): string;
             }
         }
     }
@@ -2869,24 +2882,24 @@ declare module RIAPP {
                 error: IErrorInfo;
                 included: IIncludedResult[];
             }
-            interface IEntityAspectConstructor<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem>, TDbContext extends DbContext> {
-                new (dbSet: DbSet<TItem>, row: IRowData, names: IFieldName[]): EntityAspect<TItem, TDBSet, TDbContext>;
+            interface IEntityAspectConstructor<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem, DbContext>, TDbContext extends DbContext> {
+                new (itemType: IEntityConstructor<TItem>, dbSet: DbSet<TItem, DbContext>, row: IRowData, names: IFieldName[]): EntityAspect<TItem, TDBSet, TDbContext>;
             }
             interface IEntityConstructor<TItem extends IEntityItem> {
-                new (aspect: EntityAspect<TItem, DbSet<IEntityItem>, DbContext>): TItem;
+                new (aspect: EntityAspect<TItem, DbSet<IEntityItem, DbContext>, DbContext>): TItem;
             }
             interface IDbSetConstructor<TItem extends IEntityItem> {
-                new (dbContext: DbContext): DbSet<TItem>;
+                new (dbContext: DbContext): DbSet<TItem, DbContext>;
             }
             interface IEntityItem extends collMOD.ICollectionItem {
-                _aspect: EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
+                _aspect: EntityAspect<IEntityItem, DbSet<IEntityItem, DbContext>, DbContext>;
             }
             class DataCache extends BaseObject {
                 private _query;
                 private _cache;
                 private _totalCount;
                 private _itemsByKey;
-                constructor(query: TDataQuery<IEntityItem>);
+                constructor(query: DataQuery<IEntityItem>);
                 getCachedPage(pageIndex: number): ICachedPage;
                 reindexCache(): void;
                 getPrevCachedPageIndex(currentPageIndex: number): number;
@@ -2909,7 +2922,7 @@ declare module RIAPP {
                 totalCount: number;
                 cacheSize: number;
             }
-            class TDataQuery<TItem extends IEntityItem> extends BaseObject {
+            class DataQuery<TItem extends IEntityItem> extends BaseObject {
                 private _dbSet;
                 private __queryInfo;
                 private _filterInfo;
@@ -2923,18 +2936,18 @@ declare module RIAPP {
                 private _isClearCacheOnEveryLoad;
                 private _dataCache;
                 private _cacheInvalidated;
-                constructor(dbSet: DbSet<TItem>, queryInfo: IQueryInfo);
+                constructor(dbSet: DbSet<TItem, DbContext>, queryInfo: IQueryInfo);
                 getFieldInfo(fieldName: string): collMOD.IFieldInfo;
                 getFieldNames(): string[];
                 private _addSort(fieldName, sortOrder);
                 private _addFilterItem(fieldName, operand, value);
-                where(fieldName: string, operand: collMOD.FILTER_TYPE, value: any): TDataQuery<TItem>;
-                and(fieldName: string, operand: collMOD.FILTER_TYPE, value: any): TDataQuery<TItem>;
-                orderBy(fieldName: string, sortOrder?: collMOD.SORT_ORDER): TDataQuery<TItem>;
-                thenBy(fieldName: string, sortOrder?: collMOD.SORT_ORDER): TDataQuery<TItem>;
-                clearSort(): TDataQuery<TItem>;
-                clearFilter(): TDataQuery<TItem>;
-                clearParams(): TDataQuery<TItem>;
+                where(fieldName: string, operand: collMOD.FILTER_TYPE, value: any): DataQuery<TItem>;
+                and(fieldName: string, operand: collMOD.FILTER_TYPE, value: any): DataQuery<TItem>;
+                orderBy(fieldName: string, sortOrder?: collMOD.SORT_ORDER): DataQuery<TItem>;
+                thenBy(fieldName: string, sortOrder?: collMOD.SORT_ORDER): DataQuery<TItem>;
+                clearSort(): DataQuery<TItem>;
+                clearFilter(): DataQuery<TItem>;
+                clearParams(): DataQuery<TItem>;
                 _clearCache(): void;
                 _getCache(): DataCache;
                 _reindexCache(): void;
@@ -2946,7 +2959,7 @@ declare module RIAPP {
                 _queryInfo: IQueryInfo;
                 _serverTimezone: number;
                 entityType: IEntityConstructor<TItem>;
-                dbSet: DbSet<TItem>;
+                dbSet: DbSet<TItem, DbContext>;
                 dbSetName: string;
                 queryName: string;
                 filterInfo: IFilterInfo;
@@ -2961,9 +2974,9 @@ declare module RIAPP {
                 isClearCacheOnEveryLoad: boolean;
                 isCacheValid: boolean;
             }
-            class DataQuery extends TDataQuery<IEntityItem> {
+            class TDataQuery extends DataQuery<IEntityItem> {
             }
-            class EntityAspect<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem>, TDbContext extends DbContext> extends collMOD.ItemAspect<TItem> {
+            class EntityAspect<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem, DbContext>, TDbContext extends DbContext> extends collMOD.ItemAspect<TItem> {
                 private __changeType;
                 private __isRefreshing;
                 private __isCached;
@@ -2972,7 +2985,7 @@ declare module RIAPP {
                 private _origVals;
                 private _saveChangeType;
                 protected _item: TItem;
-                constructor(dbSet: TDBSet, row: IRowData, names: IFieldName[]);
+                constructor(itemType: IEntityConstructor<TItem>, dbSet: TDBSet, row: IRowData, names: IFieldName[]);
                 protected _initRowInfo(row: IRowData, names: IFieldName[]): void;
                 protected _processValues(path: string, values: any[], names: IFieldName[]): void;
                 protected _onFieldChanged(fieldName: string, fieldInfo: collMOD.IFieldInfo): void;
@@ -3022,7 +3035,7 @@ declare module RIAPP {
                 _isCached: boolean;
                 isHasChanges: boolean;
             }
-            class DbSet<TItem extends IEntityItem> extends collMOD.BaseCollection<TItem> {
+            class DbSet<TItem extends IEntityItem, TDbContext extends DbContext> extends collMOD.BaseCollection<TItem> {
                 private _dbContext;
                 private _isSubmitOnDelete;
                 private _trackAssoc;
@@ -3046,11 +3059,10 @@ declare module RIAPP {
                 protected _itemsByKey: {
                     [x: string]: TItem;
                 };
-                protected _aspectType: IEntityAspectConstructor<TItem, DbSet<TItem>, DbContext>;
                 protected _entityType: IEntityConstructor<TItem>;
                 protected _ignorePageChanged: boolean;
-                protected _query: TDataQuery<TItem>;
-                constructor(opts: IDbSetConstuctorOptions, aspectType: IEntityAspectConstructor<TItem, DbSet<TItem>, DbContext>, entityType: IEntityConstructor<TItem>);
+                protected _query: DataQuery<TItem>;
+                constructor(opts: IDbSetConstuctorOptions, entityType: IEntityConstructor<TItem>);
                 handleError(error: any, source: any): boolean;
                 protected _mapAssocFields(): void;
                 protected _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collMOD.IFieldInfo): {
@@ -3073,7 +3085,7 @@ declare module RIAPP {
                 _getCalcFieldVal(fieldName: string, item: IEntityItem): any;
                 _getNavFieldVal(fieldName: string, item: IEntityItem): any;
                 _setNavFieldVal(fieldName: string, item: IEntityItem, value: any): any;
-                _beforeLoad(query: TDataQuery<TItem>, oldQuery: TDataQuery<TItem>): void;
+                _beforeLoad(query: DataQuery<TItem>, oldQuery: DataQuery<TItem>): void;
                 _updatePermissions(perms: IPermissions): void;
                 _getChildToParentNames(childFieldName: string): string[];
                 _getStrValue(val: any, fieldInfo: collMOD.IFieldInfo): string;
@@ -3104,7 +3116,7 @@ declare module RIAPP {
                 rejectChanges(): void;
                 deleteOnSubmit(item: TItem): void;
                 clear(): void;
-                createQuery(name: string): TDataQuery<TItem>;
+                createQuery(name: string): DataQuery<TItem>;
                 clearCache(): void;
                 destroy(): void;
                 toString(): string;
@@ -3112,10 +3124,12 @@ declare module RIAPP {
                 dbContext: DbContext;
                 dbSetName: string;
                 entityType: IEntityConstructor<TItem>;
-                query: TDataQuery<TItem>;
+                query: DataQuery<TItem>;
                 hasChanges: boolean;
                 cacheSize: number;
                 isSubmitOnDelete: boolean;
+            }
+            class TDbSet extends DbSet<IEntityItem, DbContext> {
             }
             class DbSets extends BaseObject {
                 protected _dbSetNames: string[];
@@ -3123,11 +3137,11 @@ declare module RIAPP {
                 private _dbSets;
                 private _arrDbSets;
                 constructor(dbContext: DbContext);
-                protected _dbSetCreated(dbSet: DbSet<IEntityItem>): void;
+                protected _dbSetCreated(dbSet: DbSet<IEntityItem, DbContext>): void;
                 protected _createDbSet(name: string, dbSetType: IDbSetConstructor<IEntityItem>): void;
                 dbSetNames: string[];
-                arrDbSets: DbSet<IEntityItem>[];
-                getDbSet(name: string): DbSet<IEntityItem>;
+                arrDbSets: DbSet<IEntityItem, DbContext>[];
+                getDbSet(name: string): DbSet<IEntityItem, DbContext>;
                 destroy(): void;
             }
             class DbContext extends BaseObject {
@@ -3164,7 +3178,7 @@ declare module RIAPP {
                     result: any;
                     error: any;
                 }) => void): void;
-                protected _loadFromCache(query: TDataQuery<IEntityItem>, isPageChanged: boolean): IQueryResult<IEntityItem>;
+                protected _loadFromCache(query: DataQuery<IEntityItem>, isPageChanged: boolean): IQueryResult<IEntityItem>;
                 protected _loadIncluded(res: IQueryResponse): void;
                 protected _onLoaded(res: IQueryResponse, isPageChanged: boolean): IQueryResult<IEntityItem>;
                 protected _dataSaved(res: IChangeSet): void;
@@ -3188,12 +3202,12 @@ declare module RIAPP {
                 _onItemRefreshed(res: IRefreshRowInfo, item: IEntityItem): void;
                 _refreshItem(item: IEntityItem): IPromise<IEntityItem>;
                 _getQueryInfo(name: string): IQueryInfo;
-                _onDbSetHasChangesChanged(eSet: DbSet<IEntityItem>): void;
-                _load(query: TDataQuery<IEntityItem>, isPageChanged: boolean): IPromise<IQueryResult<IEntityItem>>;
-                getDbSet(name: string): DbSet<IEntityItem>;
+                _onDbSetHasChangesChanged(eSet: DbSet<IEntityItem, DbContext>): void;
+                _load(query: DataQuery<IEntityItem>, isPageChanged: boolean): IPromise<IQueryResult<IEntityItem>>;
+                getDbSet(name: string): DbSet<IEntityItem, DbContext>;
                 getAssociation(name: string): Association;
                 submitChanges(): IVoidPromise;
-                load(query: TDataQuery<IEntityItem>): IPromise<IQueryResult<IEntityItem>>;
+                load(query: DataQuery<IEntityItem>): IPromise<IQueryResult<IEntityItem>>;
                 acceptChanges(): void;
                 rejectChanges(): void;
                 destroy(): void;
@@ -3246,7 +3260,7 @@ declare module RIAPP {
                 protected _storeChildFKey(item: IEntityItem): void;
                 protected _checkChildFKey(item: IEntityItem): void;
                 protected _onChildStatusChanged(item: IEntityItem, oldChangeType: collMOD.STATUS): void;
-                protected _getItemKey(finf: collMOD.IFieldInfo[], ds: DbSet<IEntityItem>, item: IEntityItem): string;
+                protected _getItemKey(finf: collMOD.IFieldInfo[], ds: DbSet<IEntityItem, DbContext>, item: IEntityItem): string;
                 protected _resetChildMap(): void;
                 protected _resetParentMap(): void;
                 protected _unMapChildItem(item: IEntityItem): any;
@@ -3268,8 +3282,8 @@ declare module RIAPP {
                 name: string;
                 parentToChildrenName: string;
                 childToParentName: string;
-                parentDS: DbSet<IEntityItem>;
-                childDS: DbSet<IEntityItem>;
+                parentDS: DbSet<IEntityItem, DbContext>;
+                childDS: DbSet<IEntityItem, DbContext>;
                 parentFldInfos: collMOD.IFieldInfo[];
                 childFldInfos: collMOD.IFieldInfo[];
                 onDeleteAction: DELETE_ACTION;
@@ -3328,6 +3342,8 @@ declare module RIAPP {
                 fn_sort: (item1: TItem, item2: TItem) => number;
                 fn_itemsProvider: (ds: collMOD.BaseCollection<TItem>) => TItem[];
             }
+            class TDataView extends DataView<collMOD.ICollectionItem> {
+            }
             class ChildDataView<TItem extends IEntityItem> extends DataView<TItem> {
                 private _parentItem;
                 private _refreshTimeout;
@@ -3343,6 +3359,8 @@ declare module RIAPP {
                 parentItem: IEntityItem;
                 association: Association;
             }
+            class TChildDataView extends ChildDataView<IEntityItem> {
+            }
             class BaseComplexProperty extends BaseObject implements IErrorNotification {
                 private _name;
                 constructor(name: string);
@@ -3353,7 +3371,7 @@ declare module RIAPP {
                 getFieldInfo(): collMOD.IFieldInfo;
                 getProperties(): collMOD.IFieldInfo[];
                 getFullPath(name: string): string;
-                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
+                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem, DbContext>, DbContext>;
                 getPropertyByName(name: string): collMOD.IFieldInfo;
                 getIsHasErrors(): boolean;
                 addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
@@ -3364,13 +3382,13 @@ declare module RIAPP {
             }
             class RootComplexProperty extends BaseComplexProperty {
                 private _entity;
-                constructor(name: string, owner: EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>);
+                constructor(name: string, owner: EntityAspect<IEntityItem, DbSet<IEntityItem, DbContext>, DbContext>);
                 _getFullPath(path: any): string;
                 setValue(fullName: string, value: any): void;
                 getValue(fullName: string): any;
                 getFieldInfo(): collMOD.IFieldInfo;
                 getProperties(): collMOD.IFieldInfo[];
-                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
+                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem, DbContext>, DbContext>;
                 getFullPath(name: string): string;
             }
             class ChildComplexProperty extends BaseComplexProperty {
@@ -3384,7 +3402,7 @@ declare module RIAPP {
                 getParent(): BaseComplexProperty;
                 getRootProperty(): RootComplexProperty;
                 getFullPath(name: string): string;
-                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem>, DbContext>;
+                getEntity(): EntityAspect<IEntityItem, DbSet<IEntityItem, DbContext>, DbContext>;
             }
         }
     }

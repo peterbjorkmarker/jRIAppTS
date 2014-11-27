@@ -30,6 +30,9 @@ After minification jriapp.js has the size of about 311 KB. When it is gzipped, i
 I recommend using the ASP.NET MVC 4 bundling feature for managing javascript files (and automatically minify them).
 
 <b>Latest changes:</b>
+<p>2014-11-27 Update to <b>version 2.5.1</b>. Improved code generation of client side classes. Their structure had been changed and need be regenerated for previous 
+versions. They are more compact than in the version 2.5.0.
+</p>  
 <p>2014-11-26 Update to <b>version 2.5.0</b>. The jRIAppTS project is now compiled by typescript 1.3 and above.
 The entities' structure had been changed. The code generation is modified and so it is needed to regenerate domain models anew.
 Entities only hold their own properties, like for example, customer.LastName or customer.birthDate.<br/>

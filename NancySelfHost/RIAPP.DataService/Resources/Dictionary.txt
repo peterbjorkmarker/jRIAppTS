@@ -1,6 +1,6 @@
 ﻿export class {{DICT_NAME}} extends RIAPP.MOD.collection.BaseDictionary<{{ITEM_TYPE_NAME}},{{INTERFACE_NAME}}> {
 	constructor() {
-		super({{ASPECT_NAME}},'{{KEY_NAME}}',{{PROPS}});
+		super({{ITEM_TYPE_NAME}},'{{KEY_NAME}}',{{PROPS}});
 	}
 	findItem({{PK_VALS}}): {{ITEM_TYPE_NAME}} {
 		return this.findByPK(RIAPP.ArrayHelper.fromList(arguments));

@@ -134,13 +134,13 @@
                     if (old !== item) {
                         this._currentItem = item;
                         if (!!old) {
-                            mappedItem = self._itemMap[old._aspect._key];
+                            mappedItem = self._itemMap[old._key];
                             if (!!mappedItem) {
                                 global.$(mappedItem.div).removeClass(css.currentItem);
                             }
                         }
                         if (!!item) {
-                            mappedItem = self._itemMap[item._aspect._key];
+                            mappedItem = self._itemMap[item._key];
                             if (!!mappedItem) {
                                 global.$(mappedItem.div).addClass(css.currentItem);
                                 if (withScroll)
@@ -203,7 +203,7 @@
                 }
                 protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldChangeType:number) {
                     var newChangeType =item._aspect._changeType;
-                    var obj = this._itemMap[item._aspect._key];
+                    var obj = this._itemMap[item._key];
                     if (!obj)
                         return;
                     if (newChangeType === collMOD.STATUS.DELETED) {
@@ -228,13 +228,13 @@
                     var self = this;
                     newItems.forEach(function (item) {
                         //a row for item already exists
-                        if (!!self._itemMap[item._aspect._key])  
+                        if (!!self._itemMap[item._key])  
                             return;
                         self._appendItem(item);
                     });
                 }
                 protected _appendItem(item: collMOD.ICollectionItem) {
-                    if (!item._aspect._key)
+                    if (!item._key)
                         return;
                     var self = this,
                         $div = self._createElement('div'),
@@ -248,7 +248,7 @@
                     self._$el.append($div);
                     var mappedItem: IMappedItem = { div: div, template: null, item: item };
                     $div.data('data', mappedItem);
-                    self._itemMap[item._aspect._key] = mappedItem;
+                    self._itemMap[item._key] = mappedItem;
                     mappedItem.template = self._createTemplate(item);
                     mappedItem.div.appendChild(mappedItem.template.el);
                 }
@@ -318,7 +318,7 @@
                     global.$(mappedItem.div).remove();
                 }
                 protected _removeItem(item: collMOD.ICollectionItem) {
-                    this._removeItemByKey(item._aspect._key);
+                    this._removeItemByKey(item._key);
                 }
                 protected _refresh() {
                     var ds = this.dataSource, self = this;
@@ -332,13 +332,13 @@
                 scrollIntoView(item: collMOD.ICollectionItem) {
                     if (!item)
                         return;
-                    var mappedItem = this._itemMap[item._aspect._key];
+                    var mappedItem = this._itemMap[item._key];
                     if (!!mappedItem) {
                         mappedItem.div.scrollIntoView(false);
                     }
                 }
                 getDivElementByItem(item: collMOD.ICollectionItem) {
-                    var mappedItem = this._itemMap[item._aspect._key];
+                    var mappedItem = this._itemMap[item._key];
                     if (!mappedItem)
                         return null;
                     return mappedItem.div;

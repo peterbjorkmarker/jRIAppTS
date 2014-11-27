@@ -1,15 +1,5 @@
-﻿/*!
- * jRIAppTS framework v2.5.0
- * https://github.com/BBGONE/jRIAppTS
- *
- * Copyright 2013, 2014 Maxim V. Tsapov
- * Released under the MIT license
- * https://github.com/BBGONE/jRIAppTS/blob/generics/LICENSE.txt
- *
- * Date: 2014-11-26T12:30Z
- */
-'use strict';
-module RIAPP {
+﻿module RIAPP {
+    'use strict';
     export enum DEBUG_LEVEL {
         NONE= 0, NORMAL= 1, HIGH= 2
     }
