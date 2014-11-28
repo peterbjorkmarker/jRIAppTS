@@ -19,7 +19,6 @@
             export enum FILTER_TYPE { Equals= 0, Between= 1, StartsWith= 2, EndsWith= 3, Contains= 4, Gt= 5, Lt= 6, GtEq= 7, LtEq= 8, NotEq= 9 }
           
             export interface IPermissions { canAddRow: boolean; canEditRow: boolean; canDeleteRow: boolean; canRefreshRow: boolean; }
-
             export interface IFieldInfo {
                 fieldName: string;
                 isPrimaryKey: number;
@@ -70,6 +69,11 @@
                     }
                 }
                 _fn_traverseField(fld.fieldName, fld, fn);
+            }
+
+            export interface ICollectionItem extends RIAPP.IBaseObject {
+                _aspect: ItemAspect<ICollectionItem>;
+                _key: string;
             }
          
             export class ItemAspect<TItem extends ICollectionItem> extends RIAPP.BaseObject implements IErrorNotification, RIAPP.IEditable, RIAPP.ISubmittable {
@@ -446,17 +450,6 @@
 
             export interface ICollectionOptions {
                 enablePaging: boolean; pageSize: number;
-            }
-            export interface ICollectionItem {
-                raisePropertyChanged(name: string): void;
-                addOnPropertyChange(prop: string, fn: (sender, args: { property: string; }) => void, namespace?: string): void;
-                removeOnPropertyChange(prop?: string, namespace?: string): void;
-                removeNSHandlers(namespace?: string): void;
-                getIsDestroyed(): boolean;
-                getIsDestroyCalled(): boolean;
-                destroy(): void;
-                _aspect: ItemAspect<ICollectionItem>;
-                _key: string;
             }
             export interface ICollChangedArgs<TItem extends ICollectionItem> { change_type: COLL_CHANGE_TYPE; items: TItem[]; pos?: number[]; old_key?: string; new_key?: string; }
             export interface ICollFillArgs<TItem extends ICollectionItem> { isBegin: boolean; rowCount: number; time: Date; isPageChanged: boolean; resetUI?: boolean; fetchedItems?: TItem[]; newItems?: TItem[]; }

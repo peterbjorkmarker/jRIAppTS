@@ -247,27 +247,10 @@ var RIAPP;
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
-    var BaseObject = (function () {
-        function BaseObject() {
-            this._isDestroyed = false;
-            this._isDestroyCalled = false;
-            this._events = null;
+    var EventsAspect = (function () {
+        function EventsAspect() {
         }
-        /*
-        //used for events testing
-        private _stringifyEvents(text: string): string {
-            if (!this._events)
-                return text +'- empty';
-            var ev = this._events, keys = Object.keys(ev), res = '';
-            keys.forEach(function (n) {
-                res += ',' + n + ':' + countNodes(ev[n]);
-            });
-            res = text+ '- '+res.substr(1);
-            //console.log(res);
-            return res;
-        }
-        */
-        BaseObject.hasNode = function (list, node) {
+        EventsAspect.hasNode = function (list, node) {
             if (!list || !node)
                 return false;
             var curNode = list;
@@ -278,7 +261,7 @@ var RIAPP;
             }
             return false;
         };
-        BaseObject.countNodes = function (list) {
+        EventsAspect.countNodes = function (list) {
             if (!list)
                 return 0;
             var curNode = list, i = 0;
@@ -288,13 +271,13 @@ var RIAPP;
             }
             return i;
         };
-        BaseObject.prependNode = function (list, node) {
-            if (BaseObject.hasNode(list, node))
+        EventsAspect.prependNode = function (list, node) {
+            if (EventsAspect.hasNode(list, node))
                 return list;
             node.next = list;
             return node;
         };
-        BaseObject.appendNode = function (list, node) {
+        EventsAspect.appendNode = function (list, node) {
             var prevNode = list, lastNode = prevNode.next;
             if (!prevNode)
                 return null;
@@ -312,7 +295,7 @@ var RIAPP;
             lastNode.next = node;
             return list;
         };
-        BaseObject.removeNodes = function (list, ns) {
+        EventsAspect.removeNodes = function (list, ns) {
             if (!list)
                 return null;
             var firstNode = list, prevNode = null, curNode = list, nextNode = (!curNode) ? null : curNode.next;
@@ -341,14 +324,33 @@ var RIAPP;
             }
             return firstNode;
         };
-        BaseObject.toEventArray = function (list) {
+        EventsAspect.toArray = function (list) {
             var res = [], curNode = list;
             while (!!curNode) {
-                res.push(curNode);
+                res.push(curNode.fn);
                 curNode = curNode.next;
             }
             return res;
         };
+        //for testing
+        EventsAspect.stringifyEvents = function (ev, text) {
+            if (!ev)
+                return text + '- empty';
+            var keys = Object.keys(ev), res = '';
+            keys.forEach(function (n) {
+                res += ',' + n + ':' + EventsAspect.countNodes(ev[n]);
+            });
+            res = text + '- ' + res.substr(1);
+            return res;
+        };
+        return EventsAspect;
+    })();
+    var BaseObject = (function () {
+        function BaseObject() {
+            this._isDestroyed = false;
+            this._isDestroyCalled = false;
+            this._events = null;
+        }
         BaseObject.prototype._getEventNames = function () {
             return ['error', 'destroyed'];
         };
@@ -371,10 +373,10 @@ var RIAPP;
             }
             var newNode = { fn: fn, ns: ns, next: null };
             if (!prepend) {
-                ev[n] = BaseObject.appendNode(list, newNode);
+                ev[n] = EventsAspect.appendNode(list, newNode);
             }
             else {
-                ev[n] = BaseObject.prependNode(list, newNode);
+                ev[n] = EventsAspect.prependNode(list, newNode);
             }
         };
         BaseObject.prototype._removeHandler = function (name, namespace) {
@@ -393,7 +395,7 @@ var RIAPP;
                     delete ev[n];
                 }
                 else {
-                    list = BaseObject.removeNodes(list, ns);
+                    list = EventsAspect.removeNodes(list, ns);
                     if (!list)
                         delete ev[n];
                     else
@@ -406,7 +408,7 @@ var RIAPP;
                 var keys = Object.keys(ev);
                 keys.forEach(function (n) {
                     var list = ev[n];
-                    list = BaseObject.removeNodes(list, ns);
+                    list = EventsAspect.removeNodes(list, ns);
                     if (!list)
                         delete ev[n];
                     else
@@ -422,17 +424,17 @@ var RIAPP;
             if (ev === null)
                 return;
             if (ev === undefined) {
-                throw new Error("The object instance is invalid. The object constructor has not been called!");
+                throw new Error("The object's instance is invalid. The object constructor has not been called!");
             }
             if (!!name) {
-                //if an object property changed
+                //if an object's property changed
                 if (name != '0*' && RIAPP.baseUtils.startsWith(name, '0')) {
-                    //notify all those who subscribed for all property changes
+                    //and also notify those clients who subscribed for all property changes
                     this._raiseEvent('0*', args);
                 }
-                var events = BaseObject.toEventArray(ev[name]);
+                var events = EventsAspect.toArray(ev[name]);
                 for (var i = 0; i < events.length; i++) {
-                    events[i].fn.apply(self, [self, args]);
+                    events[i].apply(null, [self, args]);
                 }
             }
         };
@@ -505,7 +507,7 @@ var RIAPP;
         BaseObject.prototype.removeOnError = function (namespace) {
             this.removeHandler('error', namespace);
         };
-        //remove event handlers by namespace
+        //remove event handlers by their namespace
         BaseObject.prototype.removeNSHandlers = function (namespace) {
             this._removeHandler(null, namespace);
         };
@@ -513,7 +515,7 @@ var RIAPP;
             this._checkEventName(name);
             this._raiseEvent(name, args);
         };
-        //to subscribe for changes on all properties, pass in the prop parameter: '*'
+        //to subscribe fortthe changes on all properties, pass in the prop parameter: '*'
         BaseObject.prototype.addOnPropertyChange = function (prop, fn, namespace) {
             if (!prop)
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);

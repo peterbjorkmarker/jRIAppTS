@@ -5,27 +5,8 @@
         next: IListNode;
     }
 
-    
-    export class BaseObject {
-        protected _isDestroyed: boolean;
-        protected _isDestroyCalled: boolean;
-        private _events: { [name: string]: IListNode; };
-        /*
-        //used for events testing
-        private _stringifyEvents(text: string): string {
-            if (!this._events)
-                return text +'- empty';
-            var ev = this._events, keys = Object.keys(ev), res = '';
-            keys.forEach(function (n) {
-                res += ',' + n + ':' + countNodes(ev[n]);
-            });
-            res = text+ '- '+res.substr(1);
-            //console.log(res);
-            return res;
-        }
-        */
-
-        private static hasNode(list: IListNode, node: IListNode): boolean {
+    class EventsAspect {
+        static hasNode(list: IListNode, node: IListNode): boolean {
             if (!list || !node)
                 return false;
             var curNode = list;
@@ -36,8 +17,7 @@
             }
             return false;
         }
-
-        private static countNodes(list: IListNode): number {
+        static countNodes(list: IListNode): number {
             if (!list)
                 return 0;
             var curNode = list, i = 0;
@@ -47,15 +27,13 @@
             }
             return i;
         }
-
-        private static prependNode(list: IListNode, node: IListNode): IListNode {
-            if (BaseObject.hasNode(list, node))
+        static prependNode(list: IListNode, node: IListNode): IListNode {
+            if (EventsAspect.hasNode(list, node))
                 return list;
             node.next = list;
             return node;
         }
-
-        private static appendNode(list: IListNode, node: IListNode): IListNode {
+        static appendNode(list: IListNode, node: IListNode): IListNode {
             var prevNode = list, lastNode = prevNode.next;
             if (!prevNode)
                 return null;
@@ -73,8 +51,7 @@
             lastNode.next = node;
             return list;
         }
-
-        private static removeNodes(list: IListNode, ns: string): IListNode {
+        static removeNodes(list: IListNode, ns: string): IListNode {
             if (!list)
                 return null;
             var firstNode = list, prevNode: IListNode = null, curNode = list, nextNode: IListNode = (!curNode) ? null : curNode.next;
@@ -104,15 +81,45 @@
             }
             return firstNode;
         }
-        private static toEventArray(list: IListNode): IListNode[] {
-            var res = [], curNode = list;
+        static toArray(list: IListNode): { (sender, args): void; }[] {
+            var res: { (sender, args): void ; } [] = [], curNode = list;
             while (!!curNode) {
-                res.push(curNode);
+                res.push(curNode.fn);
                 curNode = curNode.next;
             }
             return res;
         }
+        //for testing
+        static stringifyEvents(ev: { [name: string]: IListNode; }, text: string): string {
+            if (!ev)
+                return text + '- empty';
+            var keys = Object.keys(ev), res = '';
+            keys.forEach(function (n) {
+                res += ',' + n + ':' + EventsAspect.countNodes(ev[n]);
+            });
+            res = text + '- ' + res.substr(1);
+            return res;
+        }
+    }
 
+    export interface IBaseObject {
+        raisePropertyChanged(name: string): void;
+        addHandler(name: string, fn: (sender, args) => void, namespace?: string, prepend?: boolean): void;
+        removeHandler(name?: string, namespace?: string): void;
+        addOnPropertyChange(prop: string, fn: (sender, args: { property: string; }) => void, namespace?: string): void;
+        removeOnPropertyChange(prop?: string, namespace?: string): void;
+        removeNSHandlers(namespace?: string): void;
+        handleError(error: any, source: any): boolean;
+        getIsDestroyed(): boolean;
+        getIsDestroyCalled(): boolean;
+        destroy(): void;
+    }
+
+    export class BaseObject implements IBaseObject {
+        protected _isDestroyed: boolean;
+        protected _isDestroyCalled: boolean;
+        private _events: { [name: string]: IListNode; };
+ 
         constructor() {
             this._isDestroyed = false;
             this._isDestroyCalled = false;
@@ -146,10 +153,10 @@
             var newNode: IListNode = { fn: fn, ns: ns, next: null };
 
             if (!prepend) {
-                ev[n] = BaseObject.appendNode(list, newNode);
+                ev[n] = EventsAspect.appendNode(list, newNode);
             }
             else {
-                ev[n] = BaseObject.prependNode(list, newNode);
+                ev[n] = EventsAspect.prependNode(list, newNode);
             }
         }
         protected _removeHandler(name?: string, namespace?: string):void {
@@ -170,7 +177,7 @@
                     delete ev[n];
                 }
                 else {
-                    list = BaseObject.removeNodes(list, ns);
+                    list = EventsAspect.removeNodes(list, ns);
                     if (!list)
                         delete ev[n];
                     else
@@ -184,7 +191,7 @@
                 var keys = Object.keys(ev);
                 keys.forEach(function (n) {
                     var list = ev[n];
-                    list = BaseObject.removeNodes(list, ns);
+                    list = EventsAspect.removeNodes(list, ns);
                     if (!list)
                         delete ev[n];
                     else
@@ -201,19 +208,19 @@
             if (ev === null)
                 return;
             if (ev === undefined) {
-                throw new Error("The object instance is invalid. The object constructor has not been called!");
+                throw new Error("The object's instance is invalid. The object constructor has not been called!");
             }
 
             if (!!name) {
-                //if an object property changed
+                //if an object's property changed
                 if (name != '0*' && RIAPP.baseUtils.startsWith(name, '0'))  
                 {
-                    //notify all those who subscribed for all property changes
+                    //and also notify those clients who subscribed for all property changes
                     this._raiseEvent('0*', args); 
                 }
-                var events = BaseObject.toEventArray(ev[name]);
+                var events = EventsAspect.toArray(ev[name]);
                 for (var i = 0; i < events.length; i++) {
-                    events[i].fn.apply(self, [self, args]);
+                    events[i].apply(null, [self, args]);
                 }
             }
         }
@@ -239,7 +246,6 @@
             this._raiseEvent('error', args);
             return args.isHandled;
         }
-       
         raisePropertyChanged(name: string):void {
             var data = { property: name };
             var parts = name.split('.'), lastPropName = parts[parts.length - 1];
@@ -287,7 +293,7 @@
         removeOnError(namespace?: string):void {
             this.removeHandler('error', namespace);
         }
-        //remove event handlers by namespace
+        //remove event handlers by their namespace
         removeNSHandlers(namespace?: string) :void {
             this._removeHandler(null, namespace);
         }
@@ -295,7 +301,7 @@
             this._checkEventName(name);
             this._raiseEvent(name, args);
         }
-        //to subscribe for changes on all properties, pass in the prop parameter: '*'
+        //to subscribe fortthe changes on all properties, pass in the prop parameter: '*'
         addOnPropertyChange(prop: string, fn: (sender, args: { property: string; })=>void, namespace?: string):void {
             if (!prop)
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);

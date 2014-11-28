@@ -121,16 +121,24 @@ declare module RIAPP {
     }
 }
 declare module RIAPP {
-    class BaseObject {
+    interface IBaseObject {
+        raisePropertyChanged(name: string): void;
+        addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string, prepend?: boolean): void;
+        removeHandler(name?: string, namespace?: string): void;
+        addOnPropertyChange(prop: string, fn: (sender: any, args: {
+            property: string;
+        }) => void, namespace?: string): void;
+        removeOnPropertyChange(prop?: string, namespace?: string): void;
+        removeNSHandlers(namespace?: string): void;
+        handleError(error: any, source: any): boolean;
+        getIsDestroyed(): boolean;
+        getIsDestroyCalled(): boolean;
+        destroy(): void;
+    }
+    class BaseObject implements IBaseObject {
         protected _isDestroyed: boolean;
         protected _isDestroyCalled: boolean;
         private _events;
-        private static hasNode(list, node);
-        private static countNodes(list);
-        private static prependNode(list, node);
-        private static appendNode(list, node);
-        private static removeNodes(list, ns);
-        private static toEventArray(list);
         constructor();
         protected _getEventNames(): string[];
         protected _addHandler(name: string, fn: (sender: any, args: any) => void, namespace?: string, prepend?: boolean): void;
@@ -1034,6 +1042,10 @@ declare module RIAPP {
             }
             function fn_getPropertyByName(name: string, props: IFieldInfo[]): IFieldInfo;
             function fn_traverseField(fld: IFieldInfo, fn: (name: string, fld: IFieldInfo) => void): void;
+            interface ICollectionItem extends IBaseObject {
+                _aspect: ItemAspect<ICollectionItem>;
+                _key: string;
+            }
             class ItemAspect<TItem extends ICollectionItem> extends BaseObject implements IErrorNotification, IEditable, ISubmittable {
                 protected _fkey: string;
                 protected _isEditing: boolean;
@@ -1094,19 +1106,6 @@ declare module RIAPP {
             interface ICollectionOptions {
                 enablePaging: boolean;
                 pageSize: number;
-            }
-            interface ICollectionItem {
-                raisePropertyChanged(name: string): void;
-                addOnPropertyChange(prop: string, fn: (sender: any, args: {
-                    property: string;
-                }) => void, namespace?: string): void;
-                removeOnPropertyChange(prop?: string, namespace?: string): void;
-                removeNSHandlers(namespace?: string): void;
-                getIsDestroyed(): boolean;
-                getIsDestroyCalled(): boolean;
-                destroy(): void;
-                _aspect: ItemAspect<ICollectionItem>;
-                _key: string;
             }
             interface ICollChangedArgs<TItem extends ICollectionItem> {
                 change_type: COLL_CHANGE_TYPE;

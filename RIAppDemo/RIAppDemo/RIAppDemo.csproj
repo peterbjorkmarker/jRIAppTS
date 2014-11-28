@@ -325,7 +325,7 @@
         <WebProjectProperties>
           <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>3286</DevelopmentServerPort>
+          <DevelopmentServerPort>3345</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>http://localhost:2911/RIAppDemo</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
