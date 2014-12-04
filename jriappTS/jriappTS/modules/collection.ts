@@ -477,13 +477,14 @@
                 protected _isUpdating: boolean;
                 protected _isClearing: boolean;
                 protected _waitQueue: utilsMOD.WaitQueue;
+
                 constructor() {
                     super();
                     this._options = { enablePaging: false, pageSize: 50 };
                     this._isLoading = false;
                     this._isClearing = false;
                     this._isUpdating = false;
-                    
+
                     this._EditingItem = null;
                     this._perms = { canAddRow: true, canEditRow: true, canDeleteRow: true, canRefreshRow: false };
                     //includes stored on server

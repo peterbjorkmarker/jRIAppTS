@@ -3035,9 +3035,6 @@ declare module RIAPP {
                 _isCached: boolean;
                 isHasChanges: boolean;
             }
-            interface IDbSetLoadedArgs<TItem extends IEntityItem> {
-                items: TItem[];
-            }
             class DbSet<TItem extends IEntityItem, TDbContext extends DbContext> extends collMOD.BaseCollection<TItem> {
                 private _dbContext;
                 private _isSubmitOnDelete;
@@ -3067,7 +3064,6 @@ declare module RIAPP {
                 protected _query: DataQuery<TItem>;
                 constructor(opts: IDbSetConstuctorOptions, entityType: IEntityConstructor<TItem>);
                 handleError(error: any, source: any): boolean;
-                protected _getEventNames(): string[];
                 protected _mapAssocFields(): void;
                 protected _doNavigationField(opts: IDbSetConstuctorOptions, fInfo: collMOD.IFieldInfo): {
                     getFunc: () => any;
@@ -3086,9 +3082,6 @@ declare module RIAPP {
                 protected _onPageSizeChanged(): void;
                 protected _destroyItems(): void;
                 protected _defineCalculatedField(fullName: string, getFunc: () => any): void;
-                protected _onLoaded(items: TItem[]): void;
-                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string): void;
-                removeOnLoaded(namespace?: string): void;
                 _getCalcFieldVal(fieldName: string, item: IEntityItem): any;
                 _getNavFieldVal(fieldName: string, item: IEntityItem): any;
                 _setNavFieldVal(fieldName: string, item: IEntityItem, value: any): any;

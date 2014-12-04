@@ -1192,8 +1192,6 @@
                 get isHasChanges() { return this.__changeType !== collMOD.STATUS.NONE; }
             }
 
-            export interface IDbSetLoadedArgs<TItem extends IEntityItem> { items: TItem[];  }
-            
             export class DbSet<TItem extends IEntityItem, TDbContext extends DbContext> extends collMOD.BaseCollection<TItem> {
                 private _dbContext: TDbContext;
                 private _isSubmitOnDelete: boolean;
@@ -1264,10 +1262,6 @@
                 }
                 handleError(error, source): boolean {
                     return this.dbContext.handleError(error, source);
-                }
-                protected _getEventNames() {
-                    var base_events = super._getEventNames();
-                    return ['loaded'].concat(base_events);
                 }
                 protected _mapAssocFields() {
                     var trackAssoc = this._trackAssoc, assoc: IAssociationInfo, tasKeys = Object.keys(trackAssoc),
@@ -1459,15 +1453,6 @@
                     }
                     calcDef.getFunc = getFunc;
                 }
-                protected _onLoaded(items: TItem[]) {
-                    this.raiseEvent('loaded', { items: items });
-                }
-                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string) {
-                    this.addHandler('loaded', fn, namespace);
-                }
-                removeOnLoaded(namespace?: string) {
-                    this.removeHandler('loaded', namespace);
-                }
                 _getCalcFieldVal(fieldName: string, item: IEntityItem): any {
                     return baseUtils.getValue(this._calcfldMap, fieldName).getFunc.call(item);
                 }
@@ -1527,8 +1512,7 @@
                     }, data);
 
                     var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length,
-                        newItems: TItem[] = [], positions: number[] = [], items: TItem[] = [],
-                        selectedItems: TItem[] = [], fetchedItems: TItem[] = [],
+                        newItems: TItem[] = [], positions: number[] = [], created_items: TItem[] = [], fetchedItems: TItem[] = [],
                         isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache: DataCache;
 
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
@@ -1546,7 +1530,9 @@
                             }
                         }
 
-                        fetchedItems = rows.map(function (row) {
+                    
+
+                        created_items = rows.map(function (row) {
                             //row.key already a string value generated on server (no need to convert to string)
                             var key = row.k;
                             if (!key)
@@ -1573,34 +1559,32 @@
                             return item;
                         });
 
-                        selectedItems = fetchedItems;
-
                         if (!!query) {
                             if (query.isIncludeTotalCount && !utils.check.isNt(res.totalCount)) {
                                 this.totalCount = res.totalCount;
                             }
 
                             if (query.loadPageCount > 1 && isPagingEnabled) {
-                                dataCache.fillCache(res.pageIndex, fetchedItems);
+                                dataCache.fillCache(res.pageIndex, created_items);
                                 var page = dataCache.getCachedPage(query.pageIndex);
                                 if (!page)
-                                    selectedItems = [];
+                                    created_items = [];
                                 else
-                                    selectedItems = <TItem[]>page.items;
+                                    created_items = <TItem[]>page.items;
                             }
                         }
 
-                        selectedItems.forEach(function (item) {
+                        created_items.forEach(function (item) {
                             var oldItem = self._itemsByKey[item._key];
                             if (!oldItem) {
                                 self._items.push(item);
                                 positions.push(self._items.length - 1);
                                 self._itemsByKey[item._key] = item;
                                 newItems.push(item);
-                                items.push(item);
+                                fetchedItems.push(item);
                             }
                             else
-                                items.push(oldItem);
+                                fetchedItems.push(oldItem);
                         });
 
                         if (newItems.length > 0) {
@@ -1611,17 +1595,15 @@
                         if (!!data.fn_beforeFillEnd) {
                             data.fn_beforeFillEnd();
                         }
-
-                        this._onLoaded(fetchedItems);
                     }
                     finally {
                         this._onFillEnd({
-                            isBegin: false, rowCount: items.length, time: new Date(), resetUI: clearAll,
-                            fetchedItems: items, newItems: newItems, isPageChanged: data.isPageChanged
+                            isBegin: false, rowCount: fetchedItems.length, time: new Date(), resetUI: clearAll,
+                            fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged
                         });
                     }
                     this.moveFirst();
-                    return <IQueryResult<TItem>>{ fetchedItems: items, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
+                    return <IQueryResult<TItem>>{ fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
                 }
                 _fillFromCache(data: { isPageChanged: boolean; fn_beforeFillEnd: () => void; }): IQueryResult<TItem> {
                     data = utils.extend(false, {
