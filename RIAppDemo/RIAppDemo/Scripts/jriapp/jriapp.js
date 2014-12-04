@@ -247,103 +247,78 @@ var RIAPP;
 })(RIAPP || (RIAPP = {}));
 var RIAPP;
 (function (RIAPP) {
-    var EventsAspect = (function () {
-        function EventsAspect() {
+    'use strict';
+    var EventsHelper = (function () {
+        function EventsHelper() {
         }
-        EventsAspect.hasNode = function (list, node) {
-            if (!list || !node)
-                return false;
-            var curNode = list;
-            while (!!curNode) {
-                if (curNode.fn === node.fn && curNode.ns == node.ns)
-                    return true;
-                curNode = curNode.next;
-            }
-            return false;
-        };
-        EventsAspect.countNodes = function (list) {
+        EventsHelper.countNodes = function (list) {
             if (!list)
                 return 0;
-            var curNode = list, i = 0;
-            while (!!curNode) {
-                curNode = curNode.next;
+            var cur = list.head, i = 0;
+            while (!!cur) {
+                cur = cur.next;
                 ++i;
             }
             return i;
         };
-        EventsAspect.prependNode = function (list, node) {
-            if (EventsAspect.hasNode(list, node))
-                return list;
-            node.next = list;
-            return node;
+        EventsHelper.prependNode = function (list, node) {
+            node.next = list.head;
+            list.head = node;
+            if (!list.tail)
+                list.tail = list.head;
         };
-        EventsAspect.appendNode = function (list, node) {
-            var prevNode = list, lastNode = prevNode.next;
-            if (!prevNode)
-                return null;
-            //if already have it, return without adding it again
-            if (prevNode.fn === node.fn && prevNode.ns == node.ns)
-                return list;
-            while (!!lastNode) {
-                //prevent adding it more than once
-                if (lastNode.fn === node.fn && lastNode.ns == node.ns)
-                    return list;
-                prevNode = lastNode;
-                lastNode = prevNode.next;
+        EventsHelper.appendNode = function (list, node) {
+            if (!list.head) {
+                list.tail = node;
+                list.head = node;
+                return;
             }
-            lastNode = prevNode;
-            lastNode.next = node;
-            return list;
+            var old = list.tail;
+            list.tail = node;
+            old.next = node;
         };
-        EventsAspect.removeNodes = function (list, ns) {
+        EventsHelper.removeNodes = function (list, ns) {
             if (!list)
                 return null;
-            var firstNode = list, prevNode = null, curNode = list, nextNode = (!curNode) ? null : curNode.next;
-            while (!!curNode) {
-                if (curNode.ns == ns) {
-                    if (!prevNode) {
-                        firstNode = nextNode;
-                        curNode.fn = null;
-                        curNode.next = null;
-                        curNode = nextNode;
-                        nextNode = (!curNode) ? null : curNode.next;
+            var head = list.head, prev = null, del, cur = head, next = (!cur) ? null : cur.next;
+            while (!!cur) {
+                if (cur.ns == ns) {
+                    del = cur;
+                    //delete node
+                    if (!prev) {
+                        head = next;
+                        cur = head;
+                        next = (!cur) ? null : cur.next;
                     }
                     else {
-                        prevNode.next = nextNode;
-                        curNode.fn = null;
-                        curNode.next = null;
-                        curNode = nextNode;
-                        nextNode = (!curNode) ? null : curNode.next;
+                        prev.next = next;
+                        cur = next;
+                        next = (!cur) ? null : cur.next;
                     }
+                    del.fn = null;
+                    del.next = null;
                 }
                 else {
-                    prevNode = curNode;
-                    curNode = curNode.next;
-                    nextNode = (!curNode) ? null : curNode.next;
+                    prev = cur;
+                    cur = cur.next;
+                    next = (!cur) ? null : cur.next;
                 }
             }
-            return firstNode;
+            list.head = head;
+            list.tail = (!prev) ? head : prev;
         };
-        EventsAspect.toArray = function (list) {
-            var res = [], curNode = list;
-            while (!!curNode) {
-                res.push(curNode.fn);
-                curNode = curNode.next;
+        EventsHelper.toArray = function (list) {
+            var res = [];
+            if (!list)
+                return res;
+            var cur = list.head;
+            while (!!cur) {
+                res.push(cur.fn);
+                cur = cur.next;
             }
             return res;
         };
-        //for testing
-        EventsAspect.stringifyEvents = function (ev, text) {
-            if (!ev)
-                return text + '- empty';
-            var keys = Object.keys(ev), res = '';
-            keys.forEach(function (n) {
-                res += ',' + n + ':' + EventsAspect.countNodes(ev[n]);
-            });
-            res = text + '- ' + res.substr(1);
-            return res;
-        };
-        return EventsAspect;
+        return EventsHelper;
     })();
     var BaseObject = (function () {
         function BaseObject() {
@@ -366,17 +341,16 @@ var RIAPP;
             var self = this, ev = self._events, n = name, ns = '*';
             if (!!namespace)
                 ns = '' + namespace;
-            var list = ev[n];
+            var list = ev[n], node = { fn: fn, ns: ns, next: null };
             if (!list) {
-                ev[n] = { fn: fn, ns: ns, next: null };
+                ev[n] = { head: node, tail: node };
                 return;
             }
-            var newNode = { fn: fn, ns: ns, next: null };
             if (!prepend) {
-                ev[n] = EventsAspect.appendNode(list, newNode);
+                EventsHelper.appendNode(list, node);
             }
             else {
-                ev[n] = EventsAspect.prependNode(list, newNode);
+                EventsHelper.prependNode(list, node);
             }
         };
         BaseObject.prototype._removeHandler = function (name, namespace) {
@@ -392,14 +366,12 @@ var RIAPP;
                 if (!list)
                     return;
                 if (ns == '*') {
-                    delete ev[n];
+                    ev[n] = null;
                 }
                 else {
-                    list = EventsAspect.removeNodes(list, ns);
-                    if (!list)
-                        delete ev[n];
-                    else
-                        ev[n] = list;
+                    EventsHelper.removeNodes(list, ns);
+                    if (!list.head)
+                        ev[n] = null;
                 }
                 return;
             }
@@ -408,11 +380,11 @@ var RIAPP;
                 var keys = Object.keys(ev);
                 keys.forEach(function (n) {
                     var list = ev[n];
-                    list = EventsAspect.removeNodes(list, ns);
-                    if (!list)
-                        delete ev[n];
-                    else
-                        ev[n] = list;
+                    if (!!list) {
+                        EventsHelper.removeNodes(list, ns);
+                        if (!list.head)
+                            ev[n] = null;
+                    }
                 });
                 return;
             }
@@ -432,18 +404,32 @@ var RIAPP;
                     //and also notify those clients who subscribed for all property changes
                     this._raiseEvent('0*', args);
                 }
-                var events = EventsAspect.toArray(ev[name]);
+                var events = EventsHelper.toArray(ev[name]);
                 for (var i = 0; i < events.length; i++) {
                     events[i].apply(null, [self, args]);
                 }
             }
         };
         BaseObject.prototype._checkEventName = function (name) {
-            if (this._getEventNames().indexOf(name) === -1) {
+            var proto = Object.getPrototypeOf(this), map;
+            //cache events' names in object's prototype
+            if (!proto.hasOwnProperty("__evMap")) {
+                var evn = this._getEventNames();
+                map = {};
+                for (var i = 0; i < evn.length; i++) {
+                    map[evn[i]] = true;
+                }
+                proto.__evMap = map;
+            }
+            else
+                map = proto.__evMap;
+            if (!map[name]) {
                 if (RIAPP.DebugLevel == 2 /* HIGH */) {
                     debugger;
                 }
-                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
+                var err = new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
+                this.handleError(err, this);
+                throw err;
             }
         };
         BaseObject.prototype._isHasProp = function (prop) {
@@ -1105,7 +1091,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.1';
+        Global.vesion = '2.5.2';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -15227,6 +15213,10 @@ var RIAPP;
                 DbSet.prototype.handleError = function (error, source) {
                     return this.dbContext.handleError(error, source);
                 };
+                DbSet.prototype._getEventNames = function () {
+                    var base_events = _super.prototype._getEventNames.call(this);
+                    return ['loaded'].concat(base_events);
+                };
                 DbSet.prototype._mapAssocFields = function () {
                     var trackAssoc = this._trackAssoc, assoc, tasKeys = Object.keys(trackAssoc), frel, trackAssocMap = this._trackAssocMap;
                     for (var i = 0, len = tasKeys.length; i < len; i += 1) {
@@ -15417,6 +15407,15 @@ var RIAPP;
                     }
                     calcDef.getFunc = getFunc;
                 };
+                DbSet.prototype._onLoaded = function (items) {
+                    this.raiseEvent('loaded', { items: items });
+                };
+                DbSet.prototype.addOnLoaded = function (fn, namespace) {
+                    this.addHandler('loaded', fn, namespace);
+                };
+                DbSet.prototype.removeOnLoaded = function (namespace) {
+                    this.removeHandler('loaded', namespace);
+                };
                 DbSet.prototype._getCalcFieldVal = function (fieldName, item) {
                     return baseUtils.getValue(this._calcfldMap, fieldName).getFunc.call(item);
                 };
@@ -15473,7 +15472,7 @@ var RIAPP;
                         isPageChanged: false,
                         fn_beforeFillEnd: null
                     }, data);
-                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length, newItems = [], positions = [], created_items = [], fetchedItems = [], isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache;
+                    var self = this, res = data.res, fieldNames = res.names, rows = res.rows || [], rowCount = rows.length, newItems = [], positions = [], items = [], selectedItems = [], fetchedItems = [], isPagingEnabled = this.isPagingEnabled, query = this.query, clearAll = true, dataCache;
                     this._onFillStart({ isBegin: true, rowCount: rowCount, time: new Date(), isPageChanged: data.isPageChanged });
                     try {
                         if (!!query) {
@@ -15489,7 +15488,7 @@ var RIAPP;
                                     dataCache.totalCount = res.totalCount;
                             }
                         }
-                        created_items = rows.map(function (row) {
+                        fetchedItems = rows.map(function (row) {
                             //row.key already a string value generated on server (no need to convert to string)
                             var key = row.k;
                             if (!key)
@@ -15512,30 +15511,31 @@ var RIAPP;
                             }
                             return item;
                         });
+                        selectedItems = fetchedItems;
                         if (!!query) {
                             if (query.isIncludeTotalCount && !utils.check.isNt(res.totalCount)) {
                                 this.totalCount = res.totalCount;
                             }
                             if (query.loadPageCount > 1 && isPagingEnabled) {
-                                dataCache.fillCache(res.pageIndex, created_items);
+                                dataCache.fillCache(res.pageIndex, fetchedItems);
                                 var page = dataCache.getCachedPage(query.pageIndex);
                                 if (!page)
-                                    created_items = [];
+                                    selectedItems = [];
                                 else
-                                    created_items = page.items;
+                                    selectedItems = page.items;
                             }
                         }
-                        created_items.forEach(function (item) {
+                        selectedItems.forEach(function (item) {
                             var oldItem = self._itemsByKey[item._key];
                             if (!oldItem) {
                                 self._items.push(item);
                                 positions.push(self._items.length - 1);
                                 self._itemsByKey[item._key] = item;
                                 newItems.push(item);
-                                fetchedItems.push(item);
+                                items.push(item);
                             }
                             else
-                                fetchedItems.push(oldItem);
+                                items.push(oldItem);
                         });
                         if (newItems.length > 0) {
                             this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
@@ -15544,20 +15544,21 @@ var RIAPP;
                         if (!!data.fn_beforeFillEnd) {
                             data.fn_beforeFillEnd();
                         }
+                        this._onLoaded(fetchedItems);
                     }
                     finally {
                         this._onFillEnd({
                             isBegin: false,
-                            rowCount: fetchedItems.length,
+                            rowCount: items.length,
                             time: new Date(),
                             resetUI: clearAll,
-                            fetchedItems: fetchedItems,
+                            fetchedItems: items,
                             newItems: newItems,
                             isPageChanged: data.isPageChanged
                         });
                     }
                     this.moveFirst();
-                    return { fetchedItems: fetchedItems, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
+                    return { fetchedItems: items, newItems: newItems, isPageChanged: data.isPageChanged, outOfBandData: data.res.extraInfo };
                 };
                 DbSet.prototype._fillFromCache = function (data) {
                     data = utils.extend(false, {

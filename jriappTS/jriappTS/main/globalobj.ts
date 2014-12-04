@@ -43,7 +43,7 @@
     }
 
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.5.1';
+        public static vesion = '2.5.2';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;
@@ -116,6 +116,7 @@
             self.$(self.window).unload(function () {
                 self.raiseEvent('unload', {});
             });
+            
             //this way to attach for correct work in firefox
             self.window.onerror = function (msg, url:string, linenumber:number) {
                 if (!!msg && msg.toString().indexOf("DUMMY_ERROR") > -1) {
