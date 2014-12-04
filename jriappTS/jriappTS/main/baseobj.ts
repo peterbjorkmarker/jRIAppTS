@@ -1,103 +1,82 @@
 ﻿module RIAPP {
+    'use strict';
     interface IListNode {
         fn: (sender, args) => void;
         ns: string;
         next: IListNode;
     }
+    interface IList {
+        head: IListNode;
+        tail: IListNode;
+    }
 
-    class EventsAspect {
-        static hasNode(list: IListNode, node: IListNode): boolean {
-            if (!list || !node)
-                return false;
-            var curNode = list;
-            while (!!curNode) {
-                if (curNode.fn === node.fn && curNode.ns == node.ns)
-                    return true;
-                curNode = curNode.next;
-            }
-            return false;
-        }
-        static countNodes(list: IListNode): number {
+    class EventsHelper {
+        static countNodes(list: IList): number {
             if (!list)
                 return 0;
-            var curNode = list, i = 0;
-            while (!!curNode) {
-                curNode = curNode.next;
+            var cur = list.head, i = 0;
+            while (!!cur) {
+                cur = cur.next;
                 ++i;
             }
             return i;
         }
-        static prependNode(list: IListNode, node: IListNode): IListNode {
-            if (EventsAspect.hasNode(list, node))
-                return list;
-            node.next = list;
-            return node;
+        static prependNode(list: IList, node: IListNode): void {
+            node.next = list.head
+            list.head = node;
+            if (!list.tail)
+                list.tail = list.head;
         }
-        static appendNode(list: IListNode, node: IListNode): IListNode {
-            var prevNode = list, lastNode = prevNode.next;
-            if (!prevNode)
-                return null;
-            //if already have it, return without adding it again
-            if (prevNode.fn === node.fn && prevNode.ns == node.ns)
-                return list;
-            while (!!lastNode) {
-                //prevent adding it more than once
-                if (lastNode.fn === node.fn && lastNode.ns == node.ns)
-                    return list;
-                prevNode = lastNode;
-                lastNode = prevNode.next;
+        static appendNode(list: IList, node: IListNode): void {
+            if (!list.head) {
+                list.tail = node;
+                list.head = node;
+                return;
             }
-            lastNode = prevNode;
-            lastNode.next = node;
-            return list;
+            var old = list.tail;
+            list.tail = node;
+            old.next = node;
         }
-        static removeNodes(list: IListNode, ns: string): IListNode {
+        static removeNodes(list: IList, ns: string): void {
             if (!list)
                 return null;
-            var firstNode = list, prevNode: IListNode = null, curNode = list, nextNode: IListNode = (!curNode) ? null : curNode.next;
-
-            while (!!curNode) {
-                if (curNode.ns == ns) {
-                    if (!prevNode) {
-                        firstNode = nextNode;
-                        curNode.fn = null;
-                        curNode.next = null;
-                        curNode = nextNode;
-                        nextNode = (!curNode) ? null : curNode.next;
+            var head = list.head, prev: IListNode = null, del: IListNode, cur = head,
+                next: IListNode = (!cur) ? null : cur.next;
+            while (!!cur) {
+                if (cur.ns == ns) {
+                    del = cur;
+                    //delete node
+                    if (!prev) {
+                        head = next;
+                        cur = head;
+                        next = (!cur) ? null : cur.next;
                     }
                     else {
-                        prevNode.next = nextNode;
-                        curNode.fn = null;
-                        curNode.next = null;
-                        curNode = nextNode;
-                        nextNode = (!curNode) ? null : curNode.next;
+                        prev.next = next;
+                        cur = next;
+                        next = (!cur) ? null : cur.next;
                     }
+                    del.fn = null;
+                    del.next = null;
                 }
                 else {
-                    prevNode = curNode;
-                    curNode = curNode.next;
-                    nextNode = (!curNode) ? null : curNode.next;
+                    prev = cur;
+                    cur = cur.next;
+                    next = (!cur) ? null : cur.next;
                 }
             }
-            return firstNode;
+            list.head = head;
+            list.tail = (!prev) ? head : prev;
         }
-        static toArray(list: IListNode): { (sender, args): void; }[] {
-            var res: { (sender, args): void ; } [] = [], curNode = list;
-            while (!!curNode) {
-                res.push(curNode.fn);
-                curNode = curNode.next;
+        static toArray(list: IList): { (sender, args): void; }[] {
+            var res: { (sender, args): void; }[] = [];
+            if (!list)
+                return res;
+            var cur = list.head;
+            while (!!cur) {
+                res.push(cur.fn);
+                cur = cur.next;
             }
-            return res;
-        }
-        //for testing
-        static stringifyEvents(ev: { [name: string]: IListNode; }, text: string): string {
-            if (!ev)
-                return text + '- empty';
-            var keys = Object.keys(ev), res = '';
-            keys.forEach(function (n) {
-                res += ',' + n + ':' + EventsAspect.countNodes(ev[n]);
-            });
-            res = text + '- ' + res.substr(1);
             return res;
         }
     }
@@ -118,7 +97,7 @@
     export class BaseObject implements IBaseObject {
         protected _isDestroyed: boolean;
         protected _isDestroyCalled: boolean;
-        private _events: { [name: string]: IListNode; };
+        private _events: { [name: string]: IList; };
  
         constructor() {
             this._isDestroyed = false;
@@ -143,30 +122,28 @@
             if (!!namespace)
                 ns = '' + namespace;
 
-            var list = ev[n];
+            var list = ev[n], node = { fn: fn, ns: ns, next: null };
 
             if (!list) {
-                ev[n] = { fn: fn, ns: ns, next: null };
+                ev[n] =  { head: node, tail: node };
                 return;
             }
 
-            var newNode: IListNode = { fn: fn, ns: ns, next: null };
-
             if (!prepend) {
-                ev[n] = EventsAspect.appendNode(list, newNode);
+                EventsHelper.appendNode(list, node);
             }
             else {
-                ev[n] = EventsAspect.prependNode(list, newNode);
+                EventsHelper.prependNode(list, node);
             }
         }
-        protected _removeHandler(name?: string, namespace?: string):void {
+        protected _removeHandler(name?: string, namespace?: string): void {
             var self = this, ev = self._events, n = name, ns = '*';
             if (!ev)
                 return;
 
             if (!!namespace)
                 ns = '' + namespace;
-            var list: IListNode;
+            var list: IList;
 
             //arguments supplied is name (and optionally namespace)
             if (!!n) {
@@ -174,14 +151,12 @@
                 if (!list)
                     return;
                 if (ns == '*') {
-                    delete ev[n];
+                    ev[n] = null;
                 }
                 else {
-                    list = EventsAspect.removeNodes(list, ns);
-                    if (!list)
-                        delete ev[n];
-                    else
-                        ev[n] = list;
+                    EventsHelper.removeNodes(list, ns);
+                    if (!list.head)
+                        ev[n]= null;
                 }
                 return;
             }
@@ -191,11 +166,11 @@
                 var keys = Object.keys(ev);
                 keys.forEach(function (n) {
                     var list = ev[n];
-                    list = EventsAspect.removeNodes(list, ns);
-                    if (!list)
-                        delete ev[n];
-                    else
-                        ev[n] = list;
+                    if (!!list) {
+                        EventsHelper.removeNodes(list, ns);
+                        if (!list.head)
+                            ev[n] = null;
+                    }
                 });
                 return;
             }
@@ -218,18 +193,33 @@
                     //and also notify those clients who subscribed for all property changes
                     this._raiseEvent('0*', args); 
                 }
-                var events = EventsAspect.toArray(ev[name]);
+                var events = EventsHelper.toArray(ev[name]);
                 for (var i = 0; i < events.length; i++) {
                     events[i].apply(null, [self, args]);
                 }
             }
         }
-        protected _checkEventName(name: string):void {
-            if (this._getEventNames().indexOf(name) === -1) {
+        protected _checkEventName(name: string): void {
+            var proto = Object.getPrototypeOf(this), map: { [name: string]: boolean; };
+            //cache events' names in object's prototype
+            if (!proto.hasOwnProperty("__evMap")) {
+                var evn = this._getEventNames();
+                map = {};
+                for (var i = 0; i < evn.length; i++) {
+                    map[evn[i]] = true;
+                }
+                proto.__evMap = map;
+            }
+            else
+                map = proto.__evMap;
+
+            if (!map[name]) {
                 if (DebugLevel == DEBUG_LEVEL.HIGH) {
                     debugger;
                 }
-                throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
+                var err = new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
+                this.handleError(err, this);
+                throw err;
             }
         }
         protected _isHasProp(prop: string):boolean {
