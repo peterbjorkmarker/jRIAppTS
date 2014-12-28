@@ -42,7 +42,7 @@ Now extraneous entity functionality is separate from entities. Every entity have
 For example, if we have a <i>customer</i> entity we can access its <i>beginEdit</i> method like this: customer._aspect.beginEdit().<br/>
 Also the BaseObject's _onError method was renamed to handleError.<br/>
 Now the framework supports only strongly typed lists and dictionaries (the List and the Dictionary types were removed).
-Strongly typed lists and dictionaries are typically is generated using the code generation feature of the DataService.<br/><br/>
+Strongly typed lists and dictionaries are typically generated using the code generation feature of the DataService.<br/><br/>
 The docs for the framework will be updated shortly to reflect these changes!
 </p>  
 
