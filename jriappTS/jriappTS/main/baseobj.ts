@@ -188,9 +188,10 @@
 
             if (!!name) {
                 //if an object's property changed
-                if (name != '0*' && RIAPP.baseUtils.startsWith(name, '0'))  
+                if (name != '0*' && name.charAt(0) == '0')  
                 {
-                    //and also notify those clients who subscribed for all property changes
+                    //recursive call
+                    //notify clients who subscribed for all property changes
                     this._raiseEvent('0*', args); 
                 }
                 var events = EventsHelper.toArray(ev[name]);
@@ -248,7 +249,7 @@
                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, name));
                 }
                 if (obj instanceof BaseObject) {
-                    obj._raiseEvent('0' + lastPropName, data);
+                    (<BaseObject>obj).raiseEvent('0' + lastPropName, data);
                 }
             }
             else {
@@ -258,7 +259,7 @@
                     }
                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, lastPropName));
                 }
-                this._raiseEvent('0' + lastPropName, data);
+                this.raiseEvent('0' + lastPropName, data);
             }
         }
         addHandler(name: string, fn: (sender, args) => void, namespace?: string, prepend?: boolean):void {
@@ -287,8 +288,11 @@
         removeNSHandlers(namespace?: string) :void {
             this._removeHandler(null, namespace);
         }
-        raiseEvent(name: string, args: any):void {
-            this._checkEventName(name);
+        raiseEvent(name: string, args: any): void {
+            if (!name)
+                throw new Error(RIAPP.ERRS.ERR_EVENT_INVALID);
+            if (name.charAt(0) != '0')
+                this._checkEventName(name);
             this._raiseEvent(name, args);
         }
         //to subscribe fortthe changes on all properties, pass in the prop parameter: '*'

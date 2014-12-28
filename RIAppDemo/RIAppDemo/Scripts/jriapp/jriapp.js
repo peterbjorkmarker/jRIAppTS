@@ -400,8 +400,9 @@ var RIAPP;
             }
             if (!!name) {
                 //if an object's property changed
-                if (name != '0*' && RIAPP.baseUtils.startsWith(name, '0')) {
-                    //and also notify those clients who subscribed for all property changes
+                if (name != '0*' && name.charAt(0) == '0') {
+                    //recursive call
+                    //notify clients who subscribed for all property changes
                     this._raiseEvent('0*', args);
                 }
                 var events = EventsHelper.toArray(ev[name]);
@@ -458,7 +459,7 @@ var RIAPP;
                     throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, name));
                 }
                 if (obj instanceof BaseObject) {
-                    obj._raiseEvent('0' + lastPropName, data);
+                    obj.raiseEvent('0' + lastPropName, data);
                 }
             }
             else {
@@ -468,7 +469,7 @@ var RIAPP;
                     }
                     throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, lastPropName));
                 }
-                this._raiseEvent('0' + lastPropName, data);
+                this.raiseEvent('0' + lastPropName, data);
             }
         };
         BaseObject.prototype.addHandler = function (name, fn, namespace, prepend) {
@@ -498,7 +499,10 @@ var RIAPP;
             this._removeHandler(null, namespace);
         };
         BaseObject.prototype.raiseEvent = function (name, args) {
-            this._checkEventName(name);
+            if (!name)
+                throw new Error(RIAPP.ERRS.ERR_EVENT_INVALID);
+            if (name.charAt(0) != '0')
+                this._checkEventName(name);
             this._raiseEvent(name, args);
         };
         //to subscribe fortthe changes on all properties, pass in the prop parameter: '*'
