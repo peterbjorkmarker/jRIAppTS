@@ -220,32 +220,32 @@ namespace RIAPP.DataService.WebApi
 
 
         #region Public API
-        protected virtual IHttpActionResult GetXAML(HttpRequestMessage request)
+        public virtual IHttpActionResult GetXAML(HttpRequestMessage request)
         {
             var info = this.DataService.ServiceGetXAML();
             return new PlainTextActionResult(request, info);
         }
 
-        protected virtual IHttpActionResult GetCSHARP(HttpRequestMessage request)
+        public virtual IHttpActionResult GetCSHARP(HttpRequestMessage request)
         {
             var info = this.DataService.ServiceGetCSharp();
             return new PlainTextActionResult(request, info);
         }
 
-        protected virtual IHttpActionResult GetTypeScript(HttpRequestMessage request)
+        public virtual IHttpActionResult GetTypeScript(HttpRequestMessage request)
         {
             string comment = string.Format("\tGenerated from: {0} on {1:yyyy-MM-dd HH:mm} at {1:HH:mm}\r\n\tDon't make manual changes here, because they will be lost when this db interface will be regenerated!", request.RequestUri, DateTime.Now);
             var info = this.DataService.ServiceGetTypeScript(comment);
             return new PlainTextActionResult(request, info);
         }
 
-        protected virtual HttpResponseMessage Permissions()
+        public virtual HttpResponseMessage Permissions()
         {
             var res = this.DataService.ServiceGetPermissions();
             return Request.CreateResponse<Permissions>(HttpStatusCode.OK, res, this.MediaFormatter);
         }
 
-        protected virtual IHttpActionResult Query(HttpRequestMessage request, QueryRequest query)
+        public virtual IHttpActionResult Query(HttpRequestMessage request, QueryRequest query)
         {
             var svc = this.DataService;
             if (svc == null)
@@ -258,7 +258,7 @@ namespace RIAPP.DataService.WebApi
             return result;
         }
 
-        protected virtual HttpResponseMessage Refresh(RefreshInfo refreshInfo)
+        public virtual HttpResponseMessage Refresh(RefreshInfo refreshInfo)
         {
             var svc = this.DataService;
             if (svc == null)
@@ -270,7 +270,7 @@ namespace RIAPP.DataService.WebApi
             return Request.CreateResponse<RefreshInfo>(HttpStatusCode.OK, svcData, this.MediaFormatter);
         }
 
-        protected virtual HttpResponseMessage Invoke(InvokeRequest invokeInfo)
+        public virtual HttpResponseMessage Invoke(InvokeRequest invokeInfo)
         {
             var svc = this.DataService;
             if (svc == null)
@@ -282,7 +282,7 @@ namespace RIAPP.DataService.WebApi
             return Request.CreateResponse<InvokeResponse>(HttpStatusCode.OK, svcData, this.MediaFormatter);
         }
 
-        protected virtual HttpResponseMessage Save(ChangeSet changeSet)
+        public virtual HttpResponseMessage Save(ChangeSet changeSet)
         {
             var svcResponse = this.DataService.ServiceApplyChangeSet(changeSet);
             var response = Request.CreateResponse<ChangeSet>(HttpStatusCode.OK, svcResponse, this.MediaFormatter);

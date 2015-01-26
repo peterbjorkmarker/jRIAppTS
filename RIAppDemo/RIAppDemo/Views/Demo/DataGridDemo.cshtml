@@ -18,6 +18,7 @@
     <script src="@Url.Content("~/Scripts/RIAppDemo/common.js",true)" type="text/javascript"></script>
     <script src="@Url.Content("~/Scripts/RIAppDemo/header.js",true)" type="text/javascript"></script>
     <script src="@Url.Content("~/Scripts/RIAppDemo/demoDB.js",true)" type="text/javascript"></script>
+    <script src="@Url.Content("~/Scripts/RIAppDemo/ssevents.js",true)" type="text/javascript"></script>
     <script src="@Url.Content("~/Scripts/RIAppDemo/gridDemo.js",true)" type="text/javascript"></script>
 }
 
@@ -133,12 +134,19 @@
         ops.modelData = @Html.Action("ProductModelData", "RIAppDemoService");
         ops.categoryData = @Html.Action("ProductCategoryData", "RIAppDemoService");
         *@
-        
+
         //these links are used to work with WEB API controller instead of ASP.NET MVC controller
-        ops.service_url = '@Url.Action("", "RIAppDemo", new { httproute = "ApiByAction" })';
+        ops.service_url = '@Url.Action("", "RIAppDemoWebApi", new { httproute = "ApiByAction" })';
         ops.upload_thumb_url = '@Url.Action("UploadThumbnail", "File", new { httproute = "ApiByAction" })';
         ops.productEditTemplate_url = '@Url.Action("DownloadTemplate", "File", new { httproute = "ApiByName", name = "productEditTemplate" })';
         ops.sizeDisplayTemplate_url = '@Url.Action("DownloadTemplate", "File", new { httproute = "ApiByName", name = "sizeDisplayTemplate" })';
+
+        //TESTING Server Side Events - uses Web API Controller
+        @{
+            var client_id = Guid.NewGuid().ToString();
+        }
+        ops.sse_clientID = '@client_id';
+        ops.sse_url = '@Url.Action("Get", "SSEWebApi", new { httproute = "ApiById" })';
     })(RIAPP.GRIDDEMO.mainOptions);
 </script>
 
@@ -146,7 +154,8 @@
 <h2  style="display:inline-block;">@ViewBag.Title</h2>
 <header id="title" style="width:99%; border:1px Solid LightBlue; padding:5px;margin-bottom:5px;-moz-border-radius: 4px;border-radius:4px;">
 <a href="#" id="expander" style="margin-left:2px;" data-bind="{this.command,to=expanderCommand,mode=OneWay,source=headerVM}" data-view="name=expander"></a>
-<span style="margin-left:5px;">Filter</span>
+    <span style="margin-left:5px;">Filter</span>
+    <span style="margin-left:5px;" data-bind="{this.html,to=sseMessage,mode=OneWay,source=app}"></span>
 </header>
 <form id="demoHeader" data-bind="{this.dataContext,source=productVM}" data-view="name=dataform">
     <table>

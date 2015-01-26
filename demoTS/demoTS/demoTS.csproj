@@ -14,11 +14,13 @@
     <IISExpressAnonymousAuthentication />
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
+    <TypeScriptToolsVersion>1.1</TypeScriptToolsVersion>
   </PropertyGroup>
   <ItemGroup>
     <TypeScriptCompile Include="jriapp_strings.d.ts" />
     <TypeScriptCompile Include="thirdparty\jquery.d.ts" />
     <TypeScriptCompile Include="jriapp.d.ts" />
+    <TypeScriptCompile Include="thirdparty\sse.d.ts" />
     <TypeScriptCompile Include="thirdparty\moment.d.ts" />
     <TypeScriptCompile Include="user_modules\gridDemo.ts" />
     <TypeScriptCompile Include="user_modules\common.ts" />
@@ -31,6 +33,8 @@
     <TypeScriptCompile Include="user_modules\filesDemo.ts" />
     <TypeScriptCompile Include="user_modules\folderBrowserSvc.ts" />
     <TypeScriptCompile Include="user_modules\collectionDemo.ts" />
+    <TypeScriptCompile Include="user_modules\ssevents.ts" />
+    <TypeScriptCompile Include="user_modules\websocket.ts" />
   </ItemGroup>
   <ItemGroup />
   <PropertyGroup>

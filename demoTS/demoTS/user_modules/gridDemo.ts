@@ -786,6 +786,8 @@ module RIAPP
             sizeDisplayTemplate_url: string;
             modelData: any;
             categoryData: any;
+            sse_url: string;
+            sse_clientID: string;
         }
 
         //strongly typed aplication's class
@@ -795,6 +797,8 @@ module RIAPP
             _headerVM: HEADER.HeaderVM;
             _productVM: ProductViewModel;
             _uploadVM: UploadThumbnailVM;
+            _sseVM: SSEVENTS.SSEventsVM;
+            _sseMessage: string;
 
             constructor(options: IMainOptions) {
                 super(options);
@@ -804,6 +808,7 @@ module RIAPP
                 this._headerVM = null;
                 this._productVM = null;
                 this._uploadVM = null;
+                this._sseVM = null;
             }
             onStartUp() {
                 var self = this, options: IMainOptions = self.options;
@@ -823,6 +828,9 @@ module RIAPP
                 this._headerVM = new HEADER.HeaderVM(this);
                 this._productVM = new ProductViewModel(this);
                 this._uploadVM = new UploadThumbnailVM(this, options.upload_thumb_url);
+                this._sseVM = new SSEVENTS.SSEventsVM(options.sse_url, options.sse_clientID);
+                this._sseVM.addOnMessage((s, a) => { self._sseMessage = a.data.message; self.raisePropertyChanged('sseMessage'); });
+
                 function handleError(sender, data) {
                     self._handleError(sender, data);
                 };
@@ -852,6 +860,7 @@ module RIAPP
                         self.productVM.load().done(function (loadRes) {/*alert(loadRes.outOfBandData.test);*/ return; });
                     });
                 }
+                this._sseVM.open().fail((err) => { self._handleError(self._sseVM, { error: err.message }); });
                 super.onStartUp();
             }
             private _handleError(sender, data) {
@@ -872,6 +881,7 @@ module RIAPP
                     self._productVM.destroy();
                     self._uploadVM.destroy();
                     self._dbContext.destroy();
+                    self._sseVM.destroy();
                 } finally {
                     super.destroy();
                 }
@@ -882,6 +892,9 @@ module RIAPP
             get headerVM() { return this._headerVM; }
             get productVM() { return this._productVM; }
             get uploadVM() { return this._uploadVM; }
+            //server side events
+            get sseVM() { return this._sseVM; }
+            get sseMessage() { return this._sseMessage; }
         }
 
         //global error handler - the last resort (typically display message to the user)
@@ -971,9 +984,12 @@ module RIAPP
             sizeDisplayTemplate_url: null,
             modelData: null,
             categoryData: null,
+            sse_url: null,
+            sse_clientID: null,
             user_modules: [{ name: "COMMON", initFn: COMMON.initModule },
-            { name: "HEADER", initFn: HEADER.initModule },
-            { name: "GRIDDEMO", initFn: initModule }]
+                { name: "HEADER", initFn: HEADER.initModule },
+                { name: "GRIDDEMO", initFn: initModule },
+                { name: "SSEVENTS", initFn: SSEVENTS.initModule }]
         };
     }
 }

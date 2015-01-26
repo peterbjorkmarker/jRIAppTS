@@ -30,6 +30,9 @@ After minification jriapp.js has the size of about 311 KB. When it is gzipped, i
 I recommend using the ASP.NET MVC 4 bundling feature for managing javascript files (and automatically minify them).
 
 <b>Latest changes:</b>
+<p>2015-01-26 The Demo update. Included HTML5 Server Side Events (SSE) in DataGridDemo to display quotes of the day which are streamed from the server.
+Updated code in the RIAPP.DataService.EF2 project. It can now produce metadata from Entity Framework's complex types. 
+It is useful because in Entity Framework 6 stored procedures which return records are mapped automatically to a complex type.</p>  
 <p>2014-12-28 Code optimization.</p>  
 <p>2014-12-09 Update to <b>version 2.5.2</b>. Documentation update.</p>  
 <p>2014-11-27 Update to <b>version 2.5.1</b>. Improved code generation of client side classes. Their structure had been changed and need be regenerated for previous 
