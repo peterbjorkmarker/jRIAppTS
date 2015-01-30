@@ -2,7 +2,7 @@
     export var global: Global = null;
     export var css_riaTemplate = 'ria-template';
 
-    export enum BindTo {
+    export const enum BindTo {
         Source= 0, Target= 1
     }
 

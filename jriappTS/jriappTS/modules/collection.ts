@@ -12,11 +12,11 @@
                 utils = s.utils;
             });
 
-            export enum FIELD_TYPE { None = 0, ClientOnly = 1, Calculated = 2, Navigation = 3, RowTimeStamp = 4, Object = 5, ServerCalculated = 6 }
-            export enum STATUS { NONE= 0, ADDED= 1, UPDATED= 2, DELETED= 3 }
-            export enum COLL_CHANGE_TYPE { REMOVE= 0, ADDED=1, RESET=2, REMAP_KEY=3 }
-            export enum SORT_ORDER { ASC= 0, DESC= 1 }
-            export enum FILTER_TYPE { Equals= 0, Between= 1, StartsWith= 2, EndsWith= 3, Contains= 4, Gt= 5, Lt= 6, GtEq= 7, LtEq= 8, NotEq= 9 }
+            export const enum FIELD_TYPE { None = 0, ClientOnly = 1, Calculated = 2, Navigation = 3, RowTimeStamp = 4, Object = 5, ServerCalculated = 6 }
+            export const enum STATUS { NONE= 0, ADDED= 1, UPDATED= 2, DELETED= 3 }
+            export const enum COLL_CHANGE_TYPE { REMOVE= 0, ADDED=1, RESET=2, REMAP_KEY=3 }
+            export const enum SORT_ORDER { ASC= 0, DESC= 1 }
+            export const enum FILTER_TYPE { Equals= 0, Between= 1, StartsWith= 2, EndsWith= 3, Contains= 4, Gt= 5, Lt= 6, GtEq= 7, LtEq= 8, NotEq= 9 }
           
             export interface IPermissions { canAddRow: boolean; canEditRow: boolean; canDeleteRow: boolean; canRefreshRow: boolean; }
             export interface IFieldInfo {

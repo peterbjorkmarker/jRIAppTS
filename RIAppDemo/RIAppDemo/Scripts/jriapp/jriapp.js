@@ -1,12 +1,6 @@
 var RIAPP;
 (function (RIAPP) {
     'use strict';
-    (function (DEBUG_LEVEL) {
-        DEBUG_LEVEL[DEBUG_LEVEL["NONE"] = 0] = "NONE";
-        DEBUG_LEVEL[DEBUG_LEVEL["NORMAL"] = 1] = "NORMAL";
-        DEBUG_LEVEL[DEBUG_LEVEL["HIGH"] = 2] = "HIGH";
-    })(RIAPP.DEBUG_LEVEL || (RIAPP.DEBUG_LEVEL = {}));
-    var DEBUG_LEVEL = RIAPP.DEBUG_LEVEL;
     RIAPP.DebugLevel = 0 /* NONE */;
     var ArrayHelper = (function () {
         function ArrayHelper() {
@@ -562,11 +556,6 @@ var RIAPP;
 (function (RIAPP) {
     RIAPP.global = null;
     RIAPP.css_riaTemplate = 'ria-template';
-    (function (BindTo) {
-        BindTo[BindTo["Source"] = 0] = "Source";
-        BindTo[BindTo["Target"] = 1] = "Target";
-    })(RIAPP.BindTo || (RIAPP.BindTo = {}));
-    var BindTo = RIAPP.BindTo;
     var Global = (function (_super) {
         __extends(Global, _super);
         function Global(window, jQuery) {
@@ -5170,48 +5159,6 @@ var RIAPP;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-            (function (FIELD_TYPE) {
-                FIELD_TYPE[FIELD_TYPE["None"] = 0] = "None";
-                FIELD_TYPE[FIELD_TYPE["ClientOnly"] = 1] = "ClientOnly";
-                FIELD_TYPE[FIELD_TYPE["Calculated"] = 2] = "Calculated";
-                FIELD_TYPE[FIELD_TYPE["Navigation"] = 3] = "Navigation";
-                FIELD_TYPE[FIELD_TYPE["RowTimeStamp"] = 4] = "RowTimeStamp";
-                FIELD_TYPE[FIELD_TYPE["Object"] = 5] = "Object";
-                FIELD_TYPE[FIELD_TYPE["ServerCalculated"] = 6] = "ServerCalculated";
-            })(collection.FIELD_TYPE || (collection.FIELD_TYPE = {}));
-            var FIELD_TYPE = collection.FIELD_TYPE;
-            (function (STATUS) {
-                STATUS[STATUS["NONE"] = 0] = "NONE";
-                STATUS[STATUS["ADDED"] = 1] = "ADDED";
-                STATUS[STATUS["UPDATED"] = 2] = "UPDATED";
-                STATUS[STATUS["DELETED"] = 3] = "DELETED";
-            })(collection.STATUS || (collection.STATUS = {}));
-            var STATUS = collection.STATUS;
-            (function (COLL_CHANGE_TYPE) {
-                COLL_CHANGE_TYPE[COLL_CHANGE_TYPE["REMOVE"] = 0] = "REMOVE";
-                COLL_CHANGE_TYPE[COLL_CHANGE_TYPE["ADDED"] = 1] = "ADDED";
-                COLL_CHANGE_TYPE[COLL_CHANGE_TYPE["RESET"] = 2] = "RESET";
-                COLL_CHANGE_TYPE[COLL_CHANGE_TYPE["REMAP_KEY"] = 3] = "REMAP_KEY";
-            })(collection.COLL_CHANGE_TYPE || (collection.COLL_CHANGE_TYPE = {}));
-            var COLL_CHANGE_TYPE = collection.COLL_CHANGE_TYPE;
-            (function (SORT_ORDER) {
-                SORT_ORDER[SORT_ORDER["ASC"] = 0] = "ASC";
-                SORT_ORDER[SORT_ORDER["DESC"] = 1] = "DESC";
-            })(collection.SORT_ORDER || (collection.SORT_ORDER = {}));
-            var SORT_ORDER = collection.SORT_ORDER;
-            (function (FILTER_TYPE) {
-                FILTER_TYPE[FILTER_TYPE["Equals"] = 0] = "Equals";
-                FILTER_TYPE[FILTER_TYPE["Between"] = 1] = "Between";
-                FILTER_TYPE[FILTER_TYPE["StartsWith"] = 2] = "StartsWith";
-                FILTER_TYPE[FILTER_TYPE["EndsWith"] = 3] = "EndsWith";
-                FILTER_TYPE[FILTER_TYPE["Contains"] = 4] = "Contains";
-                FILTER_TYPE[FILTER_TYPE["Gt"] = 5] = "Gt";
-                FILTER_TYPE[FILTER_TYPE["Lt"] = 6] = "Lt";
-                FILTER_TYPE[FILTER_TYPE["GtEq"] = 7] = "GtEq";
-                FILTER_TYPE[FILTER_TYPE["LtEq"] = 8] = "LtEq";
-                FILTER_TYPE[FILTER_TYPE["NotEq"] = 9] = "NotEq";
-            })(collection.FILTER_TYPE || (collection.FILTER_TYPE = {}));
-            var FILTER_TYPE = collection.FILTER_TYPE;
             function fn_getPropertyByName(name, props) {
                 var arrProps = props.filter(function (f) {
                     return f.fieldName == name;
@@ -9872,11 +9819,6 @@ var RIAPP;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-            (function (DIALOG_ACTION) {
-                DIALOG_ACTION[DIALOG_ACTION["Default"] = 0] = "Default";
-                DIALOG_ACTION[DIALOG_ACTION["StayOpen"] = 1] = "StayOpen";
-            })(datadialog.DIALOG_ACTION || (datadialog.DIALOG_ACTION = {}));
-            var DIALOG_ACTION = datadialog.DIALOG_ACTION;
             ;
             var DataEditDialog = (function (_super) {
                 __extends(DataEditDialog, _super);
@@ -13906,34 +13848,6 @@ var RIAPP;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
-            (function (FLAGS) {
-                FLAGS[FLAGS["None"] = 0] = "None";
-                FLAGS[FLAGS["Changed"] = 1] = "Changed";
-                FLAGS[FLAGS["Setted"] = 2] = "Setted";
-                FLAGS[FLAGS["Refreshed"] = 4] = "Refreshed";
-            })(_db.FLAGS || (_db.FLAGS = {}));
-            var FLAGS = _db.FLAGS;
-            (function (REFRESH_MODE) {
-                REFRESH_MODE[REFRESH_MODE["NONE"] = 0] = "NONE";
-                REFRESH_MODE[REFRESH_MODE["RefreshCurrent"] = 1] = "RefreshCurrent";
-                REFRESH_MODE[REFRESH_MODE["MergeIntoCurrent"] = 2] = "MergeIntoCurrent";
-                REFRESH_MODE[REFRESH_MODE["CommitChanges"] = 3] = "CommitChanges";
-            })(_db.REFRESH_MODE || (_db.REFRESH_MODE = {}));
-            var REFRESH_MODE = _db.REFRESH_MODE;
-            (function (DELETE_ACTION) {
-                DELETE_ACTION[DELETE_ACTION["NoAction"] = 0] = "NoAction";
-                DELETE_ACTION[DELETE_ACTION["Cascade"] = 1] = "Cascade";
-                DELETE_ACTION[DELETE_ACTION["SetNulls"] = 2] = "SetNulls";
-            })(_db.DELETE_ACTION || (_db.DELETE_ACTION = {}));
-            var DELETE_ACTION = _db.DELETE_ACTION;
-            (function (DATA_OPER) {
-                DATA_OPER[DATA_OPER["SUBMIT"] = 0] = "SUBMIT";
-                DATA_OPER[DATA_OPER["LOAD"] = 1] = "LOAD";
-                DATA_OPER[DATA_OPER["INVOKE"] = 2] = "INVOKE";
-                DATA_OPER[DATA_OPER["REFRESH"] = 3] = "REFRESH";
-                DATA_OPER[DATA_OPER["INIT"] = 4] = "INIT";
-            })(_db.DATA_OPER || (_db.DATA_OPER = {}));
-            var DATA_OPER = _db.DATA_OPER;
             var DATA_SVC_METH = {
                 Invoke: 'invoke',
                 LoadData: 'query',

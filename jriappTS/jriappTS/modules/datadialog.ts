@@ -9,7 +9,7 @@
                 utils = s.utils;
             });
 
-            export enum DIALOG_ACTION { Default = 0, StayOpen = 1 };
+            export const enum DIALOG_ACTION { Default = 0, StayOpen = 1 };
 
             export interface IDialogConstructorOptions {
                 dataContext?: any;

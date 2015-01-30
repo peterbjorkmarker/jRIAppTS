@@ -399,30 +399,28 @@ module RIAPP
                         self.searchString = null;
                     },
                     fn_OnOK: function (dialog) {
-                        var DIALOG_ACTION = MOD.datadialog.DIALOG_ACTION;
                         if (!self._isAddingNew) {
                             //allow to close the dialog
-                            return DIALOG_ACTION.Default;
+                            return MOD.datadialog.DIALOG_ACTION.Default;
                         }
                         if (!self._newAddress._aspect.endEdit())
-                            return DIALOG_ACTION.StayOpen;
+                            return MOD.datadialog.DIALOG_ACTION.StayOpen;
                         var custAdress = self._customerAddressVM._addNewCustAddress(self._newAddress);
                         custAdress._aspect.endEdit();
                         self._newAddress = null;
                         self._isAddingNew = false;
                         self.raisePropertyChanged('newAddress');
                         self.raisePropertyChanged('isAddingNew');
-                        return DIALOG_ACTION.StayOpen;
+                        return MOD.datadialog.DIALOG_ACTION.StayOpen;
                     },
                     fn_OnCancel: function (dialog) {
-                        var DIALOG_ACTION = MOD.datadialog.DIALOG_ACTION;
                         if (!self._isAddingNew) {
-                            return DIALOG_ACTION.Default;
+                            return MOD.datadialog.DIALOG_ACTION.Default;
                         }
                         if (!!self._newAddress) {
                             self._cancelAddNewAddress();
                         }
-                        return DIALOG_ACTION.StayOpen;
+                        return MOD.datadialog.DIALOG_ACTION.StayOpen;
                     }
                 };
                 this._dialogVM.createDialog('addressDialog', dialogOptions);

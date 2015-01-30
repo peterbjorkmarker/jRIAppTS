@@ -151,14 +151,15 @@ namespace RIAppDemo.Controllers
 
             if (client == null)
                 return;
-
+            /*
             //Remove the clients after random intervals simulating different task times for each client
             if (DateTime.Now - client.CreatedTime > TimeSpan.FromSeconds(rnd.Next(60, 180)))
             {
                 RemoveClient(client.id);
                 return;
             }
-        
+           */
+
             string[] words = new string[] { "Test", "How", "Messaging", "Working", "Random", "Words", "For", "Demo", "Purposes", "Only", "Needed" };
             string message = "<b>Quote of the day</b>: <i>"+ string.Join(" ", words.Select(w => words[rnd.Next(0, 10)]).ToArray())+"</i>";
             SSEMessage msg = new SSEMessage() { clientID = client.id, payload = new Payload { message = message } };

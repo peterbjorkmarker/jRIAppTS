@@ -1,4 +1,4 @@
-﻿/// <reference path="..\jriapp_strings.d.ts"/>
+/// <reference path="..\jriapp_strings.d.ts"/>
 var RIAPP;
 (function (RIAPP) {
     var _ERRS = {
@@ -80,7 +80,6 @@ var RIAPP;
         ERR_DATAVIEW_DATASRC_INVALID: 'TDataView datasource must not be null and should be descendant of Collection type',
         ERR_DATAVIEW_FILTER_INVALID: 'TDataView fn_filter option must be valid function which accepts entity and returns boolean value'
     };
-
     var PAGER = {
         firstText: '<<',
         lastText: '>>',
@@ -94,12 +93,10 @@ var RIAPP;
         showingTip: 'showing result {0} to {1} of {2}',
         showTip: 'show result {0} to {1} of {2}'
     };
-
     var VALIDATE = {
         errorInfo: 'Validation errors:',
         errorField: 'field:'
     };
-
     var TEXT = {
         txtEdit: 'Edit',
         txtAddNew: 'Add new',
@@ -113,9 +110,7 @@ var RIAPP;
         txtClose: 'Close',
         txtField: 'Field'
     };
-
     var _localizable = { PAGER: PAGER, VALIDATE: VALIDATE, TEXT: TEXT };
-
     RIAPP.ERRS = _ERRS;
     RIAPP.localizable = _localizable;
 })(RIAPP || (RIAPP = {}));

@@ -1,6 +1,6 @@
 ﻿module RIAPP {
     'use strict';
-    export enum DEBUG_LEVEL {
+    export const enum DEBUG_LEVEL {
         NONE= 0, NORMAL= 1, HIGH= 2
     }
 

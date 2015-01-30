@@ -15,10 +15,10 @@
                 utils = s.utils;
             });
             
-            export enum FLAGS { None = 0, Changed= 1, Setted= 2, Refreshed= 4 }
-            export enum REFRESH_MODE { NONE= 0, RefreshCurrent = 1, MergeIntoCurrent= 2, CommitChanges= 3 }
-            export enum DELETE_ACTION { NoAction = 0, Cascade = 1, SetNulls= 2 }
-            export enum DATA_OPER { SUBMIT, LOAD, INVOKE, REFRESH, INIT }
+            export const enum FLAGS { None = 0, Changed= 1, Setted= 2, Refreshed= 4 }
+            export const enum REFRESH_MODE { NONE= 0, RefreshCurrent = 1, MergeIntoCurrent= 2, CommitChanges= 3 }
+            export const enum DELETE_ACTION { NoAction = 0, Cascade = 1, SetNulls= 2 }
+            export const enum DATA_OPER { SUBMIT, LOAD, INVOKE, REFRESH, INIT }
 
             var DATA_SVC_METH = {
                 Invoke: 'invoke', LoadData: 'query', GetPermissions: 'permissions',
