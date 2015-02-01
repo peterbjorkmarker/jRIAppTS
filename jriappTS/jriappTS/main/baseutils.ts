@@ -61,7 +61,7 @@
 
     export interface IErrorNotification {
         getIsHasErrors(): boolean;
-        addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void;
+        addOnErrorsChanged(fn: RIAPP.TEventHandler, namespace?: string, context?: any): void;
         removeOnErrorsChanged(namespace?: string): void;
         getFieldErrors(fieldName): IValidationInfo[];
         getAllErrors(): IValidationInfo[];

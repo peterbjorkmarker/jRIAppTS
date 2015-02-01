@@ -139,14 +139,14 @@
                     }
                     return isHandled;
                 }
-                addOnClose(fn: (sender: any, args: {}) => void , namespace?: string) {
-                    this.addHandler('close', fn, namespace);
+                addOnClose(fn: (sender?, args?) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('close', fn, namespace, context);
                 }
                 removeOnClose(namespace?: string) {
                     this.removeHandler('close', namespace);
                 }
-                addOnRefresh(fn: (sender: any, args: { isHandled: boolean; }) => void , namespace?: string) {
-                    this.addHandler('refresh', fn, namespace);
+                addOnRefresh(fn: (sender: any, args: { isHandled: boolean; }) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('refresh', fn, namespace, context);
                 }
                 removeOnRefresh(namespace?: string) {
                     this.removeHandler('refresh', namespace);

@@ -466,7 +466,6 @@ var RIAPP;
                         self.searchString = null;
                     },
                     fn_OnOK: function (dialog) {
-                        var DIALOG_ACTION = RIAPP.MOD.datadialog.DIALOG_ACTION;
                         if (!self._isAddingNew) {
                             //allow to close the dialog
                             return 0 /* Default */;
@@ -482,7 +481,6 @@ var RIAPP;
                         return 1 /* StayOpen */;
                     },
                     fn_OnCancel: function (dialog) {
-                        var DIALOG_ACTION = RIAPP.MOD.datadialog.DIALOG_ACTION;
                         if (!self._isAddingNew) {
                             return 0 /* Default */;
                         }

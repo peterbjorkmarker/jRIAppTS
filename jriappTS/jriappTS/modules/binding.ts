@@ -70,7 +70,7 @@
                     }, options);
 
                     if (utils.check.isString(opts.mode)) {
-                        opts.mode = <any>BINDING_MODE[opts.mode];
+                        opts.mode = BINDING_MODE[(<string><any>opts.mode)];
                     }
 
                     if (!utils.check.isString(opts.targetPath)) {
@@ -119,37 +119,7 @@
                     if (!!err_notif && err_notif.getIsHasErrors())
                         this._onSrcErrorsChanged(err_notif);
                  }
-                private _getOnTgtDestroyedProxy() {
-                    var self = this;
-                    return function (s, a) {
-                        self._onTgtDestroyed(s,a);
-                    };
-                }
-                private _getOnSrcDestroyedProxy() {
-                    var self = this;
-                    return function (s, a) {
-                        self._onSrcDestroyed(s,a);
-                    };
-                }
-                private _getUpdTgtProxy() {
-                    var self = this;
-                    return function (sender, args) {
-                        self._updateTarget();
-                    };
-                }
-                private _getUpdSrcProxy() {
-                    var self = this;
-                    return function (sender, args) {
-                        self._updateSource();
-                    };
-                }
-                private _getSrcErrChangedProxy() {
-                    var self = this;
-                    return function (err_notif: IErrorNotification, args) {
-                        self._onSrcErrorsChanged(err_notif);
-                    };
-                }
-                private _onSrcErrorsChanged(err_notif: IErrorNotification) {
+                private _onSrcErrorsChanged(err_notif: IErrorNotification, args?) {
                     var errors:IValidationInfo[] = [], tgt = this._targetObj, src = this._sourceObj, srcPath = this._srcPath;
                     if (!!tgt && utils.check.isElView(tgt)) {
                         if (!!src && srcPath.length > 0) {
@@ -159,13 +129,14 @@
                         (<elviewMOD.BaseElView>tgt).validationErrors = errors;
                     }
                 }
-                private _getTgtChangedFn(self: Binding, obj, prop:string, restPath:string[], lvl:number) {
+                private _getTgtChangedFn(self: Binding, obj: any, prop:string, restPath:string[], lvl:number) {
                     var fn = function (sender, data) {
                         var val = parser.resolveProp(obj, prop);
                         if (restPath.length > 0) {
                             self._setPathItem(null, BindTo.Target, lvl, restPath);
                         }
-                        self._parseTgtPath(val, restPath, lvl); //bind and trigger target update
+                        //bind and trigger target update
+                        self._parseTgtPath(val, restPath, lvl);
                     };
                     return fn;
                 }
@@ -198,7 +169,7 @@
                     var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj)), isValidProp: boolean;
                     
                     if (isBaseObj) {
-                        obj.addOnDestroyed(self._getOnSrcDestroyedProxy(), self._objId);
+                        (<BaseObject>obj).addOnDestroyed(self._onSrcDestroyed, self._objId, self);
                         self._setPathItem(obj, BindTo.Source, lvl, path);
                     }
 
@@ -232,11 +203,11 @@
                         if (isValidProp) {
                             var updateOnChange = isBaseObj && (self._mode === BINDING_MODE.OneWay || self._mode === BINDING_MODE.TwoWay);
                             if (updateOnChange) {
-                                (<BaseObject>obj).addOnPropertyChange(path[0], self._getUpdTgtProxy(), self._objId);
+                                (<BaseObject>obj).addOnPropertyChange(path[0], self._updateTarget, self._objId, self);
                             }
                             var err_notif = utils.getErrorNotification(obj);
                             if (!!err_notif) {
-                                err_notif.addOnErrorsChanged(self._getSrcErrChangedProxy(), self._objId);
+                                err_notif.addOnErrorsChanged(self._onSrcErrorsChanged, self._objId, self);
                             }
                             self._sourceObj = obj;
                         }
@@ -262,13 +233,13 @@
                     var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj)), isValidProp: boolean;
 
                     if (isBaseObj) {
-                        (<BaseObject>obj).addOnDestroyed(self._getOnTgtDestroyedProxy(), self._objId);
+                        (<BaseObject>obj).addOnDestroyed(self._onTgtDestroyed, self._objId, self);
                         self._setPathItem(obj, BindTo.Target, lvl, path);
                     }
 
                     if (path.length > 1) {
                         if (isBaseObj) {
-                            (<BaseObject>obj).addOnPropertyChange(path[0], self._getTgtChangedFn(self, obj, path[0], path.slice(1), lvl + 1), self._objId);
+                            (<BaseObject>obj).addOnPropertyChange(path[0], self._getTgtChangedFn(self, obj, path[0], path.slice(1), lvl + 1), self._objId, self);
                         }
                         if (!!obj) {
                             nextObj = global.parser.resolveProp(obj, path[0]);
@@ -295,7 +266,7 @@
                         if (isValidProp) {
                             var updateOnChange = isBaseObj && (self._mode === BINDING_MODE.TwoWay);
                             if (updateOnChange) {
-                                (<BaseObject>obj).addOnPropertyChange(path[0], self._getUpdSrcProxy(), self._objId);
+                                (<BaseObject>obj).addOnPropertyChange(path[0], self._updateSource, self._objId, self);
                             }
                             self._targetObj = obj;
                         }
@@ -368,7 +339,7 @@
                 private _bindToTarget() {
                     this._parseTgtPath(this.target, this._tgtPath, 0);
                 }
-                private _updateTarget() {
+                private _updateTarget(sender?, args?) {
                     if (this._ignoreSrcChange)
                         return;
                     this._ignoreTgtChange = true;
@@ -384,7 +355,7 @@
                         this._ignoreTgtChange = false;
                     }
                 }
-                private _updateSource() {
+                private _updateSource(sender?, args?) {
                     if (this._ignoreTgtChange)
                         return;
                     this._ignoreSrcChange = true;

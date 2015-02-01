@@ -961,6 +961,7 @@ var RIAPP;
                 this._headerVM = null;
                 this._productVM = null;
                 this._uploadVM = null;
+                this._sseVM = null;
             }
             DemoApplication.prototype.onStartUp = function () {
                 var self = this, options = self.options;
@@ -987,6 +988,16 @@ var RIAPP;
                 //here we could process application's errors
                 this.addOnError(handleError);
                 this._dbContext.addOnError(handleError);
+                if (!!options.sse_url) {
+                    this._sseVM = new RIAPP.SSEVENTS.SSEventsVM(options.sse_url, options.sse_clientID);
+                    this._sseVM.addOnMessage(function (s, a) {
+                        self._sseMessage = a.data.message;
+                        self.raisePropertyChanged('sseMessage');
+                    });
+                    this._sseVM.open().fail(function (err) {
+                        self._handleError(self._sseVM, { error: err.message });
+                    });
+                }
                 //adding event handler for our custom event
                 this._uploadVM.addOnFilesUploaded(function (s, a) {
                     //need to update ThumbnailPhotoFileName
@@ -1029,6 +1040,8 @@ var RIAPP;
                     self._productVM.destroy();
                     self._uploadVM.destroy();
                     self._dbContext.destroy();
+                    if (!!self._sseVM)
+                        self._sseVM.destroy();
                 }
                 finally {
                     _super.prototype.destroy.call(this);
@@ -1072,6 +1085,21 @@ var RIAPP;
             Object.defineProperty(DemoApplication.prototype, "uploadVM", {
                 get: function () {
                     return this._uploadVM;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(DemoApplication.prototype, "sseVM", {
+                //server side events
+                get: function () {
+                    return this._sseVM;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(DemoApplication.prototype, "sseMessage", {
+                get: function () {
+                    return this._sseMessage;
                 },
                 enumerable: true,
                 configurable: true
@@ -1153,7 +1181,9 @@ var RIAPP;
             sizeDisplayTemplate_url: null,
             modelData: null,
             categoryData: null,
-            user_modules: [{ name: "COMMON", initFn: RIAPP.COMMON.initModule }, { name: "HEADER", initFn: RIAPP.HEADER.initModule }, { name: "GRIDDEMO", initFn: initModule }]
+            sse_url: null,
+            sse_clientID: null,
+            user_modules: [{ name: "COMMON", initFn: RIAPP.COMMON.initModule }, { name: "HEADER", initFn: RIAPP.HEADER.initModule }, { name: "GRIDDEMO", initFn: initModule }, { name: "SSEVENTS", initFn: RIAPP.SSEVENTS.initModule }]
         };
     })(GRIDDEMO = RIAPP.GRIDDEMO || (RIAPP.GRIDDEMO = {}));
 })(RIAPP || (RIAPP = {}));

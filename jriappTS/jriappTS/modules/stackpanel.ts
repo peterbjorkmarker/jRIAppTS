@@ -84,8 +84,8 @@
                 templateUnLoading(template: templMOD.Template): void {
                     //noop
                 }
-                addOnItemClicked(fn: (sender: StackPanel, args: { item: collMOD.ICollectionItem; }) => void , namespace?: string) {
-                    this.addHandler('item_clicked', fn, namespace);
+                addOnItemClicked(fn: (sender: StackPanel, args: { item: collMOD.ICollectionItem; }) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('item_clicked', fn, namespace, context);
                 }
                 removeOnItemClicked(namespace?: string) {
                     this.removeHandler('item_clicked', namespace);
@@ -150,7 +150,7 @@
                         this.raisePropertyChanged('currentItem');
                     }
                 }
-                protected _onDSCurrentChanged() {
+                protected _onDSCurrentChanged(sender, args) {
                     var ds = this.dataSource, cur = ds.currentItem;
                     if (!cur)
                         this._updateCurrent(null, false);
@@ -158,7 +158,7 @@
                         this._updateCurrent(cur, true);
                     }
                 }
-                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
+                protected _onDSCollectionChanged(sender, args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
                     var self = this, items = args.items;
                     switch (args.change_type) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
@@ -188,7 +188,7 @@
                             throw new Error(global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
-                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.ICollectionItem>) {
+                protected _onDSFill(sender, args: collMOD.ICollFillArgs<collMOD.ICollectionItem>) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -255,20 +255,10 @@
                 protected _bindDS() {
                     var self = this, ds = this.dataSource;
                     if (!ds) return;
-                    ds.addOnCollChanged(function (sender, args) {
-                        if (ds !== sender) return;
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addOnFill(function (sender, args) {
-                        if (ds !== sender) return;
-                        self._onDSFill(args);
-                    }, self._objId);
-                    ds.addOnPropertyChange('currentItem', function (sender, args) {
-                        if (ds !== sender) return;
-                        self._onDSCurrentChanged();
-                    }, self._objId);
+                    ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
+                    ds.addOnFill(self._onDSFill, self._objId, self);
+                    ds.addOnPropertyChange('currentItem', self._onDSCurrentChanged, self._objId, self);
                     ds.addOnStatusChanged(function (sender, args) {
-                        if (ds !== sender) return;
                         self._onItemStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
                     this._refresh();

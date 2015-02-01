@@ -161,13 +161,13 @@
                 protected _setDSPageIndex(page:number) {
                     this.dataSource.pageIndex = page - 1;
                 }
-                protected _onPageSizeChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>) {
+                protected _onPageSizeChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>, args?) {
                     this.rowsPerPage = ds.pageSize;
                 }
-                protected _onPageIndexChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>) {
+                protected _onPageIndexChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>, args?) {
                     this.currentPage = ds.pageIndex + 1;
                 }
-                protected _onTotalCountChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>) {
+                protected _onTotalCountChanged(ds: collMOD.BaseCollection<collMOD.ICollectionItem>, args?) {
                     this.rowCount = ds.totalCount;
                 }
                 destroy() {
@@ -192,15 +192,9 @@
                             }, 0);
                         }
                     }, self._objId);
-                    ds.addOnPropertyChange('pageIndex', function (sender, args) {
-                        self._onPageIndexChanged(ds);
-                    }, self._objId);
-                    ds.addOnPropertyChange('pageSize', function (sender, args) {
-                        self._onPageSizeChanged(ds);
-                    }, self._objId);
-                    ds.addOnPropertyChange('totalCount', function (sender, args) {
-                        self._onTotalCountChanged(ds);
-                    }, self._objId);
+                    ds.addOnPropertyChange('pageIndex', self._onPageIndexChanged, self._objId, self);
+                    ds.addOnPropertyChange('pageSize', self._onPageSizeChanged, self._objId, self);
+                    ds.addOnPropertyChange('totalCount', self._onTotalCountChanged, self._objId, self);
                     this._currentPage = ds.pageIndex + 1;
                     this._rowsPerPage = ds.pageSize;
                     this._rowCount = ds.totalCount;

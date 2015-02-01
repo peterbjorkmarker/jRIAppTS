@@ -1298,38 +1298,38 @@
                     return ['row_expanded', 'row_selected', 'page_changed', 'row_state_changed',
                         'cell_dblclicked', 'row_action'].concat(base_events);
                 }
-                addOnRowExpanded(fn: (sender: DataGrid, args: { old_expandedRow: Row; expandedRow: Row; isExpanded: boolean; }) => void , namespace?: string) {
-                    this.addHandler('row_expanded', fn, namespace);
+                addOnRowExpanded(fn: (sender: DataGrid, args: { old_expandedRow: Row; expandedRow: Row; isExpanded: boolean; }) => void, namespace?: string, context?: any) {
+                    this.addHandler('row_expanded', fn, namespace, context);
                 }
                 removeOnRowExpanded(namespace?: string) {
                     this.removeHandler('row_expanded', namespace);
                 }
-                addOnRowSelected(fn: (sender: DataGrid, args: { row: Row; }) => void , namespace?: string) {
-                    this.addHandler('row_selected', fn, namespace);
+                addOnRowSelected(fn: (sender: DataGrid, args: { row: Row; }) => void, namespace?: string, context?: any) {
+                    this.addHandler('row_selected', fn, namespace, context);
                 }
                 removeOnRowSelected(namespace?: string) {
                     this.removeHandler('row_selected', namespace);
                 }
-                addOnPageChanged(fn: (sender: DataGrid, args: {}) => void , namespace?: string) {
-                    this.addHandler('page_changed', fn, namespace);
+                addOnPageChanged(fn: (sender: DataGrid, args: {}) => void, namespace?: string, context?: any) {
+                    this.addHandler('page_changed', fn, namespace, context);
                 }
                 removeOnPageChanged(namespace?: string) {
                     this.removeHandler('page_changed', namespace);
                 }
-                addOnRowStateChanged(fn: (sender: DataGrid, args: { row: Row; val: any; css: string; }) => void , namespace?: string) {
-                    this.addHandler('row_state_changed', fn, namespace);
+                addOnRowStateChanged(fn: (sender: DataGrid, args: { row: Row; val: any; css: string; }) => void, namespace?: string, context?: any) {
+                    this.addHandler('row_state_changed', fn, namespace, context);
                 }
                 removeOnRowStateChanged(namespace?: string) {
                     this.removeHandler('row_state_changed', namespace);
                 }
-                addOnCellDblClicked(fn: (sender: DataGrid, args: { cell: BaseCell; }) => void , namespace?: string) {
-                    this.addHandler('cell_dblclicked', fn, namespace);
+                addOnCellDblClicked(fn: (sender: DataGrid, args: { cell: BaseCell; }) => void, namespace?: string, context?: any) {
+                    this.addHandler('cell_dblclicked', fn, namespace, context);
                 }
                 removeOnCellDblClicked(namespace?: string) {
                     this.removeHandler('cell_dblclicked', namespace);
                 }
-                addOnRowAction(fn: (sender: DataGrid, args: { row: Row; action: ROW_ACTION; }) => void, namespace?: string) {
-                    this.addHandler('row_action', fn, namespace);
+                addOnRowAction(fn: (sender: DataGrid, args: { row: Row; action: ROW_ACTION; }) => void, namespace?: string, context?: any) {
+                    this.addHandler('row_action', fn, namespace, context);
                 }
                 removeOnRowAction(namespace?: string) {
                     this.removeHandler('row_action', namespace);
@@ -1601,7 +1601,7 @@
                     }
                     return isHandled;
                 }
-                protected _onDSCurrentChanged() {
+                protected _onDSCurrentChanged(sender?, args?) {
                     var ds = this.dataSource, cur: collMOD.ICollectionItem;
                     if (!!ds)
                         cur = ds.currentItem;
@@ -1611,7 +1611,7 @@
                         this._updateCurrent(this._rowMap[cur._key], false);
                     }
                 }
-                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
+                protected _onDSCollectionChanged(sender, args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
                     var self = this, row: Row, items = args.items;
                     switch (args.change_type) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
@@ -1643,7 +1643,7 @@
                             throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
-                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.ICollectionItem>) {
+                protected _onDSFill(sender, args: collMOD.ICollFillArgs<collMOD.ICollectionItem>) {
                     var isEnd = !args.isBegin, self = this;
                     if (isEnd) {
                         self._isDSFilling = false;
@@ -1694,7 +1694,7 @@
                     }
                     this.raisePropertyChanged('editingRow');
                 }
-                protected _onItemAdded(args: collMOD.ICollItemAddedArgs<collMOD.ICollectionItem>) {
+                protected _onItemAdded(sender, args: collMOD.ICollItemAddedArgs<collMOD.ICollectionItem>) {
                     var item = args.item, row = this._rowMap[item._key];
                     if (!row)
                         return;
@@ -1723,8 +1723,8 @@
                         row.isDeleted = false;
                     }
                 }
-                protected _onDSErrorsChanged(item: collMOD.ICollectionItem) {
-                    var row = this._rowMap[item._key];
+                protected _onDSErrorsChanged(sender, args: collMOD.ICollItemArgs<collMOD.ICollectionItem>) {
+                    var row = this._rowMap[args.item._key];
                     if (!row)
                         return;
                     row.updateErrorState();
@@ -1732,32 +1732,20 @@
                 protected _bindDS() {
                     var self = this, ds = this.dataSource;
                     if (!ds) return;
-                    ds.addOnCollChanged(function (sender, args) {
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addOnFill(function (sender, args) {
-                        self._onDSFill(args);
-                    }, self._objId);
-                    ds.addOnPropertyChange('currentItem', function (sender, args) {
-                        self._onDSCurrentChanged();
-                    }, self._objId);
+                    ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
+                    ds.addOnFill(self._onDSFill, self._objId, self);
+                    ds.addOnPropertyChange('currentItem', self._onDSCurrentChanged, self._objId, self);
                     ds.addOnBeginEdit(function (sender, args) {
-                        self._onItemEdit(args.item, true, undefined);
+                        self._onItemEdit(args.item, true, false);
                     }, self._objId);
                     ds.addOnEndEdit(function (sender, args) {
                         self._onItemEdit(args.item, false, args.isCanceled);
                     }, self._objId);
-                    ds.addOnErrorsChanged(function (sender, args) {
-                        self._onDSErrorsChanged(args.item);
-                    }, self._objId);
+                    ds.addOnErrorsChanged(self._onDSErrorsChanged, self._objId, self);
                     ds.addOnStatusChanged(function (sender, args) {
-                        if (ds !== sender) return;
                         self._onItemStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
-                    ds.addOnItemAdded(function (sender, args) {
-                        if (ds !== sender) return;
-                        self._onItemAdded(args);
-                    }, self._objId);
+                    ds.addOnItemAdded(self._onItemAdded, self._objId, self);
                     //fills all rows
                     this._refreshGrid();
                     this._updateColsDim();

@@ -131,7 +131,7 @@
                     else
                         return this._getStringValue(item);
                 }
-                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
+                protected _onDSCollectionChanged(sender, args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
                     var self = this, data;
                     switch (args.change_type) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
@@ -162,7 +162,7 @@
                             }
                     }
                 }
-                protected _onDSFill(args: collMOD.ICollFillArgs<collMOD.ICollectionItem>) {
+                protected _onDSFill(sender, args: collMOD.ICollFillArgs<collMOD.ICollectionItem>) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -247,28 +247,18 @@
                 private _bindDS() {
                     var self = this, ds = this.dataSource;
                     if (!ds) return;
-                    ds.addOnCollChanged(function (sender, args) {
-                        if (ds !== sender) return;
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addOnFill(function (sender, args) {
-                        if (ds !== sender) return;
-                        self._onDSFill(args);
-                    }, self._objId);
+                    ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
+                    ds.addOnFill(self._onDSFill, self._objId, self);
                     ds.addOnBeginEdit(function (sender, args) {
-                        if (ds !== sender) return;
                         self._onEdit(args.item, true, undefined);
                     }, self._objId);
                     ds.addOnEndEdit(function (sender, args) {
-                        if (ds !== sender) return;
                         self._onEdit(args.item, false, args.isCanceled);
                     }, self._objId);
                     ds.addOnStatusChanged(function (sender, args) {
-                        if (ds !== sender) return;
                         self._onStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
                     ds.addOnCommitChanges(function (sender, args) {
-                        if (ds !== sender) return;
                         self._onCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId);
                 }

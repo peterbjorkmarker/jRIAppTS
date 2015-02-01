@@ -981,11 +981,6 @@ var RIAPP;
                 this._headerVM = new RIAPP.HEADER.HeaderVM(this);
                 this._productVM = new ProductViewModel(this);
                 this._uploadVM = new UploadThumbnailVM(this, options.upload_thumb_url);
-                this._sseVM = new RIAPP.SSEVENTS.SSEventsVM(options.sse_url, options.sse_clientID);
-                this._sseVM.addOnMessage(function (s, a) {
-                    self._sseMessage = a.data.message;
-                    self.raisePropertyChanged('sseMessage');
-                });
                 function handleError(sender, data) {
                     self._handleError(sender, data);
                 }
@@ -993,6 +988,16 @@ var RIAPP;
                 //here we could process application's errors
                 this.addOnError(handleError);
                 this._dbContext.addOnError(handleError);
+                if (!!options.sse_url) {
+                    this._sseVM = new RIAPP.SSEVENTS.SSEventsVM(options.sse_url, options.sse_clientID);
+                    this._sseVM.addOnMessage(function (s, a) {
+                        self._sseMessage = a.data.message;
+                        self.raisePropertyChanged('sseMessage');
+                    });
+                    this._sseVM.open().fail(function (err) {
+                        self._handleError(self._sseVM, { error: err.message });
+                    });
+                }
                 //adding event handler for our custom event
                 this._uploadVM.addOnFilesUploaded(function (s, a) {
                     //need to update ThumbnailPhotoFileName
@@ -1015,9 +1020,6 @@ var RIAPP;
                         });
                     });
                 }
-                this._sseVM.open().fail(function (err) {
-                    self._handleError(self._sseVM, { error: err.message });
-                });
                 _super.prototype.onStartUp.call(this);
             };
             DemoApplication.prototype._handleError = function (sender, data) {
@@ -1038,7 +1040,8 @@ var RIAPP;
                     self._productVM.destroy();
                     self._uploadVM.destroy();
                     self._dbContext.destroy();
-                    self._sseVM.destroy();
+                    if (!!self._sseVM)
+                        self._sseVM.destroy();
                 }
                 finally {
                     _super.prototype.destroy.call(this);

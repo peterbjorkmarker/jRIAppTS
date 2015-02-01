@@ -43,7 +43,7 @@
     }
 
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.5.2';
+        public static vesion = '2.5.3';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;

@@ -289,6 +289,7 @@ var RIAPP;
                         cur = next;
                         next = (!cur) ? null : cur.next;
                     }
+                    del.context = null;
                     del.fn = null;
                     del.next = null;
                 }
@@ -307,7 +308,7 @@ var RIAPP;
                 return res;
             var cur = list.head;
             while (!!cur) {
-                res.push(cur.fn);
+                res.push(cur);
                 cur = cur.next;
             }
             return res;
@@ -323,11 +324,12 @@ var RIAPP;
         BaseObject.prototype._getEventNames = function () {
             return ['error', 'destroyed'];
         };
-        BaseObject.prototype._addHandler = function (name, fn, namespace, prepend) {
+        BaseObject.prototype._addHandler = function (name, handler, namespace, context, prepend) {
             if (this._isDestroyed)
                 return;
-            if (!RIAPP.baseUtils.isFunc(fn))
+            if (!RIAPP.baseUtils.isFunc(handler)) {
                 throw new Error(RIAPP.ERRS.ERR_EVENT_INVALID_FUNC);
+            }
             if (!name)
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
             if (this._events === null)
@@ -335,7 +337,7 @@ var RIAPP;
             var self = this, ev = self._events, n = name, ns = '*';
             if (!!namespace)
                 ns = '' + namespace;
-            var list = ev[n], node = { fn: fn, ns: ns, next: null };
+            var list = ev[n], node = { fn: handler, ns: ns, next: null, context: !context ? null : context };
             if (!list) {
                 ev[n] = { head: node, tail: node };
                 return;
@@ -401,7 +403,7 @@ var RIAPP;
                 }
                 var events = EventsHelper.toArray(ev[name]);
                 for (var i = 0; i < events.length; i++) {
-                    events[i].apply(null, [self, args]);
+                    events[i].fn.apply(events[i].context, [self, args]);
                 }
             }
         };
@@ -466,9 +468,9 @@ var RIAPP;
                 this.raiseEvent('0' + lastPropName, data);
             }
         };
-        BaseObject.prototype.addHandler = function (name, fn, namespace, prepend) {
+        BaseObject.prototype.addHandler = function (name, handler, namespace, context, prepend) {
             this._checkEventName(name);
-            this._addHandler(name, fn, namespace, !!prepend);
+            this._addHandler(name, handler, namespace, context, prepend);
         };
         BaseObject.prototype.removeHandler = function (name, namespace) {
             if (!!name) {
@@ -476,14 +478,14 @@ var RIAPP;
             }
             this._removeHandler(name, namespace);
         };
-        BaseObject.prototype.addOnDestroyed = function (fn, namespace) {
-            this._addHandler('destroyed', fn, namespace, false);
+        BaseObject.prototype.addOnDestroyed = function (handler, namespace, context) {
+            this._addHandler('destroyed', handler, namespace, context, false);
         };
         BaseObject.prototype.removeOnDestroyed = function (namespace) {
             this._removeHandler('destroyed', namespace);
         };
-        BaseObject.prototype.addOnError = function (fn, namespace) {
-            this._addHandler('error', fn, namespace, false);
+        BaseObject.prototype.addOnError = function (handler, namespace, context) {
+            this._addHandler('error', handler, namespace, context, false);
         };
         BaseObject.prototype.removeOnError = function (namespace) {
             this.removeHandler('error', namespace);
@@ -500,7 +502,7 @@ var RIAPP;
             this._raiseEvent(name, args);
         };
         //to subscribe fortthe changes on all properties, pass in the prop parameter: '*'
-        BaseObject.prototype.addOnPropertyChange = function (prop, fn, namespace) {
+        BaseObject.prototype.addOnPropertyChange = function (prop, handler, namespace, context) {
             if (!prop)
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);
             if (RIAPP.DebugLevel > 0 /* NONE */ && prop != '*' && !this._isHasProp(prop)) {
@@ -510,7 +512,7 @@ var RIAPP;
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
             }
             prop = '0' + prop;
-            this._addHandler(prop, fn, namespace, false);
+            this._addHandler(prop, handler, namespace, context, false);
         };
         BaseObject.prototype.removeOnPropertyChange = function (prop, namespace) {
             if (!!prop) {
@@ -1084,7 +1086,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.2';
+        Global.vesion = '2.5.3';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -1256,7 +1258,7 @@ var RIAPP;
                     return !!obj && obj instanceof MOD.template.TemplateElView;
                 };
                 Checks.isEditable = function (obj) {
-                    return !!obj && !!obj.beginEdit && !!obj.endEdit && !!obj.cancelEdit && RIAPP.global.utils.hasProp(obj, 'isEditing');
+                    return !!obj && obj instanceof RIAPP.BaseObject && !!obj.beginEdit && !!obj.endEdit && !!obj.cancelEdit && RIAPP.global.utils.hasProp(obj, 'isEditing');
                 };
                 Checks.isSubmittable = function (obj) {
                     return !!obj && !!obj.submitChanges && !!obj.rejectChanges && RIAPP.global.utils.hasProp(obj, '_isCanSubmit');
@@ -2958,8 +2960,8 @@ var RIAPP;
                     var base_events = _super.prototype._getEventNames.call(this);
                     return ['canExecute_changed'].concat(base_events);
                 };
-                Command.prototype.addOnCanExecuteChanged = function (fn, namespace) {
-                    this.addHandler('canExecute_changed', fn, namespace);
+                Command.prototype.addOnCanExecuteChanged = function (fn, namespace, context) {
+                    this.addHandler('canExecute_changed', fn, namespace, context);
                 };
                 Command.prototype.removeOnCanExecuteChanged = function (namespace) {
                     this.removeHandler('canExecute_changed', namespace);
@@ -3383,6 +3385,9 @@ var RIAPP;
                 CommandElView.prototype._onCommandChanged = function () {
                     this.raisePropertyChanged('command');
                 };
+                CommandElView.prototype._onCanExecuteChanged = function (cmd, args) {
+                    this.isEnabled = cmd.canExecute(this, this.commandParam);
+                };
                 CommandElView.prototype._setCommand = function (v) {
                     var self = this;
                     if (v !== this._command) {
@@ -3391,9 +3396,7 @@ var RIAPP;
                         }
                         this._command = v;
                         if (!!this._command) {
-                            this._command.addOnCanExecuteChanged(function (cmd, args) {
-                                self.isEnabled = cmd.canExecute(self, self.commandParam);
-                            }, this._objId);
+                            this._command.addOnCanExecuteChanged(self._onCanExecuteChanged, this._objId, self);
                             self.isEnabled = this._command.canExecute(self, self.commandParam);
                         }
                         else
@@ -4629,37 +4632,7 @@ var RIAPP;
                     if (!!err_notif && err_notif.getIsHasErrors())
                         this._onSrcErrorsChanged(err_notif);
                 }
-                Binding.prototype._getOnTgtDestroyedProxy = function () {
-                    var self = this;
-                    return function (s, a) {
-                        self._onTgtDestroyed(s, a);
-                    };
-                };
-                Binding.prototype._getOnSrcDestroyedProxy = function () {
-                    var self = this;
-                    return function (s, a) {
-                        self._onSrcDestroyed(s, a);
-                    };
-                };
-                Binding.prototype._getUpdTgtProxy = function () {
-                    var self = this;
-                    return function (sender, args) {
-                        self._updateTarget();
-                    };
-                };
-                Binding.prototype._getUpdSrcProxy = function () {
-                    var self = this;
-                    return function (sender, args) {
-                        self._updateSource();
-                    };
-                };
-                Binding.prototype._getSrcErrChangedProxy = function () {
-                    var self = this;
-                    return function (err_notif, args) {
-                        self._onSrcErrorsChanged(err_notif);
-                    };
-                };
-                Binding.prototype._onSrcErrorsChanged = function (err_notif) {
+                Binding.prototype._onSrcErrorsChanged = function (err_notif, args) {
                     var errors = [], tgt = this._targetObj, src = this._sourceObj, srcPath = this._srcPath;
                     if (!!tgt && utils.check.isElView(tgt)) {
                         if (!!src && srcPath.length > 0) {
@@ -4675,7 +4648,8 @@ var RIAPP;
                         if (restPath.length > 0) {
                             self._setPathItem(null, 1 /* Target */, lvl, restPath);
                         }
-                        self._parseTgtPath(val, restPath, lvl); //bind and trigger target update
+                        //bind and trigger target update
+                        self._parseTgtPath(val, restPath, lvl);
                     };
                     return fn;
                 };
@@ -4706,7 +4680,7 @@ var RIAPP;
                 Binding.prototype._parseSrcPath2 = function (obj, path, lvl) {
                     var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj)), isValidProp;
                     if (isBaseObj) {
-                        obj.addOnDestroyed(self._getOnSrcDestroyedProxy(), self._objId);
+                        obj.addOnDestroyed(self._onSrcDestroyed, self._objId, self);
                         self._setPathItem(obj, 0 /* Source */, lvl, path);
                     }
                     if (path.length > 1) {
@@ -4736,11 +4710,11 @@ var RIAPP;
                         if (isValidProp) {
                             var updateOnChange = isBaseObj && (self._mode === 1 /* OneWay */ || self._mode === 2 /* TwoWay */);
                             if (updateOnChange) {
-                                obj.addOnPropertyChange(path[0], self._getUpdTgtProxy(), self._objId);
+                                obj.addOnPropertyChange(path[0], self._updateTarget, self._objId, self);
                             }
                             var err_notif = utils.getErrorNotification(obj);
                             if (!!err_notif) {
-                                err_notif.addOnErrorsChanged(self._getSrcErrChangedProxy(), self._objId);
+                                err_notif.addOnErrorsChanged(self._onSrcErrorsChanged, self._objId, self);
                             }
                             self._sourceObj = obj;
                         }
@@ -4766,12 +4740,12 @@ var RIAPP;
                 Binding.prototype._parseTgtPath2 = function (obj, path, lvl) {
                     var self = this, nextObj, isBaseObj = (!!obj && utils.check.isBaseObj(obj)), isValidProp;
                     if (isBaseObj) {
-                        obj.addOnDestroyed(self._getOnTgtDestroyedProxy(), self._objId);
+                        obj.addOnDestroyed(self._onTgtDestroyed, self._objId, self);
                         self._setPathItem(obj, 1 /* Target */, lvl, path);
                     }
                     if (path.length > 1) {
                         if (isBaseObj) {
-                            obj.addOnPropertyChange(path[0], self._getTgtChangedFn(self, obj, path[0], path.slice(1), lvl + 1), self._objId);
+                            obj.addOnPropertyChange(path[0], self._getTgtChangedFn(self, obj, path[0], path.slice(1), lvl + 1), self._objId, self);
                         }
                         if (!!obj) {
                             nextObj = global.parser.resolveProp(obj, path[0]);
@@ -4796,7 +4770,7 @@ var RIAPP;
                         if (isValidProp) {
                             var updateOnChange = isBaseObj && (self._mode === 2 /* TwoWay */);
                             if (updateOnChange) {
-                                obj.addOnPropertyChange(path[0], self._getUpdSrcProxy(), self._objId);
+                                obj.addOnPropertyChange(path[0], self._updateSource, self._objId, self);
                             }
                             self._targetObj = obj;
                         }
@@ -4867,7 +4841,7 @@ var RIAPP;
                 Binding.prototype._bindToTarget = function () {
                     this._parseTgtPath(this.target, this._tgtPath, 0);
                 };
-                Binding.prototype._updateTarget = function () {
+                Binding.prototype._updateTarget = function (sender, args) {
                     if (this._ignoreSrcChange)
                         return;
                     this._ignoreTgtChange = true;
@@ -4883,7 +4857,7 @@ var RIAPP;
                         this._ignoreTgtChange = false;
                     }
                 };
-                Binding.prototype._updateSource = function () {
+                Binding.prototype._updateSource = function (sender, args) {
                     if (this._ignoreTgtChange)
                         return;
                     this._ignoreSrcChange = true;
@@ -5382,8 +5356,8 @@ var RIAPP;
                     //can reset _isNew on all items in the collection
                     //the list descendant does it
                 };
-                ItemAspect.prototype.addOnErrorsChanged = function (fn, namespace) {
-                    this.addHandler('errors_changed', fn, namespace);
+                ItemAspect.prototype.addOnErrorsChanged = function (fn, namespace, context) {
+                    this.addHandler('errors_changed', fn, namespace, context);
                 };
                 ItemAspect.prototype.removeOnErrorsChanged = function (namespace) {
                     this.removeHandler('errors_changed', namespace);
@@ -5488,7 +5462,9 @@ var RIAPP;
                     var coll = this._collection;
                     if (this._key === null)
                         return false;
-                    if (!coll._onItemDeleting(this.getItem())) {
+                    var args = { item: this.getItem(), isCancel: false };
+                    coll._onItemDeleting(args);
+                    if (args.isCancel) {
                         return false;
                     }
                     coll.removeItem(this.getItem());
@@ -5658,92 +5634,92 @@ var RIAPP;
                     }
                     return isHandled;
                 };
-                BaseCollection.prototype.addOnClearing = function (fn, namespace) {
-                    this.addHandler('clearing', fn, namespace);
+                BaseCollection.prototype.addOnClearing = function (fn, namespace, context) {
+                    this.addHandler('clearing', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnClearing = function (namespace) {
                     this.removeHandler('clearing', namespace);
                 };
-                BaseCollection.prototype.addOnCleared = function (fn, namespace) {
-                    this.addHandler('cleared', fn, namespace);
+                BaseCollection.prototype.addOnCleared = function (fn, namespace, context) {
+                    this.addHandler('cleared', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnCleared = function (namespace) {
                     this.removeHandler('cleared', namespace);
                 };
-                BaseCollection.prototype.addOnFill = function (fn, namespace) {
-                    this.addHandler('fill', fn, namespace);
+                BaseCollection.prototype.addOnFill = function (fn, namespace, context) {
+                    this.addHandler('fill', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnFill = function (namespace) {
                     this.removeHandler('fill', namespace);
                 };
-                BaseCollection.prototype.addOnCollChanged = function (fn, namespace) {
-                    this.addHandler('coll_changed', fn, namespace);
+                BaseCollection.prototype.addOnCollChanged = function (fn, namespace, context) {
+                    this.addHandler('coll_changed', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnCollChanged = function (namespace) {
                     this.removeHandler('coll_changed', namespace);
                 };
-                BaseCollection.prototype.addOnValidate = function (fn, namespace) {
-                    this.addHandler('validate', fn, namespace);
+                BaseCollection.prototype.addOnValidate = function (fn, namespace, context) {
+                    this.addHandler('validate', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnValidate = function (namespace) {
                     this.removeHandler('validate', namespace);
                 };
-                BaseCollection.prototype.addOnItemDeleting = function (fn, namespace) {
-                    this.addHandler('item_deleting', fn, namespace);
+                BaseCollection.prototype.addOnItemDeleting = function (fn, namespace, context) {
+                    this.addHandler('item_deleting', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnItemDeleting = function (namespace) {
                     this.removeHandler('item_deleting', namespace);
                 };
-                BaseCollection.prototype.addOnItemAdding = function (fn, namespace) {
-                    this.addHandler('item_adding', fn, namespace);
+                BaseCollection.prototype.addOnItemAdding = function (fn, namespace, context) {
+                    this.addHandler('item_adding', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnItemAdding = function (namespace) {
                     this.removeHandler('item_adding', namespace);
                 };
-                BaseCollection.prototype.addOnItemAdded = function (fn, namespace) {
-                    this.addHandler('item_added', fn, namespace);
+                BaseCollection.prototype.addOnItemAdded = function (fn, namespace, context) {
+                    this.addHandler('item_added', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnItemAdded = function (namespace) {
                     this.removeHandler('item_added', namespace);
                 };
-                BaseCollection.prototype.addOnCurrentChanging = function (fn, namespace) {
-                    this.addHandler('current_changing', fn, namespace);
+                BaseCollection.prototype.addOnCurrentChanging = function (fn, namespace, context) {
+                    this.addHandler('current_changing', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnCurrentChanging = function (namespace) {
                     this.removeHandler('current_changing', namespace);
                 };
-                BaseCollection.prototype.addOnPageChanging = function (fn, namespace) {
-                    this.addHandler('page_changing', fn, namespace);
+                BaseCollection.prototype.addOnPageChanging = function (fn, namespace, context) {
+                    this.addHandler('page_changing', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnPageChanging = function (namespace) {
                     this.removeHandler('page_changing', namespace);
                 };
-                BaseCollection.prototype.addOnErrorsChanged = function (fn, namespace) {
-                    this.addHandler('errors_changed', fn, namespace);
+                BaseCollection.prototype.addOnErrorsChanged = function (fn, namespace, context) {
+                    this.addHandler('errors_changed', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnErrorsChanged = function (namespace) {
                     this.removeHandler('errors_changed', namespace);
                 };
-                BaseCollection.prototype.addOnBeginEdit = function (fn, namespace) {
-                    this.addHandler('begin_edit', fn, namespace);
+                BaseCollection.prototype.addOnBeginEdit = function (fn, namespace, context) {
+                    this.addHandler('begin_edit', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnBeginEdit = function (namespace) {
                     this.removeHandler('begin_edit', namespace);
                 };
-                BaseCollection.prototype.addOnEndEdit = function (fn, namespace) {
-                    this.addHandler('end_edit', fn, namespace);
+                BaseCollection.prototype.addOnEndEdit = function (fn, namespace, context) {
+                    this.addHandler('end_edit', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnEndEdit = function (namespace) {
                     this.removeHandler('end_edit', namespace);
                 };
-                BaseCollection.prototype.addOnCommitChanges = function (fn, namespace) {
-                    this.addHandler('commit_changes', fn, namespace);
+                BaseCollection.prototype.addOnCommitChanges = function (fn, namespace, context) {
+                    this.addHandler('commit_changes', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnCommitChanges = function (namespace) {
                     this.removeHandler('commit_changes', namespace);
                 };
-                BaseCollection.prototype.addOnStatusChanged = function (fn, namespace) {
-                    this.addHandler('status_changed', fn, namespace);
+                BaseCollection.prototype.addOnStatusChanged = function (fn, namespace, context) {
+                    this.addHandler('status_changed', fn, namespace, context);
                 };
                 BaseCollection.prototype.removeOnStatusChanged = function (namespace) {
                     this.removeHandler('status_changed', namespace);
@@ -5991,8 +5967,7 @@ var RIAPP;
                     this.raiseEvent('errors_changed', args);
                     item._aspect.raiseErrorsChanged({});
                 };
-                BaseCollection.prototype._onItemDeleting = function (item) {
-                    var args = { item: item, isCancel: false };
+                BaseCollection.prototype._onItemDeleting = function (args) {
                     this.raiseEvent('item_deleting', args);
                     return !args.isCancel;
                 };
@@ -8227,9 +8202,12 @@ var RIAPP;
                         RIAPP.global.reThrow(ex, this.handleError(ex, this));
                     }
                 };
-                DataForm.prototype._onDSErrorsChanged = function () {
+                DataForm.prototype._onDSErrorsChanged = function (sender, args) {
                     if (!!this._supportErrNotify)
                         this.validationErrors = this._supportErrNotify.getAllErrors();
+                };
+                DataForm.prototype._onIsEditingChanged = function (sender, args) {
+                    this.isEditing = this._supportEdit.isEditing;
                 };
                 DataForm.prototype._bindDS = function () {
                     var dataContext = this._dataContext, self = this;
@@ -8243,14 +8221,10 @@ var RIAPP;
                         self.dataContext = null;
                     }, self._objId);
                     if (!!this._supportEdit) {
-                        this._supportEdit.addOnPropertyChange('isEditing', function (sender, args) {
-                            self.isEditing = self._supportEdit.isEditing;
-                        }, self._objId);
+                        this._supportEdit.addOnPropertyChange('isEditing', self._onIsEditingChanged, self._objId, self);
                     }
                     if (!!this._supportErrNotify) {
-                        this._supportErrNotify.addOnErrorsChanged(function (sender, args) {
-                            self._onDSErrorsChanged();
-                        }, self._objId);
+                        this._supportErrNotify.addOnErrorsChanged(self._onDSErrorsChanged, self._objId, self);
                     }
                 };
                 DataForm.prototype._unbindDS = function () {
@@ -9022,7 +8996,7 @@ var RIAPP;
                     else
                         return this._getStringValue(item);
                 };
-                ListBox.prototype._onDSCollectionChanged = function (args) {
+                ListBox.prototype._onDSCollectionChanged = function (sender, args) {
                     var self = this, data;
                     switch (args.change_type) {
                         case 2 /* RESET */:
@@ -9052,7 +9026,7 @@ var RIAPP;
                             }
                     }
                 };
-                ListBox.prototype._onDSFill = function (args) {
+                ListBox.prototype._onDSFill = function (sender, args) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -9136,34 +9110,18 @@ var RIAPP;
                     var self = this, ds = this.dataSource;
                     if (!ds)
                         return;
-                    ds.addOnCollChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addOnFill(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSFill(args);
-                    }, self._objId);
+                    ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
+                    ds.addOnFill(self._onDSFill, self._objId, self);
                     ds.addOnBeginEdit(function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onEdit(args.item, true, undefined);
                     }, self._objId);
                     ds.addOnEndEdit(function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onEdit(args.item, false, args.isCanceled);
                     }, self._objId);
                     ds.addOnStatusChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
                     ds.addOnCommitChanges(function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId);
                 };
@@ -9889,14 +9847,14 @@ var RIAPP;
                     }
                     return isHandled;
                 };
-                DataEditDialog.prototype.addOnClose = function (fn, namespace) {
-                    this.addHandler('close', fn, namespace);
+                DataEditDialog.prototype.addOnClose = function (fn, namespace, context) {
+                    this.addHandler('close', fn, namespace, context);
                 };
                 DataEditDialog.prototype.removeOnClose = function (namespace) {
                     this.removeHandler('close', namespace);
                 };
-                DataEditDialog.prototype.addOnRefresh = function (fn, namespace) {
-                    this.addHandler('refresh', fn, namespace);
+                DataEditDialog.prototype.addOnRefresh = function (fn, namespace, context) {
+                    this.addHandler('refresh', fn, namespace, context);
                 };
                 DataEditDialog.prototype.removeOnRefresh = function (namespace) {
                     this.removeHandler('refresh', namespace);
@@ -11788,38 +11746,38 @@ var RIAPP;
                     var base_events = _super.prototype._getEventNames.call(this);
                     return ['row_expanded', 'row_selected', 'page_changed', 'row_state_changed', 'cell_dblclicked', 'row_action'].concat(base_events);
                 };
-                DataGrid.prototype.addOnRowExpanded = function (fn, namespace) {
-                    this.addHandler('row_expanded', fn, namespace);
+                DataGrid.prototype.addOnRowExpanded = function (fn, namespace, context) {
+                    this.addHandler('row_expanded', fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnRowExpanded = function (namespace) {
                     this.removeHandler('row_expanded', namespace);
                 };
-                DataGrid.prototype.addOnRowSelected = function (fn, namespace) {
-                    this.addHandler('row_selected', fn, namespace);
+                DataGrid.prototype.addOnRowSelected = function (fn, namespace, context) {
+                    this.addHandler('row_selected', fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnRowSelected = function (namespace) {
                     this.removeHandler('row_selected', namespace);
                 };
-                DataGrid.prototype.addOnPageChanged = function (fn, namespace) {
-                    this.addHandler('page_changed', fn, namespace);
+                DataGrid.prototype.addOnPageChanged = function (fn, namespace, context) {
+                    this.addHandler('page_changed', fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnPageChanged = function (namespace) {
                     this.removeHandler('page_changed', namespace);
                 };
-                DataGrid.prototype.addOnRowStateChanged = function (fn, namespace) {
-                    this.addHandler('row_state_changed', fn, namespace);
+                DataGrid.prototype.addOnRowStateChanged = function (fn, namespace, context) {
+                    this.addHandler('row_state_changed', fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnRowStateChanged = function (namespace) {
                     this.removeHandler('row_state_changed', namespace);
                 };
-                DataGrid.prototype.addOnCellDblClicked = function (fn, namespace) {
-                    this.addHandler('cell_dblclicked', fn, namespace);
+                DataGrid.prototype.addOnCellDblClicked = function (fn, namespace, context) {
+                    this.addHandler('cell_dblclicked', fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnCellDblClicked = function (namespace) {
                     this.removeHandler('cell_dblclicked', namespace);
                 };
-                DataGrid.prototype.addOnRowAction = function (fn, namespace) {
-                    this.addHandler('row_action', fn, namespace);
+                DataGrid.prototype.addOnRowAction = function (fn, namespace, context) {
+                    this.addHandler('row_action', fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnRowAction = function (namespace) {
                     this.removeHandler('row_action', namespace);
@@ -12087,7 +12045,7 @@ var RIAPP;
                     }
                     return isHandled;
                 };
-                DataGrid.prototype._onDSCurrentChanged = function () {
+                DataGrid.prototype._onDSCurrentChanged = function (sender, args) {
                     var ds = this.dataSource, cur;
                     if (!!ds)
                         cur = ds.currentItem;
@@ -12097,7 +12055,7 @@ var RIAPP;
                         this._updateCurrent(this._rowMap[cur._key], false);
                     }
                 };
-                DataGrid.prototype._onDSCollectionChanged = function (args) {
+                DataGrid.prototype._onDSCollectionChanged = function (sender, args) {
                     var self = this, row, items = args.items;
                     switch (args.change_type) {
                         case 2 /* RESET */:
@@ -12129,7 +12087,7 @@ var RIAPP;
                             throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 };
-                DataGrid.prototype._onDSFill = function (args) {
+                DataGrid.prototype._onDSFill = function (sender, args) {
                     var isEnd = !args.isBegin, self = this;
                     if (isEnd) {
                         self._isDSFilling = false;
@@ -12179,7 +12137,7 @@ var RIAPP;
                     }
                     this.raisePropertyChanged('editingRow');
                 };
-                DataGrid.prototype._onItemAdded = function (args) {
+                DataGrid.prototype._onItemAdded = function (sender, args) {
                     var item = args.item, row = this._rowMap[item._key];
                     if (!row)
                         return;
@@ -12208,8 +12166,8 @@ var RIAPP;
                         row.isDeleted = false;
                     }
                 };
-                DataGrid.prototype._onDSErrorsChanged = function (item) {
-                    var row = this._rowMap[item._key];
+                DataGrid.prototype._onDSErrorsChanged = function (sender, args) {
+                    var row = this._rowMap[args.item._key];
                     if (!row)
                         return;
                     row.updateErrorState();
@@ -12218,34 +12176,20 @@ var RIAPP;
                     var self = this, ds = this.dataSource;
                     if (!ds)
                         return;
-                    ds.addOnCollChanged(function (sender, args) {
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addOnFill(function (sender, args) {
-                        self._onDSFill(args);
-                    }, self._objId);
-                    ds.addOnPropertyChange('currentItem', function (sender, args) {
-                        self._onDSCurrentChanged();
-                    }, self._objId);
+                    ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
+                    ds.addOnFill(self._onDSFill, self._objId, self);
+                    ds.addOnPropertyChange('currentItem', self._onDSCurrentChanged, self._objId, self);
                     ds.addOnBeginEdit(function (sender, args) {
-                        self._onItemEdit(args.item, true, undefined);
+                        self._onItemEdit(args.item, true, false);
                     }, self._objId);
                     ds.addOnEndEdit(function (sender, args) {
                         self._onItemEdit(args.item, false, args.isCanceled);
                     }, self._objId);
-                    ds.addOnErrorsChanged(function (sender, args) {
-                        self._onDSErrorsChanged(args.item);
-                    }, self._objId);
+                    ds.addOnErrorsChanged(self._onDSErrorsChanged, self._objId, self);
                     ds.addOnStatusChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onItemStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
-                    ds.addOnItemAdded(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onItemAdded(args);
-                    }, self._objId);
+                    ds.addOnItemAdded(self._onItemAdded, self._objId, self);
                     //fills all rows
                     this._refreshGrid();
                     this._updateColsDim();
@@ -12972,13 +12916,13 @@ var RIAPP;
                 Pager.prototype._setDSPageIndex = function (page) {
                     this.dataSource.pageIndex = page - 1;
                 };
-                Pager.prototype._onPageSizeChanged = function (ds) {
+                Pager.prototype._onPageSizeChanged = function (ds, args) {
                     this.rowsPerPage = ds.pageSize;
                 };
-                Pager.prototype._onPageIndexChanged = function (ds) {
+                Pager.prototype._onPageIndexChanged = function (ds, args) {
                     this.currentPage = ds.pageIndex + 1;
                 };
-                Pager.prototype._onTotalCountChanged = function (ds) {
+                Pager.prototype._onTotalCountChanged = function (ds, args) {
                     this.rowCount = ds.totalCount;
                 };
                 Pager.prototype.destroy = function () {
@@ -13004,15 +12948,9 @@ var RIAPP;
                             }, 0);
                         }
                     }, self._objId);
-                    ds.addOnPropertyChange('pageIndex', function (sender, args) {
-                        self._onPageIndexChanged(ds);
-                    }, self._objId);
-                    ds.addOnPropertyChange('pageSize', function (sender, args) {
-                        self._onPageSizeChanged(ds);
-                    }, self._objId);
-                    ds.addOnPropertyChange('totalCount', function (sender, args) {
-                        self._onTotalCountChanged(ds);
-                    }, self._objId);
+                    ds.addOnPropertyChange('pageIndex', self._onPageIndexChanged, self._objId, self);
+                    ds.addOnPropertyChange('pageSize', self._onPageSizeChanged, self._objId, self);
+                    ds.addOnPropertyChange('totalCount', self._onTotalCountChanged, self._objId, self);
                     this._currentPage = ds.pageIndex + 1;
                     this._rowsPerPage = ds.pageSize;
                     this._rowCount = ds.totalCount;
@@ -13434,8 +13372,8 @@ var RIAPP;
                 StackPanel.prototype.templateUnLoading = function (template) {
                     //noop
                 };
-                StackPanel.prototype.addOnItemClicked = function (fn, namespace) {
-                    this.addHandler('item_clicked', fn, namespace);
+                StackPanel.prototype.addOnItemClicked = function (fn, namespace, context) {
+                    this.addHandler('item_clicked', fn, namespace, context);
                 };
                 StackPanel.prototype.removeOnItemClicked = function (namespace) {
                     this.removeHandler('item_clicked', namespace);
@@ -13500,7 +13438,7 @@ var RIAPP;
                         this.raisePropertyChanged('currentItem');
                     }
                 };
-                StackPanel.prototype._onDSCurrentChanged = function () {
+                StackPanel.prototype._onDSCurrentChanged = function (sender, args) {
                     var ds = this.dataSource, cur = ds.currentItem;
                     if (!cur)
                         this._updateCurrent(null, false);
@@ -13508,7 +13446,7 @@ var RIAPP;
                         this._updateCurrent(cur, true);
                     }
                 };
-                StackPanel.prototype._onDSCollectionChanged = function (args) {
+                StackPanel.prototype._onDSCollectionChanged = function (sender, args) {
                     var self = this, items = args.items;
                     switch (args.change_type) {
                         case 2 /* RESET */:
@@ -13538,7 +13476,7 @@ var RIAPP;
                             throw new Error(global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 };
-                StackPanel.prototype._onDSFill = function (args) {
+                StackPanel.prototype._onDSFill = function (sender, args) {
                     var isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -13603,24 +13541,10 @@ var RIAPP;
                     var self = this, ds = this.dataSource;
                     if (!ds)
                         return;
-                    ds.addOnCollChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addOnFill(function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSFill(args);
-                    }, self._objId);
-                    ds.addOnPropertyChange('currentItem', function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSCurrentChanged();
-                    }, self._objId);
+                    ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
+                    ds.addOnFill(self._onDSFill, self._objId, self);
+                    ds.addOnPropertyChange('currentItem', self._onDSCurrentChanged, self._objId, self);
                     ds.addOnStatusChanged(function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onItemStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
                     this._refresh();
@@ -14835,8 +14759,9 @@ var RIAPP;
                     return this.deleteOnSubmit();
                 };
                 EntityAspect.prototype.deleteOnSubmit = function () {
-                    var oldCT = this._changeType, eset = this._dbSet;
-                    if (!eset._onItemDeleting(this.getItem())) {
+                    var oldCT = this._changeType, eset = this._dbSet, args = { item: this.getItem(), isCancel: false };
+                    eset._onItemDeleting(args);
+                    if (args.isCancel) {
                         return false;
                     }
                     if (this._key === null)
@@ -15328,8 +15253,8 @@ var RIAPP;
                 DbSet.prototype._onLoaded = function (items) {
                     this.raiseEvent('loaded', { items: items });
                 };
-                DbSet.prototype.addOnLoaded = function (fn, namespace) {
-                    this.addHandler('loaded', fn, namespace);
+                DbSet.prototype.addOnLoaded = function (fn, namespace, context) {
+                    this.addHandler('loaded', fn, namespace, context);
                 };
                 DbSet.prototype.removeOnLoaded = function (namespace) {
                     this.removeHandler('loaded', namespace);
@@ -16267,8 +16192,8 @@ var RIAPP;
                         RIAPP.global._throwDummy(ex);
                     }
                 };
-                DbContext.prototype.addOnSubmitError = function (fn, namespace) {
-                    this.addHandler('submit_error', fn, namespace);
+                DbContext.prototype.addOnSubmitError = function (fn, namespace, context) {
+                    this.addHandler('submit_error', fn, namespace, context);
                 };
                 DbContext.prototype.removeOnSubmitError = function (namespace) {
                     this.removeHandler('submit_error', namespace);
@@ -16748,72 +16673,48 @@ var RIAPP;
                     if (!ds)
                         return;
                     ds.addHandler('coll_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onParentCollChanged(args);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('fill', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onParentFill(args);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('begin_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onParentEdit(args.item, true, undefined);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('end_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onParentEdit(args.item, false, args.isCanceled);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('item_deleting', function (sender, args) {
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('status_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onParentStatusChanged(args.item, args.oldChangeType);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('commit_changes', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onParentCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                 };
                 Association.prototype._bindChildDS = function () {
                     var self = this, ds = this._childDS;
                     if (!ds)
                         return;
                     ds.addHandler('coll_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onChildCollChanged(args);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('fill', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onChildFill(args);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('begin_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onChildEdit(args.item, true, undefined);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('end_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onChildEdit(args.item, false, args.isCanceled);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('status_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onChildStatusChanged(args.item, args.oldChangeType);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('commit_changes', function (sender, args) {
-                        if (ds !== sender)
-                            return;
                         self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                 };
                 Association.prototype._onParentCollChanged = function (args) {
                     var self = this, item, items = args.items, changed = [], changedKeys = {};
@@ -17519,7 +17420,7 @@ var RIAPP;
                     this.moveFirst();
                     return newItems;
                 };
-                DataView.prototype._onDSCollectionChanged = function (args) {
+                DataView.prototype._onDSCollectionChanged = function (sender, args) {
                     var self = this, item, items = args.items;
                     switch (args.change_type) {
                         case 2 /* RESET */:
@@ -17557,7 +17458,7 @@ var RIAPP;
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 };
-                DataView.prototype._onDSFill = function (args) {
+                DataView.prototype._onDSFill = function (sender, args) {
                     var self = this, items = args.fetchedItems, isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -17574,7 +17475,7 @@ var RIAPP;
                         this._isDSFilling = true;
                     }
                 };
-                DataView.prototype._onDSStatusChanged = function (args) {
+                DataView.prototype._onDSStatusChanged = function (sender, args) {
                     var self = this, item = args.item, key = args.key, oldChangeType = args.oldChangeType, isOk, canFilter = !!self._fn_filter;
                     if (!!self._itemsByKey[key]) {
                         self._onItemStatusChanged(item, oldChangeType);
@@ -17598,26 +17499,14 @@ var RIAPP;
                     var self = this, ds = this._dataSource;
                     if (!ds)
                         return;
-                    ds.addHandler('coll_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addHandler('fill', function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSFill(args);
-                    }, self._objId);
-                    ds.addHandler('begin_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                    ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
+                    ds.addOnFill(self._onDSFill, self._objId, self);
+                    ds.addOnBeginEdit(function (sender, args) {
                         if (!!self._itemsByKey[args.item._key]) {
                             self._onEditing(args.item, true, false);
                         }
                     }, self._objId);
-                    ds.addHandler('end_edit', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                    ds.addOnEndEdit(function (sender, args) {
                         var isOk, item = args.item, canFilter = !!self._fn_filter;
                         if (!!self._itemsByKey[item._key]) {
                             self._onEditing(item, false, args.isCanceled);
@@ -17636,28 +17525,18 @@ var RIAPP;
                             }
                         }
                     }, self._objId);
-                    ds.addHandler('errors_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                    ds.addOnErrorsChanged(function (sender, args) {
                         if (!!self._itemsByKey[args.item._key]) {
                             self._onErrorsChanged(args.item);
                         }
                     }, self._objId);
-                    ds.addHandler('status_changed', function (sender, args) {
-                        if (ds !== sender)
-                            return;
-                        self._onDSStatusChanged(args);
-                    }, self._objId);
-                    ds.addHandler('item_deleting', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                    ds.addOnStatusChanged(self._onDSStatusChanged, self._objId, self);
+                    ds.addOnItemDeleting(function (sender, args) {
                         if (!!self._itemsByKey[args.item._key]) {
                             self._onItemDeleting(args);
                         }
                     }, self._objId);
-                    ds.addHandler('item_added', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                    ds.addOnItemAdded(function (sender, args) {
                         if (self._isAddingNew) {
                             if (!self._itemsByKey[args.item._key]) {
                                 self._attach(args.item);
@@ -17667,9 +17546,7 @@ var RIAPP;
                             self._onItemAdded(args.item);
                         }
                     }, self._objId);
-                    ds.addHandler('item_adding', function (sender, args) {
-                        if (ds !== sender)
-                            return;
+                    ds.addOnItemAdding(function (sender, args) {
                         if (self._isAddingNew) {
                             self._onItemAdding(args.item);
                         }
@@ -18021,8 +17898,8 @@ var RIAPP;
                 BaseComplexProperty.prototype.getIsHasErrors = function () {
                     return this.getEntity().getIsHasErrors();
                 };
-                BaseComplexProperty.prototype.addOnErrorsChanged = function (fn, namespace) {
-                    this.getEntity().addOnErrorsChanged(fn, namespace);
+                BaseComplexProperty.prototype.addOnErrorsChanged = function (fn, namespace, context) {
+                    this.getEntity().addOnErrorsChanged(fn, namespace, context);
                 };
                 BaseComplexProperty.prototype.removeOnErrorsChanged = function (namespace) {
                     this.getEntity().removeOnErrorsChanged(namespace);

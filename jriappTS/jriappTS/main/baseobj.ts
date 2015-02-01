@@ -1,7 +1,14 @@
 ﻿module RIAPP {
     'use strict';
+
+    export type TEventHandler = (sender?, args?) => void;
+    export type TErrorArgs = { error: any; source: any; isHandled: boolean; };
+    export type TErrorHandler = (sender, args: TErrorArgs) => void;
+    export type TPropChangedHandler = (sender, args: { property: string; }) => void;
+
     interface IListNode {
-        fn: (sender, args) => void;
+        context : any
+        fn: TEventHandler;
         ns: string;
         next: IListNode;
     }
@@ -56,6 +63,7 @@
                         cur = next;
                         next = (!cur) ? null : cur.next;
                     }
+                    del.context = null;
                     del.fn = null;
                     del.next = null;
                 }
@@ -68,27 +76,32 @@
             list.head = head;
             list.tail = (!prev) ? head : prev;
         }
-        static toArray(list: IList): { (sender, args): void; }[] {
-            var res: { (sender, args): void; }[] = [];
+        static toArray(list: IList): IListNode[] {
+            var res: IListNode[] = [];
             if (!list)
                 return res;
             var cur = list.head;
             while (!!cur) {
-                res.push(cur.fn);
+                res.push(cur);
                 cur = cur.next;
             }
             return res;
         }
     }
 
+
     export interface IBaseObject {
         raisePropertyChanged(name: string): void;
-        addHandler(name: string, fn: (sender, args) => void, namespace?: string, prepend?: boolean): void;
+        addHandler(name: string, handler: TEventHandler, namespace?: string, context?: BaseObject, prepend?: boolean): void;
         removeHandler(name?: string, namespace?: string): void;
-        addOnPropertyChange(prop: string, fn: (sender, args: { property: string; }) => void, namespace?: string): void;
+        addOnPropertyChange(prop: string, handler: TPropChangedHandler, namespace?: string, context?: BaseObject): void;
         removeOnPropertyChange(prop?: string, namespace?: string): void;
         removeNSHandlers(namespace?: string): void;
         handleError(error: any, source: any): boolean;
+        addOnDestroyed(handler: TEventHandler, namespace?: string, context?: BaseObject): void;
+        removeOnDestroyed(namespace?: string): void;
+        addOnError(handler: TErrorHandler, namespace?: string, context?: BaseObject): void;
+        removeOnError(namespace?: string): void;
         getIsDestroyed(): boolean;
         getIsDestroyCalled(): boolean;
         destroy(): void;
@@ -107,11 +120,14 @@
         protected _getEventNames(): string[] {
             return ['error', 'destroyed'];
         }
-        protected _addHandler(name: string, fn: (sender,args)=>void, namespace?: string, prepend?: boolean):void {
+        protected _addHandler(name: string, handler: TEventHandler, namespace?: string, context?: any, prepend?: boolean):void {
             if (this._isDestroyed)
                 return;
-            if (!RIAPP.baseUtils.isFunc(fn))
-                throw new Error(RIAPP.ERRS.ERR_EVENT_INVALID_FUNC);
+
+            if (!RIAPP.baseUtils.isFunc(handler)) {
+                    throw new Error(RIAPP.ERRS.ERR_EVENT_INVALID_FUNC);
+            }
+
             if (!name)
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
 
@@ -122,7 +138,7 @@
             if (!!namespace)
                 ns = '' + namespace;
 
-            var list = ev[n], node = { fn: fn, ns: ns, next: null };
+            var list = ev[n], node : IListNode = { fn: handler, ns: ns, next: null, context: !context?null:context };
 
             if (!list) {
                 ev[n] =  { head: node, tail: node };
@@ -196,7 +212,7 @@
                 }
                 var events = EventsHelper.toArray(ev[name]);
                 for (var i = 0; i < events.length; i++) {
-                    events[i].apply(null, [self, args]);
+                    events[i].fn.apply(events[i].context, [self, args]);
                 }
             }
         }
@@ -233,7 +249,7 @@
             if (!error.message) {
                 error = new Error('' + error);
             }
-            var args = { error: error, source: source, isHandled: false };
+            var args: TErrorArgs = { error: error, source: source, isHandled: false };
             this._raiseEvent('error', args);
             return args.isHandled;
         }
@@ -262,9 +278,9 @@
                 this.raiseEvent('0' + lastPropName, data);
             }
         }
-        addHandler(name: string, fn: (sender, args) => void, namespace?: string, prepend?: boolean):void {
+        addHandler(name: string, handler: TEventHandler, namespace?: string, context?: BaseObject, prepend?: boolean):void {
             this._checkEventName(name);
-            this._addHandler(name, fn, namespace, !!prepend);
+            this._addHandler(name, handler, namespace, context, prepend);
         }
         removeHandler(name?: string, namespace?: string):void {
             if (!!name) {
@@ -272,14 +288,14 @@
             }
             this._removeHandler(name, namespace);
         }
-        addOnDestroyed(fn: (sender, args: {})=>void, namespace?: string):void {
-            this._addHandler('destroyed', fn, namespace, false);
+        addOnDestroyed(handler: TEventHandler, namespace?: string, context?: BaseObject):void {
+            this._addHandler('destroyed', handler, namespace, context, false);
         }
         removeOnDestroyed(namespace?: string):void {
             this._removeHandler('destroyed', namespace);
         }
-        addOnError(fn: (sender, args: { error: any; source: any; isHandled: boolean; }) => void , namespace?: string): void {
-            this._addHandler('error', fn, namespace, false);
+        addOnError(handler: TErrorHandler, namespace?: string, context?: BaseObject): void {
+            this._addHandler('error', handler, namespace, context, false);
         }
         removeOnError(namespace?: string):void {
             this.removeHandler('error', namespace);
@@ -296,7 +312,7 @@
             this._raiseEvent(name, args);
         }
         //to subscribe fortthe changes on all properties, pass in the prop parameter: '*'
-        addOnPropertyChange(prop: string, fn: (sender, args: { property: string; })=>void, namespace?: string):void {
+        addOnPropertyChange(prop: string, handler: TPropChangedHandler, namespace?: string, context?: BaseObject):void {
             if (!prop)
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);
             if (DebugLevel > DEBUG_LEVEL.NONE && prop != '*' && !this._isHasProp(prop)) {
@@ -306,7 +322,7 @@
                 throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
             }
             prop = '0' + prop;
-            this._addHandler(prop, fn, namespace, false);
+            this._addHandler(prop, handler, namespace, context, false);
         }
         removeOnPropertyChange(prop?: string, namespace?: string):void {
             if (!!prop) {

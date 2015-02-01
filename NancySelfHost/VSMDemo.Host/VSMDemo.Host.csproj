@@ -95,6 +95,7 @@
     <Content Include="Content\images\Themes\green.png" />
     <Content Include="Content\images\Themes\purple.png" />
     <Content Include="Content\images\Themes\red.png" />
+    <Content Include="Content\scripts\RIAppDemo\ssevents.js" />
     <Content Include="Content\Site.css" />
     <Content Include="Content\themes\redmond\images\animated-overlay.gif" />
     <Content Include="Content\themes\redmond\images\ui-bg_flat_0_aaaaaa_40x100.png" />

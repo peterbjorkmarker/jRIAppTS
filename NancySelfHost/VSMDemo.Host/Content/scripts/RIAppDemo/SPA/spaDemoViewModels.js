@@ -1412,7 +1412,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                     self.searchString = null;
                 },
                 fn_OnOK: function (dialog) {
-                    var DIALOG_ACTION = MOD.datadialog.DIALOG_ACTION;
                     if (self.uiViewVM.viewName != self.uiViewVM.newAdrTemplate) {
                         //allow to close the dialog
                         return 0 /* Default */;
@@ -1427,7 +1426,6 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                     return 1 /* StayOpen */;
                 },
                 fn_OnCancel: function (dialog) {
-                    var DIALOG_ACTION = MOD.datadialog.DIALOG_ACTION;
                     if (self.uiViewVM.viewName != self.uiViewVM.newAdrTemplate) {
                         return 0 /* Default */;
                     }

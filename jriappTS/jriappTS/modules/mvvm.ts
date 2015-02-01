@@ -5,6 +5,8 @@
                 canExecute: (sender, param) => boolean;
                 execute: (sender, param) => void;
                 raiseCanExecuteChanged: () => void;
+                addOnCanExecuteChanged(fn: (sender: mvvm.ICommand, args: {}) => void, namespace?: string, context?: any);
+                removeOnCanExecuteChanged(namespace?: string);
             }
 
             export class Command extends RIAPP.BaseObject implements ICommand {
@@ -25,8 +27,8 @@
                     var base_events = super._getEventNames();
                     return ['canExecute_changed'].concat(base_events);
                 }
-                addOnCanExecuteChanged(fn: (sender: mvvm.Command, args: {}) => void , namespace?: string) {
-                    this.addHandler('canExecute_changed', fn, namespace);
+                addOnCanExecuteChanged(fn: (sender: mvvm.ICommand, args: {}) => void, namespace?: string, context?: any) {
+                    this.addHandler('canExecute_changed', fn, namespace, context);
                 }
                 removeOnCanExecuteChanged(namespace?: string) {
                     this.removeHandler('canExecute_changed', namespace);

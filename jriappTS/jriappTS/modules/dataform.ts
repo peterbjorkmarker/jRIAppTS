@@ -173,9 +173,12 @@
                         global.reThrow(ex, this.handleError(ex, this));
                     }
                 }
-                private _onDSErrorsChanged() {
+                private _onDSErrorsChanged(sender?, args?) {
                     if (!!this._supportErrNotify)
                         this.validationErrors = this._supportErrNotify.getAllErrors();
+                }
+                _onIsEditingChanged(sender, args) {
+                    this.isEditing = this._supportEdit.isEditing;
                 }
                 private _bindDS() {
                     var dataContext = this._dataContext, self = this;
@@ -191,15 +194,11 @@
                     }, self._objId);
 
                     if (!!this._supportEdit) {
-                        (<any>this._supportEdit).addOnPropertyChange('isEditing', function (sender, args) {
-                            self.isEditing = self._supportEdit.isEditing;
-                        }, self._objId);
+                        (<RIAPP.BaseObject><any>this._supportEdit).addOnPropertyChange('isEditing', self._onIsEditingChanged, self._objId, self);
                     }
 
                     if (!!this._supportErrNotify) {
-                        this._supportErrNotify.addOnErrorsChanged(function (sender, args) {
-                            self._onDSErrorsChanged();
-                        }, self._objId);
+                        this._supportErrNotify.addOnErrorsChanged(self._onDSErrorsChanged, self._objId, self);
                     }
                 }
                 private _unbindDS() {

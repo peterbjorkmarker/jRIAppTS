@@ -278,6 +278,9 @@
                 protected _onCommandChanged() {
                     this.raisePropertyChanged('command');
                 }
+                private _onCanExecuteChanged(cmd: mvvm.Command, args) {
+                    this.isEnabled = cmd.canExecute(this, this.commandParam);
+                }
                 protected _setCommand(v: mvvmMOD.Command) {
                     var self = this;
                     if (v !== this._command) {
@@ -286,9 +289,7 @@
                         }
                         this._command = v;
                         if (!!this._command) {
-                            this._command.addOnCanExecuteChanged(function (cmd, args) {
-                                self.isEnabled = cmd.canExecute(self, self.commandParam);
-                            }, this._objId);
+                            this._command.addOnCanExecuteChanged(self._onCanExecuteChanged, this._objId, self);
                             self.isEnabled = this._command.canExecute(self, self.commandParam);
                         }
                         else

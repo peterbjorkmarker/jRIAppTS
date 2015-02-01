@@ -271,8 +271,8 @@
                     //can reset _isNew on all items in the collection
                     //the list descendant does it
                 }
-                addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string) {
-                    this.addHandler('errors_changed', fn, namespace);
+                addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string, context?: any) {
+                    this.addHandler('errors_changed', fn, namespace, context);
                 }
                 removeOnErrorsChanged(namespace?: string) {
                     this.removeHandler('errors_changed', namespace);
@@ -379,7 +379,9 @@
                     var coll = this._collection;
                     if (this._key === null)
                         return false;
-                    if (!coll._onItemDeleting(this.getItem())) {
+                    var args: ICancellableArgs<TItem> = { item: this.getItem(), isCancel: false };
+                    coll._onItemDeleting(args);
+                    if (args.isCancel) {
                         return false;
                     }
                     coll.removeItem(this.getItem());
@@ -456,7 +458,13 @@
             export interface ICollValidateArgs<TItem extends ICollectionItem> { item: TItem; fieldName: string; errors: string[]; }
             export interface ICollItemStatusArgs<TItem extends ICollectionItem> { item: TItem; oldChangeType: STATUS; key: string; }
             export interface ICollItemAddedArgs<TItem extends ICollectionItem> { item: TItem; isAddNewHandled: boolean; }
-
+            export interface ICommitChangesArgs<TItem extends ICollectionItem> { item: TItem; isBegin: boolean; isRejected: boolean; changeType: number; }
+            export interface ICollItemArgs<TItem extends ICollectionItem> { item: TItem; }
+            export interface IPageChangingArgs { page: number; isCancel: boolean; }
+            export interface ICancellableArgs<TItem extends ICollectionItem> { item: TItem; isCancel: boolean; }
+            export interface IItemAddedArgs<TItem extends ICollectionItem> { item: TItem; isAddNewHandled: boolean; }
+            export interface ICollEndEditArgs<TItem extends ICollectionItem> { item: TItem; isCanceled: boolean; }
+            export interface ICurrentChangingArgs<TItem extends ICollectionItem> { newCurrent: TItem; }
           
             export class BaseCollection<TItem extends ICollectionItem> extends RIAPP.BaseObject {
                 protected _options: ICollectionOptions;
@@ -535,92 +543,92 @@
                     }
                     return isHandled;
                 }
-                addOnClearing(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string) {
-                    this.addHandler('clearing', fn, namespace);
+                addOnClearing(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('clearing', fn, namespace, context);
                 }
                 removeOnClearing(namespace?: string) {
                     this.removeHandler('clearing', namespace);
                 }
-                addOnCleared(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string) {
-                    this.addHandler('cleared', fn, namespace);
+                addOnCleared(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('cleared', fn, namespace, context);
                 }
                 removeOnCleared(namespace?: string) {
                     this.removeHandler('cleared', namespace);
                 }
-                addOnFill(fn: (sender: BaseCollection<TItem>, args: ICollFillArgs<TItem>) => void, namespace?: string) {
-                    this.addHandler('fill', fn, namespace);
+                addOnFill(fn: (sender: BaseCollection<TItem>, args: ICollFillArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('fill', fn, namespace, context);
                 }
                 removeOnFill(namespace?: string) {
                     this.removeHandler('fill', namespace);
                 }
-                addOnCollChanged(fn: (sender: BaseCollection<TItem>, args: ICollChangedArgs<TItem>) => void, namespace?: string) {
-                    this.addHandler('coll_changed', fn, namespace);
+                addOnCollChanged(fn: (sender: BaseCollection<TItem>, args: ICollChangedArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('coll_changed', fn, namespace, context);
                 }
                 removeOnCollChanged(namespace?: string) {
                     this.removeHandler('coll_changed', namespace);
                 }
-                addOnValidate(fn: (sender: BaseCollection<TItem>, args: ICollValidateArgs<TItem>) => void, namespace?: string) {
-                    this.addHandler('validate', fn, namespace);
+                addOnValidate(fn: (sender: BaseCollection<TItem>, args: ICollValidateArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('validate', fn, namespace, context);
                 }
                 removeOnValidate(namespace?: string) {
                     this.removeHandler('validate', namespace);
                 }
-                addOnItemDeleting(fn: (sender: BaseCollection<TItem>, args: { item: TItem; isCancel: boolean; }) => void, namespace?: string) {
-                    this.addHandler('item_deleting', fn, namespace);
+                addOnItemDeleting(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('item_deleting', fn, namespace, context);
                 }
                 removeOnItemDeleting(namespace?: string) {
                     this.removeHandler('item_deleting', namespace);
                 }
-                addOnItemAdding(fn: (sender: BaseCollection<TItem>, args: { item: TItem; isCancel: boolean; }) => void, namespace?: string) {
-                    this.addHandler('item_adding', fn, namespace);
+                addOnItemAdding(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('item_adding', fn, namespace, context);
                 }
                 removeOnItemAdding(namespace?: string) {
                     this.removeHandler('item_adding', namespace);
                 }
-                addOnItemAdded(fn: (sender: BaseCollection<TItem>, args: { item: TItem; isAddNewHandled: boolean; }) => void, namespace?: string) {
-                    this.addHandler('item_added', fn, namespace);
+                addOnItemAdded(fn: (sender: BaseCollection<TItem>, args: IItemAddedArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('item_added', fn, namespace, context);
                 }
                 removeOnItemAdded(namespace?: string) {
                     this.removeHandler('item_added', namespace);
                 }
-                addOnCurrentChanging(fn: (sender: BaseCollection<TItem>, args: { newCurrent: TItem; }) => void, namespace?: string) {
-                    this.addHandler('current_changing', fn, namespace);
+                addOnCurrentChanging(fn: (sender: BaseCollection<TItem>, args: ICurrentChangingArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('current_changing', fn, namespace, context);
                 }
                 removeOnCurrentChanging(namespace?: string) {
                     this.removeHandler('current_changing', namespace);
                 }
-                addOnPageChanging(fn: (sender: BaseCollection<TItem>, args: { page: number; isCancel: boolean; }) => void, namespace?: string) {
-                    this.addHandler('page_changing', fn, namespace);
+                addOnPageChanging(fn: (sender: BaseCollection<TItem>, args: IPageChangingArgs) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('page_changing', fn, namespace, context);
                 }
                 removeOnPageChanging(namespace?: string) {
                     this.removeHandler('page_changing', namespace);
                 }
-                addOnErrorsChanged(fn: (sender: BaseCollection<TItem>, args: { item: TItem; }) => void, namespace?: string) {
-                    this.addHandler('errors_changed', fn, namespace);
+                addOnErrorsChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('errors_changed', fn, namespace, context);
                 }
                 removeOnErrorsChanged(namespace?: string) {
                     this.removeHandler('errors_changed', namespace);
                 }
-                addOnBeginEdit(fn: (sender: BaseCollection<TItem>, args: { item: TItem; }) => void, namespace?: string) {
-                    this.addHandler('begin_edit', fn, namespace);
+                addOnBeginEdit(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('begin_edit', fn, namespace, context);
                 }
                 removeOnBeginEdit(namespace?: string) {
                     this.removeHandler('begin_edit', namespace);
                 }
-                addOnEndEdit(fn: (sender: BaseCollection<TItem>, args: { item: TItem; isCanceled: boolean; }) => void, namespace?: string) {
-                    this.addHandler('end_edit', fn, namespace);
+                addOnEndEdit(fn: (sender: BaseCollection<TItem>, args: ICollEndEditArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('end_edit', fn, namespace, context);
                 }
                 removeOnEndEdit(namespace?: string) {
                     this.removeHandler('end_edit', namespace);
                 }
-                addOnCommitChanges(fn: (sender: BaseCollection<TItem>, args: { item: TItem; isBegin: boolean; isRejected: boolean; changeType: number; }) => void, namespace?: string) {
-                    this.addHandler('commit_changes', fn, namespace);
+                addOnCommitChanges(fn: (sender: BaseCollection<TItem>, args: ICommitChangesArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('commit_changes', fn, namespace, context);
                 }
                 removeOnCommitChanges(namespace?: string) {
                     this.removeHandler('commit_changes', namespace);
                 }
-                addOnStatusChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemStatusArgs<TItem>) => void, namespace?: string) {
-                    this.addHandler('status_changed', fn, namespace);
+                addOnStatusChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemStatusArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('status_changed', fn, namespace, context);
                 }
                 removeOnStatusChanged(namespace?: string) {
                     this.removeHandler('status_changed', namespace);
@@ -646,34 +654,34 @@
                     } catch (ex) {
                         global.reThrow(ex, this.handleError(ex, this));
                     }
-                    this.raiseEvent('current_changing', { newCurrent: newCurrent });
+                    this.raiseEvent('current_changing', <ICurrentChangingArgs<TItem>> { newCurrent: newCurrent });
                 }
                 protected _onCurrentChanged() {
                     this.raisePropertyChanged('currentItem');
                 }
                 //occurs when item changeType Changed (not used in simple collections)
                 protected _onItemStatusChanged(item: TItem, oldChangeType: number) {
-                    this.raiseEvent('status_changed', { item: item, oldChangeType: oldChangeType, key: item._key });
+                    this.raiseEvent('status_changed', <ICollItemStatusArgs<TItem>> { item: item, oldChangeType: oldChangeType, key: item._key });
                 }
-                protected _onFillStart(args: { isBegin: boolean; rowCount: number; time: Date; isPageChanged: boolean; }) {
+                protected _onFillStart(args: ICollFillArgs<TItem>) {
                     this.raiseEvent('fill', args);
                 }
-                protected _onFillEnd(args: { isBegin: boolean; rowCount: number; time: Date; isPageChanged: boolean; resetUI: boolean; fetchedItems: TItem[]; newItems: TItem[]; }) {
+                protected _onFillEnd(args: ICollFillArgs<TItem>) {
                     this.raiseEvent('fill', args);
                 }
-                protected _onItemsChanged(args: { change_type: COLL_CHANGE_TYPE; items: TItem[]; pos?: number[]; old_key?: string; new_key?: string; }) {
+                protected _onItemsChanged(args: ICollChangedArgs<TItem>) {
                     this.raiseEvent('coll_changed', args);
                 }
                 //new item is being added, but is not in the collection now
                 protected _onItemAdding(item: TItem) {
-                    var args = { item: item, isCancel: false };
+                    var args: ICancellableArgs<TItem> = { item: item, isCancel: false };
                     this.raiseEvent('item_adding', args);
                     if (args.isCancel)
                         global._throwDummy(new Error('operation canceled'));
                 }
                 //new item has been added and now is in editing state and is currentItem
                 protected _onItemAdded(item: TItem) {
-                    var args = { item: item, isAddNewHandled: false };
+                    var args: IItemAddedArgs<TItem> = { item: item, isAddNewHandled: false };
                     this.raiseEvent('item_added', args);
                 }
                 protected _createNew(): TItem {
@@ -718,7 +726,7 @@
                 protected _onPageSizeChanged() {
                 }
                 protected _onPageChanging() {
-                    var args = { page: this.pageIndex, isCancel: false };
+                    var args: IPageChangingArgs = { page: this.pageIndex, isCancel: false };
                     this._raiseEvent('page_changing', args);
                     if (!args.isCancel) {
                         try {
@@ -782,7 +790,7 @@
                         return;
                     if (isBegin) {
                         this._EditingItem = item;
-                        this.raiseEvent('begin_edit', { item: item });
+                        this.raiseEvent('begin_edit', <ICollItemArgs<TItem>>{ item: item });
                     }
                     else {
                         this._EditingItem = null;
@@ -791,10 +799,10 @@
                 }
                 //used by descendants when commiting submits for items
                 _onCommitChanges(item: TItem, isBegin: boolean, isRejected: boolean, changeType: number) {
-                    this.raiseEvent('commit_changes', { item: item, isBegin: isBegin, isRejected: isRejected, changeType: changeType });
+                    this.raiseEvent('commit_changes', <ICommitChangesArgs<TItem>>{ item: item, isBegin: isBegin, isRejected: isRejected, changeType: changeType });
                 }
                 _validateItem(item: TItem): RIAPP.IValidationInfo {
-                    var args = { item: item, fieldName: null, errors: [] };
+                    var args: ICollValidateArgs<TItem> = { item: item, fieldName: null, errors: [] };
                     this.raiseEvent('validate', args);
                     if (!!args.errors && args.errors.length > 0)
                         return { fieldName: null, errors: args.errors };
@@ -802,7 +810,7 @@
                         return null;
                 }
                 _validateItemField(item: TItem, fieldName: string): RIAPP.IValidationInfo {
-                    var args = { item: item, fieldName: fieldName, errors: [] };
+                    var args: ICollValidateArgs<TItem> = { item: item, fieldName: fieldName, errors: [] };
                     this.raiseEvent('validate', args);
                     if (!!args.errors && args.errors.length > 0)
                         return { fieldName: fieldName, errors: args.errors };
@@ -860,12 +868,11 @@
                     return this._errors[item._key];
                 }
                 _onErrorsChanged(item: TItem) {
-                    var args = { item: item };
+                    var args: ICollItemArgs<TItem> = { item: item };
                     this.raiseEvent('errors_changed', args);
                     item._aspect.raiseErrorsChanged({});
                 }
-                _onItemDeleting(item: TItem) {
-                    var args = { item: item, isCancel: false };
+                _onItemDeleting(args: ICancellableArgs<TItem>) {
                     this.raiseEvent('item_deleting', args);
                     return !args.isCancel;
                 }

@@ -105,7 +105,7 @@
                     return !!obj && obj instanceof MOD.template.TemplateElView;
                 }
                 static isEditable(obj:any) {
-                    return !!obj && !!obj.beginEdit && !!obj.endEdit && !!obj.cancelEdit && global.utils.hasProp(obj,'isEditing');
+                    return !!obj && obj instanceof RIAPP.BaseObject && !!obj.beginEdit && !!obj.endEdit && !!obj.cancelEdit && global.utils.hasProp(obj,'isEditing');
                 }
                 static isSubmittable(obj: any) {
                     return !!obj && !!obj.submitChanges && !!obj.rejectChanges && global.utils.hasProp(obj, '_isCanSubmit');

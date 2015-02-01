@@ -1027,8 +1027,9 @@
                     return this.deleteOnSubmit();
                 }
                 deleteOnSubmit() {
-                    var oldCT = this._changeType, eset = this._dbSet;
-                    if (!eset._onItemDeleting(this.getItem())) {
+                    var oldCT = this._changeType, eset = this._dbSet, args: collMOD.ICancellableArgs<TItem> = { item: this.getItem(), isCancel: false };
+                    eset._onItemDeleting(args);
+                    if (args.isCancel) {
                         return false;
                     }
                     if (this._key === null)
@@ -1462,8 +1463,8 @@
                 protected _onLoaded(items: TItem[]) {
                     this.raiseEvent('loaded', { items: items });
                 }
-                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string) {
-                    this.addHandler('loaded', fn, namespace);
+                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('loaded', fn, namespace, context);
                 }
                 removeOnLoaded(namespace?: string) {
                     this.removeHandler('loaded', namespace);
@@ -2400,8 +2401,8 @@
                         global._throwDummy(ex);
                     }
                 }
-                addOnSubmitError(fn: (sender: DbContext, args: { error: any; isHandled: boolean; }) => void, namespace?: string) {
-                    this.addHandler('submit_error', fn, namespace);
+                addOnSubmitError(fn: (sender: DbContext, args: { error: any; isHandled: boolean; }) => void, namespace?: string, context?: BaseObject) {
+                    this.addHandler('submit_error', fn, namespace, context);
                 }
                 removeOnSubmitError(namespace?: string) {
                     this.removeHandler('submit_error', namespace);
@@ -2892,59 +2893,47 @@
                     var self = this, ds = this._parentDS;
                     if (!ds) return;
                     ds.addHandler('coll_changed', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onParentCollChanged(args);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('fill', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onParentFill(args);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('begin_edit', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onParentEdit(args.item, true, undefined);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('end_edit', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onParentEdit(args.item, false, args.isCanceled);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('item_deleting', function (sender, args) {
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('status_changed', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onParentStatusChanged(args.item, args.oldChangeType);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('commit_changes', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onParentCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                 }
                 protected _bindChildDS() {
                     var self = this, ds = this._childDS;
                     if (!ds) return;
                     ds.addHandler('coll_changed', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onChildCollChanged(args);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('fill', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onChildFill(args);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('begin_edit', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onChildEdit(args.item, true, undefined);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('end_edit', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onChildEdit(args.item, false, args.isCanceled);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('status_changed', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onChildStatusChanged(args.item, args.oldChangeType);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                     ds.addHandler('commit_changes', function (sender, args) {
-                        if (ds !== sender) return;
                         self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
-                    }, self._objId, true);
+                    }, self._objId, null, true);
                 }
                 protected _onParentCollChanged(args: collMOD.ICollChangedArgs<IEntityItem>) {
                     var self = this, item: IEntityItem, items = args.items, changed: string[] = [], changedKeys = {};
@@ -3618,7 +3607,7 @@
                     this.moveFirst();
                     return newItems;
                 }
-                protected _onDSCollectionChanged(args: collMOD.ICollChangedArgs<TItem>) {
+                protected _onDSCollectionChanged(sender, args: collMOD.ICollChangedArgs<TItem>) {
                     var self = this, item: collMOD.ICollectionItem, items = args.items;
                     switch (args.change_type) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
@@ -3656,7 +3645,7 @@
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
                     }
                 }
-                protected _onDSFill(args: collMOD.ICollFillArgs<TItem>) {
+                protected _onDSFill(sender, args: collMOD.ICollFillArgs<TItem>) {
                     var self = this, items = args.fetchedItems, isEnd = !args.isBegin;
                     if (isEnd) {
                         this._isDSFilling = false;
@@ -3673,7 +3662,7 @@
                         this._isDSFilling = true;
                     }
                 }
-                protected _onDSStatusChanged(args: collMOD.ICollItemStatusArgs<TItem>) {
+                protected _onDSStatusChanged(sender, args: collMOD.ICollItemStatusArgs<TItem>) {
                     var self = this, item = args.item, key = args.key, oldChangeType = args.oldChangeType, isOk, canFilter = !!self._fn_filter;
                     if (!!self._itemsByKey[key]) {
                         self._onItemStatusChanged(item, oldChangeType);
@@ -3697,22 +3686,14 @@
                 protected _bindDS() {
                     var self = this, ds = this._dataSource;
                     if (!ds) return;
-                    ds.addHandler('coll_changed', function (sender, args) {
-                        if (ds !== sender) return;
-                        self._onDSCollectionChanged(args);
-                    }, self._objId);
-                    ds.addHandler('fill', function (sender, args) {
-                        if (ds !== sender) return;
-                        self._onDSFill(args);
-                    }, self._objId);
-                    ds.addHandler('begin_edit', function (sender, args) {
-                        if (ds !== sender) return;
+                    ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
+                    ds.addOnFill(self._onDSFill, self._objId, self);
+                    ds.addOnBeginEdit(function (sender, args) {
                         if (!!self._itemsByKey[args.item._key]) {
                             self._onEditing(args.item, true, false);
                         }
                     }, self._objId);
-                    ds.addHandler('end_edit', function (sender, args) {
-                        if (ds !== sender) return;
+                    ds.addOnEndEdit(function (sender, args) {
                         var isOk, item = args.item, canFilter = !!self._fn_filter;
                         if (!!self._itemsByKey[item._key]) {
                             self._onEditing(item, false, args.isCanceled);
@@ -3731,25 +3712,19 @@
                             }
                         }
                     }, self._objId);
-                    ds.addHandler('errors_changed', function (sender, args) {
-                        if (ds !== sender) return;
+                    ds.addOnErrorsChanged(function (sender, args) {
                         if (!!self._itemsByKey[args.item._key]) {
                             self._onErrorsChanged(args.item);
                         }
                     }, self._objId);
-                    ds.addHandler('status_changed', function (sender, args) {
-                        if (ds !== sender) return;
-                        self._onDSStatusChanged(args);
-                    }, self._objId);
+                    ds.addOnStatusChanged(self._onDSStatusChanged, self._objId, self);
 
-                    ds.addHandler('item_deleting', function (sender, args) {
-                        if (ds !== sender) return;
+                    ds.addOnItemDeleting(function (sender, args) {
                         if (!!self._itemsByKey[args.item._key]) {
                             self._onItemDeleting(args);
                         }
                     }, self._objId);
-                    ds.addHandler('item_added', function (sender, args) {
-                        if (ds !== sender) return;
+                    ds.addOnItemAdded(function (sender, args) {
                         if (self._isAddingNew) {
                             if (!self._itemsByKey[args.item._key]) {
                                 self._attach(args.item);
@@ -3759,8 +3734,7 @@
                             self._onItemAdded(args.item);
                         }
                     }, self._objId);
-                    ds.addHandler('item_adding', function (sender, args) {
-                        if (ds !== sender) return;
+                    ds.addOnItemAdding(function (sender, args) {
                         if (self._isAddingNew) {
                             self._onItemAdding(args.item);
                         }
@@ -4063,8 +4037,8 @@
                 getIsHasErrors(): boolean {
                     return this.getEntity().getIsHasErrors();
                 }
-                addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string): void {
-                    this.getEntity().addOnErrorsChanged(fn, namespace);
+                addOnErrorsChanged(fn: RIAPP.TEventHandler, namespace?: string, context?: any): void {
+                    this.getEntity().addOnErrorsChanged(fn, namespace, context);
                 }
                 removeOnErrorsChanged(namespace?: string): void {
                     this.getEntity().removeOnErrorsChanged(namespace)
