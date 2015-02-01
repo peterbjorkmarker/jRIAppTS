@@ -5,6 +5,7 @@
     export type TErrorArgs = { error: any; source: any; isHandled: boolean; };
     export type TErrorHandler = (sender, args: TErrorArgs) => void;
     export type TPropChangedHandler = (sender, args: { property: string; }) => void;
+    type TEvent = { fn: TEventHandler; context: any };
 
     interface IListNode {
         context : any
@@ -50,7 +51,7 @@
             var head = list.head, prev: IListNode = null, del: IListNode, cur = head,
                 next: IListNode = (!cur) ? null : cur.next;
             while (!!cur) {
-                if (cur.ns == ns) {
+                if (ns == '*' || cur.ns == ns) {
                     del = cur;
                     //delete node
                     if (!prev) {
@@ -63,7 +64,7 @@
                         cur = next;
                         next = (!cur) ? null : cur.next;
                     }
-                    del.context = null;
+                    //del.context = null;
                     del.fn = null;
                     del.next = null;
                 }
@@ -76,13 +77,13 @@
             list.head = head;
             list.tail = (!prev) ? head : prev;
         }
-        static toArray(list: IList): IListNode[] {
-            var res: IListNode[] = [];
+        static toArray(list: IList): TEvent[] {
+            var res: TEvent[] = [];
             if (!list)
                 return res;
             var cur = list.head;
             while (!!cur) {
-                res.push(cur);
+                res.push({fn: cur.fn, context: cur.context });
                 cur = cur.next;
             }
             return res;
@@ -116,6 +117,17 @@
             this._isDestroyed = false;
             this._isDestroyCalled = false;
             this._events = null;
+        }
+        private _removeNsHandler(ev: { [name: string]: IList; }, ns: string) {
+            var keys = Object.keys(ev);
+            keys.forEach(function (n) {
+                var list = ev[n];
+                if (!!list) {
+                    EventsHelper.removeNodes(list, ns);
+                    if (!list.head)
+                        ev[n] = null;
+                }
+            });
         }
         protected _getEventNames(): string[] {
             return ['error', 'destroyed'];
@@ -167,6 +179,7 @@
                 if (!list)
                     return;
                 if (ns == '*') {
+                    EventsHelper.removeNodes(list, ns);
                     ev[n] = null;
                 }
                 else {
@@ -177,22 +190,12 @@
                 return;
             }
 
-            //arguments supplied is only namespace
-            if (ns != '*') {
-                var keys = Object.keys(ev);
-                keys.forEach(function (n) {
-                    var list = ev[n];
-                    if (!!list) {
-                        EventsHelper.removeNodes(list, ns);
-                        if (!list.head)
-                            ev[n] = null;
-                    }
-                });
-                return;
-            }
+            this._removeNsHandler(ev, ns);
 
-            //no arguments supplied
-            self._events = null;
+            if (ns == '*') {
+                //no arguments supplied
+                self._events = null;
+            }
         }
         protected _raiseEvent(name: string, args: any):void {
             var self = this, ev = self._events;
@@ -210,9 +213,10 @@
                     //notify clients who subscribed for all property changes
                     this._raiseEvent('0*', args); 
                 }
-                var events = EventsHelper.toArray(ev[name]);
+                var events = EventsHelper.toArray(ev[name]), cur: TEvent;
                 for (var i = 0; i < events.length; i++) {
-                    events[i].fn.apply(events[i].context, [self, args]);
+                    cur = events[i];
+                    cur.fn.apply(cur.context, [self, args]);
                 }
             }
         }
@@ -351,7 +355,7 @@
                 this._raiseEvent('destroyed', {});
             }
             finally {
-                this._events = null;
+                this._removeHandler(null, null);
             }
         }
     }

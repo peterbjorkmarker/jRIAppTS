@@ -152,6 +152,7 @@ declare module RIAPP {
         protected _isDestroyCalled: boolean;
         private _events;
         constructor();
+        private _removeNsHandler(ev, ns);
         protected _getEventNames(): string[];
         protected _addHandler(name: string, handler: TEventHandler, namespace?: string, context?: any, prepend?: boolean): void;
         protected _removeHandler(name?: string, namespace?: string): void;

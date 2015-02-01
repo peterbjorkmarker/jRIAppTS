@@ -276,7 +276,7 @@ var RIAPP;
                 return null;
             var head = list.head, prev = null, del, cur = head, next = (!cur) ? null : cur.next;
             while (!!cur) {
-                if (cur.ns == ns) {
+                if (ns == '*' || cur.ns == ns) {
                     del = cur;
                     //delete node
                     if (!prev) {
@@ -289,7 +289,7 @@ var RIAPP;
                         cur = next;
                         next = (!cur) ? null : cur.next;
                     }
-                    del.context = null;
+                    //del.context = null;
                     del.fn = null;
                     del.next = null;
                 }
@@ -308,7 +308,7 @@ var RIAPP;
                 return res;
             var cur = list.head;
             while (!!cur) {
-                res.push(cur);
+                res.push({ fn: cur.fn, context: cur.context });
                 cur = cur.next;
             }
             return res;
@@ -321,6 +321,17 @@ var RIAPP;
             this._isDestroyCalled = false;
             this._events = null;
         }
+        BaseObject.prototype._removeNsHandler = function (ev, ns) {
+            var keys = Object.keys(ev);
+            keys.forEach(function (n) {
+                var list = ev[n];
+                if (!!list) {
+                    EventsHelper.removeNodes(list, ns);
+                    if (!list.head)
+                        ev[n] = null;
+                }
+            });
+        };
         BaseObject.prototype._getEventNames = function () {
             return ['error', 'destroyed'];
         };
@@ -362,6 +373,7 @@ var RIAPP;
                 if (!list)
                     return;
                 if (ns == '*') {
+                    EventsHelper.removeNodes(list, ns);
                     ev[n] = null;
                 }
                 else {
@@ -371,21 +383,11 @@ var RIAPP;
                 }
                 return;
             }
-            //arguments supplied is only namespace
-            if (ns != '*') {
-                var keys = Object.keys(ev);
-                keys.forEach(function (n) {
-                    var list = ev[n];
-                    if (!!list) {
-                        EventsHelper.removeNodes(list, ns);
-                        if (!list.head)
-                            ev[n] = null;
-                    }
-                });
-                return;
+            this._removeNsHandler(ev, ns);
+            if (ns == '*') {
+                //no arguments supplied
+                self._events = null;
             }
-            //no arguments supplied
-            self._events = null;
         };
         BaseObject.prototype._raiseEvent = function (name, args) {
             var self = this, ev = self._events;
@@ -401,9 +403,10 @@ var RIAPP;
                     //notify clients who subscribed for all property changes
                     this._raiseEvent('0*', args);
                 }
-                var events = EventsHelper.toArray(ev[name]);
+                var events = EventsHelper.toArray(ev[name]), cur;
                 for (var i = 0; i < events.length; i++) {
-                    events[i].fn.apply(events[i].context, [self, args]);
+                    cur = events[i];
+                    cur.fn.apply(cur.context, [self, args]);
                 }
             }
         };
@@ -541,7 +544,7 @@ var RIAPP;
                 this._raiseEvent('destroyed', {});
             }
             finally {
-                this._events = null;
+                this._removeHandler(null, null);
             }
         };
         return BaseObject;
@@ -1086,7 +1089,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.3';
+        Global.vesion = '2.5.3.1';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
