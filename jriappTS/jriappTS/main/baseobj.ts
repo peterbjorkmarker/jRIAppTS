@@ -64,7 +64,7 @@
                         cur = next;
                         next = (!cur) ? null : cur.next;
                     }
-                    //del.context = null;
+                    del.context = null;
                     del.fn = null;
                     del.next = null;
                 }

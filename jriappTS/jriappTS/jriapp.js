@@ -289,7 +289,7 @@ var RIAPP;
                         cur = next;
                         next = (!cur) ? null : cur.next;
                     }
-                    //del.context = null;
+                    del.context = null;
                     del.fn = null;
                     del.next = null;
                 }
@@ -1089,7 +1089,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.3.1';
+        Global.vesion = '2.5.3.2';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
