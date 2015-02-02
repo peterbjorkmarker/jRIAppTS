@@ -1195,7 +1195,7 @@
 
             export interface IDbSetLoadedArgs<TItem extends IEntityItem> { items: TItem[];  }
             
-            export var DBSET_EVENTS = {
+            var DBSET_EVENTS = {
                 loaded: 'loaded'
             };
 
@@ -1972,7 +1972,7 @@
                 }
             }
 
-            export var DBCTX_EVENTS = {
+            var DBCTX_EVENTS = {
                 submit_err: 'submit_error'
             };
 

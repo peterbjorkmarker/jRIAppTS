@@ -1215,6 +1215,15 @@
                 animation: RIAPP.IAnimation;
             }
 
+            var GRID_EVENTS = {
+                row_expanded: 'row_expanded',
+                row_selected: 'row_selected',
+                page_changed: 'page_changed',
+                row_state_changed: 'row_state_changed',
+                cell_dblclicked: 'cell_dblclicked',
+                row_action: 'row_action'
+            };
+
             export class DataGrid extends RIAPP.BaseObject implements RIAPP.ISelectable {
                 private _options: IGridConstructorOptions;
                 _$tableEl: JQuery;
@@ -1295,44 +1304,44 @@
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['row_expanded', 'row_selected', 'page_changed', 'row_state_changed',
-                        'cell_dblclicked', 'row_action'].concat(base_events);
+                    var events = Object.keys(GRID_EVENTS).map((key, i, arr) => { return <string>GRID_EVENTS[key]; });
+                    return events.concat(base_events);
                 }
                 addOnRowExpanded(fn: (sender: DataGrid, args: { old_expandedRow: Row; expandedRow: Row; isExpanded: boolean; }) => void, namespace?: string, context?: any) {
-                    this.addHandler('row_expanded', fn, namespace, context);
+                    this.addHandler(GRID_EVENTS.row_expanded, fn, namespace, context);
                 }
                 removeOnRowExpanded(namespace?: string) {
-                    this.removeHandler('row_expanded', namespace);
+                    this.removeHandler(GRID_EVENTS.row_expanded, namespace);
                 }
                 addOnRowSelected(fn: (sender: DataGrid, args: { row: Row; }) => void, namespace?: string, context?: any) {
-                    this.addHandler('row_selected', fn, namespace, context);
+                    this.addHandler(GRID_EVENTS.row_selected, fn, namespace, context);
                 }
                 removeOnRowSelected(namespace?: string) {
-                    this.removeHandler('row_selected', namespace);
+                    this.removeHandler(GRID_EVENTS.row_selected, namespace);
                 }
                 addOnPageChanged(fn: (sender: DataGrid, args: {}) => void, namespace?: string, context?: any) {
-                    this.addHandler('page_changed', fn, namespace, context);
+                    this.addHandler(GRID_EVENTS.page_changed, fn, namespace, context);
                 }
                 removeOnPageChanged(namespace?: string) {
-                    this.removeHandler('page_changed', namespace);
+                    this.removeHandler(GRID_EVENTS.page_changed, namespace);
                 }
                 addOnRowStateChanged(fn: (sender: DataGrid, args: { row: Row; val: any; css: string; }) => void, namespace?: string, context?: any) {
-                    this.addHandler('row_state_changed', fn, namespace, context);
+                    this.addHandler(GRID_EVENTS.row_state_changed, fn, namespace, context);
                 }
                 removeOnRowStateChanged(namespace?: string) {
-                    this.removeHandler('row_state_changed', namespace);
+                    this.removeHandler(GRID_EVENTS.row_state_changed, namespace);
                 }
                 addOnCellDblClicked(fn: (sender: DataGrid, args: { cell: BaseCell; }) => void, namespace?: string, context?: any) {
-                    this.addHandler('cell_dblclicked', fn, namespace, context);
+                    this.addHandler(GRID_EVENTS.cell_dblclicked, fn, namespace, context);
                 }
                 removeOnCellDblClicked(namespace?: string) {
-                    this.removeHandler('cell_dblclicked', namespace);
+                    this.removeHandler(GRID_EVENTS.cell_dblclicked, namespace);
                 }
                 addOnRowAction(fn: (sender: DataGrid, args: { row: Row; action: ROW_ACTION; }) => void, namespace?: string, context?: any) {
-                    this.addHandler('row_action', fn, namespace, context);
+                    this.addHandler(GRID_EVENTS.row_action, fn, namespace, context);
                 }
                 removeOnRowAction(namespace?: string) {
-                    this.removeHandler('row_action', namespace);
+                    this.removeHandler(GRID_EVENTS.row_action, namespace);
                 }
                 _isRowExpanded(row: Row): boolean {
                     return this._expandedRow === row;
@@ -1349,15 +1358,15 @@
                 }
                 _onRowStateChanged(row: Row, val) {
                     var args = { row: row, val: val, css: null };
-                    this.raiseEvent('row_state_changed', args);
+                    this.raiseEvent(GRID_EVENTS.row_state_changed, args);
                     return args.css;
                 }
                 _onCellDblClicked(cell: BaseCell) {
                     var args = { cell: cell };
-                    this.raiseEvent('cell_dblclicked', args);
+                    this.raiseEvent(GRID_EVENTS.cell_dblclicked, args);
                 }
                 _onRowSelectionChanged(row: Row) {
-                    this.raiseEvent('row_selected', { row: row });
+                    this.raiseEvent(GRID_EVENTS.row_selected, { row: row });
                 }
                 _resetColumnsSort() {
                     this.columns.forEach(function (col) {
@@ -1470,11 +1479,11 @@
                         case Keys.enter:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
-                                    this.raiseEvent('row_action', { row: this._currentRow, action: ROW_ACTION.OK });
+                                    this.raiseEvent(GRID_EVENTS.row_action, { row: this._currentRow, action: ROW_ACTION.OK });
                                     event.preventDefault();
                                 }
                                 else {
-                                    this.raiseEvent('row_action', { row: this._currentRow, action: ROW_ACTION.EDIT });
+                                    this.raiseEvent(GRID_EVENTS.row_action, { row: this._currentRow, action: ROW_ACTION.EDIT });
                                     event.preventDefault();
                                 }
                             }
@@ -1482,7 +1491,7 @@
                         case Keys.esc:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
-                                    this.raiseEvent('row_action', { row: this._currentRow, action: ROW_ACTION.CANCEL });
+                                    this.raiseEvent(GRID_EVENTS.row_action, { row: this._currentRow, action: ROW_ACTION.CANCEL });
                                     event.preventDefault();
                                 }
                             }
@@ -1525,7 +1534,7 @@
                         if (!!old)
                             old.expanderCell.toggleImage();
                     }
-                    this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: parentRow, isExpanded: expanded });
+                    this.raiseEvent(GRID_EVENTS.row_expanded, { old_expandedRow: old, expandedRow: parentRow, isExpanded: expanded });
                 }
                 protected _parseColumnAttr(column_attr:string, content_attr:string) {
                     var defaultOp: IColumnInfo = {
@@ -1678,7 +1687,7 @@
                         this._rowSelectorCol.checked = false;
                     }
                     this._scrollToCurrent(false);
-                    this.raiseEvent('page_changed', {});
+                    this.raiseEvent(GRID_EVENTS.page_changed, {});
                 }
                 protected _onItemEdit(item: collMOD.ICollectionItem, isBegin:boolean, isCanceled: boolean) {
                     var row = this._rowMap[item._key];
@@ -1941,7 +1950,7 @@
                     var old = this._expandedRow;
                     if (!!old) {
                         this._expandedRow = null;
-                        this.raiseEvent('row_expanded', { old_expandedRow: old, expandedRow: null, isExpanded: false });
+                        this.raiseEvent(GRID_EVENTS.row_expanded, { old_expandedRow: old, expandedRow: null, isExpanded: false });
                     }
                 }
                 getSelectedRows() {
@@ -2146,19 +2155,19 @@
                         return;
                     var self = this;
                     this._grid.addOnRowExpanded(function (s, args) {
-                        self.invokeGridEvent('row_expanded', args);
+                        self.invokeGridEvent(GRID_EVENTS.row_expanded, args);
                     }, this.uniqueID);
                     this._grid.addOnRowSelected(function (s, args) {
-                        self.invokeGridEvent('row_selected', args);
+                        self.invokeGridEvent(GRID_EVENTS.row_selected, args);
                     }, this.uniqueID);
                     this._grid.addOnPageChanged(function (s, args) {
-                        self.invokeGridEvent('page_changed', args);
+                        self.invokeGridEvent(GRID_EVENTS.page_changed, args);
                     }, this.uniqueID);
                     this._grid.addOnCellDblClicked(function (s, args) {
-                        self.invokeGridEvent('cell_dblclicked', args);
+                        self.invokeGridEvent(GRID_EVENTS.cell_dblclicked, args);
                     }, this.uniqueID);
                     this._grid.addOnRowStateChanged(function (s, args) {
-                        self.invokeGridEvent('row_state_changed', args);
+                        self.invokeGridEvent(GRID_EVENTS.row_state_changed, args);
                     }, this.uniqueID);
                     this._grid.addOnDestroyed(function (s, args) {
                         self._grid = null;

@@ -17,23 +17,6 @@
             export const enum COLL_CHANGE_TYPE { REMOVE= 0, ADDED=1, RESET=2, REMAP_KEY=3 }
             export const enum SORT_ORDER { ASC= 0, DESC= 1 }
             export const enum FILTER_TYPE { Equals = 0, Between = 1, StartsWith = 2, EndsWith = 3, Contains = 4, Gt = 5, Lt = 6, GtEq = 7, LtEq = 8, NotEq = 9 }
-            export var COLL_EVENTS = {
-                begin_edit: 'begin_edit',
-                end_edit: 'end_edit',
-                fill: 'fill',
-                collection_changed: 'coll_changed',
-                item_deleting: 'item_deleting',
-                item_adding: 'item_adding',
-                item_added: 'item_added',
-                validate: 'validate',
-                current_changing: 'current_changing',
-                page_changing: 'page_changing',
-                errors_changed: 'errors_changed',
-                status_changed: 'status_changed',
-                clearing: 'clearing',
-                cleared: 'cleared',
-                commit_changes: 'commit_changes'
-            };
 
             export interface IPermissions { canAddRow: boolean; canEditRow: boolean; canDeleteRow: boolean; canRefreshRow: boolean; }
             export interface IFieldInfo {
@@ -93,7 +76,7 @@
                 _key: string;
             }
          
-            export var ITEM_EVENTS = {
+            var ITEM_EVENTS = {
                 errors_changed: 'errors_changed'
             };
 
@@ -487,6 +470,24 @@
             export interface ICollEndEditArgs<TItem extends ICollectionItem> { item: TItem; isCanceled: boolean; }
             export interface ICurrentChangingArgs<TItem extends ICollectionItem> { newCurrent: TItem; }
           
+            var COLL_EVENTS = {
+                begin_edit: 'begin_edit',
+                end_edit: 'end_edit',
+                fill: 'fill',
+                collection_changed: 'coll_changed',
+                item_deleting: 'item_deleting',
+                item_adding: 'item_adding',
+                item_added: 'item_added',
+                validate: 'validate',
+                current_changing: 'current_changing',
+                page_changing: 'page_changing',
+                errors_changed: 'errors_changed',
+                status_changed: 'status_changed',
+                clearing: 'clearing',
+                cleared: 'cleared',
+                commit_changes: 'commit_changes'
+            };
+
             export class BaseCollection<TItem extends ICollectionItem> extends RIAPP.BaseObject {
                 protected _options: ICollectionOptions;
                 protected _isLoading: boolean;

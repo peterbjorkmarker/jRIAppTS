@@ -1019,23 +1019,6 @@ declare module RIAPP {
                 LtEq = 8,
                 NotEq = 9,
             }
-            var COLL_EVENTS: {
-                begin_edit: string;
-                end_edit: string;
-                fill: string;
-                collection_changed: string;
-                item_deleting: string;
-                item_adding: string;
-                item_added: string;
-                validate: string;
-                current_changing: string;
-                page_changing: string;
-                errors_changed: string;
-                status_changed: string;
-                clearing: string;
-                cleared: string;
-                commit_changes: string;
-            };
             interface IPermissions {
                 canAddRow: boolean;
                 canEditRow: boolean;
@@ -1067,9 +1050,6 @@ declare module RIAPP {
                 _aspect: ItemAspect<ICollectionItem>;
                 _key: string;
             }
-            var ITEM_EVENTS: {
-                errors_changed: string;
-            };
             class ItemAspect<TItem extends ICollectionItem> extends RIAPP.BaseObject implements IErrorNotification, RIAPP.IEditable, RIAPP.ISubmittable {
                 protected _fkey: string;
                 protected _isEditing: boolean;
@@ -3046,9 +3026,6 @@ declare module RIAPP {
             interface IDbSetLoadedArgs<TItem extends IEntityItem> {
                 items: TItem[];
             }
-            var DBSET_EVENTS: {
-                loaded: string;
-            };
             class DbSet<TItem extends IEntityItem, TDbContext extends DbContext> extends collMOD.BaseCollection<TItem> {
                 private _dbContext;
                 private _isSubmitOnDelete;
@@ -3162,9 +3139,6 @@ declare module RIAPP {
                 getDbSet(name: string): DbSet<IEntityItem, DbContext>;
                 destroy(): void;
             }
-            var DBCTX_EVENTS: {
-                submit_err: string;
-            };
             class DbContext extends RIAPP.BaseObject {
                 protected _isInitialized: boolean;
                 protected _dbSets: DbSets;
