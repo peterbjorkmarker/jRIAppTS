@@ -5135,6 +5135,23 @@ var RIAPP;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
+            collection.COLL_EVENTS = {
+                begin_edit: 'begin_edit',
+                end_edit: 'end_edit',
+                fill: 'fill',
+                collection_changed: 'coll_changed',
+                item_deleting: 'item_deleting',
+                item_adding: 'item_adding',
+                item_added: 'item_added',
+                validate: 'validate',
+                current_changing: 'current_changing',
+                page_changing: 'page_changing',
+                errors_changed: 'errors_changed',
+                status_changed: 'status_changed',
+                clearing: 'clearing',
+                cleared: 'cleared',
+                commit_changes: 'commit_changes'
+            };
             function fn_getPropertyByName(name, props) {
                 var arrProps = props.filter(function (f) {
                     return f.fieldName == name;
@@ -5169,6 +5186,9 @@ var RIAPP;
                 _fn_traverseField(fld.fieldName, fld, fn);
             }
             collection.fn_traverseField = fn_traverseField;
+            collection.ITEM_EVENTS = {
+                errors_changed: 'errors_changed'
+            };
             var ItemAspect = (function (_super) {
                 __extends(ItemAspect, _super);
                 function ItemAspect() {
@@ -5181,10 +5201,10 @@ var RIAPP;
                 }
                 ItemAspect.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['errors_changed'].concat(base_events);
+                    return [collection.ITEM_EVENTS.errors_changed].concat(base_events);
                 };
                 ItemAspect.prototype._onErrorsChanged = function (args) {
-                    this.raiseEvent('errors_changed', args);
+                    this.raiseEvent(collection.ITEM_EVENTS.errors_changed, args);
                 };
                 ItemAspect.prototype.handleError = function (error, source) {
                     var isHandled = _super.prototype.handleError.call(this, error, source);
@@ -5359,10 +5379,10 @@ var RIAPP;
                     //the list descendant does it
                 };
                 ItemAspect.prototype.addOnErrorsChanged = function (fn, namespace, context) {
-                    this.addHandler('errors_changed', fn, namespace, context);
+                    this.addHandler(collection.ITEM_EVENTS.errors_changed, fn, namespace, context);
                 };
                 ItemAspect.prototype.removeOnErrorsChanged = function (namespace) {
-                    this.removeHandler('errors_changed', namespace);
+                    this.removeHandler(collection.ITEM_EVENTS.errors_changed, namespace);
                 };
                 ItemAspect.prototype._onAttaching = function () {
                 };
@@ -5627,7 +5647,10 @@ var RIAPP;
                 };
                 BaseCollection.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['begin_edit', 'end_edit', 'fill', 'coll_changed', 'item_deleting', 'item_adding', 'item_added', 'validate', 'current_changing', 'page_changing', 'errors_changed', 'status_changed', 'clearing', 'cleared', 'commit_changes'].concat(base_events);
+                    var events = Object.keys(collection.COLL_EVENTS).map(function (key, i, arr) {
+                        return collection.COLL_EVENTS[key];
+                    });
+                    return events.concat(base_events);
                 };
                 BaseCollection.prototype.handleError = function (error, source) {
                     var isHandled = _super.prototype.handleError.call(this, error, source);
@@ -5636,95 +5659,95 @@ var RIAPP;
                     }
                     return isHandled;
                 };
-                BaseCollection.prototype.addOnClearing = function (fn, namespace, context) {
-                    this.addHandler('clearing', fn, namespace, context);
+                BaseCollection.prototype.addOnClearing = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.clearing, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnClearing = function (namespace) {
-                    this.removeHandler('clearing', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.clearing, namespace);
                 };
-                BaseCollection.prototype.addOnCleared = function (fn, namespace, context) {
-                    this.addHandler('cleared', fn, namespace, context);
+                BaseCollection.prototype.addOnCleared = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.cleared, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnCleared = function (namespace) {
-                    this.removeHandler('cleared', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.cleared, namespace);
                 };
-                BaseCollection.prototype.addOnFill = function (fn, namespace, context) {
-                    this.addHandler('fill', fn, namespace, context);
+                BaseCollection.prototype.addOnFill = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.fill, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnFill = function (namespace) {
-                    this.removeHandler('fill', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.fill, namespace);
                 };
-                BaseCollection.prototype.addOnCollChanged = function (fn, namespace, context) {
-                    this.addHandler('coll_changed', fn, namespace, context);
+                BaseCollection.prototype.addOnCollChanged = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.collection_changed, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnCollChanged = function (namespace) {
-                    this.removeHandler('coll_changed', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.collection_changed, namespace);
                 };
-                BaseCollection.prototype.addOnValidate = function (fn, namespace, context) {
-                    this.addHandler('validate', fn, namespace, context);
+                BaseCollection.prototype.addOnValidate = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.validate, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnValidate = function (namespace) {
-                    this.removeHandler('validate', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.validate, namespace);
                 };
-                BaseCollection.prototype.addOnItemDeleting = function (fn, namespace, context) {
-                    this.addHandler('item_deleting', fn, namespace, context);
+                BaseCollection.prototype.addOnItemDeleting = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.item_deleting, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnItemDeleting = function (namespace) {
-                    this.removeHandler('item_deleting', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.item_deleting, namespace);
                 };
-                BaseCollection.prototype.addOnItemAdding = function (fn, namespace, context) {
-                    this.addHandler('item_adding', fn, namespace, context);
+                BaseCollection.prototype.addOnItemAdding = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.item_adding, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnItemAdding = function (namespace) {
-                    this.removeHandler('item_adding', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.item_adding, namespace);
                 };
-                BaseCollection.prototype.addOnItemAdded = function (fn, namespace, context) {
-                    this.addHandler('item_added', fn, namespace, context);
+                BaseCollection.prototype.addOnItemAdded = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.item_added, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnItemAdded = function (namespace) {
-                    this.removeHandler('item_added', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.item_added, namespace);
                 };
-                BaseCollection.prototype.addOnCurrentChanging = function (fn, namespace, context) {
-                    this.addHandler('current_changing', fn, namespace, context);
+                BaseCollection.prototype.addOnCurrentChanging = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.current_changing, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnCurrentChanging = function (namespace) {
-                    this.removeHandler('current_changing', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.current_changing, namespace);
                 };
-                BaseCollection.prototype.addOnPageChanging = function (fn, namespace, context) {
-                    this.addHandler('page_changing', fn, namespace, context);
+                BaseCollection.prototype.addOnPageChanging = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.page_changing, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnPageChanging = function (namespace) {
-                    this.removeHandler('page_changing', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.page_changing, namespace);
                 };
-                BaseCollection.prototype.addOnErrorsChanged = function (fn, namespace, context) {
-                    this.addHandler('errors_changed', fn, namespace, context);
+                BaseCollection.prototype.addOnErrorsChanged = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.errors_changed, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnErrorsChanged = function (namespace) {
-                    this.removeHandler('errors_changed', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.errors_changed, namespace);
                 };
-                BaseCollection.prototype.addOnBeginEdit = function (fn, namespace, context) {
-                    this.addHandler('begin_edit', fn, namespace, context);
+                BaseCollection.prototype.addOnBeginEdit = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.begin_edit, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnBeginEdit = function (namespace) {
-                    this.removeHandler('begin_edit', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.begin_edit, namespace);
                 };
-                BaseCollection.prototype.addOnEndEdit = function (fn, namespace, context) {
-                    this.addHandler('end_edit', fn, namespace, context);
+                BaseCollection.prototype.addOnEndEdit = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.end_edit, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnEndEdit = function (namespace) {
-                    this.removeHandler('end_edit', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.end_edit, namespace);
                 };
-                BaseCollection.prototype.addOnCommitChanges = function (fn, namespace, context) {
-                    this.addHandler('commit_changes', fn, namespace, context);
+                BaseCollection.prototype.addOnCommitChanges = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.commit_changes, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnCommitChanges = function (namespace) {
-                    this.removeHandler('commit_changes', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.commit_changes, namespace);
                 };
-                BaseCollection.prototype.addOnStatusChanged = function (fn, namespace, context) {
-                    this.addHandler('status_changed', fn, namespace, context);
+                BaseCollection.prototype.addOnStatusChanged = function (fn, namespace, context, prepend) {
+                    this.addHandler(collection.COLL_EVENTS.status_changed, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnStatusChanged = function (namespace) {
-                    this.removeHandler('status_changed', namespace);
+                    this.removeHandler(collection.COLL_EVENTS.status_changed, namespace);
                 };
                 BaseCollection.prototype._getPKFieldInfos = function () {
                     if (!!this._pkInfo)
@@ -5748,35 +5771,35 @@ var RIAPP;
                     catch (ex) {
                         RIAPP.global.reThrow(ex, this.handleError(ex, this));
                     }
-                    this.raiseEvent('current_changing', { newCurrent: newCurrent });
+                    this.raiseEvent(collection.COLL_EVENTS.current_changing, { newCurrent: newCurrent });
                 };
                 BaseCollection.prototype._onCurrentChanged = function () {
                     this.raisePropertyChanged('currentItem');
                 };
                 //occurs when item changeType Changed (not used in simple collections)
                 BaseCollection.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    this.raiseEvent('status_changed', { item: item, oldChangeType: oldChangeType, key: item._key });
+                    this.raiseEvent(collection.COLL_EVENTS.status_changed, { item: item, oldChangeType: oldChangeType, key: item._key });
                 };
                 BaseCollection.prototype._onFillStart = function (args) {
-                    this.raiseEvent('fill', args);
+                    this.raiseEvent(collection.COLL_EVENTS.fill, args);
                 };
                 BaseCollection.prototype._onFillEnd = function (args) {
-                    this.raiseEvent('fill', args);
+                    this.raiseEvent(collection.COLL_EVENTS.fill, args);
                 };
                 BaseCollection.prototype._onItemsChanged = function (args) {
-                    this.raiseEvent('coll_changed', args);
+                    this.raiseEvent(collection.COLL_EVENTS.collection_changed, args);
                 };
                 //new item is being added, but is not in the collection now
                 BaseCollection.prototype._onItemAdding = function (item) {
                     var args = { item: item, isCancel: false };
-                    this.raiseEvent('item_adding', args);
+                    this.raiseEvent(collection.COLL_EVENTS.item_adding, args);
                     if (args.isCancel)
                         RIAPP.global._throwDummy(new Error('operation canceled'));
                 };
                 //new item has been added and now is in editing state and is currentItem
                 BaseCollection.prototype._onItemAdded = function (item) {
                     var args = { item: item, isAddNewHandled: false };
-                    this.raiseEvent('item_added', args);
+                    this.raiseEvent(collection.COLL_EVENTS.item_added, args);
                 };
                 BaseCollection.prototype._createNew = function () {
                     throw new Error('_createNew Not implemented');
@@ -5822,7 +5845,7 @@ var RIAPP;
                 };
                 BaseCollection.prototype._onPageChanging = function () {
                     var args = { page: this.pageIndex, isCancel: false };
-                    this._raiseEvent('page_changing', args);
+                    this._raiseEvent(collection.COLL_EVENTS.page_changing, args);
                     if (!args.isCancel) {
                         try {
                             this.endEdit();
@@ -5886,20 +5909,20 @@ var RIAPP;
                         return;
                     if (isBegin) {
                         this._EditingItem = item;
-                        this.raiseEvent('begin_edit', { item: item });
+                        this.raiseEvent(collection.COLL_EVENTS.begin_edit, { item: item });
                     }
                     else {
                         this._EditingItem = null;
-                        this.raiseEvent('end_edit', { item: item, isCanceled: isCanceled });
+                        this.raiseEvent(collection.COLL_EVENTS.end_edit, { item: item, isCanceled: isCanceled });
                     }
                 };
                 //used by descendants when commiting submits for items
                 BaseCollection.prototype._onCommitChanges = function (item, isBegin, isRejected, changeType) {
-                    this.raiseEvent('commit_changes', { item: item, isBegin: isBegin, isRejected: isRejected, changeType: changeType });
+                    this.raiseEvent(collection.COLL_EVENTS.commit_changes, { item: item, isBegin: isBegin, isRejected: isRejected, changeType: changeType });
                 };
                 BaseCollection.prototype._validateItem = function (item) {
                     var args = { item: item, fieldName: null, errors: [] };
-                    this.raiseEvent('validate', args);
+                    this.raiseEvent(collection.COLL_EVENTS.validate, args);
                     if (!!args.errors && args.errors.length > 0)
                         return { fieldName: null, errors: args.errors };
                     else
@@ -5907,7 +5930,7 @@ var RIAPP;
                 };
                 BaseCollection.prototype._validateItemField = function (item, fieldName) {
                     var args = { item: item, fieldName: fieldName, errors: [] };
-                    this.raiseEvent('validate', args);
+                    this.raiseEvent(collection.COLL_EVENTS.validate, args);
                     if (!!args.errors && args.errors.length > 0)
                         return { fieldName: fieldName, errors: args.errors };
                     else
@@ -5966,11 +5989,11 @@ var RIAPP;
                 };
                 BaseCollection.prototype._onErrorsChanged = function (item) {
                     var args = { item: item };
-                    this.raiseEvent('errors_changed', args);
+                    this.raiseEvent(collection.COLL_EVENTS.errors_changed, args);
                     item._aspect.raiseErrorsChanged({});
                 };
                 BaseCollection.prototype._onItemDeleting = function (args) {
-                    this.raiseEvent('item_deleting', args);
+                    this.raiseEvent(collection.COLL_EVENTS.item_deleting, args);
                     return !args.isCancel;
                 };
                 BaseCollection.prototype.getFieldInfo = function (fieldName) {
@@ -6241,7 +6264,7 @@ var RIAPP;
                 BaseCollection.prototype.clear = function () {
                     this._isClearing = true;
                     try {
-                        this.raiseEvent('clearing', {});
+                        this.raiseEvent(collection.COLL_EVENTS.clearing, {});
                         this.cancelEdit();
                         this._EditingItem = null;
                         this._newKey = 0;
@@ -6255,7 +6278,7 @@ var RIAPP;
                     finally {
                         this._isClearing = false;
                     }
-                    this.raiseEvent('cleared', {});
+                    this.raiseEvent(collection.COLL_EVENTS.cleared, {});
                     this.raisePropertyChanged('count');
                 };
                 BaseCollection.prototype.destroy = function () {
@@ -10269,13 +10292,6 @@ var RIAPP;
                 colSortAsc: 'sort-asc',
                 colSortDesc: 'sort-desc'
             };
-            (function (ROW_ACTION) {
-                ROW_ACTION[ROW_ACTION["OK"] = 0] = "OK";
-                ROW_ACTION[ROW_ACTION["EDIT"] = 1] = "EDIT";
-                ROW_ACTION[ROW_ACTION["CANCEL"] = 2] = "CANCEL";
-                ROW_ACTION[ROW_ACTION["DELETE"] = 3] = "DELETE";
-            })(datagrid.ROW_ACTION || (datagrid.ROW_ACTION = {}));
-            var ROW_ACTION = datagrid.ROW_ACTION;
             var _columnWidthInterval, _gridsCount = 0;
             var _created_grids = {};
             function _gridCreated(grid) {
@@ -15006,6 +15022,9 @@ var RIAPP;
                 return EntityAspect;
             })(collMOD.ItemAspect);
             _db.EntityAspect = EntityAspect;
+            _db.DBSET_EVENTS = {
+                loaded: 'loaded'
+            };
             var DbSet = (function (_super) {
                 __extends(DbSet, _super);
                 function DbSet(opts, entityType) {
@@ -15060,7 +15079,7 @@ var RIAPP;
                 };
                 DbSet.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['loaded'].concat(base_events);
+                    return [_db.DBSET_EVENTS.loaded].concat(base_events);
                 };
                 DbSet.prototype._mapAssocFields = function () {
                     var trackAssoc = this._trackAssoc, assoc, tasKeys = Object.keys(trackAssoc), frel, trackAssocMap = this._trackAssocMap;
@@ -15253,13 +15272,13 @@ var RIAPP;
                     calcDef.getFunc = getFunc;
                 };
                 DbSet.prototype._onLoaded = function (items) {
-                    this.raiseEvent('loaded', { items: items });
+                    this.raiseEvent(_db.DBSET_EVENTS.loaded, { items: items });
                 };
-                DbSet.prototype.addOnLoaded = function (fn, namespace, context) {
-                    this.addHandler('loaded', fn, namespace, context);
+                DbSet.prototype.addOnLoaded = function (fn, namespace, context, prepend) {
+                    this.addHandler(_db.DBSET_EVENTS.loaded, fn, namespace, context, prepend);
                 };
                 DbSet.prototype.removeOnLoaded = function (namespace) {
-                    this.removeHandler('loaded', namespace);
+                    this.removeHandler(_db.DBSET_EVENTS.loaded, namespace);
                 };
                 DbSet.prototype._getCalcFieldVal = function (fieldName, item) {
                     return baseUtils.getValue(this._calcfldMap, fieldName).getFunc.call(item);
@@ -15794,6 +15813,9 @@ var RIAPP;
                 return DbSets;
             })(RIAPP.BaseObject);
             _db.DbSets = DbSets;
+            _db.DBCTX_EVENTS = {
+                submit_err: 'submit_error'
+            };
             var DbContext = (function (_super) {
                 __extends(DbContext, _super);
                 function DbContext() {
@@ -15814,7 +15836,7 @@ var RIAPP;
                 }
                 DbContext.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['submit_error'].concat(base_events);
+                    return [_db.DBCTX_EVENTS.submit_err].concat(base_events);
                 };
                 DbContext.prototype._onGetCalcField = function (args) {
                     this.raiseEvent('define_calc', args);
@@ -16103,7 +16125,7 @@ var RIAPP;
                 };
                 DbContext.prototype._onSubmitError = function (error) {
                     var args = { error: error, isHandled: false };
-                    this.raiseEvent('submit_error', args);
+                    this.raiseEvent(_db.DBCTX_EVENTS.submit_err, args);
                     if (!args.isHandled) {
                         this.rejectChanges();
                         this._onDataOperError(error, 0 /* SUBMIT */);
@@ -16195,10 +16217,10 @@ var RIAPP;
                     }
                 };
                 DbContext.prototype.addOnSubmitError = function (fn, namespace, context) {
-                    this.addHandler('submit_error', fn, namespace, context);
+                    this.addHandler(_db.DBCTX_EVENTS.submit_err, fn, namespace, context);
                 };
                 DbContext.prototype.removeOnSubmitError = function (namespace) {
-                    this.removeHandler('submit_error', namespace);
+                    this.removeHandler(_db.DBCTX_EVENTS.submit_err, namespace);
                 };
                 DbContext.prototype._onItemRefreshed = function (res, item) {
                     var operType = 3 /* REFRESH */;
@@ -16674,24 +16696,24 @@ var RIAPP;
                     var self = this, ds = this._parentDS;
                     if (!ds)
                         return;
-                    ds.addHandler('coll_changed', function (sender, args) {
+                    ds.addOnCollChanged(function (sender, args) {
                         self._onParentCollChanged(args);
                     }, self._objId, null, true);
-                    ds.addHandler('fill', function (sender, args) {
+                    ds.addOnFill(function (sender, args) {
                         self._onParentFill(args);
                     }, self._objId, null, true);
-                    ds.addHandler('begin_edit', function (sender, args) {
+                    ds.addOnBeginEdit(function (sender, args) {
                         self._onParentEdit(args.item, true, undefined);
                     }, self._objId, null, true);
-                    ds.addHandler('end_edit', function (sender, args) {
+                    ds.addOnEndEdit(function (sender, args) {
                         self._onParentEdit(args.item, false, args.isCanceled);
                     }, self._objId, null, true);
-                    ds.addHandler('item_deleting', function (sender, args) {
+                    ds.addOnItemDeleting(function (sender, args) {
                     }, self._objId, null, true);
-                    ds.addHandler('status_changed', function (sender, args) {
+                    ds.addOnStatusChanged(function (sender, args) {
                         self._onParentStatusChanged(args.item, args.oldChangeType);
                     }, self._objId, null, true);
-                    ds.addHandler('commit_changes', function (sender, args) {
+                    ds.addOnCommitChanges(function (sender, args) {
                         self._onParentCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId, null, true);
                 };
@@ -16699,22 +16721,22 @@ var RIAPP;
                     var self = this, ds = this._childDS;
                     if (!ds)
                         return;
-                    ds.addHandler('coll_changed', function (sender, args) {
+                    ds.addOnCollChanged(function (sender, args) {
                         self._onChildCollChanged(args);
                     }, self._objId, null, true);
-                    ds.addHandler('fill', function (sender, args) {
+                    ds.addOnFill(function (sender, args) {
                         self._onChildFill(args);
                     }, self._objId, null, true);
-                    ds.addHandler('begin_edit', function (sender, args) {
+                    ds.addOnBeginEdit(function (sender, args) {
                         self._onChildEdit(args.item, true, undefined);
                     }, self._objId, null, true);
-                    ds.addHandler('end_edit', function (sender, args) {
+                    ds.addOnEndEdit(function (sender, args) {
                         self._onChildEdit(args.item, false, args.isCanceled);
                     }, self._objId, null, true);
-                    ds.addHandler('status_changed', function (sender, args) {
+                    ds.addOnStatusChanged(function (sender, args) {
                         self._onChildStatusChanged(args.item, args.oldChangeType);
                     }, self._objId, null, true);
-                    ds.addHandler('commit_changes', function (sender, args) {
+                    ds.addOnCommitChanges(function (sender, args) {
                         self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId, null, true);
                 };

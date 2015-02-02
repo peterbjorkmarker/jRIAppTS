@@ -39,7 +39,7 @@
                 colSortAsc: 'sort-asc',
                 colSortDesc: 'sort-desc'
             };
-            export enum ROW_ACTION { OK, EDIT, CANCEL, DELETE }
+            export const enum ROW_ACTION { OK, EDIT, CANCEL, DELETE }
 
             var _columnWidthInterval, _gridsCount: number = 0;
             var _created_grids: { [id: string]: DataGrid; } = {};

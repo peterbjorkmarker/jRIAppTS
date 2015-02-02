@@ -1195,6 +1195,10 @@
 
             export interface IDbSetLoadedArgs<TItem extends IEntityItem> { items: TItem[];  }
             
+            export var DBSET_EVENTS = {
+                loaded: 'loaded'
+            };
+
             export class DbSet<TItem extends IEntityItem, TDbContext extends DbContext> extends collMOD.BaseCollection<TItem> {
                 private _dbContext: TDbContext;
                 private _isSubmitOnDelete: boolean;
@@ -1268,7 +1272,7 @@
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['loaded'].concat(base_events);
+                    return [DBSET_EVENTS.loaded].concat(base_events);
                 }
                 protected _mapAssocFields() {
                     var trackAssoc = this._trackAssoc, assoc: IAssociationInfo, tasKeys = Object.keys(trackAssoc),
@@ -1461,13 +1465,13 @@
                     calcDef.getFunc = getFunc;
                 }
                 protected _onLoaded(items: TItem[]) {
-                    this.raiseEvent('loaded', { items: items });
+                    this.raiseEvent(DBSET_EVENTS.loaded, { items: items });
                 }
-                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('loaded', fn, namespace, context);
+                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(DBSET_EVENTS.loaded, fn, namespace, context, prepend);
                 }
                 removeOnLoaded(namespace?: string) {
-                    this.removeHandler('loaded', namespace);
+                    this.removeHandler(DBSET_EVENTS.loaded, namespace);
                 }
                 _getCalcFieldVal(fieldName: string, item: IEntityItem): any {
                     return baseUtils.getValue(this._calcfldMap, fieldName).getFunc.call(item);
@@ -1968,6 +1972,10 @@
                 }
             }
 
+            export var DBCTX_EVENTS = {
+                submit_err: 'submit_error'
+            };
+
             export class DbContext extends RIAPP.BaseObject {
                 protected _isInitialized: boolean;
                 protected _dbSets: DbSets;
@@ -2003,7 +2011,7 @@
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['submit_error'].concat(base_events);
+                    return [DBCTX_EVENTS.submit_err].concat(base_events);
                 }
                 protected _onGetCalcField(args: { dbSetName: string; fieldName: string; getFunc: () => any; }) {
                     this.raiseEvent('define_calc', args);
@@ -2303,7 +2311,7 @@
                 }
                 protected _onSubmitError(error) {
                     var args = { error: error, isHandled: false };
-                    this.raiseEvent('submit_error', args);
+                    this.raiseEvent(DBCTX_EVENTS.submit_err, args);
                     if (!args.isHandled) {
                         this.rejectChanges();
                         this._onDataOperError(error, DATA_OPER.SUBMIT);
@@ -2402,10 +2410,10 @@
                     }
                 }
                 addOnSubmitError(fn: (sender: DbContext, args: { error: any; isHandled: boolean; }) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('submit_error', fn, namespace, context);
+                    this.addHandler(DBCTX_EVENTS.submit_err, fn, namespace, context);
                 }
                 removeOnSubmitError(namespace?: string) {
-                    this.removeHandler('submit_error', namespace);
+                    this.removeHandler(DBCTX_EVENTS.submit_err, namespace);
                 }
                 _onItemRefreshed(res: IRefreshRowInfo, item: IEntityItem) {
                     var operType = DATA_OPER.REFRESH;
@@ -2892,46 +2900,46 @@
                 protected _bindParentDS() {
                     var self = this, ds = this._parentDS;
                     if (!ds) return;
-                    ds.addHandler('coll_changed', function (sender, args) {
+                    ds.addOnCollChanged(function (sender, args) {
                         self._onParentCollChanged(args);
                     }, self._objId, null, true);
-                    ds.addHandler('fill', function (sender, args) {
+                    ds.addOnFill(function (sender, args) {
                         self._onParentFill(args);
                     }, self._objId, null, true);
-                    ds.addHandler('begin_edit', function (sender, args) {
+                    ds.addOnBeginEdit(function (sender, args) {
                         self._onParentEdit(args.item, true, undefined);
                     }, self._objId, null, true);
-                    ds.addHandler('end_edit', function (sender, args) {
+                    ds.addOnEndEdit(function (sender, args) {
                         self._onParentEdit(args.item, false, args.isCanceled);
                     }, self._objId, null, true);
-                    ds.addHandler('item_deleting', function (sender, args) {
+                    ds.addOnItemDeleting(function (sender, args) {
                     }, self._objId, null, true);
-                    ds.addHandler('status_changed', function (sender, args) {
+                    ds.addOnStatusChanged(function (sender, args) {
                         self._onParentStatusChanged(args.item, args.oldChangeType);
                     }, self._objId, null, true);
-                    ds.addHandler('commit_changes', function (sender, args) {
+                    ds.addOnCommitChanges(function (sender, args) {
                         self._onParentCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId, null, true);
                 }
                 protected _bindChildDS() {
                     var self = this, ds = this._childDS;
                     if (!ds) return;
-                    ds.addHandler('coll_changed', function (sender, args) {
+                    ds.addOnCollChanged(function (sender, args) {
                         self._onChildCollChanged(args);
                     }, self._objId, null, true);
-                    ds.addHandler('fill', function (sender, args) {
+                    ds.addOnFill(function (sender, args) {
                         self._onChildFill(args);
                     }, self._objId, null, true);
-                    ds.addHandler('begin_edit', function (sender, args) {
+                    ds.addOnBeginEdit(function (sender, args) {
                         self._onChildEdit(args.item, true, undefined);
                     }, self._objId, null, true);
-                    ds.addHandler('end_edit', function (sender, args) {
+                    ds.addOnEndEdit(function (sender, args) {
                         self._onChildEdit(args.item, false, args.isCanceled);
                     }, self._objId, null, true);
-                    ds.addHandler('status_changed', function (sender, args) {
+                    ds.addOnStatusChanged(function (sender, args) {
                         self._onChildStatusChanged(args.item, args.oldChangeType);
                     }, self._objId, null, true);
-                    ds.addHandler('commit_changes', function (sender, args) {
+                    ds.addOnCommitChanges(function (sender, args) {
                         self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
                     }, self._objId, null, true);
                 }

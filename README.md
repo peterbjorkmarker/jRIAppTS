@@ -30,6 +30,7 @@ After minification jriapp.js has the size of about 310 KB. When it is gzipped, i
 I recommend using the ASP.NET MVC 4 bundling feature for managing javascript files (and automatically minify them).
 
 <b>Latest changes:</b>
+<p>2015-02-02 Code maintenance improvement</p>  
 <p>2015-02-01 Update to version 2.5.3. Now, the addEventHadler of the BaseObject class has a parameter- context, which defines the THIS object for the event handler</p>  
 <p>2015-01-30 Testing and recompiling with typescript 1.4.</p>  
 <p>2015-01-26 The Demo update. Included HTML5 Server Side Events (SSE) in DataGridDemo to display quotes of the day which are streamed from the server.

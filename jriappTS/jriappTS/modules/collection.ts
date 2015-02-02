@@ -16,8 +16,25 @@
             export const enum STATUS { NONE= 0, ADDED= 1, UPDATED= 2, DELETED= 3 }
             export const enum COLL_CHANGE_TYPE { REMOVE= 0, ADDED=1, RESET=2, REMAP_KEY=3 }
             export const enum SORT_ORDER { ASC= 0, DESC= 1 }
-            export const enum FILTER_TYPE { Equals= 0, Between= 1, StartsWith= 2, EndsWith= 3, Contains= 4, Gt= 5, Lt= 6, GtEq= 7, LtEq= 8, NotEq= 9 }
-          
+            export const enum FILTER_TYPE { Equals = 0, Between = 1, StartsWith = 2, EndsWith = 3, Contains = 4, Gt = 5, Lt = 6, GtEq = 7, LtEq = 8, NotEq = 9 }
+            export var COLL_EVENTS = {
+                begin_edit: 'begin_edit',
+                end_edit: 'end_edit',
+                fill: 'fill',
+                collection_changed: 'coll_changed',
+                item_deleting: 'item_deleting',
+                item_adding: 'item_adding',
+                item_added: 'item_added',
+                validate: 'validate',
+                current_changing: 'current_changing',
+                page_changing: 'page_changing',
+                errors_changed: 'errors_changed',
+                status_changed: 'status_changed',
+                clearing: 'clearing',
+                cleared: 'cleared',
+                commit_changes: 'commit_changes'
+            };
+
             export interface IPermissions { canAddRow: boolean; canEditRow: boolean; canDeleteRow: boolean; canRefreshRow: boolean; }
             export interface IFieldInfo {
                 fieldName: string;
@@ -76,6 +93,10 @@
                 _key: string;
             }
          
+            export var ITEM_EVENTS = {
+                errors_changed: 'errors_changed'
+            };
+
             export class ItemAspect<TItem extends ICollectionItem> extends RIAPP.BaseObject implements IErrorNotification, RIAPP.IEditable, RIAPP.ISubmittable {
                 protected _fkey: string;
                 protected _isEditing: boolean;
@@ -93,10 +114,10 @@
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['errors_changed'].concat(base_events);
+                    return [ITEM_EVENTS.errors_changed].concat(base_events);
                 }
                 protected _onErrorsChanged(args: any) {
-                    this.raiseEvent('errors_changed', args);
+                    this.raiseEvent(ITEM_EVENTS.errors_changed, args);
                 }
                 handleError(error, source): boolean {
                     var isHandled = super.handleError(error, source);
@@ -272,10 +293,10 @@
                     //the list descendant does it
                 }
                 addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string, context?: any) {
-                    this.addHandler('errors_changed', fn, namespace, context);
+                    this.addHandler(ITEM_EVENTS.errors_changed, fn, namespace, context);
                 }
                 removeOnErrorsChanged(namespace?: string) {
-                    this.removeHandler('errors_changed', namespace);
+                    this.removeHandler(ITEM_EVENTS.errors_changed, namespace);
                 }
                 _onAttaching() {
                 }
@@ -532,9 +553,8 @@
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['begin_edit', 'end_edit', 'fill', 'coll_changed', 'item_deleting', 'item_adding', 'item_added',
-                        'validate', 'current_changing', 'page_changing', 'errors_changed', 'status_changed', 'clearing',
-                        'cleared', 'commit_changes'].concat(base_events);
+                    var events = Object.keys(COLL_EVENTS).map((key, i, arr) => { return <string>COLL_EVENTS[key]; });
+                    return events.concat(base_events);
                 }
                 handleError(error, source): boolean {
                     var isHandled = super.handleError(error, source);
@@ -543,95 +563,95 @@
                     }
                     return isHandled;
                 }
-                addOnClearing(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('clearing', fn, namespace, context);
+                addOnClearing(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.clearing, fn, namespace, context, prepend);
                 }
                 removeOnClearing(namespace?: string) {
-                    this.removeHandler('clearing', namespace);
+                    this.removeHandler(COLL_EVENTS.clearing, namespace);
                 }
-                addOnCleared(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('cleared', fn, namespace, context);
+                addOnCleared(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.cleared, fn, namespace, context, prepend);
                 }
                 removeOnCleared(namespace?: string) {
-                    this.removeHandler('cleared', namespace);
+                    this.removeHandler(COLL_EVENTS.cleared, namespace);
                 }
-                addOnFill(fn: (sender: BaseCollection<TItem>, args: ICollFillArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('fill', fn, namespace, context);
+                addOnFill(fn: (sender: BaseCollection<TItem>, args: ICollFillArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.fill, fn, namespace, context, prepend);
                 }
                 removeOnFill(namespace?: string) {
-                    this.removeHandler('fill', namespace);
+                    this.removeHandler(COLL_EVENTS.fill, namespace);
                 }
-                addOnCollChanged(fn: (sender: BaseCollection<TItem>, args: ICollChangedArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('coll_changed', fn, namespace, context);
+                addOnCollChanged(fn: (sender: BaseCollection<TItem>, args: ICollChangedArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.collection_changed, fn, namespace, context, prepend);
                 }
                 removeOnCollChanged(namespace?: string) {
-                    this.removeHandler('coll_changed', namespace);
+                    this.removeHandler(COLL_EVENTS.collection_changed, namespace);
                 }
-                addOnValidate(fn: (sender: BaseCollection<TItem>, args: ICollValidateArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('validate', fn, namespace, context);
+                addOnValidate(fn: (sender: BaseCollection<TItem>, args: ICollValidateArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.validate, fn, namespace, context, prepend);
                 }
                 removeOnValidate(namespace?: string) {
-                    this.removeHandler('validate', namespace);
+                    this.removeHandler(COLL_EVENTS.validate, namespace);
                 }
-                addOnItemDeleting(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('item_deleting', fn, namespace, context);
+                addOnItemDeleting(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.item_deleting, fn, namespace, context, prepend);
                 }
                 removeOnItemDeleting(namespace?: string) {
-                    this.removeHandler('item_deleting', namespace);
+                    this.removeHandler(COLL_EVENTS.item_deleting, namespace);
                 }
-                addOnItemAdding(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('item_adding', fn, namespace, context);
+                addOnItemAdding(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.item_adding, fn, namespace, context, prepend);
                 }
                 removeOnItemAdding(namespace?: string) {
-                    this.removeHandler('item_adding', namespace);
+                    this.removeHandler(COLL_EVENTS.item_adding, namespace);
                 }
-                addOnItemAdded(fn: (sender: BaseCollection<TItem>, args: IItemAddedArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('item_added', fn, namespace, context);
+                addOnItemAdded(fn: (sender: BaseCollection<TItem>, args: IItemAddedArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.item_added, fn, namespace, context, prepend);
                 }
                 removeOnItemAdded(namespace?: string) {
-                    this.removeHandler('item_added', namespace);
+                    this.removeHandler(COLL_EVENTS.item_added, namespace);
                 }
-                addOnCurrentChanging(fn: (sender: BaseCollection<TItem>, args: ICurrentChangingArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('current_changing', fn, namespace, context);
+                addOnCurrentChanging(fn: (sender: BaseCollection<TItem>, args: ICurrentChangingArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.current_changing, fn, namespace, context, prepend);
                 }
                 removeOnCurrentChanging(namespace?: string) {
-                    this.removeHandler('current_changing', namespace);
+                    this.removeHandler(COLL_EVENTS.current_changing, namespace);
                 }
-                addOnPageChanging(fn: (sender: BaseCollection<TItem>, args: IPageChangingArgs) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('page_changing', fn, namespace, context);
+                addOnPageChanging(fn: (sender: BaseCollection<TItem>, args: IPageChangingArgs) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.page_changing, fn, namespace, context, prepend);
                 }
                 removeOnPageChanging(namespace?: string) {
-                    this.removeHandler('page_changing', namespace);
+                    this.removeHandler(COLL_EVENTS.page_changing, namespace);
                 }
-                addOnErrorsChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('errors_changed', fn, namespace, context);
+                addOnErrorsChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.errors_changed, fn, namespace, context, prepend);
                 }
                 removeOnErrorsChanged(namespace?: string) {
-                    this.removeHandler('errors_changed', namespace);
+                    this.removeHandler(COLL_EVENTS.errors_changed, namespace);
                 }
-                addOnBeginEdit(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('begin_edit', fn, namespace, context);
+                addOnBeginEdit(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.begin_edit, fn, namespace, context, prepend);
                 }
                 removeOnBeginEdit(namespace?: string) {
-                    this.removeHandler('begin_edit', namespace);
+                    this.removeHandler(COLL_EVENTS.begin_edit, namespace);
                 }
-                addOnEndEdit(fn: (sender: BaseCollection<TItem>, args: ICollEndEditArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('end_edit', fn, namespace, context);
+                addOnEndEdit(fn: (sender: BaseCollection<TItem>, args: ICollEndEditArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.end_edit, fn, namespace, context, prepend);
                 }
                 removeOnEndEdit(namespace?: string) {
-                    this.removeHandler('end_edit', namespace);
+                    this.removeHandler(COLL_EVENTS.end_edit, namespace);
                 }
-                addOnCommitChanges(fn: (sender: BaseCollection<TItem>, args: ICommitChangesArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('commit_changes', fn, namespace, context);
+                addOnCommitChanges(fn: (sender: BaseCollection<TItem>, args: ICommitChangesArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.commit_changes, fn, namespace, context, prepend);
                 }
                 removeOnCommitChanges(namespace?: string) {
-                    this.removeHandler('commit_changes', namespace);
+                    this.removeHandler(COLL_EVENTS.commit_changes, namespace);
                 }
-                addOnStatusChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemStatusArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('status_changed', fn, namespace, context);
+                addOnStatusChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemStatusArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
+                    this.addHandler(COLL_EVENTS.status_changed, fn, namespace, context, prepend);
                 }
                 removeOnStatusChanged(namespace?: string) {
-                    this.removeHandler('status_changed', namespace);
+                    this.removeHandler(COLL_EVENTS.status_changed, namespace);
                 }
                 protected _getPKFieldInfos(): IFieldInfo[] {
                     if (!!this._pkInfo)
@@ -654,35 +674,35 @@
                     } catch (ex) {
                         global.reThrow(ex, this.handleError(ex, this));
                     }
-                    this.raiseEvent('current_changing', <ICurrentChangingArgs<TItem>> { newCurrent: newCurrent });
+                    this.raiseEvent(COLL_EVENTS.current_changing, <ICurrentChangingArgs<TItem>> { newCurrent: newCurrent });
                 }
                 protected _onCurrentChanged() {
                     this.raisePropertyChanged('currentItem');
                 }
                 //occurs when item changeType Changed (not used in simple collections)
                 protected _onItemStatusChanged(item: TItem, oldChangeType: number) {
-                    this.raiseEvent('status_changed', <ICollItemStatusArgs<TItem>> { item: item, oldChangeType: oldChangeType, key: item._key });
+                    this.raiseEvent(COLL_EVENTS.status_changed, <ICollItemStatusArgs<TItem>> { item: item, oldChangeType: oldChangeType, key: item._key });
                 }
                 protected _onFillStart(args: ICollFillArgs<TItem>) {
-                    this.raiseEvent('fill', args);
+                    this.raiseEvent(COLL_EVENTS.fill, args);
                 }
                 protected _onFillEnd(args: ICollFillArgs<TItem>) {
-                    this.raiseEvent('fill', args);
+                    this.raiseEvent(COLL_EVENTS.fill, args);
                 }
                 protected _onItemsChanged(args: ICollChangedArgs<TItem>) {
-                    this.raiseEvent('coll_changed', args);
+                    this.raiseEvent(COLL_EVENTS.collection_changed, args);
                 }
                 //new item is being added, but is not in the collection now
                 protected _onItemAdding(item: TItem) {
                     var args: ICancellableArgs<TItem> = { item: item, isCancel: false };
-                    this.raiseEvent('item_adding', args);
+                    this.raiseEvent(COLL_EVENTS.item_adding, args);
                     if (args.isCancel)
                         global._throwDummy(new Error('operation canceled'));
                 }
                 //new item has been added and now is in editing state and is currentItem
                 protected _onItemAdded(item: TItem) {
                     var args: IItemAddedArgs<TItem> = { item: item, isAddNewHandled: false };
-                    this.raiseEvent('item_added', args);
+                    this.raiseEvent(COLL_EVENTS.item_added, args);
                 }
                 protected _createNew(): TItem {
                     throw new Error('_createNew Not implemented');
@@ -727,7 +747,7 @@
                 }
                 protected _onPageChanging() {
                     var args: IPageChangingArgs = { page: this.pageIndex, isCancel: false };
-                    this._raiseEvent('page_changing', args);
+                    this._raiseEvent(COLL_EVENTS.page_changing, args);
                     if (!args.isCancel) {
                         try {
                             this.endEdit();
@@ -790,20 +810,20 @@
                         return;
                     if (isBegin) {
                         this._EditingItem = item;
-                        this.raiseEvent('begin_edit', <ICollItemArgs<TItem>>{ item: item });
+                        this.raiseEvent(COLL_EVENTS.begin_edit, <ICollItemArgs<TItem>>{ item: item });
                     }
                     else {
                         this._EditingItem = null;
-                        this.raiseEvent('end_edit', { item: item, isCanceled: isCanceled });
+                        this.raiseEvent(COLL_EVENTS.end_edit, { item: item, isCanceled: isCanceled });
                     }
                 }
                 //used by descendants when commiting submits for items
                 _onCommitChanges(item: TItem, isBegin: boolean, isRejected: boolean, changeType: number) {
-                    this.raiseEvent('commit_changes', <ICommitChangesArgs<TItem>>{ item: item, isBegin: isBegin, isRejected: isRejected, changeType: changeType });
+                    this.raiseEvent(COLL_EVENTS.commit_changes, <ICommitChangesArgs<TItem>>{ item: item, isBegin: isBegin, isRejected: isRejected, changeType: changeType });
                 }
                 _validateItem(item: TItem): RIAPP.IValidationInfo {
                     var args: ICollValidateArgs<TItem> = { item: item, fieldName: null, errors: [] };
-                    this.raiseEvent('validate', args);
+                    this.raiseEvent(COLL_EVENTS.validate, args);
                     if (!!args.errors && args.errors.length > 0)
                         return { fieldName: null, errors: args.errors };
                     else
@@ -811,7 +831,7 @@
                 }
                 _validateItemField(item: TItem, fieldName: string): RIAPP.IValidationInfo {
                     var args: ICollValidateArgs<TItem> = { item: item, fieldName: fieldName, errors: [] };
-                    this.raiseEvent('validate', args);
+                    this.raiseEvent(COLL_EVENTS.validate, args);
                     if (!!args.errors && args.errors.length > 0)
                         return { fieldName: fieldName, errors: args.errors };
                     else
@@ -869,11 +889,11 @@
                 }
                 _onErrorsChanged(item: TItem) {
                     var args: ICollItemArgs<TItem> = { item: item };
-                    this.raiseEvent('errors_changed', args);
+                    this.raiseEvent(COLL_EVENTS.errors_changed, args);
                     item._aspect.raiseErrorsChanged({});
                 }
                 _onItemDeleting(args: ICancellableArgs<TItem>) {
-                    this.raiseEvent('item_deleting', args);
+                    this.raiseEvent(COLL_EVENTS.item_deleting, args);
                     return !args.isCancel;
                 }
                 getFieldInfo(fieldName: string): IFieldInfo {
@@ -1144,7 +1164,7 @@
                 clear() {
                     this._isClearing = true;
                     try {
-                        this.raiseEvent('clearing', {});
+                        this.raiseEvent(COLL_EVENTS.clearing, {});
                         this.cancelEdit();
                         this._EditingItem = null;
                         this._newKey = 0;
@@ -1158,7 +1178,7 @@
                     finally {
                         this._isClearing = false;
                     }
-                    this.raiseEvent('cleared', {});
+                    this.raiseEvent(COLL_EVENTS.cleared, {});
                     this.raisePropertyChanged('count');
                 }
                 destroy() {
