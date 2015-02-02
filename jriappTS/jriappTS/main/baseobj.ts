@@ -5,8 +5,7 @@
     export type TErrorArgs = { error: any; source: any; isHandled: boolean; };
     export type TErrorHandler = (sender, args: TErrorArgs) => void;
     export type TPropChangedHandler = (sender, args: { property: string; }) => void;
-    type TEvent = { fn: TEventHandler; context: any };
-
+    
     interface IListNode {
         context : any
         fn: TEventHandler;
@@ -64,8 +63,6 @@
                         cur = next;
                         next = (!cur) ? null : cur.next;
                     }
-                    del.context = null;
-                    del.fn = null;
                     del.next = null;
                 }
                 else {
@@ -77,13 +74,13 @@
             list.head = head;
             list.tail = (!prev) ? head : prev;
         }
-        static toArray(list: IList): TEvent[] {
-            var res: TEvent[] = [];
+        static toArray(list: IList): IListNode[] {
+            var res: IListNode[] = [];
             if (!list)
                 return res;
             var cur = list.head;
             while (!!cur) {
-                res.push({fn: cur.fn, context: cur.context });
+                res.push(cur);
                 cur = cur.next;
             }
             return res;
@@ -119,15 +116,16 @@
             this._events = null;
         }
         private _removeNsHandler(ev: { [name: string]: IList; }, ns: string) {
-            var keys = Object.keys(ev);
-            keys.forEach(function (n) {
-                var list = ev[n];
+            var keys = Object.keys(ev), key: string, list: IList;
+            for (var i = 0, k = keys.length; i < k; ++i) {
+                key = keys[i];
+                list = ev[key];
                 if (!!list) {
                     EventsHelper.removeNodes(list, ns);
                     if (!list.head)
-                        ev[n] = null;
+                        ev[key] = null;
                 }
-            });
+            }
         }
         protected _getEventNames(): string[] {
             return ['error', 'destroyed'];
@@ -165,7 +163,7 @@
             }
         }
         protected _removeHandler(name?: string, namespace?: string): void {
-            var self = this, ev = self._events, n = name, ns = '*';
+            var self = this, ev = self._events, ns = '*';
             if (!ev)
                 return;
 
@@ -174,18 +172,18 @@
             var list: IList;
 
             //arguments supplied is name (and optionally namespace)
-            if (!!n) {
-                list = ev[n];
+            if (!!name) {
+                list = ev[name];
                 if (!list)
                     return;
                 if (ns == '*') {
                     EventsHelper.removeNodes(list, ns);
-                    ev[n] = null;
+                    ev[name] = null;
                 }
                 else {
                     EventsHelper.removeNodes(list, ns);
                     if (!list.head)
-                        ev[n]= null;
+                        ev[name]= null;
                 }
                 return;
             }
@@ -213,7 +211,7 @@
                     //notify clients who subscribed for all property changes
                     this._raiseEvent('0*', args); 
                 }
-                var events = EventsHelper.toArray(ev[name]), cur: TEvent;
+                var events = EventsHelper.toArray(ev[name]), cur: IListNode;
                 for (var i = 0; i < events.length; i++) {
                     cur = events[i];
                     cur.fn.apply(cur.context, [self, args]);
