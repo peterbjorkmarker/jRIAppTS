@@ -1019,6 +1019,23 @@ declare module RIAPP {
                 LtEq = 8,
                 NotEq = 9,
             }
+            var COLL_EVENTS: {
+                begin_edit: string;
+                end_edit: string;
+                fill: string;
+                collection_changed: string;
+                item_deleting: string;
+                item_adding: string;
+                item_added: string;
+                validate: string;
+                current_changing: string;
+                page_changing: string;
+                errors_changed: string;
+                status_changed: string;
+                clearing: string;
+                cleared: string;
+                commit_changes: string;
+            };
             interface IPermissions {
                 canAddRow: boolean;
                 canEditRow: boolean;
@@ -1050,6 +1067,9 @@ declare module RIAPP {
                 _aspect: ItemAspect<ICollectionItem>;
                 _key: string;
             }
+            var ITEM_EVENTS: {
+                errors_changed: string;
+            };
             class ItemAspect<TItem extends ICollectionItem> extends RIAPP.BaseObject implements IErrorNotification, RIAPP.IEditable, RIAPP.ISubmittable {
                 protected _fkey: string;
                 protected _isEditing: boolean;
@@ -1200,35 +1220,35 @@ declare module RIAPP {
                 static getEmptyFieldInfo(fieldName: string): IFieldInfo;
                 protected _getEventNames(): string[];
                 handleError(error: any, source: any): boolean;
-                addOnClearing(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject): void;
+                addOnClearing(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnClearing(namespace?: string): void;
-                addOnCleared(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject): void;
+                addOnCleared(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnCleared(namespace?: string): void;
-                addOnFill(fn: (sender: BaseCollection<TItem>, args: ICollFillArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnFill(fn: (sender: BaseCollection<TItem>, args: ICollFillArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnFill(namespace?: string): void;
-                addOnCollChanged(fn: (sender: BaseCollection<TItem>, args: ICollChangedArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnCollChanged(fn: (sender: BaseCollection<TItem>, args: ICollChangedArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnCollChanged(namespace?: string): void;
-                addOnValidate(fn: (sender: BaseCollection<TItem>, args: ICollValidateArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnValidate(fn: (sender: BaseCollection<TItem>, args: ICollValidateArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnValidate(namespace?: string): void;
-                addOnItemDeleting(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnItemDeleting(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnItemDeleting(namespace?: string): void;
-                addOnItemAdding(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnItemAdding(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnItemAdding(namespace?: string): void;
-                addOnItemAdded(fn: (sender: BaseCollection<TItem>, args: IItemAddedArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnItemAdded(fn: (sender: BaseCollection<TItem>, args: IItemAddedArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnItemAdded(namespace?: string): void;
-                addOnCurrentChanging(fn: (sender: BaseCollection<TItem>, args: ICurrentChangingArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnCurrentChanging(fn: (sender: BaseCollection<TItem>, args: ICurrentChangingArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnCurrentChanging(namespace?: string): void;
-                addOnPageChanging(fn: (sender: BaseCollection<TItem>, args: IPageChangingArgs) => void, namespace?: string, context?: BaseObject): void;
+                addOnPageChanging(fn: (sender: BaseCollection<TItem>, args: IPageChangingArgs) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnPageChanging(namespace?: string): void;
-                addOnErrorsChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnErrorsChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnErrorsChanged(namespace?: string): void;
-                addOnBeginEdit(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnBeginEdit(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnBeginEdit(namespace?: string): void;
-                addOnEndEdit(fn: (sender: BaseCollection<TItem>, args: ICollEndEditArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnEndEdit(fn: (sender: BaseCollection<TItem>, args: ICollEndEditArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnEndEdit(namespace?: string): void;
-                addOnCommitChanges(fn: (sender: BaseCollection<TItem>, args: ICommitChangesArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnCommitChanges(fn: (sender: BaseCollection<TItem>, args: ICommitChangesArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnCommitChanges(namespace?: string): void;
-                addOnStatusChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemStatusArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnStatusChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemStatusArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnStatusChanged(namespace?: string): void;
                 protected _getPKFieldInfos(): IFieldInfo[];
                 protected _onCurrentChanging(newCurrent: TItem): void;
@@ -2051,7 +2071,7 @@ declare module RIAPP {
                 colSortAsc: string;
                 colSortDesc: string;
             };
-            enum ROW_ACTION {
+            const enum ROW_ACTION {
                 OK = 0,
                 EDIT = 1,
                 CANCEL = 2,
@@ -3026,6 +3046,9 @@ declare module RIAPP {
             interface IDbSetLoadedArgs<TItem extends IEntityItem> {
                 items: TItem[];
             }
+            var DBSET_EVENTS: {
+                loaded: string;
+            };
             class DbSet<TItem extends IEntityItem, TDbContext extends DbContext> extends collMOD.BaseCollection<TItem> {
                 private _dbContext;
                 private _isSubmitOnDelete;
@@ -3075,7 +3098,7 @@ declare module RIAPP {
                 protected _destroyItems(): void;
                 protected _defineCalculatedField(fullName: string, getFunc: () => any): void;
                 protected _onLoaded(items: TItem[]): void;
-                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
+                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnLoaded(namespace?: string): void;
                 _getCalcFieldVal(fieldName: string, item: IEntityItem): any;
                 _getNavFieldVal(fieldName: string, item: IEntityItem): any;
@@ -3139,6 +3162,9 @@ declare module RIAPP {
                 getDbSet(name: string): DbSet<IEntityItem, DbContext>;
                 destroy(): void;
             }
+            var DBCTX_EVENTS: {
+                submit_err: string;
+            };
             class DbContext extends RIAPP.BaseObject {
                 protected _isInitialized: boolean;
                 protected _dbSets: DbSets;
