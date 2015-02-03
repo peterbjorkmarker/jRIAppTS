@@ -5,6 +5,9 @@
     }
 
     export var DebugLevel: DEBUG_LEVEL = DEBUG_LEVEL.NONE;
+    export function startDebugger() {
+        debugger;
+    }
 
     export interface IPromise<T>{
         always(...alwaysCallbacks: { (res: any): void; }[]): IPromise<any>;

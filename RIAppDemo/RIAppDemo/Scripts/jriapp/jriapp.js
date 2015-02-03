@@ -2,6 +2,10 @@ var RIAPP;
 (function (RIAPP) {
     'use strict';
     RIAPP.DebugLevel = 0 /* NONE */;
+    function startDebugger() {
+        debugger;
+    }
+    RIAPP.startDebugger = startDebugger;
     var ArrayHelper = (function () {
         function ArrayHelper() {
         }
@@ -313,6 +317,10 @@ var RIAPP;
         };
         return EventsHelper;
     })();
+    var OBJ_EVENTS = {
+        error: 'error',
+        destroyed: 'destroyed'
+    };
     var BaseObject = (function () {
         function BaseObject() {
             this._isDestroyed = false;
@@ -332,7 +340,7 @@ var RIAPP;
             }
         };
         BaseObject.prototype._getEventNames = function () {
-            return ['error', 'destroyed'];
+            return [OBJ_EVENTS.error, OBJ_EVENTS.destroyed];
         };
         BaseObject.prototype._addHandler = function (name, handler, namespace, context, prepend) {
             if (this._isDestroyed)
@@ -424,7 +432,7 @@ var RIAPP;
                 map = proto.__evMap;
             if (!map[name]) {
                 if (RIAPP.DebugLevel == 2 /* HIGH */) {
-                    debugger;
+                    RIAPP.startDebugger();
                 }
                 var err = new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
                 this.handleError(err, this);
@@ -442,7 +450,7 @@ var RIAPP;
                 error = new Error('' + error);
             }
             var args = { error: error, source: source, isHandled: false };
-            this._raiseEvent('error', args);
+            this._raiseEvent(OBJ_EVENTS.error, args);
             return args.isHandled;
         };
         BaseObject.prototype.raisePropertyChanged = function (name) {
@@ -452,7 +460,7 @@ var RIAPP;
                 var obj = RIAPP.baseUtils.resolveOwner(this, name);
                 if (RIAPP.DebugLevel > 0 /* NONE */ && RIAPP.baseUtils.isUndefined(obj)) {
                     if (RIAPP.DebugLevel == 2 /* HIGH */) {
-                        debugger;
+                        RIAPP.startDebugger();
                     }
                     throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, name));
                 }
@@ -463,7 +471,7 @@ var RIAPP;
             else {
                 if (RIAPP.DebugLevel > 0 /* NONE */ && !RIAPP.baseUtils.hasProp(this, lastPropName)) {
                     if (RIAPP.DebugLevel == 2 /* HIGH */) {
-                        debugger;
+                        RIAPP.startDebugger();
                     }
                     throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, lastPropName));
                 }
@@ -481,16 +489,16 @@ var RIAPP;
             this._removeHandler(name, namespace);
         };
         BaseObject.prototype.addOnDestroyed = function (handler, namespace, context) {
-            this._addHandler('destroyed', handler, namespace, context, false);
+            this._addHandler(OBJ_EVENTS.destroyed, handler, namespace, context, false);
         };
         BaseObject.prototype.removeOnDestroyed = function (namespace) {
-            this._removeHandler('destroyed', namespace);
+            this._removeHandler(OBJ_EVENTS.destroyed, namespace);
         };
         BaseObject.prototype.addOnError = function (handler, namespace, context) {
-            this._addHandler('error', handler, namespace, context, false);
+            this._addHandler(OBJ_EVENTS.error, handler, namespace, context, false);
         };
         BaseObject.prototype.removeOnError = function (namespace) {
-            this.removeHandler('error', namespace);
+            this.removeHandler(OBJ_EVENTS.error, namespace);
         };
         //remove event handlers by their namespace
         BaseObject.prototype.removeNSHandlers = function (namespace) {
@@ -509,7 +517,7 @@ var RIAPP;
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);
             if (RIAPP.DebugLevel > 0 /* NONE */ && prop != '*' && !this._isHasProp(prop)) {
                 if (RIAPP.DebugLevel == 2 /* HIGH */) {
-                    debugger;
+                    RIAPP.startDebugger();
                 }
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
             }
@@ -520,7 +528,7 @@ var RIAPP;
             if (!!prop) {
                 if (RIAPP.DebugLevel > 0 /* NONE */ && prop != '*' && !this._isHasProp(prop)) {
                     if (RIAPP.DebugLevel == 2 /* HIGH */) {
-                        debugger;
+                        RIAPP.startDebugger();
                     }
                     throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
                 }
@@ -540,7 +548,7 @@ var RIAPP;
             this._isDestroyed = true;
             this._isDestroyCalled = true;
             try {
-                this._raiseEvent('destroyed', {});
+                this._raiseEvent(OBJ_EVENTS.destroyed, {});
             }
             finally {
                 this._removeHandler(null, null);
@@ -560,6 +568,12 @@ var RIAPP;
 (function (RIAPP) {
     RIAPP.global = null;
     RIAPP.css_riaTemplate = 'ria-template';
+    var GLOB_EVENTS = {
+        load: 'load',
+        unload: 'unload',
+        initialized: 'initialize',
+        unresolvedBinding: 'unresolvedBind'
+    };
     var Global = (function (_super) {
         __extends(Global, _super);
         function Global(window, jQuery) {
@@ -590,9 +604,9 @@ var RIAPP;
                 self._waitQueue = new RIAPP.MOD.utils.WaitQueue(self);
                 self._isReady = true;
                 self._processTemplateSections(self.document);
-                self.raiseEvent('load', {});
+                self.raiseEvent(GLOB_EVENTS.load, {});
                 setTimeout(function () {
-                    self.removeHandler('load', null);
+                    self.removeHandler(GLOB_EVENTS.load, null);
                 }, 0);
             });
             //when clicked outside any Selectable set _currentSelectable = null
@@ -613,7 +627,7 @@ var RIAPP;
                 }
             });
             self.$(self.window).unload(function () {
-                self.raiseEvent('unload', {});
+                self.raiseEvent(GLOB_EVENTS.unload, {});
             });
             //this way to attach for correct work in firefox
             self.window.onerror = function (msg, url, linenumber) {
@@ -652,7 +666,10 @@ var RIAPP;
         };
         Global.prototype._getEventNames = function () {
             var base_events = _super.prototype._getEventNames.call(this);
-            return ['load', 'unload', 'initialize', 'unresolvedBind'].concat(base_events);
+            var events = Object.keys(GLOB_EVENTS).map(function (key, i, arr) {
+                return GLOB_EVENTS[key];
+            });
+            return events.concat(base_events);
         };
         Global.prototype._initialize = function () {
             if (this._isInitialized)
@@ -679,14 +696,14 @@ var RIAPP;
             if (!isOK)
                 throw new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
             this._isInitialized = true;
-            self.raiseEvent('initialize', {});
+            self.raiseEvent(GLOB_EVENTS.initialized, {});
             setTimeout(function () {
-                self.removeHandler('initialize', null);
+                self.removeHandler(GLOB_EVENTS.initialized, null);
             }, 0);
         };
         Global.prototype._addHandler = function (name, fn, namespace, prepend) {
             var self = this;
-            if ((name == 'load' && self._isReady) || (name == 'initialize' && self._isInitialized)) {
+            if ((name == GLOB_EVENTS.load && self._isReady) || (name == GLOB_EVENTS.initialized && self._isInitialized)) {
                 //when already is ready, immediately raise the event
                 setTimeout(function () {
                     fn.apply(self, [self, {}]);
@@ -915,22 +932,22 @@ var RIAPP;
         };
         Global.prototype._onUnResolvedBinding = function (bindTo, root, path, propName) {
             var args = { bindTo: bindTo, root: root, path: path, propName: propName };
-            this.raiseEvent('unresolvedBind', args);
+            this.raiseEvent(GLOB_EVENTS.unresolvedBinding, args);
         };
         Global.prototype.addOnLoad = function (fn, namespace) {
-            this._addHandler('load', fn, namespace, false);
+            this._addHandler(GLOB_EVENTS.load, fn, namespace, false);
         };
         Global.prototype.addOnUnLoad = function (fn, namespace) {
-            this._addHandler('unload', fn, namespace, false);
+            this._addHandler(GLOB_EVENTS.unload, fn, namespace, false);
         };
         Global.prototype.addOnInitialize = function (fn, namespace) {
-            this._addHandler('initialize', fn, namespace, false);
+            this._addHandler(GLOB_EVENTS.initialized, fn, namespace, false);
         };
         Global.prototype.addOnUnResolvedBinding = function (fn, namespace) {
-            this.addHandler('unresolvedBind', fn, namespace);
+            this.addHandler(GLOB_EVENTS.unresolvedBinding, fn, namespace);
         };
         Global.prototype.removeOnUnResolvedBinding = function (namespace) {
-            this.removeHandler('unresolvedBind', namespace);
+            this.removeHandler(GLOB_EVENTS.unresolvedBinding, namespace);
         };
         Global.prototype.getExports = function () {
             return this._exports;
@@ -1088,7 +1105,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.4.0';
+        Global.vesion = '2.5.4.1';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -2948,25 +2965,28 @@ var RIAPP;
     (function (MOD) {
         var mvvm;
         (function (mvvm) {
+            var CMD_EVENTS = {
+                can_execute_changed: 'canExecute_changed'
+            };
             var Command = (function (_super) {
                 __extends(Command, _super);
                 function Command(fn_action, thisObj, fn_canExecute) {
                     _super.call(this);
                     var utils = RIAPP.global.utils;
                     this._action = fn_action;
-                    this._thisObj = thisObj;
+                    this._thisObj = !thisObj ? null : thisObj;
                     this._canExecute = fn_canExecute;
                     this._objId = 'cmd' + utils.getNewID();
                 }
                 Command.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['canExecute_changed'].concat(base_events);
+                    return [CMD_EVENTS.can_execute_changed].concat(base_events);
                 };
                 Command.prototype.addOnCanExecuteChanged = function (fn, namespace, context) {
-                    this.addHandler('canExecute_changed', fn, namespace, context);
+                    this.addHandler(CMD_EVENTS.can_execute_changed, fn, namespace, context);
                 };
                 Command.prototype.removeOnCanExecuteChanged = function (namespace) {
-                    this.removeHandler('canExecute_changed', namespace);
+                    this.removeHandler(CMD_EVENTS.can_execute_changed, namespace);
                 };
                 Command.prototype.canExecute = function (sender, param) {
                     if (!this._canExecute)
@@ -2988,7 +3008,7 @@ var RIAPP;
                     _super.prototype.destroy.call(this);
                 };
                 Command.prototype.raiseCanExecuteChanged = function () {
-                    this.raiseEvent('canExecute_changed', {});
+                    this.raiseEvent(CMD_EVENTS.can_execute_changed, {});
                 };
                 Command.prototype.toString = function () {
                     return 'Command';
@@ -3688,6 +3708,9 @@ var RIAPP;
                 return CheckBoxThreeStateElView;
             })(InputElView);
             baseElView.CheckBoxThreeStateElView = CheckBoxThreeStateElView;
+            var TXTBOX_EVENTS = {
+                keypress: 'keypress'
+            };
             var TextBoxElView = (function (_super) {
                 __extends(TextBoxElView, _super);
                 function TextBoxElView() {
@@ -3704,7 +3727,7 @@ var RIAPP;
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
                         var args = { keyCode: e.which, value: e.target.value, isCancel: false };
-                        self.raiseEvent('keypress', args);
+                        self.raiseEvent(TXTBOX_EVENTS.keypress, args);
                         if (args.isCancel)
                             e.preventDefault();
                     });
@@ -3717,13 +3740,13 @@ var RIAPP;
                 };
                 TextBoxElView.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['keypress'].concat(base_events);
+                    return [TXTBOX_EVENTS.keypress].concat(base_events);
                 };
                 TextBoxElView.prototype.addOnKeyPress = function (fn, namespace) {
-                    this.addHandler('keypress', fn, namespace);
+                    this.addHandler(TXTBOX_EVENTS.keypress, fn, namespace);
                 };
                 TextBoxElView.prototype.removeOnKeyPress = function (namespace) {
-                    this.removeHandler('keypress', namespace);
+                    this.removeHandler(TXTBOX_EVENTS.keypress, namespace);
                 };
                 TextBoxElView.prototype.toString = function () {
                     return 'TextBoxElView';
@@ -3758,6 +3781,9 @@ var RIAPP;
                 return HiddenElView;
             })(InputElView);
             baseElView.HiddenElView = HiddenElView;
+            var TXTAREA_EVENTS = {
+                keypress: 'keypress'
+            };
             var TextAreaElView = (function (_super) {
                 __extends(TextAreaElView, _super);
                 function TextAreaElView(app, el, options) {
@@ -3783,7 +3809,7 @@ var RIAPP;
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
                         var args = { keyCode: e.which, value: e.target.value, isCancel: false };
-                        self.raiseEvent('keypress', args);
+                        self.raiseEvent(TXTAREA_EVENTS.keypress, args);
                         if (args.isCancel)
                             e.preventDefault();
                     });
@@ -3796,13 +3822,13 @@ var RIAPP;
                 };
                 TextAreaElView.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['keypress'].concat(base_events);
+                    return [TXTAREA_EVENTS.keypress].concat(base_events);
                 };
                 TextAreaElView.prototype.addOnKeyPress = function (fn, namespace) {
-                    this.addHandler('keypress', fn, namespace);
+                    this.addHandler(TXTAREA_EVENTS.keypress, fn, namespace);
                 };
                 TextAreaElView.prototype.removeOnKeyPress = function (namespace) {
-                    this.removeHandler('keypress', namespace);
+                    this.removeHandler(TXTAREA_EVENTS.keypress, namespace);
                 };
                 TextAreaElView.prototype.toString = function () {
                     return 'TextAreaElView';
@@ -4594,13 +4620,13 @@ var RIAPP;
                     }
                     if (!utils.check.isString(opts.targetPath)) {
                         if (RIAPP.DebugLevel == 2 /* HIGH */) {
-                            debugger;
+                            RIAPP.startDebugger();
                         }
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     }
                     if (utils.check.isUndefined(BINDING_MODE[opts.mode])) {
                         if (RIAPP.DebugLevel == 2 /* HIGH */) {
-                            debugger;
+                            RIAPP.startDebugger();
                         }
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_BIND_MODE_INVALID, opts.mode));
                     }
@@ -4696,7 +4722,7 @@ var RIAPP;
                             }
                             else if (base_utils.isUndefined(nextObj)) {
                                 if (RIAPP.DebugLevel == 2 /* HIGH */) {
-                                    debugger;
+                                    RIAPP.startDebugger();
                                 }
                                 if (RIAPP.DebugLevel > 0 /* NONE */) {
                                     global._onUnResolvedBinding(0 /* Source */, self.source, self._srcPath.join('.'), path[0]);
@@ -4722,7 +4748,7 @@ var RIAPP;
                         }
                         else {
                             if (RIAPP.DebugLevel == 2 /* HIGH */) {
-                                debugger;
+                                RIAPP.startDebugger();
                             }
                             global._onUnResolvedBinding(0 /* Source */, self.source, self._srcPath.join('.'), path[0]);
                         }
@@ -4756,7 +4782,7 @@ var RIAPP;
                             }
                             else if (base_utils.isUndefined(nextObj)) {
                                 if (RIAPP.DebugLevel == 2 /* HIGH */) {
-                                    debugger;
+                                    RIAPP.startDebugger();
                                 }
                                 if (RIAPP.DebugLevel > 0 /* NONE */) {
                                     global._onUnResolvedBinding(1 /* Target */, self.target, self._tgtPath.join('.'), path[0]);
@@ -4778,7 +4804,7 @@ var RIAPP;
                         }
                         else {
                             if (RIAPP.DebugLevel == 2 /* HIGH */) {
-                                debugger;
+                                RIAPP.startDebugger();
                             }
                             global._onUnResolvedBinding(1 /* Target */, self.target, self._tgtPath.join('.'), path[0]);
                         }
@@ -9543,6 +9569,10 @@ var RIAPP;
                 return SelectElView;
             })(elviewMOD.BaseElView);
             listbox.SelectElView = SelectElView;
+            var LOOKUP_EVENTS = {
+                obj_created: 'object_created',
+                obj_needed: 'object_needed'
+            };
             var LookupContent = (function (_super) {
                 __extends(LookupContent, _super);
                 function LookupContent(app, options) {
@@ -9564,27 +9594,27 @@ var RIAPP;
                 };
                 LookupContent.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['object_created', 'object_needed'].concat(base_events);
+                    return [LOOKUP_EVENTS.obj_created, LOOKUP_EVENTS.obj_needed].concat(base_events);
                 };
                 LookupContent.prototype.addOnObjectCreated = function (fn, namespace) {
-                    this.addHandler('object_created', fn, namespace);
+                    this.addHandler(LOOKUP_EVENTS.obj_created, fn, namespace);
                 };
                 LookupContent.prototype.removeOnObjectCreated = function (namespace) {
-                    this.removeHandler('object_created', namespace);
+                    this.removeHandler(LOOKUP_EVENTS.obj_created, namespace);
                 };
                 LookupContent.prototype.addOnObjectNeeded = function (fn, namespace) {
-                    this.addHandler('object_needed', fn, namespace);
+                    this.addHandler(LOOKUP_EVENTS.obj_needed, fn, namespace);
                 };
                 LookupContent.prototype.removeOnObjectNeeded = function (namespace) {
-                    this.removeHandler('object_needed', namespace);
+                    this.removeHandler(LOOKUP_EVENTS.obj_needed, namespace);
                 };
                 LookupContent.prototype._getSelectView = function () {
                     if (!!this._selectView)
                         return this._selectView;
-                    var lookUpOptions = this._options.options;
-                    var args1 = { objectKey: 'selectElView', object: null };
+                    var lookUpOptions = this._options.options, objectKey = 'selectElView';
+                    var args1 = { objectKey: objectKey, object: null };
                     //try get externally externally cached listBox
-                    this.raiseEvent('object_needed', args1);
+                    this.raiseEvent(LOOKUP_EVENTS.obj_needed, args1);
                     if (!!args1.object) {
                         this._isListBoxCachedExternally = true;
                         this._selectView = args1.object;
@@ -9597,9 +9627,9 @@ var RIAPP;
                     el.setAttribute('size', '1');
                     var selectElView = this._createSelectElView(el, options);
                     selectElView.dataSource = dataSource;
-                    var args2 = { objectKey: 'selectElView', object: selectElView, isCachedExternally: false };
+                    var args2 = { objectKey: objectKey, object: selectElView, isCachedExternally: false };
                     //this allows to cache listBox externally
-                    this.raiseEvent('object_created', args2);
+                    this.raiseEvent(LOOKUP_EVENTS.obj_created, args2);
                     this._isListBoxCachedExternally = args2.isCachedExternally;
                     this._selectView = selectElView;
                     return this._selectView;
@@ -9803,6 +9833,10 @@ var RIAPP;
                 utils = s.utils;
             });
             ;
+            var DLG_EVENTS = {
+                close: 'close',
+                refresh: 'refresh'
+            };
             var DataEditDialog = (function (_super) {
                 __extends(DataEditDialog, _super);
                 function DataEditDialog(app, options) {
@@ -9873,16 +9907,16 @@ var RIAPP;
                     return isHandled;
                 };
                 DataEditDialog.prototype.addOnClose = function (fn, namespace, context) {
-                    this.addHandler('close', fn, namespace, context);
+                    this.addHandler(DLG_EVENTS.close, fn, namespace, context);
                 };
                 DataEditDialog.prototype.removeOnClose = function (namespace) {
-                    this.removeHandler('close', namespace);
+                    this.removeHandler(DLG_EVENTS.close, namespace);
                 };
                 DataEditDialog.prototype.addOnRefresh = function (fn, namespace, context) {
-                    this.addHandler('refresh', fn, namespace, context);
+                    this.addHandler(DLG_EVENTS.refresh, fn, namespace, context);
                 };
                 DataEditDialog.prototype.removeOnRefresh = function (namespace) {
-                    this.removeHandler('refresh', namespace);
+                    this.removeHandler(DLG_EVENTS.refresh, namespace);
                 };
                 DataEditDialog.prototype._updateIsEditable = function () {
                     this._isEditable = utils.getEditable(this._dataContext);
@@ -9903,7 +9937,7 @@ var RIAPP;
                 };
                 DataEditDialog.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['close', 'refresh'].concat(base_events);
+                    return [DLG_EVENTS.close, DLG_EVENTS.refresh].concat(base_events);
                 };
                 DataEditDialog.prototype.templateLoading = function (template) {
                     //noop
@@ -10044,7 +10078,7 @@ var RIAPP;
                 };
                 DataEditDialog.prototype._onRefresh = function () {
                     var args = { isHandled: false };
-                    this.raiseEvent('refresh', args);
+                    this.raiseEvent(DLG_EVENTS.refresh, args);
                     if (args.isHandled)
                         return;
                     var dctx = this._dataContext;
@@ -10070,7 +10104,7 @@ var RIAPP;
                         }
                         if (!!this._fn_OnClose)
                             this._fn_OnClose(this);
-                        this.raiseEvent('close', {});
+                        this.raiseEvent(DLG_EVENTS.close, {});
                     }
                     finally {
                         this._template.dataContext = null;
@@ -13355,6 +13389,9 @@ var RIAPP;
                 item: 'stackpanel-item',
                 currentItem: 'current-item'
             };
+            var PNL_EVENTS = {
+                item_clicked: 'item_clicked'
+            };
             var StackPanel = (function (_super) {
                 __extends(StackPanel, _super);
                 function StackPanel(options) {
@@ -13390,7 +13427,7 @@ var RIAPP;
                 }
                 StackPanel.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['item_clicked'].concat(base_events);
+                    return [PNL_EVENTS.item_clicked].concat(base_events);
                 };
                 StackPanel.prototype.templateLoading = function (template) {
                     //noop
@@ -13402,10 +13439,10 @@ var RIAPP;
                     //noop
                 };
                 StackPanel.prototype.addOnItemClicked = function (fn, namespace, context) {
-                    this.addHandler('item_clicked', fn, namespace, context);
+                    this.addHandler(PNL_EVENTS.item_clicked, fn, namespace, context);
                 };
                 StackPanel.prototype.removeOnItemClicked = function (namespace) {
-                    this.removeHandler('item_clicked', namespace);
+                    this.removeHandler(PNL_EVENTS.item_clicked, namespace);
                 };
                 StackPanel.prototype._onKeyDown = function (key, event) {
                     var ds = this.dataSource, self = this;
@@ -13590,7 +13627,7 @@ var RIAPP;
                 StackPanel.prototype._onItemClicked = function (div, item) {
                     this._updateCurrent(item, false);
                     this.dataSource.currentItem = item;
-                    this.raiseEvent('item_clicked', { item: item });
+                    this.raiseEvent(PNL_EVENTS.item_clicked, { item: item });
                 };
                 StackPanel.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -17313,6 +17350,9 @@ var RIAPP;
                 return Association;
             })(RIAPP.BaseObject);
             _db.Association = Association;
+            var VIEW_EVENTS = {
+                refreshed: 'view_refreshed'
+            };
             var DataView = (function (_super) {
                 __extends(DataView, _super);
                 function DataView(options) {
@@ -17342,13 +17382,13 @@ var RIAPP;
                 }
                 DataView.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
-                    return ['view_refreshed'].concat(base_events);
+                    return [VIEW_EVENTS.refreshed].concat(base_events);
                 };
                 DataView.prototype.addOnViewRefreshed = function (fn, namespace) {
-                    this.addHandler('view_refreshed', fn, namespace);
+                    this.addHandler(VIEW_EVENTS.refreshed, fn, namespace);
                 };
                 DataView.prototype.removeOnViewRefreshed = function (namespace) {
-                    this.removeHandler('view_refreshed', namespace);
+                    this.removeHandler(VIEW_EVENTS.refreshed, namespace);
                 };
                 DataView.prototype._filterForPaging = function (items) {
                     var skip = 0, take = 0, pos = -1, cnt = -1, result = [];
@@ -17367,7 +17407,7 @@ var RIAPP;
                     return result;
                 };
                 DataView.prototype._onViewRefreshed = function (args) {
-                    this.raiseEvent('view_refreshed', args);
+                    this.raiseEvent(VIEW_EVENTS.refreshed, args);
                 };
                 DataView.prototype._clear = function (isPageChanged) {
                     this.cancelEdit();
@@ -18070,6 +18110,9 @@ var RIAPP;
     RIAPP.global._initialize();
     //local variable for optimization
     var utils = RIAPP.global.utils, parser = RIAPP.global.parser;
+    var APP_EVENTS = {
+        startup: 'startup'
+    };
     var Application = (function (_super) {
         __extends(Application, _super);
         function Application(options) {
@@ -18130,7 +18173,7 @@ var RIAPP;
         });
         Application.prototype._getEventNames = function () {
             var base_events = _super.prototype._getEventNames.call(this);
-            return ['startup'].concat(base_events);
+            return [APP_EVENTS.startup].concat(base_events);
         };
         Application.prototype._cleanUpObjMaps = function () {
             var self = this;
@@ -18403,10 +18446,10 @@ var RIAPP;
             return this.contentFactory.getContentType(options);
         };
         Application.prototype.addOnStartUp = function (fn, namespace) {
-            this.addHandler('startup', fn, namespace);
+            this.addHandler(APP_EVENTS.startup, fn, namespace);
         };
         Application.prototype.removeOnStartUp = function (namespace) {
-            this.removeHandler('startup', namespace);
+            this.removeHandler(APP_EVENTS.startup, namespace);
         };
         Application.prototype.getExports = function () {
             return this._exports;
@@ -18491,7 +18534,7 @@ var RIAPP;
             var self = this, fn_init = function () {
                 try {
                     self.onStartUp();
-                    self.raiseEvent('startup', {});
+                    self.raiseEvent(APP_EVENTS.startup, {});
                     if (!!fn_sandbox)
                         fn_sandbox.apply(self, [self]);
                     self._setUpBindings();

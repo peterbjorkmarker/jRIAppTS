@@ -42,8 +42,15 @@
         propName: string;
     }
 
+    var GLOB_EVENTS = {
+        load: 'load',
+        unload: 'unload',
+        initialized: 'initialize',
+        unresolvedBinding: 'unresolvedBind'
+    };
+
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.5.4.0';
+        public static vesion = '2.5.4.1';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;
@@ -92,8 +99,8 @@
                 self._waitQueue = new MOD.utils.WaitQueue(self);
                 self._isReady = true;
                 self._processTemplateSections(self.document);
-                self.raiseEvent('load', {});
-                setTimeout(function () { self.removeHandler('load', null); }, 0);
+                self.raiseEvent(GLOB_EVENTS.load, {});
+                setTimeout(function () { self.removeHandler(GLOB_EVENTS.load, null); }, 0);
             });
 
             //when clicked outside any Selectable set _currentSelectable = null
@@ -114,7 +121,7 @@
                 }
             });
             self.$(self.window).unload(function () {
-                self.raiseEvent('unload', {});
+                self.raiseEvent(GLOB_EVENTS.unload, {});
             });
             
             //this way to attach for correct work in firefox
@@ -155,7 +162,8 @@
         }
         protected _getEventNames() {
             var base_events = super._getEventNames();
-            return ['load', 'unload','initialize', 'unresolvedBind'].concat(base_events);
+            var events = Object.keys(GLOB_EVENTS).map((key, i, arr) => { return <string>GLOB_EVENTS[key]; });
+            return events.concat(base_events);
         }
         _initialize() {
             if (this._isInitialized)
@@ -179,12 +187,12 @@
                 throw new Error(baseUtils.format(RIAPP.ERRS.ERR_MODULE_NOT_REGISTERED, name));
 
             this._isInitialized = true;
-            self.raiseEvent('initialize', {});
-            setTimeout(function () { self.removeHandler('initialize', null); }, 0);
+            self.raiseEvent(GLOB_EVENTS.initialized, {});
+            setTimeout(function () { self.removeHandler(GLOB_EVENTS.initialized, null); }, 0);
         }
         protected _addHandler(name: string, fn: (sender, args) => void , namespace?: string, prepend?: boolean) {
             var self = this;
-            if ((name == 'load' && self._isReady) || (name == 'initialize' && self._isInitialized)) {
+            if ((name == GLOB_EVENTS.load && self._isReady) || (name == GLOB_EVENTS.initialized && self._isInitialized)) {
                  //when already is ready, immediately raise the event
                 setTimeout(function () { fn.apply(self, [self, {}]); }, 0);
                 return;
@@ -419,22 +427,22 @@
         }
         _onUnResolvedBinding(bindTo: BindTo, root: any, path: string, propName: string) {
             var args: IUnResolvedBindingArgs = { bindTo: bindTo, root: root, path: path, propName: propName };
-            this.raiseEvent('unresolvedBind', args);
+            this.raiseEvent(GLOB_EVENTS.unresolvedBinding, args);
         }
         addOnLoad(fn: (sender: Global, args: any) => void, namespace?: string) {
-            this._addHandler('load', fn, namespace, false);
+            this._addHandler(GLOB_EVENTS.load, fn, namespace, false);
         }
         addOnUnLoad(fn: (sender: Global, args: any) => void, namespace?: string) {
-            this._addHandler('unload', fn, namespace, false);
+            this._addHandler(GLOB_EVENTS.unload, fn, namespace, false);
         }
         addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string) {
-            this._addHandler('initialize', fn, namespace, false);
+            this._addHandler(GLOB_EVENTS.initialized, fn, namespace, false);
         }
         addOnUnResolvedBinding(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string) {
-            this.addHandler('unresolvedBind', fn, namespace);
+            this.addHandler(GLOB_EVENTS.unresolvedBinding, fn, namespace);
         }
         removeOnUnResolvedBinding(namespace?: string) {
-            this.removeHandler('unresolvedBind', namespace);
+            this.removeHandler(GLOB_EVENTS.unresolvedBinding, namespace);
         }
         getExports() {
             return this._exports;

@@ -75,14 +75,14 @@
 
                     if (!utils.check.isString(opts.targetPath)) {
                         if (RIAPP.DebugLevel == RIAPP.DEBUG_LEVEL.HIGH) {
-                            debugger;
+                            RIAPP.startDebugger();
                         }
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_BIND_TGTPATH_INVALID, opts.targetPath));
                     }
 
                     if (utils.check.isUndefined(BINDING_MODE[opts.mode])) {
                         if (RIAPP.DebugLevel == RIAPP.DEBUG_LEVEL.HIGH) {
-                            debugger;
+                            RIAPP.startDebugger();
                         }
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_BIND_MODE_INVALID, opts.mode));
                     }
@@ -185,7 +185,7 @@
                             }
                             else if (base_utils.isUndefined(nextObj)) {
                                 if (DebugLevel == DEBUG_LEVEL.HIGH) {
-                                    debugger;
+                                    RIAPP.startDebugger();
                                 }
                                 if (DebugLevel > DEBUG_LEVEL.NONE) {
                                     global._onUnResolvedBinding(BindTo.Source, self.source, self._srcPath.join('.'), path[0]);
@@ -213,7 +213,7 @@
                         }
                         else {
                             if (DebugLevel == DEBUG_LEVEL.HIGH) {
-                                debugger;
+                                RIAPP.startDebugger();
                             }
                             global._onUnResolvedBinding(BindTo.Source, self.source, self._srcPath.join('.'), path[0]);                        }
                         }
@@ -248,7 +248,7 @@
                             }
                             else if (base_utils.isUndefined(nextObj)) {
                                 if (DebugLevel == DEBUG_LEVEL.HIGH) {
-                                    debugger;
+                                    RIAPP.startDebugger();
                                 }
                                 if (DebugLevel > DEBUG_LEVEL.NONE) {
                                     global._onUnResolvedBinding(BindTo.Target, self.target, self._tgtPath.join('.'), path[0]);
@@ -272,7 +272,7 @@
                         }
                         else {
                             if (DebugLevel == DEBUG_LEVEL.HIGH) {
-                                debugger;
+                                RIAPP.startDebugger();
                             }
                             global._onUnResolvedBinding(BindTo.Target, self.target, self._tgtPath.join('.'), path[0]);
                         }

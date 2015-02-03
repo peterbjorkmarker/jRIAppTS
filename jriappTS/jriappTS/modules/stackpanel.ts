@@ -29,6 +29,11 @@
                 dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
             }
 
+
+            var PNL_EVENTS = {
+                item_clicked: 'item_clicked'
+            };
+
             export class StackPanel extends RIAPP.BaseObject implements RIAPP.ISelectable, templMOD.ITemplateEvents {
                 private _$el: JQuery;
                 private _objId: string;
@@ -73,7 +78,7 @@
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['item_clicked'].concat(base_events);
+                    return [PNL_EVENTS.item_clicked].concat(base_events);
                 }
                 templateLoading(template: templMOD.Template): void {
                     //noop
@@ -85,10 +90,10 @@
                     //noop
                 }
                 addOnItemClicked(fn: (sender: StackPanel, args: { item: collMOD.ICollectionItem; }) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('item_clicked', fn, namespace, context);
+                    this.addHandler(PNL_EVENTS.item_clicked, fn, namespace, context);
                 }
                 removeOnItemClicked(namespace?: string) {
-                    this.removeHandler('item_clicked', namespace);
+                    this.removeHandler(PNL_EVENTS.item_clicked, namespace);
                 }
                 _onKeyDown(key:number, event: Event) {
                     var ds = this.dataSource, self = this;
@@ -274,7 +279,7 @@
                 protected _onItemClicked(div: HTMLElement, item: collMOD.ICollectionItem) {
                     this._updateCurrent(item, false);
                     this.dataSource.currentItem = item;
-                    this.raiseEvent('item_clicked', { item: item });
+                    this.raiseEvent(PNL_EVENTS.item_clicked, { item: item });
                 }
                 destroy() {
                     if (this._isDestroyed)

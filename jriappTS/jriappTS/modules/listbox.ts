@@ -596,6 +596,14 @@
                 dataSource: string; valuePath: string; textPath: string;
             }
 
+            var LOOKUP_EVENTS = {
+                obj_created: 'object_created',
+                obj_needed: 'object_needed'
+
+            };
+            export type TObjCreatedArgs =  { objectKey: string; object: BaseObject; isCachedExternally: boolean; };
+            export type TObjNeededArgs =  { objectKey: string; object: BaseObject; };
+
             export class LookupContent extends contentMOD.BindingContent implements contentMOD.IExternallyCachable {
                 private _spanView: elviewMOD.SpanElView;
                 private _valBinding: bindMOD.Binding;
@@ -623,30 +631,30 @@
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['object_created', 'object_needed'].concat(base_events);
+                    return [LOOKUP_EVENTS.obj_created, LOOKUP_EVENTS.obj_needed].concat(base_events);
                 }
-                addOnObjectCreated(fn: (sender: any, args: { objectKey: string; object: BaseObject; isCachedExternally: boolean; }) => void , namespace?: string) {
-                    this.addHandler('object_created', fn, namespace);
+                addOnObjectCreated(fn: (sender: any, args: TObjCreatedArgs) => void , namespace?: string) {
+                    this.addHandler(LOOKUP_EVENTS.obj_created, fn, namespace);
                 }
                 removeOnObjectCreated(namespace?: string) {
-                    this.removeHandler('object_created', namespace);
+                    this.removeHandler(LOOKUP_EVENTS.obj_created, namespace);
                 }
-                addOnObjectNeeded(fn: (sender: any, args: { objectKey: string; object: BaseObject; }) => void , namespace?: string) {
-                    this.addHandler('object_needed', fn, namespace);
+                addOnObjectNeeded(fn: (sender: any, args: TObjNeededArgs) => void , namespace?: string) {
+                    this.addHandler(LOOKUP_EVENTS.obj_needed, fn, namespace);
                 }
                 removeOnObjectNeeded(namespace?: string) {
-                    this.removeHandler('object_needed', namespace);
+                    this.removeHandler(LOOKUP_EVENTS.obj_needed, namespace);
                 }
                 protected _getSelectView(): SelectElView {
                     if (!!this._selectView)
                         return this._selectView;
-                    var lookUpOptions: ILookupOptions = this._options.options;
-                    var args1 = { objectKey: 'selectElView', object: null };
+                    var lookUpOptions: ILookupOptions = this._options.options, objectKey = 'selectElView';
+                    var args1: TObjNeededArgs = { objectKey: objectKey, object: null };
                     //try get externally externally cached listBox
-                    this.raiseEvent('object_needed', args1);
+                    this.raiseEvent(LOOKUP_EVENTS.obj_needed, args1);
                     if (!!args1.object) {
                         this._isListBoxCachedExternally = true;
-                        this._selectView = args1.object;
+                        this._selectView = <SelectElView>args1.object;
                     }
                     if (!!this._selectView)
                         return this._selectView;
@@ -657,9 +665,9 @@
                     el.setAttribute('size', '1');
                     var selectElView = this._createSelectElView(el, options);
                     selectElView.dataSource = dataSource;
-                    var args2 = { objectKey: 'selectElView', object: selectElView, isCachedExternally: false };
+                    var args2: TObjCreatedArgs = { objectKey: objectKey, object: selectElView, isCachedExternally: false };
                     //this allows to cache listBox externally
-                    this.raiseEvent('object_created', args2);
+                    this.raiseEvent(LOOKUP_EVENTS.obj_created, args2);
                     this._isListBoxCachedExternally = args2.isCachedExternally;
                     this._selectView = selectElView;
                     return this._selectView;

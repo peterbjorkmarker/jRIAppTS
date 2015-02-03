@@ -53,6 +53,10 @@ module RIAPP {
         application_root?: { querySelectorAll: (selectors: string) => NodeList; };
     }
 
+    var APP_EVENTS = {
+        startup: 'startup'
+    };
+
     export class Application extends RIAPP.BaseObject implements IExports {
         private static _newInstanceNum = 1;
         private get _DATA_BIND_SELECTOR() { return ['*[', constsMOD.DATA_ATTR.DATA_BIND, ']'].join(''); }
@@ -116,7 +120,7 @@ module RIAPP {
         }
         protected _getEventNames() {
             var base_events = super._getEventNames();
-            return ['startup'].concat(base_events);
+            return [APP_EVENTS.startup].concat(base_events);
         }
         private _cleanUpObjMaps() {
             var self = this;
@@ -413,10 +417,10 @@ module RIAPP {
             return this.contentFactory.getContentType(options);
         }
         addOnStartUp(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string) {
-            this.addHandler('startup', fn, namespace);
+            this.addHandler(APP_EVENTS.startup, fn, namespace);
         }
         removeOnStartUp(namespace?: string) {
-            this.removeHandler('startup', namespace);
+            this.removeHandler(APP_EVENTS.startup, namespace);
         }
         getExports() {
             return this._exports;
@@ -501,7 +505,7 @@ module RIAPP {
             var self = this, fn_init = function () {
                 try {
                     self.onStartUp();
-                    self.raiseEvent('startup', {});
+                    self.raiseEvent(APP_EVENTS.startup, {});
                     if (!!fn_sandbox)
                         fn_sandbox.apply(self, [self]);
                     self._setUpBindings();

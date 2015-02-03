@@ -8,6 +8,7 @@ declare module RIAPP {
         HIGH = 2,
     }
     var DebugLevel: DEBUG_LEVEL;
+    function startDebugger(): void;
     interface IPromise<T> {
         always(...alwaysCallbacks: {
             (res: any): void;
@@ -631,7 +632,7 @@ declare module RIAPP {
                 canExecute: (sender, param) => boolean;
                 execute: (sender, param) => void;
                 raiseCanExecuteChanged: () => void;
-                addOnCanExecuteChanged(fn: (sender: mvvm.ICommand, args: {}) => void, namespace?: string, context?: any): any;
+                addOnCanExecuteChanged(fn: (sender: mvvm.ICommand, args: {}) => void, namespace?: string, context?: RIAPP.BaseObject): any;
                 removeOnCanExecuteChanged(namespace?: string): any;
             }
             class Command extends RIAPP.BaseObject implements ICommand {
@@ -641,7 +642,7 @@ declare module RIAPP {
                 private _objId;
                 constructor(fn_action: (sender, param) => void, thisObj: any, fn_canExecute: (sender, param) => boolean);
                 protected _getEventNames(): string[];
-                addOnCanExecuteChanged(fn: (sender: mvvm.ICommand, args: {}) => void, namespace?: string, context?: any): void;
+                addOnCanExecuteChanged(fn: (sender: mvvm.ICommand, args: {}) => void, namespace?: string, context?: RIAPP.BaseObject): void;
                 removeOnCanExecuteChanged(namespace?: string): void;
                 canExecute(sender: any, param: any): boolean;
                 execute(sender: any, param: any): void;
@@ -771,14 +772,15 @@ declare module RIAPP {
             interface ITextBoxOptions extends IViewOptions {
                 updateOnKeyUp?: boolean;
             }
+            type TKeyPressArgs = {
+                keyCode: number;
+                value: string;
+                isCancel: boolean;
+            };
             class TextBoxElView extends InputElView {
                 protected _init(options: ITextBoxOptions): void;
                 protected _getEventNames(): string[];
-                addOnKeyPress(fn: (sender: TextBoxElView, args: {
-                    keyCode: number;
-                    value: string;
-                    isCancel: boolean;
-                }) => void, namespace?: string): void;
+                addOnKeyPress(fn: (sender: TextBoxElView, args: TKeyPressArgs) => void, namespace?: string): void;
                 removeOnKeyPress(namespace?: string): void;
                 toString(): string;
                 color: string;
@@ -795,11 +797,7 @@ declare module RIAPP {
                 constructor(app: RIAPP.Application, el: HTMLTextAreaElement, options: ITextAreaOptions);
                 protected _init(options: ITextAreaOptions): void;
                 protected _getEventNames(): string[];
-                addOnKeyPress(fn: (sender: TextAreaElView, args: {
-                    keyCode: number;
-                    value: string;
-                    isCancel: boolean;
-                }) => void, namespace?: string): void;
+                addOnKeyPress(fn: (sender: TextAreaElView, args: TKeyPressArgs) => void, namespace?: string): void;
                 removeOnKeyPress(namespace?: string): void;
                 toString(): string;
                 el: HTMLTextAreaElement;
@@ -1873,6 +1871,15 @@ declare module RIAPP {
                 valuePath: string;
                 textPath: string;
             }
+            type TObjCreatedArgs = {
+                objectKey: string;
+                object: BaseObject;
+                isCachedExternally: boolean;
+            };
+            type TObjNeededArgs = {
+                objectKey: string;
+                object: BaseObject;
+            };
             class LookupContent extends contentMOD.BindingContent implements contentMOD.IExternallyCachable {
                 private _spanView;
                 private _valBinding;
@@ -1883,16 +1890,9 @@ declare module RIAPP {
                 constructor(app: RIAPP.Application, options: contentMOD.IConstructorContentOptions);
                 protected _init(): void;
                 protected _getEventNames(): string[];
-                addOnObjectCreated(fn: (sender: any, args: {
-                    objectKey: string;
-                    object: BaseObject;
-                    isCachedExternally: boolean;
-                }) => void, namespace?: string): void;
+                addOnObjectCreated(fn: (sender: any, args: TObjCreatedArgs) => void, namespace?: string): void;
                 removeOnObjectCreated(namespace?: string): void;
-                addOnObjectNeeded(fn: (sender: any, args: {
-                    objectKey: string;
-                    object: BaseObject;
-                }) => void, namespace?: string): void;
+                addOnObjectNeeded(fn: (sender: any, args: TObjNeededArgs) => void, namespace?: string): void;
                 removeOnObjectNeeded(namespace?: string): void;
                 protected _getSelectView(): SelectElView;
                 protected _createSelectElView(el: HTMLSelectElement, options: ISelectViewOptions): SelectElView;

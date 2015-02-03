@@ -46,6 +46,10 @@
                 buttons: IButton[];
               }
 
+            var DLG_EVENTS = {
+                close: 'close',
+                refresh: 'refresh'
+            };
 
             export class DataEditDialog extends BaseObject implements templMOD.ITemplateEvents  {
                 private _objId: string;
@@ -140,16 +144,16 @@
                     return isHandled;
                 }
                 addOnClose(fn: (sender?, args?) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('close', fn, namespace, context);
+                    this.addHandler(DLG_EVENTS.close, fn, namespace, context);
                 }
                 removeOnClose(namespace?: string) {
-                    this.removeHandler('close', namespace);
+                    this.removeHandler(DLG_EVENTS.close, namespace);
                 }
                 addOnRefresh(fn: (sender: any, args: { isHandled: boolean; }) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler('refresh', fn, namespace, context);
+                    this.addHandler(DLG_EVENTS.refresh, fn, namespace, context);
                 }
                 removeOnRefresh(namespace?: string) {
-                    this.removeHandler('refresh', namespace);
+                    this.removeHandler(DLG_EVENTS.refresh, namespace);
                 }
                 protected _updateIsEditable() {
                     this._isEditable = utils.getEditable(this._dataContext);
@@ -170,7 +174,7 @@
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['close', 'refresh'].concat(base_events);
+                    return [DLG_EVENTS.close, DLG_EVENTS.refresh].concat(base_events);
                 }
                 templateLoading(template: templMOD.Template): void {
                     //noop
@@ -314,7 +318,7 @@
                 }
                 protected _onRefresh() {
                     var args = { isHandled: false };
-                    this.raiseEvent('refresh', args);
+                    this.raiseEvent(DLG_EVENTS.refresh, args);
                     if (args.isHandled)
                         return;
                     var dctx = this._dataContext;
@@ -340,7 +344,7 @@
                         }
                         if (!!this._fn_OnClose)
                             this._fn_OnClose(this);
-                        this.raiseEvent('close', {});
+                        this.raiseEvent(DLG_EVENTS.close, {});
                     }
                     finally {
                         this._template.dataContext = null;

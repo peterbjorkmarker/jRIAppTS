@@ -539,6 +539,11 @@
                 updateOnKeyUp?: boolean;
             }
 
+            var TXTBOX_EVENTS = {
+                keypress: 'keypress'
+            };
+            export type TKeyPressArgs = { keyCode: number; value: string; isCancel: boolean; };
+
             export class TextBoxElView extends InputElView {
                 protected _init(options:ITextBoxOptions) {
                     var self = this;
@@ -550,8 +555,8 @@
                     });
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
-                        var args = { keyCode: e.which, value: (<any>e.target).value, isCancel: false };
-                        self.raiseEvent('keypress', args);
+                        var args: TKeyPressArgs = { keyCode: e.which, value: (<any>e.target).value, isCancel: false };
+                        self.raiseEvent(TXTBOX_EVENTS.keypress, args);
                         if (args.isCancel)
                             e.preventDefault();
                     });
@@ -564,13 +569,13 @@
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['keypress'].concat(base_events);
+                    return [TXTBOX_EVENTS.keypress].concat(base_events);
                 }
-                addOnKeyPress(fn: (sender: TextBoxElView, args: { keyCode: number; value: string; isCancel: boolean; }) => void , namespace?: string) {
-                    this.addHandler('keypress', fn, namespace);
+                addOnKeyPress(fn: (sender: TextBoxElView, args: TKeyPressArgs) => void , namespace?: string) {
+                    this.addHandler(TXTBOX_EVENTS.keypress, fn, namespace);
                 }
                 removeOnKeyPress(namespace?: string) {
-                    this.removeHandler('keypress', namespace);
+                    this.removeHandler(TXTBOX_EVENTS.keypress, namespace);
                 }
                 toString() {
                     return 'TextBoxElView';
@@ -601,6 +606,10 @@
                 wrap?: string;
             }
 
+            var TXTAREA_EVENTS = {
+                keypress: 'keypress'
+            };
+
             export class TextAreaElView extends BaseElView {
                 constructor(app: RIAPP.Application, el: HTMLTextAreaElement, options: ITextAreaOptions) {
                     super(app, el, options);
@@ -624,8 +633,8 @@
                     });
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
-                        var args = { keyCode: e.which, value: (<any>e.target).value, isCancel: false };
-                        self.raiseEvent('keypress', args);
+                        var args :TKeyPressArgs = { keyCode: e.which, value: (<any>e.target).value, isCancel: false };
+                        self.raiseEvent(TXTAREA_EVENTS.keypress, args);
                         if (args.isCancel)
                             e.preventDefault();
                     });
@@ -638,13 +647,13 @@
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['keypress'].concat(base_events);
+                    return [TXTAREA_EVENTS.keypress].concat(base_events);
                 }
-                addOnKeyPress(fn: (sender: TextAreaElView, args: { keyCode: number; value: string; isCancel: boolean; }) => void , namespace?: string) {
-                    this.addHandler('keypress', fn, namespace);
+                addOnKeyPress(fn: (sender: TextAreaElView, args: TKeyPressArgs) => void , namespace?: string) {
+                    this.addHandler(TXTAREA_EVENTS.keypress, fn, namespace);
                 }
                 removeOnKeyPress(namespace?: string) {
-                    this.removeHandler('keypress', namespace);
+                    this.removeHandler(TXTAREA_EVENTS.keypress, namespace);
                 }
                 toString() {
                     return 'TextAreaElView';

@@ -3459,6 +3459,11 @@
                 get onDeleteAction() { return this._onDeleteAction; }
             }
 
+
+            var VIEW_EVENTS = {
+                refreshed: 'view_refreshed'
+            };
+
             export class DataView<TItem extends collMOD.ICollectionItem> extends collMOD.BaseCollection<TItem> {
                 private _dataSource: collMOD.BaseCollection<TItem>;
                 private _fn_filter: (item: TItem) => boolean;
@@ -3501,13 +3506,13 @@
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['view_refreshed'].concat(base_events);
+                    return [VIEW_EVENTS.refreshed].concat(base_events);
                 }
                 addOnViewRefreshed(fn: (sender: DataView<TItem>, args: {}) => void, namespace?: string) {
-                    this.addHandler('view_refreshed', fn, namespace);
+                    this.addHandler(VIEW_EVENTS.refreshed, fn, namespace);
                 }
                 removeOnViewRefreshed(namespace?: string) {
-                    this.removeHandler('view_refreshed', namespace);
+                    this.removeHandler(VIEW_EVENTS.refreshed, namespace);
                 }
                 protected _filterForPaging(items: TItem[]) {
                     var skip = 0, take = 0, pos = -1, cnt = -1, result: TItem[] = [];
@@ -3526,7 +3531,7 @@
                     return result;
                 }
                 protected _onViewRefreshed(args: {}) {
-                    this.raiseEvent('view_refreshed', args);
+                    this.raiseEvent(VIEW_EVENTS.refreshed, args);
                 }
                 protected _clear(isPageChanged: boolean) {
                     this.cancelEdit();

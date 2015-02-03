@@ -5,9 +5,13 @@
                 canExecute: (sender, param) => boolean;
                 execute: (sender, param) => void;
                 raiseCanExecuteChanged: () => void;
-                addOnCanExecuteChanged(fn: (sender: mvvm.ICommand, args: {}) => void, namespace?: string, context?: any);
+                addOnCanExecuteChanged(fn: (sender: mvvm.ICommand, args: {}) => void, namespace?: string, context?: RIAPP.BaseObject);
                 removeOnCanExecuteChanged(namespace?: string);
             }
+
+           var CMD_EVENTS = {
+               can_execute_changed: 'canExecute_changed'
+           };
 
             export class Command extends RIAPP.BaseObject implements ICommand {
                 private _action: (sender, param) => void;
@@ -19,19 +23,19 @@
                     super();
                     var utils = RIAPP.global.utils;
                     this._action = fn_action;
-                    this._thisObj = thisObj;
+                    this._thisObj = !thisObj ? null : thisObj;
                     this._canExecute = fn_canExecute;
                     this._objId = 'cmd' + utils.getNewID();
                 }
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
-                    return ['canExecute_changed'].concat(base_events);
+                    return [CMD_EVENTS.can_execute_changed].concat(base_events);
                 }
-                addOnCanExecuteChanged(fn: (sender: mvvm.ICommand, args: {}) => void, namespace?: string, context?: any) {
-                    this.addHandler('canExecute_changed', fn, namespace, context);
+                addOnCanExecuteChanged(fn: (sender: mvvm.ICommand, args: {}) => void, namespace?: string, context?: RIAPP.BaseObject) {
+                    this.addHandler(CMD_EVENTS.can_execute_changed, fn, namespace, context);
                 }
                 removeOnCanExecuteChanged(namespace?: string) {
-                    this.removeHandler('canExecute_changed', namespace);
+                    this.removeHandler(CMD_EVENTS.can_execute_changed, namespace);
                 }
                 canExecute(sender, param):boolean {
                     if (!this._canExecute)
@@ -53,7 +57,7 @@
                     super.destroy();
                 }
                 raiseCanExecuteChanged() {
-                    this.raiseEvent('canExecute_changed', {});
+                    this.raiseEvent(CMD_EVENTS.can_execute_changed, {});
                 }
                 toString() {
                     return 'Command';

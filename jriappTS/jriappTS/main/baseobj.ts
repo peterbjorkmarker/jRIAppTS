@@ -105,6 +105,11 @@
         destroy(): void;
     }
 
+    var OBJ_EVENTS = {
+        error: 'error',
+        destroyed: 'destroyed'
+    };
+
     export class BaseObject implements IBaseObject {
         protected _isDestroyed: boolean;
         protected _isDestroyCalled: boolean;
@@ -128,7 +133,7 @@
             }
         }
         protected _getEventNames(): string[] {
-            return ['error', 'destroyed'];
+            return [OBJ_EVENTS.error, OBJ_EVENTS.destroyed];
         }
         protected _addHandler(name: string, handler: TEventHandler, namespace?: string, context?: any, prepend?: boolean):void {
             if (this._isDestroyed)
@@ -148,7 +153,7 @@
             if (!!namespace)
                 ns = '' + namespace;
 
-            var list = ev[n], node : IListNode = { fn: handler, ns: ns, next: null, context: !context?null:context };
+            var list = ev[n], node: IListNode = { fn: handler, ns: ns, next: null, context: !context ? null : context };
 
             if (!list) {
                 ev[n] =  { head: node, tail: node };
@@ -234,7 +239,7 @@
 
             if (!map[name]) {
                 if (DebugLevel == DEBUG_LEVEL.HIGH) {
-                    debugger;
+                    RIAPP.startDebugger();
                 }
                 var err = new Error(RIAPP.baseUtils.format(RIAPP.ERRS.ERR_EVENT_INVALID, name));
                 this.handleError(err, this);
@@ -252,7 +257,7 @@
                 error = new Error('' + error);
             }
             var args: TErrorArgs = { error: error, source: source, isHandled: false };
-            this._raiseEvent('error', args);
+            this._raiseEvent(OBJ_EVENTS.error, args);
             return args.isHandled;
         }
         raisePropertyChanged(name: string):void {
@@ -262,7 +267,7 @@
                 var obj = baseUtils.resolveOwner(this, name);
                 if (DebugLevel > DEBUG_LEVEL.NONE && baseUtils.isUndefined(obj)) {
                     if (DebugLevel == DEBUG_LEVEL.HIGH) {
-                        debugger;
+                        RIAPP.startDebugger();
                     }
                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, name));
                 }
@@ -273,7 +278,7 @@
             else {
                 if (DebugLevel > DEBUG_LEVEL.NONE && !baseUtils.hasProp(this, lastPropName)) {
                     if (DebugLevel == DEBUG_LEVEL.HIGH) {
-                        debugger;
+                        RIAPP.startDebugger();
                     }
                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, lastPropName));
                 }
@@ -291,16 +296,16 @@
             this._removeHandler(name, namespace);
         }
         addOnDestroyed(handler: TEventHandler, namespace?: string, context?: BaseObject):void {
-            this._addHandler('destroyed', handler, namespace, context, false);
+            this._addHandler(OBJ_EVENTS.destroyed, handler, namespace, context, false);
         }
         removeOnDestroyed(namespace?: string):void {
-            this._removeHandler('destroyed', namespace);
+            this._removeHandler(OBJ_EVENTS.destroyed, namespace);
         }
         addOnError(handler: TErrorHandler, namespace?: string, context?: BaseObject): void {
-            this._addHandler('error', handler, namespace, context, false);
+            this._addHandler(OBJ_EVENTS.error, handler, namespace, context, false);
         }
         removeOnError(namespace?: string):void {
-            this.removeHandler('error', namespace);
+            this.removeHandler(OBJ_EVENTS.error, namespace);
         }
         //remove event handlers by their namespace
         removeNSHandlers(namespace?: string) :void {
@@ -319,7 +324,7 @@
                 throw new Error(RIAPP.ERRS.ERR_PROP_NAME_EMPTY);
             if (DebugLevel > DEBUG_LEVEL.NONE && prop != '*' && !this._isHasProp(prop)) {
                 if (DebugLevel == DEBUG_LEVEL.HIGH) {
-                    debugger;
+                    RIAPP.startDebugger();
                 }
                 throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
             }
@@ -330,7 +335,7 @@
             if (!!prop) {
                 if (DebugLevel > DEBUG_LEVEL.NONE && prop != '*' && !this._isHasProp(prop)) {
                     if (DebugLevel == DEBUG_LEVEL.HIGH) {
-                        debugger;
+                        RIAPP.startDebugger();
                     }
                     throw new Error(baseUtils.format(RIAPP.ERRS.ERR_PROP_NAME_INVALID, prop));
                 }
@@ -350,7 +355,7 @@
             this._isDestroyed = true;
             this._isDestroyCalled = true;
             try {
-                this._raiseEvent('destroyed', {});
+                this._raiseEvent(OBJ_EVENTS.destroyed, {});
             }
             finally {
                 this._removeHandler(null, null);
