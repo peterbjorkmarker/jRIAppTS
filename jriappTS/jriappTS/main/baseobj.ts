@@ -135,7 +135,7 @@
         protected _getEventNames(): string[] {
             return [OBJ_EVENTS.error, OBJ_EVENTS.destroyed];
         }
-        protected _addHandler(name: string, handler: TEventHandler, namespace?: string, context?: any, prepend?: boolean):void {
+        protected _addHandler(name: string, handler: TEventHandler, namespace?: string, context?: BaseObject, prepend?: boolean):void {
             if (this._isDestroyed)
                 return;
 

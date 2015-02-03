@@ -155,7 +155,7 @@ declare module RIAPP {
         constructor();
         private _removeNsHandler(ev, ns);
         protected _getEventNames(): string[];
-        protected _addHandler(name: string, handler: TEventHandler, namespace?: string, context?: any, prepend?: boolean): void;
+        protected _addHandler(name: string, handler: TEventHandler, namespace?: string, context?: BaseObject, prepend?: boolean): void;
         protected _removeHandler(name?: string, namespace?: string): void;
         protected _raiseEvent(name: string, args: any): void;
         protected _checkEventName(name: string): void;
@@ -241,7 +241,7 @@ declare module RIAPP {
         private _getTemplateLoaderCore(name);
         protected _getEventNames(): string[];
         _initialize(): void;
-        protected _addHandler(name: string, fn: (sender, args) => void, namespace?: string, prepend?: boolean): void;
+        protected _addHandler(name: string, fn: (sender, args) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
         _trackSelectable(selectable: ISelectable): void;
         _untrackSelectable(selectable: ISelectable): void;
         _registerApp(app: Application): void;
@@ -263,10 +263,10 @@ declare module RIAPP {
         _waitForNotLoading(callback: any, callbackArgs: any): void;
         _getConverter(name: string): IConverter;
         _onUnResolvedBinding(bindTo: BindTo, root: any, path: string, propName: string): void;
-        addOnLoad(fn: (sender: Global, args: any) => void, namespace?: string): void;
-        addOnUnLoad(fn: (sender: Global, args: any) => void, namespace?: string): void;
-        addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string): void;
-        addOnUnResolvedBinding(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string): void;
+        addOnLoad(fn: (sender: Global, args: any) => void, namespace?: string, context?: BaseObject): void;
+        addOnUnLoad(fn: (sender: Global, args: any) => void, namespace?: string, context?: BaseObject): void;
+        addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string, context?: BaseObject): void;
+        addOnUnResolvedBinding(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string, context?: BaseObject): void;
         removeOnUnResolvedBinding(namespace?: string): void;
         getExports(): {
             [name: string]: any;

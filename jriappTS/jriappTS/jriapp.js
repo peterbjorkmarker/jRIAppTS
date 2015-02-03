@@ -701,7 +701,7 @@ var RIAPP;
                 self.removeHandler(GLOB_EVENTS.initialized, null);
             }, 0);
         };
-        Global.prototype._addHandler = function (name, fn, namespace, prepend) {
+        Global.prototype._addHandler = function (name, fn, namespace, context, prepend) {
             var self = this;
             if ((name == GLOB_EVENTS.load && self._isReady) || (name == GLOB_EVENTS.initialized && self._isInitialized)) {
                 //when already is ready, immediately raise the event
@@ -710,7 +710,7 @@ var RIAPP;
                 }, 0);
                 return;
             }
-            _super.prototype._addHandler.call(this, name, fn, namespace, prepend);
+            _super.prototype._addHandler.call(this, name, fn, namespace, context, prepend);
         };
         Global.prototype._trackSelectable = function (selectable) {
             var self = this, utils = self.utils, el = selectable.containerEl;
@@ -934,17 +934,17 @@ var RIAPP;
             var args = { bindTo: bindTo, root: root, path: path, propName: propName };
             this.raiseEvent(GLOB_EVENTS.unresolvedBinding, args);
         };
-        Global.prototype.addOnLoad = function (fn, namespace) {
-            this._addHandler(GLOB_EVENTS.load, fn, namespace, false);
+        Global.prototype.addOnLoad = function (fn, namespace, context) {
+            this._addHandler(GLOB_EVENTS.load, fn, namespace, context, false);
         };
-        Global.prototype.addOnUnLoad = function (fn, namespace) {
-            this._addHandler(GLOB_EVENTS.unload, fn, namespace, false);
+        Global.prototype.addOnUnLoad = function (fn, namespace, context) {
+            this._addHandler(GLOB_EVENTS.unload, fn, namespace, context, false);
         };
-        Global.prototype.addOnInitialize = function (fn, namespace) {
-            this._addHandler(GLOB_EVENTS.initialized, fn, namespace, false);
+        Global.prototype.addOnInitialize = function (fn, namespace, context) {
+            this._addHandler(GLOB_EVENTS.initialized, fn, namespace, context, false);
         };
-        Global.prototype.addOnUnResolvedBinding = function (fn, namespace) {
-            this.addHandler(GLOB_EVENTS.unresolvedBinding, fn, namespace);
+        Global.prototype.addOnUnResolvedBinding = function (fn, namespace, context) {
+            this.addHandler(GLOB_EVENTS.unresolvedBinding, fn, namespace, context, false);
         };
         Global.prototype.removeOnUnResolvedBinding = function (namespace) {
             this.removeHandler(GLOB_EVENTS.unresolvedBinding, namespace);
@@ -1105,7 +1105,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.4.1';
+        Global.vesion = '2.5.4.2';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;

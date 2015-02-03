@@ -50,7 +50,7 @@
     };
 
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.5.4.1';
+        public static vesion = '2.5.4.2';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;
@@ -190,14 +190,14 @@
             self.raiseEvent(GLOB_EVENTS.initialized, {});
             setTimeout(function () { self.removeHandler(GLOB_EVENTS.initialized, null); }, 0);
         }
-        protected _addHandler(name: string, fn: (sender, args) => void , namespace?: string, prepend?: boolean) {
+        protected _addHandler(name: string, fn: (sender, args) => void , namespace?: string, context?: BaseObject, prepend?: boolean) {
             var self = this;
             if ((name == GLOB_EVENTS.load && self._isReady) || (name == GLOB_EVENTS.initialized && self._isInitialized)) {
                  //when already is ready, immediately raise the event
                 setTimeout(function () { fn.apply(self, [self, {}]); }, 0);
                 return;
             }
-            super._addHandler(name, fn, namespace, prepend);
+            super._addHandler(name, fn, namespace, context, prepend);
         }
         _trackSelectable(selectable: ISelectable) {
             var self = this, utils = self.utils, el = selectable.containerEl;
@@ -429,17 +429,17 @@
             var args: IUnResolvedBindingArgs = { bindTo: bindTo, root: root, path: path, propName: propName };
             this.raiseEvent(GLOB_EVENTS.unresolvedBinding, args);
         }
-        addOnLoad(fn: (sender: Global, args: any) => void, namespace?: string) {
-            this._addHandler(GLOB_EVENTS.load, fn, namespace, false);
+        addOnLoad(fn: (sender: Global, args: any) => void, namespace?: string, context?: BaseObject) {
+            this._addHandler(GLOB_EVENTS.load, fn, namespace, context, false);
         }
-        addOnUnLoad(fn: (sender: Global, args: any) => void, namespace?: string) {
-            this._addHandler(GLOB_EVENTS.unload, fn, namespace, false);
+        addOnUnLoad(fn: (sender: Global, args: any) => void, namespace?: string, context?: BaseObject) {
+            this._addHandler(GLOB_EVENTS.unload, fn, namespace, context, false);
         }
-        addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string) {
-            this._addHandler(GLOB_EVENTS.initialized, fn, namespace, false);
+        addOnInitialize(fn: (sender: Global, args: any) => void, namespace?: string, context?: BaseObject) {
+            this._addHandler(GLOB_EVENTS.initialized, fn, namespace, context, false);
         }
-        addOnUnResolvedBinding(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string) {
-            this.addHandler(GLOB_EVENTS.unresolvedBinding, fn, namespace);
+        addOnUnResolvedBinding(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string, context?: BaseObject) {
+            this.addHandler(GLOB_EVENTS.unresolvedBinding, fn, namespace, context, false);
         }
         removeOnUnResolvedBinding(namespace?: string) {
             this.removeHandler(GLOB_EVENTS.unresolvedBinding, namespace);
