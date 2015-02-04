@@ -276,10 +276,10 @@
                     //the list descendant does it
                 }
                 addOnErrorsChanged(fn: (sender: any, args: {}) => void, namespace?: string, context?: any) {
-                    this.addHandler(ITEM_EVENTS.errors_changed, fn, namespace, context);
+                    this._addHandler(ITEM_EVENTS.errors_changed, fn, namespace, context);
                 }
                 removeOnErrorsChanged(namespace?: string) {
-                    this.removeHandler(ITEM_EVENTS.errors_changed, namespace);
+                    this._removeHandler(ITEM_EVENTS.errors_changed, namespace);
                 }
                 _onAttaching() {
                 }
@@ -565,94 +565,94 @@
                     return isHandled;
                 }
                 addOnClearing(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.clearing, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.clearing, fn, namespace, context, prepend);
                 }
                 removeOnClearing(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.clearing, namespace);
+                    this._removeHandler(COLL_EVENTS.clearing, namespace);
                 }
                 addOnCleared(fn: (sender: BaseCollection<TItem>, args: {}) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.cleared, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.cleared, fn, namespace, context, prepend);
                 }
                 removeOnCleared(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.cleared, namespace);
+                    this._removeHandler(COLL_EVENTS.cleared, namespace);
                 }
                 addOnFill(fn: (sender: BaseCollection<TItem>, args: ICollFillArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.fill, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.fill, fn, namespace, context, prepend);
                 }
                 removeOnFill(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.fill, namespace);
+                    this._removeHandler(COLL_EVENTS.fill, namespace);
                 }
                 addOnCollChanged(fn: (sender: BaseCollection<TItem>, args: ICollChangedArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.collection_changed, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.collection_changed, fn, namespace, context, prepend);
                 }
                 removeOnCollChanged(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.collection_changed, namespace);
+                    this._removeHandler(COLL_EVENTS.collection_changed, namespace);
                 }
                 addOnValidate(fn: (sender: BaseCollection<TItem>, args: ICollValidateArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.validate, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.validate, fn, namespace, context, prepend);
                 }
                 removeOnValidate(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.validate, namespace);
+                    this._removeHandler(COLL_EVENTS.validate, namespace);
                 }
                 addOnItemDeleting(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.item_deleting, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.item_deleting, fn, namespace, context, prepend);
                 }
                 removeOnItemDeleting(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.item_deleting, namespace);
+                    this._removeHandler(COLL_EVENTS.item_deleting, namespace);
                 }
                 addOnItemAdding(fn: (sender: BaseCollection<TItem>, args: ICancellableArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.item_adding, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.item_adding, fn, namespace, context, prepend);
                 }
                 removeOnItemAdding(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.item_adding, namespace);
+                    this._removeHandler(COLL_EVENTS.item_adding, namespace);
                 }
                 addOnItemAdded(fn: (sender: BaseCollection<TItem>, args: IItemAddedArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.item_added, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.item_added, fn, namespace, context, prepend);
                 }
                 removeOnItemAdded(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.item_added, namespace);
+                    this._removeHandler(COLL_EVENTS.item_added, namespace);
                 }
                 addOnCurrentChanging(fn: (sender: BaseCollection<TItem>, args: ICurrentChangingArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.current_changing, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.current_changing, fn, namespace, context, prepend);
                 }
                 removeOnCurrentChanging(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.current_changing, namespace);
+                    this._removeHandler(COLL_EVENTS.current_changing, namespace);
                 }
                 addOnPageChanging(fn: (sender: BaseCollection<TItem>, args: IPageChangingArgs) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.page_changing, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.page_changing, fn, namespace, context, prepend);
                 }
                 removeOnPageChanging(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.page_changing, namespace);
+                    this._removeHandler(COLL_EVENTS.page_changing, namespace);
                 }
                 addOnErrorsChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.errors_changed, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.errors_changed, fn, namespace, context, prepend);
                 }
                 removeOnErrorsChanged(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.errors_changed, namespace);
+                    this._removeHandler(COLL_EVENTS.errors_changed, namespace);
                 }
                 addOnBeginEdit(fn: (sender: BaseCollection<TItem>, args: ICollItemArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.begin_edit, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.begin_edit, fn, namespace, context, prepend);
                 }
                 removeOnBeginEdit(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.begin_edit, namespace);
+                    this._removeHandler(COLL_EVENTS.begin_edit, namespace);
                 }
                 addOnEndEdit(fn: (sender: BaseCollection<TItem>, args: ICollEndEditArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.end_edit, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.end_edit, fn, namespace, context, prepend);
                 }
                 removeOnEndEdit(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.end_edit, namespace);
+                    this._removeHandler(COLL_EVENTS.end_edit, namespace);
                 }
                 addOnCommitChanges(fn: (sender: BaseCollection<TItem>, args: ICommitChangesArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.commit_changes, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.commit_changes, fn, namespace, context, prepend);
                 }
                 removeOnCommitChanges(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.commit_changes, namespace);
+                    this._removeHandler(COLL_EVENTS.commit_changes, namespace);
                 }
                 addOnStatusChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemStatusArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(COLL_EVENTS.status_changed, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.status_changed, fn, namespace, context, prepend);
                 }
                 removeOnStatusChanged(namespace?: string) {
-                    this.removeHandler(COLL_EVENTS.status_changed, namespace);
+                    this._removeHandler(COLL_EVENTS.status_changed, namespace);
                 }
                 protected _getPKFieldInfos(): IFieldInfo[] {
                     if (!!this._pkInfo)

@@ -572,10 +572,10 @@
                     return [TXTBOX_EVENTS.keypress].concat(base_events);
                 }
                 addOnKeyPress(fn: (sender: TextBoxElView, args: TKeyPressArgs) => void , namespace?: string) {
-                    this.addHandler(TXTBOX_EVENTS.keypress, fn, namespace);
+                    this._addHandler(TXTBOX_EVENTS.keypress, fn, namespace);
                 }
                 removeOnKeyPress(namespace?: string) {
-                    this.removeHandler(TXTBOX_EVENTS.keypress, namespace);
+                    this._removeHandler(TXTBOX_EVENTS.keypress, namespace);
                 }
                 toString() {
                     return 'TextBoxElView';
@@ -650,10 +650,10 @@
                     return [TXTAREA_EVENTS.keypress].concat(base_events);
                 }
                 addOnKeyPress(fn: (sender: TextAreaElView, args: TKeyPressArgs) => void , namespace?: string) {
-                    this.addHandler(TXTAREA_EVENTS.keypress, fn, namespace);
+                    this._addHandler(TXTAREA_EVENTS.keypress, fn, namespace);
                 }
                 removeOnKeyPress(namespace?: string) {
-                    this.removeHandler(TXTAREA_EVENTS.keypress, namespace);
+                    this._removeHandler(TXTAREA_EVENTS.keypress, namespace);
                 }
                 toString() {
                     return 'TextAreaElView';

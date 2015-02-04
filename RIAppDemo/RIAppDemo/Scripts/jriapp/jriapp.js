@@ -944,10 +944,10 @@ var RIAPP;
             this._addHandler(GLOB_EVENTS.initialized, fn, namespace, context, false);
         };
         Global.prototype.addOnUnResolvedBinding = function (fn, namespace, context) {
-            this.addHandler(GLOB_EVENTS.unresolvedBinding, fn, namespace, context, false);
+            this._addHandler(GLOB_EVENTS.unresolvedBinding, fn, namespace, context, false);
         };
         Global.prototype.removeOnUnResolvedBinding = function (namespace) {
-            this.removeHandler(GLOB_EVENTS.unresolvedBinding, namespace);
+            this._removeHandler(GLOB_EVENTS.unresolvedBinding, namespace);
         };
         Global.prototype.getExports = function () {
             return this._exports;
@@ -1105,7 +1105,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.4.2';
+        Global.vesion = '2.5.4.3';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -2983,10 +2983,10 @@ var RIAPP;
                     return [CMD_EVENTS.can_execute_changed].concat(base_events);
                 };
                 Command.prototype.addOnCanExecuteChanged = function (fn, namespace, context) {
-                    this.addHandler(CMD_EVENTS.can_execute_changed, fn, namespace, context);
+                    this._addHandler(CMD_EVENTS.can_execute_changed, fn, namespace, context);
                 };
                 Command.prototype.removeOnCanExecuteChanged = function (namespace) {
-                    this.removeHandler(CMD_EVENTS.can_execute_changed, namespace);
+                    this._removeHandler(CMD_EVENTS.can_execute_changed, namespace);
                 };
                 Command.prototype.canExecute = function (sender, param) {
                     if (!this._canExecute)
@@ -3743,10 +3743,10 @@ var RIAPP;
                     return [TXTBOX_EVENTS.keypress].concat(base_events);
                 };
                 TextBoxElView.prototype.addOnKeyPress = function (fn, namespace) {
-                    this.addHandler(TXTBOX_EVENTS.keypress, fn, namespace);
+                    this._addHandler(TXTBOX_EVENTS.keypress, fn, namespace);
                 };
                 TextBoxElView.prototype.removeOnKeyPress = function (namespace) {
-                    this.removeHandler(TXTBOX_EVENTS.keypress, namespace);
+                    this._removeHandler(TXTBOX_EVENTS.keypress, namespace);
                 };
                 TextBoxElView.prototype.toString = function () {
                     return 'TextBoxElView';
@@ -3825,10 +3825,10 @@ var RIAPP;
                     return [TXTAREA_EVENTS.keypress].concat(base_events);
                 };
                 TextAreaElView.prototype.addOnKeyPress = function (fn, namespace) {
-                    this.addHandler(TXTAREA_EVENTS.keypress, fn, namespace);
+                    this._addHandler(TXTAREA_EVENTS.keypress, fn, namespace);
                 };
                 TextAreaElView.prototype.removeOnKeyPress = function (namespace) {
-                    this.removeHandler(TXTAREA_EVENTS.keypress, namespace);
+                    this._removeHandler(TXTAREA_EVENTS.keypress, namespace);
                 };
                 TextAreaElView.prototype.toString = function () {
                     return 'TextAreaElView';
@@ -5388,10 +5388,10 @@ var RIAPP;
                     //the list descendant does it
                 };
                 ItemAspect.prototype.addOnErrorsChanged = function (fn, namespace, context) {
-                    this.addHandler(ITEM_EVENTS.errors_changed, fn, namespace, context);
+                    this._addHandler(ITEM_EVENTS.errors_changed, fn, namespace, context);
                 };
                 ItemAspect.prototype.removeOnErrorsChanged = function (namespace) {
-                    this.removeHandler(ITEM_EVENTS.errors_changed, namespace);
+                    this._removeHandler(ITEM_EVENTS.errors_changed, namespace);
                 };
                 ItemAspect.prototype._onAttaching = function () {
                 };
@@ -5686,94 +5686,94 @@ var RIAPP;
                     return isHandled;
                 };
                 BaseCollection.prototype.addOnClearing = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.clearing, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.clearing, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnClearing = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.clearing, namespace);
+                    this._removeHandler(COLL_EVENTS.clearing, namespace);
                 };
                 BaseCollection.prototype.addOnCleared = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.cleared, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.cleared, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnCleared = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.cleared, namespace);
+                    this._removeHandler(COLL_EVENTS.cleared, namespace);
                 };
                 BaseCollection.prototype.addOnFill = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.fill, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.fill, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnFill = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.fill, namespace);
+                    this._removeHandler(COLL_EVENTS.fill, namespace);
                 };
                 BaseCollection.prototype.addOnCollChanged = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.collection_changed, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.collection_changed, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnCollChanged = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.collection_changed, namespace);
+                    this._removeHandler(COLL_EVENTS.collection_changed, namespace);
                 };
                 BaseCollection.prototype.addOnValidate = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.validate, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.validate, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnValidate = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.validate, namespace);
+                    this._removeHandler(COLL_EVENTS.validate, namespace);
                 };
                 BaseCollection.prototype.addOnItemDeleting = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.item_deleting, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.item_deleting, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnItemDeleting = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.item_deleting, namespace);
+                    this._removeHandler(COLL_EVENTS.item_deleting, namespace);
                 };
                 BaseCollection.prototype.addOnItemAdding = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.item_adding, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.item_adding, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnItemAdding = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.item_adding, namespace);
+                    this._removeHandler(COLL_EVENTS.item_adding, namespace);
                 };
                 BaseCollection.prototype.addOnItemAdded = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.item_added, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.item_added, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnItemAdded = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.item_added, namespace);
+                    this._removeHandler(COLL_EVENTS.item_added, namespace);
                 };
                 BaseCollection.prototype.addOnCurrentChanging = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.current_changing, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.current_changing, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnCurrentChanging = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.current_changing, namespace);
+                    this._removeHandler(COLL_EVENTS.current_changing, namespace);
                 };
                 BaseCollection.prototype.addOnPageChanging = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.page_changing, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.page_changing, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnPageChanging = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.page_changing, namespace);
+                    this._removeHandler(COLL_EVENTS.page_changing, namespace);
                 };
                 BaseCollection.prototype.addOnErrorsChanged = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.errors_changed, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.errors_changed, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnErrorsChanged = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.errors_changed, namespace);
+                    this._removeHandler(COLL_EVENTS.errors_changed, namespace);
                 };
                 BaseCollection.prototype.addOnBeginEdit = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.begin_edit, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.begin_edit, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnBeginEdit = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.begin_edit, namespace);
+                    this._removeHandler(COLL_EVENTS.begin_edit, namespace);
                 };
                 BaseCollection.prototype.addOnEndEdit = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.end_edit, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.end_edit, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnEndEdit = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.end_edit, namespace);
+                    this._removeHandler(COLL_EVENTS.end_edit, namespace);
                 };
                 BaseCollection.prototype.addOnCommitChanges = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.commit_changes, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.commit_changes, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnCommitChanges = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.commit_changes, namespace);
+                    this._removeHandler(COLL_EVENTS.commit_changes, namespace);
                 };
                 BaseCollection.prototype.addOnStatusChanged = function (fn, namespace, context, prepend) {
-                    this.addHandler(COLL_EVENTS.status_changed, fn, namespace, context, prepend);
+                    this._addHandler(COLL_EVENTS.status_changed, fn, namespace, context, prepend);
                 };
                 BaseCollection.prototype.removeOnStatusChanged = function (namespace) {
-                    this.removeHandler(COLL_EVENTS.status_changed, namespace);
+                    this._removeHandler(COLL_EVENTS.status_changed, namespace);
                 };
                 BaseCollection.prototype._getPKFieldInfos = function () {
                     if (!!this._pkInfo)
@@ -9597,16 +9597,16 @@ var RIAPP;
                     return [LOOKUP_EVENTS.obj_created, LOOKUP_EVENTS.obj_needed].concat(base_events);
                 };
                 LookupContent.prototype.addOnObjectCreated = function (fn, namespace) {
-                    this.addHandler(LOOKUP_EVENTS.obj_created, fn, namespace);
+                    this._addHandler(LOOKUP_EVENTS.obj_created, fn, namespace);
                 };
                 LookupContent.prototype.removeOnObjectCreated = function (namespace) {
-                    this.removeHandler(LOOKUP_EVENTS.obj_created, namespace);
+                    this._removeHandler(LOOKUP_EVENTS.obj_created, namespace);
                 };
                 LookupContent.prototype.addOnObjectNeeded = function (fn, namespace) {
-                    this.addHandler(LOOKUP_EVENTS.obj_needed, fn, namespace);
+                    this._addHandler(LOOKUP_EVENTS.obj_needed, fn, namespace);
                 };
                 LookupContent.prototype.removeOnObjectNeeded = function (namespace) {
-                    this.removeHandler(LOOKUP_EVENTS.obj_needed, namespace);
+                    this._removeHandler(LOOKUP_EVENTS.obj_needed, namespace);
                 };
                 LookupContent.prototype._getSelectView = function () {
                     if (!!this._selectView)
@@ -9907,16 +9907,16 @@ var RIAPP;
                     return isHandled;
                 };
                 DataEditDialog.prototype.addOnClose = function (fn, namespace, context) {
-                    this.addHandler(DLG_EVENTS.close, fn, namespace, context);
+                    this._addHandler(DLG_EVENTS.close, fn, namespace, context);
                 };
                 DataEditDialog.prototype.removeOnClose = function (namespace) {
-                    this.removeHandler(DLG_EVENTS.close, namespace);
+                    this._removeHandler(DLG_EVENTS.close, namespace);
                 };
                 DataEditDialog.prototype.addOnRefresh = function (fn, namespace, context) {
-                    this.addHandler(DLG_EVENTS.refresh, fn, namespace, context);
+                    this._addHandler(DLG_EVENTS.refresh, fn, namespace, context);
                 };
                 DataEditDialog.prototype.removeOnRefresh = function (namespace) {
-                    this.removeHandler(DLG_EVENTS.refresh, namespace);
+                    this._removeHandler(DLG_EVENTS.refresh, namespace);
                 };
                 DataEditDialog.prototype._updateIsEditable = function () {
                     this._isEditable = utils.getEditable(this._dataContext);
@@ -11810,40 +11810,40 @@ var RIAPP;
                     return events.concat(base_events);
                 };
                 DataGrid.prototype.addOnRowExpanded = function (fn, namespace, context) {
-                    this.addHandler(GRID_EVENTS.row_expanded, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.row_expanded, fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnRowExpanded = function (namespace) {
-                    this.removeHandler(GRID_EVENTS.row_expanded, namespace);
+                    this._removeHandler(GRID_EVENTS.row_expanded, namespace);
                 };
                 DataGrid.prototype.addOnRowSelected = function (fn, namespace, context) {
-                    this.addHandler(GRID_EVENTS.row_selected, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.row_selected, fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnRowSelected = function (namespace) {
-                    this.removeHandler(GRID_EVENTS.row_selected, namespace);
+                    this._removeHandler(GRID_EVENTS.row_selected, namespace);
                 };
                 DataGrid.prototype.addOnPageChanged = function (fn, namespace, context) {
-                    this.addHandler(GRID_EVENTS.page_changed, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.page_changed, fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnPageChanged = function (namespace) {
-                    this.removeHandler(GRID_EVENTS.page_changed, namespace);
+                    this._removeHandler(GRID_EVENTS.page_changed, namespace);
                 };
                 DataGrid.prototype.addOnRowStateChanged = function (fn, namespace, context) {
-                    this.addHandler(GRID_EVENTS.row_state_changed, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.row_state_changed, fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnRowStateChanged = function (namespace) {
-                    this.removeHandler(GRID_EVENTS.row_state_changed, namespace);
+                    this._removeHandler(GRID_EVENTS.row_state_changed, namespace);
                 };
                 DataGrid.prototype.addOnCellDblClicked = function (fn, namespace, context) {
-                    this.addHandler(GRID_EVENTS.cell_dblclicked, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.cell_dblclicked, fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnCellDblClicked = function (namespace) {
-                    this.removeHandler(GRID_EVENTS.cell_dblclicked, namespace);
+                    this._removeHandler(GRID_EVENTS.cell_dblclicked, namespace);
                 };
                 DataGrid.prototype.addOnRowAction = function (fn, namespace, context) {
-                    this.addHandler(GRID_EVENTS.row_action, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.row_action, fn, namespace, context);
                 };
                 DataGrid.prototype.removeOnRowAction = function (namespace) {
-                    this.removeHandler(GRID_EVENTS.row_action, namespace);
+                    this._removeHandler(GRID_EVENTS.row_action, namespace);
                 };
                 DataGrid.prototype._isRowExpanded = function (row) {
                     return this._expandedRow === row;
@@ -13439,10 +13439,10 @@ var RIAPP;
                     //noop
                 };
                 StackPanel.prototype.addOnItemClicked = function (fn, namespace, context) {
-                    this.addHandler(PNL_EVENTS.item_clicked, fn, namespace, context);
+                    this._addHandler(PNL_EVENTS.item_clicked, fn, namespace, context);
                 };
                 StackPanel.prototype.removeOnItemClicked = function (namespace) {
-                    this.removeHandler(PNL_EVENTS.item_clicked, namespace);
+                    this._removeHandler(PNL_EVENTS.item_clicked, namespace);
                 };
                 StackPanel.prototype._onKeyDown = function (key, event) {
                     var ds = this.dataSource, self = this;
@@ -14663,6 +14663,9 @@ var RIAPP;
                     this._saveChangeType = null;
                     return true;
                 };
+                EntityAspect.prototype.getDbSet = function () {
+                    return this.__dbSet;
+                };
                 EntityAspect.prototype._getCalcFieldVal = function (fieldName) {
                     if (this._isDestroyCalled)
                         return null;
@@ -14930,9 +14933,6 @@ var RIAPP;
                 };
                 EntityAspect.prototype.getDbContext = function () {
                     return this.__dbSet.dbContext;
-                };
-                EntityAspect.prototype.getDbSet = function () {
-                    return this.__dbSet;
                 };
                 EntityAspect.prototype.getItem = function () {
                     return this._item;
@@ -15322,11 +15322,11 @@ var RIAPP;
                 DbSet.prototype._onLoaded = function (items) {
                     this.raiseEvent(DBSET_EVENTS.loaded, { items: items });
                 };
-                DbSet.prototype.addOnLoaded = function (fn, namespace, context, prepend) {
-                    this.addHandler(DBSET_EVENTS.loaded, fn, namespace, context, prepend);
+                DbSet.prototype.addOnLoaded = function (fn, namespace, context) {
+                    this._addHandler(DBSET_EVENTS.loaded, fn, namespace, context, false);
                 };
                 DbSet.prototype.removeOnLoaded = function (namespace) {
-                    this.removeHandler(DBSET_EVENTS.loaded, namespace);
+                    this._removeHandler(DBSET_EVENTS.loaded, namespace);
                 };
                 DbSet.prototype._getCalcFieldVal = function (fieldName, item) {
                     return baseUtils.getValue(this._calcfldMap, fieldName).getFunc.call(item);
@@ -16265,10 +16265,10 @@ var RIAPP;
                     }
                 };
                 DbContext.prototype.addOnSubmitError = function (fn, namespace, context) {
-                    this.addHandler(DBCTX_EVENTS.submit_err, fn, namespace, context);
+                    this._addHandler(DBCTX_EVENTS.submit_err, fn, namespace, context);
                 };
                 DbContext.prototype.removeOnSubmitError = function (namespace) {
-                    this.removeHandler(DBCTX_EVENTS.submit_err, namespace);
+                    this._removeHandler(DBCTX_EVENTS.submit_err, namespace);
                 };
                 DbContext.prototype._onItemRefreshed = function (res, item) {
                     var operType = 3 /* REFRESH */;
@@ -17385,10 +17385,10 @@ var RIAPP;
                     return [VIEW_EVENTS.refreshed].concat(base_events);
                 };
                 DataView.prototype.addOnViewRefreshed = function (fn, namespace) {
-                    this.addHandler(VIEW_EVENTS.refreshed, fn, namespace);
+                    this._addHandler(VIEW_EVENTS.refreshed, fn, namespace);
                 };
                 DataView.prototype.removeOnViewRefreshed = function (namespace) {
-                    this.removeHandler(VIEW_EVENTS.refreshed, namespace);
+                    this._removeHandler(VIEW_EVENTS.refreshed, namespace);
                 };
                 DataView.prototype._filterForPaging = function (items) {
                     var skip = 0, take = 0, pos = -1, cnt = -1, result = [];
@@ -18445,11 +18445,11 @@ var RIAPP;
         Application.prototype._getContentType = function (options) {
             return this.contentFactory.getContentType(options);
         };
-        Application.prototype.addOnStartUp = function (fn, namespace) {
-            this.addHandler(APP_EVENTS.startup, fn, namespace);
+        Application.prototype.addOnStartUp = function (fn, namespace, context) {
+            this._addHandler(APP_EVENTS.startup, fn, namespace, context);
         };
         Application.prototype.removeOnStartUp = function (namespace) {
-            this.removeHandler(APP_EVENTS.startup, namespace);
+            this._removeHandler(APP_EVENTS.startup, namespace);
         };
         Application.prototype.getExports = function () {
             return this._exports;

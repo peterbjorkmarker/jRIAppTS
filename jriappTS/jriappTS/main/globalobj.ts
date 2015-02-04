@@ -50,7 +50,7 @@
     };
 
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.5.4.2';
+        public static vesion = '2.5.4.3';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;
@@ -439,10 +439,10 @@
             this._addHandler(GLOB_EVENTS.initialized, fn, namespace, context, false);
         }
         addOnUnResolvedBinding(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string, context?: BaseObject) {
-            this.addHandler(GLOB_EVENTS.unresolvedBinding, fn, namespace, context, false);
+            this._addHandler(GLOB_EVENTS.unresolvedBinding, fn, namespace, context, false);
         }
         removeOnUnResolvedBinding(namespace?: string) {
-            this.removeHandler(GLOB_EVENTS.unresolvedBinding, namespace);
+            this._removeHandler(GLOB_EVENTS.unresolvedBinding, namespace);
         }
         getExports() {
             return this._exports;

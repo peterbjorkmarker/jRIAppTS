@@ -416,11 +416,11 @@ module RIAPP {
         _getContentType(options: contentMOD.IContentOptions): contentMOD.IContentType {
             return this.contentFactory.getContentType(options);
         }
-        addOnStartUp(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string) {
-            this.addHandler(APP_EVENTS.startup, fn, namespace);
+        addOnStartUp(fn: (sender: Application, args: {}) => void, namespace?: string, context?: BaseObject) {
+            this._addHandler(APP_EVENTS.startup, fn, namespace, context);
         }
         removeOnStartUp(namespace?: string) {
-            this.removeHandler(APP_EVENTS.startup, namespace);
+            this._removeHandler(APP_EVENTS.startup, namespace);
         }
         getExports() {
             return this._exports;

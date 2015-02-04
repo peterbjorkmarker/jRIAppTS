@@ -863,6 +863,9 @@
                     this._saveChangeType = null;
                     return true;
                 }
+                protected getDbSet() {
+                    return this.__dbSet;
+                }
                 _getCalcFieldVal(fieldName: string) {
                     if (this._isDestroyCalled)
                         return null;
@@ -1134,9 +1137,6 @@
                 }
                 getDbContext(): DbContext {
                     return <TDbContext>this.__dbSet.dbContext;
-                }
-                protected getDbSet() {
-                    return this.__dbSet;
                 }
                 getItem():TItem {
                     return this._item;
@@ -1467,11 +1467,11 @@
                 protected _onLoaded(items: TItem[]) {
                     this.raiseEvent(DBSET_EVENTS.loaded, { items: items });
                 }
-                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean) {
-                    this.addHandler(DBSET_EVENTS.loaded, fn, namespace, context, prepend);
+                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string, context?: BaseObject) {
+                    this._addHandler(DBSET_EVENTS.loaded, fn, namespace, context, false);
                 }
                 removeOnLoaded(namespace?: string) {
-                    this.removeHandler(DBSET_EVENTS.loaded, namespace);
+                    this._removeHandler(DBSET_EVENTS.loaded, namespace);
                 }
                 _getCalcFieldVal(fieldName: string, item: IEntityItem): any {
                     return baseUtils.getValue(this._calcfldMap, fieldName).getFunc.call(item);
@@ -2410,10 +2410,10 @@
                     }
                 }
                 addOnSubmitError(fn: (sender: DbContext, args: { error: any; isHandled: boolean; }) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler(DBCTX_EVENTS.submit_err, fn, namespace, context);
+                    this._addHandler(DBCTX_EVENTS.submit_err, fn, namespace, context);
                 }
                 removeOnSubmitError(namespace?: string) {
-                    this.removeHandler(DBCTX_EVENTS.submit_err, namespace);
+                    this._removeHandler(DBCTX_EVENTS.submit_err, namespace);
                 }
                 _onItemRefreshed(res: IRefreshRowInfo, item: IEntityItem) {
                     var operType = DATA_OPER.REFRESH;
@@ -3509,10 +3509,10 @@
                     return [VIEW_EVENTS.refreshed].concat(base_events);
                 }
                 addOnViewRefreshed(fn: (sender: DataView<TItem>, args: {}) => void, namespace?: string) {
-                    this.addHandler(VIEW_EVENTS.refreshed, fn, namespace);
+                    this._addHandler(VIEW_EVENTS.refreshed, fn, namespace);
                 }
                 removeOnViewRefreshed(namespace?: string) {
-                    this.removeHandler(VIEW_EVENTS.refreshed, namespace);
+                    this._removeHandler(VIEW_EVENTS.refreshed, namespace);
                 }
                 protected _filterForPaging(items: TItem[]) {
                     var skip = 0, take = 0, pos = -1, cnt = -1, result: TItem[] = [];

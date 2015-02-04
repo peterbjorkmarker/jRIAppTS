@@ -1308,40 +1308,40 @@
                     return events.concat(base_events);
                 }
                 addOnRowExpanded(fn: (sender: DataGrid, args: { old_expandedRow: Row; expandedRow: Row; isExpanded: boolean; }) => void, namespace?: string, context?: any) {
-                    this.addHandler(GRID_EVENTS.row_expanded, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.row_expanded, fn, namespace, context);
                 }
                 removeOnRowExpanded(namespace?: string) {
-                    this.removeHandler(GRID_EVENTS.row_expanded, namespace);
+                    this._removeHandler(GRID_EVENTS.row_expanded, namespace);
                 }
                 addOnRowSelected(fn: (sender: DataGrid, args: { row: Row; }) => void, namespace?: string, context?: any) {
-                    this.addHandler(GRID_EVENTS.row_selected, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.row_selected, fn, namespace, context);
                 }
                 removeOnRowSelected(namespace?: string) {
-                    this.removeHandler(GRID_EVENTS.row_selected, namespace);
+                    this._removeHandler(GRID_EVENTS.row_selected, namespace);
                 }
                 addOnPageChanged(fn: (sender: DataGrid, args: {}) => void, namespace?: string, context?: any) {
-                    this.addHandler(GRID_EVENTS.page_changed, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.page_changed, fn, namespace, context);
                 }
                 removeOnPageChanged(namespace?: string) {
-                    this.removeHandler(GRID_EVENTS.page_changed, namespace);
+                    this._removeHandler(GRID_EVENTS.page_changed, namespace);
                 }
                 addOnRowStateChanged(fn: (sender: DataGrid, args: { row: Row; val: any; css: string; }) => void, namespace?: string, context?: any) {
-                    this.addHandler(GRID_EVENTS.row_state_changed, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.row_state_changed, fn, namespace, context);
                 }
                 removeOnRowStateChanged(namespace?: string) {
-                    this.removeHandler(GRID_EVENTS.row_state_changed, namespace);
+                    this._removeHandler(GRID_EVENTS.row_state_changed, namespace);
                 }
                 addOnCellDblClicked(fn: (sender: DataGrid, args: { cell: BaseCell; }) => void, namespace?: string, context?: any) {
-                    this.addHandler(GRID_EVENTS.cell_dblclicked, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.cell_dblclicked, fn, namespace, context);
                 }
                 removeOnCellDblClicked(namespace?: string) {
-                    this.removeHandler(GRID_EVENTS.cell_dblclicked, namespace);
+                    this._removeHandler(GRID_EVENTS.cell_dblclicked, namespace);
                 }
                 addOnRowAction(fn: (sender: DataGrid, args: { row: Row; action: ROW_ACTION; }) => void, namespace?: string, context?: any) {
-                    this.addHandler(GRID_EVENTS.row_action, fn, namespace, context);
+                    this._addHandler(GRID_EVENTS.row_action, fn, namespace, context);
                 }
                 removeOnRowAction(namespace?: string) {
-                    this.removeHandler(GRID_EVENTS.row_action, namespace);
+                    this._removeHandler(GRID_EVENTS.row_action, namespace);
                 }
                 _isRowExpanded(row: Row): boolean {
                     return this._expandedRow === row;

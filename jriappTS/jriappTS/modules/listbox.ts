@@ -634,16 +634,16 @@
                     return [LOOKUP_EVENTS.obj_created, LOOKUP_EVENTS.obj_needed].concat(base_events);
                 }
                 addOnObjectCreated(fn: (sender: any, args: TObjCreatedArgs) => void , namespace?: string) {
-                    this.addHandler(LOOKUP_EVENTS.obj_created, fn, namespace);
+                    this._addHandler(LOOKUP_EVENTS.obj_created, fn, namespace);
                 }
                 removeOnObjectCreated(namespace?: string) {
-                    this.removeHandler(LOOKUP_EVENTS.obj_created, namespace);
+                    this._removeHandler(LOOKUP_EVENTS.obj_created, namespace);
                 }
                 addOnObjectNeeded(fn: (sender: any, args: TObjNeededArgs) => void , namespace?: string) {
-                    this.addHandler(LOOKUP_EVENTS.obj_needed, fn, namespace);
+                    this._addHandler(LOOKUP_EVENTS.obj_needed, fn, namespace);
                 }
                 removeOnObjectNeeded(namespace?: string) {
-                    this.removeHandler(LOOKUP_EVENTS.obj_needed, namespace);
+                    this._removeHandler(LOOKUP_EVENTS.obj_needed, namespace);
                 }
                 protected _getSelectView(): SelectElView {
                     if (!!this._selectView)

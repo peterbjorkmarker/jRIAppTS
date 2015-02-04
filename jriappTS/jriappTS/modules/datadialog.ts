@@ -144,16 +144,16 @@
                     return isHandled;
                 }
                 addOnClose(fn: (sender?, args?) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler(DLG_EVENTS.close, fn, namespace, context);
+                    this._addHandler(DLG_EVENTS.close, fn, namespace, context);
                 }
                 removeOnClose(namespace?: string) {
-                    this.removeHandler(DLG_EVENTS.close, namespace);
+                    this._removeHandler(DLG_EVENTS.close, namespace);
                 }
                 addOnRefresh(fn: (sender: any, args: { isHandled: boolean; }) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler(DLG_EVENTS.refresh, fn, namespace, context);
+                    this._addHandler(DLG_EVENTS.refresh, fn, namespace, context);
                 }
                 removeOnRefresh(namespace?: string) {
-                    this.removeHandler(DLG_EVENTS.refresh, namespace);
+                    this._removeHandler(DLG_EVENTS.refresh, namespace);
                 }
                 protected _updateIsEditable() {
                     this._isEditable = utils.getEditable(this._dataContext);

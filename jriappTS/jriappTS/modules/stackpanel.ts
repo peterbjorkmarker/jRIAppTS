@@ -90,10 +90,10 @@
                     //noop
                 }
                 addOnItemClicked(fn: (sender: StackPanel, args: { item: collMOD.ICollectionItem; }) => void, namespace?: string, context?: BaseObject) {
-                    this.addHandler(PNL_EVENTS.item_clicked, fn, namespace, context);
+                    this._addHandler(PNL_EVENTS.item_clicked, fn, namespace, context);
                 }
                 removeOnItemClicked(namespace?: string) {
-                    this.removeHandler(PNL_EVENTS.item_clicked, namespace);
+                    this._removeHandler(PNL_EVENTS.item_clicked, namespace);
                 }
                 _onKeyDown(key:number, event: Event) {
                     var ds = this.dataSource, self = this;

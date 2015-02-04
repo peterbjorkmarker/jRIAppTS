@@ -2984,6 +2984,7 @@ declare module RIAPP {
                 protected _skipValidate(fieldInfo: collMOD.IFieldInfo, val: any): boolean;
                 protected _beginEdit(): boolean;
                 protected _endEdit(): boolean;
+                protected getDbSet(): TDBSet;
                 _getCalcFieldVal(fieldName: string): any;
                 _getNavFieldVal(fieldName: string): any;
                 _setNavFieldVal(fieldName: string, value: any): void;
@@ -3005,7 +3006,6 @@ declare module RIAPP {
                 refresh(): IPromise<TItem>;
                 cancelEdit(): boolean;
                 getDbContext(): DbContext;
-                protected getDbSet(): TDBSet;
                 getItem(): TItem;
                 toString(): string;
                 destroy(): void;
@@ -3075,7 +3075,7 @@ declare module RIAPP {
                 protected _destroyItems(): void;
                 protected _defineCalculatedField(fullName: string, getFunc: () => any): void;
                 protected _onLoaded(items: TItem[]): void;
-                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
+                addOnLoaded(fn: (sender: DbSet<TItem, TDbContext>, args: IDbSetLoadedArgs<TItem>) => void, namespace?: string, context?: BaseObject): void;
                 removeOnLoaded(namespace?: string): void;
                 _getCalcFieldVal(fieldName: string, item: IEntityItem): any;
                 _getNavFieldVal(fieldName: string, item: IEntityItem): any;
@@ -3466,7 +3466,7 @@ declare module RIAPP {
             querySelectorAll: (selectors: string) => NodeList;
         }, dctx: any, isDataFormBind: boolean, isInsideTemplate: boolean): utilsMOD.LifeTimeScope;
         _getContentType(options: contentMOD.IContentOptions): contentMOD.IContentType;
-        addOnStartUp(fn: (sender: Global, args: IUnResolvedBindingArgs) => void, namespace?: string): void;
+        addOnStartUp(fn: (sender: Application, args: {}) => void, namespace?: string, context?: BaseObject): void;
         removeOnStartUp(namespace?: string): void;
         getExports(): {
             [name: string]: any;

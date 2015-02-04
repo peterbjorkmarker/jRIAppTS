@@ -32,10 +32,10 @@
                     return [CMD_EVENTS.can_execute_changed].concat(base_events);
                 }
                 addOnCanExecuteChanged(fn: (sender: mvvm.ICommand, args: {}) => void, namespace?: string, context?: RIAPP.BaseObject) {
-                    this.addHandler(CMD_EVENTS.can_execute_changed, fn, namespace, context);
+                    this._addHandler(CMD_EVENTS.can_execute_changed, fn, namespace, context);
                 }
                 removeOnCanExecuteChanged(namespace?: string) {
-                    this.removeHandler(CMD_EVENTS.can_execute_changed, namespace);
+                    this._removeHandler(CMD_EVENTS.can_execute_changed, namespace);
                 }
                 canExecute(sender, param):boolean {
                     if (!this._canExecute)
