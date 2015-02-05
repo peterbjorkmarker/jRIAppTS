@@ -305,7 +305,7 @@
             this._addHandler(OBJ_EVENTS.error, handler, namespace, context, false);
         }
         removeOnError(namespace?: string):void {
-            this.removeHandler(OBJ_EVENTS.error, namespace);
+            this._removeHandler(OBJ_EVENTS.error, namespace);
         }
         //remove event handlers by their namespace
         removeNSHandlers(namespace?: string) :void {

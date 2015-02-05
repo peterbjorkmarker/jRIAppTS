@@ -498,7 +498,7 @@ var RIAPP;
             this._addHandler(OBJ_EVENTS.error, handler, namespace, context, false);
         };
         BaseObject.prototype.removeOnError = function (namespace) {
-            this.removeHandler(OBJ_EVENTS.error, namespace);
+            this._removeHandler(OBJ_EVENTS.error, namespace);
         };
         //remove event handlers by their namespace
         BaseObject.prototype.removeNSHandlers = function (namespace) {
@@ -981,7 +981,7 @@ var RIAPP;
                 self._waitQueue = null;
             }
             self._promises = [];
-            self.removeHandler();
+            self._removeHandler();
             self._destroyApps();
             self._exports = {};
             self._templateLoaders = {};

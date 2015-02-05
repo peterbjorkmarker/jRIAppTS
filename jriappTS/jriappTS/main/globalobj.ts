@@ -477,7 +477,7 @@
                 self._waitQueue = null;
             }
             self._promises = [];
-            self.removeHandler();
+            self._removeHandler();
             self._destroyApps();
             self._exports = {};
             self._templateLoaders = {};
