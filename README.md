@@ -35,8 +35,11 @@ code maintenance.
 After minification the <b>jriapp.js</b> file has the size of about 310 KB. After it is gzipped, it is about 70 KB.
 
 P.S. - <i>I use this framework in real world projects at my work. So it pretty much guarantee that it is stable and mature. 
-I replaced projects written using Microsoft Silverlight with this one. 
-I have made every feature that i needed for migration of the projects into this framework.</i>
+I replaced my projects written using Microsoft Silverlight with projects which use this framework. 
+I have made every feature that i needed for migration of the projects into this framework.
+I had tested that there's <b>no memory leaks</b> when using this framework (i used about:memory in Mozilla Firefox browser for checking the memory usage).
+There's also not a single eval function used in this framework. So it works in strict mode in the browser!
+</i>
 
 <b>Latest changes:</b>
 <p>2015-02-03 Code maintenance improvement</p>  
