@@ -28,7 +28,7 @@ The documentation explains how you can use the framework in more details.
 
 The framework is distinguished from the other frameworks available on the market by the full stack implementation of the features required for 
 developing real world  LOB applications in HTML5 without the need for pluggins. 
-It allows the development in a strongly typed environment either on the client or on the server which is very benefical for large projects and
+It allows the development in a strongly typed environment either on the client or on the server which is very beneficial for large projects and
 code maintenance. 
 
 After minification the <b>jriapp.js</b> file has the size of about 310 KB. After it is gzipped, it is about 70 KB.
