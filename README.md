@@ -9,7 +9,7 @@ You can watch video of the demo on <a href="http://youtu.be/m2lxFWhJghA" target=
 <a href="http://youtu.be/ll_FS2iONV4" target="_blank">YouTube Folder Browser Demo</a><br/>
 
 
-<b>jRIAppTS</b> – is an application framework for developing rich internet applications - RIA’s. It consists of two parts – a client and a server parts. 
+<b>jRIAppTS</b> – is an application framework for developing rich internet applications - RIA’s. It consists of two parts – the client and the server parts. 
 The client part was written in typescript language. The server part was  written in C#  and the demo application was implemented in ASP.NET MVC (it can also be written in other languages, for example Ruby or Java, but you have to roll up your sleeves and prepare to write them). 
 The Server part resembles Microsoft WCF RIA services, featuring data services which is consumed by the clients. 
 The Client part resembles  Microsoft Silverlight client development, only it is based on HTML (not XAML), and uses typescript language for coding.
