@@ -21,6 +21,7 @@ Unlike many other existing frameworks, which use MVC design pattern, the framewo
 Ther main project here is the <b>jriappTS</b>. It is written in typescript language. 
 The <b>RIAppDemo</b> is the demo project which uses this framework and it also includes server side components of this framework - The Data Service.
 The demoTS and spaAMD are two typescript projects which contain code for client side part of the demo project.
+The <b>NancySelfHost</b> is another demo project which shows how to use the jriappTS framework with NancyFX framework in self hosting environment.
 
 Using the data service you can generate strongly typed client side domain model in typescript language.
 See the demoTS project for the example. (the DEMODB.ts file contains the generated code.)
