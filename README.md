@@ -31,7 +31,7 @@ developing real world  LOB applications in HTML5 without the need for pluggins.
 It allows the development in a strongly typed environment either on the client or on the server which is very benefical for large projects and
 code maintenance. 
 
-After minification the <b>jriapp.js</> file has the size of about 310 KB. After it is gzipped, it is about 70 KB.
+After minification the <b>jriapp.js</b> file has the size of about 310 KB. After it is gzipped, it is about 70 KB.
 
 P.S. - <i>I use this framework in real world projects at my work. So it pretty much guarantee that it is stable and mature. 
 I replaced projects written using Microsoft Silverlight with this one. 
