@@ -26,7 +26,7 @@ Using the data service you can generate strongly typed client side domain model 
 See the demoTS project for the example. (the DEMODB.ts file contains the generated code.)
 The documentation explains how you can use the framework in more details.
 
-The framework is distinguished from the other frameworks available on the market by thefull stack implementation of the features required for 
+The framework is distinguished from the other frameworks available on the market by the full stack implementation of the features required for 
 developing real world  LOB applications in HTML5 without the need for pluggins. 
 It allows the development in a strongly typed environment either on the client or on the server which is very benefical for large projects and
 code maintenance. 
