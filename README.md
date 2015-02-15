@@ -22,7 +22,7 @@ Ther main project here is the <b>jriappTS</b>. It is written in typescript langu
 file of the framework. <br/><i>P.S.- some of the modules in the framework are optional and you can compile the project without them if you decide that they are not needed 
 or you want to replace them with your own ones. Read the UserGuide.pdf for the details.</i><br/> 
 The <b>RIAppDemo</b> is the demo project which uses this framework and it also includes server side components of this framework - The Data Service.<br/> 
-The <b>NancySelfHost</b> is another demo project which shows how to use the jriappTS framework with NancyFX framework (http://nancyfx.org/) in self hosting environment.
+The <b>NancySelfHost</b> is another demo project which shows how to use the jriappTS framework with NancyFX framework (http://nancyfx.org/) in self hosting environment.<br/>
 The <b>demoTS</b> and <b>spaAMD</b> are two typescript projects which contain code for client side part of the demo projects (the <i>RIAppDemo</i> and the <i>NancySelfHost<i>). 
 On compilation those project produce a set of javascript files which are referenced in the demo projects HTML pages<br/> 
 
