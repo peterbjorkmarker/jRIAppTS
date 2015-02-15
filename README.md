@@ -18,10 +18,13 @@ The framework supports a wide range of essential features for creating LOB appli
 Unlike many other existing frameworks, which use MVC design pattern, the framework uses Model View View Model (MVVM) design pattern for creating applications. 
 
  
-Ther main project here is the <b>jriappTS</b>. It is written in typescript language.<br/> 
+Ther main project here is the <b>jriappTS</b>. It is written in typescript language. On compilation the project produces <b>jriapp.js</b> javascript file - it is the main 
+file of the framework. <br/><i>P.S.- some of the modules in the framework are optional and you can compile the project without them if you decide that they are not needed 
+or you want to replace them with your own ones. Read the UserGuide.pdf for the details./i><br/> 
 The <b>RIAppDemo</b> is the demo project which uses this framework and it also includes server side components of this framework - The Data Service.<br/> 
-The <b>demoTS</b> and <b>spaAMD</b> are two typescript projects which contain code for client side part of the demo project.<br/> 
-The <b>NancySelfHost</b> is another demo project which shows how to use the jriappTS framework with NancyFX framework in self hosting environment.
+The <b>NancySelfHost</b> is another demo project which shows how to use the jriappTS framework with NancyFX framework (http://nancyfx.org/) in self hosting environment.
+The <b>demoTS</b> and <b>spaAMD</b> are two typescript projects which contain code for client side part of the demo projects (the <i>RIAppDemo</i> and the <i>NancySelfHost<i>). 
+On compilation those project produce a set of javascript files which are referenced in the demo projects HTML pages<br/> 
 
 Using the data service you can generate strongly typed client side domain model in typescript language.
 See the demoTS project for the example. (the DEMODB.ts file contains the generated code.)
@@ -34,11 +37,11 @@ code maintenance.
 
 After minification the <b>jriapp.js</b> file has the size of about 310 KB. After it is gzipped, it is about 70 KB.
 
-P.S. - <i>I use this framework in real world projects at my work. So it pretty much guarantee that it is stable and mature. 
+P.S. - <i>I currently use this framework in real world projects at my work in insurance company. So the framework is tested on the real projects. 
 I replaced my projects written using Microsoft Silverlight with projects which use this framework. 
-I have made every feature that i needed for migration of the projects into this framework.
-I had tested that there's <b>no memory leaks</b> when using this framework (i used about:memory in Mozilla Firefox browser for checking the memory usage).
-There's also not a single eval function used in this framework. So it works in strict mode in the browser!
+I developed every feature that i needed for migration of the projects into this framework.
+The framework is tested that there's <b>no memory leaks</b> when using this framework.
+There's also not a single eval function used in this framework. So it works in a strict mode in the browser!
 </i>
 
 <b>Latest changes:</b>
