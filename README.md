@@ -23,7 +23,7 @@ file of the framework. <br/><i>P.S.- some of the modules in the framework are op
 or you want to replace them with your own ones. Read the UserGuide.pdf for the details.</i><br/> 
 The <b>RIAppDemo</b> is the demo project which uses this framework and it also includes server side components of this framework - The Data Service.<br/> 
 The <b>NancySelfHost</b> is another demo project which shows how to use the jriappTS framework with NancyFX framework (http://nancyfx.org/) in self hosting environment.<br/>
-The <b>demoTS</b> and <b>spaAMD</b> are two typescript projects which contain code for client side part of the demo projects (the <i>RIAppDemo</i> and the <i>NancySelfHost<i>). 
+The <b>demoTS</b> and <b>spaAMD</b> are two typescript projects which contain code for client side part of the demo projects (the <i>RIAppDemo</i> and the <i>NancySelfHost</i>). 
 On compilation those project produce a set of javascript files which are referenced in the demo projects HTML pages<br/> 
 
 Using the data service you can generate strongly typed client side domain model in typescript language.
