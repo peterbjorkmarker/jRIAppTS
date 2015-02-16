@@ -16,6 +16,12 @@
                 currentItem: 'current-item'
             };
 
+            var PROP_NAME = {
+                dataSource: 'dataSource',
+                currentItem: 'currentItem',
+                panel: 'panel'
+            };
+
             export interface IStackPanelOptions {
                 orientation?: string;
                 templateID: string;
@@ -152,7 +158,7 @@
                                     mappedItem.div.scrollIntoView(false);
                             }
                         }
-                        this.raisePropertyChanged('currentItem');
+                        this.raisePropertyChanged(PROP_NAME.currentItem);
                     }
                 }
                 protected _onDSCurrentChanged(sender, args) {
@@ -262,7 +268,7 @@
                     if (!ds) return;
                     ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
                     ds.addOnFill(self._onDSFill, self._objId, self);
-                    ds.addOnPropertyChange('currentItem', self._onDSCurrentChanged, self._objId, self);
+                    ds.addOnPropertyChange(collMOD.PROP_NAME.currentItem, self._onDSCurrentChanged, self._objId, self);
                     ds.addOnStatusChanged(function (sender, args) {
                         self._onItemStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
@@ -357,7 +363,7 @@
                     this._options.dataSource = v;
                     if (!!this.dataSource)
                         this._bindDS();
-                    this.raisePropertyChanged('dataSource');
+                    this.raisePropertyChanged(PROP_NAME.dataSource);
                 }
                 get currentItem() { return this._currentItem; }
             }
@@ -381,8 +387,8 @@
                     this._panel = new StackPanel(opts);
                     this._panel.addOnDestroyed(function () {
                         self._panel = null;
-                        self.invokePropChanged('panel');
-                        self.raisePropertyChanged('panel');
+                        self.invokePropChanged(PROP_NAME.panel);
+                        self.raisePropertyChanged(PROP_NAME.panel);
                     });
                     super(app, el, options);
                 }
@@ -409,7 +415,7 @@
                         return;
                     if (this.dataSource !== v) {
                         this._panel.dataSource = v;
-                        this.raisePropertyChanged('dataSource');
+                        this.raisePropertyChanged(PROP_NAME.dataSource);
                     }
                 }
                 get panel() { return this._panel; }

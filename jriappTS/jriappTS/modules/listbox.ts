@@ -27,6 +27,17 @@
                 op: { text: string; value: any; index: number; }; 
             }
 
+            var PROP_NAME = {
+                dataSource: 'dataSource',
+                selectedItem: 'selectedItem',
+                selectedValue: 'selectedValue',
+                valuePath: 'valuePath',
+                textPath: 'textPath',
+                isEnabled: 'isEnabled',
+                listBox: 'listBox',
+                value: 'value'
+            };
+
             export class ListBox extends RIAPP.BaseObject {
                 private _$el: JQuery;
                 private _objId: string;
@@ -428,9 +439,9 @@
                         this._refresh();
                         if (!!this.dataSource)
                             this._tempValue = undefined;
-                        this.raisePropertyChanged('dataSource');
-                        this.raisePropertyChanged('selectedItem');
-                        this.raisePropertyChanged('selectedValue');
+                        this.raisePropertyChanged(PROP_NAME.dataSource);
+                        this.raisePropertyChanged(PROP_NAME.selectedItem);
+                        this.raisePropertyChanged(PROP_NAME.selectedValue);
                     }
                 }
                 get selectedValue() {
@@ -455,8 +466,8 @@
                         if (this._tempValue !== v) {
                             this._selectedItem = null;
                             this._tempValue = v;
-                            this.raisePropertyChanged('selectedItem');
-                            this.raisePropertyChanged('selectedValue');
+                            this.raisePropertyChanged(PROP_NAME.selectedItem);
+                            this.raisePropertyChanged(PROP_NAME.selectedValue);
                         }
                     }
                 }
@@ -473,8 +484,8 @@
                         }
                         this._selectedItem = v;
                         this.el.selectedIndex = this._findItemIndex(this._selectedItem);
-                        this.raisePropertyChanged('selectedItem');
-                        this.raisePropertyChanged('selectedValue');
+                        this.raisePropertyChanged(PROP_NAME.selectedItem);
+                        this.raisePropertyChanged(PROP_NAME.selectedValue);
                     }
                 }
                 get valuePath() { return this._options.valuePath; }
@@ -482,7 +493,7 @@
                     if (v !== this.valuePath) {
                         this._options.valuePath = v;
                         this._mapByValue();
-                        this.raisePropertyChanged('valuePath');
+                        this.raisePropertyChanged(PROP_NAME.valuePath);
                     }
                 }
                 get textPath() { return this._options.textPath; }
@@ -490,14 +501,14 @@
                     if (v !== this.textPath) {
                         this._options.textPath = v;
                         this._resetText();
-                        this.raisePropertyChanged('textPath');
+                        this.raisePropertyChanged(PROP_NAME.textPath);
                     }
                 }
                 get isEnabled() { return this._getIsEnabled(this.el); }
                 set isEnabled(v) {
                     if (v !== this.isEnabled) {
                         this._setIsEnabled(this.el, v);
-                        this.raisePropertyChanged('isEnabled');
+                        this.raisePropertyChanged(PROP_NAME.isEnabled);
                     }
                 }
                 get el() { return this._options.el; }
@@ -521,11 +532,20 @@
                     self._listBox = new ListBox(opts);
                     self._listBox.addOnDestroyed(function () {
                         self._listBox = null;
-                        self.invokePropChanged('listBox');
-                        self.raisePropertyChanged('listBox');
+                        self.invokePropChanged(PROP_NAME.listBox);
+                        self.raisePropertyChanged(PROP_NAME.listBox);
                     }, this.uniqueID);
                     self._listBox.addOnPropertyChange('*', function (sender, args) {
-                        self.raisePropertyChanged(args.property);
+                        switch (args.property) {
+                            case PROP_NAME.dataSource:
+                            case PROP_NAME.isEnabled:
+                            case PROP_NAME.selectedValue:
+                            case PROP_NAME.selectedItem:
+                            case PROP_NAME.valuePath:
+                            case PROP_NAME.textPath:
+                                self.raisePropertyChanged(args.property);
+                                break;
+                        }
                     }, self.uniqueID);
                     super(app, el, options);
                 }
@@ -551,7 +571,7 @@
                     v = !!v;
                     if (v !== this.isEnabled) {
                         this.el.disabled = !v;
-                        this.raisePropertyChanged('isEnabled');
+                        this.raisePropertyChanged(PROP_NAME.isEnabled);
                     }
                 }
                 get el() { return <HTMLSelectElement>this._el; }
@@ -587,6 +607,14 @@
                     if (this._isDestroyCalled)
                         return;
                     this._listBox.selectedItem = v;
+                }
+                get valuePath() { return this._listBox.valuePath; }
+                set valuePath(v: string) {
+                    this._listBox.valuePath = v;
+                }
+                get textPath() { return this._listBox.textPath; }
+                set textPath(v: string) {
+                    this._listBox.textPath = v;
                 }
                 get listBox() { return this._listBox; }
             }
@@ -755,7 +783,7 @@
 
                     var options: bindMOD.IBindingOptions = {
                         target: this, source: this._dataContext,
-                        targetPath: 'value', sourcePath: this._options.fieldName,
+                        targetPath: PROP_NAME.value, sourcePath: this._options.fieldName,
                         mode: bindMOD.BINDING_MODE.OneWay,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
@@ -767,7 +795,7 @@
 
                     var options: bindMOD.IBindingOptions = {
                         target: selectView, source: this._dataContext,
-                        targetPath: 'selectedValue', sourcePath: this._options.fieldName,
+                        targetPath: PROP_NAME.selectedValue, sourcePath: this._options.fieldName,
                         mode: bindMOD.BINDING_MODE.TwoWay,
                         converter: null, converterParam: null, isSourceFixed: false
                     };
@@ -796,7 +824,7 @@
                     if (this._value !== v) {
                         this._value = v;
                         this._updateTextValue();
-                        this.raisePropertyChanged('value');
+                        this.raisePropertyChanged(PROP_NAME.value);
                     }
                 }
             }

@@ -50,6 +50,15 @@
                 close: 'close',
                 refresh: 'refresh'
             };
+            var PROP_NAME = {
+                dataContext: 'dataContext',
+                isSubmitOnOK: 'isSubmitOnOK',
+                width: 'width',
+                height: 'height',
+                title: 'title',
+                canRefresh: 'canRefresh',
+                canCancel: 'canCancel'
+            };
 
             export class DataEditDialog extends BaseObject implements templMOD.ITemplateEvents  {
                 private _objId: string;
@@ -403,7 +412,7 @@
                     if (v !== this._dataContext) {
                         this._dataContext = v;
                         this._updateIsEditable();
-                        this.raisePropertyChanged('dataContext');
+                        this.raisePropertyChanged(PROP_NAME.dataContext);
                     }
                 }
                 get result() { return this._result; }
@@ -412,7 +421,7 @@
                 set isSubmitOnOK(v) {
                     if (this._submitOnOK !== v) {
                         this._submitOnOK = v;
-                        this.raisePropertyChanged('isSubmitOnOK');
+                        this.raisePropertyChanged(PROP_NAME.isSubmitOnOK);
                     }
                 }
                 get width() { return this.getOption('width'); }
@@ -420,7 +429,7 @@
                     var x = this.getOption('width');
                     if (v !== x) {
                         this.setOption('width', v);
-                        this.raisePropertyChanged('width');
+                        this.raisePropertyChanged(PROP_NAME.width);
                     }
                 }
                 get height() { return this.getOption('height'); }
@@ -428,7 +437,7 @@
                     var x = this.getOption('height');
                     if (v !== x) {
                         this.setOption('height', v);
-                        this.raisePropertyChanged('height');
+                        this.raisePropertyChanged(PROP_NAME.height);
                     }
                 }
                 get title() { return this.getOption('title'); }
@@ -436,7 +445,7 @@
                     var x = this.getOption('title');
                     if (v !== x) {
                         this.setOption('title', v);
-                        this.raisePropertyChanged('title');
+                        this.raisePropertyChanged(PROP_NAME.title);
                     }
                 }
                 get canRefresh() { return this._canRefresh; }
@@ -444,7 +453,7 @@
                     var x = this._canRefresh;
                     if (v !== x) {
                         this._canRefresh = v;
-                        this.raisePropertyChanged('canRefresh');
+                        this.raisePropertyChanged(PROP_NAME.canRefresh);
                     }
                 }
                 get canCancel() { return this._canCancel; }
@@ -452,7 +461,7 @@
                     var x = this._canCancel;
                     if (v !== x) {
                         this._canCancel = v;
-                        this.raisePropertyChanged('canCancel');
+                        this.raisePropertyChanged(PROP_NAME.canCancel);
                     }
                 }
             }

@@ -574,6 +574,10 @@ var RIAPP;
         initialized: 'initialize',
         unresolvedBinding: 'unresolvedBind'
     };
+    var PROP_NAME = {
+        isLoading: 'isLoading',
+        curSelectable: 'currentSelectable'
+    };
     var Global = (function (_super) {
         __extends(Global, _super);
         function Global(window, jQuery) {
@@ -775,7 +779,7 @@ var RIAPP;
             var self = this, promise = fn_loader(), old = self.isLoading;
             self._promises.push(promise);
             if (self.isLoading !== old)
-                self.raisePropertyChanged('isLoading');
+                self.raisePropertyChanged(PROP_NAME.isLoading);
             var deferred = self.utils.createDeferred();
             promise.then(function (html) {
                 self.utils.removeFromArray(self._promises, promise);
@@ -790,11 +794,11 @@ var RIAPP;
                     deferred.reject();
                 }
                 if (!self.isLoading)
-                    self.raisePropertyChanged('isLoading');
+                    self.raisePropertyChanged(PROP_NAME.isLoading);
             }, function (err) {
                 self.utils.removeFromArray(self._promises, promise);
                 if (!self.isLoading)
-                    self.raisePropertyChanged('isLoading');
+                    self.raisePropertyChanged(PROP_NAME.isLoading);
                 deferred.reject();
                 if (!!err && !!err.message) {
                     self.handleError(err, self);
@@ -1078,7 +1082,7 @@ var RIAPP;
             set: function (v) {
                 if (this._currentSelectable !== v) {
                     this._currentSelectable = v;
-                    this.raisePropertyChanged('currentSelectable');
+                    this.raisePropertyChanged(PROP_NAME.curSelectable);
                 }
             },
             enumerable: true,
@@ -1105,7 +1109,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.4.3';
+        Global.vesion = '2.5.4.4';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -2560,6 +2564,17 @@ var RIAPP;
     (function (MOD) {
         var defaults;
         (function (defaults) {
+            var PROP_NAME = {
+                ajaxTimeOut: 'ajaxTimeOut',
+                dateFormat: 'dateFormat',
+                timeFormat: 'timeFormat',
+                dateTimeFormat: 'dateTimeFormat',
+                datepicker: 'datepicker',
+                imagesPath: 'imagesPath',
+                decimalPoint: 'decimalPoint',
+                thousandSep: 'thousandSep',
+                decPrecision: 'decPrecision'
+            };
             var Defaults = (function (_super) {
                 __extends(Defaults, _super);
                 function Defaults() {
@@ -2585,7 +2600,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._ajaxTimeOut !== v) {
                             this._ajaxTimeOut = v;
-                            this.raisePropertyChanged('ajaxTimeOut');
+                            this.raisePropertyChanged(PROP_NAME.ajaxTimeOut);
                         }
                     },
                     enumerable: true,
@@ -2599,7 +2614,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._dateFormat !== v) {
                             this._dateFormat = v;
-                            this.raisePropertyChanged('dateFormat');
+                            this.raisePropertyChanged(PROP_NAME.dateFormat);
                         }
                     },
                     enumerable: true,
@@ -2613,7 +2628,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._timeFormat !== v) {
                             this._timeFormat = v;
-                            this.raisePropertyChanged('timeFormat');
+                            this.raisePropertyChanged(PROP_NAME.timeFormat);
                         }
                     },
                     enumerable: true,
@@ -2626,7 +2641,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._dateTimeFormat !== v) {
                             this._dateTimeFormat = v;
-                            this.raisePropertyChanged('dateTimeFormat');
+                            this.raisePropertyChanged(PROP_NAME.dateTimeFormat);
                         }
                     },
                     enumerable: true,
@@ -2639,7 +2654,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._datepicker !== v) {
                             this._datepicker = v;
-                            this.raisePropertyChanged("datepicker");
+                            this.raisePropertyChanged(PROP_NAME.datepicker);
                         }
                     },
                     enumerable: true,
@@ -2659,7 +2674,7 @@ var RIAPP;
                             }
                             else
                                 this._imagesPath = v;
-                            this.raisePropertyChanged("imagesPath");
+                            this.raisePropertyChanged(PROP_NAME.imagesPath);
                         }
                     },
                     enumerable: true,
@@ -2672,7 +2687,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._decimalPoint !== v) {
                             this._decimalPoint = v;
-                            this.raisePropertyChanged("decimalPoint");
+                            this.raisePropertyChanged(PROP_NAME.decimalPoint);
                         }
                     },
                     enumerable: true,
@@ -2685,7 +2700,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._thousandSep !== v) {
                             this._thousandSep = v;
-                            this.raisePropertyChanged("thousandSep");
+                            this.raisePropertyChanged(PROP_NAME.thousandSep);
                         }
                     },
                     enumerable: true,
@@ -2699,7 +2714,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._decPrecision !== v) {
                             this._decPrecision = v;
-                            this.raisePropertyChanged("decPrecision");
+                            this.raisePropertyChanged(PROP_NAME.decPrecision);
                         }
                     },
                     enumerable: true,
@@ -3090,7 +3105,41 @@ var RIAPP;
             baseElView.PropChangedCommand = PropChangedCommand;
             baseElView.css = {
                 fieldError: 'ria-field-error',
-                commandLink: 'ria-command-link'
+                commandLink: 'ria-command-link',
+                disabled: 'disabled',
+                opacity: 'opacity',
+                color: 'color',
+                fontSize: 'font-size'
+            };
+            var PROP_NAME = {
+                isVisible: 'isVisible',
+                validationErrors: 'validationErrors',
+                toolTip: 'toolTip',
+                css: 'css',
+                isEnabled: 'isEnabled',
+                value: 'value',
+                command: 'command',
+                disabled: 'disabled',
+                commandParam: 'commandParam',
+                isBusy: 'isBusy',
+                delay: 'delay',
+                checked: 'checked',
+                color: 'color',
+                rows: 'rows',
+                cols: 'cols',
+                wrap: 'wrap',
+                text: 'text',
+                html: 'html',
+                preventDefault: 'preventDefault',
+                imageSrc: 'imageSrc',
+                href: 'href',
+                isExpanded: 'isExpanded',
+                fontSize: 'fontSize',
+                borderColor: 'borderColor',
+                borderStyle: 'borderStyle',
+                width: 'width',
+                height: 'height',
+                src: 'src'
             };
             var BaseElView = (function (_super) {
                 __extends(BaseElView, _super);
@@ -3235,7 +3284,7 @@ var RIAPP;
                                 else
                                     this.el.style.display = '';
                             }
-                            this.raisePropertyChanged('isVisible');
+                            this.raisePropertyChanged(PROP_NAME.isVisible);
                         }
                     },
                     enumerable: true,
@@ -3262,7 +3311,7 @@ var RIAPP;
                     set: function (v) {
                         if (v !== this._errors) {
                             this._errors = v;
-                            this.raisePropertyChanged('validationErrors');
+                            this.raisePropertyChanged(PROP_NAME.validationErrors);
                             this._updateErrorUI(this._el, this._errors);
                         }
                     },
@@ -3284,7 +3333,7 @@ var RIAPP;
                         if (this._toolTip != v) {
                             this._toolTip = v;
                             this._setToolTip(this.$el, v);
-                            this.raisePropertyChanged('toolTip');
+                            this.raisePropertyChanged(PROP_NAME.toolTip);
                         }
                     },
                     enumerable: true,
@@ -3302,7 +3351,7 @@ var RIAPP;
                             this._css = v;
                             if (!!this._css)
                                 $el.addClass(this._css);
-                            this.raisePropertyChanged('css');
+                            this.raisePropertyChanged(PROP_NAME.css);
                         }
                     },
                     enumerable: true,
@@ -3335,7 +3384,7 @@ var RIAPP;
                         v = !!v;
                         if (v !== this.isEnabled) {
                             this.el.disabled = !v;
-                            this.raisePropertyChanged('isEnabled');
+                            this.raisePropertyChanged(PROP_NAME.isEnabled);
                         }
                     },
                     enumerable: true,
@@ -3364,7 +3413,7 @@ var RIAPP;
                         v = (v === null) ? '' : str;
                         if (x !== v) {
                             el.value = v;
-                            this.raisePropertyChanged('value');
+                            this.raisePropertyChanged(PROP_NAME.value);
                         }
                     },
                     enumerable: true,
@@ -3405,7 +3454,7 @@ var RIAPP;
                     }
                 };
                 CommandElView.prototype._onCommandChanged = function () {
-                    this.raisePropertyChanged('command');
+                    this.raisePropertyChanged(PROP_NAME.command);
                 };
                 CommandElView.prototype._onCanExecuteChanged = function (cmd, args) {
                     this.isEnabled = cmd.canExecute(this, this.commandParam);
@@ -3431,16 +3480,16 @@ var RIAPP;
                 };
                 Object.defineProperty(CommandElView.prototype, "isEnabled", {
                     get: function () {
-                        return !(this.$el.prop('disabled'));
+                        return !(this.$el.prop(PROP_NAME.disabled));
                     },
                     set: function (v) {
                         if (v !== this.isEnabled) {
-                            this.$el.prop('disabled', !v);
+                            this.$el.prop(PROP_NAME.disabled, !v);
                             if (!v)
-                                this.$el.addClass('disabled');
+                                this.$el.addClass(baseElView.css.disabled);
                             else
-                                this.$el.removeClass('disabled');
-                            this.raisePropertyChanged('isEnabled');
+                                this.$el.removeClass(baseElView.css.disabled);
+                            this.raisePropertyChanged(PROP_NAME.isEnabled);
                         }
                     },
                     enumerable: true,
@@ -3463,7 +3512,7 @@ var RIAPP;
                     set: function (v) {
                         if (v !== this._commandParam) {
                             this._commandParam = v;
-                            this.raisePropertyChanged('commandParam');
+                            this.raisePropertyChanged(PROP_NAME.commandParam);
                         }
                     },
                     enumerable: true,
@@ -3546,7 +3595,7 @@ var RIAPP;
                                 else
                                     self._$loader.hide();
                             }
-                            self.raisePropertyChanged('isBusy');
+                            self.raisePropertyChanged(PROP_NAME.isBusy);
                         }
                     },
                     enumerable: true,
@@ -3559,7 +3608,7 @@ var RIAPP;
                     set: function (v) {
                         if (v !== this._delay) {
                             this._delay = v;
-                            this.raisePropertyChanged('delay');
+                            this.raisePropertyChanged(PROP_NAME.delay);
                         }
                     },
                     enumerable: true,
@@ -3616,11 +3665,11 @@ var RIAPP;
                             if (el)
                                 el.checked = !!this._val;
                             if (this._val === null) {
-                                this.$el.css("opacity", 0.33);
+                                this.$el.css(baseElView.css.opacity, 0.33);
                             }
                             else
-                                this.$el.css("opacity", 1.0);
-                            this.raisePropertyChanged('checked');
+                                this.$el.css(baseElView.css.opacity, 1.0);
+                            this.raisePropertyChanged(PROP_NAME.checked);
                         }
                     },
                     enumerable: true,
@@ -3699,7 +3748,7 @@ var RIAPP;
                                     $el.prop('checked', false);
                                     this._cbxVal = 0;
                             }
-                            this.raisePropertyChanged('checked');
+                            this.raisePropertyChanged(PROP_NAME.checked);
                         }
                     },
                     enumerable: true,
@@ -3722,7 +3771,7 @@ var RIAPP;
                     var $el = this.$el;
                     $el.on('change.' + this._objId, function (e) {
                         e.stopPropagation();
-                        self.raisePropertyChanged('value');
+                        self.raisePropertyChanged(PROP_NAME.value);
                     });
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
@@ -3734,7 +3783,7 @@ var RIAPP;
                     if (!!options.updateOnKeyUp) {
                         $el.on('keyup.' + this._objId, function (e) {
                             e.stopPropagation();
-                            self.raisePropertyChanged('value');
+                            self.raisePropertyChanged(PROP_NAME.value);
                         });
                     }
                 };
@@ -3758,10 +3807,10 @@ var RIAPP;
                     },
                     set: function (v) {
                         var $el = this.$el;
-                        var x = $el.css('color');
+                        var x = $el.css(baseElView.css.color);
                         if (v !== x) {
-                            $el.css('color', v);
-                            this.raisePropertyChanged('color');
+                            $el.css(baseElView.css.color, v);
+                            this.raisePropertyChanged(PROP_NAME.color);
                         }
                     },
                     enumerable: true,
@@ -3804,7 +3853,7 @@ var RIAPP;
                     var $el = this.$el;
                     $el.on('change.' + this._objId, function (e) {
                         e.stopPropagation();
-                        self.raisePropertyChanged('value');
+                        self.raisePropertyChanged(PROP_NAME.value);
                     });
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
@@ -3816,7 +3865,7 @@ var RIAPP;
                     if (!!options.updateOnKeyUp) {
                         $el.on('keyup.' + this._objId, function (e) {
                             e.stopPropagation();
-                            self.raisePropertyChanged('value');
+                            self.raisePropertyChanged(PROP_NAME.value);
                         });
                     }
                 };
@@ -3856,7 +3905,7 @@ var RIAPP;
                         v = (v === null) ? '' : str;
                         if (x !== v) {
                             el.value = v;
-                            this.raisePropertyChanged('value');
+                            this.raisePropertyChanged(PROP_NAME.value);
                         }
                     },
                     enumerable: true,
@@ -3870,7 +3919,7 @@ var RIAPP;
                         v = !!v;
                         if (v !== this.isEnabled) {
                             this.el.disabled = !v;
-                            this.raisePropertyChanged('isEnabled');
+                            this.raisePropertyChanged(PROP_NAME.isEnabled);
                         }
                     },
                     enumerable: true,
@@ -3891,7 +3940,7 @@ var RIAPP;
                         v = (!v) ? 1 : v;
                         if (x !== v) {
                             el.rows = v;
-                            this.raisePropertyChanged('rows');
+                            this.raisePropertyChanged(PROP_NAME.rows);
                         }
                     },
                     enumerable: true,
@@ -3912,7 +3961,7 @@ var RIAPP;
                         v = (!v) ? 1 : v;
                         if (x !== v) {
                             el.cols = v;
-                            this.raisePropertyChanged('cols');
+                            this.raisePropertyChanged(PROP_NAME.cols);
                         }
                     },
                     enumerable: true,
@@ -3935,7 +3984,7 @@ var RIAPP;
                             v = 'off';
                         if (x !== v) {
                             el.wrap = v;
-                            this.raisePropertyChanged('wrap');
+                            this.raisePropertyChanged(PROP_NAME.wrap);
                         }
                     },
                     enumerable: true,
@@ -4006,8 +4055,8 @@ var RIAPP;
                                 this.$el.css("opacity", 0.33);
                             }
                             else
-                                this.$el.css("opacity", 1.0);
-                            this.raisePropertyChanged('checked');
+                                this.$el.css(baseElView.css.opacity, 1.0);
+                            this.raisePropertyChanged(PROP_NAME.checked);
                         }
                     },
                     enumerable: true,
@@ -4026,7 +4075,7 @@ var RIAPP;
                             strv = '';
                         if (strv !== el.value) {
                             el.value = strv;
-                            this.raisePropertyChanged('value');
+                            this.raisePropertyChanged(PROP_NAME.value);
                         }
                     },
                     enumerable: true,
@@ -4081,7 +4130,7 @@ var RIAPP;
                             v = '' + v;
                         if (x !== v) {
                             this.$el.val(v);
-                            this.raisePropertyChanged('value');
+                            this.raisePropertyChanged(PROP_NAME.value);
                         }
                     },
                     enumerable: true,
@@ -4103,7 +4152,7 @@ var RIAPP;
                             v = '' + v;
                         if (x !== v) {
                             this.$el.text(v);
-                            this.raisePropertyChanged('text');
+                            this.raisePropertyChanged(PROP_NAME.text);
                         }
                     },
                     enumerable: true,
@@ -4125,7 +4174,7 @@ var RIAPP;
                             v = '' + v;
                         if (x !== v) {
                             this.$el.html(v);
-                            this.raisePropertyChanged('html');
+                            this.raisePropertyChanged(PROP_NAME.html);
                         }
                     },
                     enumerable: true,
@@ -4138,7 +4187,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._preventDefault !== v) {
                             this._preventDefault = v;
-                            this.raisePropertyChanged('preventDefault');
+                            this.raisePropertyChanged(PROP_NAME.preventDefault);
                         }
                     },
                     enumerable: true,
@@ -4225,7 +4274,7 @@ var RIAPP;
                         var x = this._imageSrc;
                         if (x !== v) {
                             this._updateImage(v);
-                            this.raisePropertyChanged('imageSrc');
+                            this.raisePropertyChanged(PROP_NAME.imageSrc);
                         }
                     },
                     enumerable: true,
@@ -4247,7 +4296,7 @@ var RIAPP;
                             v = '' + v;
                         if (x !== v) {
                             this.$el.html(v);
-                            this.raisePropertyChanged('html');
+                            this.raisePropertyChanged(PROP_NAME.html);
                         }
                     },
                     enumerable: true,
@@ -4269,7 +4318,7 @@ var RIAPP;
                             v = '' + v;
                         if (x !== v) {
                             this.$el.text(v);
-                            this.raisePropertyChanged('text');
+                            this.raisePropertyChanged(PROP_NAME.text);
                         }
                     },
                     enumerable: true,
@@ -4291,7 +4340,7 @@ var RIAPP;
                             v = '' + v;
                         if (x !== v) {
                             this.el.href = v;
-                            this.raisePropertyChanged('href');
+                            this.raisePropertyChanged(PROP_NAME.href);
                         }
                     },
                     enumerable: true,
@@ -4304,7 +4353,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._preventDefault !== v) {
                             this._preventDefault = v;
-                            this.raisePropertyChanged('preventDefault');
+                            this.raisePropertyChanged(PROP_NAME.preventDefault);
                         }
                     },
                     enumerable: true,
@@ -4359,7 +4408,7 @@ var RIAPP;
                         if (this._isExpanded !== v) {
                             this._isExpanded = v;
                             this.invokeCommand();
-                            this.raisePropertyChanged('isExpanded');
+                            this.raisePropertyChanged(PROP_NAME.isExpanded);
                         }
                     },
                     enumerable: true,
@@ -4386,8 +4435,8 @@ var RIAPP;
                         v = v === null ? '' : str;
                         if (x !== v) {
                             $el.text(v);
-                            this.raisePropertyChanged('text');
-                            this.raisePropertyChanged('value');
+                            this.raisePropertyChanged(PROP_NAME.text);
+                            this.raisePropertyChanged(PROP_NAME.value);
                         }
                     },
                     enumerable: true,
@@ -4413,7 +4462,7 @@ var RIAPP;
                         v = v === null ? '' : str;
                         if (x !== v) {
                             this.el.innerHTML = v;
-                            this.raisePropertyChanged('html');
+                            this.raisePropertyChanged(PROP_NAME.html);
                         }
                     },
                     enumerable: true,
@@ -4426,10 +4475,10 @@ var RIAPP;
                     },
                     set: function (v) {
                         var $el = this.$el;
-                        var x = $el.css('color');
+                        var x = $el.css(baseElView.css.color);
                         if (v !== x) {
-                            $el.css('color', v);
-                            this.raisePropertyChanged('color');
+                            $el.css(baseElView.css.color, v);
+                            this.raisePropertyChanged(PROP_NAME.color);
                         }
                     },
                     enumerable: true,
@@ -4442,10 +4491,10 @@ var RIAPP;
                     },
                     set: function (v) {
                         var $el = this.$el;
-                        var x = $el.css('font-size');
+                        var x = $el.css(baseElView.css.fontSize);
                         if (v !== x) {
-                            $el.css('font-size', v);
-                            this.raisePropertyChanged('fontSize');
+                            $el.css(baseElView.css.fontSize, v);
+                            this.raisePropertyChanged(PROP_NAME.fontSize);
                         }
                     },
                     enumerable: true,
@@ -4471,8 +4520,8 @@ var RIAPP;
                         var $el = this.$el;
                         var x = $el.css('border-top-color');
                         if (v !== x) {
-                            this.el.style.borderColor = v;
-                            this.raisePropertyChanged('borderColor');
+                            $el.css('border-color', v);
+                            this.raisePropertyChanged(PROP_NAME.borderColor);
                         }
                     },
                     enumerable: true,
@@ -4488,7 +4537,7 @@ var RIAPP;
                         var x = $el.css('border-top-style');
                         if (v !== x) {
                             $el.css('border-style', v);
-                            this.raisePropertyChanged('borderStyle');
+                            this.raisePropertyChanged(PROP_NAME.borderStyle);
                         }
                     },
                     enumerable: true,
@@ -4504,7 +4553,7 @@ var RIAPP;
                         var x = $el.width();
                         if (v !== x) {
                             $el.width(v);
-                            this.raisePropertyChanged('width');
+                            this.raisePropertyChanged(PROP_NAME.width);
                         }
                     },
                     enumerable: true,
@@ -4520,7 +4569,7 @@ var RIAPP;
                         var x = $el.height();
                         if (v !== x) {
                             $el.height(v);
-                            this.raisePropertyChanged('height');
+                            this.raisePropertyChanged(PROP_NAME.height);
                         }
                     },
                     enumerable: true,
@@ -4552,7 +4601,7 @@ var RIAPP;
                         var x = this.el.src;
                         if (x !== v) {
                             this.el.src = v;
-                            this.raisePropertyChanged('src');
+                            this.raisePropertyChanged(PROP_NAME.src);
                         }
                     },
                     enumerable: true,
@@ -5198,6 +5247,17 @@ var RIAPP;
             var ITEM_EVENTS = {
                 errors_changed: 'errors_changed'
             };
+            collection.PROP_NAME = {
+                isEditing: 'isEditing',
+                currentItem: 'currentItem',
+                count: 'count',
+                totalCount: 'totalCount',
+                pageCount: 'pageCount',
+                pageSize: 'pageSize',
+                pageIndex: 'pageIndex',
+                isUpdating: 'isUpdating',
+                isLoading: 'isLoading'
+            };
             var ItemAspect = (function (_super) {
                 __extends(ItemAspect, _super);
                 function ItemAspect() {
@@ -5457,7 +5517,7 @@ var RIAPP;
                     if (!this._beginEdit())
                         return false;
                     coll._onEditing(this.getItem(), true, false);
-                    this.raisePropertyChanged('isEditing');
+                    this.raisePropertyChanged(collection.PROP_NAME.isEditing);
                     return true;
                 };
                 ItemAspect.prototype.endEdit = function () {
@@ -5466,27 +5526,27 @@ var RIAPP;
                         return false;
                     coll._onEditing(this.getItem(), false, false);
                     this._notEdited = false;
-                    this.raisePropertyChanged('isEditing');
+                    this.raisePropertyChanged(collection.PROP_NAME.isEditing);
                     return true;
                 };
                 ItemAspect.prototype.cancelEdit = function () {
                     if (!this._isEditing)
                         return false;
-                    var coll = this._collection, isNew = this._isNew;
+                    var coll = this._collection, isNew = this._isNew, self = this;
                     var changes = this._saveVals;
                     this._vals = this._saveVals;
                     this._saveVals = null;
                     coll._removeAllErrors(this.getItem());
                     //refresh User interface when values restored
                     coll.getFieldNames().forEach(function (name) {
-                        if (changes[name] !== this._vals[name])
-                            this.raisePropertyChanged(name);
-                    }, this);
+                        if (changes[name] !== self._vals[name])
+                            self.raisePropertyChanged(name);
+                    });
                     if (isNew && this._notEdited)
                         coll.removeItem(this.getItem());
                     this._isEditing = false;
                     coll._onEditing(this.getItem(), false, true);
-                    this.raisePropertyChanged('isEditing');
+                    this.raisePropertyChanged(collection.PROP_NAME.isEditing);
                     return true;
                 };
                 ItemAspect.prototype.deleteItem = function () {
@@ -5800,7 +5860,7 @@ var RIAPP;
                     this.raiseEvent(COLL_EVENTS.current_changing, { newCurrent: newCurrent });
                 };
                 BaseCollection.prototype._onCurrentChanged = function () {
-                    this.raisePropertyChanged('currentItem');
+                    this.raisePropertyChanged(collection.PROP_NAME.currentItem);
                 };
                 //occurs when item changeType Changed (not used in simple collections)
                 BaseCollection.prototype._onItemStatusChanged = function (item, oldChangeType) {
@@ -5853,7 +5913,7 @@ var RIAPP;
                     this._itemsByKey[item._key] = item;
                     this._onItemsChanged({ change_type: 1 /* ADDED */, items: [item], pos: [pos] });
                     item._aspect._onAttach();
-                    this.raisePropertyChanged('count');
+                    this.raisePropertyChanged(collection.PROP_NAME.count);
                     this._onCurrentChanging(item);
                     this._currentPos = pos;
                     this._onCurrentChanged();
@@ -5864,7 +5924,7 @@ var RIAPP;
                         this._onItemsChanged({ change_type: 0 /* REMOVE */, items: [item], pos: [pos] });
                     }
                     finally {
-                        this.raisePropertyChanged('count');
+                        this.raisePropertyChanged(collection.PROP_NAME.count);
                     }
                 };
                 BaseCollection.prototype._onPageSizeChanged = function () {
@@ -6305,7 +6365,7 @@ var RIAPP;
                         this._isClearing = false;
                     }
                     this.raiseEvent(COLL_EVENTS.cleared, {});
-                    this.raisePropertyChanged('count');
+                    this.raisePropertyChanged(collection.PROP_NAME.count);
                 };
                 BaseCollection.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -6365,8 +6425,8 @@ var RIAPP;
                     set: function (v) {
                         if (v != this._totalCount) {
                             this._totalCount = v;
-                            this.raisePropertyChanged('totalCount');
-                            this.raisePropertyChanged('pageCount');
+                            this.raisePropertyChanged(collection.PROP_NAME.totalCount);
+                            this.raisePropertyChanged(collection.PROP_NAME.pageCount);
                         }
                     },
                     enumerable: true,
@@ -6379,7 +6439,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._options.pageSize !== v) {
                             this._options.pageSize = v;
-                            this.raisePropertyChanged('pageSize');
+                            this.raisePropertyChanged(collection.PROP_NAME.pageSize);
                             this._onPageSizeChanged();
                         }
                     },
@@ -6399,7 +6459,7 @@ var RIAPP;
                             }
                             this._pageIndex = v;
                             this._onPageChanged();
-                            this.raisePropertyChanged('pageIndex');
+                            this.raisePropertyChanged(collection.PROP_NAME.pageIndex);
                         }
                     },
                     enumerable: true,
@@ -6440,7 +6500,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isLoading !== v) {
                             this._isLoading = v;
-                            this.raisePropertyChanged('isLoading');
+                            this.raisePropertyChanged(collection.PROP_NAME.isLoading);
                         }
                     },
                     enumerable: true,
@@ -6453,7 +6513,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isUpdating !== v) {
                             this._isUpdating = v;
-                            this.raisePropertyChanged('isUpdating');
+                            this.raisePropertyChanged(collection.PROP_NAME.isUpdating);
                         }
                     },
                     enumerable: true,
@@ -6706,7 +6766,7 @@ var RIAPP;
                         });
                         if (newItems.length > 0) {
                             this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
-                            this.raisePropertyChanged('count');
+                            this.raisePropertyChanged(collection.PROP_NAME.count);
                         }
                     }
                     finally {
@@ -6807,6 +6867,12 @@ var RIAPP;
             global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
+            var PROP_NAME = {
+                dataContext: 'dataContext',
+                templateID: 'templateID',
+                template: 'template',
+                isEnabled: 'isEnabled'
+            };
             var Template = (function (_super) {
                 __extends(Template, _super);
                 function Template(options) {
@@ -7101,7 +7167,7 @@ var RIAPP;
                     set: function (v) {
                         if (this.dataContext !== v) {
                             this._options.dataContext = v;
-                            this.raisePropertyChanged('dataContext');
+                            this.raisePropertyChanged(PROP_NAME.dataContext);
                             this._updateBindingSource();
                         }
                     },
@@ -7116,7 +7182,7 @@ var RIAPP;
                         if (this.templateID !== v) {
                             this._options.templateID = v;
                             this._loadTemplate();
-                            this.raisePropertyChanged('templateID');
+                            this.raisePropertyChanged(PROP_NAME.templateID);
                         }
                     },
                     enumerable: true,
@@ -7165,7 +7231,7 @@ var RIAPP;
                         self._commandParam = { template: template, isLoaded: true };
                         self.invokeCommand();
                         self._commandParam = p;
-                        this.raisePropertyChanged('template');
+                        this.raisePropertyChanged(PROP_NAME.template);
                     }
                     catch (ex) {
                         this.handleError(ex, this);
@@ -7185,7 +7251,7 @@ var RIAPP;
                         self._commandParam = p;
                         self._template = null;
                     }
-                    this.raisePropertyChanged('template');
+                    this.raisePropertyChanged(PROP_NAME.template);
                 };
                 TemplateElView.prototype.toString = function () {
                     return 'TemplateElView';
@@ -7197,7 +7263,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isEnabled !== v) {
                             this._isEnabled = v;
-                            this.raisePropertyChanged('isEnabled');
+                            this.raisePropertyChanged(PROP_NAME.isEnabled);
                         }
                     },
                     enumerable: true,
@@ -8131,6 +8197,12 @@ var RIAPP;
                 else
                     return null;
             }
+            var PROP_NAME = {
+                dataContext: 'dataContext',
+                isEditing: 'isEditing',
+                validationErrors: 'validationErrors',
+                form: 'form'
+            };
             var DataForm = (function (_super) {
                 __extends(DataForm, _super);
                 function DataForm(options) {
@@ -8272,7 +8344,7 @@ var RIAPP;
                         self.dataContext = null;
                     }, self._objId);
                     if (!!this._supportEdit) {
-                        this._supportEdit.addOnPropertyChange('isEditing', self._onIsEditingChanged, self._objId, self);
+                        this._supportEdit.addOnPropertyChange(PROP_NAME.isEditing, self._onIsEditingChanged, self._objId, self);
                     }
                     if (!!this._supportErrNotify) {
                         this._supportErrNotify.addOnErrorsChanged(self._onDSErrorsChanged, self._objId, self);
@@ -8355,7 +8427,7 @@ var RIAPP;
                             this._dataContext = v;
                             this._bindDS();
                             this._updateContent();
-                            this.raisePropertyChanged('dataContext');
+                            this.raisePropertyChanged(PROP_NAME.dataContext);
                             if (!!this._dataContext) {
                                 if (!!this._supportEdit && this._isEditing !== this._supportEdit.isEditing) {
                                     this.isEditing = this._supportEdit.isEditing;
@@ -8386,7 +8458,7 @@ var RIAPP;
                         if (!editable && v !== isEditing) {
                             this._isEditing = v;
                             this._updateContent();
-                            this.raisePropertyChanged('isEditing');
+                            this.raisePropertyChanged(PROP_NAME.isEditing);
                             return;
                         }
                         if (v !== isEditing && !!editable) {
@@ -8405,7 +8477,7 @@ var RIAPP;
                         if (!!editable && editable.isEditing !== isEditing) {
                             this._isEditing = editable.isEditing;
                             this._updateContent();
-                            this.raisePropertyChanged('isEditing');
+                            this.raisePropertyChanged(PROP_NAME.isEditing);
                         }
                     },
                     enumerable: true,
@@ -8418,7 +8490,7 @@ var RIAPP;
                     set: function (v) {
                         if (v !== this._errors) {
                             this._errors = v;
-                            this.raisePropertyChanged('validationErrors');
+                            this.raisePropertyChanged(PROP_NAME.validationErrors);
                         }
                     },
                     enumerable: true,
@@ -8446,16 +8518,15 @@ var RIAPP;
                     this._form = new DataForm({ app: app, el: el });
                     this._form.addOnDestroyed(function () {
                         self._form = null;
-                        self.invokePropChanged('form');
-                        self.raisePropertyChanged('form');
+                        self.invokePropChanged(PROP_NAME.form);
+                        self.raisePropertyChanged(PROP_NAME.form);
                     });
                     this._form.addOnPropertyChange('*', function (form, args) {
                         switch (args.property) {
-                            case 'validationErrors':
+                            case PROP_NAME.validationErrors:
                                 self.validationErrors = form.validationErrors;
                                 break;
-                            case 'dataContext':
-                            case 'isDisabled':
+                            case PROP_NAME.dataContext:
                                 self.raisePropertyChanged(args.property);
                                 break;
                         }
@@ -8555,6 +8626,12 @@ var RIAPP;
             global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
+            var PROP_NAME = {
+                template: 'template',
+                templateID: 'templateID',
+                dataContext: 'dataContext',
+                animation: 'animation'
+            };
             var DynaContentElView = (function (_super) {
                 __extends(DynaContentElView, _super);
                 function DynaContentElView(app, el, options) {
@@ -8599,13 +8676,13 @@ var RIAPP;
                                         return;
                                     self._template.destroy();
                                     self._template = null;
-                                    self.raisePropertyChanged('template');
+                                    self.raisePropertyChanged(PROP_NAME.template);
                                 });
                             }
                             else {
                                 self._template.destroy();
                                 self._template = null;
-                                self.raisePropertyChanged('template');
+                                self.raisePropertyChanged(PROP_NAME.template);
                             }
                             return;
                         }
@@ -8622,7 +8699,7 @@ var RIAPP;
                                 dataContext: this._dataContext,
                                 templEvents: this
                             });
-                            self.raisePropertyChanged('template');
+                            self.raisePropertyChanged(PROP_NAME.template);
                             return;
                         }
                         if (!!this._animation && !!this._template.loadedElem) {
@@ -8676,7 +8753,7 @@ var RIAPP;
                             this._prevTemplateID = this._templateID;
                             this._templateID = v;
                             this._templateChanging(old, v);
-                            this.raisePropertyChanged('templateID');
+                            this.raisePropertyChanged(PROP_NAME.templateID);
                         }
                     },
                     enumerable: true,
@@ -8692,7 +8769,7 @@ var RIAPP;
                             if (!!this._template) {
                                 this._template.dataContext = this._dataContext;
                             }
-                            this.raisePropertyChanged('dataContext');
+                            this.raisePropertyChanged(PROP_NAME.dataContext);
                         }
                     },
                     enumerable: true,
@@ -8705,7 +8782,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._animation !== v) {
                             this._animation = v;
-                            this.raisePropertyChanged('animation');
+                            this.raisePropertyChanged(PROP_NAME.animation);
                         }
                     },
                     enumerable: true,
@@ -8726,6 +8803,10 @@ var RIAPP;
         var datepicker;
         (function (datepicker) {
             var elviewMOD = RIAPP.MOD.baseElView;
+            var PROP_NAME = {
+                dateFormat: 'dateFormat',
+                datepickerRegion: 'datepickerRegion'
+            };
             var Datepicker = (function (_super) {
                 __extends(Datepicker, _super);
                 function Datepicker() {
@@ -8774,7 +8855,7 @@ var RIAPP;
                                 regional.dateFormat = this._dateFormat;
                                 this.datePickerFn.setDefaults(regional);
                             }
-                            this.raisePropertyChanged('dateFormat');
+                            this.raisePropertyChanged(PROP_NAME.dateFormat);
                         }
                     },
                     enumerable: true,
@@ -8794,7 +8875,7 @@ var RIAPP;
                                 this._datepickerRegion = v;
                                 regional.dateFormat = oldDateFormat;
                                 this.datePickerFn.setDefaults(regional);
-                                this.raisePropertyChanged("datepickerRegion");
+                                this.raisePropertyChanged(PROP_NAME.datepickerRegion);
                             }
                         }
                     },
@@ -8849,6 +8930,9 @@ var RIAPP;
         var tabs;
         (function (tabs) {
             var elviewMOD = MOD.baseElView;
+            var PROP_NAME = {
+                tabIndex: 'tabIndex'
+            };
             var TabsElView = (function (_super) {
                 __extends(TabsElView, _super);
                 function TabsElView() {
@@ -8865,12 +8949,12 @@ var RIAPP;
                         activate: function (e, tab) {
                             var active = $el.tabs("option", "active");
                             self.invokeTabsEvent("select", { index: active, el: $el });
-                            self.raisePropertyChanged('tabIndex');
+                            self.raisePropertyChanged(PROP_NAME.tabIndex);
                         },
                         load: function (e, tab) {
                             var active = $el.tabs("option", "active");
                             self.invokeTabsEvent("load", { index: active, el: $el });
-                            self.raisePropertyChanged('tabIndex');
+                            self.raisePropertyChanged(PROP_NAME.tabIndex);
                         }
                     };
                     tabOpts = RIAPP.global.utils.extend(false, tabOpts, self._tabOpts);
@@ -8881,7 +8965,7 @@ var RIAPP;
                         self.invokeTabsEvent("create", { el: $el });
                         var active = $el.tabs("option", "active");
                         self.invokeTabsEvent("select", { index: active, el: $el });
-                        self.raisePropertyChanged('tabIndex');
+                        self.raisePropertyChanged(PROP_NAME.tabIndex);
                     }, 100);
                 };
                 TabsElView.prototype._destroyTabs = function () {
@@ -8956,6 +9040,16 @@ var RIAPP;
                 utils = s.utils;
                 parser = s.parser;
             });
+            var PROP_NAME = {
+                dataSource: 'dataSource',
+                selectedItem: 'selectedItem',
+                selectedValue: 'selectedValue',
+                valuePath: 'valuePath',
+                textPath: 'textPath',
+                isEnabled: 'isEnabled',
+                listBox: 'listBox',
+                value: 'value'
+            };
             var ListBox = (function (_super) {
                 __extends(ListBox, _super);
                 function ListBox(options) {
@@ -9346,9 +9440,9 @@ var RIAPP;
                             this._refresh();
                             if (!!this.dataSource)
                                 this._tempValue = undefined;
-                            this.raisePropertyChanged('dataSource');
-                            this.raisePropertyChanged('selectedItem');
-                            this.raisePropertyChanged('selectedValue');
+                            this.raisePropertyChanged(PROP_NAME.dataSource);
+                            this.raisePropertyChanged(PROP_NAME.selectedItem);
+                            this.raisePropertyChanged(PROP_NAME.selectedValue);
                         }
                     },
                     enumerable: true,
@@ -9377,8 +9471,8 @@ var RIAPP;
                             if (this._tempValue !== v) {
                                 this._selectedItem = null;
                                 this._tempValue = v;
-                                this.raisePropertyChanged('selectedItem');
-                                this.raisePropertyChanged('selectedValue');
+                                this.raisePropertyChanged(PROP_NAME.selectedItem);
+                                this.raisePropertyChanged(PROP_NAME.selectedValue);
                             }
                         }
                     },
@@ -9399,8 +9493,8 @@ var RIAPP;
                             }
                             this._selectedItem = v;
                             this.el.selectedIndex = this._findItemIndex(this._selectedItem);
-                            this.raisePropertyChanged('selectedItem');
-                            this.raisePropertyChanged('selectedValue');
+                            this.raisePropertyChanged(PROP_NAME.selectedItem);
+                            this.raisePropertyChanged(PROP_NAME.selectedValue);
                         }
                     },
                     enumerable: true,
@@ -9414,7 +9508,7 @@ var RIAPP;
                         if (v !== this.valuePath) {
                             this._options.valuePath = v;
                             this._mapByValue();
-                            this.raisePropertyChanged('valuePath');
+                            this.raisePropertyChanged(PROP_NAME.valuePath);
                         }
                     },
                     enumerable: true,
@@ -9428,7 +9522,7 @@ var RIAPP;
                         if (v !== this.textPath) {
                             this._options.textPath = v;
                             this._resetText();
-                            this.raisePropertyChanged('textPath');
+                            this.raisePropertyChanged(PROP_NAME.textPath);
                         }
                     },
                     enumerable: true,
@@ -9441,7 +9535,7 @@ var RIAPP;
                     set: function (v) {
                         if (v !== this.isEnabled) {
                             this._setIsEnabled(this.el, v);
-                            this.raisePropertyChanged('isEnabled');
+                            this.raisePropertyChanged(PROP_NAME.isEnabled);
                         }
                     },
                     enumerable: true,
@@ -9470,11 +9564,20 @@ var RIAPP;
                     self._listBox = new ListBox(opts);
                     self._listBox.addOnDestroyed(function () {
                         self._listBox = null;
-                        self.invokePropChanged('listBox');
-                        self.raisePropertyChanged('listBox');
+                        self.invokePropChanged(PROP_NAME.listBox);
+                        self.raisePropertyChanged(PROP_NAME.listBox);
                     }, this.uniqueID);
                     self._listBox.addOnPropertyChange('*', function (sender, args) {
-                        self.raisePropertyChanged(args.property);
+                        switch (args.property) {
+                            case PROP_NAME.dataSource:
+                            case PROP_NAME.isEnabled:
+                            case PROP_NAME.selectedValue:
+                            case PROP_NAME.selectedItem:
+                            case PROP_NAME.valuePath:
+                            case PROP_NAME.textPath:
+                                self.raisePropertyChanged(args.property);
+                                break;
+                        }
                     }, self.uniqueID);
                     _super.call(this, app, el, options);
                 }
@@ -9501,7 +9604,7 @@ var RIAPP;
                         v = !!v;
                         if (v !== this.isEnabled) {
                             this.el.disabled = !v;
-                            this.raisePropertyChanged('isEnabled');
+                            this.raisePropertyChanged(PROP_NAME.isEnabled);
                         }
                     },
                     enumerable: true,
@@ -9555,6 +9658,26 @@ var RIAPP;
                         if (this._isDestroyCalled)
                             return;
                         this._listBox.selectedItem = v;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(SelectElView.prototype, "valuePath", {
+                    get: function () {
+                        return this._listBox.valuePath;
+                    },
+                    set: function (v) {
+                        this._listBox.valuePath = v;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(SelectElView.prototype, "textPath", {
+                    get: function () {
+                        return this._listBox.textPath;
+                    },
+                    set: function (v) {
+                        this._listBox.textPath = v;
                     },
                     enumerable: true,
                     configurable: true
@@ -9716,7 +9839,7 @@ var RIAPP;
                     var options = {
                         target: this,
                         source: this._dataContext,
-                        targetPath: 'value',
+                        targetPath: PROP_NAME.value,
                         sourcePath: this._options.fieldName,
                         mode: 1 /* OneWay */,
                         converter: null,
@@ -9731,7 +9854,7 @@ var RIAPP;
                     var options = {
                         target: selectView,
                         source: this._dataContext,
-                        targetPath: 'selectedValue',
+                        targetPath: PROP_NAME.selectedValue,
                         sourcePath: this._options.fieldName,
                         mode: 2 /* TwoWay */,
                         converter: null,
@@ -9766,7 +9889,7 @@ var RIAPP;
                         if (this._value !== v) {
                             this._value = v;
                             this._updateTextValue();
-                            this.raisePropertyChanged('value');
+                            this.raisePropertyChanged(PROP_NAME.value);
                         }
                     },
                     enumerable: true,
@@ -9836,6 +9959,15 @@ var RIAPP;
             var DLG_EVENTS = {
                 close: 'close',
                 refresh: 'refresh'
+            };
+            var PROP_NAME = {
+                dataContext: 'dataContext',
+                isSubmitOnOK: 'isSubmitOnOK',
+                width: 'width',
+                height: 'height',
+                title: 'title',
+                canRefresh: 'canRefresh',
+                canCancel: 'canCancel'
             };
             var DataEditDialog = (function (_super) {
                 __extends(DataEditDialog, _super);
@@ -10175,7 +10307,7 @@ var RIAPP;
                         if (v !== this._dataContext) {
                             this._dataContext = v;
                             this._updateIsEditable();
-                            this.raisePropertyChanged('dataContext');
+                            this.raisePropertyChanged(PROP_NAME.dataContext);
                         }
                     },
                     enumerable: true,
@@ -10202,7 +10334,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._submitOnOK !== v) {
                             this._submitOnOK = v;
-                            this.raisePropertyChanged('isSubmitOnOK');
+                            this.raisePropertyChanged(PROP_NAME.isSubmitOnOK);
                         }
                     },
                     enumerable: true,
@@ -10216,7 +10348,7 @@ var RIAPP;
                         var x = this.getOption('width');
                         if (v !== x) {
                             this.setOption('width', v);
-                            this.raisePropertyChanged('width');
+                            this.raisePropertyChanged(PROP_NAME.width);
                         }
                     },
                     enumerable: true,
@@ -10230,7 +10362,7 @@ var RIAPP;
                         var x = this.getOption('height');
                         if (v !== x) {
                             this.setOption('height', v);
-                            this.raisePropertyChanged('height');
+                            this.raisePropertyChanged(PROP_NAME.height);
                         }
                     },
                     enumerable: true,
@@ -10244,7 +10376,7 @@ var RIAPP;
                         var x = this.getOption('title');
                         if (v !== x) {
                             this.setOption('title', v);
-                            this.raisePropertyChanged('title');
+                            this.raisePropertyChanged(PROP_NAME.title);
                         }
                     },
                     enumerable: true,
@@ -10258,7 +10390,7 @@ var RIAPP;
                         var x = this._canRefresh;
                         if (v !== x) {
                             this._canRefresh = v;
-                            this.raisePropertyChanged('canRefresh');
+                            this.raisePropertyChanged(PROP_NAME.canRefresh);
                         }
                     },
                     enumerable: true,
@@ -10272,7 +10404,7 @@ var RIAPP;
                         var x = this._canCancel;
                         if (v !== x) {
                             this._canCancel = v;
-                            this.raisePropertyChanged('canCancel');
+                            this.raisePropertyChanged(PROP_NAME.canCancel);
                         }
                     },
                     enumerable: true,
@@ -10325,6 +10457,17 @@ var RIAPP;
                 colSortable: 'sortable',
                 colSortAsc: 'sort-asc',
                 colSortDesc: 'sort-desc'
+            };
+            var PROP_NAME = {
+                isCurrent: 'isCurrent',
+                isSelected: 'isSelected',
+                sortOrder: 'sortOrder',
+                checked: 'checked',
+                editingRow: 'editingRow',
+                dataSource: 'dataSource',
+                currentRow: 'currentRow',
+                grid: 'grid',
+                animation: 'animation'
             };
             var _columnWidthInterval, _gridsCount = 0;
             var _created_grids = {};
@@ -11050,7 +11193,7 @@ var RIAPP;
                             else {
                                 $el.removeClass(datagrid.css.rowHighlight);
                             }
-                            this.raisePropertyChanged('isCurrent');
+                            this.raisePropertyChanged(PROP_NAME.isCurrent);
                         }
                     },
                     enumerable: true,
@@ -11063,7 +11206,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isSelected != v) {
                             this._isSelected = v;
-                            this.raisePropertyChanged('isSelected');
+                            this.raisePropertyChanged(PROP_NAME.isSelected);
                             this.grid._onRowSelectionChanged(this);
                         }
                     },
@@ -11573,7 +11716,7 @@ var RIAPP;
                                     this.$div.addClass(datagrid.css.colSortable);
                         }
                         this._sortOrder = v;
-                        this.raisePropertyChanged('sortOrder');
+                        this.raisePropertyChanged(PROP_NAME.sortOrder);
                     },
                     enumerable: true,
                     configurable: true
@@ -11636,7 +11779,7 @@ var RIAPP;
                             this._val = v;
                             if (!!$el)
                                 $el.prop('checked', !!this._val);
-                            this.raisePropertyChanged('checked');
+                            this.raisePropertyChanged(PROP_NAME.checked);
                         }
                     },
                     enumerable: true,
@@ -12198,7 +12341,7 @@ var RIAPP;
                         row._onEndEdit(isCanceled);
                         this._editingRow = null;
                     }
-                    this.raisePropertyChanged('editingRow');
+                    this.raisePropertyChanged(PROP_NAME.editingRow);
                 };
                 DataGrid.prototype._onItemAdded = function (sender, args) {
                     var item = args.item, row = this._rowMap[item._key];
@@ -12241,7 +12384,7 @@ var RIAPP;
                         return;
                     ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
                     ds.addOnFill(self._onDSFill, self._objId, self);
-                    ds.addOnPropertyChange('currentItem', self._onDSCurrentChanged, self._objId, self);
+                    ds.addOnPropertyChange(collMOD.PROP_NAME.currentItem, self._onDSCurrentChanged, self._objId, self);
                     ds.addOnBeginEdit(function (sender, args) {
                         self._onItemEdit(args.item, true, false);
                     }, self._objId);
@@ -12617,7 +12760,7 @@ var RIAPP;
                         this._options.dataSource = v;
                         if (!!this.dataSource)
                             this._bindDS();
-                        this.raisePropertyChanged('dataSource');
+                        this.raisePropertyChanged(PROP_NAME.dataSource);
                     },
                     enumerable: true,
                     configurable: true
@@ -12660,7 +12803,7 @@ var RIAPP;
                         else
                             ds.currentItem = null;
                         if (isChanged)
-                            this.raisePropertyChanged('currentRow');
+                            this.raisePropertyChanged(PROP_NAME.currentRow);
                     },
                     enumerable: true,
                     configurable: true
@@ -12780,8 +12923,8 @@ var RIAPP;
                     }, this.uniqueID);
                     this._grid.addOnDestroyed(function (s, args) {
                         self._grid = null;
-                        self.invokePropChanged('grid');
-                        self.raisePropertyChanged('grid');
+                        self.invokePropChanged(PROP_NAME.grid);
+                        self.raisePropertyChanged(PROP_NAME.grid);
                     }, this.uniqueID);
                 };
                 GridElView.prototype.invokeGridEvent = function (eventName, args) {
@@ -12801,7 +12944,7 @@ var RIAPP;
                             return;
                         if (this.dataSource !== v) {
                             this.grid.dataSource = v;
-                            this.raisePropertyChanged('dataSource');
+                            this.raisePropertyChanged(PROP_NAME.dataSource);
                         }
                     },
                     enumerable: true,
@@ -12842,7 +12985,7 @@ var RIAPP;
                             return;
                         if (this.animation !== v) {
                             this._grid.options.animation = v;
-                            this.raisePropertyChanged('animation');
+                            this.raisePropertyChanged(PROP_NAME.animation);
                         }
                     },
                     enumerable: true,
@@ -12875,6 +13018,12 @@ var RIAPP;
                 otherPage: 'pager-other-page'
             };
             var PAGER_TXT = RIAPP.localizable.PAGER;
+            var PROP_NAME = {
+                dataSource: 'dataSource',
+                rowCount: 'rowCount',
+                currentPage: 'currentPage',
+                pager: 'pager'
+            };
             var Pager = (function (_super) {
                 __extends(Pager, _super);
                 function Pager(options) {
@@ -13011,9 +13160,9 @@ var RIAPP;
                             }, 0);
                         }
                     }, self._objId);
-                    ds.addOnPropertyChange('pageIndex', self._onPageIndexChanged, self._objId, self);
-                    ds.addOnPropertyChange('pageSize', self._onPageSizeChanged, self._objId, self);
-                    ds.addOnPropertyChange('totalCount', self._onTotalCountChanged, self._objId, self);
+                    ds.addOnPropertyChange(collMOD.PROP_NAME.pageIndex, self._onPageIndexChanged, self._objId, self);
+                    ds.addOnPropertyChange(collMOD.PROP_NAME.pageSize, self._onPageSizeChanged, self._objId, self);
+                    ds.addOnPropertyChange(collMOD.PROP_NAME.totalCount, self._onTotalCountChanged, self._objId, self);
                     this._currentPage = ds.pageIndex + 1;
                     this._rowsPerPage = ds.pageSize;
                     this._rowCount = ds.totalCount;
@@ -13137,7 +13286,7 @@ var RIAPP;
                         this._options.dataSource = v;
                         if (!!this.dataSource)
                             this._bindDS();
-                        this.raisePropertyChanged('dataSource');
+                        this.raisePropertyChanged(PROP_NAME.dataSource);
                     },
                     enumerable: true,
                     configurable: true
@@ -13168,7 +13317,7 @@ var RIAPP;
                         if (this._rowCount != v) {
                             this._rowCount = v;
                             this._render();
-                            this.raisePropertyChanged('rowCount');
+                            this.raisePropertyChanged(PROP_NAME.rowCount);
                         }
                     },
                     enumerable: true,
@@ -13195,7 +13344,7 @@ var RIAPP;
                         if (this._currentPage != v) {
                             this._currentPage = v;
                             this._render();
-                            this.raisePropertyChanged('currentPage');
+                            this.raisePropertyChanged(PROP_NAME.currentPage);
                         }
                     },
                     enumerable: true,
@@ -13322,8 +13471,8 @@ var RIAPP;
                     this._pager = new Pager(opts);
                     this._pager.addOnDestroyed(function () {
                         self._pager = null;
-                        self.invokePropChanged('pager');
-                        self.raisePropertyChanged('pager');
+                        self.invokePropChanged(PROP_NAME.pager);
+                        self.raisePropertyChanged(PROP_NAME.pager);
                     });
                     _super.call(this, app, el, options);
                 }
@@ -13351,7 +13500,7 @@ var RIAPP;
                             return;
                         if (this.dataSource !== v) {
                             this._pager.dataSource = v;
-                            this.raisePropertyChanged('dataSource');
+                            this.raisePropertyChanged(PROP_NAME.dataSource);
                         }
                     },
                     enumerable: true,
@@ -13388,6 +13537,11 @@ var RIAPP;
                 stackpanel: 'ria-stackpanel',
                 item: 'stackpanel-item',
                 currentItem: 'current-item'
+            };
+            var PROP_NAME = {
+                dataSource: 'dataSource',
+                currentItem: 'currentItem',
+                panel: 'panel'
             };
             var PNL_EVENTS = {
                 item_clicked: 'item_clicked'
@@ -13501,7 +13655,7 @@ var RIAPP;
                                     mappedItem.div.scrollIntoView(false);
                             }
                         }
-                        this.raisePropertyChanged('currentItem');
+                        this.raisePropertyChanged(PROP_NAME.currentItem);
                     }
                 };
                 StackPanel.prototype._onDSCurrentChanged = function (sender, args) {
@@ -13609,7 +13763,7 @@ var RIAPP;
                         return;
                     ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
                     ds.addOnFill(self._onDSFill, self._objId, self);
-                    ds.addOnPropertyChange('currentItem', self._onDSCurrentChanged, self._objId, self);
+                    ds.addOnPropertyChange(collMOD.PROP_NAME.currentItem, self._onDSCurrentChanged, self._objId, self);
                     ds.addOnStatusChanged(function (sender, args) {
                         self._onItemStatusChanged(args.item, args.oldChangeType);
                     }, self._objId);
@@ -13744,7 +13898,7 @@ var RIAPP;
                         this._options.dataSource = v;
                         if (!!this.dataSource)
                             this._bindDS();
-                        this.raisePropertyChanged('dataSource');
+                        this.raisePropertyChanged(PROP_NAME.dataSource);
                     },
                     enumerable: true,
                     configurable: true
@@ -13773,8 +13927,8 @@ var RIAPP;
                     this._panel = new StackPanel(opts);
                     this._panel.addOnDestroyed(function () {
                         self._panel = null;
-                        self.invokePropChanged('panel');
-                        self.raisePropertyChanged('panel');
+                        self.invokePropChanged(PROP_NAME.panel);
+                        self.raisePropertyChanged(PROP_NAME.panel);
                     });
                     _super.call(this, app, el, options);
                 }
@@ -13802,7 +13956,7 @@ var RIAPP;
                             return;
                         if (this.dataSource !== v) {
                             this._panel.dataSource = v;
-                            this.raisePropertyChanged('dataSource');
+                            this.raisePropertyChanged(PROP_NAME.dataSource);
                         }
                     },
                     enumerable: true,
@@ -13969,6 +14123,19 @@ var RIAPP;
                 }
                 _fn_traverseChanges(val.fieldName, val, fn);
             }
+            _db.PROP_NAME = {
+                hasChanges: 'hasChanges',
+                isSubmitOnDelete: 'isSubmitOnDelete',
+                isInitialized: 'isInitialized',
+                isBusy: 'isBusy',
+                isSubmiting: 'isSubmiting',
+                isPagingEnabled: 'isPagingEnabled',
+                parentItem: 'parentItem',
+                totalCount: 'totalCount',
+                loadPageCount: 'loadPageCount',
+                isClearCacheOnEveryLoad: 'isClearCacheOnEveryLoad',
+                isRefreshing: 'isRefreshing'
+            };
             var DataCache = (function (_super) {
                 __extends(DataCache, _super);
                 function DataCache(query) {
@@ -14060,7 +14227,7 @@ var RIAPP;
                                 }
                                 page.items.push(item);
                                 keyMap[item._key] = item;
-                                item._aspect._isCached = true;
+                                item._aspect.isCached = true;
                             }
                             else {
                                 return;
@@ -14075,7 +14242,7 @@ var RIAPP;
                         for (j = 0; j < items.length; j += 1) {
                             item = items[j];
                             if (!!item && item._key !== null) {
-                                item._aspect._isCached = false;
+                                item._aspect.isCached = false;
                                 if (!dbSet.getItemByKey(item._key))
                                     item._aspect.destroy();
                             }
@@ -14094,7 +14261,7 @@ var RIAPP;
                         item = items[j];
                         if (!!item && item._key !== null) {
                             delete this._itemsByKey[item._key];
-                            item._aspect._isCached = false;
+                            item._aspect.isCached = false;
                             if (!dbSet.getItemByKey(item._key))
                                 item._aspect.destroy();
                         }
@@ -14173,7 +14340,7 @@ var RIAPP;
                             v = 0;
                         if (v !== this._totalCount) {
                             this._totalCount = v;
-                            this.raisePropertyChanged('totalCount');
+                            this.raisePropertyChanged(_db.PROP_NAME.totalCount);
                         }
                     },
                     enumerable: true,
@@ -14464,7 +14631,7 @@ var RIAPP;
                             if (v === 1) {
                                 this._clearCache();
                             }
-                            this.raisePropertyChanged('loadPageCount');
+                            this.raisePropertyChanged(_db.PROP_NAME.loadPageCount);
                         }
                     },
                     enumerable: true,
@@ -14477,7 +14644,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isClearCacheOnEveryLoad != v) {
                             this._isClearCacheOnEveryLoad = v;
-                            this.raisePropertyChanged('isClearCacheOnEveryLoad');
+                            this.raisePropertyChanged(_db.PROP_NAME.isClearCacheOnEveryLoad);
                         }
                     },
                     enumerable: true,
@@ -14928,7 +15095,7 @@ var RIAPP;
                         coll.removeItem(this.getItem());
                     }
                     coll._onEditing(this.getItem(), false, true);
-                    this.raisePropertyChanged('isEditing');
+                    this.raisePropertyChanged(collMOD.PROP_NAME.isEditing);
                     return true;
                 };
                 EntityAspect.prototype.getDbContext = function () {
@@ -15037,20 +15204,20 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(EntityAspect.prototype, "_isRefreshing", {
+                Object.defineProperty(EntityAspect.prototype, "isRefreshing", {
                     get: function () {
                         return this.__isRefreshing;
                     },
                     set: function (v) {
                         if (this.__isRefreshing !== v) {
                             this.__isRefreshing = v;
-                            this.raisePropertyChanged('_isRefreshing');
+                            this.raisePropertyChanged(_db.PROP_NAME.isRefreshing);
                         }
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(EntityAspect.prototype, "_isCached", {
+                Object.defineProperty(EntityAspect.prototype, "isCached", {
                     get: function () {
                         return this.__isCached;
                     },
@@ -15279,7 +15446,7 @@ var RIAPP;
                     this._changeCache = {};
                     this._changeCount = 0;
                     if (old !== this._changeCount)
-                        this.raisePropertyChanged('hasChanges');
+                        this.raisePropertyChanged(_db.PROP_NAME.hasChanges);
                 };
                 DbSet.prototype._onPageChanging = function () {
                     var res = _super.prototype._onPageChanging.call(this);
@@ -15306,7 +15473,7 @@ var RIAPP;
                 };
                 DbSet.prototype._destroyItems = function () {
                     this._items.forEach(function (item) {
-                        if (item._aspect._isCached)
+                        if (item._aspect.isCached)
                             item._aspect.removeNSHandlers(null);
                         else
                             item._aspect.destroy();
@@ -15451,7 +15618,7 @@ var RIAPP;
                         });
                         if (newItems.length > 0) {
                             this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
-                            this.raisePropertyChanged('count');
+                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
                         }
                         if (!!data.fn_beforeFillEnd) {
                             data.fn_beforeFillEnd();
@@ -15495,7 +15662,7 @@ var RIAPP;
                         }
                         if (fetchedItems.length > 0) {
                             this._onItemsChanged({ change_type: 1 /* ADDED */, items: fetchedItems, pos: positions });
-                            this.raisePropertyChanged('count');
+                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
                         }
                     }
                     finally {
@@ -15584,7 +15751,7 @@ var RIAPP;
                         this._changeCache[item._key] = item;
                         this._changeCount += 1;
                         if (this._changeCount === 1)
-                            this.raisePropertyChanged('hasChanges');
+                            this.raisePropertyChanged(_db.PROP_NAME.hasChanges);
                     }
                 };
                 DbSet.prototype._removeFromChanged = function (key) {
@@ -15594,7 +15761,7 @@ var RIAPP;
                         delete this._changeCache[key];
                         this._changeCount -= 1;
                         if (this._changeCount === 0)
-                            this.raisePropertyChanged('hasChanges');
+                            this.raisePropertyChanged(_db.PROP_NAME.hasChanges);
                     }
                 };
                 //occurs when item changeType Changed (not used in simple collections)
@@ -15783,7 +15950,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isSubmitOnDelete !== v) {
                             this._isSubmitOnDelete = !!v;
-                            this.raisePropertyChanged('isSubmitOnDelete');
+                            this.raisePropertyChanged(_db.PROP_NAME.isSubmitOnDelete);
                         }
                     },
                     enumerable: true,
@@ -15813,7 +15980,7 @@ var RIAPP;
                 DbSets.prototype._dbSetCreated = function (dbSet) {
                     var self = this;
                     this._arrDbSets.push(dbSet);
-                    dbSet.addOnPropertyChange('hasChanges', function (sender, args) {
+                    dbSet.addOnPropertyChange(_db.PROP_NAME.hasChanges, function (sender, args) {
                         self._dbContext._onDbSetHasChangesChanged(sender);
                     }, null);
                 };
@@ -16229,7 +16396,7 @@ var RIAPP;
                         if (!!opts.permissions) {
                             self._updatePermissions(opts.permissions);
                             self._isInitialized = true;
-                            self.raisePropertyChanged('isInitialized');
+                            self.raisePropertyChanged(_db.PROP_NAME.isInitialized);
                             return;
                         }
                         //initialize by obtaining metadata from the data service by ajax call
@@ -16246,7 +16413,7 @@ var RIAPP;
                                 self._updatePermissions(JSON.parse(permissions));
                                 self.isBusy = false;
                                 self._isInitialized = true;
-                                self.raisePropertyChanged('isInitialized');
+                                self.raisePropertyChanged(_db.PROP_NAME.isInitialized);
                             }
                             catch (ex) {
                                 self.isBusy = false;
@@ -16307,7 +16474,7 @@ var RIAPP;
                             var fn_onEnd = function () {
                                 self.isBusy = false;
                                 dbSet.isLoading = false;
-                                item._aspect._isRefreshing = false;
+                                item._aspect.isRefreshing = false;
                             }, fn_onErr = function (ex) {
                                 fn_onEnd();
                                 self._onDataOperError(ex, operType);
@@ -16315,7 +16482,7 @@ var RIAPP;
                                 self._onItemRefreshed(res, item);
                                 fn_onEnd();
                             };
-                            item._aspect._isRefreshing = true;
+                            item._aspect.isRefreshing = true;
                             self.isBusy = true;
                             dbSet.isLoading = true;
                             try {
@@ -16364,7 +16531,7 @@ var RIAPP;
                         }
                     }
                     if (this._hasChanges !== old) {
-                        this.raisePropertyChanged('hasChanges');
+                        this.raisePropertyChanged(_db.PROP_NAME.hasChanges);
                     }
                 };
                 DbContext.prototype._load = function (query, isPageChanged) {
@@ -16638,7 +16805,7 @@ var RIAPP;
                         }
                         cur = this._isBusy > 0;
                         if (cur != old) {
-                            this.raisePropertyChanged('isBusy');
+                            this.raisePropertyChanged(_db.PROP_NAME.isBusy);
                         }
                     },
                     enumerable: true,
@@ -16651,7 +16818,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isSubmiting !== v) {
                             this._isSubmiting = v;
-                            this.raisePropertyChanged('isSubmiting');
+                            this.raisePropertyChanged(_db.PROP_NAME.isSubmiting);
                         }
                     },
                     enumerable: true,
@@ -17420,7 +17587,7 @@ var RIAPP;
                     this._onItemsChanged({ change_type: 2 /* RESET */, items: [] });
                     if (!isPageChanged)
                         this.pageIndex = 0;
-                    this.raisePropertyChanged('count');
+                    this.raisePropertyChanged(collMOD.PROP_NAME.count);
                 };
                 DataView.prototype._refresh = function (isPageChanged) {
                     var items;
@@ -17474,7 +17641,7 @@ var RIAPP;
                         });
                         if (newItems.length > 0) {
                             this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
-                            this.raisePropertyChanged('count');
+                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
                         }
                     }
                     finally {
@@ -17766,7 +17933,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._options.enablePaging !== v) {
                             this._options.enablePaging = v;
-                            this.raisePropertyChanged('isPagingEnabled');
+                            this.raisePropertyChanged(_db.PROP_NAME.isPagingEnabled);
                             this._refresh(false);
                         }
                     },
@@ -17896,7 +18063,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._parentItem !== v) {
                             this._parentItem = v;
-                            this.raisePropertyChanged('parentItem');
+                            this.raisePropertyChanged(_db.PROP_NAME.parentItem);
                             var self = this;
                             if (this.items.length > 0) {
                                 this.clear();

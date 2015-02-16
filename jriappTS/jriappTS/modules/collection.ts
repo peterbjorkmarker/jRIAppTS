@@ -79,7 +79,17 @@
             var ITEM_EVENTS = {
                 errors_changed: 'errors_changed'
             };
-
+            export var PROP_NAME = {
+                isEditing: 'isEditing',
+                currentItem: 'currentItem',
+                count: 'count',
+                totalCount: 'totalCount',
+                pageCount: 'pageCount',
+                pageSize: 'pageSize',
+                pageIndex: 'pageIndex',
+                isUpdating: 'isUpdating',
+                isLoading: 'isLoading'
+            };
             export class ItemAspect<TItem extends ICollectionItem> extends RIAPP.BaseObject implements IErrorNotification, RIAPP.IEditable, RIAPP.ISubmittable {
                 protected _fkey: string;
                 protected _isEditing: boolean;
@@ -345,7 +355,7 @@
                     if (!this._beginEdit())
                         return false;
                     coll._onEditing(this.getItem(), true, false);
-                    this.raisePropertyChanged('isEditing');
+                    this.raisePropertyChanged(PROP_NAME.isEditing);
                     return true;
                 }
                 endEdit() {
@@ -354,29 +364,29 @@
                         return false;
                     coll._onEditing(this.getItem(), false, false);
                     this._notEdited = false;
-                    this.raisePropertyChanged('isEditing');
+                    this.raisePropertyChanged(PROP_NAME.isEditing);
                     return true;
                 }
                 cancelEdit() {
                     if (!this._isEditing)
                         return false;
-                    var coll = this._collection, isNew = this._isNew;
+                    var coll = this._collection, isNew = this._isNew, self= this;
                     var changes = this._saveVals;
                     this._vals = this._saveVals;
                     this._saveVals = null;
                     coll._removeAllErrors(this.getItem());
                     //refresh User interface when values restored
                     coll.getFieldNames().forEach(function (name) {
-                        if (changes[name] !== this._vals[name])
-                            this.raisePropertyChanged(name);
-                    }, this);
+                        if (changes[name] !== self._vals[name])
+                            self.raisePropertyChanged(name);
+                    });
 
                     if (isNew && this._notEdited)
                         coll.removeItem(this.getItem());
 
                     this._isEditing = false;
                     coll._onEditing(this.getItem(), false, true);
-                    this.raisePropertyChanged('isEditing');
+                    this.raisePropertyChanged(PROP_NAME.isEditing);
                     return true;
                 }
                 deleteItem() {
@@ -678,7 +688,7 @@
                     this.raiseEvent(COLL_EVENTS.current_changing, <ICurrentChangingArgs<TItem>> { newCurrent: newCurrent });
                 }
                 protected _onCurrentChanged() {
-                    this.raisePropertyChanged('currentItem');
+                    this.raisePropertyChanged(PROP_NAME.currentItem);
                 }
                 //occurs when item changeType Changed (not used in simple collections)
                 protected _onItemStatusChanged(item: TItem, oldChangeType: number) {
@@ -730,7 +740,7 @@
                     this._itemsByKey[item._key] = item;
                     this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: [item], pos: [pos] });
                     item._aspect._onAttach();
-                    this.raisePropertyChanged('count');
+                    this.raisePropertyChanged(PROP_NAME.count);
                     this._onCurrentChanging(item);
                     this._currentPos = pos;
                     this._onCurrentChanged();
@@ -741,7 +751,7 @@
                         this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.REMOVE, items: [item], pos: [pos] });
                     }
                     finally {
-                        this.raisePropertyChanged('count');
+                        this.raisePropertyChanged(PROP_NAME.count);
                     }
                 }
                 protected _onPageSizeChanged() {
@@ -1180,7 +1190,7 @@
                         this._isClearing = false;
                     }
                     this.raiseEvent(COLL_EVENTS.cleared, {});
-                    this.raisePropertyChanged('count');
+                    this.raisePropertyChanged(PROP_NAME.count);
                 }
                 destroy() {
                     if (this._isDestroyed)
@@ -1217,15 +1227,15 @@
                 set totalCount(v: number) {
                     if (v != this._totalCount) {
                         this._totalCount = v;
-                        this.raisePropertyChanged('totalCount');
-                        this.raisePropertyChanged('pageCount');
+                        this.raisePropertyChanged(PROP_NAME.totalCount);
+                        this.raisePropertyChanged(PROP_NAME.pageCount);
                     }
                 }
                 get pageSize() { return this._options.pageSize; }
                 set pageSize(v: number) {
                     if (this._options.pageSize !== v) {
                         this._options.pageSize = v;
-                        this.raisePropertyChanged('pageSize');
+                        this.raisePropertyChanged(PROP_NAME.pageSize);
                         this._onPageSizeChanged();
                     }
                 }
@@ -1239,7 +1249,7 @@
                         }
                         this._pageIndex = v;
                         this._onPageChanged();
-                        this.raisePropertyChanged('pageIndex');
+                        this.raisePropertyChanged(PROP_NAME.pageIndex);
                     }
                 }
                 get items() { return this._items; }
@@ -1250,14 +1260,14 @@
                 set isLoading(v: boolean) {
                     if (this._isLoading !== v) {
                         this._isLoading = v;
-                        this.raisePropertyChanged('isLoading');
+                        this.raisePropertyChanged(PROP_NAME.isLoading);
                     }
                 }
                 get isUpdating() { return this._isUpdating; }
                 set isUpdating(v: boolean) {
                     if (this._isUpdating !== v) {
                         this._isUpdating = v;
-                        this.raisePropertyChanged('isUpdating');
+                        this.raisePropertyChanged(PROP_NAME.isUpdating);
                     }
                 }
                 get pageCount() {
@@ -1485,7 +1495,7 @@
 
                         if (newItems.length > 0) {
                             this._onItemsChanged({ change_type: COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
-                            this.raisePropertyChanged('count');
+                            this.raisePropertyChanged(PROP_NAME.count);
                         }
                     }
                     finally {

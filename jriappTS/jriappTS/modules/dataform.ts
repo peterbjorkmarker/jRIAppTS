@@ -33,6 +33,12 @@
                     return null;
             }
 
+            var PROP_NAME = {
+                dataContext: 'dataContext',
+                isEditing: 'isEditing',
+                validationErrors: 'validationErrors',
+                form: 'form'
+            };
             export class DataForm extends RIAPP.BaseObject {
                 private get _DATA_CONTENT_SELECTOR() { return '*[' + constsMOD.DATA_ATTR.DATA_CONTENT + ']:not([' + constsMOD.DATA_ATTR.DATA_COLUMN + '])'; }
                 private _el: HTMLElement;
@@ -194,7 +200,7 @@
                     }, self._objId);
 
                     if (!!this._supportEdit) {
-                        (<RIAPP.BaseObject><any>this._supportEdit).addOnPropertyChange('isEditing', self._onIsEditingChanged, self._objId, self);
+                        (<RIAPP.BaseObject><any>this._supportEdit).addOnPropertyChange(PROP_NAME.isEditing, self._onIsEditingChanged, self._objId, self);
                     }
 
                     if (!!this._supportErrNotify) {
@@ -263,7 +269,7 @@
                         this._dataContext = v;
                         this._bindDS();
                         this._updateContent();
-                        this.raisePropertyChanged('dataContext');
+                        this.raisePropertyChanged(PROP_NAME.dataContext);
                         if (!!this._dataContext) {
                             if (!!this._supportEdit && this._isEditing !== this._supportEdit.isEditing) {
                                 this.isEditing = this._supportEdit.isEditing;
@@ -289,7 +295,7 @@
                     if (!editable && v !== isEditing) {
                         this._isEditing = v;
                         this._updateContent();
-                        this.raisePropertyChanged('isEditing');
+                        this.raisePropertyChanged(PROP_NAME.isEditing);
                         return;
                     }
 
@@ -311,14 +317,14 @@
                     if (!!editable && editable.isEditing !== isEditing) {
                         this._isEditing = editable.isEditing;
                         this._updateContent();
-                        this.raisePropertyChanged('isEditing');
+                        this.raisePropertyChanged(PROP_NAME.isEditing);
                     }
                 }
                 get validationErrors() { return this._errors; }
                 set validationErrors(v) {
                     if (v !== this._errors) {
                         this._errors = v;
-                        this.raisePropertyChanged('validationErrors');
+                        this.raisePropertyChanged(PROP_NAME.validationErrors);
                     }
                 }
                 get isInsideTemplate() { return this._isInsideTemplate; }
@@ -338,16 +344,15 @@
                     this._form = new DataForm({ app: app, el: el });
                     this._form.addOnDestroyed(function () {
                         self._form = null;
-                        self.invokePropChanged('form');
-                        self.raisePropertyChanged('form');
+                        self.invokePropChanged(PROP_NAME.form);
+                        self.raisePropertyChanged(PROP_NAME.form);
                     });
                     this._form.addOnPropertyChange('*', function (form, args) {
                         switch (args.property) {
-                            case 'validationErrors':
+                            case PROP_NAME.validationErrors:
                                 self.validationErrors = form.validationErrors;
                                 break;
-                            case 'dataContext':
-                            case 'isDisabled':
+                            case PROP_NAME.dataContext:
                                 self.raisePropertyChanged(args.property);
                                 break;
                         }

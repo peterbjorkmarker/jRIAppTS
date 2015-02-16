@@ -45,7 +45,7 @@ There's also not a single eval function used in this framework. So it works in a
 </i>
 
 <b>Latest changes:</b>
-<p>2015-02-03 Code maintenance improvement</p>  
+<p>2015-02-16 Replaced "magic strings" (literal strings) in the framework's code with variables containing string values. This improves quality of the code</p>  
 <p>2015-02-02 Code maintenance improvement</p>  
 <p>2015-02-01 Update to version 2.5.3. Now, the addEventHadler of the BaseObject class has a parameter- context, which defines the THIS object for the event handler</p>  
 <p>2015-01-30 Testing and recompiling with typescript 1.4.</p>  

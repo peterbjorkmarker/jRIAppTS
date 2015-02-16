@@ -3,6 +3,11 @@
         export module datepicker {
             import elviewMOD = RIAPP.MOD.baseElView;
 
+            var PROP_NAME = {
+                dateFormat: 'dateFormat',
+                datepickerRegion: 'datepickerRegion'
+            };
+
             export class Datepicker extends RIAPP.BaseObject implements RIAPP.IDatepicker{
                 private _datepickerRegion: string;
                 private _dateFormat: string;
@@ -52,7 +57,7 @@
                             regional.dateFormat = this._dateFormat;
                             this.datePickerFn.setDefaults(regional);
                         }
-                        this.raisePropertyChanged('dateFormat');
+                        this.raisePropertyChanged(PROP_NAME.dateFormat);
                     }
                 }
                 get datepickerRegion() { return this._datepickerRegion; }
@@ -66,7 +71,7 @@
                             this._datepickerRegion = v;
                             regional.dateFormat = oldDateFormat;
                             this.datePickerFn.setDefaults(regional);
-                            this.raisePropertyChanged("datepickerRegion");
+                            this.raisePropertyChanged(PROP_NAME.datepickerRegion);
                         }
                     }
                 }

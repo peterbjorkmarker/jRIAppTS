@@ -1,7 +1,7 @@
 ﻿module RIAPP {
     export var global: Global = null;
     export var css_riaTemplate = 'ria-template';
-
+   
     export const enum BindTo {
         Source= 0, Target= 1
     }
@@ -49,8 +49,13 @@
         unresolvedBinding: 'unresolvedBind'
     };
 
+    var PROP_NAME = {
+        isLoading: 'isLoading',
+        curSelectable: 'currentSelectable'
+    };
+
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.5.4.3';
+        public static vesion = '2.5.4.4';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;
@@ -262,7 +267,7 @@
             var self = this, promise = fn_loader(), old = self.isLoading;
             self._promises.push(promise);
             if (self.isLoading !== old)
-                self.raisePropertyChanged('isLoading');
+                self.raisePropertyChanged(PROP_NAME.isLoading);
             var deferred = self.utils.createDeferred();
             promise.then(function (html:string) {
                 self.utils.removeFromArray(self._promises, promise);
@@ -277,11 +282,11 @@
                     deferred.reject();
                 }
                 if (!self.isLoading)
-                    self.raisePropertyChanged('isLoading');
+                    self.raisePropertyChanged(PROP_NAME.isLoading);
             },function (err) {
                 self.utils.removeFromArray(self._promises, promise);
                 if (!self.isLoading)
-                    self.raisePropertyChanged('isLoading');
+                    self.raisePropertyChanged(PROP_NAME.isLoading);
                 deferred.reject();
                 if (!!err && !!err.message) {
                     self.handleError(err, self);
@@ -545,7 +550,7 @@
         set currentSelectable(v: ISelectable) {
             if (this._currentSelectable !== v) {
                 this._currentSelectable = v;
-                this.raisePropertyChanged('currentSelectable');
+                this.raisePropertyChanged(PROP_NAME.curSelectable);
             }
         }
         get defaults() {

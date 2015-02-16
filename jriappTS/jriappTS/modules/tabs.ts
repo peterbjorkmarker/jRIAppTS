@@ -4,6 +4,10 @@
             import mvvmMOD = RIAPP.MOD.mvvm;
             import elviewMOD = MOD.baseElView;
 
+            var PROP_NAME = {
+                tabIndex: 'tabIndex'
+            };
+
             export class TabsElView extends elviewMOD.BaseElView {
                 private _tabsEventCommand: mvvmMOD.ICommand;
                 private _tabOpts: any;
@@ -19,12 +23,12 @@
                         activate: function (e, tab) {
                             var active = (<any>$el).tabs("option", "active");
                             self.invokeTabsEvent("select", { index: active, el: $el });
-                            self.raisePropertyChanged('tabIndex');
+                            self.raisePropertyChanged(PROP_NAME.tabIndex);
                         },
                         load: function (e, tab) {
                             var active = (<any>$el).tabs("option", "active");
                             self.invokeTabsEvent("load", { index: active, el: $el });
-                            self.raisePropertyChanged('tabIndex');
+                            self.raisePropertyChanged(PROP_NAME.tabIndex);
                         }
                     };
                     tabOpts = RIAPP.global.utils.extend(false, tabOpts, self._tabOpts);
@@ -35,7 +39,7 @@
                         self.invokeTabsEvent("create", { el: $el });
                         var active = (<any>$el).tabs("option", "active");
                         self.invokeTabsEvent("select", { index: active, el: $el });
-                        self.raisePropertyChanged('tabIndex');
+                        self.raisePropertyChanged(PROP_NAME.tabIndex);
                     }, 100);
                 }
                 protected _destroyTabs() {

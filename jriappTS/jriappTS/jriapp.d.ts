@@ -678,6 +678,10 @@ declare module RIAPP {
             var css: {
                 fieldError: string;
                 commandLink: string;
+                disabled: string;
+                opacity: string;
+                color: string;
+                fontSize: string;
             };
             interface IViewOptions {
                 css?: string;
@@ -1048,6 +1052,17 @@ declare module RIAPP {
                 _aspect: ItemAspect<ICollectionItem>;
                 _key: string;
             }
+            var PROP_NAME: {
+                isEditing: string;
+                currentItem: string;
+                count: string;
+                totalCount: string;
+                pageCount: string;
+                pageSize: string;
+                pageIndex: string;
+                isUpdating: string;
+                isLoading: string;
+            };
             class ItemAspect<TItem extends ICollectionItem> extends RIAPP.BaseObject implements IErrorNotification, RIAPP.IEditable, RIAPP.ISubmittable {
                 protected _fkey: string;
                 protected _isEditing: boolean;
@@ -1864,6 +1879,8 @@ declare module RIAPP {
                 dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
                 selectedValue: any;
                 selectedItem: collMOD.ICollectionItem;
+                valuePath: string;
+                textPath: string;
                 listBox: ListBox;
             }
             interface ILookupOptions {
@@ -2882,6 +2899,19 @@ declare module RIAPP {
             interface IEntityItem extends collMOD.ICollectionItem {
                 _aspect: EntityAspect<IEntityItem, DbSet<IEntityItem, DbContext>, DbContext>;
             }
+            var PROP_NAME: {
+                hasChanges: string;
+                isSubmitOnDelete: string;
+                isInitialized: string;
+                isBusy: string;
+                isSubmiting: string;
+                isPagingEnabled: string;
+                parentItem: string;
+                totalCount: string;
+                loadPageCount: string;
+                isClearCacheOnEveryLoad: string;
+                isRefreshing: string;
+            };
             class DataCache extends RIAPP.BaseObject {
                 private _query;
                 private _cache;
@@ -3019,8 +3049,8 @@ declare module RIAPP {
                 _serverTimezone: number;
                 _collection: TDBSet;
                 _dbSet: TDBSet;
-                _isRefreshing: boolean;
-                _isCached: boolean;
+                isRefreshing: boolean;
+                isCached: boolean;
                 isHasChanges: boolean;
             }
             interface IDbSetLoadedArgs<TItem extends IEntityItem> {

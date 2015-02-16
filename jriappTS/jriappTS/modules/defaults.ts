@@ -3,6 +3,18 @@
         export module defaults {
             import utilsMOD = RIAPP.MOD.utils;
 
+            var PROP_NAME = {
+                ajaxTimeOut: 'ajaxTimeOut',
+                dateFormat: 'dateFormat',
+                timeFormat: 'timeFormat',
+                dateTimeFormat: 'dateTimeFormat',
+                datepicker: 'datepicker',
+                imagesPath: 'imagesPath',
+                decimalPoint: 'decimalPoint',
+                thousandSep: 'thousandSep',
+                decPrecision: 'decPrecision'
+            };
+
             export class Defaults extends RIAPP.BaseObject{
                 private _imagesPath: string;
                 private _datepicker: RIAPP.IDatepicker;
@@ -36,7 +48,7 @@
                 set ajaxTimeOut(v: number) {
                     if (this._ajaxTimeOut !== v) {
                         this._ajaxTimeOut = v;
-                        this.raisePropertyChanged('ajaxTimeOut');
+                        this.raisePropertyChanged(PROP_NAME.ajaxTimeOut);
                     }
                 }
                 //uses moment.js format
@@ -44,7 +56,7 @@
                 set dateFormat(v) {
                     if (this._dateFormat !== v) {
                         this._dateFormat = v;
-                        this.raisePropertyChanged('dateFormat');
+                        this.raisePropertyChanged(PROP_NAME.dateFormat);
                     }
                 }
                 //uses moment.js format
@@ -52,21 +64,21 @@
                 set timeFormat(v) {
                     if (this._timeFormat !== v) {
                         this._timeFormat = v;
-                        this.raisePropertyChanged('timeFormat');
+                        this.raisePropertyChanged(PROP_NAME.timeFormat);
                     }
                 }
                 get dateTimeFormat() { return this._dateTimeFormat; }
                 set dateTimeFormat(v) {
                     if (this._dateTimeFormat !== v) {
                         this._dateTimeFormat = v;
-                        this.raisePropertyChanged('dateTimeFormat');
+                        this.raisePropertyChanged(PROP_NAME.dateTimeFormat);
                     }
                 }
                 get datepicker() { return this._datepicker; }
                 set datepicker(v) {
                     if (this._datepicker !== v) {
                         this._datepicker = v;
-                        this.raisePropertyChanged("datepicker");
+                        this.raisePropertyChanged(PROP_NAME.datepicker);
                     }
                 }
                 //path to where application images are stored
@@ -80,21 +92,21 @@
                         }
                         else
                             this._imagesPath = v;
-                        this.raisePropertyChanged("imagesPath");
+                        this.raisePropertyChanged(PROP_NAME.imagesPath);
                     }
                 }
                 get decimalPoint() { return this._decimalPoint; }
                 set decimalPoint(v) {
                     if (this._decimalPoint !== v) {
                         this._decimalPoint = v;
-                        this.raisePropertyChanged("decimalPoint");
+                        this.raisePropertyChanged(PROP_NAME.decimalPoint);
                     }
                 }
                 get thousandSep() { return this._thousandSep; }
                 set thousandSep(v) {
                     if (this._thousandSep !== v) {
                         this._thousandSep = v;
-                        this.raisePropertyChanged("thousandSep");
+                        this.raisePropertyChanged(PROP_NAME.thousandSep);
                     }
                 }
                 //money decimal presision: defaults to 2
@@ -102,7 +114,7 @@
                 set decPrecision(v) {
                     if (this._decPrecision !== v) {
                         this._decPrecision = v;
-                        this.raisePropertyChanged("decPrecision");
+                        this.raisePropertyChanged(PROP_NAME.decPrecision);
                     } }
             }
 

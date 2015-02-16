@@ -18,7 +18,41 @@
 
             export var css = {
                 fieldError: 'ria-field-error',
-                commandLink: 'ria-command-link'
+                commandLink: 'ria-command-link',
+                disabled: 'disabled',
+                opacity: 'opacity',
+                color: 'color',
+                fontSize: 'font-size'
+            };
+            var PROP_NAME = {
+                isVisible: 'isVisible',
+                validationErrors: 'validationErrors',
+                toolTip: 'toolTip',
+                css: 'css',
+                isEnabled: 'isEnabled',
+                value: 'value',
+                command: 'command',
+                disabled: 'disabled',
+                commandParam: 'commandParam',
+                isBusy: 'isBusy',
+                delay: 'delay',
+                checked: 'checked',
+                color: 'color',
+                rows: 'rows',
+                cols: 'cols',
+                wrap: 'wrap',
+                text: 'text',
+                html: 'html',
+                preventDefault: 'preventDefault',
+                imageSrc: 'imageSrc',
+                href: 'href',
+                isExpanded: 'isExpanded',
+                fontSize: 'fontSize',
+                borderColor: 'borderColor',
+                borderStyle: 'borderStyle',
+                width: 'width',
+                height: 'height',
+                src: 'src'
             };
 
             export interface IViewOptions {
@@ -165,7 +199,7 @@
                             else
                                 this.el.style.display = '';
                         }
-                        this.raisePropertyChanged('isVisible');
+                        this.raisePropertyChanged(PROP_NAME.isVisible);
                     }
                 }
                 get propChangedCommand() { return this._propChangedCommand; }
@@ -180,7 +214,7 @@
                 set validationErrors(v: RIAPP.IValidationInfo[]) {
                     if (v !== this._errors) {
                         this._errors = v;
-                        this.raisePropertyChanged('validationErrors');
+                        this.raisePropertyChanged(PROP_NAME.validationErrors);
                         this._updateErrorUI(this._el, this._errors);
                     }
                 }
@@ -190,7 +224,7 @@
                     if (this._toolTip != v) {
                         this._toolTip = v;
                         this._setToolTip(this.$el, v);
-                        this.raisePropertyChanged('toolTip');
+                        this.raisePropertyChanged(PROP_NAME.toolTip);
                     }
                 }
                 get css() { return this._css; }
@@ -202,7 +236,7 @@
                         this._css = v;
                         if (!!this._css)
                             $el.addClass(this._css);
-                        this.raisePropertyChanged('css');
+                        this.raisePropertyChanged(PROP_NAME.css);
                     }
                 }
                 get app() { return this._app; }
@@ -220,7 +254,7 @@
                     v = !!v;
                     if (v !== this.isEnabled) {
                         this.el.disabled = !v;
-                        this.raisePropertyChanged('isEnabled');
+                        this.raisePropertyChanged(PROP_NAME.isEnabled);
                     }
                 }
                 get el() { return <HTMLInputElement>this._el; }
@@ -239,7 +273,7 @@
                     v = (v === null) ? '' : str;
                     if (x !== v) {
                         el.value = v;
-                        this.raisePropertyChanged('value');
+                        this.raisePropertyChanged(PROP_NAME.value);
                     }
                 }
             };
@@ -276,7 +310,7 @@
                     }
                 }
                 protected _onCommandChanged() {
-                    this.raisePropertyChanged('command');
+                    this.raisePropertyChanged(PROP_NAME.command);
                 }
                 private _onCanExecuteChanged(cmd: mvvm.Command, args) {
                     this.isEnabled = cmd.canExecute(this, this.commandParam);
@@ -300,15 +334,15 @@
                 toString() {
                     return 'CommandElView';
                 }
-                get isEnabled() { return !(this.$el.prop('disabled')); }
+                get isEnabled() { return !(this.$el.prop(PROP_NAME.disabled)); }
                 set isEnabled(v:boolean) {
                     if (v !== this.isEnabled) {
-                        this.$el.prop('disabled', !v);
+                        this.$el.prop(PROP_NAME.disabled, !v);
                         if (!v)
-                            this.$el.addClass('disabled');
+                            this.$el.addClass(css.disabled);
                         else
-                            this.$el.removeClass('disabled');
-                        this.raisePropertyChanged('isEnabled');
+                            this.$el.removeClass(css.disabled);
+                        this.raisePropertyChanged(PROP_NAME.isEnabled);
                     }
                 }
                 get command() { return this._command; }
@@ -317,7 +351,7 @@
                 set commandParam(v) {
                     if (v !== this._commandParam) {
                         this._commandParam = v;
-                        this.raisePropertyChanged('commandParam');
+                        this.raisePropertyChanged(PROP_NAME.commandParam);
                     }
                 }
             };
@@ -397,14 +431,14 @@
                             else
                                 self._$loader.hide();
                         }
-                        self.raisePropertyChanged('isBusy');
+                        self.raisePropertyChanged(PROP_NAME.isBusy);
                     }
                 }
                 get delay() { return this._delay; }
                 set delay(v) {
                     if (v !== this._delay) {
                         this._delay = v;
-                        this.raisePropertyChanged('delay');
+                        this.raisePropertyChanged(PROP_NAME.delay);
                     }
                 }
             }
@@ -452,11 +486,11 @@
                             el.checked = !!this._val;
 
                         if (this._val === null) {
-                            this.$el.css("opacity", 0.33);
+                            this.$el.css(css.opacity, 0.33);
                         }
                         else
-                            this.$el.css("opacity", 1.0);
-                        this.raisePropertyChanged('checked');
+                            this.$el.css(css.opacity, 1.0);
+                        this.raisePropertyChanged(PROP_NAME.checked);
                     }
                 }
             }
@@ -530,7 +564,7 @@
                                 $el.prop('checked', false);
                                 this._cbxVal = 0;
                         }
-                        this.raisePropertyChanged('checked');
+                        this.raisePropertyChanged(PROP_NAME.checked);
                     }
                 }
             }
@@ -551,7 +585,7 @@
                     var $el =  this.$el;
                     $el.on('change.' + this._objId, function (e) {
                         e.stopPropagation();
-                        self.raisePropertyChanged('value');
+                        self.raisePropertyChanged(PROP_NAME.value);
                     });
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
@@ -563,7 +597,7 @@
                     if (!!options.updateOnKeyUp) {
                         $el.on('keyup.' + this._objId, function (e) {
                             e.stopPropagation();
-                            self.raisePropertyChanged('value');
+                            self.raisePropertyChanged(PROP_NAME.value);
                         });
                     }
                 }
@@ -586,10 +620,10 @@
                 }
                 set color(v) {
                     var $el = this.$el;
-                    var x = $el.css('color');
+                    var x = $el.css(css.color);
                     if (v !== x) {
-                        $el.css('color', v);
-                        this.raisePropertyChanged('color');
+                        $el.css(css.color, v);
+                        this.raisePropertyChanged(PROP_NAME.color);
                     }
                 }
             }
@@ -629,7 +663,7 @@
                     var $el = this.$el;
                     $el.on('change.' + this._objId, function (e) {
                         e.stopPropagation();
-                        self.raisePropertyChanged('value');
+                        self.raisePropertyChanged(PROP_NAME.value);
                     });
                     $el.on('keypress.' + this._objId, function (e) {
                         e.stopPropagation();
@@ -641,7 +675,7 @@
                     if (!!options.updateOnKeyUp) {
                         $el.on('keyup.' + this._objId, function (e) {
                             e.stopPropagation();
-                            self.raisePropertyChanged('value');
+                            self.raisePropertyChanged(PROP_NAME.value);
                         });
                     }
                 }
@@ -674,7 +708,7 @@
                     v = (v === null) ? '' : str;
                     if (x !== v) {
                         el.value = v;
-                        this.raisePropertyChanged('value');
+                        this.raisePropertyChanged(PROP_NAME.value);
                     }
                 }
                 get isEnabled() { return !this.el.disabled; }
@@ -682,7 +716,7 @@
                     v = !!v;
                     if (v !== this.isEnabled) {
                         this.el.disabled = !v;
-                        this.raisePropertyChanged('isEnabled');
+                        this.raisePropertyChanged(PROP_NAME.isEnabled);
                     }
                 }
                 get rows() {
@@ -699,7 +733,7 @@
                     v = (!v) ? 1 : v;
                     if (x !== v) {
                         el.rows = v;
-                        this.raisePropertyChanged('rows');
+                        this.raisePropertyChanged(PROP_NAME.rows);
                     }
                 }
                 get cols() {
@@ -716,7 +750,7 @@
                     v = (!v) ? 1 : v;
                     if (x !== v) {
                         el.cols = v;
-                        this.raisePropertyChanged('cols');
+                        this.raisePropertyChanged(PROP_NAME.cols);
                     }
                 }
                 get wrap() {
@@ -735,7 +769,7 @@
                         v = 'off';
                     if (x !== v) {
                         el.wrap = v;
-                        this.raisePropertyChanged('wrap');
+                        this.raisePropertyChanged(PROP_NAME.wrap);
                     }
                 }
             }
@@ -797,8 +831,8 @@
                             this.$el.css("opacity", 0.33);
                         }
                         else
-                            this.$el.css("opacity", 1.0);
-                        this.raisePropertyChanged('checked');
+                            this.$el.css(css.opacity, 1.0);
+                        this.raisePropertyChanged(PROP_NAME.checked);
                     }
                 }
                 get value() { return this.el.value; }
@@ -811,7 +845,7 @@
                         strv = '';
                     if (strv !== el.value) {
                         el.value = strv;
-                        this.raisePropertyChanged('value');
+                        this.raisePropertyChanged(PROP_NAME.value);
                     }
                 }
                 get name() { return this.el.name; }
@@ -861,7 +895,7 @@
                         v = '' + v;
                     if (x !== v) {
                         this.$el.val(v);
-                        this.raisePropertyChanged('value');
+                        this.raisePropertyChanged(PROP_NAME.value);
                     }
                 }
                 get text() {
@@ -880,7 +914,7 @@
                         v = '' + v;
                     if (x !== v) {
                         this.$el.text(v);
-                        this.raisePropertyChanged('text');
+                        this.raisePropertyChanged(PROP_NAME.text);
                     }
                 }
                 get html() {
@@ -899,7 +933,7 @@
                         v = '' + v;
                     if (x !== v) {
                         this.$el.html(v);
-                        this.raisePropertyChanged('html');
+                        this.raisePropertyChanged(PROP_NAME.html);
                     }
                 }
                 get preventDefault() {
@@ -908,7 +942,7 @@
                 set preventDefault(v: boolean) {
                     if (this._preventDefault !== v) {
                         this._preventDefault = v;
-                        this.raisePropertyChanged('preventDefault');
+                        this.raisePropertyChanged(PROP_NAME.preventDefault);
                     }
                 }
             }
@@ -991,7 +1025,7 @@
                     var x = this._imageSrc;
                     if (x !== v) {
                         this._updateImage(v);
-                        this.raisePropertyChanged('imageSrc');
+                        this.raisePropertyChanged(PROP_NAME.imageSrc);
                     }
                 }
                 get html() {
@@ -1010,7 +1044,7 @@
                         v = '' + v;
                     if (x !== v) {
                         this.$el.html(v);
-                        this.raisePropertyChanged('html');
+                        this.raisePropertyChanged(PROP_NAME.html);
                     }
                 }
                 get text() {
@@ -1029,7 +1063,7 @@
                         v = '' + v;
                     if (x !== v) {
                         this.$el.text(v);
-                        this.raisePropertyChanged('text');
+                        this.raisePropertyChanged(PROP_NAME.text);
                     }
                 }
                 get href() {
@@ -1048,7 +1082,7 @@
                         v = '' + v;
                     if (x !== v) {
                         this.el.href = v;
-                        this.raisePropertyChanged('href');
+                        this.raisePropertyChanged(PROP_NAME.href);
                     }
                 }
                 get preventDefault() {
@@ -1057,7 +1091,7 @@
                 set preventDefault(v:boolean) {
                     if (this._preventDefault !== v) {
                         this._preventDefault = v;
-                        this.raisePropertyChanged('preventDefault');
+                        this.raisePropertyChanged(PROP_NAME.preventDefault);
                     }
                 }
             }
@@ -1110,7 +1144,7 @@
                     if (this._isExpanded !== v) {
                         this._isExpanded = v;
                         this.invokeCommand();
-                        this.raisePropertyChanged('isExpanded');
+                        this.raisePropertyChanged(PROP_NAME.isExpanded);
                     }
                 }
             }
@@ -1126,8 +1160,8 @@
                     v = v === null ? '' : str;
                     if (x !== v) {
                         $el.text(v);
-                        this.raisePropertyChanged('text');
-                        this.raisePropertyChanged('value');
+                        this.raisePropertyChanged(PROP_NAME.text);
+                        this.raisePropertyChanged(PROP_NAME.value);
                     }
                 }
                 get value() { return this.text; }
@@ -1139,7 +1173,7 @@
                     v = v === null ? '' : str;
                     if (x !== v) {
                         this.el.innerHTML = v;
-                        this.raisePropertyChanged('html');
+                        this.raisePropertyChanged(PROP_NAME.html);
                     }
                 }
                 get color() {
@@ -1148,10 +1182,10 @@
                 }
                 set color(v) {
                     var $el = this.$el;
-                    var x = $el.css('color');
+                    var x = $el.css(css.color);
                     if (v !== x) {
-                        $el.css('color', v);
-                        this.raisePropertyChanged('color');
+                        $el.css(css.color, v);
+                        this.raisePropertyChanged(PROP_NAME.color);
                     }
                 }
                 get fontSize() {
@@ -1160,10 +1194,10 @@
                 }
                 set fontSize(v) {
                     var $el = this.$el;
-                    var x = $el.css('font-size');
+                    var x = $el.css(css.fontSize);
                     if (v !== x) {
-                        $el.css('font-size', v);
-                        this.raisePropertyChanged('fontSize');
+                        $el.css(css.fontSize, v);
+                        this.raisePropertyChanged(PROP_NAME.fontSize);
                     }
                 }
             }
@@ -1180,8 +1214,8 @@
                     var $el = this.$el;
                     var x = $el.css('border-top-color');
                     if (v !== x) {
-                        this.el.style.borderColor = v;
-                        this.raisePropertyChanged('borderColor');
+                        $el.css('border-color', v);
+                        this.raisePropertyChanged(PROP_NAME.borderColor);
                     }
                 }
                 get borderStyle() {
@@ -1193,7 +1227,7 @@
                     var x = $el.css('border-top-style');
                     if (v !== x) {
                         $el.css('border-style', v);
-                        this.raisePropertyChanged('borderStyle');
+                        this.raisePropertyChanged(PROP_NAME.borderStyle);
                     }
                 }
                 get width() {
@@ -1205,7 +1239,7 @@
                     var x = $el.width();
                     if (v !== x) {
                         $el.width(v);
-                        this.raisePropertyChanged('width');
+                        this.raisePropertyChanged(PROP_NAME.width);
                     }
                 }
                 get height() {
@@ -1217,7 +1251,7 @@
                     var x = $el.height();
                     if (v !== x) {
                         $el.height(v);
-                        this.raisePropertyChanged('height');
+                        this.raisePropertyChanged(PROP_NAME.height);
                     }
                 }
             }
@@ -1235,7 +1269,7 @@
                     var x = this.el.src;
                     if (x !== v) {
                         this.el.src = v;
-                        this.raisePropertyChanged('src');
+                        this.raisePropertyChanged(PROP_NAME.src);
                     }
                 }
             }

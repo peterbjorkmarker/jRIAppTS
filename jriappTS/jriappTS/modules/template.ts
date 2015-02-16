@@ -15,6 +15,13 @@
                 utils = s.utils;
             });
 
+            var PROP_NAME = {
+                dataContext: 'dataContext',
+                templateID: 'templateID',
+                template: 'template',
+                isEnabled: 'isEnabled'
+            };
+
             export interface ITemplateEvents {
                 templateLoading(template: Template): void;
                 templateLoaded(template: Template): void;
@@ -330,7 +337,7 @@
                 set dataContext(v) {
                     if (this.dataContext !== v) {
                         this._options.dataContext = v;
-                        this.raisePropertyChanged('dataContext');
+                        this.raisePropertyChanged(PROP_NAME.dataContext);
                         this._updateBindingSource();
                     }
                 }
@@ -339,7 +346,7 @@
                     if (this.templateID !== v) {
                         this._options.templateID = v;
                         this._loadTemplate();
-                        this.raisePropertyChanged('templateID');
+                        this.raisePropertyChanged(PROP_NAME.templateID);
                     }
                 }
                 get el() { return this._el; }
@@ -371,7 +378,7 @@
                         self._commandParam = { template: template, isLoaded: true };
                         self.invokeCommand();
                         self._commandParam = p;
-                        this.raisePropertyChanged('template');
+                        this.raisePropertyChanged(PROP_NAME.template);
                     }
                     catch (ex) {
                         this.handleError(ex, this);
@@ -391,7 +398,7 @@
                         self._commandParam = p;
                         self._template = null;
                     }
-                    this.raisePropertyChanged('template');
+                    this.raisePropertyChanged(PROP_NAME.template);
                 }
                 toString() {
                     return 'TemplateElView';
@@ -400,7 +407,7 @@
                 set isEnabled(v: boolean) {
                     if (this._isEnabled !== v) {
                         this._isEnabled = v;
-                        this.raisePropertyChanged('isEnabled');
+                        this.raisePropertyChanged(PROP_NAME.isEnabled);
                     }
                 }
                 get template() {

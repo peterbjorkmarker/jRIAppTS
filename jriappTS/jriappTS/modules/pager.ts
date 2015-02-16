@@ -33,6 +33,13 @@
                 dataSource: collMOD.BaseCollection<collMOD.ICollectionItem>;
             }
 
+            var PROP_NAME = {
+                dataSource: 'dataSource',
+                rowCount: 'rowCount',
+                currentPage: 'currentPage',
+                pager: 'pager'
+            };
+
             export class Pager extends RIAPP.BaseObject {
                 private _$el: JQuery;
                 private _objId: string;
@@ -192,9 +199,9 @@
                             }, 0);
                         }
                     }, self._objId);
-                    ds.addOnPropertyChange('pageIndex', self._onPageIndexChanged, self._objId, self);
-                    ds.addOnPropertyChange('pageSize', self._onPageSizeChanged, self._objId, self);
-                    ds.addOnPropertyChange('totalCount', self._onTotalCountChanged, self._objId, self);
+                    ds.addOnPropertyChange(collMOD.PROP_NAME.pageIndex, self._onPageIndexChanged, self._objId, self);
+                    ds.addOnPropertyChange(collMOD.PROP_NAME.pageSize, self._onPageSizeChanged, self._objId, self);
+                    ds.addOnPropertyChange(collMOD.PROP_NAME.totalCount, self._onTotalCountChanged, self._objId, self);
                     this._currentPage = ds.pageIndex + 1;
                     this._rowsPerPage = ds.pageSize;
                     this._rowCount = ds.totalCount;
@@ -317,7 +324,7 @@
                     this._options.dataSource = v;
                     if (!!this.dataSource)
                         this._bindDS();
-                    this.raisePropertyChanged('dataSource');
+                    this.raisePropertyChanged(PROP_NAME.dataSource);
                 }
                 get pageCount() {
                     var rowCount = this.rowCount, rowsPerPage = this.rowsPerPage, result;
@@ -340,7 +347,7 @@
                     if (this._rowCount != v) {
                         this._rowCount = v;
                         this._render();
-                        this.raisePropertyChanged('rowCount');
+                        this.raisePropertyChanged(PROP_NAME.rowCount);
                     }
                 }
                 get rowsPerPage() { return this._rowsPerPage; }
@@ -355,7 +362,7 @@
                     if (this._currentPage != v) {
                         this._currentPage = v;
                         this._render();
-                        this.raisePropertyChanged('currentPage');
+                        this.raisePropertyChanged(PROP_NAME.currentPage);
                     }
                 }
                 get useSlider() { return this._options.useSlider; }
@@ -436,8 +443,8 @@
                     this._pager = new Pager(opts);
                     this._pager.addOnDestroyed(function () {
                         self._pager = null;
-                        self.invokePropChanged('pager');
-                        self.raisePropertyChanged('pager');
+                        self.invokePropChanged(PROP_NAME.pager);
+                        self.raisePropertyChanged(PROP_NAME.pager);
                     });
                     super(app, el, options);
                 }
@@ -464,7 +471,7 @@
                         return;
                     if (this.dataSource !== v) {
                         this._pager.dataSource = v;
-                        this.raisePropertyChanged('dataSource');
+                        this.raisePropertyChanged(PROP_NAME.dataSource);
                     }
                 }
                 get pager() { return this._pager; }

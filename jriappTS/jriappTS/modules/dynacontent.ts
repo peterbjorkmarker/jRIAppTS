@@ -24,6 +24,13 @@
                 animate?: string;
             }
 
+            var PROP_NAME = {
+                template: 'template',
+                templateID: 'templateID',
+                dataContext: 'dataContext',
+                animation: 'animation'
+            };
+
             export class DynaContentElView extends elviewMOD.BaseElView implements templMOD.ITemplateEvents {
                 private _dataContext: any;
                 private _prevTemplateID: string;
@@ -76,14 +83,14 @@
                                         return;
                                     self._template.destroy();
                                     self._template = null;
-                                    self.raisePropertyChanged('template');
+                                    self.raisePropertyChanged(PROP_NAME.template);
 
                                 });
                             }
                             else {
                                 self._template.destroy();
                                 self._template = null;
-                                self.raisePropertyChanged('template');
+                                self.raisePropertyChanged(PROP_NAME.template);
                             }
                             return;
                         }
@@ -101,7 +108,7 @@
                                     dataContext: this._dataContext,
                                     templEvents: this
                                 });
-                            self.raisePropertyChanged('template');
+                            self.raisePropertyChanged(PROP_NAME.template);
                             return;
                         }
                         if (!!this._animation && !!this._template.loadedElem) {
@@ -148,7 +155,7 @@
                         this._prevTemplateID = this._templateID;
                         this._templateID = v;
                         this._templateChanging(old, v);
-                        this.raisePropertyChanged('templateID');
+                        this.raisePropertyChanged(PROP_NAME.templateID);
                     }
                 }
                 get dataContext() { return this._dataContext; }
@@ -158,14 +165,14 @@
                         if (!!this._template) {
                             this._template.dataContext = this._dataContext;
                         }
-                        this.raisePropertyChanged('dataContext');
+                        this.raisePropertyChanged(PROP_NAME.dataContext);
                     }
                 }
                 get animation() { return this._animation; }
                 set animation(v) {
                     if (this._animation !== v) {
                         this._animation = v;
-                        this.raisePropertyChanged('animation');
+                        this.raisePropertyChanged(PROP_NAME.animation);
                     }
                 }
             }

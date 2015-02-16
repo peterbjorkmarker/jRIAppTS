@@ -269,6 +269,20 @@
                 _fn_traverseChanges(val.fieldName, val, fn);
             }
 
+            export var PROP_NAME = {
+                hasChanges: 'hasChanges',
+                isSubmitOnDelete: 'isSubmitOnDelete',
+                isInitialized: 'isInitialized',
+                isBusy: 'isBusy',
+                isSubmiting: 'isSubmiting',
+                isPagingEnabled: 'isPagingEnabled',
+                parentItem: 'parentItem',
+                totalCount: 'totalCount',
+                loadPageCount: 'loadPageCount',
+                isClearCacheOnEveryLoad: 'isClearCacheOnEveryLoad',
+                isRefreshing: 'isRefreshing'
+            };
+
             export class DataCache extends RIAPP.BaseObject {
                 private _query: DataQuery<IEntityItem>;
                 private _cache: ICachedPage[];
@@ -367,7 +381,7 @@
                                 }
                                 page.items.push(item);
                                 keyMap[item._key] = item;
-                                item._aspect._isCached = true;
+                                item._aspect.isCached = true;
                             }
                             else {
                                 return;
@@ -382,7 +396,7 @@
                         for (j = 0; j < items.length; j += 1) {
                             item = items[j];
                             if (!!item && item._key !== null) {
-                                item._aspect._isCached = false;
+                                item._aspect.isCached = false;
                                 if (!dbSet.getItemByKey(item._key))
                                     item._aspect.destroy();
                             }
@@ -401,7 +415,7 @@
                         item = items[j];
                         if (!!item && item._key !== null) {
                             delete this._itemsByKey[item._key];
-                            item._aspect._isCached = false;
+                            item._aspect.isCached = false;
                             if (!dbSet.getItemByKey(item._key))
                                 item._aspect.destroy();
                         }
@@ -463,7 +477,7 @@
                         v = 0;
                     if (v !== this._totalCount) {
                         this._totalCount = v;
-                        this.raisePropertyChanged('totalCount');
+                        this.raisePropertyChanged(PROP_NAME.totalCount);
                     }
                 }
                 get cacheSize() { return this._cache.length; }
@@ -668,14 +682,14 @@
                         if (v === 1) {
                             this._clearCache();
                         }
-                        this.raisePropertyChanged('loadPageCount');
+                        this.raisePropertyChanged(PROP_NAME.loadPageCount);
                     }
                 }
                 get isClearCacheOnEveryLoad() { return this._isClearCacheOnEveryLoad; }
                 set isClearCacheOnEveryLoad(v) {
                     if (this._isClearCacheOnEveryLoad != v) {
                         this._isClearCacheOnEveryLoad = v;
-                        this.raisePropertyChanged('isClearCacheOnEveryLoad');
+                        this.raisePropertyChanged(PROP_NAME.isClearCacheOnEveryLoad);
                     }
                 }
                 get isCacheValid() { return !!this._dataCache && !this._cacheInvalidated; }
@@ -1132,7 +1146,7 @@
                         coll.removeItem(this.getItem());
                     }
                     coll._onEditing(this.getItem(), false, true);
-                    this.raisePropertyChanged('isEditing');
+                    this.raisePropertyChanged(collMOD.PROP_NAME.isEditing);
                     return true;
                 }
                 getDbContext(): DbContext {
@@ -1181,15 +1195,15 @@
                 get _serverTimezone() { return this.getDbContext().serverTimezone; }
                 get _collection() { return this.__dbSet; }
                 get _dbSet() { return this.__dbSet; }
-                get _isRefreshing() { return this.__isRefreshing; }
-                set _isRefreshing(v) {
+                get isRefreshing() { return this.__isRefreshing; }
+                set isRefreshing(v) {
                     if (this.__isRefreshing !== v) {
                         this.__isRefreshing = v;
-                        this.raisePropertyChanged('_isRefreshing');
+                        this.raisePropertyChanged(PROP_NAME.isRefreshing);
                     }
                 }
-                get _isCached() { return this.__isCached; }
-                set _isCached(v) { this.__isCached = v; }
+                get isCached() { return this.__isCached; }
+                set isCached(v) { this.__isCached = v; }
                 get isHasChanges() { return this.__changeType !== collMOD.STATUS.NONE; }
             }
 
@@ -1424,7 +1438,7 @@
                     this._changeCache = {};
                     this._changeCount = 0;
                     if (old !== this._changeCount)
-                        this.raisePropertyChanged('hasChanges');
+                        this.raisePropertyChanged(PROP_NAME.hasChanges);
                 }
                 protected _onPageChanging() {
                     var res = super._onPageChanging();
@@ -1451,7 +1465,7 @@
                 }
                 protected _destroyItems() {
                     this._items.forEach(function (item) {
-                        if (item._aspect._isCached)
+                        if (item._aspect.isCached)
                             item._aspect.removeNSHandlers(null);
                         else
                             item._aspect.destroy();
@@ -1610,7 +1624,7 @@
 
                         if (newItems.length > 0) {
                             this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
-                            this.raisePropertyChanged('count');
+                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
                         }
 
                         if (!!data.fn_beforeFillEnd) {
@@ -1656,7 +1670,7 @@
 
                         if (fetchedItems.length > 0) {
                             this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.ADDED, items: fetchedItems, pos: positions });
-                            this.raisePropertyChanged('count');
+                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
                         }
                     }
                     finally {
@@ -1743,7 +1757,7 @@
                         this._changeCache[item._key] = item;
                         this._changeCount += 1;
                         if (this._changeCount === 1)
-                            this.raisePropertyChanged('hasChanges');
+                            this.raisePropertyChanged(PROP_NAME.hasChanges);
                     }
                 }
                 _removeFromChanged(key: string) {
@@ -1753,7 +1767,7 @@
                         delete this._changeCache[key];
                         this._changeCount -= 1;
                         if (this._changeCount === 0)
-                            this.raisePropertyChanged('hasChanges');
+                            this.raisePropertyChanged(PROP_NAME.hasChanges);
                     }
                 }
                 //occurs when item changeType Changed (not used in simple collections)
@@ -1908,7 +1922,7 @@
                 set isSubmitOnDelete(v:boolean) {
                     if (this._isSubmitOnDelete !== v) {
                         this._isSubmitOnDelete = !!v;
-                        this.raisePropertyChanged('isSubmitOnDelete');
+                        this.raisePropertyChanged(PROP_NAME.isSubmitOnDelete);
                     }
                 }
             }
@@ -1933,7 +1947,7 @@
                 protected _dbSetCreated(dbSet: DbSet<IEntityItem, DbContext>) {
                     var self = this;
                     this._arrDbSets.push(dbSet);
-                    dbSet.addOnPropertyChange('hasChanges', function (sender, args) {
+                    dbSet.addOnPropertyChange(PROP_NAME.hasChanges, function (sender, args) {
                         self._dbContext._onDbSetHasChangesChanged(sender);
                     }, null);
                 }
@@ -2372,7 +2386,7 @@
                         if (!!opts.permissions) {
                             self._updatePermissions(opts.permissions);
                             self._isInitialized = true;
-                            self.raisePropertyChanged('isInitialized');
+                            self.raisePropertyChanged(PROP_NAME.isInitialized);
                             return;
                         }
 
@@ -2391,7 +2405,7 @@
                                 self._updatePermissions(JSON.parse(permissions));
                                 self.isBusy = false;
                                 self._isInitialized = true;
-                                self.raisePropertyChanged('isInitialized');
+                                self.raisePropertyChanged(PROP_NAME.isInitialized);
                             }
                             catch (ex) {
                                 self.isBusy = false;
@@ -2452,7 +2466,7 @@
                             var fn_onEnd = function () {
                                 self.isBusy = false;
                                 dbSet.isLoading = false;
-                                item._aspect._isRefreshing = false;
+                                item._aspect.isRefreshing = false;
                             },
                                 fn_onErr = function (ex) {
                                     fn_onEnd();
@@ -2463,7 +2477,7 @@
                                     fn_onEnd();
                                 };
 
-                            item._aspect._isRefreshing = true;
+                            item._aspect.isRefreshing = true;
                             self.isBusy = true;
                             dbSet.isLoading = true;
                             try {
@@ -2517,7 +2531,7 @@
                         }
                     }
                     if (this._hasChanges !== old) {
-                        this.raisePropertyChanged('hasChanges');
+                        this.raisePropertyChanged(PROP_NAME.hasChanges);
                     }
                 }
                 _load(query: DataQuery<IEntityItem>, isPageChanged: boolean): IPromise<IQueryResult<IEntityItem>> {
@@ -2810,14 +2824,14 @@
                     }
                     cur = this._isBusy > 0;
                     if (cur != old) {
-                        this.raisePropertyChanged('isBusy');
+                        this.raisePropertyChanged(PROP_NAME.isBusy);
                     }
                 }
                 get isSubmiting() { return this._isSubmiting; }
                 set isSubmiting(v) {
                     if (this._isSubmiting !== v) {
                         this._isSubmiting = v;
-                        this.raisePropertyChanged('isSubmiting');
+                        this.raisePropertyChanged(PROP_NAME.isSubmiting);
                     }
                 }
                 get serverTimezone() { return this._serverTimezone; }
@@ -3544,7 +3558,7 @@
                     this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.RESET, items: [] });
                     if (!isPageChanged)
                         this.pageIndex = 0;
-                    this.raisePropertyChanged('count');
+                    this.raisePropertyChanged(collMOD.PROP_NAME.count);
                 }
                 protected _refresh(isPageChanged: boolean): void {
                     var items;
@@ -3605,7 +3619,7 @@
 
                         if (newItems.length > 0) {
                             this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
-                            this.raisePropertyChanged('count');
+                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
                         }
                     } finally {
                         this._onFillEnd({
@@ -3882,7 +3896,7 @@
                 set isPagingEnabled(v) {
                     if (this._options.enablePaging !== v) {
                         this._options.enablePaging = v;
-                        this.raisePropertyChanged('isPagingEnabled');
+                        this.raisePropertyChanged(PROP_NAME.isPagingEnabled);
                         this._refresh(false);
                     }
                 }
@@ -3989,7 +4003,7 @@
                 set parentItem(v: IEntityItem) {
                     if (this._parentItem !== v) {
                         this._parentItem = v;
-                        this.raisePropertyChanged('parentItem');
+                        this.raisePropertyChanged(PROP_NAME.parentItem);
                         var self = this;
                         if (this.items.length > 0) {
                             this.clear();

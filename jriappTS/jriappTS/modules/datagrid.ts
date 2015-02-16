@@ -39,6 +39,17 @@
                 colSortAsc: 'sort-asc',
                 colSortDesc: 'sort-desc'
             };
+            var PROP_NAME = {
+                isCurrent: 'isCurrent',
+                isSelected: 'isSelected',
+                sortOrder: 'sortOrder',
+                checked: 'checked',
+                editingRow: 'editingRow',
+                dataSource: 'dataSource',
+                currentRow: 'currentRow',
+                grid: 'grid',
+                animation: 'animation'
+            };
             export const enum ROW_ACTION { OK, EDIT, CANCEL, DELETE }
 
             var _columnWidthInterval, _gridsCount: number = 0;
@@ -637,14 +648,14 @@
                         else {
                             $el.removeClass(css.rowHighlight);
                         }
-                        this.raisePropertyChanged('isCurrent');
+                        this.raisePropertyChanged(PROP_NAME.isCurrent);
                     }
                 }
                 get isSelected() { return this._isSelected; }
                 set isSelected(v) {
                     if (this._isSelected != v) {
                         this._isSelected = v;
-                        this.raisePropertyChanged('isSelected');
+                        this.raisePropertyChanged(PROP_NAME.isSelected);
                         this.grid._onRowSelectionChanged(this);
                     }
                 }
@@ -1042,7 +1053,7 @@
                                 this.$div.addClass(css.colSortable);
                     }
                     this._sortOrder = v;
-                    this.raisePropertyChanged('sortOrder');
+                    this.raisePropertyChanged(PROP_NAME.sortOrder);
                 }
             }
 
@@ -1091,7 +1102,7 @@
                         this._val = v;
                         if (!!$el)
                             $el.prop('checked',!!this._val);
-                        this.raisePropertyChanged('checked');
+                        this.raisePropertyChanged(PROP_NAME.checked);
                     }
                 }
                 destroy() {
@@ -1701,7 +1712,7 @@
                         row._onEndEdit(isCanceled);
                         this._editingRow = null;
                     }
-                    this.raisePropertyChanged('editingRow');
+                    this.raisePropertyChanged(PROP_NAME.editingRow);
                 }
                 protected _onItemAdded(sender, args: collMOD.ICollItemAddedArgs<collMOD.ICollectionItem>) {
                     var item = args.item, row = this._rowMap[item._key];
@@ -1743,7 +1754,7 @@
                     if (!ds) return;
                     ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
                     ds.addOnFill(self._onDSFill, self._objId, self);
-                    ds.addOnPropertyChange('currentItem', self._onDSCurrentChanged, self._objId, self);
+                    ds.addOnPropertyChange(collMOD.PROP_NAME.currentItem, self._onDSCurrentChanged, self._objId, self);
                     ds.addOnBeginEdit(function (sender, args) {
                         self._onItemEdit(args.item, true, false);
                     }, self._objId);
@@ -2057,7 +2068,7 @@
                     this._options.dataSource = v;
                     if (!!this.dataSource)
                         this._bindDS();
-                    this.raisePropertyChanged('dataSource');
+                    this.raisePropertyChanged(PROP_NAME.dataSource);
                 }
                 get rows() { return this._rows; }
                 get columns() { return this._columns; }
@@ -2082,7 +2093,7 @@
                     else
                         ds.currentItem = null;
                     if (isChanged)
-                        this.raisePropertyChanged('currentRow');
+                        this.raisePropertyChanged(PROP_NAME.currentRow);
                 }
                 get editingRow() { return this._editingRow; }
                 get isCanEdit() {
@@ -2171,8 +2182,8 @@
                     }, this.uniqueID);
                     this._grid.addOnDestroyed(function (s, args) {
                         self._grid = null;
-                        self.invokePropChanged('grid');
-                        self.raisePropertyChanged('grid');
+                        self.invokePropChanged(PROP_NAME.grid);
+                        self.raisePropertyChanged(PROP_NAME.grid);
                     }, this.uniqueID);
 
                 }
@@ -2192,7 +2203,7 @@
                         return;
                     if (this.dataSource !== v) {
                         this.grid.dataSource = v;
-                        this.raisePropertyChanged('dataSource');
+                        this.raisePropertyChanged(PROP_NAME.dataSource);
                     }
                 }
                 get grid() { return this._grid; }
@@ -2217,7 +2228,7 @@
                         return;
                     if (this.animation !== v) {
                         this._grid.options.animation = v;
-                        this.raisePropertyChanged('animation');
+                        this.raisePropertyChanged(PROP_NAME.animation);
                     }
                 }
             }
