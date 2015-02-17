@@ -1232,7 +1232,7 @@
                 }
                 waitForNotLoading(callback, callbackArgs: any[], syncCheck: boolean, groupName: string) {
                     this._waitQueue.enQueue({
-                        prop: 'isLoading',
+                        prop: PROP_NAME.isLoading,
                         groupName: null,
                         predicate: function (val) {
                             return !val;

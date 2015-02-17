@@ -1109,7 +1109,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.5.0';
+        Global.vesion = '2.5.5.1';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -6371,7 +6371,7 @@ var RIAPP;
                 };
                 BaseCollection.prototype.waitForNotLoading = function (callback, callbackArgs, syncCheck, groupName) {
                     this._waitQueue.enQueue({
-                        prop: 'isLoading',
+                        prop: PROP_NAME.isLoading,
                         groupName: null,
                         predicate: function (val) {
                             return !val;
@@ -16324,7 +16324,7 @@ var RIAPP;
                 };
                 DbContext.prototype.waitForNotBusy = function (callback, callbackArgs) {
                     this._waitQueue.enQueue({
-                        prop: 'isBusy',
+                        prop: PROP_NAME.isBusy,
                         groupName: null,
                         predicate: function (val) {
                             return !val;
@@ -16335,7 +16335,7 @@ var RIAPP;
                 };
                 DbContext.prototype.waitForNotSubmiting = function (callback, callbackArgs, groupName) {
                     this._waitQueue.enQueue({
-                        prop: 'isSubmiting',
+                        prop: PROP_NAME.isSubmiting,
                         predicate: function (val) {
                             return !val;
                         },
@@ -16347,7 +16347,7 @@ var RIAPP;
                 };
                 DbContext.prototype.waitForInitialized = function (callback, callbackArgs) {
                     this._waitQueue.enQueue({
-                        prop: 'isInitialized',
+                        prop: PROP_NAME.isInitialized,
                         groupName: 'dbContext',
                         predicate: function (val) {
                             return !!val;

@@ -2325,7 +2325,7 @@
                 }
                 protected waitForNotBusy(callback, callbackArgs) {
                     this._waitQueue.enQueue({
-                        prop: 'isBusy',
+                        prop: PROP_NAME.isBusy,
                         groupName: null,
                         predicate: function (val) {
                             return !val;
@@ -2336,7 +2336,7 @@
                 }
                 protected waitForNotSubmiting(callback, callbackArgs, groupName) {
                     this._waitQueue.enQueue({
-                        prop: 'isSubmiting',
+                        prop: PROP_NAME.isSubmiting,
                         predicate: function (val) {
                             return !val;
                         },
@@ -2348,7 +2348,7 @@
                 }
                 protected waitForInitialized(callback, callbackArgs) {
                     this._waitQueue.enQueue({
-                        prop: 'isInitialized',
+                        prop: PROP_NAME.isInitialized,
                         groupName: 'dbContext',
                         predicate: function (val) {
                             return !!val;
