@@ -269,8 +269,8 @@
                 _fn_traverseChanges(val.fieldName, val, fn);
             }
 
-            export var PROP_NAME = {
-                hasChanges: 'hasChanges',
+            var PROP_NAME = {
+                isHasChanges: 'isHasChanges',
                 isSubmitOnDelete: 'isSubmitOnDelete',
                 isInitialized: 'isInitialized',
                 isBusy: 'isBusy',
@@ -534,7 +534,7 @@
                     var fld = this.getFieldInfo(fieldName);
                     if (!fld)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
-                    var stz = this._serverTimezone, dcnv = fld.dateConversion, vals:any[]=[];
+                    var stz = this.serverTimezone, dcnv = fld.dateConversion, vals:any[]=[];
                     if (!utils.check.isArray(value))
                         vals = [value];
                     else
@@ -641,7 +641,7 @@
                     return 'DataQuery';
                 }
                 get _queryInfo() { return this.__queryInfo; }
-                get _serverTimezone() { return this._dbSet.dbContext.serverTimezone; }
+                get serverTimezone() { return this._dbSet.dbContext.serverTimezone; }
                 get entityType() { return this._dbSet.entityType; }
                 get dbSet() { return this._dbSet; }
                 get dbSetName() { return this._dbSet.dbSetName; }
@@ -699,27 +699,24 @@
             }
 
             export class EntityAspect<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem, DbContext>, TDbContext extends DbContext> extends collMOD.ItemAspect<TItem> {
-                private __changeType: collMOD.STATUS;
-                private __isRefreshing: boolean;
-                private __isCached: boolean;
-                private __dbSet: TDBSet;
-                private _srvRowKey: string;
+                private __srvKey: string;
+                private _isRefreshing: boolean;
+                private _isCached: boolean;
+                private _dbSet: TDBSet;
                 private _origVals: { [name: string]: any; };
-                private _saveChangeType: collMOD.STATUS;
+                private _savedStatus: collMOD.STATUS;
                 protected _item: TItem;
 
                 constructor(itemType: IEntityConstructor<TItem>, dbSet: TDBSet, row: IRowData, names: IFieldName[]) {
-                    this.__dbSet = dbSet;
+                    this._dbSet = dbSet;
                     super();
                     var self = this;
-                    this.__changeType = collMOD.STATUS.NONE;
-                    this.__isRefreshing = false;
-                    this.__isCached = false;
-
-                    this._srvRowKey = null;
+                    this.__srvKey = null;
+                    this._isRefreshing = false;
+                    this._isCached = false;
                     this._origVals = null;
-                    this._saveChangeType = null;
-                    var fieldInfos = this._dbSet.getFieldInfos(), fld: collMOD.IFieldInfo;
+                    this._savedStatus = null;
+                    var fieldInfos = this.dbSet.getFieldInfos(), fld: collMOD.IFieldInfo;
                     for (var i = 0, len = fieldInfos.length; i < len; i += 1)
                     {
                         fld = fieldInfos[i];
@@ -743,16 +740,16 @@
                 protected _initRowInfo(row: IRowData, names: IFieldName[]) {
                     if (!row)
                         return;
-                    this._srvRowKey = row.k;
+                    this.__srvKey = row.k;
                     this._key = row.k;
                     this._processValues('', row.v, names);
                 }
                 protected _processValues(path: string, values: any[], names: IFieldName[]) {
-                    var self = this, stz = self._serverTimezone;
+                    var self = this, stz = self.serverTimezone;
                     values.forEach(function (value, index) {
-                        var name: IFieldName = names[index], fieldName = path + name.n, fld = self._dbSet.getFieldInfo(fieldName), val;
+                        var name: IFieldName = names[index], fieldName = path + name.n, fld = self.dbSet.getFieldInfo(fieldName), val;
                         if (!fld)
-                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fieldName));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self.dbSetName, fieldName));
 
                         if (fld.fieldType == collMOD.FIELD_TYPE.Object) {
                             //for object fields the value should be an array of values - recursive processing
@@ -783,7 +780,7 @@
                     }
                 }
                 protected _getValueChange(fullName: string, fld: collMOD.IFieldInfo, changedOnly: boolean): IValueChange {
-                    var self = this, dbSet = self._dbSet, res: IValueChange, i: number, len: number, tmp: IValueChange;
+                    var self = this, dbSet = self.dbSet, res: IValueChange, i: number, len: number, tmp: IValueChange;
                     if (fn_isNotSubmittable(fld))
                         return <IValueChange>null;
 
@@ -826,7 +823,7 @@
                     }
                 }
                 protected _getValueChanges(changedOnly: boolean): IValueChange[] {
-                    var self = this, flds = this._dbSet.getFieldInfos();
+                    var self = this, flds = this.dbSet.getFieldInfos();
                     var res = flds.map((fld) => {
                         return self._getValueChange(fld.fieldName, fld, changedOnly);
                     });
@@ -845,9 +842,9 @@
                 }
                 protected _fldChanged(fieldName: string, fieldInfo: collMOD.IFieldInfo, oldV, newV) {
                     if (!(fieldInfo.fieldType == collMOD.FIELD_TYPE.ClientOnly || fieldInfo.fieldType == collMOD.FIELD_TYPE.ServerCalculated)) {
-                        switch (this._changeType) {
+                        switch (this.status) {
                             case collMOD.STATUS.NONE:
-                                this._changeType = collMOD.STATUS.UPDATED;
+                                this.setStatus(collMOD.STATUS.UPDATED);
                                 break;
                         }
                     }
@@ -855,7 +852,7 @@
                     return true;
                 }
                 protected _skipValidate(fieldInfo: collMOD.IFieldInfo, val) {
-                    var childToParentNames = this._dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
+                    var childToParentNames = this.dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
                     if (!!childToParentNames && val === null) {
                         for (var i = 0, len = childToParentNames.length; i < len; i += 1) {
                             res = !!this._getFieldVal(childToParentNames[i]);
@@ -868,47 +865,58 @@
                 protected _beginEdit() {
                     if (!super._beginEdit())
                         return false;
-                    this._saveChangeType = this._changeType;
+                    this._savedStatus = this.status;
                     return true;
                 }
                 protected _endEdit() {
                     if (!super._endEdit())
                         return false;
-                    this._saveChangeType = null;
+                    this._savedStatus = null;
                     return true;
                 }
                 protected getDbSet() {
-                    return this.__dbSet;
+                    return this._dbSet;
+                }
+                protected setStatus(v: collMOD.STATUS) {
+                    if (this._status !== v) {
+                        var oldStatus = this._status;
+                        this._status = v;
+                        if (v !== collMOD.STATUS.NONE)
+                            this.dbSet._addToChanged(this.getItem());
+                        else
+                            this.dbSet._removeFromChanged(this._key);
+                        this.dbSet._onItemStatusChanged(this.getItem(), oldStatus);
+                    }
                 }
                 _getCalcFieldVal(fieldName: string) {
                     if (this._isDestroyCalled)
                         return null;
-                    return this._dbSet._getCalcFieldVal(fieldName, this.getItem());
+                    return this.dbSet._getCalcFieldVal(fieldName, this.getItem());
                 }
                 _getNavFieldVal(fieldName: string) {
                     if (this._isDestroyCalled) {
                         return null;
                     }
-                    return this._dbSet._getNavFieldVal(fieldName, this.getItem());
+                    return this.dbSet._getNavFieldVal(fieldName, this.getItem());
                 }
                 _setNavFieldVal(fieldName: string, value: any) {
-                    var dbSet = this._dbSet
-                    this._dbSet._setNavFieldVal(fieldName, this.getItem(), value)
+                    var dbSet = this.dbSet
+                    dbSet._setNavFieldVal(fieldName, this.getItem(), value)
                 }
                 _updateKeys(srvKey: string) {
-                    this._srvRowKey = srvKey;
+                    this.__srvKey = srvKey;
                     this._key = srvKey;
                 }
                 _checkCanRefresh() {
-                    if (this._key === null || this._changeType === collMOD.STATUS.ADDED) {
+                    if (this._key === null || this.status === collMOD.STATUS.ADDED) {
                         throw new Error(RIAPP.ERRS.ERR_OPER_REFRESH_INVALID);
                     }
                 }
                 _refreshValue(val:any, fullName: string, refreshMode: REFRESH_MODE) {
-                    var self = this, fld = self._dbSet.getFieldInfo(fullName);
+                    var self = this, fld = self.dbSet.getFieldInfo(fullName);
                     if (!fld)
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fullName));
-                    var stz = self._serverTimezone, newVal, oldVal, oldValOrig, dataType = fld.dataType, dcnv = fld.dateConversion;
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self.dbSetName, fullName));
+                    var stz = self.serverTimezone, newVal, oldVal, oldValOrig, dataType = fld.dataType, dcnv = fld.dateConversion;
                     newVal = valueUtils.parseValue(val, dataType, dcnv, stz);
                     oldVal = baseUtils.getValue(self._vals,fullName);
                     switch (refreshMode) {
@@ -954,7 +962,7 @@
                     }
                 }
                 _refreshValues(rowInfo: IRowInfo, refreshMode: REFRESH_MODE) {
-                    var self = this, oldCT = this._changeType;
+                    var self = this, oldStatus = this.status;
                     if (!this._isDestroyed) {
                         if (!refreshMode) {
                             refreshMode = REFRESH_MODE.RefreshCurrent;
@@ -967,11 +975,11 @@
                             });
                         });
 
-                        if (oldCT === collMOD.STATUS.UPDATED) {
+                        if (oldStatus === collMOD.STATUS.UPDATED) {
                             var changes = this._getValueChanges(true);
                             if (changes.length === 0) {
                                 this._origVals = null;
-                                this._changeType = collMOD.STATUS.NONE;
+                                this.setStatus(collMOD.STATUS.NONE);
                             }
                         }
                     }
@@ -979,7 +987,7 @@
                 _getRowInfo() {
                     var res: IRowInfo = {
                         values: this._getValueChanges(false),
-                        changeType: this._changeType,
+                        changeType: this.status,
                         serverKey: this._srvKey,
                         clientKey: this._key,
                         error: null
@@ -995,12 +1003,12 @@
                     return baseUtils.getValue(this._vals,fieldName);
                 }
                 _setFieldVal(fieldName: string, val):boolean {
-                    var validation_error, error, dbSetName = this._dbSetName, dbSet = this._dbSet,
+                    var validation_error, error, dbSetName = this.dbSetName, dbSet = this.dbSet,
                         ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val,
                         fld = this.getFieldInfo(fieldName), res = false;
                     if (!fld)
                         throw new Error(baseUtils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
-                    if (!this._isEditing && !this._isUpdating)
+                    if (!this._isEditing && !this.isUpdating)
                         this.beginEdit();
                     try {
                         newV = this._checkVal(fld, newV);
@@ -1032,60 +1040,60 @@
                 }
                 _onAttaching() {
                     super._onAttaching();
-                    this.__changeType = collMOD.STATUS.ADDED;
+                    this._status = collMOD.STATUS.ADDED;
                 }
                 _onAttach() {
                     super._onAttach();
                     if (this._key === null)
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
-                    this._dbSet._addToChanged(this.getItem());
+                    this.dbSet._addToChanged(this.getItem());
                 }
                 deleteItem() {
                     return this.deleteOnSubmit();
                 }
                 deleteOnSubmit() {
-                    var oldCT = this._changeType, eset = this._dbSet, args: collMOD.ICancellableArgs<TItem> = { item: this.getItem(), isCancel: false };
-                    eset._onItemDeleting(args);
+                    var oldStatus = this.status, dbSet = this.dbSet, args: collMOD.ICancellableArgs<TItem> = { item: this.getItem(), isCancel: false };
+                    dbSet._onItemDeleting(args);
                     if (args.isCancel) {
                         return false;
                     }
                     if (this._key === null)
                         return false;
-                    if (oldCT === collMOD.STATUS.ADDED) {
-                        eset.removeItem(this.getItem());
+                    if (oldStatus === collMOD.STATUS.ADDED) {
+                        dbSet.removeItem(this.getItem());
                         return true;
                     }
-                    this._changeType = collMOD.STATUS.DELETED;
+                    this.setStatus(collMOD.STATUS.DELETED);
                     return true;
                 }
                 acceptChanges(rowInfo?: IRowInfo) {
-                    var oldCT = this._changeType, eset = this._dbSet;
+                    var oldStatus = this.status, dbSet = this.dbSet;
                     if (this._key === null)
                         return;
-                    if (oldCT !== collMOD.STATUS.NONE) {
-                        eset._onCommitChanges(this.getItem(), true, false, oldCT);
-                        if (oldCT === collMOD.STATUS.DELETED) {
-                            eset.removeItem(this.getItem());
+                    if (oldStatus !== collMOD.STATUS.NONE) {
+                        dbSet._onCommitChanges(this.getItem(), true, false, oldStatus);
+                        if (oldStatus === collMOD.STATUS.DELETED) {
+                            dbSet.removeItem(this.getItem());
                             return;
                         }
                         this._origVals = null;
                         if (!!this._saveVals)
                             this._saveVals = utils.cloneObj(this._vals);
-                        this._changeType = collMOD.STATUS.NONE;
-                        eset._removeAllErrors(this.getItem());
+                        this.setStatus(collMOD.STATUS.NONE);
+                        dbSet._removeAllErrors(this.getItem());
                         if (!!rowInfo)
                             this._refreshValues(rowInfo, REFRESH_MODE.CommitChanges);
-                        eset._onCommitChanges(this.getItem(), false, false, oldCT);
+                        dbSet._onCommitChanges(this.getItem(), false, false, oldStatus);
                     }
                 }
                 rejectChanges() {
-                    var self = this, oldCT = self._changeType, eset = self._dbSet;
+                    var self = this, oldStatus = self.status, dbSet = self.dbSet;
                     if (!self._key)
                         return;
-                    if (oldCT !== collMOD.STATUS.NONE) {
-                        eset._onCommitChanges(self.getItem(), true, true, oldCT);
-                        if (oldCT === collMOD.STATUS.ADDED) {
-                            eset.removeItem(this.getItem());
+                    if (oldStatus !== collMOD.STATUS.NONE) {
+                        dbSet._onCommitChanges(self.getItem(), true, true, oldStatus);
+                        if (oldStatus === collMOD.STATUS.ADDED) {
+                            dbSet.removeItem(this.getItem());
                             return;
                         }
 
@@ -1097,14 +1105,14 @@
                                 self._saveVals = utils.cloneObj(self._vals);
                             }
                         }
-                        self._changeType = collMOD.STATUS.NONE;
-                        eset._removeAllErrors(this.getItem());
+                        self.setStatus(collMOD.STATUS.NONE);
+                        dbSet._removeAllErrors(this.getItem());
                         changes.forEach(function (v) {
                             fn_traverseChanges(v, (fullName, vc) => {
-                                self._onFieldChanged(fullName, eset.getFieldInfo(fullName));
+                                self._onFieldChanged(fullName, dbSet.getFieldInfo(fullName));
                             });
                         });
-                        eset._onCommitChanges(this.getItem(), false, true, oldCT);
+                        dbSet._onCommitChanges(this.getItem(), false, true, oldStatus);
                     }
                 }
                 submitChanges(): IVoidPromise {
@@ -1132,25 +1140,24 @@
                 cancelEdit() {
                     if (!this._isEditing)
                         return false;
-                    var self = this, changes = this._getValueChanges(true), isNew = this._isNew, coll = this._dbSet;
-                    this._isEditing = false;
+                    var self = this, changes = this._getValueChanges(true), isNew = this.isNew, dbSet = this.dbSet;
                     this._vals = this._saveVals;
                     this._saveVals = null;
-                    this._changeType = this._saveChangeType;
-                    this._saveChangeType = null;
-                    coll._removeAllErrors(this.getItem());
+                    this.setStatus(this._savedStatus);
+                    this._savedStatus = null;
+                    dbSet._removeAllErrors(this.getItem());
                     changes.forEach(function (v) {
                         self.raisePropertyChanged(v.fieldName);
                     });
                     if (isNew && this._notEdited) {
-                        coll.removeItem(this.getItem());
+                        dbSet.removeItem(this.getItem());
                     }
-                    coll._onEditing(this.getItem(), false, true);
-                    this.raisePropertyChanged(collMOD.PROP_NAME.isEditing);
+                    this._isEditing = false;
+                    dbSet._onEditing(this.getItem(), false, true);
                     return true;
                 }
                 getDbContext(): DbContext {
-                    return <TDbContext>this.__dbSet.dbContext;
+                    return <TDbContext>this._dbSet.dbContext;
                 }
                 getItem():TItem {
                     return this._item;
@@ -1162,49 +1169,37 @@
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    this.__dbSet = null;
-                    this._srvRowKey = null;
+                    this._dbSet = null;
+                    this.__srvKey = null;
                     this._origVals = null;
-                    this._saveChangeType = null;
-                    this.__isRefreshing = false;
-                    this.__isCached = false;
+                    this._savedStatus = null;
+                    this._isRefreshing = false;
+                    this._isCached = false;
                     if (!!this._item && !this._item.getIsDestroyCalled()) {
                         this._item.destroy();
                     }
                     this._item = null;
                     super.destroy();
                 }
-                get _isCanSubmit() { return true; }
-                get _changeType() { return this.__changeType; }
-                set _changeType(v) {
-                    if (this.__changeType !== v) {
-                        var oldChangeType = this.__changeType;
-                        this.__changeType = v;
-                        if (v !== collMOD.STATUS.NONE)
-                            this._dbSet._addToChanged(this.getItem());
-                        else
-                            this._dbSet._removeFromChanged(this._key);
-                        this._dbSet._onItemStatusChanged(this.getItem(), oldChangeType);
-                    }
-                }
-                get _isNew() { return this.__changeType === collMOD.STATUS.ADDED; }
-                get _isDeleted() { return this.__changeType === collMOD.STATUS.DELETED; }
-                get _entityType() { return this.__dbSet.entityType; }
-                get _srvKey() { return this._srvRowKey; }
-                get _dbSetName() { return this.__dbSet.dbSetName; }
-                get _serverTimezone() { return this.getDbContext().serverTimezone; }
-                get _collection() { return this.__dbSet; }
-                get _dbSet() { return this.__dbSet; }
-                get isRefreshing() { return this.__isRefreshing; }
+                get _entityType() { return this._dbSet.entityType; }
+                get _srvKey() { return this.__srvKey; }
+                get isCanSubmit() { return true; }
+                get isNew() { return this._status === collMOD.STATUS.ADDED; }
+                get isDeleted() { return this._status === collMOD.STATUS.DELETED; }
+                get dbSetName() { return this._dbSet.dbSetName; }
+                get serverTimezone() { return this.getDbContext().serverTimezone; }
+                get collection() { return this._dbSet; }
+                get dbSet() { return this._dbSet; }
+                get isRefreshing() { return this._isRefreshing; }
                 set isRefreshing(v) {
-                    if (this.__isRefreshing !== v) {
-                        this.__isRefreshing = v;
+                    if (this._isRefreshing !== v) {
+                        this._isRefreshing = v;
                         this.raisePropertyChanged(PROP_NAME.isRefreshing);
                     }
                 }
-                get isCached() { return this.__isCached; }
-                set isCached(v) { this.__isCached = v; }
-                get isHasChanges() { return this.__changeType !== collMOD.STATUS.NONE; }
+                get isCached() { return this._isCached; }
+                set isCached(v) { this._isCached = v; }
+                get isHasChanges() { return this._status !== collMOD.STATUS.NONE; }
             }
 
             export interface IDbSetLoadedArgs<TItem extends IEntityItem> { items: TItem[];  }
@@ -1438,14 +1433,14 @@
                     this._changeCache = {};
                     this._changeCount = 0;
                     if (old !== this._changeCount)
-                        this.raisePropertyChanged(PROP_NAME.hasChanges);
+                        this.raisePropertyChanged(PROP_NAME.isHasChanges);
                 }
                 protected _onPageChanging() {
                     var res = super._onPageChanging();
                     if (!res) {
                         return res;
                     }
-                    if (this.hasChanges) {
+                    if (this.isHasChanges) {
                         this.rejectChanges();
                     }
                     return res;
@@ -1623,8 +1618,8 @@
                         });
 
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
-                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
+                            this._onItemsChanged({ changeType: collMOD.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
+                            this._onCountChanged();
                         }
 
                         if (!!data.fn_beforeFillEnd) {
@@ -1669,8 +1664,8 @@
                         }
 
                         if (fetchedItems.length > 0) {
-                            this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.ADDED, items: fetchedItems, pos: positions });
-                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
+                            this._onItemsChanged({ changeType: collMOD.COLL_CHANGE_TYPE.ADDED, items: fetchedItems, pos: positions });
+                            this._onCountChanged();
                         }
                     }
                     finally {
@@ -1690,15 +1685,15 @@
                         if (!item) {
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, key));
                         }
-                        var itemCT = item._aspect._changeType;
+                        var itemStatus = item._aspect.status;
                         item._aspect.acceptChanges(rowInfo);
-                        if (itemCT === collMOD.STATUS.ADDED) {
+                        if (itemStatus === collMOD.STATUS.ADDED) {
                             //on insert
                             delete self._itemsByKey[key];
                             item._aspect._updateKeys(rowInfo.serverKey);
                             self._itemsByKey[item._key] = item;
                             self._onItemsChanged({
-                                change_type: collMOD.COLL_CHANGE_TYPE.REMAP_KEY,
+                                changeType: collMOD.COLL_CHANGE_TYPE.REMAP_KEY,
                                 items: [item],
                                 old_key: key,
                                 new_key: item._key
@@ -1757,7 +1752,7 @@
                         this._changeCache[item._key] = item;
                         this._changeCount += 1;
                         if (this._changeCount === 1)
-                            this.raisePropertyChanged(PROP_NAME.hasChanges);
+                            this.raisePropertyChanged(PROP_NAME.isHasChanges);
                     }
                 }
                 _removeFromChanged(key: string) {
@@ -1767,13 +1762,13 @@
                         delete this._changeCache[key];
                         this._changeCount -= 1;
                         if (this._changeCount === 0)
-                            this.raisePropertyChanged(PROP_NAME.hasChanges);
+                            this.raisePropertyChanged(PROP_NAME.isHasChanges);
                     }
                 }
-                //occurs when item changeType Changed (not used in simple collections)
-                _onItemStatusChanged(item: TItem, oldChangeType: number) {
-                    super._onItemStatusChanged(item, oldChangeType);
-                    if (item._aspect._isDeleted && this.isSubmitOnDelete) {
+                //occurs when item Status Changed (not used in simple collections)
+                _onItemStatusChanged(item: TItem, oldStatus: collMOD.STATUS) {
+                    super._onItemStatusChanged(item, oldStatus);
+                    if (item._aspect.isDeleted && this.isSubmitOnDelete) {
                         this.dbContext.submitChanges();
                     }
                 }
@@ -1909,7 +1904,7 @@
                 get dbSetName() { return this._options.dbSetName; }
                 get entityType() { return this._entityType; }
                 get query() { return this._query; }
-                get hasChanges():boolean { return this._changeCount > 0; }
+                get isHasChanges():boolean { return this._changeCount > 0; }
                 get cacheSize():number {
                     var query = this._query, dataCache: DataCache;
                     if (!!query && query.isCacheValid) {
@@ -1947,7 +1942,7 @@
                 protected _dbSetCreated(dbSet: DbSet<IEntityItem, DbContext>) {
                     var self = this;
                     this._arrDbSets.push(dbSet);
-                    dbSet.addOnPropertyChange(PROP_NAME.hasChanges, function (sender, args) {
+                    dbSet.addOnPropertyChange(PROP_NAME.isHasChanges, function (sender, args) {
                         self._dbContext._onDbSetHasChangesChanged(sender);
                     }, null);
                 }
@@ -2002,7 +1997,7 @@
                 private _serviceUrl: string;
                 private _isBusy: number;
                 private _isSubmiting: boolean;
-                private _hasChanges: boolean;
+                private _isHasChanges: boolean;
                 private _pendingSubmit: { deferred: IDeferred<any>; };
                 private _serverTimezone: number;
                 private _waitQueue: utilsMOD.WaitQueue;
@@ -2018,7 +2013,7 @@
                     this._serviceUrl = null;
                     this._isBusy = 0;
                     this._isSubmiting = false;
-                    this._hasChanges = false;
+                    this._isHasChanges = false;
                     this._pendingSubmit = null;
                     this._serverTimezone = utils.get_timeZoneOffset();
                     this._waitQueue = new utilsMOD.WaitQueue(this);
@@ -2026,9 +2021,6 @@
                 protected _getEventNames() {
                     var base_events = super._getEventNames();
                     return [DBCTX_EVENTS.submit_err].concat(base_events);
-                }
-                protected _onGetCalcField(args: { dbSetName: string; fieldName: string; getFunc: () => any; }) {
-                    this.raiseEvent('define_calc', args);
                 }
                 protected _initDbSets() {
                     if (this._isInitialized)
@@ -2142,12 +2134,12 @@
                             var arr = new Array(val.length);
                             for (var k = 0; k < val.length; k += 1) {
                                 //first convert all values to string
-                                arr[k] = valueUtils.stringifyValue(val[k], pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
+                                arr[k] = valueUtils.stringifyValue(val[k], pinfo.dateConversion, pinfo.dataType, self.serverTimezone);
                             }
                             value = JSON.stringify(arr);
                         }
                         else
-                            value = valueUtils.stringifyValue(val, pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
+                            value = valueUtils.stringifyValue(val, pinfo.dateConversion, pinfo.dataType, self.serverTimezone);
 
                         data.paramInfo.parameters.push({ name: pinfo.name, value: value });
                     }
@@ -2434,7 +2426,7 @@
                     try {
                         __checkError(res.error, operType);
                         if (!res.rowInfo) {
-                            item._aspect._dbSet.removeItem(item);
+                            item._aspect.dbSet.removeItem(item);
                             item._aspect.destroy();
                             throw new Error(RIAPP.ERRS.ERR_ITEM_DELETED_BY_ANOTHER_USER);
                         }
@@ -2458,7 +2450,7 @@
                             deferred.reject();
                         }
                     };
-                    var url = this._getUrl(DATA_SVC_METH.Refresh), dbSet = item._aspect._dbSet;
+                    var url = this._getUrl(DATA_SVC_METH.Refresh), dbSet = item._aspect.dbSet;
                     var self = this;
                     this.waitForNotSubmiting(function () {
                         dbSet.waitForNotLoading(function () {
@@ -2481,7 +2473,7 @@
                             self.isBusy = true;
                             dbSet.isLoading = true;
                             try {
-                                var request: IRefreshRowInfo = { dbSetName: item._aspect._dbSetName, rowInfo: item._aspect._getRowInfo(), error: null };
+                                var request: IRefreshRowInfo = { dbSetName: item._aspect.dbSetName, rowInfo: item._aspect._getRowInfo(), error: null };
                                 item._aspect._checkCanRefresh();
                                 postData = JSON.stringify(request);
                                 utils.performAjaxCall(
@@ -2516,22 +2508,22 @@
                     return this._queryInf[name];
                 }
                 _onDbSetHasChangesChanged(eSet: DbSet<IEntityItem, DbContext>) {
-                    var old = this._hasChanges, test: DbSet<IEntityItem, DbContext>;
-                    this._hasChanges = false;
-                    if (eSet.hasChanges) {
-                        this._hasChanges = true;
+                    var old = this._isHasChanges, test: DbSet<IEntityItem, DbContext>;
+                    this._isHasChanges = false;
+                    if (eSet.isHasChanges) {
+                        this._isHasChanges = true;
                     }
                     else {
                         for (var i = 0, len = this._dbSets.arrDbSets.length; i < len; i += 1) {
                             test = this._dbSets.arrDbSets[i];
-                            if (test.hasChanges) {
-                                this._hasChanges = true;
+                            if (test.isHasChanges) {
+                                this._isHasChanges = true;
                                 break;
                             }
                         }
                     }
-                    if (this._hasChanges !== old) {
-                        this.raisePropertyChanged(PROP_NAME.hasChanges);
+                    if (this._isHasChanges !== old) {
+                        this.raisePropertyChanged(PROP_NAME.isHasChanges);
                     }
                 }
                 _load(query: DataQuery<IEntityItem>, isPageChanged: boolean): IPromise<IQueryResult<IEntityItem>> {
@@ -2806,7 +2798,7 @@
                     this._isInitialized = false;
                     this._isBusy = 0;
                     this._isSubmiting = false;
-                    this._hasChanges = false;
+                    this._isHasChanges = false;
                     super.destroy();
                 }
                 get service_url() { return this._serviceUrl; }
@@ -2837,7 +2829,7 @@
                 get serverTimezone() { return this._serverTimezone; }
                 get dbSets() { return this._dbSets; }
                 get serviceMethods() { return this._svcMethods; }
-                get hasChanges() { return this._hasChanges; }
+                get isHasChanges() { return this._isHasChanges; }
             }
 
             export class Association extends RIAPP.BaseObject {
@@ -2929,10 +2921,10 @@
                     ds.addOnItemDeleting(function (sender, args) {
                     }, self._objId, null, true);
                     ds.addOnStatusChanged(function (sender, args) {
-                        self._onParentStatusChanged(args.item, args.oldChangeType);
+                        self._onParentStatusChanged(args.item, args.oldStatus);
                     }, self._objId, null, true);
                     ds.addOnCommitChanges(function (sender, args) {
-                        self._onParentCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
+                        self._onParentCommitChanges(args.item, args.isBegin, args.isRejected, args.status);
                     }, self._objId, null, true);
                 }
                 protected _bindChildDS() {
@@ -2951,15 +2943,15 @@
                         self._onChildEdit(args.item, false, args.isCanceled);
                     }, self._objId, null, true);
                     ds.addOnStatusChanged(function (sender, args) {
-                        self._onChildStatusChanged(args.item, args.oldChangeType);
+                        self._onChildStatusChanged(args.item, args.oldStatus);
                     }, self._objId, null, true);
                     ds.addOnCommitChanges(function (sender, args) {
-                        self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
+                        self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.status);
                     }, self._objId, null, true);
                 }
                 protected _onParentCollChanged(args: collMOD.ICollChangedArgs<IEntityItem>) {
                     var self = this, item: IEntityItem, items = args.items, changed: string[] = [], changedKeys = {};
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!self._isParentFilling)
                                 changed = self.refreshParentMap();
@@ -2989,7 +2981,7 @@
                             }
                             break;
                         default:
-                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.changeType));
                     }
                     self._notifyParentChanged(changed);
                 }
@@ -3020,16 +3012,16 @@
                             self._saveParentFKey = null;
                     }
                 }
-                protected _onParentCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS) {
+                protected _onParentCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, status: collMOD.STATUS) {
                     var self = this, fkey;
                     if (isBegin) {
-                        if (isRejected && changeType === collMOD.STATUS.ADDED) {
+                        if (isRejected && status === collMOD.STATUS.ADDED) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
                             return;
                         }
-                        else if (!isRejected && changeType === collMOD.STATUS.DELETED) {
+                        else if (!isRejected && status === collMOD.STATUS.DELETED) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
@@ -3066,10 +3058,10 @@
                         }
                     }
                 }
-                protected _onParentStatusChanged(item: IEntityItem, oldChangeType: collMOD.STATUS) {
-                    var self = this, newChangeType = item._aspect._changeType, fkey:string;
+                protected _onParentStatusChanged(item: IEntityItem, oldStatus: collMOD.STATUS) {
+                    var self = this, newStatus = item._aspect.status, fkey:string = null;
                     var children: IEntityItem[];
-                    if (newChangeType === collMOD.STATUS.DELETED) {
+                    if (newStatus === collMOD.STATUS.DELETED) {
                         children = self.getChildItems(item);
                         fkey = this._unMapParentItem(item);
                         switch (self.onDeleteAction) {
@@ -3107,7 +3099,7 @@
                 }
                 protected _onChildCollChanged(args: collMOD.ICollChangedArgs<IEntityItem>) {
                     var self = this, item: IEntityItem, items = args.items, changed: string[] = [], changedKeys = {};
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!self._isChildFilling)
                                 changed = self.refreshChildMap();
@@ -3141,7 +3133,7 @@
                             }
                             break;
                         default:
-                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.changeType));
                     }
                     self._notifyChildrenChanged(changed);
                 }
@@ -3220,16 +3212,16 @@
                         }
                     }
                 }
-                protected _onChildCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS) {
+                protected _onChildCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, status: collMOD.STATUS) {
                     var self = this, fkey: string;
                     if (isBegin) {
-                        if (isRejected && changeType === collMOD.STATUS.ADDED) {
+                        if (isRejected && status === collMOD.STATUS.ADDED) {
                             fkey = this._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
                             return;
                         }
-                        else if (!isRejected && changeType === collMOD.STATUS.DELETED) {
+                        else if (!isRejected && status === collMOD.STATUS.DELETED) {
                             fkey = self._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
@@ -3272,12 +3264,11 @@
                         }
                     }
                 }
-                protected _onChildStatusChanged(item: IEntityItem, oldChangeType: collMOD.STATUS) {
-                    var self = this, newChangeType = item._aspect._changeType;
-                    var fkey = self.getChildFKey(item);
+                protected _onChildStatusChanged(item: IEntityItem, oldStatus: collMOD.STATUS) {
+                    var self = this, newStatus = item._aspect.status, fkey = self.getChildFKey(item);
                     if (!fkey)
                         return;
-                    if (newChangeType === collMOD.STATUS.DELETED) {
+                    if (newStatus === collMOD.STATUS.DELETED) {
                         fkey = self._unMapChildItem(item);
                         if (!!fkey)
                             self._notifyChildrenChanged([fkey]);
@@ -3330,11 +3321,11 @@
                     return changedKey;
                 }
                 protected _mapParentItems(items: IEntityItem[]) {
-                    var item: IEntityItem, fkey: string, chngType: number, old: IEntityItem, chngedKeys = {};
+                    var item: IEntityItem, fkey: string, status: collMOD.STATUS, old: IEntityItem, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
-                        chngType = item._aspect._changeType;
-                        if (chngType === collMOD.STATUS.DELETED)
+                        status = item._aspect.status;
+                        if (status === collMOD.STATUS.DELETED)
                             continue;
                         fkey = this.getParentFKey(item);
                         if (!!fkey) {
@@ -3368,11 +3359,11 @@
                     }
                 }
                 protected _mapChildren(items: IEntityItem[]) {
-                    var item: IEntityItem, fkey: string, arr: IEntityItem[], chngType, chngedKeys = {};
+                    var item: IEntityItem, fkey: string, arr: IEntityItem[], status: collMOD.STATUS, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
-                        chngType = item._aspect._changeType;
-                        if (chngType === collMOD.STATUS.DELETED)
+                        status = item._aspect.status;
+                        if (status === collMOD.STATUS.DELETED)
                             continue;
                         fkey = this.getChildFKey(item);
                         if (!!fkey) {
@@ -3401,7 +3392,7 @@
                     ds.removeNSHandlers(self._objId);
                 }
                 getParentFKey(item: IEntityItem) {
-                    if (!!item && item._aspect._isNew)
+                    if (!!item && item._aspect.isNew)
                         return item._key;
                     return this._getItemKey(this._parentFldInfos, this._parentDS, item);
                 }
@@ -3555,10 +3546,10 @@
                     this._items = [];
                     this._itemsByKey = {};
                     this._errors = {};
-                    this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.RESET, items: [] });
+                    this._onItemsChanged({ changeType: collMOD.COLL_CHANGE_TYPE.RESET, items: [] });
                     if (!isPageChanged)
                         this.pageIndex = 0;
-                    this.raisePropertyChanged(collMOD.PROP_NAME.count);
+                    this._onCountChanged();
                 }
                 protected _refresh(isPageChanged: boolean): void {
                     var items;
@@ -3618,8 +3609,8 @@
                         });
 
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: collMOD.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
-                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
+                            this._onItemsChanged({ changeType: collMOD.COLL_CHANGE_TYPE.ADDED, items: newItems, pos: positions });
+                            this._onCountChanged();
                         }
                     } finally {
                         this._onFillEnd({
@@ -3636,7 +3627,7 @@
                 }
                 protected _onDSCollectionChanged(sender, args: collMOD.ICollChangedArgs<TItem>) {
                     var self = this, item: collMOD.ICollectionItem, items = args.items;
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh(false);
@@ -3669,7 +3660,7 @@
                             }
                             break;
                         default:
-                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.changeType));
                     }
                 }
                 protected _onDSFill(sender, args: collMOD.ICollFillArgs<TItem>) {
@@ -3690,9 +3681,9 @@
                     }
                 }
                 protected _onDSStatusChanged(sender, args: collMOD.ICollItemStatusArgs<TItem>) {
-                    var self = this, item = args.item, key = args.key, oldChangeType = args.oldChangeType, isOk, canFilter = !!self._fn_filter;
+                    var self = this, item = args.item, key = args.key, oldStatus = args.oldStatus, isOk, canFilter = !!self._fn_filter;
                     if (!!self._itemsByKey[key]) {
-                        self._onItemStatusChanged(item, oldChangeType);
+                        self._onItemStatusChanged(item, oldStatus);
 
                         if (canFilter) {
                             isOk = self._fn_filter(item);

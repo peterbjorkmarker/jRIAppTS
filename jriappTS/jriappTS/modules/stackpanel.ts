@@ -171,7 +171,7 @@
                 }
                 protected _onDSCollectionChanged(sender, args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
                     var self = this, items = args.items;
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh();
@@ -196,7 +196,7 @@
                             }
                             break;
                         default:
-                            throw new Error(global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.changeType));
                     }
                 }
                 protected _onDSFill(sender, args: collMOD.ICollFillArgs<collMOD.ICollectionItem>) {
@@ -212,15 +212,15 @@
                         this._isDSFilling = true;
                     }
                 }
-                protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldChangeType:number) {
-                    var newChangeType =item._aspect._changeType;
+                protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldStatus: collMOD.STATUS) {
+                    var newStatus =item._aspect.status;
                     var obj = this._itemMap[item._key];
                     if (!obj)
                         return;
-                    if (newChangeType === collMOD.STATUS.DELETED) {
+                    if (newStatus === collMOD.STATUS.DELETED) {
                         global.$(obj.div).hide();
                     }
-                    else if (oldChangeType === collMOD.STATUS.DELETED && newChangeType !== collMOD.STATUS.DELETED) {
+                    else if (oldStatus === collMOD.STATUS.DELETED && newStatus !== collMOD.STATUS.DELETED) {
                         global.$(obj.div).show();
                     }
                 }
@@ -268,9 +268,9 @@
                     if (!ds) return;
                     ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
                     ds.addOnFill(self._onDSFill, self._objId, self);
-                    ds.addOnPropertyChange(collMOD.PROP_NAME.currentItem, self._onDSCurrentChanged, self._objId, self);
+                    ds.addOnCurrentChanged(self._onDSCurrentChanged, self._objId, self);
                     ds.addOnStatusChanged(function (sender, args) {
-                        self._onItemStatusChanged(args.item, args.oldChangeType);
+                        self._onItemStatusChanged(args.item, args.oldStatus);
                     }, self._objId);
                     this._refresh();
                 }

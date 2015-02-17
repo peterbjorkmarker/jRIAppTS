@@ -86,13 +86,13 @@ var RIAPP;
                     self.dbContext.submitChanges();
                 }, self, function (s, p) {
                     //the command is enabled when there are pending changes
-                    return self.dbContext.hasChanges;
+                    return self.dbContext.isHasChanges;
                 });
                 this._undoCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     self.dbContext.rejectChanges();
                 }, self, function (s, p) {
                     //the command is enabled when there are pending changes
-                    return self.dbContext.hasChanges;
+                    return self.dbContext.isHasChanges;
                 });
                 //load data from the server
                 this._loadCommand = new RIAPP.MOD.mvvm.Command(function (sender, args) {
@@ -560,7 +560,7 @@ var RIAPP;
                     }
                 }, self, null);
             }
-            Object.defineProperty(AddAddressVM.prototype, "_isCanSubmit", {
+            Object.defineProperty(AddAddressVM.prototype, "isCanSubmit", {
                 get: function () {
                     return true;
                 },

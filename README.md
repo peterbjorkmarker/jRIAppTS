@@ -18,7 +18,7 @@ The framework supports a wide range of essential features for creating LOB appli
 Unlike many other existing frameworks, which use MVC design pattern, the framework uses Model View View Model (MVVM) design pattern for creating applications. 
 
  
-Ther main project here is the <b>jriappTS</b>. It is written in typescript language. On compilation the project produces <b>jriapp.js</b> javascript file - it is the main 
+The main project here is the <b>jriappTS</b>. It is written in typescript language. On compilation the project produces <b>jriapp.js</b> javascript file - it is the main 
 file of the framework. <br/><i>P.S.- some of the modules in the framework are optional and you can compile the project without them if you decide that they are not needed 
 or you want to replace them with your own ones. Read the UserGuide.pdf for the details.</i><br/> 
 The <b>RIAppDemo</b> is the demo project which uses this framework and it also includes server side components of this framework - The Data Service.<br/> 
@@ -45,6 +45,7 @@ There's also not a single eval function used in this framework. So it works in a
 </i>
 
 <b>Latest changes:</b>
+<p>2015-02-17 Code optimization, renaming unconventionally named properties, docs update.</p>  
 <p>2015-02-16 Replaced "magic strings" (literal strings) in the framework's code with variables containing string values. This improves quality of the code</p>  
 <p>2015-02-02 Code maintenance improvement</p>  
 <p>2015-02-01 Update to version 2.5.3. Now, the addEventHadler of the BaseObject class has a parameter- context, which defines the THIS object for the event handler</p>  

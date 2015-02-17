@@ -918,7 +918,7 @@ var RIAPP;
         };
         Global.prototype._waitForNotLoading = function (callback, callbackArgs) {
             this._waitQueue.enQueue({
-                prop: 'isLoading',
+                prop: PROP_NAME.isLoading,
                 groupName: null,
                 predicate: function (val) {
                     return !val;
@@ -1109,7 +1109,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.4.4';
+        Global.vesion = '2.5.5.0';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -1134,43 +1134,6 @@ var RIAPP;
                 DATA_NAME: 'data-name',
                 DATA_FORM: 'data-form'
             };
-            (function (DATE_CONVERSION) {
-                DATE_CONVERSION[DATE_CONVERSION["None"] = 0] = "None";
-                DATE_CONVERSION[DATE_CONVERSION["ServerLocalToClientLocal"] = 1] = "ServerLocalToClientLocal";
-                DATE_CONVERSION[DATE_CONVERSION["UtcToClientLocal"] = 2] = "UtcToClientLocal";
-            })(consts.DATE_CONVERSION || (consts.DATE_CONVERSION = {}));
-            var DATE_CONVERSION = consts.DATE_CONVERSION;
-            (function (DATA_TYPE) {
-                DATA_TYPE[DATA_TYPE["None"] = 0] = "None";
-                DATA_TYPE[DATA_TYPE["String"] = 1] = "String";
-                DATA_TYPE[DATA_TYPE["Bool"] = 2] = "Bool";
-                DATA_TYPE[DATA_TYPE["Integer"] = 3] = "Integer";
-                DATA_TYPE[DATA_TYPE["Decimal"] = 4] = "Decimal";
-                DATA_TYPE[DATA_TYPE["Float"] = 5] = "Float";
-                DATA_TYPE[DATA_TYPE["DateTime"] = 6] = "DateTime";
-                DATA_TYPE[DATA_TYPE["Date"] = 7] = "Date";
-                DATA_TYPE[DATA_TYPE["Time"] = 8] = "Time";
-                DATA_TYPE[DATA_TYPE["Guid"] = 9] = "Guid";
-                DATA_TYPE[DATA_TYPE["Binary"] = 10] = "Binary";
-            })(consts.DATA_TYPE || (consts.DATA_TYPE = {}));
-            var DATA_TYPE = consts.DATA_TYPE;
-            (function (KEYS) {
-                KEYS[KEYS["backspace"] = 8] = "backspace";
-                KEYS[KEYS["tab"] = 9] = "tab";
-                KEYS[KEYS["enter"] = 13] = "enter";
-                KEYS[KEYS["esc"] = 27] = "esc";
-                KEYS[KEYS["space"] = 32] = "space";
-                KEYS[KEYS["pageUp"] = 33] = "pageUp";
-                KEYS[KEYS["pageDown"] = 34] = "pageDown";
-                KEYS[KEYS["end"] = 35] = "end";
-                KEYS[KEYS["home"] = 36] = "home";
-                KEYS[KEYS["left"] = 37] = "left";
-                KEYS[KEYS["up"] = 38] = "up";
-                KEYS[KEYS["right"] = 39] = "right";
-                KEYS[KEYS["down"] = 40] = "down";
-                KEYS[KEYS["del"] = 127] = "del";
-            })(consts.KEYS || (consts.KEYS = {}));
-            var KEYS = consts.KEYS;
             consts.ELVIEW_NM = { DATAFORM: 'dataform' };
             consts.LOADER_GIF = { SMALL: 'loader2.gif', NORMAL: 'loader.gif' };
             RIAPP.global.onModuleLoaded('consts', consts);
@@ -1284,7 +1247,7 @@ var RIAPP;
                     return !!obj && obj instanceof RIAPP.BaseObject && !!obj.beginEdit && !!obj.endEdit && !!obj.cancelEdit && RIAPP.global.utils.hasProp(obj, 'isEditing');
                 };
                 Checks.isSubmittable = function (obj) {
-                    return !!obj && !!obj.submitChanges && !!obj.rejectChanges && RIAPP.global.utils.hasProp(obj, '_isCanSubmit');
+                    return !!obj && !!obj.submitChanges && !!obj.rejectChanges && RIAPP.global.utils.hasProp(obj, 'isCanSubmit');
                 };
                 Checks.isDataForm = function (el) {
                     if (!el)
@@ -1461,7 +1424,6 @@ var RIAPP;
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'val', val));
                     }
                     var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), parseInt(parts[3], 10), parseInt(parts[4], 10), parseInt(parts[5], 10), (!!parts[6]) ? parseInt(parts[6], 10) : 0);
-                    var DATE_CONVERSION = MOD.consts.DATE_CONVERSION;
                     var ctz = RIAPP.global.utils.get_timeZoneOffset();
                     switch (dtcnv) {
                         case 0 /* None */:
@@ -1483,7 +1445,6 @@ var RIAPP;
                         return null;
                     if (!Checks.isDate(dt))
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dt', dt));
-                    var DATE_CONVERSION = MOD.consts.DATE_CONVERSION;
                     var ctz = RIAPP.global.utils.get_timeZoneOffset();
                     switch (dtcnv) {
                         case 0 /* None */:
@@ -1503,7 +1464,6 @@ var RIAPP;
                 compareVals: function (v1, v2, dataType) {
                     if ((v1 === null && v2 !== null) || (v1 !== null && v2 === null))
                         return false;
-                    var DATA_TYPE = MOD.consts.DATA_TYPE;
                     switch (dataType) {
                         case 6 /* DateTime */:
                         case 7 /* Date */:
@@ -1576,7 +1536,7 @@ var RIAPP;
                             throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dataType', dataType));
                     }
                     if (!isOK)
-                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_WRONG_TYPE, v, MOD.consts.DATA_TYPE[dataType]));
+                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_WRONG_TYPE, v, dataType));
                     return res;
                 },
                 parseValue: function (v, dataType, dcnv, stz) {
@@ -5206,7 +5166,7 @@ var RIAPP;
             var utilsMOD = RIAPP.MOD.utils;
             var errorsMOD = RIAPP.MOD.errors;
             //local variables for optimization
-            var ValidationError = errorsMOD.ValidationError, DATA_TYPE = constsMOD.DATA_TYPE, valueUtils = utilsMOD.valueUtils, baseUtils = RIAPP.baseUtils, utils;
+            var ValidationError = errorsMOD.ValidationError, valueUtils = utilsMOD.valueUtils, baseUtils = RIAPP.baseUtils, utils;
             RIAPP.global.addOnInitialize(function (s, args) {
                 utils = s.utils;
             });
@@ -5247,7 +5207,7 @@ var RIAPP;
             var ITEM_EVENTS = {
                 errors_changed: 'errors_changed'
             };
-            collection.PROP_NAME = {
+            var PROP_NAME = {
                 isEditing: 'isEditing',
                 currentItem: 'currentItem',
                 count: 'count',
@@ -5262,12 +5222,26 @@ var RIAPP;
                 __extends(ItemAspect, _super);
                 function ItemAspect() {
                     _super.call(this);
-                    this._fkey = null;
-                    this._isEditing = false;
+                    this.__key = null;
+                    this.__isEditing = false;
+                    this._status = 0 /* NONE */;
                     this._saveVals = null;
                     this._vals = {};
                     this._notEdited = true;
                 }
+                Object.defineProperty(ItemAspect.prototype, "_isEditing", {
+                    get: function () {
+                        return this.__isEditing;
+                    },
+                    set: function (v) {
+                        if (this.__isEditing != v) {
+                            this.__isEditing = v;
+                            this.raisePropertyChanged(PROP_NAME.isEditing);
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
                 ItemAspect.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
                     return [ITEM_EVENTS.errors_changed].concat(base_events);
@@ -5278,12 +5252,12 @@ var RIAPP;
                 ItemAspect.prototype.handleError = function (error, source) {
                     var isHandled = _super.prototype.handleError.call(this, error, source);
                     if (!isHandled) {
-                        return this._collection.handleError(error, source);
+                        return this.collection.handleError(error, source);
                     }
                     return isHandled;
                 };
                 ItemAspect.prototype._beginEdit = function () {
-                    var coll = this._collection, isHandled;
+                    var coll = this.collection, isHandled;
                     if (coll.isEditing) {
                         var eitem = coll._getEditingItem();
                         if (eitem._aspect === this)
@@ -5305,13 +5279,13 @@ var RIAPP;
                         return false;
                     this._isEditing = true;
                     this._saveVals = utils.cloneObj(this._vals);
-                    this._collection.currentItem = this.getItem();
+                    this.collection.currentItem = this.getItem();
                     return true;
                 };
                 ItemAspect.prototype._endEdit = function () {
-                    if (!this._isEditing)
+                    if (!this.__isEditing)
                         return false;
-                    var coll = this._collection, self = this;
+                    var coll = this.collection, self = this;
                     if (this.getIsHasErrors()) {
                         return false;
                     }
@@ -5328,7 +5302,7 @@ var RIAPP;
                     return true;
                 };
                 ItemAspect.prototype._validate = function () {
-                    return this._collection._validateItem(this.getItem());
+                    return this.collection._validateItem(this.getItem());
                 };
                 ItemAspect.prototype._skipValidate = function (fieldInfo, val) {
                     return false;
@@ -5339,7 +5313,7 @@ var RIAPP;
                         val = baseUtils.getValue(this._vals, fieldName);
                         if (this._skipValidate(fieldInfo, val))
                             return res;
-                        if (this._isNew) {
+                        if (this.isNew) {
                             if (val === null && !fieldInfo.isNullable && !fieldInfo.isReadOnly && !fieldInfo.isAutoGenerated)
                                 throw new Error(RIAPP.ERRS.ERR_FIELD_ISNOT_NULLABLE);
                         }
@@ -5351,7 +5325,7 @@ var RIAPP;
                     catch (ex) {
                         res = { fieldName: fieldName, errors: [ex.message] };
                     }
-                    var tmp = this._collection._validateItemField(this.getItem(), fieldName);
+                    var tmp = this.collection._validateItemField(this.getItem(), fieldName);
                     if (!!res && !!tmp) {
                         res.errors = res.errors.concat(tmp.errors);
                     }
@@ -5360,7 +5334,7 @@ var RIAPP;
                     return res;
                 };
                 ItemAspect.prototype._validateAll = function () {
-                    var self = this, fieldInfos = this._collection.getFieldInfos(), errs = [];
+                    var self = this, fieldInfos = this.collection.getFieldInfos(), errs = [];
                     fieldInfos.forEach(function (fld) {
                         fn_traverseField(fld, function (name, fld) {
                             if (fld.fieldType != 5 /* Object */) {
@@ -5381,7 +5355,7 @@ var RIAPP;
                     var res = val, ERRS = RIAPP.ERRS;
                     if (this._skipValidate(fieldInfo, val))
                         return res;
-                    if (fieldInfo.isReadOnly && !(fieldInfo.allowClientDefault && this._isNew))
+                    if (fieldInfo.isReadOnly && !(fieldInfo.allowClientDefault && this.isNew))
                         throw new Error(ERRS.ERR_FIELD_READONLY);
                     if ((val === null || (utils.check.isString(val) && !val)) && !fieldInfo.isNullable)
                         throw new Error(ERRS.ERR_FIELD_ISNOT_NULLABLE);
@@ -5444,7 +5418,7 @@ var RIAPP;
                     return res;
                 };
                 ItemAspect.prototype._resetIsNew = function () {
-                    //can reset _isNew on all items in the collection
+                    //can reset isNew on all items in the collection
                     //the list descendant does it
                 };
                 ItemAspect.prototype.addOnErrorsChanged = function (fn, namespace, context) {
@@ -5461,13 +5435,13 @@ var RIAPP;
                     this._onErrorsChanged(args);
                 };
                 ItemAspect.prototype.getFieldInfo = function (fieldName) {
-                    return this._collection.getFieldInfo(fieldName);
+                    return this.collection.getFieldInfo(fieldName);
                 };
                 ItemAspect.prototype.getFieldNames = function () {
-                    return this._collection.getFieldNames();
+                    return this.collection.getFieldNames();
                 };
                 ItemAspect.prototype.getFieldErrors = function (fieldName) {
-                    var itemErrors = this._collection._getErrors(this.getItem());
+                    var itemErrors = this.collection._getErrors(this.getItem());
                     if (!itemErrors)
                         return [];
                     var name = fieldName;
@@ -5482,7 +5456,7 @@ var RIAPP;
                     ];
                 };
                 ItemAspect.prototype.getAllErrors = function () {
-                    var itemErrors = this._collection._getErrors(this.getItem());
+                    var itemErrors = this.collection._getErrors(this.getItem());
                     if (!itemErrors)
                         return [];
                     var res = [];
@@ -5496,7 +5470,7 @@ var RIAPP;
                     return res;
                 };
                 ItemAspect.prototype.getErrorString = function () {
-                    var itemErrors = this._collection._getErrors(this.getItem());
+                    var itemErrors = this.collection._getErrors(this.getItem());
                     if (!itemErrors)
                         return '';
                     var res = [];
@@ -5513,26 +5487,24 @@ var RIAPP;
                 ItemAspect.prototype.rejectChanges = function () {
                 };
                 ItemAspect.prototype.beginEdit = function () {
-                    var coll = this._collection;
+                    var coll = this.collection;
                     if (!this._beginEdit())
                         return false;
                     coll._onEditing(this.getItem(), true, false);
-                    this.raisePropertyChanged(collection.PROP_NAME.isEditing);
                     return true;
                 };
                 ItemAspect.prototype.endEdit = function () {
-                    var coll = this._collection;
+                    var coll = this.collection;
                     if (!this._endEdit())
                         return false;
                     coll._onEditing(this.getItem(), false, false);
                     this._notEdited = false;
-                    this.raisePropertyChanged(collection.PROP_NAME.isEditing);
                     return true;
                 };
                 ItemAspect.prototype.cancelEdit = function () {
                     if (!this._isEditing)
                         return false;
-                    var coll = this._collection, isNew = this._isNew, self = this;
+                    var coll = this.collection, isNew = this.isNew, self = this;
                     var changes = this._saveVals;
                     this._vals = this._saveVals;
                     this._saveVals = null;
@@ -5546,11 +5518,10 @@ var RIAPP;
                         coll.removeItem(this.getItem());
                     this._isEditing = false;
                     coll._onEditing(this.getItem(), false, true);
-                    this.raisePropertyChanged(collection.PROP_NAME.isEditing);
                     return true;
                 };
                 ItemAspect.prototype.deleteItem = function () {
-                    var coll = this._collection;
+                    var coll = this.collection;
                     if (this._key === null)
                         return false;
                     var args = { item: this.getItem(), isCancel: false };
@@ -5562,22 +5533,22 @@ var RIAPP;
                     return true;
                 };
                 ItemAspect.prototype.getIsNew = function () {
-                    return this._isNew;
+                    return this.isNew;
                 };
                 ItemAspect.prototype.getIsDeleted = function () {
-                    return this._isDeleted;
+                    return this.isDeleted;
                 };
                 ItemAspect.prototype.getKey = function () {
                     return this._key;
                 };
                 ItemAspect.prototype.getCollection = function () {
-                    return this._collection;
+                    return this.collection;
                 };
                 ItemAspect.prototype.getIsEditing = function () {
                     return this._isEditing;
                 };
                 ItemAspect.prototype.getIsHasErrors = function () {
-                    var itemErrors = this._collection._getErrors(this.getItem());
+                    var itemErrors = this.collection._getErrors(this.getItem());
                     return !!itemErrors;
                 };
                 ItemAspect.prototype.getIErrorNotification = function () {
@@ -5587,10 +5558,10 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    if (!!this._fkey && !!this._collection && !this._collection.getIsClearing()) {
-                        this._collection.removeItem(this.getItem());
+                    if (!!this.__key && !!this.collection && !this.collection.getIsClearing()) {
+                        this.collection.removeItem(this.getItem());
                     }
-                    this._fkey = null;
+                    this.__key = null;
                     this._saveVals = null;
                     this._vals = {};
                     this._isEditing = false;
@@ -5602,28 +5573,28 @@ var RIAPP;
                 ItemAspect.prototype.getItem = function () {
                     throw new Error('Not implemented');
                 };
-                Object.defineProperty(ItemAspect.prototype, "_isCanSubmit", {
+                Object.defineProperty(ItemAspect.prototype, "isCanSubmit", {
                     get: function () {
                         return false;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(ItemAspect.prototype, "_changeType", {
+                Object.defineProperty(ItemAspect.prototype, "status", {
                     get: function () {
-                        return 0 /* NONE */;
+                        return this._status;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(ItemAspect.prototype, "_isNew", {
+                Object.defineProperty(ItemAspect.prototype, "isNew", {
                     get: function () {
                         return false;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(ItemAspect.prototype, "_isDeleted", {
+                Object.defineProperty(ItemAspect.prototype, "isDeleted", {
                     get: function () {
                         return false;
                     },
@@ -5632,26 +5603,26 @@ var RIAPP;
                 });
                 Object.defineProperty(ItemAspect.prototype, "_key", {
                     get: function () {
-                        return this._fkey;
+                        return this.__key;
                     },
                     set: function (v) {
                         if (v !== null)
                             v = '' + v;
-                        this._fkey = v;
+                        this.__key = v;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(ItemAspect.prototype, "_collection", {
+                Object.defineProperty(ItemAspect.prototype, "collection", {
                     get: function () {
                         return null;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(ItemAspect.prototype, "_isUpdating", {
+                Object.defineProperty(ItemAspect.prototype, "isUpdating", {
                     get: function () {
-                        var coll = this._collection;
+                        var coll = this.collection;
                         if (!coll)
                             return false;
                         return coll.isUpdating;
@@ -5661,7 +5632,7 @@ var RIAPP;
                 });
                 Object.defineProperty(ItemAspect.prototype, "isEditing", {
                     get: function () {
-                        return this._isEditing;
+                        return this.__isEditing;
                     },
                     enumerable: true,
                     configurable: true
@@ -5835,6 +5806,18 @@ var RIAPP;
                 BaseCollection.prototype.removeOnStatusChanged = function (namespace) {
                     this._removeHandler(COLL_EVENTS.status_changed, namespace);
                 };
+                BaseCollection.prototype.addOnPageIndexChanged = function (handler, namespace, context) {
+                    this.addOnPropertyChange(PROP_NAME.pageIndex, handler, namespace, context);
+                };
+                BaseCollection.prototype.addOnPageSizeChanged = function (handler, namespace, context) {
+                    this.addOnPropertyChange(PROP_NAME.pageSize, handler, namespace, context);
+                };
+                BaseCollection.prototype.addOnTotalCountChanged = function (handler, namespace, context) {
+                    this.addOnPropertyChange(PROP_NAME.totalCount, handler, namespace, context);
+                };
+                BaseCollection.prototype.addOnCurrentChanged = function (handler, namespace, context) {
+                    this.addOnPropertyChange(PROP_NAME.currentItem, handler, namespace, context);
+                };
                 BaseCollection.prototype._getPKFieldInfos = function () {
                     if (!!this._pkInfo)
                         return this._pkInfo;
@@ -5860,11 +5843,17 @@ var RIAPP;
                     this.raiseEvent(COLL_EVENTS.current_changing, { newCurrent: newCurrent });
                 };
                 BaseCollection.prototype._onCurrentChanged = function () {
-                    this.raisePropertyChanged(collection.PROP_NAME.currentItem);
+                    this.raisePropertyChanged(PROP_NAME.currentItem);
                 };
-                //occurs when item changeType Changed (not used in simple collections)
-                BaseCollection.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    this.raiseEvent(COLL_EVENTS.status_changed, { item: item, oldChangeType: oldChangeType, key: item._key });
+                BaseCollection.prototype._onCountChanged = function () {
+                    this.raisePropertyChanged(PROP_NAME.count);
+                };
+                BaseCollection.prototype._onEditingChanged = function () {
+                    this.raisePropertyChanged(PROP_NAME.isEditing);
+                };
+                //occurs when item status Changed (not used in simple collections)
+                BaseCollection.prototype._onItemStatusChanged = function (item, oldStatus) {
+                    this.raiseEvent(COLL_EVENTS.status_changed, { item: item, oldStatus: oldStatus, key: item._key });
                 };
                 BaseCollection.prototype._onFillStart = function (args) {
                     this.raiseEvent(COLL_EVENTS.fill, args);
@@ -5911,9 +5900,9 @@ var RIAPP;
                         utils.insertIntoArray(this._items, item, pos);
                     }
                     this._itemsByKey[item._key] = item;
-                    this._onItemsChanged({ change_type: 1 /* ADDED */, items: [item], pos: [pos] });
+                    this._onItemsChanged({ changeType: 1 /* ADDED */, items: [item], pos: [pos] });
                     item._aspect._onAttach();
-                    this.raisePropertyChanged(collection.PROP_NAME.count);
+                    this.raisePropertyChanged(PROP_NAME.count);
                     this._onCurrentChanging(item);
                     this._currentPos = pos;
                     this._onCurrentChanged();
@@ -5921,10 +5910,10 @@ var RIAPP;
                 };
                 BaseCollection.prototype._onRemoved = function (item, pos) {
                     try {
-                        this._onItemsChanged({ change_type: 0 /* REMOVE */, items: [item], pos: [pos] });
+                        this._onItemsChanged({ changeType: 0 /* REMOVE */, items: [item], pos: [pos] });
                     }
                     finally {
-                        this.raisePropertyChanged(collection.PROP_NAME.count);
+                        this.raisePropertyChanged(PROP_NAME.count);
                     }
                 };
                 BaseCollection.prototype._onPageSizeChanged = function () {
@@ -5996,15 +5985,17 @@ var RIAPP;
                     if (isBegin) {
                         this._EditingItem = item;
                         this.raiseEvent(COLL_EVENTS.begin_edit, { item: item });
+                        this._onEditingChanged();
                     }
                     else {
                         this._EditingItem = null;
                         this.raiseEvent(COLL_EVENTS.end_edit, { item: item, isCanceled: isCanceled });
+                        this._onEditingChanged();
                     }
                 };
                 //used by descendants when commiting submits for items
-                BaseCollection.prototype._onCommitChanges = function (item, isBegin, isRejected, changeType) {
-                    this.raiseEvent(COLL_EVENTS.commit_changes, { item: item, isBegin: isBegin, isRejected: isRejected, changeType: changeType });
+                BaseCollection.prototype._onCommitChanges = function (item, isBegin, isRejected, status) {
+                    this.raiseEvent(COLL_EVENTS.commit_changes, { item: item, isBegin: isBegin, isRejected: isRejected, status: status });
                 };
                 BaseCollection.prototype._validateItem = function (item) {
                     var args = { item: item, fieldName: null, errors: [] };
@@ -6186,7 +6177,7 @@ var RIAPP;
                     if (!item)
                         return false;
                     if (!!skipDeleted) {
-                        if (item._aspect._isDeleted) {
+                        if (item._aspect.isDeleted) {
                             return this.moveNext(true);
                         }
                     }
@@ -6206,7 +6197,7 @@ var RIAPP;
                     if (!item)
                         return false;
                     if (!!skipDeleted) {
-                        if (item._aspect._isDeleted) {
+                        if (item._aspect.isDeleted) {
                             this._currentPos = pos;
                             return this.movePrev(true);
                         }
@@ -6227,7 +6218,7 @@ var RIAPP;
                     if (!item)
                         return false;
                     if (!!skipDeleted) {
-                        if (item._aspect._isDeleted) {
+                        if (item._aspect.isDeleted) {
                             this._currentPos = pos;
                             return this.moveNext(true);
                         }
@@ -6245,7 +6236,7 @@ var RIAPP;
                     if (!item)
                         return false;
                     if (!!skipDeleted) {
-                        if (item._aspect._isDeleted) {
+                        if (item._aspect.isDeleted) {
                             return this.movePrev(true);
                         }
                     }
@@ -6336,7 +6327,7 @@ var RIAPP;
                         self.isLoading = true;
                         try {
                             self._items.sort(fn);
-                            self._onItemsChanged({ change_type: 2 /* RESET */, items: [], pos: [] });
+                            self._onItemsChanged({ changeType: 2 /* RESET */, items: [], pos: [] });
                         }
                         finally {
                             self.isLoading = false;
@@ -6359,13 +6350,13 @@ var RIAPP;
                         this._items = [];
                         this._itemsByKey = {};
                         this._errors = {};
-                        this._onItemsChanged({ change_type: 2 /* RESET */, items: [], pos: [] });
+                        this._onItemsChanged({ changeType: 2 /* RESET */, items: [], pos: [] });
                     }
                     finally {
                         this._isClearing = false;
                     }
                     this.raiseEvent(COLL_EVENTS.cleared, {});
-                    this.raisePropertyChanged(collection.PROP_NAME.count);
+                    this.raisePropertyChanged(PROP_NAME.count);
                 };
                 BaseCollection.prototype.destroy = function () {
                     if (this._isDestroyed)
@@ -6425,8 +6416,8 @@ var RIAPP;
                     set: function (v) {
                         if (v != this._totalCount) {
                             this._totalCount = v;
-                            this.raisePropertyChanged(collection.PROP_NAME.totalCount);
-                            this.raisePropertyChanged(collection.PROP_NAME.pageCount);
+                            this.raisePropertyChanged(PROP_NAME.totalCount);
+                            this.raisePropertyChanged(PROP_NAME.pageCount);
                         }
                     },
                     enumerable: true,
@@ -6439,7 +6430,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._options.pageSize !== v) {
                             this._options.pageSize = v;
-                            this.raisePropertyChanged(collection.PROP_NAME.pageSize);
+                            this.raisePropertyChanged(PROP_NAME.pageSize);
                             this._onPageSizeChanged();
                         }
                     },
@@ -6459,7 +6450,7 @@ var RIAPP;
                             }
                             this._pageIndex = v;
                             this._onPageChanged();
-                            this.raisePropertyChanged(collection.PROP_NAME.pageIndex);
+                            this.raisePropertyChanged(PROP_NAME.pageIndex);
                         }
                     },
                     enumerable: true,
@@ -6500,7 +6491,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isLoading !== v) {
                             this._isLoading = v;
-                            this.raisePropertyChanged(collection.PROP_NAME.isLoading);
+                            this.raisePropertyChanged(PROP_NAME.isLoading);
                         }
                     },
                     enumerable: true,
@@ -6513,7 +6504,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isUpdating !== v) {
                             this._isUpdating = v;
-                            this.raisePropertyChanged(collection.PROP_NAME.isUpdating);
+                            this.raisePropertyChanged(PROP_NAME.isUpdating);
                         }
                     },
                     enumerable: true,
@@ -6613,7 +6604,7 @@ var RIAPP;
                     return vals;
                 };
                 ListItemAspect.prototype._setProp = function (name, val) {
-                    var validation_error, error, coll = this._collection;
+                    var validation_error, error, coll = this.collection;
                     if (this._getProp(name) !== val) {
                         try {
                             baseUtils.setValue(this._vals, name, val, false);
@@ -6669,14 +6660,14 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(ListItemAspect.prototype, "_isNew", {
+                Object.defineProperty(ListItemAspect.prototype, "isNew", {
                     get: function () {
                         return this.__isNew;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(ListItemAspect.prototype, "_collection", {
+                Object.defineProperty(ListItemAspect.prototype, "collection", {
                     get: function () {
                         return this.__coll;
                     },
@@ -6765,8 +6756,8 @@ var RIAPP;
                             }
                         });
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
-                            this.raisePropertyChanged(collection.PROP_NAME.count);
+                            this._onItemsChanged({ changeType: 1 /* ADDED */, items: newItems, pos: positions });
+                            this.raisePropertyChanged(PROP_NAME.count);
                         }
                     }
                     finally {
@@ -6789,7 +6780,7 @@ var RIAPP;
                 };
                 BaseList.prototype.getNewObjects = function () {
                     return this._items.filter(function (item) {
-                        return item._aspect._isNew;
+                        return item._aspect.isNew;
                     });
                 };
                 BaseList.prototype.resetNewObjects = function () {
@@ -7930,7 +7921,6 @@ var RIAPP;
                 Object.defineProperty(NumberContent.prototype, "_allowedKeys", {
                     get: function () {
                         if (!NumberContent.__allowedKeys) {
-                            var KEYS = constsMOD.KEYS;
                             NumberContent.__allowedKeys = [0, 8 /* backspace */, 127 /* del */, 37 /* left */, 39 /* right */, 35 /* end */, 36 /* home */, 9 /* tab */, 27 /* esc */, 13 /* enter */];
                         }
                         return NumberContent.__allowedKeys;
@@ -7997,7 +7987,6 @@ var RIAPP;
                 Object.defineProperty(StringContent.prototype, "_allowedKeys", {
                     get: function () {
                         if (!StringContent.__allowedKeys) {
-                            var KEYS = constsMOD.KEYS;
                             StringContent.__allowedKeys = [0, 8 /* backspace */, 127 /* del */, 37 /* left */, 39 /* right */, 35 /* end */, 36 /* home */, 9 /* tab */, 27 /* esc */, 13 /* enter */];
                         }
                         return StringContent.__allowedKeys;
@@ -8037,7 +8026,6 @@ var RIAPP;
                 Object.defineProperty(MultyLineContent.prototype, "_allowedKeys", {
                     get: function () {
                         if (!MultyLineContent.__allowedKeys) {
-                            var KEYS = constsMOD.KEYS;
                             MultyLineContent.__allowedKeys = [0, 8 /* backspace */, 127 /* del */, 37 /* left */, 39 /* right */, 35 /* end */, 36 /* home */, 9 /* tab */, 27 /* esc */, 13 /* enter */];
                         }
                         return MultyLineContent.__allowedKeys;
@@ -9143,7 +9131,7 @@ var RIAPP;
                 };
                 ListBox.prototype._onDSCollectionChanged = function (sender, args) {
                     var self = this, data;
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case 2 /* RESET */:
                             if (!this._isDSFilling)
                                 this._refresh();
@@ -9151,7 +9139,7 @@ var RIAPP;
                         case 1 /* ADDED */:
                             if (!this._isDSFilling) {
                                 args.items.forEach(function (item) {
-                                    self._addOption(item, item._aspect._isNew);
+                                    self._addOption(item, item._aspect.isNew);
                                 });
                             }
                             break;
@@ -9212,19 +9200,19 @@ var RIAPP;
                         }
                     }
                 };
-                ListBox.prototype._onStatusChanged = function (item, oldChangeType) {
-                    var newChangeType = item._aspect._changeType;
-                    if (newChangeType === 3 /* DELETED */) {
+                ListBox.prototype._onStatusChanged = function (item, oldStatus) {
+                    var newStatus = item._aspect.status;
+                    if (newStatus === 3 /* DELETED */) {
                         this._removeOption(item);
                     }
                 };
-                ListBox.prototype._onCommitChanges = function (item, isBegin, isRejected, changeType) {
+                ListBox.prototype._onCommitChanges = function (item, isBegin, isRejected, status) {
                     var self = this, oldVal, val, data;
                     if (isBegin) {
-                        if (isRejected && changeType === 1 /* ADDED */) {
+                        if (isRejected && status === 1 /* ADDED */) {
                             return;
                         }
-                        else if (!isRejected && changeType === 3 /* DELETED */) {
+                        else if (!isRejected && status === 3 /* DELETED */) {
                             return;
                         }
                         this._savedValue = this._getStringValue(item);
@@ -9232,7 +9220,7 @@ var RIAPP;
                     else {
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
-                        if (isRejected && changeType === 3 /* DELETED */) {
+                        if (isRejected && status === 3 /* DELETED */) {
                             this._addOption(item, true);
                             return;
                         }
@@ -9264,10 +9252,10 @@ var RIAPP;
                         self._onEdit(args.item, false, args.isCanceled);
                     }, self._objId);
                     ds.addOnStatusChanged(function (sender, args) {
-                        self._onStatusChanged(args.item, args.oldChangeType);
+                        self._onStatusChanged(args.item, args.oldStatus);
                     }, self._objId);
                     ds.addOnCommitChanges(function (sender, args) {
-                        self._onCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
+                        self._onCommitChanges(args.item, args.isBegin, args.isRejected, args.status);
                     }, self._objId);
                 };
                 ListBox.prototype._unbindDS = function () {
@@ -10010,7 +9998,7 @@ var RIAPP;
                     this._currentSelectable = null;
                     this._fn_submitOnOK = function () {
                         var iSubmittable = utils.getSubmittable(self._dataContext);
-                        if (!iSubmittable || !iSubmittable._isCanSubmit) {
+                        if (!iSubmittable || !iSubmittable.isCanSubmit) {
                             //signals immediatly
                             return utils.createDeferred().resolve().promise();
                         }
@@ -10997,7 +10985,7 @@ var RIAPP;
                     this._isDeleted = false;
                     this._isSelected = false;
                     this._createCells();
-                    this.isDeleted = this._item._aspect._isDeleted;
+                    this._isDeleted = this._item._aspect.isDeleted;
                     var fn_state = function () {
                         var css = self._grid._onRowStateChanged(self, self._item[self._grid.options.rowStateField]);
                         self._setState(css);
@@ -12053,7 +12041,7 @@ var RIAPP;
                     }
                 };
                 DataGrid.prototype._onKeyDown = function (key, event) {
-                    var ds = this.dataSource, Keys = constsMOD.KEYS, self = this;
+                    var ds = this.dataSource, self = this;
                     if (!ds)
                         return;
                     switch (key) {
@@ -12117,7 +12105,7 @@ var RIAPP;
                     }
                 };
                 DataGrid.prototype._onKeyUp = function (key, event) {
-                    var ds = this.dataSource, Keys = constsMOD.KEYS;
+                    var ds = this.dataSource;
                     if (!ds)
                         return;
                     switch (key) {
@@ -12263,7 +12251,7 @@ var RIAPP;
                 };
                 DataGrid.prototype._onDSCollectionChanged = function (sender, args) {
                     var self = this, row, items = args.items;
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case 2 /* RESET */:
                             if (!this._isDSFilling)
                                 this._refreshGrid();
@@ -12290,7 +12278,7 @@ var RIAPP;
                             }
                             break;
                         default:
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.changeType));
                     }
                 };
                 DataGrid.prototype._onDSFill = function (sender, args) {
@@ -12353,12 +12341,12 @@ var RIAPP;
                         args.isAddNewHandled = this.showEditDialog();
                     }
                 };
-                DataGrid.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    var newChangeType = item._aspect._changeType, ds = this.dataSource;
+                DataGrid.prototype._onItemStatusChanged = function (item, oldStatus) {
+                    var newStatus = item._aspect.status, ds = this.dataSource;
                     var row = this._rowMap[item._key];
                     if (!row)
                         return;
-                    if (newChangeType === 3 /* DELETED */) {
+                    if (newStatus === 3 /* DELETED */) {
                         row.isDeleted = true;
                         var row2 = this._findUndeleted(row, true);
                         if (!row2) {
@@ -12368,7 +12356,7 @@ var RIAPP;
                             ds.currentItem = row2.item;
                         }
                     }
-                    else if (oldChangeType === 3 /* DELETED */ && newChangeType !== 3 /* DELETED */) {
+                    else if (oldStatus === 3 /* DELETED */ && newStatus !== 3 /* DELETED */) {
                         row.isDeleted = false;
                     }
                 };
@@ -12384,7 +12372,7 @@ var RIAPP;
                         return;
                     ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
                     ds.addOnFill(self._onDSFill, self._objId, self);
-                    ds.addOnPropertyChange(collMOD.PROP_NAME.currentItem, self._onDSCurrentChanged, self._objId, self);
+                    ds.addOnCurrentChanged(self._onDSCurrentChanged, self._objId, self);
                     ds.addOnBeginEdit(function (sender, args) {
                         self._onItemEdit(args.item, true, false);
                     }, self._objId);
@@ -12393,7 +12381,7 @@ var RIAPP;
                     }, self._objId);
                     ds.addOnErrorsChanged(self._onDSErrorsChanged, self._objId, self);
                     ds.addOnStatusChanged(function (sender, args) {
-                        self._onItemStatusChanged(args.item, args.oldChangeType);
+                        self._onItemStatusChanged(args.item, args.oldStatus);
                     }, self._objId);
                     ds.addOnItemAdded(self._onItemAdded, self._objId, self);
                     //fills all rows
@@ -12616,7 +12604,7 @@ var RIAPP;
                     }
                     else
                         this._dialog.dataContext = item;
-                    this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._aspect._isNew;
+                    this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._aspect.isNew;
                     this._dialog.show();
                     return true;
                 };
@@ -13160,9 +13148,9 @@ var RIAPP;
                             }, 0);
                         }
                     }, self._objId);
-                    ds.addOnPropertyChange(collMOD.PROP_NAME.pageIndex, self._onPageIndexChanged, self._objId, self);
-                    ds.addOnPropertyChange(collMOD.PROP_NAME.pageSize, self._onPageSizeChanged, self._objId, self);
-                    ds.addOnPropertyChange(collMOD.PROP_NAME.totalCount, self._onTotalCountChanged, self._objId, self);
+                    ds.addOnPageIndexChanged(self._onPageIndexChanged, self._objId, self);
+                    ds.addOnPageSizeChanged(self._onPageSizeChanged, self._objId, self);
+                    ds.addOnTotalCountChanged(self._onTotalCountChanged, self._objId, self);
                     this._currentPage = ds.pageIndex + 1;
                     this._rowsPerPage = ds.pageSize;
                     this._rowCount = ds.totalCount;
@@ -13668,7 +13656,7 @@ var RIAPP;
                 };
                 StackPanel.prototype._onDSCollectionChanged = function (sender, args) {
                     var self = this, items = args.items;
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case 2 /* RESET */:
                             if (!this._isDSFilling)
                                 this._refresh();
@@ -13693,7 +13681,7 @@ var RIAPP;
                             }
                             break;
                         default:
-                            throw new Error(global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(global.utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.changeType));
                     }
                 };
                 StackPanel.prototype._onDSFill = function (sender, args) {
@@ -13709,15 +13697,15 @@ var RIAPP;
                         this._isDSFilling = true;
                     }
                 };
-                StackPanel.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    var newChangeType = item._aspect._changeType;
+                StackPanel.prototype._onItemStatusChanged = function (item, oldStatus) {
+                    var newStatus = item._aspect.status;
                     var obj = this._itemMap[item._key];
                     if (!obj)
                         return;
-                    if (newChangeType === 3 /* DELETED */) {
+                    if (newStatus === 3 /* DELETED */) {
                         global.$(obj.div).hide();
                     }
-                    else if (oldChangeType === 3 /* DELETED */ && newChangeType !== 3 /* DELETED */) {
+                    else if (oldStatus === 3 /* DELETED */ && newStatus !== 3 /* DELETED */) {
                         global.$(obj.div).show();
                     }
                 };
@@ -13763,9 +13751,9 @@ var RIAPP;
                         return;
                     ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
                     ds.addOnFill(self._onDSFill, self._objId, self);
-                    ds.addOnPropertyChange(collMOD.PROP_NAME.currentItem, self._onDSCurrentChanged, self._objId, self);
+                    ds.addOnCurrentChanged(self._onDSCurrentChanged, self._objId, self);
                     ds.addOnStatusChanged(function (sender, args) {
-                        self._onItemStatusChanged(args.item, args.oldChangeType);
+                        self._onItemStatusChanged(args.item, args.oldStatus);
                     }, self._objId);
                     this._refresh();
                 };
@@ -14123,8 +14111,8 @@ var RIAPP;
                 }
                 _fn_traverseChanges(val.fieldName, val, fn);
             }
-            _db.PROP_NAME = {
-                hasChanges: 'hasChanges',
+            var PROP_NAME = {
+                isHasChanges: 'isHasChanges',
                 isSubmitOnDelete: 'isSubmitOnDelete',
                 isInitialized: 'isInitialized',
                 isBusy: 'isBusy',
@@ -14340,7 +14328,7 @@ var RIAPP;
                             v = 0;
                         if (v !== this._totalCount) {
                             this._totalCount = v;
-                            this.raisePropertyChanged(_db.PROP_NAME.totalCount);
+                            this.raisePropertyChanged(PROP_NAME.totalCount);
                         }
                     },
                     enumerable: true,
@@ -14393,7 +14381,7 @@ var RIAPP;
                     var fld = this.getFieldInfo(fieldName);
                     if (!fld)
                         throw new Error(utils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, this.dbSetName, fieldName));
-                    var stz = this._serverTimezone, dcnv = fld.dateConversion, vals = [];
+                    var stz = this.serverTimezone, dcnv = fld.dateConversion, vals = [];
                     if (!utils.check.isArray(value))
                         vals = [value];
                     else
@@ -14505,7 +14493,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DataQuery.prototype, "_serverTimezone", {
+                Object.defineProperty(DataQuery.prototype, "serverTimezone", {
                     get: function () {
                         return this._dbSet.dbContext.serverTimezone;
                     },
@@ -14631,7 +14619,7 @@ var RIAPP;
                             if (v === 1) {
                                 this._clearCache();
                             }
-                            this.raisePropertyChanged(_db.PROP_NAME.loadPageCount);
+                            this.raisePropertyChanged(PROP_NAME.loadPageCount);
                         }
                     },
                     enumerable: true,
@@ -14644,7 +14632,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isClearCacheOnEveryLoad != v) {
                             this._isClearCacheOnEveryLoad = v;
-                            this.raisePropertyChanged(_db.PROP_NAME.isClearCacheOnEveryLoad);
+                            this.raisePropertyChanged(PROP_NAME.isClearCacheOnEveryLoad);
                         }
                     },
                     enumerable: true,
@@ -14671,16 +14659,15 @@ var RIAPP;
             var EntityAspect = (function (_super) {
                 __extends(EntityAspect, _super);
                 function EntityAspect(itemType, dbSet, row, names) {
-                    this.__dbSet = dbSet;
+                    this._dbSet = dbSet;
                     _super.call(this);
                     var self = this;
-                    this.__changeType = 0 /* NONE */;
-                    this.__isRefreshing = false;
-                    this.__isCached = false;
-                    this._srvRowKey = null;
+                    this.__srvKey = null;
+                    this._isRefreshing = false;
+                    this._isCached = false;
                     this._origVals = null;
-                    this._saveChangeType = null;
-                    var fieldInfos = this._dbSet.getFieldInfos(), fld;
+                    this._savedStatus = null;
+                    var fieldInfos = this.dbSet.getFieldInfos(), fld;
                     for (var i = 0, len = fieldInfos.length; i < len; i += 1) {
                         fld = fieldInfos[i];
                         if (fld.fieldType != 5 /* Object */) {
@@ -14702,16 +14689,16 @@ var RIAPP;
                 EntityAspect.prototype._initRowInfo = function (row, names) {
                     if (!row)
                         return;
-                    this._srvRowKey = row.k;
+                    this.__srvKey = row.k;
                     this._key = row.k;
                     this._processValues('', row.v, names);
                 };
                 EntityAspect.prototype._processValues = function (path, values, names) {
-                    var self = this, stz = self._serverTimezone;
+                    var self = this, stz = self.serverTimezone;
                     values.forEach(function (value, index) {
-                        var name = names[index], fieldName = path + name.n, fld = self._dbSet.getFieldInfo(fieldName), val;
+                        var name = names[index], fieldName = path + name.n, fld = self.dbSet.getFieldInfo(fieldName), val;
                         if (!fld)
-                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fieldName));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self.dbSetName, fieldName));
                         if (fld.fieldType == 5 /* Object */) {
                             //for object fields the value should be an array of values - recursive processing
                             self._processValues(fieldName + '.', value, name.p);
@@ -14741,7 +14728,7 @@ var RIAPP;
                     }
                 };
                 EntityAspect.prototype._getValueChange = function (fullName, fld, changedOnly) {
-                    var self = this, dbSet = self._dbSet, res, i, len, tmp;
+                    var self = this, dbSet = self.dbSet, res, i, len, tmp;
                     if (fn_isNotSubmittable(fld))
                         return null;
                     if (fld.fieldType == 5 /* Object */) {
@@ -14780,7 +14767,7 @@ var RIAPP;
                     }
                 };
                 EntityAspect.prototype._getValueChanges = function (changedOnly) {
-                    var self = this, flds = this._dbSet.getFieldInfos();
+                    var self = this, flds = this.dbSet.getFieldInfos();
                     var res = flds.map(function (fld) {
                         return self._getValueChange(fld.fieldName, fld, changedOnly);
                     });
@@ -14798,9 +14785,9 @@ var RIAPP;
                 };
                 EntityAspect.prototype._fldChanged = function (fieldName, fieldInfo, oldV, newV) {
                     if (!(fieldInfo.fieldType == 1 /* ClientOnly */ || fieldInfo.fieldType == 6 /* ServerCalculated */)) {
-                        switch (this._changeType) {
+                        switch (this.status) {
                             case 0 /* NONE */:
-                                this._changeType = 2 /* UPDATED */;
+                                this.setStatus(2 /* UPDATED */);
                                 break;
                         }
                     }
@@ -14808,7 +14795,7 @@ var RIAPP;
                     return true;
                 };
                 EntityAspect.prototype._skipValidate = function (fieldInfo, val) {
-                    var childToParentNames = this._dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
+                    var childToParentNames = this.dbSet._getChildToParentNames(fieldInfo.fieldName), res = false;
                     if (!!childToParentNames && val === null) {
                         for (var i = 0, len = childToParentNames.length; i < len; i += 1) {
                             res = !!this._getFieldVal(childToParentNames[i]);
@@ -14821,47 +14808,58 @@ var RIAPP;
                 EntityAspect.prototype._beginEdit = function () {
                     if (!_super.prototype._beginEdit.call(this))
                         return false;
-                    this._saveChangeType = this._changeType;
+                    this._savedStatus = this.status;
                     return true;
                 };
                 EntityAspect.prototype._endEdit = function () {
                     if (!_super.prototype._endEdit.call(this))
                         return false;
-                    this._saveChangeType = null;
+                    this._savedStatus = null;
                     return true;
                 };
                 EntityAspect.prototype.getDbSet = function () {
-                    return this.__dbSet;
+                    return this._dbSet;
+                };
+                EntityAspect.prototype.setStatus = function (v) {
+                    if (this._status !== v) {
+                        var oldStatus = this._status;
+                        this._status = v;
+                        if (v !== 0 /* NONE */)
+                            this.dbSet._addToChanged(this.getItem());
+                        else
+                            this.dbSet._removeFromChanged(this._key);
+                        this.dbSet._onItemStatusChanged(this.getItem(), oldStatus);
+                    }
                 };
                 EntityAspect.prototype._getCalcFieldVal = function (fieldName) {
                     if (this._isDestroyCalled)
                         return null;
-                    return this._dbSet._getCalcFieldVal(fieldName, this.getItem());
+                    return this.dbSet._getCalcFieldVal(fieldName, this.getItem());
                 };
                 EntityAspect.prototype._getNavFieldVal = function (fieldName) {
                     if (this._isDestroyCalled) {
                         return null;
                     }
-                    return this._dbSet._getNavFieldVal(fieldName, this.getItem());
+                    return this.dbSet._getNavFieldVal(fieldName, this.getItem());
                 };
                 EntityAspect.prototype._setNavFieldVal = function (fieldName, value) {
-                    var dbSet = this._dbSet;
-                    this._dbSet._setNavFieldVal(fieldName, this.getItem(), value);
+                    var dbSet = this.dbSet;
+                    dbSet._setNavFieldVal(fieldName, this.getItem(), value);
                 };
                 EntityAspect.prototype._updateKeys = function (srvKey) {
-                    this._srvRowKey = srvKey;
+                    this.__srvKey = srvKey;
                     this._key = srvKey;
                 };
                 EntityAspect.prototype._checkCanRefresh = function () {
-                    if (this._key === null || this._changeType === 1 /* ADDED */) {
+                    if (this._key === null || this.status === 1 /* ADDED */) {
                         throw new Error(RIAPP.ERRS.ERR_OPER_REFRESH_INVALID);
                     }
                 };
                 EntityAspect.prototype._refreshValue = function (val, fullName, refreshMode) {
-                    var self = this, fld = self._dbSet.getFieldInfo(fullName);
+                    var self = this, fld = self.dbSet.getFieldInfo(fullName);
                     if (!fld)
-                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self._dbSetName, fullName));
-                    var stz = self._serverTimezone, newVal, oldVal, oldValOrig, dataType = fld.dataType, dcnv = fld.dateConversion;
+                        throw new Error(baseUtils.format(RIAPP.ERRS.ERR_DBSET_INVALID_FIELDNAME, self.dbSetName, fullName));
+                    var stz = self.serverTimezone, newVal, oldVal, oldValOrig, dataType = fld.dataType, dcnv = fld.dateConversion;
                     newVal = valueUtils.parseValue(val, dataType, dcnv, stz);
                     oldVal = baseUtils.getValue(self._vals, fullName);
                     switch (refreshMode) {
@@ -14907,7 +14905,7 @@ var RIAPP;
                     }
                 };
                 EntityAspect.prototype._refreshValues = function (rowInfo, refreshMode) {
-                    var self = this, oldCT = this._changeType;
+                    var self = this, oldStatus = this.status;
                     if (!this._isDestroyed) {
                         if (!refreshMode) {
                             refreshMode = 1 /* RefreshCurrent */;
@@ -14919,11 +14917,11 @@ var RIAPP;
                                 self._refreshValue(vc.val, fullName, refreshMode);
                             });
                         });
-                        if (oldCT === 2 /* UPDATED */) {
+                        if (oldStatus === 2 /* UPDATED */) {
                             var changes = this._getValueChanges(true);
                             if (changes.length === 0) {
                                 this._origVals = null;
-                                this._changeType = 0 /* NONE */;
+                                this.setStatus(0 /* NONE */);
                             }
                         }
                     }
@@ -14931,7 +14929,7 @@ var RIAPP;
                 EntityAspect.prototype._getRowInfo = function () {
                     var res = {
                         values: this._getValueChanges(false),
-                        changeType: this._changeType,
+                        changeType: this.status,
                         serverKey: this._srvKey,
                         clientKey: this._key,
                         error: null
@@ -14947,10 +14945,10 @@ var RIAPP;
                     return baseUtils.getValue(this._vals, fieldName);
                 };
                 EntityAspect.prototype._setFieldVal = function (fieldName, val) {
-                    var validation_error, error, dbSetName = this._dbSetName, dbSet = this._dbSet, ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val, fld = this.getFieldInfo(fieldName), res = false;
+                    var validation_error, error, dbSetName = this.dbSetName, dbSet = this.dbSet, ERRS = RIAPP.ERRS, oldV = this._getFieldVal(fieldName), newV = val, fld = this.getFieldInfo(fieldName), res = false;
                     if (!fld)
                         throw new Error(baseUtils.format(ERRS.ERR_DBSET_INVALID_FIELDNAME, dbSetName, fieldName));
-                    if (!this._isEditing && !this._isUpdating)
+                    if (!this._isEditing && !this.isUpdating)
                         this.beginEdit();
                     try {
                         newV = this._checkVal(fld, newV);
@@ -14983,60 +14981,60 @@ var RIAPP;
                 };
                 EntityAspect.prototype._onAttaching = function () {
                     _super.prototype._onAttaching.call(this);
-                    this.__changeType = 1 /* ADDED */;
+                    this._status = 1 /* ADDED */;
                 };
                 EntityAspect.prototype._onAttach = function () {
                     _super.prototype._onAttach.call(this);
                     if (this._key === null)
                         throw new Error(RIAPP.ERRS.ERR_ITEM_IS_DETACHED);
-                    this._dbSet._addToChanged(this.getItem());
+                    this.dbSet._addToChanged(this.getItem());
                 };
                 EntityAspect.prototype.deleteItem = function () {
                     return this.deleteOnSubmit();
                 };
                 EntityAspect.prototype.deleteOnSubmit = function () {
-                    var oldCT = this._changeType, eset = this._dbSet, args = { item: this.getItem(), isCancel: false };
-                    eset._onItemDeleting(args);
+                    var oldStatus = this.status, dbSet = this.dbSet, args = { item: this.getItem(), isCancel: false };
+                    dbSet._onItemDeleting(args);
                     if (args.isCancel) {
                         return false;
                     }
                     if (this._key === null)
                         return false;
-                    if (oldCT === 1 /* ADDED */) {
-                        eset.removeItem(this.getItem());
+                    if (oldStatus === 1 /* ADDED */) {
+                        dbSet.removeItem(this.getItem());
                         return true;
                     }
-                    this._changeType = 3 /* DELETED */;
+                    this.setStatus(3 /* DELETED */);
                     return true;
                 };
                 EntityAspect.prototype.acceptChanges = function (rowInfo) {
-                    var oldCT = this._changeType, eset = this._dbSet;
+                    var oldStatus = this.status, dbSet = this.dbSet;
                     if (this._key === null)
                         return;
-                    if (oldCT !== 0 /* NONE */) {
-                        eset._onCommitChanges(this.getItem(), true, false, oldCT);
-                        if (oldCT === 3 /* DELETED */) {
-                            eset.removeItem(this.getItem());
+                    if (oldStatus !== 0 /* NONE */) {
+                        dbSet._onCommitChanges(this.getItem(), true, false, oldStatus);
+                        if (oldStatus === 3 /* DELETED */) {
+                            dbSet.removeItem(this.getItem());
                             return;
                         }
                         this._origVals = null;
                         if (!!this._saveVals)
                             this._saveVals = utils.cloneObj(this._vals);
-                        this._changeType = 0 /* NONE */;
-                        eset._removeAllErrors(this.getItem());
+                        this.setStatus(0 /* NONE */);
+                        dbSet._removeAllErrors(this.getItem());
                         if (!!rowInfo)
                             this._refreshValues(rowInfo, 3 /* CommitChanges */);
-                        eset._onCommitChanges(this.getItem(), false, false, oldCT);
+                        dbSet._onCommitChanges(this.getItem(), false, false, oldStatus);
                     }
                 };
                 EntityAspect.prototype.rejectChanges = function () {
-                    var self = this, oldCT = self._changeType, eset = self._dbSet;
+                    var self = this, oldStatus = self.status, dbSet = self.dbSet;
                     if (!self._key)
                         return;
-                    if (oldCT !== 0 /* NONE */) {
-                        eset._onCommitChanges(self.getItem(), true, true, oldCT);
-                        if (oldCT === 1 /* ADDED */) {
-                            eset.removeItem(this.getItem());
+                    if (oldStatus !== 0 /* NONE */) {
+                        dbSet._onCommitChanges(self.getItem(), true, true, oldStatus);
+                        if (oldStatus === 1 /* ADDED */) {
+                            dbSet.removeItem(this.getItem());
                             return;
                         }
                         var changes = self._getValueChanges(true);
@@ -15047,14 +15045,14 @@ var RIAPP;
                                 self._saveVals = utils.cloneObj(self._vals);
                             }
                         }
-                        self._changeType = 0 /* NONE */;
-                        eset._removeAllErrors(this.getItem());
+                        self.setStatus(0 /* NONE */);
+                        dbSet._removeAllErrors(this.getItem());
                         changes.forEach(function (v) {
                             fn_traverseChanges(v, function (fullName, vc) {
-                                self._onFieldChanged(fullName, eset.getFieldInfo(fullName));
+                                self._onFieldChanged(fullName, dbSet.getFieldInfo(fullName));
                             });
                         });
-                        eset._onCommitChanges(this.getItem(), false, true, oldCT);
+                        dbSet._onCommitChanges(this.getItem(), false, true, oldStatus);
                     }
                 };
                 EntityAspect.prototype.submitChanges = function () {
@@ -15081,25 +15079,24 @@ var RIAPP;
                 EntityAspect.prototype.cancelEdit = function () {
                     if (!this._isEditing)
                         return false;
-                    var self = this, changes = this._getValueChanges(true), isNew = this._isNew, coll = this._dbSet;
-                    this._isEditing = false;
+                    var self = this, changes = this._getValueChanges(true), isNew = this.isNew, dbSet = this.dbSet;
                     this._vals = this._saveVals;
                     this._saveVals = null;
-                    this._changeType = this._saveChangeType;
-                    this._saveChangeType = null;
-                    coll._removeAllErrors(this.getItem());
+                    this.setStatus(this._savedStatus);
+                    this._savedStatus = null;
+                    dbSet._removeAllErrors(this.getItem());
                     changes.forEach(function (v) {
                         self.raisePropertyChanged(v.fieldName);
                     });
                     if (isNew && this._notEdited) {
-                        coll.removeItem(this.getItem());
+                        dbSet.removeItem(this.getItem());
                     }
-                    coll._onEditing(this.getItem(), false, true);
-                    this.raisePropertyChanged(collMOD.PROP_NAME.isEditing);
+                    this._isEditing = false;
+                    dbSet._onEditing(this.getItem(), false, true);
                     return true;
                 };
                 EntityAspect.prototype.getDbContext = function () {
-                    return this.__dbSet.dbContext;
+                    return this._dbSet.dbContext;
                 };
                 EntityAspect.prototype.getItem = function () {
                     return this._item;
@@ -15111,107 +15108,89 @@ var RIAPP;
                     if (this._isDestroyed)
                         return;
                     this._isDestroyCalled = true;
-                    this.__dbSet = null;
-                    this._srvRowKey = null;
+                    this._dbSet = null;
+                    this.__srvKey = null;
                     this._origVals = null;
-                    this._saveChangeType = null;
-                    this.__isRefreshing = false;
-                    this.__isCached = false;
+                    this._savedStatus = null;
+                    this._isRefreshing = false;
+                    this._isCached = false;
                     if (!!this._item && !this._item.getIsDestroyCalled()) {
                         this._item.destroy();
                     }
                     this._item = null;
                     _super.prototype.destroy.call(this);
                 };
-                Object.defineProperty(EntityAspect.prototype, "_isCanSubmit", {
-                    get: function () {
-                        return true;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(EntityAspect.prototype, "_changeType", {
-                    get: function () {
-                        return this.__changeType;
-                    },
-                    set: function (v) {
-                        if (this.__changeType !== v) {
-                            var oldChangeType = this.__changeType;
-                            this.__changeType = v;
-                            if (v !== 0 /* NONE */)
-                                this._dbSet._addToChanged(this.getItem());
-                            else
-                                this._dbSet._removeFromChanged(this._key);
-                            this._dbSet._onItemStatusChanged(this.getItem(), oldChangeType);
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(EntityAspect.prototype, "_isNew", {
-                    get: function () {
-                        return this.__changeType === 1 /* ADDED */;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                Object.defineProperty(EntityAspect.prototype, "_isDeleted", {
-                    get: function () {
-                        return this.__changeType === 3 /* DELETED */;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
                 Object.defineProperty(EntityAspect.prototype, "_entityType", {
                     get: function () {
-                        return this.__dbSet.entityType;
+                        return this._dbSet.entityType;
                     },
                     enumerable: true,
                     configurable: true
                 });
                 Object.defineProperty(EntityAspect.prototype, "_srvKey", {
                     get: function () {
-                        return this._srvRowKey;
+                        return this.__srvKey;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(EntityAspect.prototype, "_dbSetName", {
+                Object.defineProperty(EntityAspect.prototype, "isCanSubmit", {
                     get: function () {
-                        return this.__dbSet.dbSetName;
+                        return true;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(EntityAspect.prototype, "_serverTimezone", {
+                Object.defineProperty(EntityAspect.prototype, "isNew", {
+                    get: function () {
+                        return this._status === 1 /* ADDED */;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(EntityAspect.prototype, "isDeleted", {
+                    get: function () {
+                        return this._status === 3 /* DELETED */;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(EntityAspect.prototype, "dbSetName", {
+                    get: function () {
+                        return this._dbSet.dbSetName;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(EntityAspect.prototype, "serverTimezone", {
                     get: function () {
                         return this.getDbContext().serverTimezone;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(EntityAspect.prototype, "_collection", {
+                Object.defineProperty(EntityAspect.prototype, "collection", {
                     get: function () {
-                        return this.__dbSet;
+                        return this._dbSet;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(EntityAspect.prototype, "_dbSet", {
+                Object.defineProperty(EntityAspect.prototype, "dbSet", {
                     get: function () {
-                        return this.__dbSet;
+                        return this._dbSet;
                     },
                     enumerable: true,
                     configurable: true
                 });
                 Object.defineProperty(EntityAspect.prototype, "isRefreshing", {
                     get: function () {
-                        return this.__isRefreshing;
+                        return this._isRefreshing;
                     },
                     set: function (v) {
-                        if (this.__isRefreshing !== v) {
-                            this.__isRefreshing = v;
-                            this.raisePropertyChanged(_db.PROP_NAME.isRefreshing);
+                        if (this._isRefreshing !== v) {
+                            this._isRefreshing = v;
+                            this.raisePropertyChanged(PROP_NAME.isRefreshing);
                         }
                     },
                     enumerable: true,
@@ -15219,17 +15198,17 @@ var RIAPP;
                 });
                 Object.defineProperty(EntityAspect.prototype, "isCached", {
                     get: function () {
-                        return this.__isCached;
+                        return this._isCached;
                     },
                     set: function (v) {
-                        this.__isCached = v;
+                        this._isCached = v;
                     },
                     enumerable: true,
                     configurable: true
                 });
                 Object.defineProperty(EntityAspect.prototype, "isHasChanges", {
                     get: function () {
-                        return this.__changeType !== 0 /* NONE */;
+                        return this._status !== 0 /* NONE */;
                     },
                     enumerable: true,
                     configurable: true
@@ -15446,14 +15425,14 @@ var RIAPP;
                     this._changeCache = {};
                     this._changeCount = 0;
                     if (old !== this._changeCount)
-                        this.raisePropertyChanged(_db.PROP_NAME.hasChanges);
+                        this.raisePropertyChanged(PROP_NAME.isHasChanges);
                 };
                 DbSet.prototype._onPageChanging = function () {
                     var res = _super.prototype._onPageChanging.call(this);
                     if (!res) {
                         return res;
                     }
-                    if (this.hasChanges) {
+                    if (this.isHasChanges) {
                         this.rejectChanges();
                     }
                     return res;
@@ -15617,8 +15596,8 @@ var RIAPP;
                                 items.push(oldItem);
                         });
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
-                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
+                            this._onItemsChanged({ changeType: 1 /* ADDED */, items: newItems, pos: positions });
+                            this._onCountChanged();
                         }
                         if (!!data.fn_beforeFillEnd) {
                             data.fn_beforeFillEnd();
@@ -15661,8 +15640,8 @@ var RIAPP;
                             data.fn_beforeFillEnd();
                         }
                         if (fetchedItems.length > 0) {
-                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: fetchedItems, pos: positions });
-                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
+                            this._onItemsChanged({ changeType: 1 /* ADDED */, items: fetchedItems, pos: positions });
+                            this._onCountChanged();
                         }
                     }
                     finally {
@@ -15686,15 +15665,15 @@ var RIAPP;
                         if (!item) {
                             throw new Error(baseUtils.format(RIAPP.ERRS.ERR_KEY_IS_NOTFOUND, key));
                         }
-                        var itemCT = item._aspect._changeType;
+                        var itemStatus = item._aspect.status;
                         item._aspect.acceptChanges(rowInfo);
-                        if (itemCT === 1 /* ADDED */) {
+                        if (itemStatus === 1 /* ADDED */) {
                             //on insert
                             delete self._itemsByKey[key];
                             item._aspect._updateKeys(rowInfo.serverKey);
                             self._itemsByKey[item._key] = item;
                             self._onItemsChanged({
-                                change_type: 3 /* REMAP_KEY */,
+                                changeType: 3 /* REMAP_KEY */,
                                 items: [item],
                                 old_key: key,
                                 new_key: item._key
@@ -15751,7 +15730,7 @@ var RIAPP;
                         this._changeCache[item._key] = item;
                         this._changeCount += 1;
                         if (this._changeCount === 1)
-                            this.raisePropertyChanged(_db.PROP_NAME.hasChanges);
+                            this.raisePropertyChanged(PROP_NAME.isHasChanges);
                     }
                 };
                 DbSet.prototype._removeFromChanged = function (key) {
@@ -15761,13 +15740,13 @@ var RIAPP;
                         delete this._changeCache[key];
                         this._changeCount -= 1;
                         if (this._changeCount === 0)
-                            this.raisePropertyChanged(_db.PROP_NAME.hasChanges);
+                            this.raisePropertyChanged(PROP_NAME.isHasChanges);
                     }
                 };
-                //occurs when item changeType Changed (not used in simple collections)
-                DbSet.prototype._onItemStatusChanged = function (item, oldChangeType) {
-                    _super.prototype._onItemStatusChanged.call(this, item, oldChangeType);
-                    if (item._aspect._isDeleted && this.isSubmitOnDelete) {
+                //occurs when item Status Changed (not used in simple collections)
+                DbSet.prototype._onItemStatusChanged = function (item, oldStatus) {
+                    _super.prototype._onItemStatusChanged.call(this, item, oldStatus);
+                    if (item._aspect.isDeleted && this.isSubmitOnDelete) {
                         this.dbContext.submitChanges();
                     }
                 };
@@ -15924,7 +15903,7 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DbSet.prototype, "hasChanges", {
+                Object.defineProperty(DbSet.prototype, "isHasChanges", {
                     get: function () {
                         return this._changeCount > 0;
                     },
@@ -15950,7 +15929,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isSubmitOnDelete !== v) {
                             this._isSubmitOnDelete = !!v;
-                            this.raisePropertyChanged(_db.PROP_NAME.isSubmitOnDelete);
+                            this.raisePropertyChanged(PROP_NAME.isSubmitOnDelete);
                         }
                     },
                     enumerable: true,
@@ -15980,7 +15959,7 @@ var RIAPP;
                 DbSets.prototype._dbSetCreated = function (dbSet) {
                     var self = this;
                     this._arrDbSets.push(dbSet);
-                    dbSet.addOnPropertyChange(_db.PROP_NAME.hasChanges, function (sender, args) {
+                    dbSet.addOnPropertyChange(PROP_NAME.isHasChanges, function (sender, args) {
                         self._dbContext._onDbSetHasChangesChanged(sender);
                     }, null);
                 };
@@ -16044,7 +16023,7 @@ var RIAPP;
                     this._serviceUrl = null;
                     this._isBusy = 0;
                     this._isSubmiting = false;
-                    this._hasChanges = false;
+                    this._isHasChanges = false;
                     this._pendingSubmit = null;
                     this._serverTimezone = utils.get_timeZoneOffset();
                     this._waitQueue = new utilsMOD.WaitQueue(this);
@@ -16052,9 +16031,6 @@ var RIAPP;
                 DbContext.prototype._getEventNames = function () {
                     var base_events = _super.prototype._getEventNames.call(this);
                     return [DBCTX_EVENTS.submit_err].concat(base_events);
-                };
-                DbContext.prototype._onGetCalcField = function (args) {
-                    this.raiseEvent('define_calc', args);
                 };
                 DbContext.prototype._initDbSets = function () {
                     if (this._isInitialized)
@@ -16164,12 +16140,12 @@ var RIAPP;
                             var arr = new Array(val.length);
                             for (var k = 0; k < val.length; k += 1) {
                                 //first convert all values to string
-                                arr[k] = valueUtils.stringifyValue(val[k], pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
+                                arr[k] = valueUtils.stringifyValue(val[k], pinfo.dateConversion, pinfo.dataType, self.serverTimezone);
                             }
                             value = JSON.stringify(arr);
                         }
                         else
-                            value = valueUtils.stringifyValue(val, pinfo.dateConversion, pinfo.dataType, self._serverTimezone);
+                            value = valueUtils.stringifyValue(val, pinfo.dateConversion, pinfo.dataType, self.serverTimezone);
                         data.paramInfo.parameters.push({ name: pinfo.name, value: value });
                     }
                     return data;
@@ -16396,7 +16372,7 @@ var RIAPP;
                         if (!!opts.permissions) {
                             self._updatePermissions(opts.permissions);
                             self._isInitialized = true;
-                            self.raisePropertyChanged(_db.PROP_NAME.isInitialized);
+                            self.raisePropertyChanged(PROP_NAME.isInitialized);
                             return;
                         }
                         //initialize by obtaining metadata from the data service by ajax call
@@ -16413,7 +16389,7 @@ var RIAPP;
                                 self._updatePermissions(JSON.parse(permissions));
                                 self.isBusy = false;
                                 self._isInitialized = true;
-                                self.raisePropertyChanged(_db.PROP_NAME.isInitialized);
+                                self.raisePropertyChanged(PROP_NAME.isInitialized);
                             }
                             catch (ex) {
                                 self.isBusy = false;
@@ -16442,7 +16418,7 @@ var RIAPP;
                     try {
                         __checkError(res.error, operType);
                         if (!res.rowInfo) {
-                            item._aspect._dbSet.removeItem(item);
+                            item._aspect.dbSet.removeItem(item);
                             item._aspect.destroy();
                             throw new Error(RIAPP.ERRS.ERR_ITEM_DELETED_BY_ANOTHER_USER);
                         }
@@ -16466,7 +16442,7 @@ var RIAPP;
                             deferred.reject();
                         }
                     };
-                    var url = this._getUrl(DATA_SVC_METH.Refresh), dbSet = item._aspect._dbSet;
+                    var url = this._getUrl(DATA_SVC_METH.Refresh), dbSet = item._aspect.dbSet;
                     var self = this;
                     this.waitForNotSubmiting(function () {
                         dbSet.waitForNotLoading(function () {
@@ -16486,7 +16462,7 @@ var RIAPP;
                             self.isBusy = true;
                             dbSet.isLoading = true;
                             try {
-                                var request = { dbSetName: item._aspect._dbSetName, rowInfo: item._aspect._getRowInfo(), error: null };
+                                var request = { dbSetName: item._aspect.dbSetName, rowInfo: item._aspect._getRowInfo(), error: null };
                                 item._aspect._checkCanRefresh();
                                 postData = JSON.stringify(request);
                                 utils.performAjaxCall(url, postData, true, function (res) {
@@ -16516,22 +16492,22 @@ var RIAPP;
                     return this._queryInf[name];
                 };
                 DbContext.prototype._onDbSetHasChangesChanged = function (eSet) {
-                    var old = this._hasChanges, test;
-                    this._hasChanges = false;
-                    if (eSet.hasChanges) {
-                        this._hasChanges = true;
+                    var old = this._isHasChanges, test;
+                    this._isHasChanges = false;
+                    if (eSet.isHasChanges) {
+                        this._isHasChanges = true;
                     }
                     else {
                         for (var i = 0, len = this._dbSets.arrDbSets.length; i < len; i += 1) {
                             test = this._dbSets.arrDbSets[i];
-                            if (test.hasChanges) {
-                                this._hasChanges = true;
+                            if (test.isHasChanges) {
+                                this._isHasChanges = true;
                                 break;
                             }
                         }
                     }
-                    if (this._hasChanges !== old) {
-                        this.raisePropertyChanged(_db.PROP_NAME.hasChanges);
+                    if (this._isHasChanges !== old) {
+                        this.raisePropertyChanged(PROP_NAME.isHasChanges);
                     }
                 };
                 DbContext.prototype._load = function (query, isPageChanged) {
@@ -16772,7 +16748,7 @@ var RIAPP;
                     this._isInitialized = false;
                     this._isBusy = 0;
                     this._isSubmiting = false;
-                    this._hasChanges = false;
+                    this._isHasChanges = false;
                     _super.prototype.destroy.call(this);
                 };
                 Object.defineProperty(DbContext.prototype, "service_url", {
@@ -16805,7 +16781,7 @@ var RIAPP;
                         }
                         cur = this._isBusy > 0;
                         if (cur != old) {
-                            this.raisePropertyChanged(_db.PROP_NAME.isBusy);
+                            this.raisePropertyChanged(PROP_NAME.isBusy);
                         }
                     },
                     enumerable: true,
@@ -16818,7 +16794,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._isSubmiting !== v) {
                             this._isSubmiting = v;
-                            this.raisePropertyChanged(_db.PROP_NAME.isSubmiting);
+                            this.raisePropertyChanged(PROP_NAME.isSubmiting);
                         }
                     },
                     enumerable: true,
@@ -16845,9 +16821,9 @@ var RIAPP;
                     enumerable: true,
                     configurable: true
                 });
-                Object.defineProperty(DbContext.prototype, "hasChanges", {
+                Object.defineProperty(DbContext.prototype, "isHasChanges", {
                     get: function () {
-                        return this._hasChanges;
+                        return this._isHasChanges;
                     },
                     enumerable: true,
                     configurable: true
@@ -16926,10 +16902,10 @@ var RIAPP;
                     ds.addOnItemDeleting(function (sender, args) {
                     }, self._objId, null, true);
                     ds.addOnStatusChanged(function (sender, args) {
-                        self._onParentStatusChanged(args.item, args.oldChangeType);
+                        self._onParentStatusChanged(args.item, args.oldStatus);
                     }, self._objId, null, true);
                     ds.addOnCommitChanges(function (sender, args) {
-                        self._onParentCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
+                        self._onParentCommitChanges(args.item, args.isBegin, args.isRejected, args.status);
                     }, self._objId, null, true);
                 };
                 Association.prototype._bindChildDS = function () {
@@ -16949,15 +16925,15 @@ var RIAPP;
                         self._onChildEdit(args.item, false, args.isCanceled);
                     }, self._objId, null, true);
                     ds.addOnStatusChanged(function (sender, args) {
-                        self._onChildStatusChanged(args.item, args.oldChangeType);
+                        self._onChildStatusChanged(args.item, args.oldStatus);
                     }, self._objId, null, true);
                     ds.addOnCommitChanges(function (sender, args) {
-                        self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
+                        self._onChildCommitChanges(args.item, args.isBegin, args.isRejected, args.status);
                     }, self._objId, null, true);
                 };
                 Association.prototype._onParentCollChanged = function (args) {
                     var self = this, item, items = args.items, changed = [], changedKeys = {};
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case 2 /* RESET */:
                             if (!self._isParentFilling)
                                 changed = self.refreshParentMap();
@@ -16987,7 +16963,7 @@ var RIAPP;
                             }
                             break;
                         default:
-                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.changeType));
                     }
                     self._notifyParentChanged(changed);
                 };
@@ -17018,16 +16994,16 @@ var RIAPP;
                             self._saveParentFKey = null;
                     }
                 };
-                Association.prototype._onParentCommitChanges = function (item, isBegin, isRejected, changeType) {
+                Association.prototype._onParentCommitChanges = function (item, isBegin, isRejected, status) {
                     var self = this, fkey;
                     if (isBegin) {
-                        if (isRejected && changeType === 1 /* ADDED */) {
+                        if (isRejected && status === 1 /* ADDED */) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
                             return;
                         }
-                        else if (!isRejected && changeType === 3 /* DELETED */) {
+                        else if (!isRejected && status === 3 /* DELETED */) {
                             fkey = this._unMapParentItem(item);
                             if (!!fkey)
                                 self._notifyParentChanged([fkey]);
@@ -17062,10 +17038,10 @@ var RIAPP;
                         }
                     }
                 };
-                Association.prototype._onParentStatusChanged = function (item, oldChangeType) {
-                    var self = this, newChangeType = item._aspect._changeType, fkey;
+                Association.prototype._onParentStatusChanged = function (item, oldStatus) {
+                    var self = this, newStatus = item._aspect.status, fkey = null;
                     var children;
-                    if (newChangeType === 3 /* DELETED */) {
+                    if (newStatus === 3 /* DELETED */) {
                         children = self.getChildItems(item);
                         fkey = this._unMapParentItem(item);
                         switch (self.onDeleteAction) {
@@ -17102,7 +17078,7 @@ var RIAPP;
                 };
                 Association.prototype._onChildCollChanged = function (args) {
                     var self = this, item, items = args.items, changed = [], changedKeys = {};
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case 2 /* RESET */:
                             if (!self._isChildFilling)
                                 changed = self.refreshChildMap();
@@ -17136,7 +17112,7 @@ var RIAPP;
                             }
                             break;
                         default:
-                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.changeType));
                     }
                     self._notifyChildrenChanged(changed);
                 };
@@ -17214,16 +17190,16 @@ var RIAPP;
                         }
                     }
                 };
-                Association.prototype._onChildCommitChanges = function (item, isBegin, isRejected, changeType) {
+                Association.prototype._onChildCommitChanges = function (item, isBegin, isRejected, status) {
                     var self = this, fkey;
                     if (isBegin) {
-                        if (isRejected && changeType === 1 /* ADDED */) {
+                        if (isRejected && status === 1 /* ADDED */) {
                             fkey = this._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
                             return;
                         }
-                        else if (!isRejected && changeType === 3 /* DELETED */) {
+                        else if (!isRejected && status === 3 /* DELETED */) {
                             fkey = self._unMapChildItem(item);
                             if (!!fkey)
                                 self._notifyChildrenChanged([fkey]);
@@ -17265,12 +17241,11 @@ var RIAPP;
                         }
                     }
                 };
-                Association.prototype._onChildStatusChanged = function (item, oldChangeType) {
-                    var self = this, newChangeType = item._aspect._changeType;
-                    var fkey = self.getChildFKey(item);
+                Association.prototype._onChildStatusChanged = function (item, oldStatus) {
+                    var self = this, newStatus = item._aspect.status, fkey = self.getChildFKey(item);
                     if (!fkey)
                         return;
-                    if (newChangeType === 3 /* DELETED */) {
+                    if (newStatus === 3 /* DELETED */) {
                         fkey = self._unMapChildItem(item);
                         if (!!fkey)
                             self._notifyChildrenChanged([fkey]);
@@ -17323,11 +17298,11 @@ var RIAPP;
                     return changedKey;
                 };
                 Association.prototype._mapParentItems = function (items) {
-                    var item, fkey, chngType, old, chngedKeys = {};
+                    var item, fkey, status, old, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
-                        chngType = item._aspect._changeType;
-                        if (chngType === 3 /* DELETED */)
+                        status = item._aspect.status;
+                        if (status === 3 /* DELETED */)
                             continue;
                         fkey = this.getParentFKey(item);
                         if (!!fkey) {
@@ -17361,11 +17336,11 @@ var RIAPP;
                     }
                 };
                 Association.prototype._mapChildren = function (items) {
-                    var item, fkey, arr, chngType, chngedKeys = {};
+                    var item, fkey, arr, status, chngedKeys = {};
                     for (var i = 0, len = items.length; i < len; i += 1) {
                         item = items[i];
-                        chngType = item._aspect._changeType;
-                        if (chngType === 3 /* DELETED */)
+                        status = item._aspect.status;
+                        if (status === 3 /* DELETED */)
                             continue;
                         fkey = this.getChildFKey(item);
                         if (!!fkey) {
@@ -17396,7 +17371,7 @@ var RIAPP;
                     ds.removeNSHandlers(self._objId);
                 };
                 Association.prototype.getParentFKey = function (item) {
-                    if (!!item && item._aspect._isNew)
+                    if (!!item && item._aspect.isNew)
                         return item._key;
                     return this._getItemKey(this._parentFldInfos, this._parentDS, item);
                 };
@@ -17584,10 +17559,10 @@ var RIAPP;
                     this._items = [];
                     this._itemsByKey = {};
                     this._errors = {};
-                    this._onItemsChanged({ change_type: 2 /* RESET */, items: [] });
+                    this._onItemsChanged({ changeType: 2 /* RESET */, items: [] });
                     if (!isPageChanged)
                         this.pageIndex = 0;
-                    this.raisePropertyChanged(collMOD.PROP_NAME.count);
+                    this._onCountChanged();
                 };
                 DataView.prototype._refresh = function (isPageChanged) {
                     var items;
@@ -17640,8 +17615,8 @@ var RIAPP;
                             }
                         });
                         if (newItems.length > 0) {
-                            this._onItemsChanged({ change_type: 1 /* ADDED */, items: newItems, pos: positions });
-                            this.raisePropertyChanged(collMOD.PROP_NAME.count);
+                            this._onItemsChanged({ changeType: 1 /* ADDED */, items: newItems, pos: positions });
+                            this._onCountChanged();
                         }
                     }
                     finally {
@@ -17664,7 +17639,7 @@ var RIAPP;
                 };
                 DataView.prototype._onDSCollectionChanged = function (sender, args) {
                     var self = this, item, items = args.items;
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case 2 /* RESET */:
                             if (!this._isDSFilling)
                                 this._refresh(false);
@@ -17697,7 +17672,7 @@ var RIAPP;
                             }
                             break;
                         default:
-                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(baseUtils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.changeType));
                     }
                 };
                 DataView.prototype._onDSFill = function (sender, args) {
@@ -17718,9 +17693,9 @@ var RIAPP;
                     }
                 };
                 DataView.prototype._onDSStatusChanged = function (sender, args) {
-                    var self = this, item = args.item, key = args.key, oldChangeType = args.oldChangeType, isOk, canFilter = !!self._fn_filter;
+                    var self = this, item = args.item, key = args.key, oldStatus = args.oldStatus, isOk, canFilter = !!self._fn_filter;
                     if (!!self._itemsByKey[key]) {
-                        self._onItemStatusChanged(item, oldChangeType);
+                        self._onItemStatusChanged(item, oldStatus);
                         if (canFilter) {
                             isOk = self._fn_filter(item);
                             if (!isOk) {
@@ -17933,7 +17908,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._options.enablePaging !== v) {
                             this._options.enablePaging = v;
-                            this.raisePropertyChanged(_db.PROP_NAME.isPagingEnabled);
+                            this.raisePropertyChanged(PROP_NAME.isPagingEnabled);
                             this._refresh(false);
                         }
                     },
@@ -18063,7 +18038,7 @@ var RIAPP;
                     set: function (v) {
                         if (this._parentItem !== v) {
                             this._parentItem = v;
-                            this.raisePropertyChanged(_db.PROP_NAME.parentItem);
+                            this.raisePropertyChanged(PROP_NAME.parentItem);
                             var self = this;
                             if (this.items.length > 0) {
                                 this.clear();

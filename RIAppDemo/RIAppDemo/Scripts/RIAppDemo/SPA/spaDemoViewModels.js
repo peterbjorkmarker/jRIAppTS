@@ -281,13 +281,13 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
                 self.dbContext.submitChanges();
             }, self, function (s, p) {
                 //the command is enabled when there are pending changes
-                return self.dbContext.hasChanges;
+                return self.dbContext.isHasChanges;
             });
             this._undoCommand = new MOD.mvvm.Command(function (sender, param) {
                 self.dbContext.rejectChanges();
             }, self, function (s, p) {
                 //the command is enabled when there are pending changes
-                return self.dbContext.hasChanges;
+                return self.dbContext.isHasChanges;
             });
             //load data from the server
             this._loadCommand = new MOD.mvvm.Command(function (sender, args) {
@@ -305,7 +305,7 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             }, self, null);
             //the property watcher helps us handling properties changes
             //more convenient than using addOnPropertyChange
-            this._propWatcher.addPropWatch(self.dbContext, 'hasChanges', function (prop) {
+            this._propWatcher.addPropWatch(self.dbContext, 'isHasChanges', function (prop) {
                 self._saveCommand.raiseCanExecuteChanged();
                 self._undoCommand.raiseCanExecuteChanged();
             });
@@ -1647,7 +1647,7 @@ define(["require", "exports", "domainModel", "common", "autocomplete", "animatio
             enumerable: true,
             configurable: true
         });
-        Object.defineProperty(AddAddressVM.prototype, "_isCanSubmit", {
+        Object.defineProperty(AddAddressVM.prototype, "isCanSubmit", {
             get: function () {
                 return true;
             },

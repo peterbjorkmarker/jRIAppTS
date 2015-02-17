@@ -495,7 +495,7 @@
                     this._isDeleted = false;
                     this._isSelected = false;
                     this._createCells();
-                    this.isDeleted = this._item._aspect._isDeleted;
+                    this._isDeleted = this._item._aspect.isDeleted;
                     var fn_state = ()=>{
                         var css = self._grid._onRowStateChanged(self, self._item[self._grid.options.rowStateField]);
                         self._setState(css);
@@ -1419,11 +1419,11 @@
                     }
                 }
                 _onKeyDown(key: number, event: Event) {
-                    var ds = this.dataSource, Keys = constsMOD.KEYS, self = this;
+                    var ds = this.dataSource, self = this;
                     if (!ds)
                         return;
                     switch (key) {
-                        case Keys.up:
+                        case constsMOD.KEYS.up:
                             event.preventDefault();
                             if (ds.movePrev(true)) {
                                 if (self.isUseScrollInto) {
@@ -1431,7 +1431,7 @@
                                 }
                             }
                             break;
-                        case Keys.down:
+                        case constsMOD.KEYS.down:
                             event.preventDefault();
                             if (ds.moveNext(true)) {
                                 if (self.isUseScrollInto) {
@@ -1439,7 +1439,7 @@
                                 }
                             }
                             break;
-                        case Keys.pageDown:
+                        case constsMOD.KEYS.pageDown:
                             /*
                              if (!!this._currentRow && !!this._currentRow.expanderCell && !this._currentRow.isExpanded) {
                              this._currentRow.expanderCell._onCellClicked();
@@ -1449,7 +1449,7 @@
                             if (ds.pageIndex > 0)
                                 ds.pageIndex = ds.pageIndex - 1;
                             break;
-                        case Keys.pageUp:
+                        case constsMOD.KEYS.pageUp:
                             /*
                              if (!!this._currentRow && !!this._currentRow.expanderCell && !!this._currentRow.isExpanded) {
                              this._currentRow.expanderCell._onCellClicked();
@@ -1458,7 +1458,7 @@
                              */
                             ds.pageIndex = ds.pageIndex + 1;
                             break;
-                        case Keys.enter:
+                        case constsMOD.KEYS.enter:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
                                     event.preventDefault();
@@ -1468,14 +1468,14 @@
                                 }
                             }
                             break;
-                        case Keys.esc:
+                        case constsMOD.KEYS.esc:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
                                     event.preventDefault();
                                 }
                             }
                             break;
-                        case Keys.space:
+                        case constsMOD.KEYS.space:
                             if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
                                 event.preventDefault();
                             }
@@ -1483,11 +1483,11 @@
                     }
                 }
                 _onKeyUp(key: number, event: Event) {
-                    var ds = this.dataSource, Keys = constsMOD.KEYS;
+                    var ds = this.dataSource;
                     if (!ds)
                         return;
                     switch (key) {
-                        case Keys.enter:
+                        case constsMOD.KEYS.enter:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
                                     this.raiseEvent(GRID_EVENTS.row_action, { row: this._currentRow, action: ROW_ACTION.OK });
@@ -1499,7 +1499,7 @@
                                 }
                             }
                             break;
-                        case Keys.esc:
+                        case constsMOD.KEYS.esc:
                             if (!!this._currentRow && !!this._actionsCol) {
                                 if (this._currentRow.isEditing) {
                                     this.raiseEvent(GRID_EVENTS.row_action, { row: this._currentRow, action: ROW_ACTION.CANCEL });
@@ -1507,7 +1507,7 @@
                                 }
                             }
                             break;
-                        case Keys.space:
+                        case constsMOD.KEYS.space:
                             if (!!this._rowSelectorCol && !!this._currentRow && !this._currentRow.isEditing) {
                                 event.preventDefault();
                                 this._currentRow.isSelected = !this._currentRow.isSelected;
@@ -1633,7 +1633,7 @@
                 }
                 protected _onDSCollectionChanged(sender, args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
                     var self = this, row: Row, items = args.items;
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refreshGrid();
@@ -1660,7 +1660,7 @@
                             }
                             break;
                         default:
-                            throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.change_type));
+                            throw new Error(utils.format(RIAPP.ERRS.ERR_COLLECTION_CHANGETYPE_INVALID, args.changeType));
                     }
                 }
                 protected _onDSFill(sender, args: collMOD.ICollFillArgs<collMOD.ICollectionItem>) {
@@ -1724,12 +1724,12 @@
                         args.isAddNewHandled = this.showEditDialog();
                     }
                 }
-                protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldChangeType: collMOD.STATUS) {
-                    var newChangeType = item._aspect._changeType, ds = this.dataSource;
+                protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldStatus: collMOD.STATUS) {
+                    var newStatus = item._aspect.status, ds = this.dataSource;
                     var row = this._rowMap[item._key];
                     if (!row)
                         return;
-                    if (newChangeType === collMOD.STATUS.DELETED) {
+                    if (newStatus === collMOD.STATUS.DELETED) {
                         row.isDeleted = true;
                         var row2 = this._findUndeleted(row, true);
                         if (!row2) {
@@ -1739,7 +1739,7 @@
                             ds.currentItem = row2.item;
                         }
                     }
-                    else if (oldChangeType === collMOD.STATUS.DELETED && newChangeType !== collMOD.STATUS.DELETED) {
+                    else if (oldStatus === collMOD.STATUS.DELETED && newStatus !== collMOD.STATUS.DELETED) {
                         row.isDeleted = false;
                     }
                 }
@@ -1754,7 +1754,7 @@
                     if (!ds) return;
                     ds.addOnCollChanged(self._onDSCollectionChanged, self._objId, self);
                     ds.addOnFill(self._onDSFill, self._objId, self);
-                    ds.addOnPropertyChange(collMOD.PROP_NAME.currentItem, self._onDSCurrentChanged, self._objId, self);
+                    ds.addOnCurrentChanged(self._onDSCurrentChanged, self._objId, self);
                     ds.addOnBeginEdit(function (sender, args) {
                         self._onItemEdit(args.item, true, false);
                     }, self._objId);
@@ -1763,7 +1763,7 @@
                     }, self._objId);
                     ds.addOnErrorsChanged(self._onDSErrorsChanged, self._objId, self);
                     ds.addOnStatusChanged(function (sender, args) {
-                        self._onItemStatusChanged(args.item, args.oldChangeType);
+                        self._onItemStatusChanged(args.item, args.oldStatus);
                     }, self._objId);
                     ds.addOnItemAdded(self._onItemAdded, self._objId, self);
                     //fills all rows
@@ -1990,7 +1990,7 @@
                     }
                     else
                         this._dialog.dataContext = item;
-                    this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._aspect._isNew;
+                    this._dialog.canRefresh = !!this.dataSource.permissions.canRefreshRow && !item._aspect.isNew;
                     this._dialog.show();
                     return true;
                 }

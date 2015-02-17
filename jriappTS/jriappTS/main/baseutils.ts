@@ -54,7 +54,7 @@
     export interface ISubmittable {
         submitChanges(): IVoidPromise;
         rejectChanges(): void;
-        _isCanSubmit: boolean;
+        isCanSubmit: boolean;
     }
 
     export interface IValidationInfo {

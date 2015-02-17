@@ -124,7 +124,7 @@
                     this._currentSelectable = null;
                     this._fn_submitOnOK = function () {
                         var iSubmittable = utils.getSubmittable(self._dataContext);
-                        if (!iSubmittable || !iSubmittable._isCanSubmit) {
+                        if (!iSubmittable || !iSubmittable.isCanSubmit) {
                             //signals immediatly
                             return utils.createDeferred().resolve().promise();
                         }

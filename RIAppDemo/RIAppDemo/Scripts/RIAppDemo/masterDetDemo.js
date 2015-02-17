@@ -62,13 +62,13 @@ var RIAPP;
                     self.dbContext.submitChanges();
                 }, self, function (s, p) {
                     //the command is enabled when there are pending changes
-                    return self.dbContext.hasChanges;
+                    return self.dbContext.isHasChanges;
                 });
                 this._undoCommand = new RIAPP.MOD.mvvm.Command(function (sender, param) {
                     self.dbContext.rejectChanges();
                 }, self, function (s, p) {
                     //the command is enabled when there are pending changes
-                    return self.dbContext.hasChanges;
+                    return self.dbContext.isHasChanges;
                 });
                 //load data from the server
                 this._loadCommand = new RIAPP.MOD.mvvm.Command(function (sender, args) {
@@ -98,7 +98,7 @@ var RIAPP;
                 }, self, null);
                 //the property watcher helps us handling properties changes
                 //more convenient than using addOnPropertyChange
-                this._propWatcher.addPropWatch(self.dbContext, 'hasChanges', function (prop) {
+                this._propWatcher.addPropWatch(self.dbContext, 'isHasChanges', function (prop) {
                     self._saveCommand.raiseCanExecuteChanged();
                     self._undoCommand.raiseCanExecuteChanged();
                 });

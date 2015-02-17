@@ -95,7 +95,7 @@ module RIAPP
                     self.dbContext.submitChanges();
                 }, self, function (s, p) {
                     //the command is enabled when there are pending changes
-                    return self.dbContext.hasChanges;
+                    return self.dbContext.isHasChanges;
                 });
 
 
@@ -103,7 +103,7 @@ module RIAPP
                     self.dbContext.rejectChanges();
                 }, self, function (s, p) {
                     //the command is enabled when there are pending changes
-                    return self.dbContext.hasChanges;
+                    return self.dbContext.isHasChanges;
                 });
 
                 //load data from the server
@@ -503,7 +503,7 @@ module RIAPP
                     }
                 }, self, null);
             }
-            get _isCanSubmit(): boolean { return true; }
+            get isCanSubmit(): boolean { return true; }
             submitChanges(): IVoidPromise { return this.dbContext.submitChanges(); }
             rejectChanges(): void {
             }

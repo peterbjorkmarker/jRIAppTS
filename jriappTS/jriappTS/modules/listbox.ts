@@ -144,7 +144,7 @@
                 }
                 protected _onDSCollectionChanged(sender, args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>) {
                     var self = this, data;
-                    switch (args.change_type) {
+                    switch (args.changeType) {
                         case collMOD.COLL_CHANGE_TYPE.RESET:
                             if (!this._isDSFilling)
                                 this._refresh();
@@ -153,7 +153,7 @@
                             if (!this._isDSFilling) //if items are filling then it will be appended when fill ends
                             {
                                 args.items.forEach(function (item) {
-                                    self._addOption(item, item._aspect._isNew);
+                                    self._addOption(item, item._aspect.isNew);
                                 });
                             }
                             break;
@@ -214,19 +214,19 @@
                         }
                     }
                 }
-                protected _onStatusChanged(item: collMOD.ICollectionItem, oldChangeType:number) {
-                    var newChangeType = item._aspect._changeType;
-                    if (newChangeType === collMOD.STATUS.DELETED) {
+                protected _onStatusChanged(item: collMOD.ICollectionItem, oldStatus: collMOD.STATUS) {
+                    var newStatus = item._aspect.status;
+                    if (newStatus === collMOD.STATUS.DELETED) {
                         this._removeOption(item);
                     }
                 }
-                protected _onCommitChanges(item: collMOD.ICollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS) {
+                protected _onCommitChanges(item: collMOD.ICollectionItem, isBegin: boolean, isRejected: boolean, status: collMOD.STATUS) {
                     var self = this, oldVal, val, data;
                     if (isBegin) {
-                        if (isRejected && changeType === collMOD.STATUS.ADDED) {
+                        if (isRejected && status === collMOD.STATUS.ADDED) {
                             return;
                         }
-                        else if (!isRejected && changeType === collMOD.STATUS.DELETED) {
+                        else if (!isRejected && status === collMOD.STATUS.DELETED) {
                             return;
                         }
 
@@ -236,7 +236,7 @@
                         oldVal = this._savedValue;
                         this._savedValue = undefined;
 
-                        if (isRejected && changeType === collMOD.STATUS.DELETED) {
+                        if (isRejected && status === collMOD.STATUS.DELETED) {
                             this._addOption(item, true);
                             return;
                         }
@@ -267,10 +267,10 @@
                         self._onEdit(args.item, false, args.isCanceled);
                     }, self._objId);
                     ds.addOnStatusChanged(function (sender, args) {
-                        self._onStatusChanged(args.item, args.oldChangeType);
+                        self._onStatusChanged(args.item, args.oldStatus);
                     }, self._objId);
                     ds.addOnCommitChanges(function (sender, args) {
-                        self._onCommitChanges(args.item, args.isBegin, args.isRejected, args.changeType);
+                        self._onCommitChanges(args.item, args.isBegin, args.isRejected, args.status);
                     }, self._objId);
                 }
                 private _unbindDS() {

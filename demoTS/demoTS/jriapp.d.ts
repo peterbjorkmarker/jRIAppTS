@@ -65,7 +65,7 @@ declare module RIAPP {
     interface ISubmittable {
         submitChanges(): IVoidPromise;
         rejectChanges(): void;
-        _isCanSubmit: boolean;
+        isCanSubmit: boolean;
     }
     interface IValidationInfo {
         fieldName: string;
@@ -309,12 +309,12 @@ declare module RIAPP {
                 DATA_NAME: string;
                 DATA_FORM: string;
             };
-            enum DATE_CONVERSION {
+            const enum DATE_CONVERSION {
                 None = 0,
                 ServerLocalToClientLocal = 1,
                 UtcToClientLocal = 2,
             }
-            enum DATA_TYPE {
+            const enum DATA_TYPE {
                 None = 0,
                 String = 1,
                 Bool = 2,
@@ -327,7 +327,7 @@ declare module RIAPP {
                 Guid = 9,
                 Binary = 10,
             }
-            enum KEYS {
+            const enum KEYS {
                 backspace = 8,
                 tab = 9,
                 enter = 13,
@@ -1052,20 +1052,10 @@ declare module RIAPP {
                 _aspect: ItemAspect<ICollectionItem>;
                 _key: string;
             }
-            var PROP_NAME: {
-                isEditing: string;
-                currentItem: string;
-                count: string;
-                totalCount: string;
-                pageCount: string;
-                pageSize: string;
-                pageIndex: string;
-                isUpdating: string;
-                isLoading: string;
-            };
             class ItemAspect<TItem extends ICollectionItem> extends RIAPP.BaseObject implements IErrorNotification, RIAPP.IEditable, RIAPP.ISubmittable {
-                protected _fkey: string;
-                protected _isEditing: boolean;
+                private __key;
+                private __isEditing;
+                protected _status: STATUS;
                 protected _saveVals: {
                     [fieldName: string]: any;
                 };
@@ -1073,6 +1063,7 @@ declare module RIAPP {
                     [fieldName: string]: any;
                 };
                 protected _notEdited: boolean;
+                protected _isEditing: boolean;
                 constructor();
                 protected _getEventNames(): string[];
                 protected _onErrorsChanged(args: any): void;
@@ -1111,13 +1102,13 @@ declare module RIAPP {
                 destroy(): void;
                 toString(): string;
                 getItem(): TItem;
-                _isCanSubmit: boolean;
-                _changeType: STATUS;
-                _isNew: boolean;
-                _isDeleted: boolean;
+                isCanSubmit: boolean;
+                status: STATUS;
+                isNew: boolean;
+                isDeleted: boolean;
                 _key: string;
-                _collection: BaseCollection<ICollectionItem>;
-                _isUpdating: boolean;
+                collection: BaseCollection<ICollectionItem>;
+                isUpdating: boolean;
                 isEditing: boolean;
             }
             interface ICollectionOptions {
@@ -1125,7 +1116,7 @@ declare module RIAPP {
                 pageSize: number;
             }
             interface ICollChangedArgs<TItem extends ICollectionItem> {
-                change_type: COLL_CHANGE_TYPE;
+                changeType: COLL_CHANGE_TYPE;
                 items: TItem[];
                 pos?: number[];
                 old_key?: string;
@@ -1147,7 +1138,7 @@ declare module RIAPP {
             }
             interface ICollItemStatusArgs<TItem extends ICollectionItem> {
                 item: TItem;
-                oldChangeType: STATUS;
+                oldStatus: STATUS;
                 key: string;
             }
             interface ICollItemAddedArgs<TItem extends ICollectionItem> {
@@ -1158,7 +1149,7 @@ declare module RIAPP {
                 item: TItem;
                 isBegin: boolean;
                 isRejected: boolean;
-                changeType: number;
+                status: STATUS;
             }
             interface ICollItemArgs<TItem extends ICollectionItem> {
                 item: TItem;
@@ -1243,10 +1234,16 @@ declare module RIAPP {
                 removeOnCommitChanges(namespace?: string): void;
                 addOnStatusChanged(fn: (sender: BaseCollection<TItem>, args: ICollItemStatusArgs<TItem>) => void, namespace?: string, context?: BaseObject, prepend?: boolean): void;
                 removeOnStatusChanged(namespace?: string): void;
+                addOnPageIndexChanged(handler: TPropChangedHandler, namespace?: string, context?: BaseObject): void;
+                addOnPageSizeChanged(handler: TPropChangedHandler, namespace?: string, context?: BaseObject): void;
+                addOnTotalCountChanged(handler: TPropChangedHandler, namespace?: string, context?: BaseObject): void;
+                addOnCurrentChanged(handler: TPropChangedHandler, namespace?: string, context?: BaseObject): void;
                 protected _getPKFieldInfos(): IFieldInfo[];
                 protected _onCurrentChanging(newCurrent: TItem): void;
                 protected _onCurrentChanged(): void;
-                protected _onItemStatusChanged(item: TItem, oldChangeType: number): void;
+                protected _onCountChanged(): void;
+                protected _onEditingChanged(): void;
+                protected _onItemStatusChanged(item: TItem, oldStatus: STATUS): void;
                 protected _onFillStart(args: ICollFillArgs<TItem>): void;
                 protected _onFillEnd(args: ICollFillArgs<TItem>): void;
                 protected _onItemsChanged(args: ICollChangedArgs<TItem>): void;
@@ -1264,7 +1261,7 @@ declare module RIAPP {
                 _getEditingItem(): TItem;
                 _getStrValue(val: any, fieldInfo: IFieldInfo): string;
                 _onEditing(item: TItem, isBegin: boolean, isCanceled: boolean): void;
-                _onCommitChanges(item: TItem, isBegin: boolean, isRejected: boolean, changeType: number): void;
+                _onCommitChanges(item: TItem, isBegin: boolean, isRejected: boolean, status: STATUS): void;
                 _validateItem(item: TItem): RIAPP.IValidationInfo;
                 _validateItemField(item: TItem, fieldName: string): RIAPP.IValidationInfo;
                 _addErrors(item: TItem, errors: RIAPP.IValidationInfo[]): void;
@@ -1352,8 +1349,8 @@ declare module RIAPP {
                 vals: {
                     [fieldName: string]: any;
                 };
-                _isNew: boolean;
-                _collection: BaseList<IListItem, TObj>;
+                isNew: boolean;
+                collection: BaseList<IListItem, TObj>;
             }
             class BaseList<TItem extends IListItem, TObj> extends BaseCollection<TItem> {
                 protected _itemType: IListItemConstructor<TItem, TObj>;
@@ -1841,8 +1838,8 @@ declare module RIAPP {
                 protected _onDSCollectionChanged(sender: any, args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>): void;
                 protected _onDSFill(sender: any, args: collMOD.ICollFillArgs<collMOD.ICollectionItem>): void;
                 protected _onEdit(item: collMOD.ICollectionItem, isBegin: boolean, isCanceled: boolean): void;
-                protected _onStatusChanged(item: collMOD.ICollectionItem, oldChangeType: number): void;
-                protected _onCommitChanges(item: collMOD.ICollectionItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS): void;
+                protected _onStatusChanged(item: collMOD.ICollectionItem, oldStatus: collMOD.STATUS): void;
+                protected _onCommitChanges(item: collMOD.ICollectionItem, isBegin: boolean, isRejected: boolean, status: collMOD.STATUS): void;
                 private _bindDS();
                 private _unbindDS();
                 private _addOption(item, first);
@@ -2424,7 +2421,7 @@ declare module RIAPP {
                 protected _onPageChanged(): void;
                 protected _onItemEdit(item: collMOD.ICollectionItem, isBegin: boolean, isCanceled: boolean): void;
                 protected _onItemAdded(sender: any, args: collMOD.ICollItemAddedArgs<collMOD.ICollectionItem>): void;
-                protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldChangeType: collMOD.STATUS): void;
+                protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldStatus: collMOD.STATUS): void;
                 protected _onDSErrorsChanged(sender: any, args: collMOD.ICollItemArgs<collMOD.ICollectionItem>): void;
                 protected _bindDS(): void;
                 protected _unbindDS(): void;
@@ -2615,7 +2612,7 @@ declare module RIAPP {
                 protected _onDSCurrentChanged(sender: any, args: any): void;
                 protected _onDSCollectionChanged(sender: any, args: collMOD.ICollChangedArgs<collMOD.ICollectionItem>): void;
                 protected _onDSFill(sender: any, args: collMOD.ICollFillArgs<collMOD.ICollectionItem>): void;
-                protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldChangeType: number): void;
+                protected _onItemStatusChanged(item: collMOD.ICollectionItem, oldStatus: collMOD.STATUS): void;
                 protected _createTemplate(item: collMOD.ICollectionItem): templMOD.Template;
                 protected _appendItems(newItems: collMOD.ICollectionItem[]): void;
                 protected _appendItem(item: collMOD.ICollectionItem): void;
@@ -2899,19 +2896,6 @@ declare module RIAPP {
             interface IEntityItem extends collMOD.ICollectionItem {
                 _aspect: EntityAspect<IEntityItem, DbSet<IEntityItem, DbContext>, DbContext>;
             }
-            var PROP_NAME: {
-                hasChanges: string;
-                isSubmitOnDelete: string;
-                isInitialized: string;
-                isBusy: string;
-                isSubmiting: string;
-                isPagingEnabled: string;
-                parentItem: string;
-                totalCount: string;
-                loadPageCount: string;
-                isClearCacheOnEveryLoad: string;
-                isRefreshing: string;
-            };
             class DataCache extends RIAPP.BaseObject {
                 private _query;
                 private _cache;
@@ -2975,7 +2959,7 @@ declare module RIAPP {
                 destroy(): void;
                 toString(): string;
                 _queryInfo: IQueryInfo;
-                _serverTimezone: number;
+                serverTimezone: number;
                 entityType: IEntityConstructor<TItem>;
                 dbSet: DbSet<TItem, DbContext>;
                 dbSetName: string;
@@ -2995,13 +2979,12 @@ declare module RIAPP {
             class TDataQuery extends DataQuery<IEntityItem> {
             }
             class EntityAspect<TItem extends IEntityItem, TDBSet extends DbSet<IEntityItem, DbContext>, TDbContext extends DbContext> extends collMOD.ItemAspect<TItem> {
-                private __changeType;
-                private __isRefreshing;
-                private __isCached;
-                private __dbSet;
-                private _srvRowKey;
+                private __srvKey;
+                private _isRefreshing;
+                private _isCached;
+                private _dbSet;
                 private _origVals;
-                private _saveChangeType;
+                private _savedStatus;
                 protected _item: TItem;
                 constructor(itemType: IEntityConstructor<TItem>, dbSet: TDBSet, row: IRowData, names: IFieldName[]);
                 protected _initRowInfo(row: IRowData, names: IFieldName[]): void;
@@ -3015,6 +2998,7 @@ declare module RIAPP {
                 protected _beginEdit(): boolean;
                 protected _endEdit(): boolean;
                 protected getDbSet(): TDBSet;
+                protected setStatus(v: collMOD.STATUS): void;
                 _getCalcFieldVal(fieldName: string): any;
                 _getNavFieldVal(fieldName: string): any;
                 _setNavFieldVal(fieldName: string, value: any): void;
@@ -3039,16 +3023,15 @@ declare module RIAPP {
                 getItem(): TItem;
                 toString(): string;
                 destroy(): void;
-                _isCanSubmit: boolean;
-                _changeType: collMOD.STATUS;
-                _isNew: boolean;
-                _isDeleted: boolean;
                 _entityType: IEntityConstructor<IEntityItem>;
                 _srvKey: string;
-                _dbSetName: string;
-                _serverTimezone: number;
-                _collection: TDBSet;
-                _dbSet: TDBSet;
+                isCanSubmit: boolean;
+                isNew: boolean;
+                isDeleted: boolean;
+                dbSetName: string;
+                serverTimezone: number;
+                collection: TDBSet;
+                dbSet: TDBSet;
                 isRefreshing: boolean;
                 isCached: boolean;
                 isHasChanges: boolean;
@@ -3129,7 +3112,7 @@ declare module RIAPP {
                 _getTrackAssocInfo(): ITrackAssoc[];
                 _addToChanged(item: TItem): void;
                 _removeFromChanged(key: string): void;
-                _onItemStatusChanged(item: TItem, oldChangeType: number): void;
+                _onItemStatusChanged(item: TItem, oldStatus: collMOD.STATUS): void;
                 _onRemoved(item: TItem, pos: number): void;
                 getFieldInfo(fieldName: string): collMOD.IFieldInfo;
                 sort(fieldNames: string[], sortOrder: collMOD.SORT_ORDER): IPromise<IQueryResult<IEntityItem>>;
@@ -3150,7 +3133,7 @@ declare module RIAPP {
                 dbSetName: string;
                 entityType: IEntityConstructor<TItem>;
                 query: DataQuery<TItem>;
-                hasChanges: boolean;
+                isHasChanges: boolean;
                 cacheSize: number;
                 isSubmitOnDelete: boolean;
             }
@@ -3179,17 +3162,12 @@ declare module RIAPP {
                 private _serviceUrl;
                 private _isBusy;
                 private _isSubmiting;
-                private _hasChanges;
+                private _isHasChanges;
                 private _pendingSubmit;
                 private _serverTimezone;
                 private _waitQueue;
                 constructor();
                 protected _getEventNames(): string[];
-                protected _onGetCalcField(args: {
-                    dbSetName: string;
-                    fieldName: string;
-                    getFunc: () => any;
-                }): void;
                 protected _initDbSets(): void;
                 protected _initAssociations(associations: IAssociationInfo[]): void;
                 protected _initMethods(methods: IQueryInfo[]): void;
@@ -3243,7 +3221,7 @@ declare module RIAPP {
                 serverTimezone: number;
                 dbSets: DbSets;
                 serviceMethods: any;
-                hasChanges: boolean;
+                isHasChanges: boolean;
             }
             class Association extends RIAPP.BaseObject {
                 private _objId;
@@ -3271,20 +3249,20 @@ declare module RIAPP {
                 protected _onParentCollChanged(args: collMOD.ICollChangedArgs<IEntityItem>): void;
                 protected _onParentFill(args: collMOD.ICollFillArgs<IEntityItem>): void;
                 protected _onParentEdit(item: IEntityItem, isBegin: boolean, isCanceled: boolean): void;
-                protected _onParentCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS): void;
+                protected _onParentCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, status: collMOD.STATUS): void;
                 protected _storeParentFKey(item: IEntityItem): void;
                 protected _checkParentFKey(item: IEntityItem): void;
-                protected _onParentStatusChanged(item: IEntityItem, oldChangeType: collMOD.STATUS): void;
+                protected _onParentStatusChanged(item: IEntityItem, oldStatus: collMOD.STATUS): void;
                 protected _onChildCollChanged(args: collMOD.ICollChangedArgs<IEntityItem>): void;
                 protected _notifyChildrenChanged(changed: string[]): void;
                 protected _notifyParentChanged(changed: string[]): void;
                 protected _notifyChanged(changed_pkeys: string[], changed_ckeys: string[]): void;
                 protected _onChildFill(args: collMOD.ICollFillArgs<IEntityItem>): void;
                 protected _onChildEdit(item: IEntityItem, isBegin: boolean, isCanceled: boolean): void;
-                protected _onChildCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, changeType: collMOD.STATUS): void;
+                protected _onChildCommitChanges(item: IEntityItem, isBegin: boolean, isRejected: boolean, status: collMOD.STATUS): void;
                 protected _storeChildFKey(item: IEntityItem): void;
                 protected _checkChildFKey(item: IEntityItem): void;
-                protected _onChildStatusChanged(item: IEntityItem, oldChangeType: collMOD.STATUS): void;
+                protected _onChildStatusChanged(item: IEntityItem, oldStatus: collMOD.STATUS): void;
                 protected _getItemKey(finf: collMOD.IFieldInfo[], ds: DbSet<IEntityItem, DbContext>, item: IEntityItem): string;
                 protected _resetChildMap(): void;
                 protected _resetParentMap(): void;

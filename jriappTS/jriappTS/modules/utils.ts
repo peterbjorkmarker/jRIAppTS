@@ -108,7 +108,7 @@
                     return !!obj && obj instanceof RIAPP.BaseObject && !!obj.beginEdit && !!obj.endEdit && !!obj.cancelEdit && global.utils.hasProp(obj,'isEditing');
                 }
                 static isSubmittable(obj: any) {
-                    return !!obj && !!obj.submitChanges && !!obj.rejectChanges && global.utils.hasProp(obj, '_isCanSubmit');
+                    return !!obj && !!obj.submitChanges && !!obj.rejectChanges && global.utils.hasProp(obj, 'isCanSubmit');
                 }
                 static isDataForm(el: HTMLElement) {
                     if (!el)
@@ -285,17 +285,16 @@
                     }
                     var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), parseInt(parts[3], 10),
                         parseInt(parts[4], 10), parseInt(parts[5], 10), (!!parts[6]) ? parseInt(parts[6],10):0);
-                    var DATE_CONVERSION = consts.DATE_CONVERSION;
                     var ctz = global.utils.get_timeZoneOffset();
 
                     switch (dtcnv) {
-                        case DATE_CONVERSION.None:
+                        case consts.DATE_CONVERSION.None:
                             break;
-                        case DATE_CONVERSION.ServerLocalToClientLocal:
+                        case consts.DATE_CONVERSION.ServerLocalToClientLocal:
                             dt.setMinutes(dt.getMinutes() + stz); //ServerToUTC
                             dt.setMinutes(dt.getMinutes() - ctz); //UtcToLocal
                             break;
-                        case DATE_CONVERSION.UtcToClientLocal:
+                        case consts.DATE_CONVERSION.UtcToClientLocal:
                             dt.setMinutes(dt.getMinutes() - ctz); //UtcToLocal
                             break;
                         default:
@@ -308,16 +307,15 @@
                         return null;
                     if (!Checks.isDate(dt))
                         throw new Error(base_utils.format(RIAPP.ERRS.ERR_PARAM_INVALID, 'dt', dt));
-                    var DATE_CONVERSION = consts.DATE_CONVERSION;
                     var ctz = global.utils.get_timeZoneOffset();
                     switch (dtcnv) {
-                        case DATE_CONVERSION.None:
+                        case consts.DATE_CONVERSION.None:
                             break;
-                        case DATE_CONVERSION.ServerLocalToClientLocal:
+                        case consts.DATE_CONVERSION.ServerLocalToClientLocal:
                             dt.setMinutes(dt.getMinutes() + ctz); //LocalToUTC
                             dt.setMinutes(dt.getMinutes() - serverTZ); //UtcToServer
                             break;
-                        case DATE_CONVERSION.UtcToClientLocal:
+                        case consts.DATE_CONVERSION.UtcToClientLocal:
                             dt.setMinutes(dt.getMinutes() + ctz); //LocalToUTC
                             break;
                         default:
@@ -328,11 +326,10 @@
                 compareVals: function (v1, v2, dataType: consts.DATA_TYPE): boolean {
                     if ((v1 === null && v2 !== null) || (v1 !== null && v2 === null))
                         return false;
-                    var DATA_TYPE = consts.DATA_TYPE;
                     switch (dataType) {
-                        case DATA_TYPE.DateTime:
-                        case DATA_TYPE.Date:
-                        case DATA_TYPE.Time:
+                        case consts.DATA_TYPE.DateTime:
+                        case consts.DATA_TYPE.Date:
+                        case consts.DATA_TYPE.Time:
                             if (Checks.isDate(v1) && Checks.isDate(v2))
                                 return v1.getTime() === v2.getTime();
                             else
@@ -403,7 +400,7 @@
                     }
 
                     if (!isOK)
-                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_WRONG_TYPE, v, consts.DATA_TYPE[dataType]));
+                        throw new Error(base_utils.format(RIAPP.ERRS.ERR_FIELD_WRONG_TYPE, v, dataType));
                     return res;
                 },
                 parseValue: function (v:string, dataType: consts.DATA_TYPE, dcnv: consts.DATE_CONVERSION, stz:number) {

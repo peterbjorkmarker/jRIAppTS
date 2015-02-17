@@ -12,12 +12,12 @@
                 DATA_NAME: 'data-name',
                 DATA_FORM: 'data-form'
             };
-            export enum DATE_CONVERSION { None= 0, ServerLocalToClientLocal= 1, UtcToClientLocal= 2 }
-            export enum DATA_TYPE {
+            export const enum DATE_CONVERSION { None= 0, ServerLocalToClientLocal= 1, UtcToClientLocal= 2 }
+            export const enum DATA_TYPE {
                 None= 0, String= 1, Bool= 2, Integer= 3, Decimal= 4, Float= 5, DateTime= 6, Date= 7, Time= 8,
                 Guid= 9, Binary= 10
             }
-            export enum KEYS {
+            export const enum KEYS {
                 backspace=8,
                 tab=9,
                 enter=13,

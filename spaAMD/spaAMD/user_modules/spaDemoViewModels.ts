@@ -256,7 +256,7 @@ export class CustomerVM extends MOD.mvvm.BaseViewModel {
             self.dbContext.submitChanges();
         }, self, function (s, p) {
                 //the command is enabled when there are pending changes
-                return self.dbContext.hasChanges;
+                return self.dbContext.isHasChanges;
             });
 
 
@@ -264,7 +264,7 @@ export class CustomerVM extends MOD.mvvm.BaseViewModel {
             self.dbContext.rejectChanges();
         }, self, function (s, p) {
                 //the command is enabled when there are pending changes
-                return self.dbContext.hasChanges;
+                return self.dbContext.isHasChanges;
             });
 
         //load data from the server
@@ -288,7 +288,7 @@ export class CustomerVM extends MOD.mvvm.BaseViewModel {
 
         //the property watcher helps us handling properties changes
         //more convenient than using addOnPropertyChange
-        this._propWatcher.addPropWatch(self.dbContext, 'hasChanges', function (prop) {
+        this._propWatcher.addPropWatch(self.dbContext, 'isHasChanges', function (prop) {
             self._saveCommand.raiseCanExecuteChanged();
             self._undoCommand.raiseCanExecuteChanged();
         });
@@ -1300,7 +1300,7 @@ export class AddAddressVM extends MOD.mvvm.BaseViewModel implements RIAPP.ISubmi
     get app() { return <DEMO.DemoApplication>this._app; }
     get dbContext() { return this.app.dbContext; }
     get dbSets() { return this.dbContext.dbSets; }
-    get _isCanSubmit(): boolean { return true; }
+    get isCanSubmit(): boolean { return true; }
     get addressInfosDb() { return this._addressInfosDb; }
     get addressInfosView() { return this._addressInfosView; }
     get addressesView() { return this._customerAddressVM._addressesView; }

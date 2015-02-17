@@ -645,8 +645,7 @@
                 static __allowedKeys:number[] = null;
                 private get _allowedKeys() {
                     if (!NumberContent.__allowedKeys) {
-                        var KEYS = constsMOD.KEYS;
-                        NumberContent.__allowedKeys = [0, KEYS.backspace, KEYS.del, KEYS.left, KEYS.right, KEYS.end, KEYS.home, KEYS.tab, KEYS.esc, KEYS.enter];
+                        NumberContent.__allowedKeys = [0, constsMOD.KEYS.backspace, constsMOD.KEYS.del, constsMOD.KEYS.left, constsMOD.KEYS.right, constsMOD.KEYS.end, constsMOD.KEYS.home, constsMOD.KEYS.tab, constsMOD.KEYS.esc, constsMOD.KEYS.enter];
                     }
                     return NumberContent.__allowedKeys;
                 }
@@ -703,8 +702,7 @@
                 static __allowedKeys: number[] = null;
                 private get _allowedKeys() {
                     if (!StringContent.__allowedKeys) {
-                        var KEYS = constsMOD.KEYS;
-                        StringContent.__allowedKeys = [0, KEYS.backspace, KEYS.del, KEYS.left, KEYS.right, KEYS.end, KEYS.home, KEYS.tab, KEYS.esc, KEYS.enter];
+                        StringContent.__allowedKeys = [0, constsMOD.KEYS.backspace, constsMOD.KEYS.del, constsMOD.KEYS.left, constsMOD.KEYS.right, constsMOD.KEYS.end, constsMOD.KEYS.home, constsMOD.KEYS.tab, constsMOD.KEYS.esc, constsMOD.KEYS.enter];
                     }
                     return StringContent.__allowedKeys;
                 }
@@ -732,8 +730,7 @@
                 static __allowedKeys: number[] = null;
                 private get _allowedKeys() {
                     if (!MultyLineContent.__allowedKeys) {
-                        var KEYS = constsMOD.KEYS;
-                        MultyLineContent.__allowedKeys = [0, KEYS.backspace, KEYS.del, KEYS.left, KEYS.right, KEYS.end, KEYS.home, KEYS.tab, KEYS.esc, KEYS.enter];
+                        MultyLineContent.__allowedKeys = [0, constsMOD.KEYS.backspace, constsMOD.KEYS.del, constsMOD.KEYS.left, constsMOD.KEYS.right, constsMOD.KEYS.end, constsMOD.KEYS.home, constsMOD.KEYS.tab, constsMOD.KEYS.esc, constsMOD.KEYS.enter];
                     }
                     return MultyLineContent.__allowedKeys;
                 }

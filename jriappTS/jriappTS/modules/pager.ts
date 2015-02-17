@@ -199,9 +199,9 @@
                             }, 0);
                         }
                     }, self._objId);
-                    ds.addOnPropertyChange(collMOD.PROP_NAME.pageIndex, self._onPageIndexChanged, self._objId, self);
-                    ds.addOnPropertyChange(collMOD.PROP_NAME.pageSize, self._onPageSizeChanged, self._objId, self);
-                    ds.addOnPropertyChange(collMOD.PROP_NAME.totalCount, self._onTotalCountChanged, self._objId, self);
+                    ds.addOnPageIndexChanged(self._onPageIndexChanged, self._objId, self);
+                    ds.addOnPageSizeChanged(self._onPageSizeChanged, self._objId, self);
+                    ds.addOnTotalCountChanged(self._onTotalCountChanged, self._objId, self);
                     this._currentPage = ds.pageIndex + 1;
                     this._rowsPerPage = ds.pageSize;
                     this._rowCount = ds.totalCount;

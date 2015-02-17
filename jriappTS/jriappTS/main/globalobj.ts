@@ -55,7 +55,7 @@
     };
 
     export class Global extends BaseObject implements IExports {
-        public static vesion = '2.5.4.4';
+        public static vesion = '2.5.5.0';
         public static _TEMPLATES_SELECTOR = ['section.', css_riaTemplate].join('');
         public static _TEMPLATE_SELECTOR = '*[data-role="template"]';
         private _window: Window;
@@ -414,7 +414,7 @@
         }
         _waitForNotLoading(callback, callbackArgs) {
             this._waitQueue.enQueue({
-                prop: 'isLoading',
+                prop: PROP_NAME.isLoading,
                 groupName: null,
                 predicate: function (val) {
                     return !val;
