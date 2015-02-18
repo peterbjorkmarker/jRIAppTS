@@ -64,8 +64,12 @@ namespace RIAppDemo.Controllers
 
             public async Task WriteAndSend(string data)
             {
+                if (this._isDisposed)
+                    return;
                 this.UpdateAccessTime();
                 await this.stream.WriteLineAsync("data:" + data + "\n");
+                if (this._isDisposed)
+                    return;
                 await this.stream.FlushAsync();
             }
 

@@ -45,6 +45,9 @@ There's also not a single eval function used in this framework. So it works in a
 </i>
 
 <b>Latest changes:</b>
+<p>2015-02-18 The server side code update. Now The dataservice supports returning Tasks from its query, refresh, validate and invoke methods.
+It is not mandatory - the previous code works as before, but now it is allowed to return Task and then the method will be executed asynchronously.
+The demo projects were updated.</p>  
 <p>2015-02-17 Code optimization, renaming unconventionally named properties, docs update.</p>  
 <p>2015-02-16 Replaced "magic strings" (literal strings) in the framework's code with variables containing string values. This improves quality of the code</p>  
 <p>2015-02-02 Code maintenance improvement</p>  

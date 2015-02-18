@@ -6,6 +6,7 @@ using System.Transactions;
 using RIAPP.DataService.Utils;
 using RIAPP.DataService.Utils.Interfaces;
 using RIAPP.DataService.Types;
+using System.Threading.Tasks;
 
 namespace RIAPP.DataService.LinqSql
 {
@@ -113,7 +114,7 @@ namespace RIAPP.DataService.LinqSql
             return metadata;
         }
 
-        protected override void ExecuteChangeSet()
+        protected override async Task ExecuteChangeSet()
         {
             using (TransactionScope transScope = new TransactionScope(TransactionScopeOption.RequiresNew, 
                 new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.FromMinutes(1.0) }))
@@ -122,6 +123,8 @@ namespace RIAPP.DataService.LinqSql
                 
                 transScope.Complete();
             }
+            //added just in order that the warning about executing it synchronously will dissapear
+            await Task.FromResult<object>(null);
         }
 
         protected override string GetCSharp()

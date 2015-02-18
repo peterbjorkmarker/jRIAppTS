@@ -8,6 +8,7 @@ using System.Data.Objects.DataClasses;
 using System.Data.Metadata.Edm;
 using System.Text.RegularExpressions;
 using RIAPP.DataService.Types;
+using System.Threading.Tasks;
 
 namespace RIAPP.DataService.EF
 {
@@ -35,7 +36,7 @@ namespace RIAPP.DataService.EF
             return Activator.CreateInstance<TDB>();
         }
 
-        protected override void ExecuteChangeSet()
+        protected override async Task ExecuteChangeSet()
         {
             using (TransactionScope transScope = new TransactionScope(TransactionScopeOption.RequiresNew, 
                 new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.FromMinutes(1.0) }))
@@ -44,6 +45,8 @@ namespace RIAPP.DataService.EF
                 
                 transScope.Complete();
             }
+            //added just in order that the warning about executing it synchronously will dissapear
+            await Task.FromResult<object>(null);
         }
 
         protected virtual DataType DataTypeFromType(string fullName, out bool isArray)

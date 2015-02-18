@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RIAppDemo", "RIAppDemo\RIAppDemo.csproj", "{7500EB0A-9796-40AB-9BF3-3CDF7208AC38}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RIAPP.DataService", "RIAPP.DataService\RIAPP.DataService.csproj", "{5FA08D23-6BAE-47AD-930B-A11EAFFF11DC}"

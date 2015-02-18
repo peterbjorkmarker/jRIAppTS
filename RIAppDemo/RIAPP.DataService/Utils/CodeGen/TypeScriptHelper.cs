@@ -5,6 +5,7 @@ using System.Text;
 using System.Xml;
 using RIAPP.DataService.Utils.Interfaces;
 using RIAPP.DataService.Types;
+using System.Threading.Tasks;
 
 
 namespace RIAPP.DataService.Utils
@@ -212,7 +213,7 @@ namespace RIAPP.DataService.Utils
                         if (methodInfo.methodResult)
                         {
                             sbArgs.Append("\t}) => RIAPP.IPromise<");
-                            sbArgs.Append(this._dotNet2TS.GetTSTypeName(methodInfo.methodInfo.ReturnType));
+                            sbArgs.Append(this._dotNet2TS.GetTSTypeName(this.removeTaskFromType(methodInfo.methodInfo.ReturnType)));
                             sbArgs.Append(">");
                         }
                         else
@@ -497,7 +498,7 @@ namespace RIAPP.DataService.Utils
         {
             var sb = new StringBuilder(256);
             var sbArgs = new StringBuilder(256);
-            var selected = this._metadata.methods.Where((m) =>m.isQuery && m.methodInfo.ReturnType.GetGenericArguments().First() == dbSetInfo.EntityType).ToList();
+            var selected = this._metadata.methods.Where((m) =>m.isQuery && this.removeTaskFromType(m.methodInfo.ReturnType).GetGenericArguments().First() == dbSetInfo.EntityType).ToList();
             selected.ForEach((methodInfo) =>
             {
                 sbArgs.Length = 0;
@@ -534,6 +535,22 @@ namespace RIAPP.DataService.Utils
                 sb.AppendLine("\t}");
             });
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// if the type is Task<InnerType>
+        /// the method return type of InnerType removing Task type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        private Type removeTaskFromType(Type type)
+        {
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                return type.GetGenericArguments().First();
+            }
+            else
+                return type;
         }
 
         private string createCalcFields(DbSetInfo dbSetInfo)

@@ -12,6 +12,7 @@ using RIAPP.DataService.Utils;
 using RIAPP.DataService.Utils.Interfaces;
 using RIAPPInterface = RIAPP.DataService.Utils.Interfaces;
 using RIAPP.DataService.Types;
+using System.Threading.Tasks;
 
 
 
@@ -47,28 +48,28 @@ namespace RIAPP.DataService.Nancy
                 return this.GetPermissionsInfo();
             };
 
-            Post["/query"] = x =>
+            Post["/query", runAsync: true] = async (parameters, ct) =>
             {
                 var request = this.Bind<QueryRequest>(bconfig);
-                return this.PerformQuery(request);
+                return await this.PerformQuery(request);
             };
 
-            Post["/save"] = x =>
+            Post["/save", runAsync: true] = async (parameters, ct) =>
             {
                 var request = this.Bind<ChangeSet>(bconfig);
-                return this.Save(request);
+                return await this.Save(request);
             };
 
-            Post["/refresh"] = x =>
+            Post["/refresh", runAsync: true] = async (parameters, ct) =>
             {
                 var request = this.Bind<RefreshInfo>(bconfig);
-                return this.Refresh(request);
+                return await this.Refresh(request);
             };
 
-            Post["/invoke"] = x =>
+            Post["/invoke", runAsync: true] = async (parameters, ct) =>
             {
                 var request = this.Bind<InvokeRequest>(bconfig);
-                return this.Invoke(request);
+                return await this.Invoke(request);
             };
 		}
 
@@ -148,26 +149,27 @@ namespace RIAPP.DataService.Nancy
                 return this._GetTypeScript();
         }
 
-        protected Response PerformQuery(QueryRequest request)
+        protected async Task<Response> PerformQuery(QueryRequest request)
         {
-            return new IncrementalResult(this.DomainService.ServiceGetData(request), this.Serializer);
+            var queryResponse = await this.DomainService.ServiceGetData(request);
+            return new IncrementalResult(queryResponse, this.Serializer);
         }
 
-        protected Response Save(ChangeSet changeSet)
+        protected async Task<Response> Save(ChangeSet changeSet)
         {
-            var res = this.DomainService.ServiceApplyChangeSet(changeSet);
+            var res = await this.DomainService.ServiceApplyChangeSet(changeSet);
             return Response.AsJson(res);
         }
 
-        protected Response Refresh(RefreshInfo refreshInfo)
+        protected async Task<Response> Refresh(RefreshInfo refreshInfo)
         {
-            var res = this.DomainService.ServiceRefreshRow(refreshInfo);
+            var res = await this.DomainService.ServiceRefreshRow(refreshInfo);
             return Response.AsJson(res);
         }
 
-        protected Response Invoke(InvokeRequest invokeInfo)
+        protected async Task<Response> Invoke(InvokeRequest invokeInfo)
         {
-            var res = this.DomainService.ServiceInvokeMethod(invokeInfo);
+            var res = await this.DomainService.ServiceInvokeMethod(invokeInfo);
             return Response.AsJson(res);
         }
 

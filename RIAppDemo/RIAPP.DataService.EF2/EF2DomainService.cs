@@ -10,6 +10,7 @@ using System.Data.Entity.Infrastructure;
 using System.Data.Entity.Core.Objects;
 using System.Data.Entity.Core.Metadata.Edm;
 using System.Data.Entity.Core.Mapping;
+using System.Threading.Tasks;
 
 namespace RIAPP.DataService.EF2
 {
@@ -37,12 +38,12 @@ namespace RIAPP.DataService.EF2
             return Activator.CreateInstance<TDB>();
         }
 
-        protected override void ExecuteChangeSet()
+        protected override async Task ExecuteChangeSet()
         {
             using (TransactionScope transScope = new TransactionScope(TransactionScopeOption.RequiresNew, 
                 new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.FromMinutes(1.0) }))
             {
-                this.DB.SaveChanges();
+                await this.DB.SaveChangesAsync();
                 
                 transScope.Complete();
             }

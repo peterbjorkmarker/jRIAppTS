@@ -12,6 +12,7 @@ using RIAppDemo.BLL.Utils;
 using RIAppDemo.BLL.Models;
 using System.IO;
 using RIAPP.DataService.Types;
+using System.Threading.Tasks;
 
 namespace RIAppDemo.BLL.DataServices
 {
@@ -76,7 +77,7 @@ namespace RIAppDemo.BLL.DataServices
             throw new NotImplementedException();
         }
 
-        protected override void ExecuteChangeSet()
+        protected override Task ExecuteChangeSet()
         {
             throw new NotImplementedException();
         }

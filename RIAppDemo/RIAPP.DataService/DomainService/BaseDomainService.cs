@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace RIAPP.DataService
 {
@@ -143,7 +144,7 @@ namespace RIAPP.DataService
         public QueryResponse GetQueryData(string dbSetName, string queryName)
         {
             QueryRequest getInfo = new QueryRequest { dbSetName = dbSetName, queryName = queryName };
-            return this.ServiceGetData(getInfo);
+            return this.ServiceGetData(getInfo).Result;
         }
 
         protected IPrincipal CurrentPrincipal
@@ -749,8 +750,8 @@ namespace RIAPP.DataService
             rowInfo.changeState.OriginalEntity = dbEntity;
             methInfo.Invoke(this, new object[] { dbEntity });
         }
-        
-        protected bool ValidateEntity(RowInfo rowInfo)
+
+        protected async Task<bool> ValidateEntity(RowInfo rowInfo)
         {
             DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
             IEnumerable<ValidationErrorInfo> errs = null;
@@ -805,7 +806,16 @@ namespace RIAPP.DataService
             MethodInfo methInfo = this.GetOperMethodInfo(dbSetInfo, OperationNames.VALIDATE);
             if (methInfo != null)
             {
-                errs = (IEnumerable<ValidationErrorInfo>)methInfo.Invoke(this, new object[] { rowInfo.changeState.Entity, rowInfo.changeState.NamesOfChangedFields });
+                var invokeRes = methInfo.Invoke(this, new object[] { rowInfo.changeState.Entity, rowInfo.changeState.NamesOfChangedFields });
+                var typeInfo = invokeRes.GetType();
+                if (typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(Task<>))
+                {
+                    await ((Task)invokeRes).ConfigureAwait(false);
+                    errs = (IEnumerable<ValidationErrorInfo>)typeInfo.GetProperty("Result").GetValue(invokeRes, null);
+
+                }
+                else
+                    errs = (IEnumerable<ValidationErrorInfo>)invokeRes;
             }
             
             if (errs != null && errs.Count() > 0)
@@ -836,7 +846,7 @@ namespace RIAPP.DataService
 
         }
      
-        protected abstract void ExecuteChangeSet();
+        protected abstract Task ExecuteChangeSet();
 
         protected virtual void ApplyChangesToEntity(RowInfo rowInfo)
         {
@@ -923,7 +933,7 @@ namespace RIAPP.DataService
             return dbSetInfo.GetInResultFields().Select(fi => new FieldName { n = fi.fieldName, p = (fi.fieldType == FieldType.Object) ? this.GetNames(fi) : null }).ToArray();
         }
 
-        protected QueryResponse PerformQuery(QueryRequest queryInfo)
+        protected async Task<QueryResponse> PerformQuery(QueryRequest queryInfo)
         {
             var metadata = this.EnsureMetadataInitialized();
             List<MethodDescription> methodList = metadata.methodDescriptions;
@@ -948,7 +958,16 @@ namespace RIAPP.DataService
             this.RequestState.CurrentQueryInfo = queryInfo;
             try
             {
-                queryResult = (QueryResult)method.methodInfo.Invoke(this, methParams.ToArray());
+                var invokeRes = method.methodInfo.Invoke(this, methParams.ToArray());
+                var typeInfo = invokeRes.GetType();
+                if (typeInfo.GetGenericTypeDefinition() == typeof(Task<>))
+                {
+                    await ((Task)invokeRes).ConfigureAwait(false);
+                    queryResult = (QueryResult)typeInfo.GetProperty("Result").GetValue(invokeRes, null);
+
+                }
+                else
+                    queryResult = (QueryResult)invokeRes;
             }
             finally
             {
@@ -1036,7 +1055,7 @@ namespace RIAPP.DataService
             }
         }
 
-        protected bool ApplyChangeSet(ChangeSet changeSet)
+        protected async Task<bool> ApplyChangeSet(ChangeSet changeSet)
         {
             CachedMetadata metadata = this.EnsureMetadataInitialized();
             ChangeSetGraph graph = new ChangeSetGraph(changeSet, metadata);
@@ -1099,7 +1118,7 @@ namespace RIAPP.DataService
                 this.RequestState.CurrentRowInfo = rowInfo; 
                 try
                 {
-                    if (!this.ValidateEntity(rowInfo))
+                    if (!(await this.ValidateEntity(rowInfo).ConfigureAwait(false)))
                     {
                         rowInfo.invalid = rowInfo.changeState.ValidationErrors;
                         hasErrors = true;
@@ -1119,7 +1138,7 @@ namespace RIAPP.DataService
                 this.RequestState.CurrentRowInfo = rowInfo; 
                 try
                 {
-                    if (!this.ValidateEntity(rowInfo))
+                    if (!(await this.ValidateEntity(rowInfo).ConfigureAwait(false)))
                     {
                         rowInfo.invalid = rowInfo.changeState.ValidationErrors;
                         hasErrors = true;
@@ -1135,7 +1154,7 @@ namespace RIAPP.DataService
             if (hasErrors)
                 return false;
 
-            this.ExecuteChangeSet();
+            await this.ExecuteChangeSet().ConfigureAwait(false);
 
             foreach (var rowInfo in graph.allList)
             {
@@ -1156,7 +1175,7 @@ namespace RIAPP.DataService
             return true;
         }
 
-        protected InvokeResponse InvokeMethod(InvokeRequest invokeInfo) {
+        protected async Task<InvokeResponse> InvokeMethod(InvokeRequest invokeInfo) {
             List<MethodDescription> methodList = this.EnsureMetadataInitialized().methodDescriptions;
             MethodDescription method = methodList.Where((m)=>m.methodName == invokeInfo.methodName && m.isQuery == false).FirstOrDefault();
             if (method == null) {
@@ -1167,14 +1186,24 @@ namespace RIAPP.DataService
             for (var i = 0; i < method.parameters.Count; ++i) {
                methParams.Add(invokeInfo.paramInfo.GetValue(method.parameters[i].name, method, this.ServiceContainer));
             }
-            object meth_result = method.methodInfo.Invoke(this, methParams.ToArray());
+            object meth_result = null;
+            var invokeRes = method.methodInfo.Invoke(this, methParams.ToArray());
+            var typeInfo = invokeRes.GetType();
+            if (typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                await ((Task)invokeRes).ConfigureAwait(false);
+                meth_result = typeInfo.GetProperty("Result").GetValue(invokeRes, null);
+            }
+            else
+                meth_result = invokeRes;
+
             InvokeResponse res = new InvokeResponse();
             if (method.methodResult)
                 res.result = meth_result;
             return res;
         }
 
-        protected RefreshInfo RefreshRowInfo(RefreshInfo info)
+        protected async Task<RefreshInfo> RefreshRowInfo(RefreshInfo info)
         {
             var metadata = this.EnsureMetadataInitialized();
             info.dbSetInfo = metadata.dbSets[info.dbSetName];
@@ -1183,7 +1212,18 @@ namespace RIAPP.DataService
                 throw new InvalidOperationException(string.Format(ErrorStrings.ERR_REC_REFRESH_INVALID, info.dbSetInfo.EntityType.Name, this.GetType().Name));
             info.rowInfo.dbSetInfo = info.dbSetInfo;
             this.Authorizer.CheckUserRightsToExecute(methInfo);
-            object dbEntity = methInfo.Invoke(this, new object[] { info });
+
+            object dbEntity = null;
+            var invokeRes = methInfo.Invoke(this, new object[] { info });
+            var typeInfo = invokeRes.GetType();
+            if (typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                await ((Task)invokeRes).ConfigureAwait(false);
+                dbEntity = typeInfo.GetProperty("Result").GetValue(invokeRes, null);
+            }
+            else
+                dbEntity = invokeRes;
+
             var rri = new RefreshInfo { rowInfo = info.rowInfo, dbSetName = info.dbSetName };
             if (dbEntity != null)
             {
@@ -1262,13 +1302,13 @@ namespace RIAPP.DataService
             }
         }
 
-        public QueryResponse ServiceGetData(QueryRequest queryRequest)
+        public async Task<QueryResponse> ServiceGetData(QueryRequest queryRequest)
         {
             QueryResponse res = null;
             this.RequestState.CurrentOperation = ServiceOperationType.Query;
             try
             {
-                res = this.PerformQuery(queryRequest);
+                res = await this.PerformQuery(queryRequest);
             }
             catch (Exception ex)
             {
@@ -1286,7 +1326,7 @@ namespace RIAPP.DataService
             return res;
         }
 
-        public ChangeSet ServiceApplyChangeSet(ChangeSet changeSet)
+        public async Task<ChangeSet> ServiceApplyChangeSet(ChangeSet changeSet)
         {
             bool res = true;
             this.RequestState.CurrentOperation = ServiceOperationType.SaveChanges;
@@ -1294,7 +1334,7 @@ namespace RIAPP.DataService
             try
             {
                 this.AuthorizeChangeSet(changeSet);
-                res = this.ApplyChangeSet(changeSet);
+                res = await this.ApplyChangeSet(changeSet);
                 if (!res) {
                     throw new ValidationException(ErrorStrings.ERR_SVC_CHANGES_ARENOT_VALID);
                 }
@@ -1314,13 +1354,13 @@ namespace RIAPP.DataService
             return changeSet;
         }
 
-        public RefreshInfo ServiceRefreshRow(RefreshInfo refreshInfo)
+        public async Task<RefreshInfo> ServiceRefreshRow(RefreshInfo refreshInfo)
         {
             RefreshInfo res = null;
             this.RequestState.CurrentOperation = ServiceOperationType.RowRefresh;
             try
             {
-                res = this.RefreshRowInfo(refreshInfo);
+                res = await this.RefreshRowInfo(refreshInfo);
             }
             catch (Exception ex)
             {
@@ -1336,12 +1376,12 @@ namespace RIAPP.DataService
             return res;
         }
 
-        public InvokeResponse ServiceInvokeMethod(InvokeRequest parameters) {
+        public async Task<InvokeResponse> ServiceInvokeMethod(InvokeRequest parameters) {
             InvokeResponse res = null;
             this.RequestState.CurrentOperation = ServiceOperationType.InvokeMethod;
             try
             {
-                res = this.InvokeMethod(parameters);
+                res = await this.InvokeMethod(parameters);
             }
             catch (Exception ex)
             {

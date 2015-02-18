@@ -8,6 +8,7 @@ using RIAPP.DataService;
 using RIAPP.DataService.Utils;
 using RIAPP.DataService.Utils.Interfaces;
 using RIAPP.DataService.Types;
+using System.Threading.Tasks;
 
 namespace RIAPP.DataService.Mvc
 {
@@ -87,7 +88,7 @@ namespace RIAPP.DataService.Mvc
                     case "csharp":
                         return this._GetCSharp();
                     default:
-                        throw new Exception(string.Format("Unknown type argument: {0}", lang));
+                        throw new Exception(string.Format("Unknown lang argument: {0}", lang));
                 }
             }
             else
@@ -104,32 +105,32 @@ namespace RIAPP.DataService.Mvc
 
         [ActionName("query")]
         [HttpPost]
-        public ActionResult PerformQuery([SericeParamsBinder] QueryRequest request)
+        public async Task<ActionResult> PerformQuery([SericeParamsBinder] QueryRequest request)
         {
-            return new IncrementalResult(this.DomainService.ServiceGetData(request), this.Serializer);
+            return new IncrementalResult(await this.DomainService.ServiceGetData(request).ConfigureAwait(false), this.Serializer);
         }
 
         [ActionName("save")]
         [HttpPost]
-        public ActionResult Save([SericeParamsBinder] ChangeSet changeSet)
+        public async Task<ActionResult> Save([SericeParamsBinder] ChangeSet changeSet)
         {
-            var res = this.DomainService.ServiceApplyChangeSet(changeSet);
+            var res = await this.DomainService.ServiceApplyChangeSet(changeSet).ConfigureAwait(false);
             return Json(res);
         }
 
         [ActionName("refresh")]
         [HttpPost]
-        public ActionResult Refresh([SericeParamsBinder] RefreshInfo refreshInfo)
+        public async Task<ActionResult> Refresh([SericeParamsBinder] RefreshInfo refreshInfo)
         {
-            var res = this.DomainService.ServiceRefreshRow(refreshInfo);
+            var res = await this.DomainService.ServiceRefreshRow(refreshInfo).ConfigureAwait(false);
             return Json(res);
         }
 
         [ActionName("invoke")]
         [HttpPost]
-        public ActionResult Invoke([SericeParamsBinder] InvokeRequest invokeInfo)
+        public async Task<ActionResult> Invoke([SericeParamsBinder] InvokeRequest invokeInfo)
         {
-            var res = this.DomainService.ServiceInvokeMethod(invokeInfo);
+            var res = await this.DomainService.ServiceInvokeMethod(invokeInfo).ConfigureAwait(false);
             return Json(res);
         }
 

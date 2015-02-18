@@ -220,18 +220,24 @@ namespace RIAPP.DataService.WebApi
 
 
         #region Public API
+        [ActionName("xaml")]
+        [HttpGet]
         public virtual IHttpActionResult GetXAML(HttpRequestMessage request)
         {
             var info = this.DataService.ServiceGetXAML();
             return new PlainTextActionResult(request, info);
         }
 
+        [ActionName("csharp")]
+        [HttpGet]
         public virtual IHttpActionResult GetCSHARP(HttpRequestMessage request)
         {
             var info = this.DataService.ServiceGetCSharp();
             return new PlainTextActionResult(request, info);
         }
 
+        [ActionName("ts")]
+        [HttpGet]
         public virtual IHttpActionResult GetTypeScript(HttpRequestMessage request)
         {
             string comment = string.Format("\tGenerated from: {0} on {1:yyyy-MM-dd HH:mm} at {1:HH:mm}\r\n\tDon't make manual changes here, because they will be lost when this db interface will be regenerated!", request.RequestUri, DateTime.Now);
@@ -239,13 +245,17 @@ namespace RIAPP.DataService.WebApi
             return new PlainTextActionResult(request, info);
         }
 
+        [ActionName("permissions")]
+        [HttpGet]
         public virtual HttpResponseMessage Permissions()
         {
             var res = this.DataService.ServiceGetPermissions();
             return Request.CreateResponse<Permissions>(HttpStatusCode.OK, res, this.MediaFormatter);
         }
 
-        public virtual IHttpActionResult Query(HttpRequestMessage request, QueryRequest query)
+        [ActionName("query")]
+        [HttpPost]
+        public virtual async Task<IHttpActionResult> Query(HttpRequestMessage request, QueryRequest query)
         {
             var svc = this.DataService;
             if (svc == null)
@@ -253,12 +263,14 @@ namespace RIAPP.DataService.WebApi
                 var response = Request.CreateResponse(HttpStatusCode.NotFound, "Service not found");
                 throw new HttpResponseException(response);
             }
-            var queryResponse = svc.ServiceGetData(query);
+            var queryResponse = await svc.ServiceGetData(query).ConfigureAwait(false);
             IncrementalActionResult result = new IncrementalActionResult(request, queryResponse, this._serializer);
             return result;
         }
 
-        public virtual HttpResponseMessage Refresh(RefreshInfo refreshInfo)
+        [ActionName("refresh")]
+        [HttpPost]
+        public virtual async Task<HttpResponseMessage> Refresh(RefreshInfo refreshInfo)
         {
             var svc = this.DataService;
             if (svc == null)
@@ -266,11 +278,13 @@ namespace RIAPP.DataService.WebApi
                 var response = Request.CreateResponse(HttpStatusCode.NotFound, "Service not found");
                 throw new HttpResponseException(response);
             }
-            var svcData = svc.ServiceRefreshRow(refreshInfo);
+            RefreshInfo svcData = await svc.ServiceRefreshRow(refreshInfo).ConfigureAwait(false);
             return Request.CreateResponse<RefreshInfo>(HttpStatusCode.OK, svcData, this.MediaFormatter);
         }
 
-        public virtual HttpResponseMessage Invoke(InvokeRequest invokeInfo)
+        [ActionName("invoke")]
+        [HttpPost]
+        public virtual async Task<HttpResponseMessage> Invoke(InvokeRequest invokeInfo)
         {
             var svc = this.DataService;
             if (svc == null)
@@ -278,16 +292,29 @@ namespace RIAPP.DataService.WebApi
                 var response = Request.CreateResponse(HttpStatusCode.NotFound, "Service not found");
                 throw new HttpResponseException(response);
             }
-            var svcData = svc.ServiceInvokeMethod(invokeInfo);
+            var svcData = await svc.ServiceInvokeMethod(invokeInfo).ConfigureAwait(false);
             return Request.CreateResponse<InvokeResponse>(HttpStatusCode.OK, svcData, this.MediaFormatter);
         }
 
-        public virtual HttpResponseMessage Save(ChangeSet changeSet)
+        [ActionName("save")]
+        [HttpPost]
+        public virtual async Task<HttpResponseMessage> Save(ChangeSet changeSet)
         {
-            var svcResponse = this.DataService.ServiceApplyChangeSet(changeSet);
+            var svcResponse = await this.DataService.ServiceApplyChangeSet(changeSet).ConfigureAwait(false);
             var response = Request.CreateResponse<ChangeSet>(HttpStatusCode.OK, svcResponse, this.MediaFormatter);
             return response;
         }
         #endregion
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && this._dataService.IsValueCreated)
+            {
+                ((IDisposable)this._dataService.Value).Dispose();
+            }
+            this._dataService = null;
+            this._serializer = null;
+            base.Dispose(disposing);
+        }
     }
 }

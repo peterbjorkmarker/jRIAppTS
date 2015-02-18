@@ -87,26 +87,48 @@ namespace RIAppDemo.BLL.DataServices
 
         #region Product
         [Query]
-        public QueryResult<LookUpProduct> ReadProductLookUp()
+        public Task<QueryResult<LookUpProduct>> ReadProductLookUp()
         {
             int? totalCount = null;
             var res = this.QueryHelper.PerformQuery(this.DB.Products, this.CurrentQueryInfo, ref totalCount).Select(p => new LookUpProduct { ProductID = p.ProductID, Name = p.Name }).AsEnumerable();
             var queryResult = new QueryResult<LookUpProduct>(res, totalCount);
-            return queryResult;
+            return Task.FromResult(queryResult);
         }
 
+        /// <summary>
+        /// The method can be asynchronous if instead of QueryResult<Product> type
+        /// you return Task<QueryResult<Product>>
+        /// the demo shows the asynchronous variant
+        /// </summary>
+        /// <param name="param1"></param>
+        /// <param name="param2"></param>
+        /// <returns></returns>
         [Query]
-        public QueryResult<Product> ReadProduct(int[] param1, string param2)
+        public async Task<QueryResult<Product>> ReadProduct(int[] param1, string param2)
         {
             int? totalCount = null;
-            var res = this.QueryHelper.PerformQuery(this.DB.Products,this.CurrentQueryInfo, ref totalCount).ToArray();
-            var productIDs = res.Select(p => p.ProductID).Distinct().ToArray();
+            //the async delay is for the demo purposes to make it more  complex
+            //await Task.Delay(250).ConfigureAwait(false);
 
-            var queryResult = new QueryResult<Product>(res, totalCount);
+            //another async part (simulate async query execution)
+            var products = await Task.Run<IQueryable<Product>>(() =>
+            {
+                return this.QueryHelper.PerformQuery(this.DB.Products, this.CurrentQueryInfo, ref totalCount);
+            }).ConfigureAwait(false);
+
+            var productsArr = products.ToArray();
+            var productIDs = productsArr.Select(p => p.ProductID).Distinct().ToArray();
+            var queryResult = new QueryResult<Product>(productsArr, totalCount);
+
+            //the last async part
+            var subResult = await Task.Run<SubResult>(() =>
+            {
+                return new SubResult() { dbSetName = "SalesOrderDetail", Result = this.DB.SalesOrderDetails.Where(sod => productIDs.Contains(sod.ProductID)) };
+            }).ConfigureAwait(false);
+
             //include related SalesOrderDetails with the products in the same query result
-            queryResult.subResults.Add(new SubResult() { dbSetName = "SalesOrderDetail", Result = this.DB.SalesOrderDetails.Where(sod => productIDs.Contains(sod.ProductID)) });
-
-            //example of returning out of band information and use it on the client (of it can be more useful than it)
+            queryResult.subResults.Add(subResult);
+           //example of returning out of band information and use it on the client (of it can be more useful than it)
             queryResult.extraInfo = new { test = "ReadProduct Extra Info: " + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") };
             return queryResult;
         }
@@ -119,7 +141,15 @@ namespace RIAppDemo.BLL.DataServices
             return new QueryResult<Product>(res, totalCount);
         }
 
-        public IEnumerable<ValidationErrorInfo> ValidateProduct(Product product, string[] modifiedField)
+        /// <summary>
+        /// The method can be asynchronous if instead of IEnumerable<ValidationErrorInfo> type
+        /// you return Task<IEnumerable<ValidationErrorInfo>>
+        /// the demo shows the asynchronous variant
+        /// </summary>
+        /// <param name="product"></param>
+        /// <param name="modifiedField"></param>
+        /// <returns></returns>
+        public Task<IEnumerable<ValidationErrorInfo>> ValidateProduct(Product product, string[] modifiedField)
         {
             LinkedList<ValidationErrorInfo> errors = new LinkedList<ValidationErrorInfo>();
             if (Array.IndexOf(modifiedField,"Name") >-1 && product.Name.StartsWith("Ugly",StringComparison.OrdinalIgnoreCase))
@@ -131,7 +161,7 @@ namespace RIAppDemo.BLL.DataServices
             if (Array.IndexOf(modifiedField, "SellStartDate") > -1 && product.SellStartDate > DateTime.Today)
                 errors.AddLast(new ValidationErrorInfo { fieldName = "SellStartDate", message = "SellStartDate must be prior today" });
 
-            return errors;
+            return Task.FromResult<IEnumerable<ValidationErrorInfo>>(errors);
         }
 
         [Authorize(Roles = new string[]{ADMINS_ROLE})]
@@ -156,9 +186,18 @@ namespace RIAppDemo.BLL.DataServices
             this.DB.Products.DeleteOnSubmit(product);
         }
 
-        public Product RefreshProduct(RefreshInfo refreshInfo)
+        /// <summary>
+        /// This is just a demo that you can return Task<Product> type from this method
+        /// instead of simply returning the Product type
+        /// </summary>
+        /// <param name="refreshInfo"></param>
+        /// <returns>Product or Task<Product></returns>
+        public Task<Product> RefreshProduct(RefreshInfo refreshInfo)
         {
-            return this.QueryHelper.GetRefreshedEntity<Product>(this.DB.Products, refreshInfo);
+            return Task.Run<Product>(() =>
+            {
+                return this.QueryHelper.GetRefreshedEntity<Product>(this.DB.Products, refreshInfo);
+            });
         }
         #endregion
 
@@ -181,17 +220,18 @@ namespace RIAppDemo.BLL.DataServices
                 includeHierarchy = new string[] { "CustomerAddresses.Address" };
             }
             var customers = this.DB.Customers as IQueryable<Customer>;
-            
+
             //AddressCount does not exists in Database (we calculate it), so it is needed to sort it manually
-            var addressCountSortItem = this.CurrentQueryInfo.sortInfo.sortItems.FirstOrDefault((sortItem)=> sortItem.fieldName== "AddressCount");
-            if (addressCountSortItem != null){
+            var addressCountSortItem = this.CurrentQueryInfo.sortInfo.sortItems.FirstOrDefault((sortItem) => sortItem.fieldName == "AddressCount");
+            if (addressCountSortItem != null)
+            {
                 this.CurrentQueryInfo.sortInfo.sortItems.Remove(addressCountSortItem);
                 if (addressCountSortItem.sortOrder == RIAPP.DataService.Types.SortOrder.ASC)
                     customers = customers.OrderBy(c => c.CustomerAddresses.Count());
                 else
                     customers = customers.OrderByDescending(c => c.CustomerAddresses.Count());
             }
-            
+
             //perform query
             int? totalCount = null;
             var res = this.QueryHelper.PerformQuery(customers, this.CurrentQueryInfo, ref totalCount).ToList();
@@ -435,24 +475,36 @@ namespace RIAppDemo.BLL.DataServices
             return new QueryResult<AddressInfo>(res, totalCount);
         }
         
+        /// <summary>
+        /// if you return Task<SomeType> result from the Invoke method then it will be asynchronous
+        /// if instead you return SomeType type then the method will be executed synchronously
+        /// here i use the asynchronous variant for demo purposes only!
+        /// </summary>
+        /// <param name="param1"></param>
+        /// <param name="param2"></param>
+        /// <returns></returns>
         [Invoke()]
-        public string TestInvoke(byte[] param1, string param2)
+        public Task<string> TestInvoke(byte[] param1, string param2)
         {
-            StringBuilder sb = new StringBuilder();
-         
-            Array.ForEach(param1, (item) => {
-                if (sb.Length > 0)
-                    sb.Append(", ");
-                sb.Append(item);
-            });
-           
-            /*
-            int rand = (new Random(DateTime.Now.Millisecond)).Next(0, 999);
-            if ((rand % 3) == 0)
-                throw new Exception("Error generated randomly for testing purposes. Don't worry! Try again.");
-            */
+            return Task.Run<string>(() =>
+            {
+                StringBuilder sb = new StringBuilder();
 
-            return string.Format("TestInvoke method invoked with<br/><br/><b>param1:</b> {0}<br/> <b>param2:</b> {1}", sb, param2);
+                Array.ForEach(param1, (item) =>
+                {
+                    if (sb.Length > 0)
+                        sb.Append(", ");
+                    sb.Append(item);
+                });
+
+                /*
+                int rand = (new Random(DateTime.Now.Millisecond)).Next(0, 999);
+                if ((rand % 3) == 0)
+                    throw new Exception("Error generated randomly for testing purposes. Don't worry! Try again.");
+                */
+
+                return string.Format("TestInvoke method invoked with<br/><br/><b>param1:</b> {0}<br/> <b>param2:</b> {1}", sb, param2);
+            });
         }
 
         [Invoke()]
