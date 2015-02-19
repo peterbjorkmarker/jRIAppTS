@@ -45,6 +45,9 @@ There's also not a single eval function used in this framework. So it works in a
 </i>
 
 <b>Latest changes:</b>
+<p>2015-02-19 The server side code update. The dataservice's major code improvement.
+New attributes were added UpdateAttribute, InsertAttribute, DeleteAttribute, RefreshAttribute, ValidateAttribute. They can be used to mark
+methods inside a dataservice. The demo projects were updated.</p>  
 <p>2015-02-18 The server side code update. Now The dataservice supports returning Tasks from its query, refresh, validate and invoke methods.
 It is not mandatory - the previous code works as before, but now it is allowed to return Task and then the method will be executed asynchronously.
 The demo projects were updated.</p>  

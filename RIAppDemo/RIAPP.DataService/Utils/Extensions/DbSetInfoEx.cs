@@ -17,22 +17,22 @@ namespace RIAPP.DataService.Utils
             return SecurityHelper.GetDbSetPermissions(dbSetInfo, authorizer);
         }
 
-        public static MethodInfo getOperationMethodInfo(this DbSetInfo dbSetInfo, string oper)
+        public static MethodInfo getOperationMethodInfo(this DbSetInfo dbSetInfo, MethodType methodType)
         {
-            switch (oper.ToLowerInvariant())
+            switch (methodType)
             {
-                case OperationNames.REFRESH:
+                case MethodType.Refresh:
                     return dbSetInfo._refreshDataMethod;
-                case OperationNames.CREATE:
+                case MethodType.Insert:
                     return dbSetInfo._insertDataMethod;
-                case OperationNames.UPDATE:
+                case MethodType.Update:
                     return dbSetInfo._updateDataMethod;
-                case OperationNames.DELETE:
+                case MethodType.Delete:
                     return dbSetInfo._deleteDataMethod;
-                case OperationNames.VALIDATE:
+                case MethodType.Validate:
                     return dbSetInfo._validateDataMethod;
                 default:
-                    throw new DomainServiceException(string.Format("Invalid Operation name {0}", oper));
+                    throw new DomainServiceException(string.Format("Invalid Method Type {0}", methodType));
             }
         }
 
@@ -56,32 +56,32 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        public static string getOperationMethodName(this DbSetInfo dbSetInfo, string oper)
+        public static string getOperationMethodName(this DbSetInfo dbSetInfo, MethodType methodType)
         {
-            switch (oper.ToLowerInvariant())
+            switch (methodType)
             {
-                case OperationNames.REFRESH:
+                case MethodType.Refresh:
                     if (string.IsNullOrWhiteSpace(dbSetInfo.refreshDataMethod))
                         return null;
                     return GenerateMethodName(dbSetInfo.refreshDataMethod, dbSetInfo.dbSetName);
-                case OperationNames.CREATE:
+                case MethodType.Insert:
                     if (string.IsNullOrWhiteSpace(dbSetInfo.insertDataMethod))
                         return null;
                     return GenerateMethodName(dbSetInfo.insertDataMethod, dbSetInfo.dbSetName);
-                case OperationNames.UPDATE:
+                case MethodType.Update:
                     if (string.IsNullOrWhiteSpace(dbSetInfo.updateDataMethod))
                         return null;
                     return GenerateMethodName(dbSetInfo.updateDataMethod, dbSetInfo.dbSetName);
-                case OperationNames.DELETE:
+                case MethodType.Delete:
                     if (string.IsNullOrWhiteSpace(dbSetInfo.deleteDataMethod))
                         return null;
                     return GenerateMethodName(dbSetInfo.deleteDataMethod, dbSetInfo.dbSetName);
-                case OperationNames.VALIDATE:
+                case MethodType.Validate:
                     if (string.IsNullOrWhiteSpace(dbSetInfo.validateDataMethod))
                         return null;
                     return GenerateMethodName(dbSetInfo.validateDataMethod, dbSetInfo.dbSetName);
                 default:
-                    throw new DomainServiceException(string.Format("Invalid Operation name {0}", oper));
+                    throw new DomainServiceException(string.Format("Invalid Method Type {0}", methodType));
             }
         }
 
@@ -104,44 +104,7 @@ namespace RIAPP.DataService.Utils
             }
         }
 
-        public static void InitMethods(this DbSetInfo dbSetInfo, Type serviceType)
-        {
-            System.Reflection.FieldInfo[] fields = typeof(OperationNames).GetFields(BindingFlags.Public | BindingFlags.Static);
-            Array.ForEach(fields, (fl) =>
-            {
-                if (!fl.IsSpecialName && fl.IsLiteral && !fl.IsInitOnly)
-                {
-                    string operName = fl.GetValue(null).ToString();
-                    string methodName = dbSetInfo.getOperationMethodName(operName);
-                    MethodInfo minfo = DataHelper.GetMethodInfo(serviceType, methodName);
-                    if (minfo != null)
-                    {
-                        switch (operName)
-                        {
-                            case OperationNames.REFRESH:
-                                dbSetInfo._refreshDataMethod = minfo;
-                                break;
-                            case OperationNames.CREATE:
-                                dbSetInfo._insertDataMethod = minfo;
-                                break;
-                            case OperationNames.UPDATE:
-                                dbSetInfo._updateDataMethod = minfo;
-                                break;
-                            case OperationNames.DELETE:
-                                dbSetInfo._deleteDataMethod = minfo;
-                                break;
-                            case OperationNames.VALIDATE:
-                                dbSetInfo._validateDataMethod = minfo;
-                                break;
-                            default:
-                                throw new DomainServiceException(string.Format("Invalid Operation name {0}", operName));
-                        }
-                    }
-                }
-            });
-        }
-
-        public static void Initialize(this DbSetInfo dbSetInfo, Type serviceType, IServiceContainer services)
+        public static void Initialize(this DbSetInfo dbSetInfo, IServiceContainer services)
         {
             dbSetInfo._fieldsByNames = new Dictionary<string, Field>();
             int i = 0; 
@@ -163,7 +126,6 @@ namespace RIAPP.DataService.Utils
                 throw new DomainServiceException(string.Format(ErrorStrings.ERR_DBSET_HAS_NO_PK, dbSetInfo.dbSetName));
             }
             var fbn = dbSetInfo.GetFieldByNames();
-            dbSetInfo.InitMethods(serviceType);
         }
         #endregion
     }

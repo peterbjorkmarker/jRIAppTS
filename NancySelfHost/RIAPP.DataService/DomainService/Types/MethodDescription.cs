@@ -64,14 +64,14 @@ namespace RIAPP.DataService.Types
         /// <param name="isQuery"></param>
         /// <param name="dataHelper"></param>
         /// <returns></returns>
-        public static MethodDescription FromMethodInfo(MethodInfo methodInfo, bool isQuery, IServiceContainer container)
+        public static MethodDescription FromMethodInfo(MethodInfo methodInfo, MethodType methodType, IServiceContainer container)
         {
             Type returnType = methodInfo.ReturnType;
             bool isVoid = returnType == typeof(void);
             MethodDescription methDescription = new MethodDescription();
             methDescription.methodInfo = methodInfo;
             methDescription.methodName = methodInfo.Name;
-            methDescription.isQuery = isQuery;
+            methDescription.isQuery = methodType == MethodType.Query;
 
             if (!isVoid)
                 methDescription.methodResult = true;

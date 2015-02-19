@@ -36,7 +36,7 @@ namespace RIAPP.DataService.EF
             return Activator.CreateInstance<TDB>();
         }
 
-        protected override async Task ExecuteChangeSet()
+        protected override Task ExecuteChangeSet()
         {
             using (TransactionScope transScope = new TransactionScope(TransactionScopeOption.RequiresNew, 
                 new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.FromMinutes(1.0) }))
@@ -45,8 +45,7 @@ namespace RIAPP.DataService.EF
                 
                 transScope.Complete();
             }
-            //added just in order that the warning about executing it synchronously will dissapear
-            await Task.FromResult<object>(null);
+            return Task.FromResult<object>(null);
         }
 
         protected virtual DataType DataTypeFromType(string fullName, out bool isArray)

@@ -41,7 +41,7 @@ namespace RIAPP.DataService.EF2
         protected override async Task ExecuteChangeSet()
         {
             using (TransactionScope transScope = new TransactionScope(TransactionScopeOption.RequiresNew, 
-                new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.FromMinutes(1.0) }))
+                new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.FromMinutes(1.0) }, TransactionScopeAsyncFlowOption.Enabled))
             {
                 await this.DB.SaveChangesAsync();
                 

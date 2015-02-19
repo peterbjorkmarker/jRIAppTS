@@ -38,17 +38,13 @@ namespace RIAPP.DataService.Types
         None=0, Changed=1, Setted=2, Refreshed=4
     }
 
-    public static class OperationNames
-    {
-        public const string CREATE = "create";
-        public const string UPDATE = "update";
-        public const string DELETE = "delete";
-        public const string REFRESH = "refresh";
-        public const string VALIDATE = "validate";
-    }
-
     public enum DeleteAction : int
     {
         NoAction = 0, Cascade = 1, SetNulls = 2
+    }
+
+    public enum MethodType : int
+    {
+        None = 0, Query= 1, Invoke= 2, Insert= 3, Update=4, Delete= 5, Validate= 6, Refresh = 7
     }
 }

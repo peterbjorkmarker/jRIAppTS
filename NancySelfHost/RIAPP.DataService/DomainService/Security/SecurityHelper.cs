@@ -77,13 +77,13 @@ namespace RIAPP.DataService.Security
             switch (rowInfo.changeType)
             {
                 case ChangeType.Added:
-                    methInfo = dbInfo.getOperationMethodInfo(OperationNames.CREATE);
+                    methInfo = dbInfo.getOperationMethodInfo(MethodType.Insert);
                     break;
                 case ChangeType.Deleted:
-                    methInfo = dbInfo.getOperationMethodInfo(OperationNames.DELETE);
+                    methInfo = dbInfo.getOperationMethodInfo(MethodType.Delete);
                     break;
                 case ChangeType.Updated:
-                    methInfo = dbInfo.getOperationMethodInfo(OperationNames.UPDATE);
+                    methInfo = dbInfo.getOperationMethodInfo(MethodType.Update);
                     break;
                 default:
                     throw new DomainServiceException(string.Format(ErrorStrings.ERR_REC_CHANGETYPE_INVALID, dbInfo.EntityType.Name, rowInfo.changeType));
@@ -108,16 +108,16 @@ namespace RIAPP.DataService.Security
             MethodInfo methInfo = null;
             DbSetPermit permit = new DbSetPermit();
             permit.dbSetName = dbInfo.dbSetName;
-            methInfo = dbInfo.getOperationMethodInfo(OperationNames.CREATE);
+            methInfo = dbInfo.getOperationMethodInfo(MethodType.Insert);
             permit.canAddRow = methInfo != null && CanAccessMethod(methInfo,authorizer);
 
-            methInfo = dbInfo.getOperationMethodInfo(OperationNames.UPDATE);
+            methInfo = dbInfo.getOperationMethodInfo(MethodType.Update);
             permit.canEditRow = methInfo != null && CanAccessMethod(methInfo, authorizer);
 
-            methInfo = dbInfo.getOperationMethodInfo(OperationNames.DELETE);
+            methInfo = dbInfo.getOperationMethodInfo(MethodType.Delete);
             permit.canDeleteRow = methInfo != null && CanAccessMethod(methInfo, authorizer);
 
-            methInfo = dbInfo.getOperationMethodInfo(OperationNames.REFRESH);
+            methInfo = dbInfo.getOperationMethodInfo(MethodType.Refresh);
             permit.canRefreshRow = methInfo != null && CanAccessMethod(methInfo, authorizer);
             return permit;
         }

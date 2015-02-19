@@ -3,7 +3,6 @@ using RIAPP.DataService.Security;
 using RIAPP.DataService.Types;
 using RIAPP.DataService.Utils;
 using RIAPP.DataService.Utils.Interfaces;
-using StaThreadSyncronizer;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -61,11 +60,7 @@ namespace RIAPP.DataService
         }
 
         #region private members
-        private static StaSynchronizationContext _synchronizer = new StaSynchronizationContext();
-        private static MetadataCache _metadataCache = new MetadataCache();
-        private static ConcurrentDictionary<Type, MethodsList> _methodsInfo = new ConcurrentDictionary<Type, MethodsList>();
         private PerRequestState _requestState = new PerRequestState();
-        private CachedMetadata _cachedMetadata;
         private IPrincipal _principal;
         private ISerializer _serializer;
         private bool _IsCodeGenEnabled = false;
@@ -104,7 +99,7 @@ namespace RIAPP.DataService
             }
         }
 
-        protected IServiceContainer ServiceContainer
+        protected internal IServiceContainer ServiceContainer
         {
             get
             {
@@ -263,7 +258,7 @@ namespace RIAPP.DataService
             if (includePaths.Length == 0)
                 return Enumerable.Empty<IncludedResult>();
             Dictionary<string, IncludedResult> visited = new Dictionary<string, IncludedResult>();
-            var metadata = this.EnsureMetadataInitialized();
+            var metadata = MetadataHelper.EnsureMetadataInitialized(this);
             foreach (string includePath in includePaths)
             {
                 string[] pathParts = includePath.Split('.');
@@ -278,7 +273,7 @@ namespace RIAPP.DataService
             IncludedResultList result = new IncludedResultList();
             if (subResults == null)
                 return result;
-            var metadata = this.EnsureMetadataInitialized();
+            var metadata = MetadataHelper.EnsureMetadataInitialized(this);
             int rowCount = 0;
             foreach (SubResult subResult in subResults)
             {
@@ -300,7 +295,7 @@ namespace RIAPP.DataService
 
         private void CreateIncludedResult(DbSetInfo dbSetInfo, IEnumerable<object> inputEntities, string propertyName, string[] nextParts, Dictionary<string, IncludedResult> visited)
         {
-            var metadata = this.EnsureMetadataInitialized();
+            var metadata = MetadataHelper.EnsureMetadataInitialized(this);
             bool isChildProperty = false;
             DbSetInfo nextDbSetInfo = null;
             var assoc = metadata.associations.Values.Where(a=>a.parentDbSetName == dbSetInfo.dbSetName && a.parentToChildrenName == propertyName).FirstOrDefault();
@@ -355,144 +350,14 @@ namespace RIAPP.DataService
             current.rowCount = rowCount;
         }
         
-        protected CachedMetadata EnsureMetadataInitialized()
+      
+
+        protected MethodInfo GetOperMethodInfo(DbSetInfo dbSetInfo, MethodType methodType)
         {
-            Func<CachedMetadata> factory = () => { this.ExecuteOnSTA(this.InitMetadata, this); return this._cachedMetadata; };
-            System.Threading.LazyInitializer.EnsureInitialized<CachedMetadata>(ref this._cachedMetadata, factory);
-            return this._cachedMetadata;
+            return dbSetInfo.getOperationMethodInfo(methodType);
         }
 
-        protected void ExecuteOnSTA(System.Threading.SendOrPostCallback action, object state)
-        {
-            _synchronizer.Send(action, state);
-        }
-
-        private void InitMetadata(object state)
-        {
-            BaseDomainService self = (BaseDomainService)state;
-            CachedMetadata cachedMetadata = null;
-            if (BaseDomainService._metadataCache.TryGetValue(self.GetType(), out cachedMetadata))
-            {
-                self._cachedMetadata = cachedMetadata;
-                return;
-            }
-            var metadata = self.GetMetadata();
-            cachedMetadata = new CachedMetadata();
-            foreach (var dbSetInfo in metadata.DbSets)
-            {
-                dbSetInfo.Initialize(self.GetType(), this.ServiceContainer);
-                //indexed by dbSetName
-                cachedMetadata.dbSets.Add(dbSetInfo.dbSetName, dbSetInfo);
-            }
-
-            foreach (var assoc in metadata.Associations)
-            {
-                if (string.IsNullOrWhiteSpace(assoc.name))
-                {
-                    throw new DomainServiceException(ErrorStrings.ERR_ASSOC_EMPTY_NAME);
-                }
-                if (!cachedMetadata.dbSets.ContainsKey(assoc.parentDbSetName)) 
-                {
-                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_ASSOC_INVALID_PARENT,assoc.name, assoc.parentDbSetName));
-                }
-                if (!cachedMetadata.dbSets.ContainsKey(assoc.childDbSetName))
-                {
-                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_ASSOC_INVALID_CHILD, assoc.name, assoc.childDbSetName));
-                }
-                var childDb = cachedMetadata.dbSets[assoc.childDbSetName];
-                var parentDb = cachedMetadata.dbSets[assoc.parentDbSetName];
-                var parentDbFields = parentDb.GetFieldByNames();
-                var childDbFields = childDb.GetFieldByNames();
-
-                //check navigation field
-                //dont allow to define  it explicitly, the association adds the field by itself (implicitly)
-                if (!string.IsNullOrEmpty(assoc.childToParentName) && childDbFields.ContainsKey(assoc.childToParentName))
-                {
-                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_ASSOC_INVALID_NAV_FIELD, assoc.name, assoc.childToParentName));
-                }
-
-                //check navigation field
-                //dont allow to define  it explicitly, the association adds the field by itself (implicitly)
-                if (!string.IsNullOrEmpty(assoc.parentToChildrenName) && parentDbFields.ContainsKey(assoc.parentToChildrenName))
-                {
-                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_ASSOC_INVALID_NAV_FIELD, assoc.name, assoc.parentToChildrenName));
-                }
-
-                if (!string.IsNullOrEmpty(assoc.parentToChildrenName) && !string.IsNullOrEmpty(assoc.childToParentName) && assoc.childToParentName == assoc.parentToChildrenName)
-                {
-                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_ASSOC_INVALID_NAV_FIELD, assoc.name, assoc.parentToChildrenName));
-                }
-
-                foreach (var frel in assoc.fieldRels)
-                {
-                    if (!parentDbFields.ContainsKey(frel.parentField))
-                    {
-                        throw new DomainServiceException(string.Format(ErrorStrings.ERR_ASSOC_INVALID_PARENT_FIELD, assoc.name, frel.parentField));
-                    }
-                    if (!childDbFields.ContainsKey(frel.childField))
-                    {
-                        throw new DomainServiceException(string.Format(ErrorStrings.ERR_ASSOC_INVALID_CHILD_FIELD, assoc.name, frel.childField));
-                    }
-                }
-                //indexed by Name
-                cachedMetadata.associations.Add(assoc.name, assoc);
-
-                if (!string.IsNullOrEmpty(assoc.childToParentName))
-                {
-                    var sb = new System.Text.StringBuilder(120);
-                    var dependentOn = assoc.fieldRels.Aggregate(sb, (a, b) => a.Append((a.Length == 0 ? "" : ",") + b.childField), a => a).ToString();
-                    //add navigation field to dbSet's field collection
-                    childDb.fieldInfos.Add(new Field()
-                    {
-                        fieldName = assoc.childToParentName,
-                        fieldType = FieldType.Navigation,
-                        dataType = DataType.None,
-                        dependentOn = dependentOn,
-                        _TypeScriptDataType = TypeScriptHelper.GetEntityTypeName(parentDb.dbSetName)
-                    });
-                }
-
-                if (!string.IsNullOrEmpty(assoc.parentToChildrenName))
-                {
-                    var sb = new System.Text.StringBuilder(120);
-                    //add navigation field to dbSet's field collection
-                    parentDb.fieldInfos.Add(new Field()
-                    {
-                        fieldName = assoc.parentToChildrenName,
-                        fieldType = FieldType.Navigation,
-                        dataType = DataType.None,
-                        _TypeScriptDataType = string.Format("{0}[]", TypeScriptHelper.GetEntityTypeName(childDb.dbSetName))
-                    });
-                }
-            }
-            cachedMetadata.methodDescriptions = this.GetMethodDescriptions(self.GetType());
-            self._cachedMetadata = cachedMetadata;
-            BaseDomainService._metadataCache.TryAdd(self.GetType(), cachedMetadata);
-        }
-
-        protected MethodInfo GetOperMethodInfo(DbSetInfo dbSetInfo, string oper)
-        {
-            return dbSetInfo.getOperationMethodInfo(oper);
-        }
-
-        /// <summary>
-        /// Test if public methods on the service has Invoke or Query Attribute
-        /// and generates from this methods their invocation method descriptions 
-        /// </summary>
-        /// <returns></returns>
-        private MethodsList GetMethodDescriptions(Type thisType)
-        {
-             MethodsList res = null;
-             if (BaseDomainService._methodsInfo.TryGetValue(thisType, out res))
-                return res;
-             res = new MethodsList();
-             var methList = thisType.GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public).Select(m => new { method = m, isQuery = m.IsDefined(typeof(QueryAttribute), false), isInvoke = m.IsDefined(typeof(InvokeAttribute), false) }).Where(m=>(m.isInvoke || m.isQuery)).ToArray();
-             Array.ForEach(methList,(info) => {
-                 res.Add(MethodDescription.FromMethodInfo(info.method, info.isQuery, this.ServiceContainer));
-            });
-            BaseDomainService._methodsInfo.TryAdd(thisType, res);
-            return res;
-        }
+     
 
         private void ApplyValues(object entity, RowInfo rowInfo, string path, ValueChange[] values, bool isOriginal)
         {
@@ -708,7 +573,7 @@ namespace RIAPP.DataService
             DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
             if (rowInfo.changeType != ChangeType.Added)
                 throw new DomainServiceException(string.Format(ErrorStrings.ERR_REC_CHANGETYPE_INVALID, dbSetInfo.EntityType.Name, rowInfo.changeType));
-            MethodInfo methInfo = this.GetOperMethodInfo(dbSetInfo, OperationNames.CREATE);
+            MethodInfo methInfo = this.GetOperMethodInfo(dbSetInfo, MethodType.Insert);
             if (methInfo == null)
                 throw new DomainServiceException(string.Format(ErrorStrings.ERR_DB_INSERT_NOT_IMPLEMENTED, dbSetInfo.EntityType.Name, this.GetType().Name));
             object dbEntity = Activator.CreateInstance(dbSetInfo.EntityType);
@@ -722,7 +587,7 @@ namespace RIAPP.DataService
             DbSetInfo dbSetInfo = rowInfo.dbSetInfo;
             if (rowInfo.changeType != ChangeType.Updated)
                 throw new DomainServiceException(string.Format(ErrorStrings.ERR_REC_CHANGETYPE_INVALID, dbSetInfo.EntityType.Name, rowInfo.changeType));
-            MethodInfo methInfo = this.GetOperMethodInfo(dbSetInfo, OperationNames.UPDATE);
+            MethodInfo methInfo = this.GetOperMethodInfo(dbSetInfo, MethodType.Update);
             if (methInfo == null)
                 throw new DomainServiceException(string.Format(ErrorStrings.ERR_DB_UPDATE_NOT_IMPLEMENTED, dbSetInfo.EntityType.Name, this.GetType().Name));
             object dbEntity = Activator.CreateInstance(dbSetInfo.EntityType);
@@ -740,7 +605,7 @@ namespace RIAPP.DataService
             if (rowInfo.changeType != ChangeType.Deleted)
                 throw new DomainServiceException(string.Format(ErrorStrings.ERR_REC_CHANGETYPE_INVALID, dbSetInfo.EntityType.Name, rowInfo.changeType));
           
-            MethodInfo methInfo = this.GetOperMethodInfo(dbSetInfo, OperationNames.DELETE);
+            MethodInfo methInfo = this.GetOperMethodInfo(dbSetInfo, MethodType.Delete);
             if (methInfo == null)
                 throw new DomainServiceException(string.Format(ErrorStrings.ERR_DB_DELETE_NOT_IMPLEMENTED, dbSetInfo.EntityType.Name, this.GetType().Name));
 
@@ -803,19 +668,11 @@ namespace RIAPP.DataService
             }
 
             rowInfo.changeState.NamesOfChangedFields = mustBeChecked.ToArray();
-            MethodInfo methInfo = this.GetOperMethodInfo(dbSetInfo, OperationNames.VALIDATE);
+            MethodInfo methInfo = this.GetOperMethodInfo(dbSetInfo, MethodType.Validate);
             if (methInfo != null)
             {
                 var invokeRes = methInfo.Invoke(this, new object[] { rowInfo.changeState.Entity, rowInfo.changeState.NamesOfChangedFields });
-                var typeInfo = invokeRes.GetType();
-                if (typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(Task<>))
-                {
-                    await ((Task)invokeRes).ConfigureAwait(false);
-                    errs = (IEnumerable<ValidationErrorInfo>)typeInfo.GetProperty("Result").GetValue(invokeRes, null);
-
-                }
-                else
-                    errs = (IEnumerable<ValidationErrorInfo>)invokeRes;
+                errs = (IEnumerable<ValidationErrorInfo>)await GetMethodResult(invokeRes).ConfigureAwait(false);
             }
             
             if (errs != null && errs.Count() > 0)
@@ -829,7 +686,7 @@ namespace RIAPP.DataService
         #endregion
 
         #region Overridable Methods
-        protected abstract Metadata GetMetadata();
+        protected internal abstract Metadata GetMetadata();
 
         /// <summary>
         /// Can be used for tracking what is changed by CRUD methods
@@ -935,14 +792,8 @@ namespace RIAPP.DataService
 
         protected async Task<QueryResponse> PerformQuery(QueryRequest queryInfo)
         {
-            var metadata = this.EnsureMetadataInitialized();
-            List<MethodDescription> methodList = metadata.methodDescriptions;
-            MethodDescription method = methodList.Where((m) => m.methodName == queryInfo.queryName && m.isQuery == true).FirstOrDefault();
-            if (method == null)
-            {
-                throw new DomainServiceException(string.Format(ErrorStrings.ERR_QUERY_NAME_INVALID, queryInfo.queryName));
-            }
-
+            var metadata = MetadataHelper.EnsureMetadataInitialized(this);
+            MethodDescription method = metadata.GetQueryMethod(queryInfo.queryName);
             this.Authorizer.CheckUserRightsToExecute(method.methodInfo);
             queryInfo.dbSetInfo = metadata.dbSets[queryInfo.dbSetName];
             bool isMultyPageRequest = queryInfo.dbSetInfo.enablePaging && queryInfo.pageCount > 1;
@@ -959,15 +810,7 @@ namespace RIAPP.DataService
             try
             {
                 var invokeRes = method.methodInfo.Invoke(this, methParams.ToArray());
-                var typeInfo = invokeRes.GetType();
-                if (typeInfo.GetGenericTypeDefinition() == typeof(Task<>))
-                {
-                    await ((Task)invokeRes).ConfigureAwait(false);
-                    queryResult = (QueryResult)typeInfo.GetProperty("Result").GetValue(invokeRes, null);
-
-                }
-                else
-                    queryResult = (QueryResult)invokeRes;
+                queryResult = (QueryResult)await GetMethodResult(invokeRes).ConfigureAwait(false);
             }
             finally
             {
@@ -1016,7 +859,7 @@ namespace RIAPP.DataService
         {
             try
             {
-                var metadata = this.EnsureMetadataInitialized();
+                var metadata = MetadataHelper.EnsureMetadataInitialized(this);
                 foreach (var dbSet in changeSet.dbSets)
                 {
                     //methods on domain service which are attempted to be executed by client (SaveChanges triggers their execution)
@@ -1057,7 +900,7 @@ namespace RIAPP.DataService
 
         protected async Task<bool> ApplyChangeSet(ChangeSet changeSet)
         {
-            CachedMetadata metadata = this.EnsureMetadataInitialized();
+            CachedMetadata metadata = MetadataHelper.EnsureMetadataInitialized(this);
             ChangeSetGraph graph = new ChangeSetGraph(changeSet, metadata);
             graph.Prepare();
            
@@ -1176,27 +1019,16 @@ namespace RIAPP.DataService
         }
 
         protected async Task<InvokeResponse> InvokeMethod(InvokeRequest invokeInfo) {
-            List<MethodDescription> methodList = this.EnsureMetadataInitialized().methodDescriptions;
-            MethodDescription method = methodList.Where((m)=>m.methodName == invokeInfo.methodName && m.isQuery == false).FirstOrDefault();
-            if (method == null) {
-                throw new DomainServiceException(string.Format(ErrorStrings.ERR_METH_NAME_INVALID, invokeInfo.methodName));
-            }
+            var metadata = MetadataHelper.EnsureMetadataInitialized(this);
+            MethodDescription method = metadata.GetInvokeMethod(invokeInfo.methodName);
             this.Authorizer.CheckUserRightsToExecute(method.methodInfo);
             List<object> methParams = new List<object>();
             for (var i = 0; i < method.parameters.Count; ++i) {
                methParams.Add(invokeInfo.paramInfo.GetValue(method.parameters[i].name, method, this.ServiceContainer));
             }
-            object meth_result = null;
+             
             var invokeRes = method.methodInfo.Invoke(this, methParams.ToArray());
-            var typeInfo = invokeRes.GetType();
-            if (typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(Task<>))
-            {
-                await ((Task)invokeRes).ConfigureAwait(false);
-                meth_result = typeInfo.GetProperty("Result").GetValue(invokeRes, null);
-            }
-            else
-                meth_result = invokeRes;
-
+            object meth_result = await GetMethodResult(invokeRes).ConfigureAwait(false);
             InvokeResponse res = new InvokeResponse();
             if (method.methodResult)
                 res.result = meth_result;
@@ -1205,9 +1037,9 @@ namespace RIAPP.DataService
 
         protected async Task<RefreshInfo> RefreshRowInfo(RefreshInfo info)
         {
-            var metadata = this.EnsureMetadataInitialized();
+            var metadata = MetadataHelper.EnsureMetadataInitialized(this);
             info.dbSetInfo = metadata.dbSets[info.dbSetName];
-            MethodInfo methInfo = this.GetOperMethodInfo(info.dbSetInfo, OperationNames.REFRESH);
+            MethodInfo methInfo = this.GetOperMethodInfo(info.dbSetInfo, MethodType.Refresh);
             if (methInfo == null)
                 throw new InvalidOperationException(string.Format(ErrorStrings.ERR_REC_REFRESH_INVALID, info.dbSetInfo.EntityType.Name, this.GetType().Name));
             info.rowInfo.dbSetInfo = info.dbSetInfo;
@@ -1215,14 +1047,7 @@ namespace RIAPP.DataService
 
             object dbEntity = null;
             var invokeRes = methInfo.Invoke(this, new object[] { info });
-            var typeInfo = invokeRes.GetType();
-            if (typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(Task<>))
-            {
-                await ((Task)invokeRes).ConfigureAwait(false);
-                dbEntity = typeInfo.GetProperty("Result").GetValue(invokeRes, null);
-            }
-            else
-                dbEntity = invokeRes;
+            dbEntity = await GetMethodResult(invokeRes).ConfigureAwait(false);
 
             var rri = new RefreshInfo { rowInfo = info.rowInfo, dbSetName = info.dbSetName };
             if (dbEntity != null)
@@ -1234,7 +1059,18 @@ namespace RIAPP.DataService
 
             return rri; 
         }
-        
+
+        private async Task<object> GetMethodResult(object invokeRes)
+        {
+            var typeInfo = invokeRes != null ? invokeRes.GetType() : null;
+            if (typeInfo != null && typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                await ((Task)invokeRes).ConfigureAwait(false);
+                return typeInfo.GetProperty("Result").GetValue(invokeRes, null);
+            }
+            else
+                return invokeRes;
+        }
 
         #region IDomainService Public Methods
         public string ServiceGetTypeScript(string comment = null)
@@ -1249,7 +1085,8 @@ namespace RIAPP.DataService
             if (!this.IsCodeGenEnabled)
                 throw new InvalidOperationException(string.Format(ErrorStrings.ERR_CODEGEN_DISABLED, MethodInfo.GetCurrentMethod().Name, this.GetType().Name));
             string xaml = null;
-            this.ExecuteOnSTA((object state) => {
+            MetadataHelper.ExecuteOnSTA((object state) =>
+            {
                 xaml = (state as BaseDomainService).GetXAML();
             }, this);
             return xaml;
@@ -1266,7 +1103,7 @@ namespace RIAPP.DataService
         {
             try
             {
-                CachedMetadata metadata = this.EnsureMetadataInitialized();
+                CachedMetadata metadata = MetadataHelper.EnsureMetadataInitialized(this);
                 Permissions result = new Permissions();
                 result.serverTimezone = RIAPP.DataService.Utils.DataHelper.GetLocalDateTimezoneOffset(DateTime.Now);
                 foreach (var dbInfo in metadata.dbSets.Values)
@@ -1288,7 +1125,7 @@ namespace RIAPP.DataService
         {
             try
             {
-                CachedMetadata metadata = this.EnsureMetadataInitialized();
+                CachedMetadata metadata = MetadataHelper.EnsureMetadataInitialized(this);
                 var result = new MetadataResult();
                 result.methods = metadata.methodDescriptions;
                 result.associations.AddRange(metadata.associations.Values);
@@ -1402,7 +1239,6 @@ namespace RIAPP.DataService
 
         protected virtual void Dispose(bool isDisposing)
         {
-           this._cachedMetadata=null;
            this._requestState = null;
            this._principal = null;
            this._serviceContainer = null;

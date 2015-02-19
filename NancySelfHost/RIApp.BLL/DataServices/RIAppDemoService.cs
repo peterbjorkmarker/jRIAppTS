@@ -120,6 +120,9 @@ namespace RIAppDemo.BLL.DataServices
             var productIDs = productsArr.Select(p => p.ProductID).Distinct().ToArray();
             var queryResult = new QueryResult<Product>(productsArr, totalCount);
 
+            //the async delay is for the demo purposes to make it more  complex
+            //await Task.Delay(250).ConfigureAwait(false);
+
             //the last async part
             var subResult = await Task.Run<SubResult>(() =>
             {
@@ -149,6 +152,7 @@ namespace RIAppDemo.BLL.DataServices
         /// <param name="product"></param>
         /// <param name="modifiedField"></param>
         /// <returns></returns>
+        [Validate]
         public Task<IEnumerable<ValidationErrorInfo>> ValidateProduct(Product product, string[] modifiedField)
         {
             LinkedList<ValidationErrorInfo> errors = new LinkedList<ValidationErrorInfo>();
@@ -165,6 +169,7 @@ namespace RIAppDemo.BLL.DataServices
         }
 
         [Authorize(Roles = new string[]{ADMINS_ROLE})]
+        [Insert]
         public void InsertProduct(Product product)
         {
             product.ModifiedDate = DateTime.Now;
@@ -173,6 +178,7 @@ namespace RIAppDemo.BLL.DataServices
         }
 
         [Authorize(Roles = new string[] { ADMINS_ROLE })]
+        [Update]
         public void UpdateProduct(Product product)
         {
             Product orig = this.GetOriginal<Product>();
@@ -180,6 +186,7 @@ namespace RIAppDemo.BLL.DataServices
         }
 
         [Authorize(Roles = new string[] { ADMINS_ROLE })]
+        [Delete]
         public void DeleteProduct(Product product)
         {
             this.DB.Products.Attach(product);
@@ -192,6 +199,7 @@ namespace RIAppDemo.BLL.DataServices
         /// </summary>
         /// <param name="refreshInfo"></param>
         /// <returns>Product or Task<Product></returns>
+        [Refresh]
         public Task<Product> RefreshProduct(RefreshInfo refreshInfo)
         {
             return Task.Run<Product>(() =>
