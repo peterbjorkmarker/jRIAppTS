@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using RIAPP.DataService.Types;
 using RIAPP.DataService.Resources;
+using System.Collections.ObjectModel;
 
 namespace RIAPP.DataService.Utils
 {
@@ -12,21 +13,47 @@ namespace RIAPP.DataService.Utils
     {
         DbSetsDictionary _dbSets = new DbSetsDictionary();
         AssociationsDictionary _associations = new AssociationsDictionary();
-        IDictionary<string, MethodDescription> _invokeMethods = new Dictionary<string,MethodDescription>();
-        IDictionary<string, MethodDescription> _queryMethods = new Dictionary<string,MethodDescription>();
+        MethodsList _methodDescriptions;
+        IReadOnlyDictionary<string, MethodDescription> _invokeMethods;
+        IReadOnlyDictionary<string, MethodDescription> _queryMethods;
 
         public CachedMetadata() 
         {
         }
-        internal IDictionary<string, MethodDescription> invokeMethods { get { return this._invokeMethods; } }
-        internal IDictionary<string, MethodDescription> queryMethods { get { return this._queryMethods; } }
+
+        internal void InitMethods(MethodsList methods)
+        {
+            IDictionary<string, MethodDescription> invokeMeth = new Dictionary<string, MethodDescription>();
+            IDictionary<string, MethodDescription> queryMeth = new Dictionary<string, MethodDescription>();
+            methods.ForEach((md) =>
+            {
+                if (md.isQuery)
+                {
+                    queryMeth.Add(md.methodName, md);
+                }
+                else
+                {
+                    invokeMeth.Add(md.methodName, md);
+                }
+            });
+
+            this._methodDescriptions = methods;
+            this._invokeMethods = new ReadOnlyDictionary<string, MethodDescription>(invokeMeth);
+            this._queryMethods = new ReadOnlyDictionary<string, MethodDescription>(queryMeth);
+        }
+
+        internal IReadOnlyDictionary<string, MethodDescription> invokeMethods { get { return this._invokeMethods; } }
+        internal IReadOnlyDictionary<string, MethodDescription> queryMethods { get { return this._queryMethods; } }
 
         public MethodDescription GetQueryMethod(string name)
         {
             MethodDescription method = null;
-            if (!queryMethods.TryGetValue(name, out method))
+            lock (this._queryMethods)
             {
-                throw new DomainServiceException(string.Format(ErrorStrings.ERR_QUERY_NAME_INVALID, name));
+                if (!queryMethods.TryGetValue(name, out method))
+                {
+                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_QUERY_NAME_INVALID, name));
+                }
             }
             return method;
         }
@@ -34,16 +61,19 @@ namespace RIAPP.DataService.Utils
         public MethodDescription GetInvokeMethod(string name)
         {
             MethodDescription method = null;
-            if (!invokeMethods.TryGetValue(name, out method))
+            lock (this._invokeMethods)
             {
-                throw new DomainServiceException(string.Format(ErrorStrings.ERR_METH_NAME_INVALID, name));
+                if (!invokeMethods.TryGetValue(name, out method))
+                {
+                    throw new DomainServiceException(string.Format(ErrorStrings.ERR_METH_NAME_INVALID, name));
+                }
             }
             return method;
         }
 
         public DbSetsDictionary dbSets { get { return _dbSets; } }
         public AssociationsDictionary associations { get { return _associations; } }
-        public MethodsList methodDescriptions { get; set; }
+        public MethodsList methodDescriptions { get { return this._methodDescriptions; } }
       }
 
 

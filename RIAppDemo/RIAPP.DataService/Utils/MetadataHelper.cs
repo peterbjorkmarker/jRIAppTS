@@ -213,7 +213,6 @@ namespace RIAPP.DataService.Utils
         {
             Type thisType= domainService.GetType();
             IServiceContainer services = domainService.ServiceContainer;
-            MethodsList methodList = new MethodsList();
             Func<MethodInfo, MethodType> fn_getMethodType = (m) =>
             {
                 if (m.IsDefined(typeof(QueryAttribute), false))
@@ -238,19 +237,12 @@ namespace RIAPP.DataService.Utils
             var methodInfos = thisType.GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public);
             var allList = methodInfos.Select(m => new { method = m, methodType = fn_getMethodType(m) });
             var queryAndInvokes = allList.Where((info) => info.methodType == MethodType.Query || info.methodType == MethodType.Invoke).ToArray();
+            MethodsList methodList = new MethodsList();
             Array.ForEach(queryAndInvokes, (info) =>
             {
-                var methodDescription = MethodDescription.FromMethodInfo(info.method, info.methodType, services);
-                methodList.Add(methodDescription);
-                if (info.methodType == MethodType.Query)
-                {
-                    metadata.queryMethods.Add(info.method.Name, methodDescription);
-                }
-                else
-                {
-                    metadata.invokeMethods.Add(info.method.Name, methodDescription);
-                }
+                methodList.Add(MethodDescription.FromMethodInfo(info.method, info.methodType, services));
             });
+            metadata.InitMethods(methodList);
 
             var otherMethods = allList.Where((info) => !(info.methodType == MethodType.Query || info.methodType == MethodType.Invoke || info.methodType == MethodType.None)).ToArray();
 
@@ -295,7 +287,6 @@ namespace RIAPP.DataService.Utils
                 }
             });
 
-            metadata.methodDescriptions = methodList;
         }
 
         /// <summary>
