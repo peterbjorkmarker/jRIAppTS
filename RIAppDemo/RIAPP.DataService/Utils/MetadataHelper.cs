@@ -23,11 +23,12 @@ namespace RIAPP.DataService.Utils
         {
             CachedMetadata cachedMetadata = null;
             Func<CachedMetadata> factory = () => {
+                Type thisType = domainService.GetType();
                 CachedMetadata result = null;
-                if (MetadataHelper._metadataCache.TryGetValue(domainService.GetType(), out result))
+                if (MetadataHelper._metadataCache.TryGetValue(thisType, out result))
                     return result;
                 MetadataHelper.ExecuteOnSTA(MetadataHelper.InitMetadata, domainService);
-                MetadataHelper._metadataCache.TryGetValue(domainService.GetType(), out result);
+                MetadataHelper._metadataCache.TryGetValue(thisType, out result);
                 return result;
             };
             System.Threading.LazyInitializer.EnsureInitialized<CachedMetadata>(ref cachedMetadata, factory);
@@ -42,12 +43,13 @@ namespace RIAPP.DataService.Utils
         private static void InitMetadata(object state)
         {
             BaseDomainService domainService = (BaseDomainService)state;
+            Type thisType = domainService.GetType();
             CachedMetadata cachedMetadata = null;
-            if (MetadataHelper._metadataCache.TryGetValue(domainService.GetType(), out cachedMetadata))
+            if (MetadataHelper._metadataCache.TryGetValue(thisType, out cachedMetadata))
             {
                 return;
             }
-            var metadata = domainService.GetMetadata();
+            Metadata metadata = domainService.GetMetadata();
             cachedMetadata = new CachedMetadata();
             foreach (var dbSetInfo in metadata.DbSets)
             {
@@ -139,7 +141,7 @@ namespace RIAPP.DataService.Utils
                     });
                 }
             }
-            MetadataHelper._metadataCache.TryAdd(domainService.GetType(), cachedMetadata);
+            MetadataHelper._metadataCache.TryAdd(thisType, cachedMetadata);
         }
 
         public static void CheckMethod(BaseDomainService domainService, DbSetInfo dbSetInfo, MethodType methodType)
@@ -234,28 +236,26 @@ namespace RIAPP.DataService.Utils
             var dbsetsLookUp = metadata.dbSets.Values.ToLookup(v => v.EntityType);
             var dbsetsByType = dbsetsLookUp.ToDictionary(v => v.Key);
             var methodInfos = thisType.GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public);
-            var allList = methodInfos.Select(m => new { method = m, methodType = fn_getMethodType(m) }).ToArray();
-            Array.ForEach(allList, (info) =>
+            var allList = methodInfos.Select(m => new { method = m, methodType = fn_getMethodType(m) });
+            var queryAndInvokes = allList.Where((info) => info.methodType == MethodType.Query || info.methodType == MethodType.Invoke).ToArray();
+            Array.ForEach(queryAndInvokes, (info) =>
             {
-                if ((info.methodType == MethodType.Query || info.methodType == MethodType.Invoke))
+                var methodDescription = MethodDescription.FromMethodInfo(info.method, info.methodType, services);
+                methodList.Add(methodDescription);
+                if (info.methodType == MethodType.Query)
                 {
-                    var methodDescription = MethodDescription.FromMethodInfo(info.method, info.methodType, services);
-                    methodList.Add(methodDescription);
-                    if (info.methodType == MethodType.Query)
-                    {
-                        metadata.queryMethods.TryAdd(info.method.Name, methodDescription);
-                    }
-                    else
-                    {
-                        metadata.invokeMethods.TryAdd(info.method.Name, methodDescription);
-                    }
+                    metadata.queryMethods.Add(info.method.Name, methodDescription);
+                }
+                else
+                {
+                    metadata.invokeMethods.Add(info.method.Name, methodDescription);
                 }
             });
 
-            Array.ForEach(allList, (info) =>
+            var otherMethods = allList.Where((info) => !(info.methodType == MethodType.Query || info.methodType == MethodType.Invoke || info.methodType == MethodType.None)).ToArray();
+
+            Array.ForEach(otherMethods, (info) =>
             {
-                if ((info.methodType == MethodType.Query || info.methodType == MethodType.Invoke || info.methodType == MethodType.None))
-                    return;
                 Type entityType = null;
                 if (info.methodType == MethodType.Refresh)
                 {
@@ -306,7 +306,7 @@ namespace RIAPP.DataService.Utils
         /// <returns></returns>
         public static Type RemoveTaskFromType(Type type)
         {
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>))
+            if (type.IsGenericType && typeof(Task).IsAssignableFrom(type))
             {
                 return type.GetGenericArguments().First();
             }

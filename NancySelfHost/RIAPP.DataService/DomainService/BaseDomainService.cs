@@ -1060,10 +1060,10 @@ namespace RIAPP.DataService
             return rri; 
         }
 
-        private async Task<object> GetMethodResult(object invokeRes)
+        private static async Task<object> GetMethodResult(object invokeRes)
         {
             var typeInfo = invokeRes != null ? invokeRes.GetType() : null;
-            if (typeInfo != null && typeInfo.IsGenericType && typeInfo.GetGenericTypeDefinition() == typeof(Task<>))
+            if (typeInfo != null && invokeRes is Task)
             {
                 await ((Task)invokeRes).ConfigureAwait(false);
                 return typeInfo.GetProperty("Result").GetValue(invokeRes, null);

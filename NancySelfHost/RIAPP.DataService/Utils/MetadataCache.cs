@@ -12,14 +12,14 @@ namespace RIAPP.DataService.Utils
     {
         DbSetsDictionary _dbSets = new DbSetsDictionary();
         AssociationsDictionary _associations = new AssociationsDictionary();
-        ConcurrentDictionary<string, MethodDescription> _invokeMethods = new ConcurrentDictionary<string,MethodDescription>();
-        ConcurrentDictionary<string, MethodDescription> _queryMethods = new ConcurrentDictionary<string,MethodDescription>();
+        IDictionary<string, MethodDescription> _invokeMethods = new Dictionary<string,MethodDescription>();
+        IDictionary<string, MethodDescription> _queryMethods = new Dictionary<string,MethodDescription>();
 
         public CachedMetadata() 
         {
         }
-        internal ConcurrentDictionary<string, MethodDescription> invokeMethods { get { return this._invokeMethods; } }
-        internal ConcurrentDictionary<string, MethodDescription> queryMethods { get { return this._queryMethods; } }
+        internal IDictionary<string, MethodDescription> invokeMethods { get { return this._invokeMethods; } }
+        internal IDictionary<string, MethodDescription> queryMethods { get { return this._queryMethods; } }
 
         public MethodDescription GetQueryMethod(string name)
         {
