@@ -37,9 +37,12 @@ namespace RIAPP.DataService.Utils
                 }
             });
 
-            this._methodDescriptions = methods;
-            this._invokeMethods = new ReadOnlyDictionary<string, MethodDescription>(invokeMeth);
-            this._queryMethods = new ReadOnlyDictionary<string, MethodDescription>(queryMeth);
+            lock (this)
+            {
+                this._methodDescriptions = methods;
+                this._invokeMethods = new ReadOnlyDictionary<string, MethodDescription>(invokeMeth);
+                this._queryMethods = new ReadOnlyDictionary<string, MethodDescription>(queryMeth);
+            }
         }
 
         internal IReadOnlyDictionary<string, MethodDescription> invokeMethods { get { return this._invokeMethods; } }
