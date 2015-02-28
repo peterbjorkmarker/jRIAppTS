@@ -35,22 +35,21 @@
                 </div>
             </div>
              <div id="c">
-                    <table style="font-size: 9pt;" data-name="tblOrderDetails" data-bind="{this.dataSource,to=vwSalesOrderDet,source=productVM}"
-                        data-view="options={wrapCss:orderDetailTableWrap,isHandleAddNew:true,editor:{templateID:orderDetEditTemplate,width:650,height:550,title:'Order Detail editing'}}">
-                        <thead>
-                            <tr>
-                                <th data-column="width:50px,type:row_actions" ></th>
-                                <th data-column="width:80px,sortable:true,title:OrderQty" data-content="fieldName:OrderQty,readOnly:true" ></th>
-                                <th data-column="width:80px,sortable:true,title:UnitPrice" data-content="fieldName:UnitPrice,readOnly:true" ></th>
-                                <th data-column="width:80px,sortable:true,title:UnitPriceDiscount" data-content="fieldName:UnitPriceDiscount,readOnly:true" ></th>
-                                <th data-column="width:80px,sortable:true,title:LineTotal" data-content="fieldName:LineTotal,readOnly:true" ></th>
-                                <th data-column="width:80px,sortable:true,title:Status" data-content="fieldName:SalesOrderHeader.Status,readOnly:true" ></th>
-                                <th data-column="width:100%,title:Product" data-content="fieldName:Product.Name,readOnly:true" ></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+                 <table style="font-size: 9pt;" data-name="tblOrderDetails" data-bind="{this.dataSource,to=vwSalesOrderDet,source=productVM}"
+                        data-view="options={wrapCss:orderDetailTableWrap,isHandleAddNew:true,editor:{templateID:orderDetEditTemplate,width:650,height:550,submitOnOK:true,title:'Order Detail editing'}}">
+                     <thead>
+                         <tr>
+                             <th data-column="width:50px,type:row_actions"></th>
+                             <th data-column="width:80px,sortable:true,title:OrderQty" data-content="fieldName:OrderQty,readOnly:true"></th>
+                             <th data-column="width:80px,sortable:true,title:UnitPrice" data-content="fieldName:UnitPrice,readOnly:true"></th>
+                             <th data-column="width:80px,sortable:true,title:UnitPriceDiscount" data-content="fieldName:UnitPriceDiscount,readOnly:true"></th>
+                             <th data-column="width:80px,sortable:true,title:LineTotal" data-content="fieldName:LineTotal,readOnly:true"></th>
+                             <th data-column="width:80px,sortable:true,title:Status" data-content="fieldName:SalesOrderHeader.Status,readOnly:true"></th>
+                             <th data-column="width:100%,title:Product" data-content="fieldName:Product.Name,readOnly:true"></th>
+                         </tr>
+                     </thead>
+                     <tbody></tbody>
+                 </table>
               </div>
         </div>
         <!--myTabs-->
