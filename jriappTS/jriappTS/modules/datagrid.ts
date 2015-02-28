@@ -1136,6 +1136,7 @@
                         function (e) {
                             e.stopPropagation();
                             var $img = global.$(this), name = this.name, cell: ActionsCell = $img.data('cell');
+                            self.grid.currentRow = cell.row;
                             switch (name) {
                                 case 'img_ok':
                                     self._onOk(cell);

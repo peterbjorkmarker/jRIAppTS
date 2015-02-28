@@ -11801,6 +11801,7 @@ var RIAPP;
                     this.grid._$tableEl.on("click", 'img[' + constsMOD.DATA_ATTR.DATA_EVENT_SCOPE + '="' + this.uniqueID + '"]', function (e) {
                         e.stopPropagation();
                         var $img = global.$(this), name = this.name, cell = $img.data('cell');
+                        self.grid.currentRow = cell.row;
                         switch (name) {
                             case 'img_ok':
                                 self._onOk(cell);
