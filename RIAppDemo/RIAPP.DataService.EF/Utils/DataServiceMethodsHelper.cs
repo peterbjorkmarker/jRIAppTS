@@ -34,7 +34,8 @@ namespace RIAPP.DataService.EF.Utils
             sb.AppendLine(string.Format("\treturn new QueryResult<{0}>(res, totalCount);",dbSetInfo.EntityType.Name));
             sb.AppendLine("}");
             sb.AppendLine("");
-    
+
+            sb.AppendLine("[Insert]");
             sb.AppendFormat("public void Insert{1}({0} {2})", dbSetInfo.EntityType.Name, dbSetInfo.dbSetName, dbSetInfo.dbSetName.ToLower());
             sb.AppendLine("");
             sb.AppendLine("{");
@@ -49,6 +50,7 @@ namespace RIAPP.DataService.EF.Utils
             sb.AppendLine("}");
             sb.AppendLine("");
 
+            sb.AppendLine("[Update]");
             sb.AppendFormat("public void Update{1}({0} {2})", dbSetInfo.EntityType.Name, dbSetInfo.dbSetName, dbSetInfo.dbSetName.ToLower());
             sb.AppendLine("");
             sb.AppendLine("{");
@@ -58,6 +60,7 @@ namespace RIAPP.DataService.EF.Utils
             sb.AppendLine("}");
             sb.AppendLine("");
 
+            sb.AppendLine("[Delete]");
             sb.AppendFormat("public void Delete{1}({0} {2})", dbSetInfo.EntityType.Name, dbSetInfo.dbSetName, dbSetInfo.dbSetName.ToLower());
             sb.AppendLine("");
             sb.AppendLine("{");
