@@ -111,7 +111,7 @@
         <classShapeMoniker Id="80237d48-18b2-41af-ac5a-577b14720c90" />
       </nodes>
     </associationConnector>
-    <associationConnector edgePoints="[(5.375 : 6.78925699869792); (7.51041466666667 : 6.78925699869792 : JumpStart); (7.67708133333333 : 6.78925699869792 : JumpEnd); (8.5 : 6.78925699869792)]" fixedFrom="NotFixed" fixedTo="NotFixed">
+    <associationConnector edgePoints="[(5.375 : 6.78925699869792); (8.5 : 6.78925699869792)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/RIAppDemoDataContext/Product/Product_SalesOrderDetail" />
       <nodes>
         <classShapeMoniker Id="f96a5fdb-0ad4-4566-a455-53c967a38a91" />
@@ -139,7 +139,7 @@
         <classShapeMoniker Id="888458d2-1983-41f0-86d1-c569250c9454" />
       </nodes>
     </associationConnector>
-    <associationConnector edgePoints="[(2.5 : 3.1963525390625); (3.26041666666667 : 3.1963525390625 : JumpStart); (3.42708333333333 : 3.1963525390625 : JumpEnd); (6.75 : 3.1963525390625)]" fixedFrom="NotFixed" fixedTo="NotFixed">
+    <associationConnector edgePoints="[(2.5 : 3.1963525390625); (6.75 : 3.1963525390625)]" fixedFrom="NotFixed" fixedTo="NotFixed">
       <AssociationMoniker Name="/RIAppDemoDataContext/Customer/Customer_SalesOrderHeader" />
       <nodes>
         <classShapeMoniker Id="e51979b0-63ac-4763-abc7-2d3f39c8ac73" />
