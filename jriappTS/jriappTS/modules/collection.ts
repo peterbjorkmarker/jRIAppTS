@@ -963,11 +963,11 @@
                         this._EditingItem._aspect.cancelEdit();
                 }
                 endEdit() {
-                    var EditingItem;
+                    var EditingItem: TItem;
                     if (this.isEditing) {
                         EditingItem = this._EditingItem;
-                        if (!EditingItem.endEdit() && EditingItem.getIsHasErrors()) {
-                            this.handleError(new ValidationError(EditingItem.getAllErrors(), EditingItem), EditingItem);
+                        if (!EditingItem._aspect.endEdit() && EditingItem._aspect.getIsHasErrors()) {
+                            this.handleError(new ValidationError(EditingItem._aspect.getAllErrors(), EditingItem), EditingItem);
                             this.cancelEdit();
                         }
                     }

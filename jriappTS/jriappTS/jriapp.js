@@ -1109,7 +1109,7 @@ var RIAPP;
             enumerable: true,
             configurable: true
         });
-        Global.vesion = '2.5.5.1';
+        Global.vesion = '2.5.6.0';
         Global._TEMPLATES_SELECTOR = ['section.', RIAPP.css_riaTemplate].join('');
         Global._TEMPLATE_SELECTOR = '*[data-role="template"]';
         return Global;
@@ -6105,8 +6105,8 @@ var RIAPP;
                     var EditingItem;
                     if (this.isEditing) {
                         EditingItem = this._EditingItem;
-                        if (!EditingItem.endEdit() && EditingItem.getIsHasErrors()) {
-                            this.handleError(new ValidationError(EditingItem.getAllErrors(), EditingItem), EditingItem);
+                        if (!EditingItem._aspect.endEdit() && EditingItem._aspect.getIsHasErrors()) {
+                            this.handleError(new ValidationError(EditingItem._aspect.getAllErrors(), EditingItem), EditingItem);
                             this.cancelEdit();
                         }
                     }

@@ -37,14 +37,8 @@ code maintenance.
 
 After minification the <b>jriapp.js</b> file has the size of about 310 KB. After it is gzipped, it is about 70 KB.
 
-P.S. - <i>I currently use this framework in real world projects at my work in insurance company. So the framework is tested on the real projects. 
-I replaced my projects written using Microsoft Silverlight with projects which use this framework. 
-I developed every feature that i needed for migration of the projects into this framework.
-The framework is tested that there's <b>no memory leaks</b> when using this framework.
-There's also not a single eval function used in this framework. So it works in a strict mode in the browser!
-</i>
-
 <b>Latest changes:</b>
+<p>2015-03-02 Bug fix in collection.ts module.</p>  
 <p>2015-02-19 The server side code update. The dataservice's major code improvement.
 New attributes were added UpdateAttribute, InsertAttribute, DeleteAttribute, RefreshAttribute, ValidateAttribute. They can be used to mark
 methods inside a dataservice. The demo projects were updated.</p>  
